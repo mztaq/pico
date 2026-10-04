@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, FolderOpen, GitBranch, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, FolderOpen, GitBranch, History, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import { compile } from '../language';
 import type { Program } from '../language/ast';
 import { examples } from '../examples';
@@ -9,11 +9,14 @@ import { findSuggestions, friendlyError, documentationFor, type Suggestion } fro
 import { execute, type RunResult } from '../runtime/interpreter';
 import { exportProject, importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects, type PicoFile, type PicoProject, type TestCase } from '../storage/projects';
 import { loadSettings, saveSettings, type PicoSettings } from '../storage/settings';
+import { addVersion, loadHistory, type ProjectVersion } from '../storage/history';
+import { formatPseudocode } from '../language/formatter';
 import { cssVariables, getTheme } from '../app/themes';
 import { FloatingPanel } from './components/FloatingPanel';
 import { ThemePicker } from './components/ThemePicker';
 import '../app/styles/app.css';
-import './styles/easter-eggs.css';
+import './styles/editor-folding.css';
+import './styles/workspace-upgrades.css';
 import './styles/file-tabs.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
@@ -33,6 +36,8 @@ export default function App() {
   const [activePanel, setActivePanel] = useState<PanelKey>('console');
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<ProjectVersion[]>([]);
   const [inputValues, setInputValues] = useState('');
   const [result, setResult] = useState<RunResult | null>(null);
   const [executionError, setExecutionError] = useState<ReturnType<typeof friendlyError> | null>(null);
@@ -73,6 +78,7 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [projects, activeId]);
   useEffect(() => { try { saveSettings(settings); } catch { /* The current tab remains usable if storage is blocked. */ } }, [settings]);
+  useEffect(() => { setHistory(loadHistory(activeProject.id)); }, [activeProject.id]);
   useEffect(() => {
     const root = document.documentElement;
     for (const [property, value] of Object.entries(cssVariables(theme))) root.style.setProperty(property, value);
@@ -106,6 +112,9 @@ export default function App() {
     setExecutionError(null); setResult(null); setTestOutcomes({});
     updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code } : file), updatedAt: Date.now() }));
   }
+  function formatCode() { updateCode(formatPseudocode(activeFile.code)); }
+  function saveSnapshot() { const label = window.prompt('Name this snapshot', `Snapshot ${history.length + 1}`); if (label === null) return; setHistory(addVersion(activeProject.id, label, activeProject.files, activeProject.activeFileId)); setHistoryOpen(true); }
+  function restoreSnapshot(version: ProjectVersion) { if (!window.confirm(`Restore “${version.label}”? Current edits will remain available only if you save a snapshot first.`)) return; updateProject(project => ({ ...project, files: version.files.map(file => ({ ...file })), activeFileId: version.activeFileId, code: version.files.find(file => file.id === version.activeFileId)?.code ?? version.files[0]?.code ?? '', updatedAt: Date.now() })); setHistoryOpen(false); setResult(null); setExecutionError(null); }
   function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
   function selectProject(id: string) {
     setActiveId(id); setExecutionError(null); setResult(null); setTestOutcomes({}); setInputValues(''); setActivePanel('console');
@@ -151,7 +160,15 @@ export default function App() {
   const creatorInput = inputValues.split(/\r?\n/).some(value => /^(amar|mustaqim)$/i.test(value.trim()));
   const teacherInput = inputValues.split(/\r?\n/).some(value => /^mr\.boyle$/i.test(value.trim()));
   function reorderPanels(target: PanelKey) { if (!draggedPanel || draggedPanel === target) return; const order = [...settings.panelOrder]; const from = order.indexOf(draggedPanel); const to = order.indexOf(target); if (from < 0 || to < 0) return; order.splice(from, 1); order.splice(to, 0, draggedPanel); changeSettings({ panelOrder: order }); setDraggedPanel(null); }
-  function resetLayout() { changeSettings({ sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 278, dockSize: 33, panelOrder: [...defaultPanelOrder] }); }
+  function applyLayoutPreset(preset: PicoSettings['layoutPreset']) {
+    const presets: Record<Exclude<PicoSettings['layoutPreset'], 'custom'>, Partial<PicoSettings>> = {
+      coding: { sidebarVisible: true, referenceVisible: true, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 278, dockSize: 33, panelOrder: [...defaultPanelOrder] },
+      debugging: { sidebarVisible: true, referenceVisible: false, sidebarSide: 'left', dockSide: 'right', sidebarWidth: 226, referenceWidth: 278, dockSize: 42, panelOrder: ['debugger','console','tests','coverage','flowchart','ast','tokens'] },
+      focus: { sidebarVisible: false, referenceVisible: false, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 278, dockSize: 28, panelOrder: [...defaultPanelOrder] },
+    };
+    changeSettings({ ...(presets[preset as Exclude<PicoSettings['layoutPreset'], 'custom'>] ?? {}), layoutPreset: preset });
+  }
+  function resetLayout() { applyLayoutPreset('coding'); }
   function runTests() {
     if (!parsed.ast) {
       const message = parseError?.message ?? 'Fix the syntax before running test cases.';
@@ -194,19 +211,19 @@ export default function App() {
       <div className="topbar-crumb"><FolderOpen size={14} /><span>Workspace</span><span className="crumb-slash">/</span><span className="crumb-active">Cambridge Core</span><ChevronDown size={12} /></div>
       <div className="topbar-spacer" />
       <div className={`save-indicator ${saveState}`}><span className="save-dot">{saveState === 'saved' ? <Check size={9} /> : null}</span>{saveText}</div>
-      <div className="settings-anchor" ref={settingsAnchorRef}><button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>{<FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover"><div className="settings-title"><div><Settings2 size={15} /><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setSettingsOpen(false)}><X size={14} /></button></div><SettingRow title="Autocomplete" detail="Suggest Cambridge keywords as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} /><SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} /><SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} /><ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} /><SettingRow title="Ask for INPUT on Run" detail="Show an input dialog before programs execute" checked={settings.promptForInput} onChange={value => changeSettings({ promptForInput: value })} /><label className="font-setting"><span>Sidebar position</span><select value={settings.sidebarSide} onChange={event => changeSettings({ sidebarSide: event.target.value as PicoSettings['sidebarSide'] })}><option value="left">Left</option><option value="right">Right</option></select></label><label className="font-setting"><span>Tool dock position</span><select value={settings.dockSide} onChange={event => changeSettings({ dockSide: event.target.value as PicoSettings['dockSide'] })}><option value="bottom">Bottom</option><option value="right">Right</option></select></label><label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="20" value={settings.fontSize} onChange={event => changeSettings({ fontSize: Number(event.target.value) })} /></label><button className="reset-layout-button" onClick={resetLayout}>Reset workspace layout</button><div className="settings-foot">Saved locally in this browser · drag dock tabs to reorder</div></FloatingPanel>}</div>
+      <div className="settings-anchor" ref={settingsAnchorRef}><button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>{<FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover"><div className="settings-title"><div><Settings2 size={15} /><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setSettingsOpen(false)}><X size={14} /></button></div><SettingRow title="Autocomplete" detail="Suggest Cambridge keywords as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} /><SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} /><SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} /><ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} /><SettingRow title="Ask for INPUT on Run" detail="Show an input dialog before programs execute" checked={settings.promptForInput} onChange={value => changeSettings({ promptForInput: value })} /><label className="font-setting"><span>Sidebar position</span><select value={settings.sidebarSide} onChange={event => changeSettings({ sidebarSide: event.target.value as PicoSettings['sidebarSide'] })}><option value="left">Left</option><option value="right">Right</option></select></label><label className="font-setting"><span>Tool dock position</span><select value={settings.dockSide} onChange={event => changeSettings({ dockSide: event.target.value as PicoSettings['dockSide'] })}><option value="bottom">Bottom</option><option value="right">Right</option></select></label><label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="20" value={settings.fontSize} onChange={event => changeSettings({ fontSize: Number(event.target.value) })} /></label><label className="font-setting"><span>Layout preset</span><select value={settings.layoutPreset} onChange={event => applyLayoutPreset(event.target.value as PicoSettings['layoutPreset'])}><option value="coding">Coding</option><option value="debugging">Debugging</option><option value="focus">Focus</option><option value="custom">Custom</option></select></label><SettingRow title="Project sidebar" detail="Show the project and example navigator" checked={settings.sidebarVisible} onChange={value => changeSettings({ sidebarVisible: value, layoutPreset: 'custom' })} /><SettingRow title="Quick reference" detail="Show the Cambridge keyword reference" checked={settings.referenceVisible} onChange={value => changeSettings({ referenceVisible: value, layoutPreset: 'custom' })} /><button className="reset-layout-button" onClick={resetLayout}>Reset workspace layout</button><div className="settings-foot">Saved locally in this browser · drag dock tabs to reorder</div></FloatingPanel>}</div>
       <div className="file-menu-anchor" ref={fileAnchorRef}><button className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" title="Cambridge subset guide" onClick={() => { setSelectedDoc('DECLARE'); document.getElementById('quick-reference')?.scrollIntoView({ behavior: 'smooth' }); }}><CircleHelp size={15} /><span>Help</span></button>
     </header>
 
     <div className={`ide-shell sidebar-${settings.sidebarSide} dock-${settings.dockSide}`}>
-      <aside className="project-sidebar">
+      {settings.sidebarVisible && <aside className="project-sidebar">
         <div className="sidebar-head"><span>WORKSPACE</span><button className="small-icon-button" onClick={createBlankProject} title="New project" aria-label="New project"><Plus size={15} /></button></div>
         <div className="side-section-label"><span>PROJECTS</span><span className="count-pill">{projects.length}</span></div>
         <div className="project-list">{projects.map(project => <div className={`project-row ${project.id === activeId ? 'active' : ''}`} key={project.id}><button className="project-select" onClick={() => selectProject(project.id)} title={project.name}><FileCode2 size={15} /><span>{project.name}</span></button>{project.id === activeId && <button className="project-delete" title="Delete project" aria-label="Delete project" onClick={() => removeProject(project.id)}><Trash2 size={12} /></button>}</div>)}</div>
         <div className="side-section-label examples-label"><span>CAMBRIDGE EXAMPLES</span><Sparkles size={12} /></div>
         <div className="example-list">{examples.map(example => <button className="example-row" key={example.id} title={example.description} onClick={() => loadExample(example.id)}><span className="example-mark"><Code2 size={13} /></span><span><b>{example.name}</b><small>{example.description}</small></span></button>)}</div>
         <div className="sidebar-bottom"><div className="subset-mark"><span><BookOpen size={14} /></span><div><strong>Cambridge core</strong><small>Focused syllabus subset</small></div></div><span className="local-badge"><span /> LOCAL ONLY</span></div>
-      </aside>
+      </aside>}
 
       <main className="workspace-main">
         <div className="command-bar">
@@ -218,21 +235,21 @@ export default function App() {
             <ToggleChip label="Hover docs" checked={settings.hoverDocs} onClick={() => changeSettings({ hoverDocs: !settings.hoverDocs })} />
           </div>
           <div className="command-divider" />
-          <button className="toolbar-button" onClick={() => setActivePanel('flowchart')}><GitBranch size={14} /><span>Flowchart</span></button>
+          <button className="toolbar-button" onClick={formatCode} title="Format code · Shift+Alt+F"><CodeXml size={14} /><span>Format</span></button><button className="toolbar-button" onClick={saveSnapshot} title="Save a project snapshot"><History size={14} /><span>History</span></button><button className="toolbar-button" onClick={() => setActivePanel('flowchart')}><GitBranch size={14} /><span>Flowchart</span></button>
           <button className="toolbar-button debug-button" onClick={() => runProgram(true)}><Code2 size={14} /><span>Debug</span></button>
           <button className="run-button" onClick={() => runProgram()}><Play size={13} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
         </div>
 
-        <div className="editor-split">
+        <div className={`editor-split ${settings.referenceVisible ? '' : 'reference-hidden'}`}>
           <section className="editor-card">
             <div className="editor-card-head"><div className="editor-card-title"><span className="editor-live-dot" /><span>Editor</span><span className="line-count">{activeFile.code.split('\n').length} lines</span></div><div className="editor-card-meta"><span className="mono-tag">IGCSE</span><span>·</span><span>UTF-8</span><span>·</span><span>LF</span></div></div>
             <div className="file-tabs" role="tablist" aria-label="Project files">{activeProject.files.map(file => <div className={`file-tab ${file.id === activeFile.id ? 'active' : ''}`} key={file.id} role="tab" aria-selected={file.id === activeFile.id} onDoubleClick={() => renameFile(file)}><button className="file-tab-select" onClick={() => selectFile(file.id)} title={`${file.name} · double-click to rename`}><FileCode2 size={12} /><span>{file.name}</span></button><button className="file-tab-close" onClick={() => closeFile(file)} aria-label={`Close ${file.name}`} title="Close file"><X size={11} /></button></div>)}<button className="file-tab-new" onClick={createFile} title="New file" aria-label="New file"><Plus size={13} /></button></div>
             {suggestions.length > 0 && <div className="suggestion-ribbon"><Sparkles size={13} /><span>Did you mean?</span>{suggestions.map((suggestion, index) => <button className="suggestion-chip" key={`${suggestion.line}-${suggestion.column}-${index}`} onClick={() => applySuggestion(suggestion)}><code>{suggestion.original}</code><span>→</span><b>{suggestion.replacement}</b><small>line {suggestion.line}</small></button>)}<button className="dismiss-suggestions" title="Dismiss suggestions" onClick={() => setDismissedSuggestions(true)}><X size={13} /></button></div>}
-            <div className="editor-body"><CodeEditor ref={editorRef} value={activeFile.code} onChange={updateCode} preferences={settings} theme={theme} coveredLines={result?.coverage ?? []} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
+            <div className="editor-body"><CodeEditor ref={editorRef} value={activeFile.code} onChange={updateCode} onFormat={formatCode} preferences={settings} theme={theme} coveredLines={result?.coverage ?? []} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
             <div className="editor-card-foot"><span><Keyboard size={12} /> <kbd>⌘</kbd> <kbd>↵</kbd> to run <span className="shortcut-separator">·</span> <kbd>Ctrl G</kbd> go to line</span><span className="scope-note">Cambridge subset · core statements and expressions</span></div>
           </section>
 
-          <aside className="reference-card" id="quick-reference">
+          {settings.referenceVisible && <aside className="reference-card" id="quick-reference">
             <div className="reference-head"><div><BookOpen size={15} /><strong>Quick reference</strong></div><span className="reference-level">CAMBRIDGE</span></div>
             <div className="reference-search"><Search size={13} /><input value={docSearch} onChange={event => setDocSearch(event.target.value)} placeholder="Find a keyword" aria-label="Search Cambridge keywords" /></div>
             <div className="reference-keywords"><button className="syntax-cheat-button" onClick={() => setDocSearch('')}>Syntax cheat sheet</button>{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} onClick={() => setSelectedDoc(term)}>{term}</button>)}</div>
@@ -256,7 +273,7 @@ OTHERWISE
 ENDCASE`}</pre></details>
             <div className="reference-scope"><div className="scope-icon"><Sparkles size={14} /></div><div><strong>A focused subset</strong><p>Cambridge declarations, selection, CASE, all loop styles, routines, arrays, files and booklet library routines.</p></div></div>
             <button className={`hover-doc-setting ${settings.hoverDocs ? 'enabled' : ''}`} onClick={() => changeSettings({ hoverDocs: !settings.hoverDocs })}><span className="hover-setting-icon">⌕</span><span><b>Hover documentation</b><small>Pause on a keyword in the editor</small></span><Toggle checked={settings.hoverDocs} onChange={() => changeSettings({ hoverDocs: !settings.hoverDocs })} /></button>
-          </aside>
+          </aside>}
         </div>
 
         <section className="tool-dock">
@@ -275,6 +292,7 @@ ENDCASE`}</pre></details>
     </div>
 
     <footer className="statusbar"><div className="attribution">Deployed by Mustaqim 11 Boys Red and Made by Amar 11 Boys Blue</div><div className="status-left"><span className="status-ready"><span /> READY</span><span className="status-divider" /><span>{saveState === 'saved' ? 'Saved locally' : saveState === 'saving' ? 'Saving changes…' : 'Local storage unavailable'}</span><span className="status-divider" /><span>Cambridge core</span></div><div className="status-right"><span>{activeFile.code.split('\n').length} lines</span><span className="status-divider" /><span>Browser-only <span className="status-lock">●</span></span><span className="status-divider" /><span className="version-mark">PICO / 01</span></div></footer>
+    {historyOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setHistoryOpen(false)}><div className="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title" onClick={event => event.stopPropagation()}><div className="input-modal-head"><div><strong id="history-title">Project history</strong><small>{activeProject.name} · browser-local snapshots</small></div><button className="icon-button quiet" onClick={() => setHistoryOpen(false)} aria-label="Close history"><X size={15} /></button></div><div className="history-actions"><button className="primary-small" onClick={saveSnapshot}><History size={13} /> Save snapshot</button></div>{history.length === 0 ? <div className="history-empty">No snapshots yet. Save one before experimenting with a big change.</div> : <div className="history-list">{history.map(version => <div className="history-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()} · {version.files.length} file{version.files.length === 1 ? '' : 's'}</small></div><button className="subtle-button" onClick={() => restoreSnapshot(version)}>Restore</button></div>)}</div>}</div></div>}
     {inputPromptOpen && <div className="input-modal-backdrop" role="presentation"><div className="input-modal" role="dialog" aria-modal="true"><div className="input-modal-head"><div><strong>Program input</strong><small>This program uses INPUT. Enter one value per line.</small></div><button className="icon-button quiet" onClick={() => setInputPromptOpen(false)} aria-label="Close input dialog"><X size={15} /></button></div><textarea autoFocus rows={6} value={inputValues} onChange={event => setInputValues(event.target.value)} placeholder="One input value per line" />{creatorInput && <div className="pico-easter-egg creator-note" role="status">These are my creators — thanks, Amar and Mustaqim.</div>}{teacherInput && <div className="pico-easter-egg creator-note" role="status">Hello, Mr. Boyle — my computer science teacher.</div>}<div className="input-modal-actions"><button className="subtle-button" onClick={() => setInputPromptOpen(false)}>Cancel</button><button className="primary-small" onClick={submitInputPrompt}><Play size={13} fill="currentColor" /> Run program</button></div></div></div>}
     {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>A Cambridge pseudocode studio made with care.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
   </div>;
