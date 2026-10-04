@@ -17,6 +17,7 @@ import { ThemePicker } from './components/ThemePicker';
 import '../app/styles/app.css';
 import './styles/editor-folding.css';
 import './styles/workspace-upgrades.css';
+import './styles/tutorial.css';
 import './styles/file-tabs.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
@@ -49,6 +50,8 @@ export default function App() {
   const [inputPromptOpen, setInputPromptOpen] = useState(false);
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [picoGreeting, setPicoGreeting] = useState(false);
+  const [tutorialOfferOpen, setTutorialOfferOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [pendingDebug, setPendingDebug] = useState(false);
   const [draggedPanel, setDraggedPanel] = useState<PanelKey | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +82,13 @@ export default function App() {
   }, [projects, activeId]);
   useEffect(() => { try { saveSettings(settings); } catch { /* The current tab remains usable if storage is blocked. */ } }, [settings]);
   useEffect(() => { setHistory(loadHistory(activeProject.id)); }, [activeProject.id]);
+  useEffect(() => {
+    try {
+      const visits = Number(localStorage.getItem('pico.visitCount.v1') ?? '0') + 1;
+      localStorage.setItem('pico.visitCount.v1', String(visits));
+      if (visits <= 2) setTutorialOfferOpen(true);
+    } catch { /* On blocked storage, the app remains usable without onboarding. */ }
+  }, []);
   useEffect(() => {
     const root = document.documentElement;
     for (const [property, value] of Object.entries(cssVariables(theme))) root.style.setProperty(property, value);
@@ -291,10 +301,12 @@ ENDCASE`}</pre></details>
       </main>
     </div>
 
+    {tutorialOfferOpen && <div className="tutorial-offer" role="dialog" aria-label="Pico tutorial offer"><div><strong>New to Pico?</strong><small>Take a quick tour of the workspace.</small></div><div className="tutorial-offer-actions"><button className="subtle-button" onClick={() => setTutorialOfferOpen(false)}>Not now</button><button className="primary-small" onClick={() => { setTutorialOfferOpen(false); setTutorialOpen(true); }}>Show tutorial</button></div></div>}
+    {tutorialOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setTutorialOpen(false)}><div className="tutorial-modal" role="dialog" aria-modal="true" aria-labelledby="tutorial-title" onClick={event => event.stopPropagation()}><div className="input-modal-head"><div><strong id="tutorial-title">Pico in a minute</strong><small>A short tour of the useful bits.</small></div><button className="icon-button quiet" onClick={() => setTutorialOpen(false)} aria-label="Close tutorial"><X size={15} /></button></div><div className="tutorial-steps"><div><b>1 · Write</b><span>Use the editor, tabs, folding arrows, and <kbd>Ctrl G</kbd> to jump to a line.</span></div><div><b>2 · Run and learn</b><span>Press Run, use the input popup, then inspect Console, Debugger, Tests, Flowchart, and Coverage.</span></div><div><b>3 · Make it yours</b><span>Format with <kbd>Shift Alt F</kbd>, save snapshots in History, and choose a layout preset in Settings.</span></div><div><b>4 · Say hello</b><span>Click the Pico logo for credits. Hint: try <code>OUTPUT "PICO"</code>, or enter <code>Amar</code>, <code>Mustaqim</code>, or <code>Mr.Boyle</code> in an input popup.</span></div></div><div className="tutorial-actions"><button className="subtle-button" onClick={() => setTutorialOpen(false)}>Start exploring</button><button className="primary-small" onClick={() => { setTutorialOpen(false); setCreditsOpen(true); }}>Try the logo credits</button></div></div></div>}
     <footer className="statusbar"><div className="attribution">Deployed by Mustaqim 11 Boys Red and Made by Amar 11 Boys Blue</div><div className="status-left"><span className="status-ready"><span /> READY</span><span className="status-divider" /><span>{saveState === 'saved' ? 'Saved locally' : saveState === 'saving' ? 'Saving changes…' : 'Local storage unavailable'}</span><span className="status-divider" /><span>Cambridge core</span></div><div className="status-right"><span>{activeFile.code.split('\n').length} lines</span><span className="status-divider" /><span>Browser-only <span className="status-lock">●</span></span><span className="status-divider" /><span className="version-mark">PICO / 01</span></div></footer>
     {historyOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setHistoryOpen(false)}><div className="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title" onClick={event => event.stopPropagation()}><div className="input-modal-head"><div><strong id="history-title">Project history</strong><small>{activeProject.name} · browser-local snapshots</small></div><button className="icon-button quiet" onClick={() => setHistoryOpen(false)} aria-label="Close history"><X size={15} /></button></div><div className="history-actions"><button className="primary-small" onClick={saveSnapshot}><History size={13} /> Save snapshot</button></div>{history.length === 0 ? <div className="history-empty">No snapshots yet. Save one before experimenting with a big change.</div> : <div className="history-list">{history.map(version => <div className="history-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()} · {version.files.length} file{version.files.length === 1 ? '' : 's'}</small></div><button className="subtle-button" onClick={() => restoreSnapshot(version)}>Restore</button></div>)}</div>}</div></div>}
     {inputPromptOpen && <div className="input-modal-backdrop" role="presentation"><div className="input-modal" role="dialog" aria-modal="true"><div className="input-modal-head"><div><strong>Program input</strong><small>This program uses INPUT. Enter one value per line.</small></div><button className="icon-button quiet" onClick={() => setInputPromptOpen(false)} aria-label="Close input dialog"><X size={15} /></button></div><textarea autoFocus rows={6} value={inputValues} onChange={event => setInputValues(event.target.value)} placeholder="One input value per line" />{creatorInput && <div className="pico-easter-egg creator-note" role="status">These are my creators — thanks, Amar and Mustaqim.</div>}{teacherInput && <div className="pico-easter-egg creator-note" role="status">Hello, Mr. Boyle — my computer science teacher.</div>}<div className="input-modal-actions"><button className="subtle-button" onClick={() => setInputPromptOpen(false)}>Cancel</button><button className="primary-small" onClick={submitInputPrompt}><Play size={13} fill="currentColor" /> Run program</button></div></div></div>}
-    {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>A Cambridge pseudocode studio made with care.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
+    {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>A Cambridge pseudocode studio made with care.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a> or <a href="mailto:b03661@nbabarwa.com">b03661@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
   </div>;
 }
 
