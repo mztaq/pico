@@ -1,5 +1,6 @@
 /* Pico Easter eggs: friendly, reversible and kept separate from program output. */
-.brand-lockup { border: 0; padding: 0; background: transparent; cursor: pointer; text-align: left; }
+.brand-lockup { appearance: none; -webkit-appearance: none; border: 0 !important; padding: 0; background: transparent !important; box-shadow: none; cursor: pointer; text-align: left; }
+.brand-lockup:focus, .brand-lockup:active { background: transparent !important; }
 .brand-lockup:hover .brand-mark { transform: translateY(-1px) rotate(-3deg); }
 .brand-mark { transition: transform .18s ease; }
 .pico-easter-egg { margin: 8px 14px 10px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 6px; color: var(--text); background: color-mix(in srgb, var(--accent) 10%, transparent); font-family: var(--font-code); font-size: 10px; }
