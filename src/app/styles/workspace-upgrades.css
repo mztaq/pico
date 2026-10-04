@@ -1,0 +1,9 @@
+.editor-split.reference-hidden { grid-template-columns: minmax(0, 1fr); }
+.history-modal { width: min(560px, 100%); max-height: min(680px, 90vh); overflow: auto; padding: 18px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-raised); box-shadow: 0 24px 90px rgba(0,0,0,.62); }
+.history-actions { display: flex; justify-content: flex-end; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.history-empty { padding: 30px 8px; color: var(--muted); font-size: 11px; text-align: center; }
+.history-list { display: grid; gap: 6px; margin-top: 10px; }
+.history-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-input); }
+.history-row strong, .history-row small { display: block; }
+.history-row strong { color: var(--text); font-size: 11px; }
+.history-row small { margin-top: 4px; color: var(--muted); font-size: 9px; }

@@ -16,6 +16,7 @@ export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => voi
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onFormat: () => void;
   preferences: EditorPreferences;
   theme: PicoTheme;
   coveredLines: number[];
@@ -275,7 +276,7 @@ function buildDecorations(view: EditorView, covered: number[], currentLine?: num
   return Decoration.set(ranges, true);
 }
 
-export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function CodeEditor({ value, onChange, preferences, theme, coveredLines, currentLine, errorLine }, ref) {
+export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function CodeEditor({ value, onChange, onFormat, preferences, theme, coveredLines, currentLine, errorLine }, ref) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const prefs = useRef(new Compartment());
@@ -283,6 +284,8 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
   const marks = useRef(new Compartment());
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onFormatRef = useRef(onFormat);
+  onFormatRef.current = onFormat;
 
   useImperativeHandle(ref, () => ({
     applySuggestion: suggestion => {
@@ -304,7 +307,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
         lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
         pseudoLanguage, foldService.of(cambridgeFold), indentationGuides,
-        keymap.of([{ key: 'Enter', run: insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+        keymap.of([{ key: 'Enter', run: insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, { key: 'Shift-Alt-f', run: () => { onFormatRef.current(); return true; } }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         palette.current.of(themeExtensions(theme)),
         prefs.current.of(createPreferences(preferences)),
         marks.current.of(EditorView.decorations.of(v => buildDecorations(v, coveredLines, currentLine, errorLine))),
