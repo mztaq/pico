@@ -1,0 +1,12 @@
+/* Pico Easter eggs: friendly, reversible and kept separate from program output. */
+.brand-lockup { border: 0; padding: 0; background: transparent; cursor: pointer; text-align: left; }
+.brand-lockup:hover .brand-mark { transform: translateY(-1px) rotate(-3deg); }
+.brand-mark { transition: transform .18s ease; }
+.pico-easter-egg { margin: 8px 14px 10px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 6px; color: var(--text); background: color-mix(in srgb, var(--accent) 10%, transparent); font-family: var(--font-code); font-size: 10px; }
+.creator-note { margin: 10px 0 0; font-family: var(--font-ui); }
+.credits-modal { width: min(420px, 100%); padding: 22px; border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border)); border-radius: 14px; background: var(--surface-raised); box-shadow: 0 24px 90px rgba(0,0,0,.62); }
+.credits-mark { width: 42px; height: 42px; display: grid; place-items: center; margin-bottom: 13px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.credits-mark .brand-mark { width: 34px; height: 34px; margin: 0; }
+.credits-message, .credits-contact { color: var(--text); font-size: 12px; line-height: 1.6; }
+.credits-contact { color: var(--muted); }
+.credits-contact a { color: var(--accent); }

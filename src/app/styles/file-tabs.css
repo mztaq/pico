@@ -1,0 +1,9 @@
+.file-tabs { min-height: 34px; display: flex; align-items: stretch; gap: 2px; padding: 4px 8px 0; overflow-x: auto; border-bottom: 1px solid var(--border); background: var(--surface-input); }
+.file-tab { min-width: 0; display: inline-flex; align-items: center; border: 1px solid transparent; border-bottom: 0; border-radius: 6px 6px 0 0; color: var(--muted); background: transparent; }
+.file-tab.active { color: var(--text); border-color: var(--border); background: var(--surface-raised); }
+.file-tab-select, .file-tab-close, .file-tab-new { border: 0; background: transparent; cursor: pointer; }
+.file-tab-select { min-width: 0; display: inline-flex; align-items: center; gap: 6px; padding: 7px 8px; color: inherit; font-family: var(--font-code); font-size: 9px; }
+.file-tab-select span { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-tab-select:hover, .file-tab-close:hover, .file-tab-new:hover { color: var(--text); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.file-tab-close { display: grid; place-items: center; margin-right: 3px; padding: 4px; border-radius: 4px; color: var(--muted); }
+.file-tab-new { align-self: center; display: grid; place-items: center; width: 25px; height: 25px; margin-left: 3px; border-radius: 5px; color: var(--muted); }

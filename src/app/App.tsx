@@ -7,12 +7,14 @@ import { CodeEditor, type EditorHandle } from './components/CodeEditor';
 import { AstPanel, ConsolePanel, CoveragePanel, DebuggerPanel, FlowchartDock, panelIcon, TestsPanel, TokensPanel, type PanelKey, type TestOutcome } from './components/Panels';
 import { findSuggestions, friendlyError, documentationFor, type Suggestion } from '../runtime/diagnostics';
 import { execute, type RunResult } from '../runtime/interpreter';
-import { exportProject, importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects, type PicoProject, type TestCase } from '../storage/projects';
+import { exportProject, importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects, type PicoFile, type PicoProject, type TestCase } from '../storage/projects';
 import { loadSettings, saveSettings, type PicoSettings } from '../storage/settings';
 import { cssVariables, getTheme } from '../app/themes';
 import { FloatingPanel } from './components/FloatingPanel';
 import { ThemePicker } from './components/ThemePicker';
 import '../app/styles/app.css';
+import './styles/easter-eggs.css';
+import './styles/file-tabs.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
@@ -40,6 +42,8 @@ export default function App() {
   const [docSearch, setDocSearch] = useState('');
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [inputPromptOpen, setInputPromptOpen] = useState(false);
+  const [creditsOpen, setCreditsOpen] = useState(false);
+  const [picoGreeting, setPicoGreeting] = useState(false);
   const [pendingDebug, setPendingDebug] = useState(false);
   const [draggedPanel, setDraggedPanel] = useState<PanelKey | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,14 +53,15 @@ export default function App() {
   const fileAnchorRef = useRef<HTMLDivElement>(null);
 
   const activeProject = projects.find(project => project.id === activeId) ?? projects[0]!;
+  const activeFile = activeProject.files.find(file => file.id === activeProject.activeFileId) ?? activeProject.files[0]!;
   const theme = getTheme(settings.theme);
   const parsed = useMemo<ParseState>(() => {
-    try { const compilation = compile(activeProject.code); return { ast: compilation.ast, tokens: compilation.tokens, error: null }; }
+    try { const compilation = compile(activeFile.code); return { ast: compilation.ast, tokens: compilation.tokens, error: null }; }
     catch (error) { return { ast: null, tokens: [], error }; }
-  }, [activeProject.code]);
+  }, [activeFile.code]);
   const parseError = parsed.error ? friendlyError(parsed.error) : null;
   const visibleError = executionError ?? parseError;
-  const suggestions = useMemo(() => settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeProject.code).slice(0, 3) : [], [activeProject.code, settings.autocorrect, dismissedSuggestions]);
+  const suggestions = useMemo(() => settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeFile.code).slice(0, 3) : [], [activeFile.code, settings.autocorrect, dismissedSuggestions]);
   const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
 
   useEffect(() => {
@@ -99,7 +104,7 @@ export default function App() {
     code = code.replace(/<--/g, '←').replace(/[“”]/g, '"');
     setDismissedSuggestions(false);
     setExecutionError(null); setResult(null); setTestOutcomes({});
-    updateProject(project => ({ ...project, code, updatedAt: Date.now() }));
+    updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code } : file), updatedAt: Date.now() }));
   }
   function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
   function selectProject(id: string) {
@@ -107,7 +112,9 @@ export default function App() {
     try { localStorage.setItem('pico.activeProject.v1', id); } catch { /* Autosave status will explain local-storage availability. */ }
   }
   function createBlankProject() {
-    const project = newProject(); setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
+    const requested = window.prompt('Name this project', 'Untitled program');
+    if (requested === null) return;
+    const project = newProject(requested.trim().slice(0, 42) || 'Untitled program'); setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
   }
   function loadExample(exampleId: string) {
     const project = projectFromExample(exampleId);
@@ -115,6 +122,10 @@ export default function App() {
     setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
   }
   function renameProject(name: string) { updateProject(project => ({ ...project, name: name.slice(0, 42), updatedAt: Date.now() })); }
+  function selectFile(fileId: string) { setProjects(current => current.map(project => project.id === activeId ? { ...project, activeFileId: fileId, code: project.files.find(file => file.id === fileId)?.code ?? project.code, updatedAt: Date.now() } : project)); setExecutionError(null); setResult(null); setTestOutcomes({}); }
+  function createFile() { const next = activeProject.files.length + 1; const file: PicoFile = { id: crypto.randomUUID(), name: `untitled-${next}.pseudocode`, code: '', }; updateProject(project => ({ ...project, files: [...project.files, file], activeFileId: file.id, code: file.code, updatedAt: Date.now() })); setExecutionError(null); setResult(null); }
+  function renameFile(file: PicoFile) { const name = window.prompt('Rename file', file.name); if (name === null) return; const clean = name.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 48) || file.name; updateProject(project => ({ ...project, files: project.files.map(item => item.id === file.id ? { ...item, name: clean } : item), updatedAt: Date.now() })); }
+  function closeFile(file: PicoFile) { if (activeProject.files.length === 1) { window.alert('A project must keep at least one file.'); return; } if (!window.confirm(`Close “${file.name}” from this project?`)) return; const files = activeProject.files.filter(item => item.id !== file.id); const next = files[0]!; updateProject(project => ({ ...project, files, activeFileId: next.id, code: next.code, updatedAt: Date.now() })); setExecutionError(null); setResult(null); }
   function removeProject(id: string) {
     if (projects.length < 2) { if (!window.confirm('This is your last local project. Replace it with a fresh blank program?')) return; const replacement = newProject(); setProjects([replacement]); selectProject(replacement.id); return; }
     const project = projects.find(item => item.id === id);
@@ -133,10 +144,12 @@ export default function App() {
     try {
       const values = inputValues === '' ? [] : inputValues.split(/\r?\n/);
       const next = execute(parsed.ast, values);
-      setResult(next); setDebugIndex(0); setTestOutcomes({}); setActivePanel(debug ? 'debugger' : 'console');
+      setResult(next); setDebugIndex(0); setTestOutcomes({}); setPicoGreeting(next.output.some(line => line.trim().toUpperCase() === 'PICO')); setActivePanel(debug ? 'debugger' : 'console');
     } catch (error) { setResult(null); setExecutionError(friendlyError(error)); setActivePanel('console'); }
   }
   function submitInputPrompt() { setInputPromptOpen(false); executeProgram(pendingDebug); }
+  const creatorInput = inputValues.split(/\r?\n/).some(value => /^(amar|mustaqim)$/i.test(value.trim()));
+  const teacherInput = inputValues.split(/\r?\n/).some(value => /^mr\.boyle$/i.test(value.trim()));
   function reorderPanels(target: PanelKey) { if (!draggedPanel || draggedPanel === target) return; const order = [...settings.panelOrder]; const from = order.indexOf(draggedPanel); const to = order.indexOf(target); if (from < 0 || to < 0) return; order.splice(from, 1); order.splice(to, 0, draggedPanel); changeSettings({ panelOrder: order }); setDraggedPanel(null); }
   function resetLayout() { changeSettings({ sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 278, dockSize: 33, panelOrder: [...defaultPanelOrder] }); }
   function runTests() {
@@ -176,7 +189,7 @@ export default function App() {
 
   return <div className="pico-app" data-pico-theme={theme.id} style={{ ...cssVariables(theme), '--sidebar-width': `${settings.sidebarWidth}px`, '--reference-width': `${settings.referenceWidth}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <header className="topbar">
-      <div className="brand-lockup"><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">PSEUDOCODE STUDIO</span></div>
+      <button className="brand-lockup" title="About Pico" aria-label="Open Pico developer credits" onClick={() => setCreditsOpen(true)}><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">PSEUDOCODE STUDIO</span></button>
       <div className="topbar-divider" />
       <div className="topbar-crumb"><FolderOpen size={14} /><span>Workspace</span><span className="crumb-slash">/</span><span className="crumb-active">Cambridge Core</span><ChevronDown size={12} /></div>
       <div className="topbar-spacer" />
@@ -212,9 +225,10 @@ export default function App() {
 
         <div className="editor-split">
           <section className="editor-card">
-            <div className="editor-card-head"><div className="editor-card-title"><span className="editor-live-dot" /><span>Editor</span><span className="line-count">{activeProject.code.split('\n').length} lines</span></div><div className="editor-card-meta"><span className="mono-tag">IGCSE</span><span>·</span><span>UTF-8</span><span>·</span><span>LF</span></div></div>
+            <div className="editor-card-head"><div className="editor-card-title"><span className="editor-live-dot" /><span>Editor</span><span className="line-count">{activeFile.code.split('\n').length} lines</span></div><div className="editor-card-meta"><span className="mono-tag">IGCSE</span><span>·</span><span>UTF-8</span><span>·</span><span>LF</span></div></div>
+            <div className="file-tabs" role="tablist" aria-label="Project files">{activeProject.files.map(file => <div className={`file-tab ${file.id === activeFile.id ? 'active' : ''}`} key={file.id} role="tab" aria-selected={file.id === activeFile.id} onDoubleClick={() => renameFile(file)}><button className="file-tab-select" onClick={() => selectFile(file.id)} title={`${file.name} · double-click to rename`}><FileCode2 size={12} /><span>{file.name}</span></button><button className="file-tab-close" onClick={() => closeFile(file)} aria-label={`Close ${file.name}`} title="Close file"><X size={11} /></button></div>)}<button className="file-tab-new" onClick={createFile} title="New file" aria-label="New file"><Plus size={13} /></button></div>
             {suggestions.length > 0 && <div className="suggestion-ribbon"><Sparkles size={13} /><span>Did you mean?</span>{suggestions.map((suggestion, index) => <button className="suggestion-chip" key={`${suggestion.line}-${suggestion.column}-${index}`} onClick={() => applySuggestion(suggestion)}><code>{suggestion.original}</code><span>→</span><b>{suggestion.replacement}</b><small>line {suggestion.line}</small></button>)}<button className="dismiss-suggestions" title="Dismiss suggestions" onClick={() => setDismissedSuggestions(true)}><X size={13} /></button></div>}
-            <div className="editor-body"><CodeEditor ref={editorRef} value={activeProject.code} onChange={updateCode} preferences={settings} theme={theme} coveredLines={result?.coverage ?? []} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
+            <div className="editor-body"><CodeEditor ref={editorRef} value={activeFile.code} onChange={updateCode} preferences={settings} theme={theme} coveredLines={result?.coverage ?? []} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
             <div className="editor-card-foot"><span><Keyboard size={12} /> <kbd>⌘</kbd> <kbd>↵</kbd> to run</span><span className="scope-note">Cambridge subset · core statements and expressions</span></div>
           </section>
 
@@ -248,11 +262,11 @@ ENDCASE`}</pre></details>
         <section className="tool-dock">
           <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}{tab.key === 'coverage' && result && <small>{result.coverage.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
           <div className="dock-content" role="tabpanel">
-            {activePanel === 'console' && <ConsolePanel output={result?.output ?? []} error={executionError ?? parseError} stdin={inputValues} onInput={setInputValues} ran={Boolean(result)} />}
+            {activePanel === 'console' && <><ConsolePanel output={result?.output ?? []} error={executionError ?? parseError} stdin={inputValues} onInput={setInputValues} ran={Boolean(result)} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
             {activePanel === 'debugger' && <DebuggerPanel trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} />}
             {activePanel === 'tests' && <TestsPanel tests={activeProject.tests} outcomes={testOutcomes} onRun={runTests} onUpdate={updateTest} onAdd={addTest} onRemove={removeTest} />}
             {activePanel === 'flowchart' && <FlowchartDock ast={parsed.ast} error={parseError?.message} />}
-            {activePanel === 'coverage' && <CoveragePanel source={activeProject.code} lines={result?.coverage ?? []} />}
+            {activePanel === 'coverage' && <CoveragePanel source={activeFile.code} lines={result?.coverage ?? []} />}
             {activePanel === 'ast' && <AstPanel ast={parsed.ast} error={parseError?.message} />}
             {activePanel === 'tokens' && <TokensPanel tokens={parsed.tokens} error={parseError?.message} />}
           </div>
@@ -260,8 +274,9 @@ ENDCASE`}</pre></details>
       </main>
     </div>
 
-    <footer className="statusbar"><div className="attribution">Deployed by Mustaqim 11 Boys Red and Made by Amar 11 Boys Blue</div><div className="status-left"><span className="status-ready"><span /> READY</span><span className="status-divider" /><span>{saveState === 'saved' ? 'Saved locally' : saveState === 'saving' ? 'Saving changes…' : 'Local storage unavailable'}</span><span className="status-divider" /><span>Cambridge core</span></div><div className="status-right"><span>{activeProject.code.split('\n').length} lines</span><span className="status-divider" /><span>Browser-only <span className="status-lock">●</span></span><span className="status-divider" /><span className="version-mark">PICO / 01</span></div></footer>
-    {inputPromptOpen && <div className="input-modal-backdrop" role="presentation"><div className="input-modal" role="dialog" aria-modal="true"><div className="input-modal-head"><div><strong>Program input</strong><small>This program uses INPUT. Enter one value per line.</small></div><button className="icon-button quiet" onClick={() => setInputPromptOpen(false)} aria-label="Close input dialog"><X size={15} /></button></div><textarea autoFocus rows={6} value={inputValues} onChange={event => setInputValues(event.target.value)} placeholder="One input value per line" /><div className="input-modal-actions"><button className="subtle-button" onClick={() => setInputPromptOpen(false)}>Cancel</button><button className="primary-small" onClick={submitInputPrompt}><Play size={13} fill="currentColor" /> Run program</button></div></div></div>}
+    <footer className="statusbar"><div className="attribution">Deployed by Mustaqim 11 Boys Red and Made by Amar 11 Boys Blue</div><div className="status-left"><span className="status-ready"><span /> READY</span><span className="status-divider" /><span>{saveState === 'saved' ? 'Saved locally' : saveState === 'saving' ? 'Saving changes…' : 'Local storage unavailable'}</span><span className="status-divider" /><span>Cambridge core</span></div><div className="status-right"><span>{activeFile.code.split('\n').length} lines</span><span className="status-divider" /><span>Browser-only <span className="status-lock">●</span></span><span className="status-divider" /><span className="version-mark">PICO / 01</span></div></footer>
+    {inputPromptOpen && <div className="input-modal-backdrop" role="presentation"><div className="input-modal" role="dialog" aria-modal="true"><div className="input-modal-head"><div><strong>Program input</strong><small>This program uses INPUT. Enter one value per line.</small></div><button className="icon-button quiet" onClick={() => setInputPromptOpen(false)} aria-label="Close input dialog"><X size={15} /></button></div><textarea autoFocus rows={6} value={inputValues} onChange={event => setInputValues(event.target.value)} placeholder="One input value per line" />{creatorInput && <div className="pico-easter-egg creator-note" role="status">These are my creators — thanks, Amar and Mustaqim.</div>}{teacherInput && <div className="pico-easter-egg creator-note" role="status">Hello, Mr. Boyle — my computer science teacher.</div>}<div className="input-modal-actions"><button className="subtle-button" onClick={() => setInputPromptOpen(false)}>Cancel</button><button className="primary-small" onClick={submitInputPrompt}><Play size={13} fill="currentColor" /> Run program</button></div></div></div>}
+    {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>A Cambridge pseudocode studio made with care.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
   </div>;
 }
 
