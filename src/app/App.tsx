@@ -1,0 +1,274 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, FolderOpen, GitBranch, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
+import { compile } from '../language';
+import type { Program } from '../language/ast';
+import { examples } from '../examples';
+import { CodeEditor, type EditorHandle } from './components/CodeEditor';
+import { AstPanel, ConsolePanel, CoveragePanel, DebuggerPanel, FlowchartDock, panelIcon, TestsPanel, TokensPanel, type PanelKey, type TestOutcome } from './components/Panels';
+import { findSuggestions, friendlyError, documentationFor, type Suggestion } from '../runtime/diagnostics';
+import { execute, type RunResult } from '../runtime/interpreter';
+import { exportProject, importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects, type PicoProject, type TestCase } from '../storage/projects';
+import { loadSettings, saveSettings, type PicoSettings } from '../storage/settings';
+import { cssVariables, getTheme } from '../app/themes';
+import { FloatingPanel } from './components/FloatingPanel';
+import { ThemePicker } from './components/ThemePicker';
+import '../app/styles/app.css';
+
+const panelTabs: { key: PanelKey; title: string }[] = [
+  { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
+  { key: 'flowchart', title: 'Flowchart' }, { key: 'coverage', title: 'Coverage' }, { key: 'ast', title: 'AST' }, { key: 'tokens', title: 'Tokens' },
+];
+const referenceTerms = ['DECLARE', 'CONSTANT', 'INPUT', 'OUTPUT', 'IF', 'THEN', 'ELSE', 'ENDIF', 'WHILE', 'DO', 'ENDWHILE', 'FOR', 'TO', 'STEP', 'NEXT', 'REPEAT', 'UNTIL', 'CASE', 'OF', 'OTHERWISE', 'ENDCASE', 'PROCEDURE', 'FUNCTION', 'CALL', 'RETURN', 'ARRAY', 'INTEGER', 'REAL', 'CHAR', 'STRING', 'BOOLEAN', 'AND', 'OR', 'NOT', 'DIV', 'MOD', 'ROUND', 'LENGTH', 'SUBSTRING', 'UCASE', 'LCASE', 'UPPER', 'LOWER', 'RANDOM', 'OPENFILE', 'READFILE', 'WRITEFILE', 'CLOSEFILE'];
+
+type SaveState = 'saved' | 'saving' | 'local-only';
+interface ParseState { ast: Program | null; tokens: ReturnType<typeof compile>['tokens']; error: unknown | null; }
+
+export default function App() {
+  const [initial] = useState(() => { const projects = loadProjects(); return { projects, activeId: loadActiveId(projects) }; });
+  const [projects, setProjects] = useState<PicoProject[]>(initial.projects);
+  const [activeId, setActiveId] = useState(initial.activeId);
+  const [settings, setSettings] = useState<PicoSettings>(() => loadSettings());
+  const [activePanel, setActivePanel] = useState<PanelKey>('console');
+  const [saveState, setSaveState] = useState<SaveState>('saved');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [inputValues, setInputValues] = useState('');
+  const [result, setResult] = useState<RunResult | null>(null);
+  const [executionError, setExecutionError] = useState<ReturnType<typeof friendlyError> | null>(null);
+  const [debugIndex, setDebugIndex] = useState(0);
+  const [testOutcomes, setTestOutcomes] = useState<Record<string, TestOutcome>>({});
+  const [selectedDoc, setSelectedDoc] = useState('OUTPUT');
+  const [docSearch, setDocSearch] = useState('');
+  const [fileMenuOpen, setFileMenuOpen] = useState(false);
+  const [inputPromptOpen, setInputPromptOpen] = useState(false);
+  const [pendingDebug, setPendingDebug] = useState(false);
+  const [draggedPanel, setDraggedPanel] = useState<PanelKey | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dismissedSuggestions, setDismissedSuggestions] = useState(false);
+  const editorRef = useRef<EditorHandle>(null);
+  const settingsAnchorRef = useRef<HTMLDivElement>(null);
+  const fileAnchorRef = useRef<HTMLDivElement>(null);
+
+  const activeProject = projects.find(project => project.id === activeId) ?? projects[0]!;
+  const theme = getTheme(settings.theme);
+  const parsed = useMemo<ParseState>(() => {
+    try { const compilation = compile(activeProject.code); return { ast: compilation.ast, tokens: compilation.tokens, error: null }; }
+    catch (error) { return { ast: null, tokens: [], error }; }
+  }, [activeProject.code]);
+  const parseError = parsed.error ? friendlyError(parsed.error) : null;
+  const visibleError = executionError ?? parseError;
+  const suggestions = useMemo(() => settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeProject.code).slice(0, 3) : [], [activeProject.code, settings.autocorrect, dismissedSuggestions]);
+  const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
+
+  useEffect(() => {
+    setSaveState('saving');
+    const timer = window.setTimeout(() => {
+      try { saveProjects(projects, activeId); setSaveState('saved'); }
+      catch { setSaveState('local-only'); }
+    }, 360);
+    return () => window.clearTimeout(timer);
+  }, [projects, activeId]);
+  useEffect(() => { try { saveSettings(settings); } catch { /* The current tab remains usable if storage is blocked. */ } }, [settings]);
+  useEffect(() => {
+    const root = document.documentElement;
+    for (const [property, value] of Object.entries(cssVariables(theme))) root.style.setProperty(property, value);
+    root.style.colorScheme = theme.appearance;
+  }, [theme]);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') { event.preventDefault(); runProgram(); }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); saveProjects(projects, activeId); setSaveState('saved'); }
+      if (event.key === 'Escape') { setSettingsOpen(false); setFileMenuOpen(false); }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  });
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (settingsAnchorRef.current && !settingsAnchorRef.current.contains(target)) setSettingsOpen(false);
+      if (fileAnchorRef.current && !fileAnchorRef.current.contains(target)) setFileMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, []);
+
+  function updateProject(change: (project: PicoProject) => PicoProject) {
+    setProjects(current => current.map(project => project.id === activeId ? change({ ...project }) : project));
+  }
+  function updateCode(code: string) {
+    code = code.replace(/<--/g, '←').replace(/[“”]/g, '"');
+    setDismissedSuggestions(false);
+    setExecutionError(null); setResult(null); setTestOutcomes({});
+    updateProject(project => ({ ...project, code, updatedAt: Date.now() }));
+  }
+  function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
+  function selectProject(id: string) {
+    setActiveId(id); setExecutionError(null); setResult(null); setTestOutcomes({}); setInputValues(''); setActivePanel('console');
+    try { localStorage.setItem('pico.activeProject.v1', id); } catch { /* Autosave status will explain local-storage availability. */ }
+  }
+  function createBlankProject() {
+    const project = newProject(); setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
+  }
+  function loadExample(exampleId: string) {
+    const project = projectFromExample(exampleId);
+    if (!project) return;
+    setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
+  }
+  function renameProject(name: string) { updateProject(project => ({ ...project, name: name.slice(0, 42), updatedAt: Date.now() })); }
+  function removeProject(id: string) {
+    if (projects.length < 2) { if (!window.confirm('This is your last local project. Replace it with a fresh blank program?')) return; const replacement = newProject(); setProjects([replacement]); selectProject(replacement.id); return; }
+    const project = projects.find(item => item.id === id);
+    if (!window.confirm(`Delete “${project?.name ?? 'this project'}” from this browser? This cannot be undone.`)) return;
+    const remaining = projects.filter(item => item.id !== id); setProjects(remaining);
+    if (id === activeId) selectProject(remaining[0]!.id);
+  }
+  function runProgram(debug = false) {
+    setExecutionError(null);
+    if (!parsed.ast) { setExecutionError(parseError ?? { message: 'Fix the syntax before running.' }); setActivePanel('console'); return; }
+    if (settings.promptForInput && hasInputStatements(parsed.ast) && !inputPromptOpen) { setPendingDebug(debug); setInputPromptOpen(true); return; }
+    executeProgram(debug);
+  }
+  function executeProgram(debug = false) {
+    if (!parsed.ast) return;
+    try {
+      const values = inputValues === '' ? [] : inputValues.split(/\r?\n/);
+      const next = execute(parsed.ast, values);
+      setResult(next); setDebugIndex(0); setTestOutcomes({}); setActivePanel(debug ? 'debugger' : 'console');
+    } catch (error) { setResult(null); setExecutionError(friendlyError(error)); setActivePanel('console'); }
+  }
+  function submitInputPrompt() { setInputPromptOpen(false); executeProgram(pendingDebug); }
+  function reorderPanels(target: PanelKey) { if (!draggedPanel || draggedPanel === target) return; const order = [...settings.panelOrder]; const from = order.indexOf(draggedPanel); const to = order.indexOf(target); if (from < 0 || to < 0) return; order.splice(from, 1); order.splice(to, 0, draggedPanel); changeSettings({ panelOrder: order }); setDraggedPanel(null); }
+  function resetLayout() { changeSettings({ sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 278, dockSize: 33, panelOrder: [...defaultPanelOrder] }); }
+  function runTests() {
+    if (!parsed.ast) {
+      const message = parseError?.message ?? 'Fix the syntax before running test cases.';
+      setTestOutcomes(Object.fromEntries(activeProject.tests.map(test => [test.id, { passed: false, actual: [], error: message }])));
+      return;
+    }
+    const outcomes: Record<string, TestOutcome> = {};
+    for (const test of activeProject.tests) {
+      try {
+        const actual = execute(parsed.ast, test.inputs).output;
+        outcomes[test.id] = { passed: actual.length === test.expected.length && actual.every((line, index) => line === test.expected[index]), actual };
+      } catch (error) { outcomes[test.id] = { passed: false, actual: [], error: friendlyError(error).message }; }
+    }
+    setTestOutcomes(outcomes); setActivePanel('tests');
+  }
+  function updateTest(id: string, patch: Partial<TestCase>) {
+    setTestOutcomes(current => { const next = { ...current }; delete next[id]; return next; });
+    updateProject(project => ({ ...project, tests: project.tests.map(test => test.id === id ? { ...test, ...patch } : test), updatedAt: Date.now() }));
+  }
+  function addTest() {
+    const test: TestCase = { id: crypto.randomUUID(), name: `Test ${activeProject.tests.length + 1}`, inputs: [], expected: [] };
+    updateProject(project => ({ ...project, tests: [...project.tests, test], updatedAt: Date.now() })); setActivePanel('tests');
+  }
+  function removeTest(id: string) {
+    updateProject(project => ({ ...project, tests: project.tests.filter(test => test.id !== id), updatedAt: Date.now() }));
+    setTestOutcomes(current => { const next = { ...current }; delete next[id]; return next; });
+  }
+  function applySuggestion(suggestion: Suggestion) { editorRef.current?.applySuggestion(suggestion); setDismissedSuggestions(false); }
+  async function handleImport(event: React.ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (!file) return; try { const project = await importProject(file); setProjects(current => [...current, project]); setActiveId(project.id); } catch (error) { window.alert(error instanceof Error ? error.message : 'Could not import that .pico file.'); } event.target.value = ''; }
+
+  const orderedTabs = settings.panelOrder.map(key => panelTabs.find(tab => tab.key === key)).filter(Boolean) as typeof panelTabs;
+  const shownTerms = referenceTerms.filter(term => term.includes(docSearch.trim().toUpperCase()));
+  const saveText = saveState === 'saving' ? 'Saving…' : saveState === 'local-only' ? 'Storage unavailable' : 'Saved on this device';
+  const currentDoc = documentationFor(selectedDoc) ?? 'Select a Cambridge pseudocode keyword to read its quick explanation.';
+
+  return <div className="pico-app" data-pico-theme={theme.id} style={{ ...cssVariables(theme), '--sidebar-width': `${settings.sidebarWidth}px`, '--reference-width': `${settings.referenceWidth}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
+    <header className="topbar">
+      <div className="brand-lockup"><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">PSEUDOCODE STUDIO</span></div>
+      <div className="topbar-divider" />
+      <div className="topbar-crumb"><FolderOpen size={14} /><span>Workspace</span><span className="crumb-slash">/</span><span className="crumb-active">Cambridge Core</span><ChevronDown size={12} /></div>
+      <div className="topbar-spacer" />
+      <div className={`save-indicator ${saveState}`}><span className="save-dot">{saveState === 'saved' ? <Check size={9} /> : null}</span>{saveText}</div>
+      <div className="settings-anchor" ref={settingsAnchorRef}><button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>{<FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover"><div className="settings-title"><div><Settings2 size={15} /><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setSettingsOpen(false)}><X size={14} /></button></div><SettingRow title="Autocomplete" detail="Suggest Cambridge keywords as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} /><SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} /><SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} /><ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} /><SettingRow title="Ask for INPUT on Run" detail="Show an input dialog before programs execute" checked={settings.promptForInput} onChange={value => changeSettings({ promptForInput: value })} /><label className="font-setting"><span>Sidebar position</span><select value={settings.sidebarSide} onChange={event => changeSettings({ sidebarSide: event.target.value as PicoSettings['sidebarSide'] })}><option value="left">Left</option><option value="right">Right</option></select></label><label className="font-setting"><span>Tool dock position</span><select value={settings.dockSide} onChange={event => changeSettings({ dockSide: event.target.value as PicoSettings['dockSide'] })}><option value="bottom">Bottom</option><option value="right">Right</option></select></label><label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="20" value={settings.fontSize} onChange={event => changeSettings({ fontSize: Number(event.target.value) })} /></label><button className="reset-layout-button" onClick={resetLayout}>Reset workspace layout</button><div className="settings-foot">Saved locally in this browser · drag dock tabs to reorder</div></FloatingPanel>}</div>
+      <div className="file-menu-anchor" ref={fileAnchorRef}><button className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" title="Cambridge subset guide" onClick={() => { setSelectedDoc('DECLARE'); document.getElementById('quick-reference')?.scrollIntoView({ behavior: 'smooth' }); }}><CircleHelp size={15} /><span>Help</span></button>
+    </header>
+
+    <div className={`ide-shell sidebar-${settings.sidebarSide} dock-${settings.dockSide}`}>
+      <aside className="project-sidebar">
+        <div className="sidebar-head"><span>WORKSPACE</span><button className="small-icon-button" onClick={createBlankProject} title="New project" aria-label="New project"><Plus size={15} /></button></div>
+        <div className="side-section-label"><span>PROJECTS</span><span className="count-pill">{projects.length}</span></div>
+        <div className="project-list">{projects.map(project => <div className={`project-row ${project.id === activeId ? 'active' : ''}`} key={project.id}><button className="project-select" onClick={() => selectProject(project.id)} title={project.name}><FileCode2 size={15} /><span>{project.name}</span></button>{project.id === activeId && <button className="project-delete" title="Delete project" aria-label="Delete project" onClick={() => removeProject(project.id)}><Trash2 size={12} /></button>}</div>)}</div>
+        <div className="side-section-label examples-label"><span>CAMBRIDGE EXAMPLES</span><Sparkles size={12} /></div>
+        <div className="example-list">{examples.map(example => <button className="example-row" key={example.id} title={example.description} onClick={() => loadExample(example.id)}><span className="example-mark"><Code2 size={13} /></span><span><b>{example.name}</b><small>{example.description}</small></span></button>)}</div>
+        <div className="sidebar-bottom"><div className="subset-mark"><span><BookOpen size={14} /></span><div><strong>Cambridge core</strong><small>Focused syllabus subset</small></div></div><span className="local-badge"><span /> LOCAL ONLY</span></div>
+      </aside>
+
+      <main className="workspace-main">
+        <div className="command-bar">
+          <div className="file-crumb"><span className="file-icon"><CodeXml size={15} /></span><input aria-label="Project name" className="project-title-input" value={activeProject.name} onChange={event => renameProject(event.target.value)} /><span className="file-extension">.pseudocode</span><span className="command-dot">·</span><span className="language-pill"><span /> Cambridge pseudocode</span></div>
+          <div className="command-spacer" />
+          <div className="editor-preferences">
+            <ToggleChip label="Autocomplete" checked={settings.autocomplete} onClick={() => changeSettings({ autocomplete: !settings.autocomplete })} />
+            <ToggleChip label="Autocorrect" checked={settings.autocorrect} onClick={() => { changeSettings({ autocorrect: !settings.autocorrect }); setDismissedSuggestions(false); }} />
+            <ToggleChip label="Hover docs" checked={settings.hoverDocs} onClick={() => changeSettings({ hoverDocs: !settings.hoverDocs })} />
+          </div>
+          <div className="command-divider" />
+          <button className="toolbar-button" onClick={() => setActivePanel('flowchart')}><GitBranch size={14} /><span>Flowchart</span></button>
+          <button className="toolbar-button debug-button" onClick={() => runProgram(true)}><Code2 size={14} /><span>Debug</span></button>
+          <button className="run-button" onClick={() => runProgram()}><Play size={13} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
+        </div>
+
+        <div className="editor-split">
+          <section className="editor-card">
+            <div className="editor-card-head"><div className="editor-card-title"><span className="editor-live-dot" /><span>Editor</span><span className="line-count">{activeProject.code.split('\n').length} lines</span></div><div className="editor-card-meta"><span className="mono-tag">IGCSE</span><span>·</span><span>UTF-8</span><span>·</span><span>LF</span></div></div>
+            {suggestions.length > 0 && <div className="suggestion-ribbon"><Sparkles size={13} /><span>Did you mean?</span>{suggestions.map((suggestion, index) => <button className="suggestion-chip" key={`${suggestion.line}-${suggestion.column}-${index}`} onClick={() => applySuggestion(suggestion)}><code>{suggestion.original}</code><span>→</span><b>{suggestion.replacement}</b><small>line {suggestion.line}</small></button>)}<button className="dismiss-suggestions" title="Dismiss suggestions" onClick={() => setDismissedSuggestions(true)}><X size={13} /></button></div>}
+            <div className="editor-body"><CodeEditor ref={editorRef} value={activeProject.code} onChange={updateCode} preferences={settings} theme={theme} coveredLines={result?.coverage ?? []} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
+            <div className="editor-card-foot"><span><Keyboard size={12} /> <kbd>⌘</kbd> <kbd>↵</kbd> to run</span><span className="scope-note">Cambridge subset · core statements and expressions</span></div>
+          </section>
+
+          <aside className="reference-card" id="quick-reference">
+            <div className="reference-head"><div><BookOpen size={15} /><strong>Quick reference</strong></div><span className="reference-level">CAMBRIDGE</span></div>
+            <div className="reference-search"><Search size={13} /><input value={docSearch} onChange={event => setDocSearch(event.target.value)} placeholder="Find a keyword" aria-label="Search Cambridge keywords" /></div>
+            <div className="reference-keywords"><button className="syntax-cheat-button" onClick={() => setDocSearch('')}>Syntax cheat sheet</button>{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} onClick={() => setSelectedDoc(term)}>{term}</button>)}</div>
+            <div className="reference-explanation"><span className="mini-label">KEYWORD</span><strong>{selectedDoc}</strong><p>{currentDoc}</p></div><details className="syntax-cheat-sheet" open><summary>Syntax cheat sheet · examples</summary><pre>{`DECLARE Name : STRING
+Name ← "Pico"
+
+IF Score >= 50 THEN
+    OUTPUT "Pass"
+ELSE
+    OUTPUT "Try again"
+ENDIF
+
+WHILE Number <> -1 DO
+    INPUT Number
+ENDWHILE
+
+CASE OF Choice
+1 : OUTPUT "One"
+OTHERWISE
+    OUTPUT "Other"
+ENDCASE`}</pre></details>
+            <div className="reference-scope"><div className="scope-icon"><Sparkles size={14} /></div><div><strong>A focused subset</strong><p>Cambridge declarations, selection, CASE, all loop styles, routines, arrays, files and booklet library routines.</p></div></div>
+            <button className={`hover-doc-setting ${settings.hoverDocs ? 'enabled' : ''}`} onClick={() => changeSettings({ hoverDocs: !settings.hoverDocs })}><span className="hover-setting-icon">⌕</span><span><b>Hover documentation</b><small>Pause on a keyword in the editor</small></span><Toggle checked={settings.hoverDocs} onChange={() => changeSettings({ hoverDocs: !settings.hoverDocs })} /></button>
+          </aside>
+        </div>
+
+        <section className="tool-dock">
+          <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}{tab.key === 'coverage' && result && <small>{result.coverage.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
+          <div className="dock-content" role="tabpanel">
+            {activePanel === 'console' && <ConsolePanel output={result?.output ?? []} error={executionError ?? parseError} stdin={inputValues} onInput={setInputValues} ran={Boolean(result)} />}
+            {activePanel === 'debugger' && <DebuggerPanel trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} />}
+            {activePanel === 'tests' && <TestsPanel tests={activeProject.tests} outcomes={testOutcomes} onRun={runTests} onUpdate={updateTest} onAdd={addTest} onRemove={removeTest} />}
+            {activePanel === 'flowchart' && <FlowchartDock ast={parsed.ast} error={parseError?.message} />}
+            {activePanel === 'coverage' && <CoveragePanel source={activeProject.code} lines={result?.coverage ?? []} />}
+            {activePanel === 'ast' && <AstPanel ast={parsed.ast} error={parseError?.message} />}
+            {activePanel === 'tokens' && <TokensPanel tokens={parsed.tokens} error={parseError?.message} />}
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer className="statusbar"><div className="attribution">Deployed by Mustaqim 11 Boys Red and Made by Amar 11 Boys Blue</div><div className="status-left"><span className="status-ready"><span /> READY</span><span className="status-divider" /><span>{saveState === 'saved' ? 'Saved locally' : saveState === 'saving' ? 'Saving changes…' : 'Local storage unavailable'}</span><span className="status-divider" /><span>Cambridge core</span></div><div className="status-right"><span>{activeProject.code.split('\n').length} lines</span><span className="status-divider" /><span>Browser-only <span className="status-lock">●</span></span><span className="status-divider" /><span className="version-mark">PICO / 01</span></div></footer>
+    {inputPromptOpen && <div className="input-modal-backdrop" role="presentation"><div className="input-modal" role="dialog" aria-modal="true"><div className="input-modal-head"><div><strong>Program input</strong><small>This program uses INPUT. Enter one value per line.</small></div><button className="icon-button quiet" onClick={() => setInputPromptOpen(false)} aria-label="Close input dialog"><X size={15} /></button></div><textarea autoFocus rows={6} value={inputValues} onChange={event => setInputValues(event.target.value)} placeholder="One input value per line" /><div className="input-modal-actions"><button className="subtle-button" onClick={() => setInputPromptOpen(false)}>Cancel</button><button className="primary-small" onClick={submitInputPrompt}><Play size={13} fill="currentColor" /> Run program</button></div></div></div>}
+  </div>;
+}
+
+function ToggleChip({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) { return <button className={`toggle-chip ${checked ? 'on' : ''}`} aria-pressed={checked} onClick={onClick}><span className="toggle-light" />{label}</button>; }
+function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) { return <button className={`switch ${checked ? 'checked' : ''}`} role="switch" aria-checked={checked} onClick={onChange}><span /></button>; }
+function SettingRow({ title, detail, checked, onChange }: { title: string; detail: string; checked: boolean; onChange: (value: boolean) => void }) { return <div className="setting-row"><div><strong>{title}</strong><small>{detail}</small></div><Toggle checked={checked} onChange={() => onChange(!checked)} /></div>; }
+function BrandMark() { return <svg className="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="8" fill="#8179ef"/><path d="M9 7.5h7.6a4.4 4.4 0 0 1 0 8.8H12v4.2H9V7.5Zm3 2.8v3.2h4.3a1.6 1.6 0 0 0 0-3.2H12Z" fill="#11121a"/><circle cx="19.5" cy="20.5" r="1.5" fill="#c9c4ff"/></svg>; }
+
+const defaultPanelOrder: PanelKey[] = ['console','debugger','tests','flowchart','coverage','ast','tokens'];
+function hasInputStatements(program: Program): boolean { const scan = (statements: any[]): boolean => statements.some(statement => statement.kind === 'Input' || (statement.thenBody && (scan(statement.thenBody) || scan(statement.elseBody ?? []))) || (statement.body && scan(statement.body)) || (statement.branches && statement.branches.some((branch: any) => scan(branch.body))) || (statement.otherwise && scan(statement.otherwise))); return scan(program.statements); }
