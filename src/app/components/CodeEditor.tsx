@@ -2,13 +2,14 @@ import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react';
 import { autocompletion, closeBrackets, closeBracketsKeymap, type CompletionContext } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentLess, indentMore } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import { bracketMatching, HighlightStyle, indentOnInput, indentUnit, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
+import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
 import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { KEYWORDS, ROUTINES, TYPES, COMPLETIONS } from '../../language/lexer';
 import { documentationFor, type Suggestion } from '../../runtime/diagnostics';
 import type { PicoTheme } from '../themes';
+import '../styles/editor-folding.css';
 
 export interface EditorPreferences { autocomplete: boolean; hoverDocs: boolean; fontSize: number; }
 export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; }
@@ -225,6 +226,41 @@ function handleTab(view: EditorView): boolean {
   return true;
 }
 
+const foldPairs: Record<string, string> = { IF: 'ENDIF', WHILE: 'ENDWHILE', FOR: 'NEXT', REPEAT: 'UNTIL', CASE: 'ENDCASE', PROCEDURE: 'ENDPROCEDURE', FUNCTION: 'ENDFUNCTION' };
+const foldClosers = new Set(Object.values(foldPairs));
+function cambridgeFold(state: EditorState, lineStart: number) {
+  const line = state.doc.lineAt(lineStart);
+  const opener = /^\s*(IF|WHILE|FOR|REPEAT|CASE\s+OF|PROCEDURE|FUNCTION)\b/i.exec(line.text);
+  if (!opener) return null;
+  const openerName = opener[1]!.split(/\s+/)[0]!.toUpperCase();
+  const closer = foldPairs[openerName];
+  if (!closer) return null;
+  const stack: string[] = [closer];
+  for (let number = line.number + 1; number <= state.doc.lines; number += 1) {
+    const candidate = state.doc.line(number);
+    const word = /^\s*([A-Za-z]+)/.exec(candidate.text)?.[1]?.toUpperCase();
+    if (!word) continue;
+    if (foldPairs[word]) stack.push(foldPairs[word]);
+    else if (foldClosers.has(word)) {
+      if (word === stack.at(-1)) stack.pop();
+      if (!stack.length) return { from: line.to, to: candidate.to };
+    }
+  }
+  return null;
+}
+
+function goToLine(view: EditorView): boolean {
+  const current = view.state.doc.lineAt(view.state.selection.main.head).number;
+  const requested = window.prompt('Go to line', String(current));
+  if (requested === null) return true;
+  const lineNumber = Number.parseInt(requested.trim(), 10);
+  if (!Number.isFinite(lineNumber)) return true;
+  const line = view.state.doc.line(Math.max(1, Math.min(view.state.doc.lines, lineNumber)));
+  view.dispatch({ selection: { anchor: line.from }, effects: EditorView.scrollIntoView(line.from, { y: 'center' }) });
+  view.focus();
+  return true;
+}
+
 function buildDecorations(view: EditorView, covered: number[], currentLine?: number, errorLine?: number) {
   const classes = new Map<number, string>();
   for (const line of covered) classes.set(line, 'pico-covered-line');
@@ -265,10 +301,10 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
       doc: value,
       parent: host.current,
       extensions: [
-        lineNumbers(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
+        lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
-        pseudoLanguage, indentationGuides,
-        keymap.of([{ key: 'Enter', run: insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+        pseudoLanguage, foldService.of(cambridgeFold), indentationGuides,
+        keymap.of([{ key: 'Enter', run: insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         palette.current.of(themeExtensions(theme)),
         prefs.current.of(createPreferences(preferences)),
         marks.current.of(EditorView.decorations.of(v => buildDecorations(v, coveredLines, currentLine, errorLine))),

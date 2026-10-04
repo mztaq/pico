@@ -1,0 +1,4 @@
+.cm-foldGutter .cm-gutterElement { display: grid; place-items: center; width: 18px; cursor: pointer; color: var(--editor-gutter); font-size: 12px; }
+.cm-foldGutter .cm-gutterElement:hover { color: var(--accent); background: var(--editor-line); }
+.cm-foldPlaceholder { margin-left: 4px; padding: 0 6px; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--surface-raised); font-family: var(--font-code); font-size: 10px; }
+.shortcut-separator { margin: 0 3px; color: var(--border); }
