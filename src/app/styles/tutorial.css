@@ -1,13 +1,11 @@
-.tutorial-offer { position: fixed; top: 68px; right: 18px; z-index: 80; width: min(300px, calc(100vw - 28px)); padding: 13px; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border)); border-radius: 10px; background: var(--surface-raised); box-shadow: 0 18px 55px rgba(0,0,0,.5); }
-.tutorial-offer strong, .tutorial-offer small { display: block; }
-.tutorial-offer strong { color: var(--text); font-size: 12px; }
-.tutorial-offer small { margin-top: 4px; color: var(--muted); font-size: 10px; }
-.tutorial-offer-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 11px; }
-.tutorial-modal { width: min(520px, 100%); padding: 20px; border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border)); border-radius: 14px; background: var(--surface-raised); box-shadow: 0 24px 90px rgba(0,0,0,.62); }
-.tutorial-steps { display: grid; gap: 8px; }
-.tutorial-steps > div { padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-input); }
-.tutorial-steps b, .tutorial-steps span { display: block; }
-.tutorial-steps b { color: var(--text); font-size: 11px; }
-.tutorial-steps span { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.55; }
-.tutorial-steps code, .tutorial-steps kbd { padding: 1px 4px; border: 1px solid var(--border); border-radius: 3px; color: var(--accent); font-family: var(--font-code); font-size: 9px; }
-.tutorial-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; }
+.tutorial-progress { display: flex; gap: 5px; margin: -2px 0 15px; }
+.tutorial-progress span { height: 4px; flex: 1; border-radius: 9px; background: var(--border); }
+.tutorial-progress span.active { background: var(--accent); }
+.tutorial-step-card { display: flex; gap: 13px; padding: 15px; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius: 9px; background: color-mix(in srgb, var(--accent) 7%, var(--surface-input)); }
+.tutorial-step-number { color: var(--accent); font-family: var(--font-code); font-size: 20px; font-weight: 700; line-height: 1; }
+.tutorial-step-card h3 { margin: 0; color: var(--text); font-size: 14px; }
+.tutorial-step-card p { margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.tutorial-action { width: 100%; margin-top: 12px; padding: 10px; border: 1px solid var(--accent); border-radius: 7px; color: var(--text); background: var(--accent-soft); cursor: pointer; font-size: 10px; font-weight: 600; }
+.tutorial-action:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.tutorial-action.complete { border-color: var(--mint); color: var(--mint); background: color-mix(in srgb, var(--mint) 10%, transparent); }
+.tutorial-actions button:disabled { cursor: not-allowed; opacity: .45; }
