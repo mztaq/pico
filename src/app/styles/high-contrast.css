@@ -2,7 +2,7 @@
 .pico-app[data-high-contrast="true"] :where(button, input, textarea, select, p, label, summary, small, strong, b, kbd, span, code, svg, a):not(.highlighted-code *):not(.cm-editor *):not(.theme-swatch *) {
   color: var(--text);
 }
-.pico-app[data-high-contrast="true"] :where(.editor-card-foot, .reference-card, .reference-head, .settings-popover, .file-menu, .tutorial-card, .tutorial-offer, .input-modal, .history-modal, .credits-modal, .theme-picker, .theme-option, .theme-search, .stdin-row, .debugger-controls, .debugger-content, .test-card, .test-card-head, .token-table, .token-table th, .runtime-error-card, .reference-example pre, .reference-scope, .hover-doc-setting) {
+.pico-app[data-high-contrast="true"] :where(.editor-card-foot, .reference-card, .reference-head, .settings-popover, .file-menu, .tutorial-card, .tutorial-offer, .input-modal, .history-modal, .credits-modal, .theme-picker, .theme-option, .theme-search, .console-input-form, .debugger-controls, .debugger-content, .test-card, .test-card-head, .token-table, .token-table th, .runtime-error-card, .reference-example pre, .reference-scope, .hover-doc-setting) {
   background: var(--bg);
   border-color: var(--border);
   box-shadow: none;

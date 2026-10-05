@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, FolderOpen, GitBranch, History, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
-import type { DataType, Program, Statement } from '../language/ast';
+import type { DataType, Program } from '../language/ast';
 import { examples } from '../examples';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
-import { AstPanel, ConsolePanel, CoveragePanel, DebuggerPanel, FlowchartDock, panelIcon, TestsPanel, TokensPanel, type PanelKey, type TestOutcome } from './components/Panels';
+import { AstPanel, ConsolePanel, CoveragePanel, DebuggerPanel, FlowchartDock, panelIcon, TestsPanel, TokensPanel, type PanelKey, type TestOutcome, type ConsoleEntry } from './components/Panels';
 import { findSuggestions, friendlyError, documentationFor, type Suggestion } from '../runtime/diagnostics';
 import type { RunResult } from '../runtime/interpreter';
 import { startExecution, type ExecutionJob } from '../runtime/runner';
+import type { PendingInput } from '../runtime/worker';
 import { normalizeSource } from '../language/normalize';
 import { exportProject, importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects, type PicoFile, type PicoProject, type TestCase } from '../storage/projects';
 import { loadSettings, saveSettings, type PicoSettings } from '../storage/settings';
@@ -49,7 +50,9 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<ProjectVersion[]>([]);
-  const [inputValues, setInputValues] = useState('');
+  const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
+  const [pendingInput, setPendingInput] = useState<PendingInput | null>(null);
+  const [inputValue, setInputValue] = useState('');
   const jobRef = useRef<ExecutionJob | null>(null);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<RunResult | null>(null);
@@ -59,7 +62,6 @@ export default function App() {
   const [selectedDoc, setSelectedDoc] = useState<ReferenceKeyword>('OUTPUT');
   const [docSearch, setDocSearch] = useState('');
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
-  const [inputPromptOpen, setInputPromptOpen] = useState(false);
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [picoGreeting, setPicoGreeting] = useState(false);
   const [tutorialOfferOpen, setTutorialOfferOpen] = useState(false);
@@ -67,7 +69,6 @@ export default function App() {
   const [tutorialStep, setTutorialStep] = useState(0);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const tutorialPanelRef = useRef<PanelKey>('console');
-  const [pendingDebug, setPendingDebug] = useState(false);
   const [draggedPanel, setDraggedPanel] = useState<PanelKey | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(false);
@@ -90,7 +91,7 @@ export default function App() {
   const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
 
   useEffect(() => () => { jobRef.current?.cancel(); }, []);
-  useEffect(() => { jobRef.current?.cancel(); jobRef.current = null; setRunning(false); }, [activeId, activeFile.id, activeFile.code, activeProject.tests, activeProject.virtualFiles]);
+  useEffect(() => { jobRef.current?.cancel(); jobRef.current = null; setRunning(false); setPendingInput(null); setInputValue(''); }, [activeId, activeFile.id, activeFile.code, activeProject.tests, activeProject.virtualFiles]);
   useEffect(() => {
     setSaveState('saving');
     const timer = window.setTimeout(() => {
@@ -157,7 +158,7 @@ export default function App() {
       autoDeclaredTypesRef.current[activeFile.id] = autoDeclaredTypes;
     }
     setDismissedSuggestions(false);
-    setExecutionError(null); setResult(null); setTestOutcomes({});
+    setExecutionError(null); setResult(null); setTestOutcomes({}); setConsoleEntries([]);
     updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code, autoDeclaredTypes } : file), updatedAt: Date.now() }));
   }
   function formatCode() { updateCode(formatPseudocode(activeFile.code)); }
@@ -166,7 +167,7 @@ export default function App() {
   function startTutorial() {
     tutorialPanelRef.current = activePanel;
     setTutorialStep(0); setTutorialOpen(true); setTutorialOfferOpen(false);
-    setSettingsOpen(false); setFileMenuOpen(false); setHistoryOpen(false); setCreditsOpen(false); setInputPromptOpen(false);
+    setSettingsOpen(false); setFileMenuOpen(false); setHistoryOpen(false); setCreditsOpen(false);
   }
   function closeTutorial() { setTutorialOpen(false); setActivePanel(tutorialPanelRef.current); }
   function goToTutorialStep(step: number) {
@@ -189,7 +190,7 @@ export default function App() {
   }
   function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
   function selectProject(id: string) {
-    setActiveId(id); setExecutionError(null); setResult(null); setTestOutcomes({}); setInputValues(''); setActivePanel('console');
+    setActiveId(id); setExecutionError(null); setResult(null); setTestOutcomes({}); setConsoleEntries([]); setPendingInput(null); setInputValue(''); setActivePanel('console');
     try { localStorage.setItem('pico.activeProject.v1', id); } catch { /* Autosave status will explain local-storage availability. */ }
   }
   function createBlankProject() {
@@ -203,10 +204,10 @@ export default function App() {
     setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
   }
   function renameProject(name: string) { updateProject(project => ({ ...project, name: name.slice(0, 42), updatedAt: Date.now() })); }
-  function selectFile(fileId: string) { setProjects(current => current.map(project => project.id === activeId ? { ...project, activeFileId: fileId, code: project.files.find(file => file.id === fileId)?.code ?? project.code, updatedAt: Date.now() } : project)); setExecutionError(null); setResult(null); setTestOutcomes({}); }
-  function createFile() { const next = activeProject.files.length + 1; const file: PicoFile = { id: crypto.randomUUID(), name: `untitled-${next}.pico`, code: '', }; updateProject(project => ({ ...project, files: [...project.files, file], activeFileId: file.id, code: file.code, updatedAt: Date.now() })); setExecutionError(null); setResult(null); }
+  function selectFile(fileId: string) { setProjects(current => current.map(project => project.id === activeId ? { ...project, activeFileId: fileId, code: project.files.find(file => file.id === fileId)?.code ?? project.code, updatedAt: Date.now() } : project)); setExecutionError(null); setResult(null); setTestOutcomes({}); setConsoleEntries([]); }
+  function createFile() { const next = activeProject.files.length + 1; const file: PicoFile = { id: crypto.randomUUID(), name: `untitled-${next}.pico`, code: '', }; updateProject(project => ({ ...project, files: [...project.files, file], activeFileId: file.id, code: file.code, updatedAt: Date.now() })); setExecutionError(null); setResult(null); setConsoleEntries([]); }
   function renameFile(file: PicoFile) { const name = window.prompt('Rename file', file.name); if (name === null) return; const clean = name.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 48) || file.name; updateProject(project => ({ ...project, files: project.files.map(item => item.id === file.id ? { ...item, name: clean } : item), updatedAt: Date.now() })); }
-  function closeFile(file: PicoFile) { if (activeProject.files.length === 1) { window.alert('A project must keep at least one file.'); return; } if (!window.confirm(`Close “${file.name}” from this project?`)) return; const files = activeProject.files.filter(item => item.id !== file.id); const next = files[0]!; updateProject(project => ({ ...project, files, activeFileId: next.id, code: next.code, updatedAt: Date.now() })); setExecutionError(null); setResult(null); }
+  function closeFile(file: PicoFile) { if (activeProject.files.length === 1) { window.alert('A project must keep at least one file.'); return; } if (!window.confirm(`Close “${file.name}” from this project?`)) return; const files = activeProject.files.filter(item => item.id !== file.id); const next = files[0]!; updateProject(project => ({ ...project, files, activeFileId: next.id, code: next.code, updatedAt: Date.now() })); setExecutionError(null); setResult(null); setConsoleEntries([]); }
   function removeProject(id: string) {
     if (projects.length < 2) { if (!window.confirm('This is your last local project. Replace it with a fresh blank program?')) return; const replacement = newProject(); setProjects([replacement]); selectProject(replacement.id); return; }
     const project = projects.find(item => item.id === id);
@@ -215,20 +216,23 @@ export default function App() {
     if (id === activeId) selectProject(remaining[0]!.id);
   }
   function runProgram(debug = false) {
+    if (running) return;
     setExecutionError(null);
     if (!parsed.ast) { setExecutionError(parseError ?? { message: 'Fix the syntax before running.' }); setActivePanel('console'); return; }
-    if (settings.promptForInput && hasInputStatements(parsed.ast) && !inputPromptOpen) { setPendingDebug(debug); setInputPromptOpen(true); return; }
     executeProgram(debug);
   }
   async function executeProgram(debug = false) {
     if (!parsed.ast) return;
     jobRef.current?.cancel();
-    const values = inputValues === '' ? [] : inputValues.split(/\r?\n/);
-    const job = startExecution({ast:parsed.ast,runs:[{inputs:values,options:{files:activeProject.virtualFiles}}]});
+    setConsoleEntries([]); setPendingInput(null); setInputValue(''); setResult(null); setPicoGreeting(false); setActivePanel('console');
+    const job = startExecution({ast:parsed.ast,interactive:true,runs:[{inputs:[],options:{files:activeProject.virtualFiles}}]}, {
+      onOutput: lines => { if(jobRef.current===job) setConsoleEntries(entries=>[...entries,...lines.map(text=>({kind:'output' as const,text}))]); },
+      onInput: request => { if(jobRef.current===job) { setPendingInput(request); setInputValue(''); setActivePanel('console'); } },
+    });
     jobRef.current=job; setRunning(true);
     const [reply]=await job.promise;
     if(jobRef.current!==job)return;
-    jobRef.current=null;setRunning(false);
+    jobRef.current=null;setRunning(false);setPendingInput(null);
     const next=reply?.result;
     setResult(next??null); setDebugIndex(0); setTestOutcomes({});
     setExecutionError(reply?.error?{message:reply.error.message,line:reply.error.line}:null);
@@ -237,9 +241,11 @@ export default function App() {
     if(next)updateProject(project=>({...project,virtualFiles:next.files,updatedAt:Date.now()}));
   }
   function stopExecution() { jobRef.current?.cancel(); }
-  function submitInputPrompt() { setInputPromptOpen(false); executeProgram(pendingDebug); }
-  const creatorInput = inputValues.split(/\r?\n/).some(value => /^(amar|mustaqim)$/i.test(value.trim()));
-  const teacherInput = inputValues.split(/\r?\n/).some(value => /^mr\.boyle$/i.test(value.trim()));
+  function submitConsoleInput() {
+    if (!pendingInput || !jobRef.current?.provideInput(pendingInput.id, inputValue)) return;
+    setConsoleEntries(entries => [...entries, { kind: 'input', text: inputValue }]);
+    setPendingInput(null); setInputValue('');
+  }
   function reorderPanels(target: PanelKey) { if (!draggedPanel || draggedPanel === target) return; const order = [...settings.panelOrder]; const from = order.indexOf(draggedPanel); const to = order.indexOf(target); if (from < 0 || to < 0) return; order.splice(from, 1); order.splice(to, 0, draggedPanel); changeSettings({ panelOrder: order }); setDraggedPanel(null); }
   function applyLayoutPreset(preset: PicoSettings['layoutPreset']) {
     const presets: Record<Exclude<PicoSettings['layoutPreset'], 'custom'>, Partial<PicoSettings>> = {
@@ -266,13 +272,13 @@ export default function App() {
     if(!parsed.ast) {
       setTestOutcomes(Object.fromEntries(activeProject.tests.map(test=>[test.id,{passed:false,actual:[],error:parseError?.message??'Fix the syntax before running test cases.'}])));return;
     }
-    jobRef.current?.cancel();
+    jobRef.current?.cancel(); setPendingInput(null);
     const tests=activeProject.tests;
     const job=startExecution({ast:parsed.ast,runs:tests.map(test=>({inputs:test.inputs,options:{files:activeProject.virtualFiles,trace:false}}))});
     jobRef.current=job;setRunning(true);
     const replies=await job.promise;
     if(jobRef.current!==job)return;
-    jobRef.current=null;setRunning(false);
+    jobRef.current=null;setRunning(false);setPendingInput(null);
     const outcomes:Record<string,TestOutcome>={};
     tests.forEach((test,index)=>{const reply=replies[index];const actual=reply?.result?.output??[];outcomes[test.id]={passed:!reply?.error&&actual.length===test.expected.length&&actual.every((line,i)=>line===test.expected[i]),actual,error:reply?.error?.message};});
     setTestOutcomes(outcomes);setActivePanel('tests');
@@ -315,7 +321,6 @@ export default function App() {
           <SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} />
           <SettingRow title="Auto-declare variables" detail="Infer and update types from assignments" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />
           <ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} />
-          <SettingRow title="Ask for INPUT on Run" detail="Show an input dialog before programs execute" checked={settings.promptForInput} onChange={value => changeSettings({ promptForInput: value })} />
           <label className="font-setting"><span>Sidebar position</span><select value={settings.sidebarSide} onChange={event => changeSettings({ sidebarSide: event.target.value as PicoSettings['sidebarSide'] })}><option value="left">Left</option><option value="right">Right</option></select></label>
           <label className="font-setting"><span>Tool dock position</span><select value={settings.dockSide} onChange={event => changeSettings({ dockSide: event.target.value as PicoSettings['dockSide'] })}><option value="bottom">Bottom</option><option value="right">Right</option></select></label>
           <label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="20" value={settings.fontSize} onChange={event => changeSettings({ fontSize: Number(event.target.value) })} /></label>
@@ -386,7 +391,7 @@ export default function App() {
         <section className="tool-dock" data-tour="tools">
           <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}{tab.key === 'coverage' && result && <small>{result.coverage.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
           <div className="dock-content" role="tabpanel" key={activePanel}>
-            {activePanel === 'console' && <><ConsolePanel output={result?.output ?? []} error={executionError ?? parseError} stdin={inputValues} onInput={setInputValues} ran={Boolean(result)} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
+            {activePanel === 'console' && <><ConsolePanel entries={consoleEntries} error={executionError ?? parseError} pendingInput={pendingInput} inputValue={inputValue} onInput={setInputValue} onSubmit={submitConsoleInput} running={running} ran={Boolean(result)} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
             {activePanel === 'debugger' && <DebuggerPanel trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} truncated={result?.traceTruncated} error={executionError?.message} />}
             {activePanel === 'tests' && <TestsPanel tests={activeProject.tests} outcomes={testOutcomes} onRun={runTests} onUpdate={updateTest} onAdd={addTest} onRemove={removeTest} running={running} />}
             {activePanel === 'flowchart' && <FlowchartDock ast={parsed.ast} error={parseError?.message} />}
@@ -402,7 +407,6 @@ export default function App() {
     {tutorialOpen && <GuidedTutorial step={tutorialStep} onStep={goToTutorialStep} onClose={closeTutorial} onReference={() => { closeTutorial(); openReference(); }} />}
     <footer className="statusbar" inert={tutorialOpen}><div className="attribution"><span className="credit-item"><span>Deployed by</span> <strong>Mustaqim</strong> <small>11 Boys Red</small></span><span className="credit-divider" aria-hidden="true">·</span><span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span></div></footer>
     {historyOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setHistoryOpen(false)}><div className="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title" onClick={event => event.stopPropagation()}><div className="input-modal-head"><div><strong id="history-title">Project history</strong><small>{activeProject.name} · browser-local snapshots</small></div><button className="icon-button quiet" onClick={() => setHistoryOpen(false)} aria-label="Close history"><X size={15} /></button></div><div className="history-actions"><button className="primary-small" onClick={saveSnapshot}><History size={13} /> Save snapshot</button></div>{history.length === 0 ? <div className="history-empty">No snapshots yet. Save one before experimenting with a big change.</div> : <div className="history-list">{history.map(version => <div className="history-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()} · {version.files.length} file{version.files.length === 1 ? '' : 's'}</small></div><button className="subtle-button" onClick={() => restoreSnapshot(version)}>Restore</button></div>)}</div>}</div></div>}
-    {inputPromptOpen && <div className="input-modal-backdrop" role="presentation"><div className="input-modal" role="dialog" aria-modal="true"><div className="input-modal-head"><div><strong>Program input</strong><small>This program uses INPUT. Enter one value per line.</small></div><button className="icon-button quiet" onClick={() => setInputPromptOpen(false)} aria-label="Close input dialog"><X size={15} /></button></div><textarea autoFocus rows={6} value={inputValues} onChange={event => setInputValues(event.target.value)} placeholder="One input value per line" />{creatorInput && <div className="pico-easter-egg creator-note" role="status">These are my creators — thanks, Amar and Mustaqim.</div>}{teacherInput && <div className="pico-easter-egg creator-note" role="status">Hello, Mr. Boyle — my computer science teacher.</div>}<div className="input-modal-actions"><button className="subtle-button" onClick={() => setInputPromptOpen(false)}>Cancel</button><button className="primary-small" onClick={submitInputPrompt}><Play size={13} fill="currentColor" /> Run program</button></div></div></div>}
     {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>A Cambridge pseudocode studio made with care.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a> or <a href="mailto:b03661@nbabarwa.com">b03661@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
   </div>;
 }
@@ -413,15 +417,6 @@ function SettingRow({ title, detail, checked, onChange }: { title: string; detai
 function BrandMark() { return <svg className="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="8" fill="#8179ef"/><path d="M9 7.5h7.6a4.4 4.4 0 0 1 0 8.8H12v4.2H9V7.5Zm3 2.8v3.2h4.3a1.6 1.6 0 0 0 0-3.2H12Z" fill="#11121a"/><circle cx="19.5" cy="20.5" r="1.5" fill="#c9c4ff"/></svg>; }
 
 const defaultPanelOrder: PanelKey[] = ['console','debugger','tests','flowchart','coverage','ast','tokens'];
-function hasInputStatements(program: Program): boolean {
-  const scan=(statements:Statement[]):boolean=>statements.some(s=>{
-    if(s.kind==='Input')return true;
-    if(s.kind==='IfStatement')return scan(s.thenBody)||scan(s.elseBody);
-    if(s.kind==='CaseStatement')return s.branches.some(b=>scan(b.body))||scan(s.otherwise);
-    if('body' in s)return scan(s.body);
-    return false;
-  });return scan(program.statements);
-}
 function PracticeFiles({files,onChange}:{files:Record<string,string[]>;onChange:(files:Record<string,string[]>)=>void}) {
   const [name,setName]=useState('');
   return <details className="practice-files"><summary>Project practice files ({Object.keys(files).length})</summary><p>Text files used by OPENFILE. Saved with this project.</p>{Object.entries(files).map(([filename,lines])=><label key={filename}><span>{filename}</span><textarea aria-label={`Contents of ${filename}`} value={lines.join('\n')} onChange={event=>onChange({...files,[filename]:event.target.value===''?[]:event.target.value.split(/\r?\n/)})} /></label>)}<div><input aria-label="New practice filename" placeholder="data.txt" value={name} onChange={event=>setName(event.target.value)} /><button className="subtle-button" disabled={!name.trim()||Object.hasOwn(files,name.trim())} onClick={()=>{onChange({...files,[name.trim()]:[]});setName('');}}>Add file</button></div></details>;
