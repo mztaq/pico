@@ -455,8 +455,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .file-menu button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 10px; text-align: left; cursor: pointer; }
 .file-menu button:hover { background: var(--surface-hover); color: var(--text); }
 .settings-popover select { width: 100%; margin-top: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface-input); color: var(--text); font-family: var(--font-code); font-size: 10px; }
-.syntax-cheat-button { width: 100%; margin: 0 0 8px; padding: 7px 9px; border: 1px solid #35344d; border-radius: 6px; background: rgba(150,140,255,.08); color: #c4beff; font-family: var(--font-code); font-size: 9px; text-align: left; cursor: pointer; }
-.syntax-cheat-button:hover { background: rgba(150,140,255,.16); border-color: #625aa5; }
 .attribution { max-width: 430px; overflow: hidden; color: #727785; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 900px) { .attribution { display: none; } .editor-preferences { display: none; } }
 
@@ -519,9 +517,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .pico-app[data-pico-theme] .token-table td { border-color: var(--border-soft); color: var(--muted); }
 .pico-app[data-pico-theme] .statusbar { background: var(--surface); }
 .pico-app[data-pico-theme] .project-sidebar { flex-basis: var(--sidebar-width); width: var(--sidebar-width); }
-.pico-app[data-pico-theme] .syntax-cheat-sheet { margin: 10px 0; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); }
-.syntax-cheat-sheet summary { color: var(--accent); cursor: pointer; font-size: 9px; font-weight: 700; }
-.syntax-cheat-sheet pre { max-height: 170px; overflow: auto; margin: 8px 0 0; color: var(--text); font-family: var(--font-code); font-size: 8px; line-height: 1.55; white-space: pre-wrap; }
 /* ==========================================================================
    IDE layer: floating panels, indentation guides, theme gallery
    ========================================================================== */
@@ -596,7 +591,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .pico-app[data-pico-theme] .small-icon-button:hover { background: var(--surface-hover); color: var(--text); }
 .pico-app[data-pico-theme] .toggle-chip { border-color: var(--border); color: var(--muted); }
 .pico-app[data-pico-theme] .toggle-chip.on { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
-.pico-app[data-pico-theme] .syntax-cheat-button { background: var(--accent-soft); color: var(--text); }
 .pico-app[data-pico-theme] .keyword-pill { border-color: var(--border); color: var(--muted); }
 .pico-app[data-pico-theme] .keyword-pill.active { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
 .pico-app[data-pico-theme] .project-title-input { color: var(--text); }/* The theme lives on :root as well as the shell, so inherited text and the page

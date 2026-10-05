@@ -17,17 +17,13 @@
 .reference-keywords { min-height: 100px; max-height: 190px; flex-shrink: 1; gap: 6px; padding-bottom: 10px; }
 .pico-app[data-pico-theme] .keyword-pill { min-height: 30px; height: auto; padding: 5px 8px; font-size: var(--reference-font-size); background: var(--surface-raised); color: var(--reference-label); }
 .pico-app[data-pico-theme] .keyword-pill:hover { border-color: var(--accent); background: var(--accent-soft); }
-.pico-app[data-pico-theme] .syntax-cheat-button { min-height: 34px; margin-bottom: 4px; font-size: 13px; color: var(--reference-label); background: var(--surface-raised); border-color: var(--border); }
-.pico-app[data-pico-theme] .syntax-cheat-button:hover { background: var(--surface-hover); border-color: var(--accent); }
 .pico-app[data-pico-theme] .keyword-pill.active { color: var(--reference-label); background: var(--surface-raised); border-color: var(--border); font-weight: 600; }
 .pico-app[data-pico-theme] .keyword-pill.active:hover { border-color: var(--accent); background: var(--accent-soft); }
 .reference-no-results { margin: 4px 0; color: var(--muted); font-size: 14px; }
 .reference-explanation { padding: 12px 0; border-color: var(--border); user-select: text; }
 .reference-explanation .mini-label { font-size: 11px; color: var(--muted); }
 .reference-explanation > strong { margin-top: 9px; font-size: calc(var(--reference-font-size) + 1px); color: var(--reference-label); }
-.reference-explanation p { color: var(--text); font-size: var(--reference-font-size); line-height: 1.6; }
-.syntax-cheat-sheet summary { color: var(--reference-label); font-size: 13px; line-height: 1.5; }
-.syntax-cheat-sheet pre { max-height: none; font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; user-select: text; }
+.reference-explanation > p { color: var(--text); font-size: var(--reference-font-size); line-height: 1.6; }
 .reference-scope { border-color: var(--border); background: var(--accent-soft); padding: 12px; }
 .reference-scope strong { color: var(--text); font-size: 13px; }
 .reference-scope p { color: var(--text); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; }
@@ -101,3 +97,8 @@
 .file-tab-close { min-width: 26px; min-height: 26px; }
 .file-tab-new { width: 30px; height: 30px; }
 .project-title-input, .file-extension { font-size: 13px; }
+
+.reference-example { margin-top: 16px; }
+.reference-example pre { margin: 8px 0 0; padding: 10px; overflow-x: auto; background: var(--surface-raised); border-radius: 6px; color: var(--text); font-family: var(--font-code); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; white-space: pre; user-select: text; }
+.reference-example .reference-input-hint { margin: 8px 0 0; color: var(--text); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.5; }
+.reference-input-hint code { font-family: var(--font-code); }

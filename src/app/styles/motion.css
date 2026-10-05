@@ -1,0 +1,31 @@
+/* One-shot feedback only; keep typing, output updates and resizing immediate. */
+@media (prefers-reduced-motion: no-preference) {
+  .reference-explanation, .dock-content {
+    animation: content-enter 150ms ease-out;
+  }
+  .input-modal, .history-modal, .credits-modal, .tutorial-offer {
+    animation: content-enter 180ms ease-out;
+  }
+  /* The tutorial positions itself from measured bounds; fade without moving it. */
+  .tutorial-card {
+    animation: surface-enter 160ms ease-out;
+  }
+  .toolbar-button > svg, .help-button > svg, .reference-close > svg {
+    transition: transform 140ms ease-out;
+  }
+  .toolbar-button:hover > svg, .help-button:hover > svg {
+    transform: translateY(-1px);
+  }
+  .reference-close:hover > svg {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes content-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes surface-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
