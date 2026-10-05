@@ -3,7 +3,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap, type CompletionCont
 import { defaultKeymap, history, historyKeymap, indentLess, indentMore } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
-import { Compartment, EditorState, Transaction, type Extension, type Range } from '@codemirror/state';
+import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
 import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { KEYWORDS, ROUTINES, TYPES, COMPLETIONS } from '../../language/lexer';
@@ -15,7 +15,7 @@ export interface EditorPreferences { autocomplete: boolean; hoverDocs: boolean; 
 export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; }
 interface CodeEditorProps {
   value: string;
-  onChange: (value: string, analyzeNow?: boolean) => void;
+  onChange: (value: string) => void;
   onFormat: () => void;
   preferences: EditorPreferences;
   theme: PicoTheme;
@@ -311,15 +311,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
         palette.current.of(themeExtensions(theme)),
         prefs.current.of(createPreferences(preferences)),
         marks.current.of(EditorView.decorations.of(v => buildDecorations(v, coveredLines, currentLine, errorLine))),
-        EditorView.updateListener.of(update => {
-          if (!update.docChanged) return;
-          const completedLine = update.state.doc.lines > update.startState.doc.lines;
-          const committedEdit = update.transactions.some(transaction => {
-            const event = transaction.annotation(Transaction.userEvent);
-            return event === 'input.paste' || event === 'input.drop' || event === 'input.complete';
-          });
-          onChangeRef.current(update.state.doc.toString(), completedLine || committedEdit);
-        }),
+        EditorView.updateListener.of(update => { if (update.docChanged) onChangeRef.current(update.state.doc.toString()); }),
       ],
     });
     view.current = editor;

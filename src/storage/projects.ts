@@ -1,13 +1,35 @@
 import { examples } from '../examples';
+import type { DataType } from '../language/ast';
+import { isAutoDeclaredType } from '../language/autoDeclare';
 export interface TestCase { id: string; name: string; inputs: string[]; expected: string[]; }
-export interface PicoFile { id: string; name: string; code: string; }
+export interface PicoFile { id: string; name: string; code: string; autoDeclaredTypes?: Record<string, DataType>; }
 export interface PicoProject { id: string; name: string; code: string; files: PicoFile[]; activeFileId: string; tests: TestCase[]; updatedAt: number; }
 const PROJECTS_KEY='pico.projects.v1'; const ACTIVE_KEY='pico.activeProject.v1'; const starter=examples[1]!;
 function makeFile(name:string,code:string,id:string=crypto.randomUUID()):PicoFile{return{id,name,code};}
 function makeProject(id:string,name:string,code:string,tests:TestCase[]):PicoProject{const file=makeFile('main.pseudocode',code,`${id}-main`);return{id,name,code,files:[file],activeFileId:file.id,tests,updatedAt:Date.now()};}
 const initialProject: PicoProject=makeProject('project-starter','Untitled program',starter.code,[{id:'test-count-five',name:'Counts from 1 to 5',inputs:[],expected:['1','2','3','4','5']}]);
 export function loadProjects():PicoProject[]{try{const raw:unknown=JSON.parse(localStorage.getItem(PROJECTS_KEY)??'null');if(Array.isArray(raw)){const valid=raw.map(normalizeProject).filter((p):p is PicoProject=>Boolean(p));if(valid.length)return valid;}}catch{}return[initialProject];}
-function normalizeProject(v:unknown):PicoProject|undefined{if(!v||typeof v!=='object')return;const p=v as Partial<PicoProject>;if(typeof p.id!=='string'||typeof p.name!=='string'||typeof p.tests===undefined||!Array.isArray(p.tests))return;const legacyCode=typeof p.code==='string'?p.code:'';const rawFiles=Array.isArray(p.files)?p.files.filter((f):f is PicoFile=>Boolean(f&&typeof f==='object'&&typeof (f as PicoFile).id==='string'&&typeof (f as PicoFile).name==='string'&&typeof (f as PicoFile).code==='string')):[];const files=rawFiles.length?rawFiles:[makeFile('main.pseudocode',legacyCode,`${p.id}-main`)];const activeFileId=files.some(file=>file.id===p.activeFileId)?p.activeFileId!:files[0]!.id;const active=files.find(file=>file.id===activeFileId)!;return{...p,code:active.code,files,activeFileId,updatedAt:typeof p.updatedAt==='number'?p.updatedAt:Date.now()} as PicoProject;}
+function normalizeProject(value: unknown): PicoProject | undefined {
+  if (!value || typeof value !== 'object') return;
+  const project = value as Partial<PicoProject>;
+  if (typeof project.id !== 'string' || typeof project.name !== 'string' || !Array.isArray(project.tests)) return;
+  const legacyCode = typeof project.code === 'string' ? project.code : '';
+  const rawFiles = Array.isArray(project.files) ? project.files.map(normalizeFile).filter((file): file is PicoFile => Boolean(file)) : [];
+  const files = rawFiles.length ? rawFiles : [makeFile('main.pseudocode', legacyCode, `${project.id}-main`)];
+  const activeFileId = files.some(file => file.id === project.activeFileId) ? project.activeFileId! : files[0]!.id;
+  const active = files.find(file => file.id === activeFileId)!;
+  return { ...project, code: active.code, files, activeFileId, updatedAt: typeof project.updatedAt === 'number' ? project.updatedAt : Date.now() } as PicoProject;
+}
+
+function normalizeFile(value: unknown): PicoFile | undefined {
+  if (!value || typeof value !== 'object') return;
+  const file = value as Partial<PicoFile>;
+  if (typeof file.id !== 'string' || typeof file.name !== 'string' || typeof file.code !== 'string') return;
+  const autoDeclaredTypes = file.autoDeclaredTypes && typeof file.autoDeclaredTypes === 'object' && !Array.isArray(file.autoDeclaredTypes)
+    ? Object.fromEntries(Object.entries(file.autoDeclaredTypes).filter(([, type]) => isAutoDeclaredType(type))) as Record<string, DataType>
+    : undefined;
+  return { id: file.id, name: file.name, code: file.code, ...(autoDeclaredTypes ? { autoDeclaredTypes } : {}) };
+}
 export function saveProjects(projects:PicoProject[],activeId:string):void{localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects));localStorage.setItem(ACTIVE_KEY,activeId);}
 export function loadActiveId(projects:PicoProject[]):string{const id=localStorage.getItem(ACTIVE_KEY);return projects.some(p=>p.id===id)?id!:projects[0]!.id;}
 export function newProject(name='Untitled program'):PicoProject{return makeProject(crypto.randomUUID(),name,'DECLARE Number : INTEGER\nNumber ← 42\nOUTPUT Number',[]);}

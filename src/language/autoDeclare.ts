@@ -1,57 +1,104 @@
-import type { DataType, Expression, Program, Statement } from './ast';
-import { parse } from './parser';
+import type { DataType, Declaration, Expression, Program, Statement } from './ast';
 import { tokenize } from './lexer';
+import { parse } from './parser';
 
 type SymbolTypes = Map<string, DataType>;
 type RoutineTypes = Map<string, DataType>;
-interface Candidate { name: string; types: DataType[]; }
+interface Candidate { name: string; constraints: DataType[]; assignments: Expression[]; integerRequired: boolean; }
+interface ManagedDeclarations { names: Set<string>; declarations: Map<string, Declaration>; }
+export interface AutoDeclarationSync { code: string; generatedTypes: Record<string, DataType>; }
 
 const builtinReturns: Record<string, DataType> = {
   DIV: 'INTEGER', MOD: 'INTEGER', ROUND: 'REAL', LENGTH: 'INTEGER', SUBSTRING: 'STRING',
   UCASE: 'STRING', LCASE: 'STRING', UPPER: 'STRING', LOWER: 'STRING', RANDOM: 'REAL',
 };
+const dataTypes = new Set<DataType>(['INTEGER', 'REAL', 'CHAR', 'STRING', 'BOOLEAN']);
 
 /**
- * Infer missing scalar declarations from parsed code, without changing the
- * language's compiler rules. Unsupported or ambiguous cases are left alone.
+ * Analyze each source revision, create declarations for clear inferences, and
+ * revise only declarations previously created by Auto-declare. Explicit
+ * student declarations are deliberately never changed.
  */
-export function autoDeclareVariables(source: string): string {
+export function synchronizeAutoDeclarations(source: string, previouslyGenerated: Record<string, DataType> = {}): AutoDeclarationSync {
   let program: Program;
   try { program = parse(tokenize(source)); }
-  catch { return source; }
+  catch { return { code: source, generatedTypes: { ...previouslyGenerated } }; }
 
   const routines: RoutineTypes = new Map();
   collectRoutineTypes(program.statements, routines);
+  const lines = source.split(/\r?\n/);
+  const insertions: { line: number; declarations: string[] }[] = [];
+  const generatedTypes: Record<string, DataType> = {};
+
+  const globalScope = 'global';
+  const globalManaged = findManagedDeclarations(program.statements, globalScope, previouslyGenerated, generatedTypes);
   const globalSymbols: SymbolTypes = new Map();
   collectSymbols(program.statements, globalSymbols, true);
   inferConstants(program.statements, globalSymbols, routines, true);
+  const globalCandidates = inferCandidates(program.statements, globalSymbols, routines, true, globalManaged.names);
+  const inferredGlobals = new Map(globalCandidates.map(item => [item.name, item.type]));
 
-  const globalCandidates = inferCandidates(program.statements, globalSymbols, routines, true);
-  const edits: { line: number; declarations: string[] }[] = [];
-  if (globalCandidates.length) {
-    const line = globalInsertionLine(source.split(/\r?\n/));
-    edits.push({ line, declarations: globalCandidates.map(item => `DECLARE ${item.name} : ${item.type}`) });
-    for (const item of globalCandidates) globalSymbols.set(item.name, item.type);
+  const addedGlobal: string[] = [];
+  for (const item of globalCandidates) {
+    const declaration = globalManaged.declarations.get(item.name);
+    if (declaration) replaceDeclarationType(lines, declaration, item.type);
+    else addedGlobal.push(`DECLARE ${item.name} : ${item.type}`);
+    generatedTypes[scopeKey(globalScope, item.name)] = item.type;
+    globalSymbols.set(item.name, item.type);
   }
+  for (const [name, declaration] of globalManaged.declarations) {
+    if (!inferredGlobals.has(name)) globalSymbols.set(name, declaration.dataType);
+  }
+  if (addedGlobal.length) insertions.push({ line: globalInsertionLine(lines), declarations: addedGlobal });
 
   for (const statement of program.statements) {
     if (statement.kind !== 'Procedure' && statement.kind !== 'Function') continue;
-    const localSymbols = new Map(globalSymbols);
+    const scope = `routine:${statement.name.toUpperCase()}`;
+    const managed = findManagedDeclarations(statement.body, scope, previouslyGenerated, generatedTypes);
+    const localSymbols: SymbolTypes = new Map(globalSymbols);
     for (const parameter of statement.parameters) localSymbols.set(parameter.name, parameter.dataType);
     collectSymbols(statement.body, localSymbols, false);
     inferConstants(statement.body, localSymbols, routines, false);
-    const locals = inferCandidates(statement.body, localSymbols, routines, false);
-    if (locals.length) edits.push({
-      line: statement.line,
-      declarations: locals.map(item => `DECLARE ${item.name} : ${item.type}`),
-    });
+    const localCandidates = inferCandidates(statement.body, localSymbols, routines, false, managed.names);
+    const inferredLocals = new Map(localCandidates.map(item => [item.name, item.type]));
+    const additions: string[] = [];
+    for (const item of localCandidates) {
+      const declaration = managed.declarations.get(item.name);
+      if (declaration) replaceDeclarationType(lines, declaration, item.type);
+      else additions.push(`DECLARE ${item.name} : ${item.type}`);
+      generatedTypes[scopeKey(scope, item.name)] = item.type;
+      localSymbols.set(item.name, item.type);
+    }
+    for (const [name, declaration] of managed.declarations) {
+      if (!inferredLocals.has(name)) localSymbols.set(name, declaration.dataType);
+    }
+    if (additions.length) insertions.push({ line: statement.line, declarations: additions });
   }
 
-  if (!edits.length) return source;
+  for (const insertion of insertions.sort((a, b) => b.line - a.line)) lines.splice(insertion.line, 0, ...insertion.declarations);
   const newline = source.includes('\r\n') ? '\r\n' : '\n';
-  const lines = source.split(/\r?\n/);
-  for (const edit of edits.sort((a, b) => b.line - a.line)) lines.splice(edit.line, 0, ...edit.declarations);
-  return lines.join(newline);
+  return { code: lines.join(newline), generatedTypes };
+}
+
+/** Backwards-compatible helper used by callers that do not persist provenance. */
+export function autoDeclareVariables(source: string): string {
+  return synchronizeAutoDeclarations(source).code;
+}
+
+function scopeKey(scope: string, name: string): string { return `${scope}::${name}`; }
+
+function findManagedDeclarations(statements: Statement[], scope: string, tracked: Record<string, DataType>, retained: Record<string, DataType>): ManagedDeclarations {
+  const names = new Set<string>();
+  const declarations = new Map<string, Declaration>();
+  for (const statement of statements) {
+    if (statement.kind !== 'Declaration' || statement.array) continue;
+    const key = scopeKey(scope, statement.name);
+    if (tracked[key] !== statement.dataType) continue;
+    names.add(statement.name);
+    declarations.set(statement.name, statement);
+    retained[key] = statement.dataType;
+  }
+  return { names, declarations };
 }
 
 function collectRoutineTypes(statements: Statement[], routines: RoutineTypes): void {
@@ -90,47 +137,39 @@ function inferConstants(statements: Statement[], symbols: SymbolTypes, routines:
   }
 }
 
-function inferCandidates(statements: Statement[], symbols: SymbolTypes, routines: RoutineTypes, skipRoutines: boolean): { name: string; type: DataType }[] {
+function inferCandidates(statements: Statement[], symbols: SymbolTypes, routines: RoutineTypes, skipRoutines: boolean, forceRecheck: Set<string>): { name: string; type: DataType }[] {
   const candidates = new Map<string, Candidate>();
   visitStatements(statements, statement => {
-    if (statement.kind === 'Assignment' && statement.target.indexes.length === 0 && !symbols.has(statement.target.name)) {
-      addCandidate(candidates, statement.target.name);
-    } else if (statement.kind === 'ForStatement' && !symbols.has(statement.name)) {
-      addCandidate(candidates, statement.name).types.push('INTEGER');
+    if (statement.kind === 'Assignment' && statement.target.indexes.length === 0 && (!symbols.has(statement.target.name) || forceRecheck.has(statement.target.name))) {
+      addCandidate(candidates, statement.target.name).assignments.push(statement.value);
+    } else if (statement.kind === 'ForStatement' && (!symbols.has(statement.name) || forceRecheck.has(statement.name))) {
+      const candidate = addCandidate(candidates, statement.name);
+      candidate.constraints.push('INTEGER');
+      candidate.integerRequired = true;
     }
   }, skipRoutines);
 
   const inferred = new Map<string, DataType>();
-  const conflicts = new Set<string>();
   for (let pass = 0; pass <= candidates.size; pass += 1) {
-    let changed = false;
     const available = new Map([...symbols, ...inferred]);
-    visitStatements(statements, statement => {
-      if (statement.kind !== 'Assignment' || statement.target.indexes.length) return;
-      const candidate = candidates.get(statement.target.name);
-      if (!candidate || conflicts.has(candidate.name)) return;
-      const type = inferExpression(statement.value, available, routines);
-      if (type) { candidate.types.push(type); changed = true; }
-    }, skipRoutines);
-
+    const next = new Map<string, DataType>();
     for (const [name, candidate] of candidates) {
-      if (conflicts.has(name) || !candidate.types.length) continue;
-      const merged = mergeTypes(candidate.types);
-      if (!merged) { conflicts.add(name); inferred.delete(name); continue; }
-      if (inferred.get(name) !== merged) { inferred.set(name, merged); changed = true; }
+      const observations = [...candidate.constraints, ...candidate.assignments.map(expression => inferExpression(expression, available, routines)).filter((type): type is DataType => Boolean(type))];
+      if (!observations.length || (candidate.integerRequired && observations.some(type => type !== 'INTEGER'))) continue;
+      const merged = mergeTypes(observations);
+      if (merged) next.set(name, merged);
     }
-    if (!changed) break;
+    const stable = next.size === inferred.size && [...next].every(([name, type]) => inferred.get(name) === type);
+    inferred.clear();
+    for (const [name, type] of next) inferred.set(name, type);
+    if (stable) break;
   }
-
-  return [...inferred].flatMap(([name, type]) => {
-    const candidate = candidates.get(name)!;
-    return conflicts.has(name) ? [] : [{ name: candidate.name, type }];
-  });
+  return [...inferred].map(([name, type]) => ({ name: candidates.get(name)!.name, type }));
 }
 
 function addCandidate(candidates: Map<string, Candidate>, name: string): Candidate {
   let candidate = candidates.get(name);
-  if (!candidate) { candidate = { name, types: [] }; candidates.set(name, candidate); }
+  if (!candidate) { candidate = { name, constraints: [], assignments: [], integerRequired: false }; candidates.set(name, candidate); }
   return candidate;
 }
 
@@ -182,8 +221,22 @@ function visitStatements(statements: Statement[], visit: (statement: Statement) 
   }
 }
 
+function replaceDeclarationType(lines: string[], declaration: Declaration, type: DataType): void {
+  const index = declaration.line - 1;
+  if (declaration.array || index < 0 || index >= lines.length) return;
+  const name = declaration.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`^(\\s*DECLARE\\s+${name}\\s*:\\s*)(INTEGER|REAL|CHAR|STRING|BOOLEAN)(\\b)`, 'i');
+  const line = lines[index]!;
+  if (pattern.test(line)) lines[index] = line.replace(pattern, `$1${type}$3`);
+}
+
 function globalInsertionLine(lines: string[]): number {
   let line = 0;
   while (line < lines.length && (!lines[line]!.trim() || lines[line]!.trim().startsWith('//'))) line += 1;
   return line;
+}
+
+/** Non-persisted callers use these type names to keep their API simple. */
+export function isAutoDeclaredType(value: unknown): value is DataType {
+  return typeof value === 'string' && dataTypes.has(value as DataType);
 }
