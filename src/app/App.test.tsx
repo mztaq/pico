@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runRequests, type WorkerRequest } from '../runtime/worker';
 import App from './App';
+import { referenceExamples, referenceTerms } from './reference';
 
 vi.mock('./components/CodeEditor',()=>({CodeEditor:({value,onChange}:{value:string;onChange:(value:string)=>void})=><textarea aria-label="Test pseudocode editor" value={value} onChange={event=>onChange(event.target.value)} />}));
 class BrowserWorker {
@@ -106,9 +107,10 @@ describe('guided help and readable reference',()=>{
   });
 });
 
-it('shows coloured, selectable reference examples and a credits-only footer',()=>{
-  const example=container.querySelector('.syntax-cheat-sheet pre')!;
-  expect(example.textContent).toContain('DECLARE Name : STRING\nName ← "Pico"');
+it('shows coloured, selectable reference examples and a credits-only footer',async()=>{
+  await click(button('DECLARE'));
+  const example=container.querySelector('.reference-example pre')!;
+  expect(example.textContent).toBe(referenceExamples.DECLARE.code);
   expect(example.querySelector('.syntax-keyword')?.textContent).toBe('DECLARE');
   expect(example.querySelector('.syntax-type')?.textContent).toBe('STRING');
   expect(example.querySelector('.syntax-string')?.textContent).toBe('"Pico"');
@@ -120,12 +122,33 @@ it('shows coloured, selectable reference examples and a credits-only footer',()=
 
 it('colours only the example code in the reference, leaving keyword labels plain',async()=>{
   expect(container.querySelector('.reference-keywords .highlighted-code')).toBeNull();
-  expect(container.querySelector('.reference-explanation .highlighted-code')).toBeNull();
+  expect(container.querySelector('.reference-explanation > strong .highlighted-code')).toBeNull();
   expect(button('DECLARE').textContent).toBe('DECLARE');
   await click(button('DECLARE'));
   expect(container.querySelector('.reference-explanation > strong')?.textContent).toBe('DECLARE');
-  expect(container.querySelector('.syntax-cheat-sheet .syntax-keyword')).not.toBeNull();
+  expect(container.querySelector('.reference-example .syntax-keyword')).not.toBeNull();
   expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--reference-label: #ffffff');
+});
+
+it('shows the selected keyword example for every reference entry without changing the editor',async()=>{
+  const originalCode=container.querySelector('textarea')!.value;
+  expect(container.querySelector('.reference-keywords')?.textContent).not.toContain('Syntax cheat sheet');
+  expect(container.querySelector('.reference-card details')).toBeNull();
+  for(const keyword of referenceTerms){
+    await click(button(keyword));
+    const example=container.querySelector('.reference-example pre')!;
+    expect(example.getAttribute('aria-label')).toBe(`${keyword} code example`);
+    expect(example.textContent).toBe(referenceExamples[keyword].code);
+    expect(button(keyword).getAttribute('aria-pressed')).toBe('true');
+  }
+  await click(button('INPUT'));
+  expect(container.querySelector('.reference-input-hint')?.textContent).toBe('Example input: Ada');
+  await click(button('FOR'));
+  expect(container.querySelector('.reference-input-hint')).toBeNull();
+  expect(container.querySelector('textarea')!.value).toBe(originalCode);
+  expect(container.querySelector('.reference-controls')).not.toBeNull();
+  expect(container.querySelector('.reference-scope')).not.toBeNull();
+  expect(container.querySelector('.hover-doc-setting')).not.toBeNull();
 });
 
 it('lets the user choose either high-contrast theme and saves the preference',async()=>{
