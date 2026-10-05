@@ -67,7 +67,8 @@
 .panel-empty p, .console-placeholder p { color: var(--muted); font-size: 13px; line-height: 1.65; }
 .runtime-error-card p { color: var(--text); font-size: 13px; line-height: 1.65; }
 .error-tip { font-size: 13px; line-height: 1.65; }
-.output-line { color: var(--text); font-size: 14px; line-height: 1.7; }
+.pico-app { --panel-font-size: 14px; }
+.output-line { color: var(--text); font-size: var(--panel-font-size); line-height: 1.7; }
 .pico-easter-egg { font-size: 14px; line-height: 1.6; }
 
 /* Source examples use the same token categories and theme palette as the editor. */
@@ -102,6 +103,43 @@
 .reference-example pre { margin: 8px 0 0; padding: 10px; overflow-x: auto; background: var(--surface-raised); border-radius: 6px; color: var(--text); font-family: var(--font-code); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; white-space: pre; user-select: text; }
 .reference-example .reference-input-hint { margin: 8px 0 0; color: var(--text); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.5; }
 .reference-input-hint code { font-family: var(--font-code); }
+
+/* Use the console's text size throughout the inspection and test panels. */
+:is(.debugger-panel, .tests-panel, .coverage-panel, .code-inspector, .token-panel) {
+  font-size: var(--panel-font-size);
+  line-height: 1.7;
+}
+:is(.debugger-panel, .tests-panel, .coverage-panel, .code-inspector, .token-panel)
+:is(.mini-label, .step-indicator, .step-indicator strong, .step-next, .debug-line-chip,
+    .debug-action-name, .variable-name, .variable-row code, .debug-empty,
+    .debug-stdout code, .trace-chip, .tests-toolbar, .tests-toolbar > div:first-child > .muted,
+    .subtle-button, .primary-small, .test-name-wrap input, .result-chip,
+    .test-columns label > span, .test-columns label small, .actual-output > span:first-child,
+    .test-columns textarea, .actual-output code, .actual-pending, .actual-error,
+    .coverage-ring > span, .coverage-ring small, .coverage-summary strong, .coverage-summary p,
+    .coverage-row, .json-view, .token-table, .token-table th, .token-table td code,
+    .token-type, .panel-empty > strong, .panel-empty p) {
+  font-size: var(--panel-font-size);
+}
+.tests-toolbar { flex-wrap: wrap; }
+.tests-actions { flex-wrap: wrap; }
+.step-next, .tests-panel .subtle-button, .tests-panel .primary-small, .trace-chip { height: auto; min-height: 30px; }
+.test-columns textarea, .actual-output code, .actual-pending, .actual-error { line-height: 1.7; min-height: 64px; }
+.coverage-row { min-height: 26px; }
+.coverage-ring { width: 52px; height: 52px; flex-shrink: 0; }
+.coverage-ring::before { width: 44px; height: 44px; }
+.coverage-mark { width: 14px; flex-shrink: 0; }
+.coverage-number { min-width: 28px; flex-shrink: 0; }
+.coverage-lines { overflow-x: auto; }
+.token-table th { height: auto; padding-block: 8px; }
+.token-table td { padding-block: 6px; }
+.debug-line-chip { min-width: 40px; width: auto; min-height: 32px; }
+.debugger-content { grid-template-columns: 140px minmax(180px, 1fr) minmax(160px, .7fr); }
+.ide-shell.dock-right .debugger-content, .ide-shell.dock-right .test-columns { grid-template-columns: 1fr; }
+@media (max-width: 800px) {
+  .debugger-content { grid-template-columns: minmax(120px, .5fr) minmax(180px, 1fr); }
+  .test-columns { grid-template-columns: 1fr; }
+}
 
 .console-panel { min-height: 0; }
 .console-input-line { margin-top: 6px; }

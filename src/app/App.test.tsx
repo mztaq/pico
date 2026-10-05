@@ -138,15 +138,15 @@ describe('workspace execution integration',()=>{
     expect(container.querySelector('.output-line')).toBeNull();
   });
   it.each([
-    ['Amar','These are my creators, Amar the developer, and Mustaqim the deployer'],
-    ['Mustaqim','These are my creators, Amar the developer, and Mustaqim the deployer'],
+    ['Amar','The gentleman who constructed me from the ground up'],
+    ['Mustaqim','The gentleman who released me to the World Wide Web'],
     ['Mr.Boyle','Hello, He is my computer science teacher'],
     ['Mr. Boyle','Hello, He is my computer science teacher'],
     ['Boyle','Hello, He is my computer science teacher'],
     ['Fore','Hello, He is the head of computer science and ICT'],
     ['Mr.Fore','Hello, He is the head of computer science and ICT'],
     ['Mr. Fore','Hello, He is the head of computer science and ICT'],
-    ['  mUsTaQiM  ','These are my creators, Amar the developer, and Mustaqim the deployer'],
+    ['  mUsTaQiM  ','The gentleman who released me to the World Wide Web'],
   ])('shows the %s Easter egg while preserving the exact input and program output',async(value,message)=>{
     const code='DECLARE Name : STRING\nINPUT Name\nOUTPUT Name';
     await typeValue(codeEditor(),code);
@@ -194,7 +194,8 @@ describe('guided help and readable reference',()=>{
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Close tutorial');
     for(let i=0;i<6;i++)await click(button('Next'));
     await click(button('Finish tour'));
-    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Your next idea starts here.');
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Amar, Mustaqim, Boyle, and Fore');
     await click(button('Start coding'));
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
     expect(codeEditor().value).toBe(code);
@@ -227,12 +228,14 @@ describe('guided help and readable reference',()=>{
     expect(container.querySelector('.reference-card')).toBeNull();
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Read the result');
-    await click(button('Back'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Bring your program to life');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('STRING INPUT');
+    await click(button('Back'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Run your program');
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('.dock-tab[aria-selected="true"]')?.textContent).toBe('Debugger');
     await click(button('Next'));expect(container.querySelector('[data-tour="reference"]')).not.toBeNull();
     await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
-    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Your next idea starts here.');
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Amar, Mustaqim, Boyle, and Fore');
     await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
     await click(button('Skip for now'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();
@@ -315,7 +318,8 @@ it('shows the selected keyword example for every reference entry without changin
   expect(container.querySelector('.reference-input-hint')).toBeNull();
   expect(container.querySelector('textarea')!.value).toBe(originalCode);
   expect(container.querySelector('.reference-controls')).not.toBeNull();
-  expect(container.querySelector('.reference-scope')).not.toBeNull();
+  expect(container.querySelector('.reference-scope')).toBeNull();
+  expect(container.querySelector('.sidebar-bottom')).toBeNull();
   expect(container.querySelector('.hover-doc-setting')).not.toBeNull();
 });
 
