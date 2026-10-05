@@ -283,7 +283,7 @@ const seeds: ThemeSeed[] = [
   },
 ];
 
-export const DEFAULT_THEME_ID: ThemeId = 'dark-plus';
+export const DEFAULT_THEME_ID: ThemeId = 'catppuccin-mocha';
 
 /** Theme names from earlier Pico versions, mapped onto the new registry. */
 const LEGACY_THEME_IDS: Record<string, ThemeId> = {

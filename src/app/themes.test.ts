@@ -37,7 +37,7 @@ describe('theme registry', () => {
 
   it('resolves ids and migrates the palettes older versions stored', () => {
     expect(getTheme('nord').id).toBe('nord');
-    expect(getTheme('dark').id).toBe(DEFAULT_THEME_ID);
+    expect(getTheme('dark').id).toBe('dark-plus');
     expect(getTheme('light').id).toBe('light-plus');
     expect(getTheme('nonsense').id).toBe(DEFAULT_THEME_ID);
     expect(normalizeThemeId('coffee')).toBe('gruvbox-dark');

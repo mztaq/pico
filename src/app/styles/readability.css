@@ -20,7 +20,7 @@
 .pico-app[data-pico-theme] .keyword-pill.active { color: var(--reference-label); background: var(--surface-raised); border-color: var(--border); font-weight: 600; }
 .pico-app[data-pico-theme] .keyword-pill.active:hover { border-color: var(--accent); background: var(--accent-soft); }
 .reference-no-results { margin: 4px 0; color: var(--muted); font-size: 14px; }
-.reference-explanation { padding: 12px 0; border-color: var(--border); user-select: text; }
+.reference-explanation { padding: 12px 0; border-color: var(--border); border-bottom: 0; user-select: text; }
 .reference-explanation .mini-label { font-size: 11px; color: var(--muted); }
 .reference-explanation > strong { margin-top: 9px; font-size: calc(var(--reference-font-size) + 1px); color: var(--reference-label); }
 .reference-explanation > p { color: var(--text); font-size: var(--reference-font-size); line-height: 1.6; }
@@ -60,9 +60,8 @@
   .credit-divider { display: none; }
 }
 @media (max-height: 720px) {
-  .workspace-main { grid-template-rows: auto minmax(160px, 1fr) var(--splitter-size) minmax(130px, var(--dock-size)); }
+  .workspace-main { grid-template-rows: minmax(160px, 1fr) var(--splitter-size) minmax(130px, var(--dock-size)); }
 }
-.command-bar { height: auto; min-height: 53px; flex-wrap: wrap; row-gap: 8px; padding-block: 10px; }
 .panel-empty > strong, .console-placeholder strong { color: var(--text); font-size: 15px; }
 .panel-empty p, .console-placeholder p { color: var(--muted); font-size: 13px; line-height: 1.65; }
 .runtime-error-card p { color: var(--text); font-size: 13px; line-height: 1.65; }

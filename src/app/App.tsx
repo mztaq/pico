@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, FolderOpen, GitBranch, History, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, History, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
 import { examples } from '../examples';
@@ -18,7 +18,7 @@ import { contrastRatio, cssVariables, getTheme } from '../app/themes';
 import { FloatingPanel } from './components/FloatingPanel';
 import { ResizeHandle } from './components/ResizeHandle';
 import { ThemePicker } from './components/ThemePicker';
-import { GuidedTutorial } from './components/GuidedTutorial';
+import { GuidedTutorial, tutorialSteps } from './components/GuidedTutorial';
 import { TutorialOffer } from './components/TutorialOffer';
 import { inputEasterEgg } from './inputEasterEgg';
 import { HighlightedCode } from './components/HighlightedCode';
@@ -33,6 +33,7 @@ import './styles/branding-adjustments.css';
 import './styles/readability.css';
 import './styles/high-contrast.css';
 import './styles/motion.css';
+import './styles/top-toolbar.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
@@ -180,8 +181,8 @@ export default function App() {
   function closeTutorial() { setTutorialOpen(false); setActivePanel(tutorialPanelRef.current); }
   function goToTutorialStep(step: number) {
     setTutorialStep(step);
-    if (step === 2) setActivePanel('console');
-    if (step === 3) setActivePanel('debugger');
+    if (tutorialSteps[step]?.label === 'OUTPUT') setActivePanel('console');
+    if (tutorialSteps[step]?.label === 'EXPLORE') setActivePanel('debugger');
   }
   function openReference() {
     changeSettings({ referenceVisible: true, layoutPreset: 'custom' });
@@ -307,7 +308,8 @@ export default function App() {
   function applySuggestion(suggestion: Suggestion) { editorRef.current?.applySuggestion(suggestion); setDismissedSuggestions(false); }
   async function handleImport(event: React.ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (!file) return; try { const project = await importProject(file); setProjects(current => [...current, project]); setActiveId(project.id); } catch (error) { window.alert(error instanceof Error ? error.message : 'Could not import that .pico file.'); } event.target.value = ''; }
 
-  const layout = tutorialOpen ? { ...settings, dockSide: 'bottom' as const, referenceVisible: tutorialStep === 4 } : settings;
+  const tutorialReference = tutorialOpen && tutorialSteps[tutorialStep]?.target === 'reference';
+  const layout = tutorialOpen ? { ...settings, dockSide: 'bottom' as const, referenceVisible: tutorialReference } : settings;
   const orderedTabs = settings.panelOrder.map(key => panelTabs.find(tab => tab.key === key)).filter(Boolean) as typeof panelTabs;
   const shownTerms = referenceTerms.filter(term => term.includes(docSearch.trim().toUpperCase()));
   const saveText = saveState === 'saving' ? 'Saving…' : saveState === 'local-only' ? 'Storage unavailable' : 'Saved on this device';
@@ -317,16 +319,21 @@ export default function App() {
   return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--sidebar-width': `${settings.sidebarWidth}px`, '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <header className="topbar" inert={tutorialOpen || tutorialOfferOpen}>
       <button className="brand-lockup" title="About Pico" aria-label="Open Pico developer credits" onClick={() => setCreditsOpen(true)}><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">PSEUDOCODE STUDIO</span></button>
-      <div className="topbar-divider" />
-      <div className="topbar-crumb"><FolderOpen size={14} /><span>Workspace</span><span className="crumb-slash">/</span><span className="crumb-active">Cambridge Core</span><ChevronDown size={12} /></div>
+      <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={activeProject.name} onChange={event => renameProject(event.target.value)} />
       <div className="topbar-spacer" />
       <div className={`save-indicator ${saveState}`}><span className="save-dot">{saveState === 'saved' ? <Check size={9} /> : null}</span>{saveText}</div>
+      <div className="topbar-actions">
+        <button className="toolbar-button reference-toggle" aria-label="Toggle quick reference" onClick={toggleReference} title="Quick reference"><BookOpen size={16} /><span>Reference</span></button>
+        <button className="toolbar-button" aria-label="Open project history" onClick={() => setHistoryOpen(true)} title="Project history"><History size={16} /><span>History</span></button>
+        {running ? <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button> : <button className="toolbar-button debug-button" aria-label="Debug program" onClick={() => runProgram(true)}><Code2 size={16} /><span>Debug</span></button>}
+        <button data-tour="run" className="run-button" disabled={running} onClick={() => runProgram()}><Play size={14} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
+      </div>
       <div className="settings-anchor" ref={settingsAnchorRef}>
         <button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" data-tour="settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>
         <FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover">
           <div className="settings-title"><div><Settings2 size={15} /><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setSettingsOpen(false)}><X size={14} /></button></div>
           <SettingRow title="Autocomplete" detail="Suggest keywords and declared names as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} />
-          <SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} />
+          <SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => { changeSettings({ autocorrect: value }); setDismissedSuggestions(false); }} />
           <SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} />
           <SettingRow title="Auto-declare variables" detail="Infer and update types from assignments" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />
           <ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} />
@@ -340,10 +347,10 @@ export default function App() {
           <div className="settings-foot">Saved locally in this browser · drag dock tabs to reorder</div>
         </FloatingPanel>
       </div>
-      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={activeProject.name} onChange={event => renameProject(event.target.value)} /></label><button onClick={() => { formatCode(); setFileMenuOpen(false); }} title="Format code · Shift+Alt+F"><CodeXml size={14} /> Format code</button><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
     </header>
 
-    <div inert={tutorialOpen || tutorialOfferOpen} className={`ide-shell ${settings.sidebarVisible ? '' : 'sidebar-hidden'} sidebar-${settings.sidebarSide} dock-${layout.dockSide} ${(referenceExpanded || (tutorialOpen && tutorialStep === 4)) ? 'reference-open' : ''}`}>
+    <div inert={tutorialOpen || tutorialOfferOpen} className={`ide-shell ${settings.sidebarVisible ? '' : 'sidebar-hidden'} sidebar-${settings.sidebarSide} dock-${layout.dockSide} ${(referenceExpanded || tutorialReference) ? 'reference-open' : ''}`}>
       {settings.sidebarVisible && <aside className="project-sidebar">
         <div className="sidebar-head"><span>WORKSPACE</span><button className="small-icon-button" onClick={createBlankProject} title="New project" aria-label="New project"><Plus size={15} /></button></div>
         <div className="side-section-label"><span>PROJECTS</span><span className="count-pill">{projects.length}</span></div>
@@ -354,22 +361,6 @@ export default function App() {
       {settings.sidebarVisible && <ResizeHandle axis="x" label="Resize project sidebar" className="sidebar-resize-handle" onResize={resizeSidebar} />}
 
       <main className="workspace-main" ref={workspaceMainRef}>
-        <div className="command-bar">
-          <div className="file-crumb"><span className="file-icon"><CodeXml size={15} /></span><input aria-label="Project name" className="project-title-input" value={activeProject.name} onChange={event => renameProject(event.target.value)} /><span className="file-extension">.pico</span><span className="command-dot">·</span><span className="language-pill"><span /> Cambridge pseudocode</span></div>
-          <div className="command-spacer" />
-          <div className="editor-preferences">
-            <ToggleChip label="Autocomplete" checked={settings.autocomplete} onClick={() => changeSettings({ autocomplete: !settings.autocomplete })} />
-            <ToggleChip label="Autocorrect" checked={settings.autocorrect} onClick={() => { changeSettings({ autocorrect: !settings.autocorrect }); setDismissedSuggestions(false); }} />
-            <ToggleChip label="Hover docs" checked={settings.hoverDocs} onClick={() => changeSettings({ hoverDocs: !settings.hoverDocs })} />
-          </div>
-          <div className="command-divider" />
-          <button className="toolbar-button reference-toggle" aria-label="Toggle quick reference" onClick={toggleReference} title="Quick reference"><BookOpen size={16} /><span>Reference</span></button>
-          <button className="toolbar-button" onClick={formatCode} title="Format code · Shift+Alt+F"><CodeXml size={14} /><span>Format</span></button><button className="toolbar-button" onClick={saveSnapshot} title="Save a project snapshot"><History size={14} /><span>History</span></button><button className="toolbar-button" onClick={() => setActivePanel('flowchart')}><GitBranch size={14} /><span>Flowchart</span></button>
-          <button className="toolbar-button debug-button" disabled={running} onClick={() => runProgram(true)}><Code2 size={14} /><span>Debug</span></button>
-          {running && <button className="toolbar-button" onClick={stopExecution}><X size={13} /> Stop</button>}
-          <button data-tour="run" className="run-button" disabled={running} onClick={() => runProgram()}><Play size={13} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
-        </div>
-
         <div className={`editor-split ${layout.referenceVisible ? '' : 'reference-hidden'}`}>
           <section className="editor-card" data-tour="editor">
             <div className="editor-card-head"><div className="editor-card-title"><span className="editor-live-dot" /><span>Editor</span><span className="line-count">{activeFile.code.split('\n').length} lines</span></div><div className="editor-card-meta"><span className="mono-tag">IGCSE</span><span>·</span><span>UTF-8</span><span>·</span><span>LF</span></div></div>
@@ -417,9 +408,8 @@ export default function App() {
   </div>;
 }
 
-function ToggleChip({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) { return <button className={`toggle-chip ${checked ? 'on' : ''}`} aria-pressed={checked} onClick={onClick}><span className="toggle-light" />{label}</button>; }
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) { return <button className={`switch ${checked ? 'checked' : ''}`} role="switch" aria-checked={checked} onClick={onChange}><span /></button>; }
-function SettingRow({ title, detail, checked, onChange }: { title: string; detail: string; checked: boolean; onChange: (value: boolean) => void }) { return <div className="setting-row"><div><strong>{title}</strong><small>{detail}</small></div><Toggle checked={checked} onChange={() => onChange(!checked)} /></div>; }
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) { return <button className={`switch ${checked ? 'checked' : ''}`} role="switch" aria-label={label} aria-checked={checked} onClick={onChange}><span /></button>; }
+function SettingRow({ title, detail, checked, onChange }: { title: string; detail: string; checked: boolean; onChange: (value: boolean) => void }) { return <div className="setting-row"><div><strong>{title}</strong><small>{detail}</small></div><Toggle label={title} checked={checked} onChange={() => onChange(!checked)} /></div>; }
 function BrandMark() { return <svg className="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="8" fill="#8179ef"/><path d="M9 7.5h7.6a4.4 4.4 0 0 1 0 8.8H12v4.2H9V7.5Zm3 2.8v3.2h4.3a1.6 1.6 0 0 0 0-3.2H12Z" fill="#11121a"/><circle cx="19.5" cy="20.5" r="1.5" fill="#c9c4ff"/></svg>; }
 
 const defaultPanelOrder: PanelKey[] = ['console','debugger','tests','flowchart','coverage','ast','tokens'];

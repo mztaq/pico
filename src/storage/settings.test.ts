@@ -1,6 +1,14 @@
 import {afterEach,expect,it,vi} from 'vitest';
 import {loadSettings} from './settings';
 afterEach(()=>vi.unstubAllGlobals());
+it('starts with Catppuccin Mocha and preserves saved theme choices',()=>{
+  vi.stubGlobal('localStorage',{getItem:()=>null});
+  expect(loadSettings().theme).toBe('catppuccin-mocha');
+  for (const [stored, expected] of [['dark-plus','dark-plus'],['high-contrast-yellow','high-contrast-yellow'],['dark','dark-plus']]) {
+    vi.stubGlobal('localStorage',{getItem:(key:string)=>key==='pico.settings.v5'?JSON.stringify({theme:stored}):null});
+    expect(loadSettings().theme).toBe(expected);
+  }
+});
 it('normalizes malformed settings and keeps all tool tabs available',()=>{
   vi.stubGlobal('localStorage',{getItem:()=>JSON.stringify({autocomplete:'no',sidebarSide:'bad',dockSide:'bad',panelOrder:['tests','tests','bogus']})});
   const settings=loadSettings();expect(settings.autocomplete).toBe(true);expect(settings.sidebarSide).toBe('left');expect(settings.dockSide).toBe('bottom');expect(new Set(settings.panelOrder).size).toBe(7);expect(settings.panelOrder[0]).toBe('tests');
