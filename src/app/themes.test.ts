@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_THEME_ID, THEMES, contrastRatio, cssVariables, getTheme, normalizeThemeId, themeIssues } from './themes';
+import { DEFAULT_THEME_ID, THEMES, contrastRatio, cssVariables, getTheme, mix, normalizeThemeId, themeIssues } from './themes';
 
 describe('theme registry', () => {
   it('ships a large set of IDE themes with unique ids', () => {
@@ -45,9 +45,9 @@ describe('theme registry', () => {
   });
 });
 
-it('provides 21:1 interface contrast and readable coloured syntax in all six high-contrast themes',()=>{
+it('provides 21:1 interface contrast and readable coloured syntax in all eleven high-contrast themes',()=>{
   const highContrastThemes = THEMES.filter(theme => theme.highContrast);
-  expect(highContrastThemes).toHaveLength(6);
+  expect(highContrastThemes).toHaveLength(11);
   for(const {id} of highContrastThemes) {
     const theme=getTheme(id);
     expect(theme.highContrast).toBe(true);expect(normalizeThemeId(id)).toBe(id);
@@ -57,7 +57,38 @@ it('provides 21:1 interface contrast and readable coloured syntax in all six hig
       expect(background).toBe(theme.bg);expect(contrastRatio(theme.text,background)).toBe(21);
     }
     for(const token of Object.values(theme.syntax))expect(contrastRatio(token,theme.bg)).toBeGreaterThanOrEqual(7);
-    expect(contrastRatio(theme.accent,theme.bg)).toBe(21);
+    expect(contrastRatio(theme.accent,theme.bg)).toBeGreaterThanOrEqual(7);
+    expect(contrastRatio(theme.ui.border,theme.bg)).toBeGreaterThanOrEqual(7);
     expect(theme.ui.gutter).toBe(theme.text);expect(theme.ui.dim).toBe(theme.text);
+  }
+});
+
+
+it('keeps coloured button text readable throughout both static gradients', () => {
+  const gradientThemes = THEMES.filter(theme => theme.accentGradient);
+  expect(gradientThemes.map(theme => theme.id)).toEqual(['high-contrast-spectrum', 'high-contrast-sunset']);
+  for (const theme of gradientThemes) {
+    expect(cssVariables(theme)['--accent-fill']).toContain('linear-gradient(');
+    const foreground = contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000';
+    const stops = theme.accentGradient!;
+    for (let segment = 1; segment < stops.length; segment++) {
+      for (let sample = 0; sample <= 100; sample++) {
+        const background = mix(stops[segment - 1]!, stops[segment]!, sample / 100);
+        expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(7);
+        expect(contrastRatio(background, theme.bg)).toBeGreaterThanOrEqual(7);
+      }
+    }
+  }
+});
+
+it('preserves the original black and white high-contrast options alongside coloured accents', () => {
+  expect(getTheme('high-contrast-dark').accent).toBe('#ffffff');
+  expect(getTheme('high-contrast-light').accent).toBe('#000000');
+  for (const id of ['high-contrast-red', 'high-contrast-blue', 'high-contrast-yellow', 'high-contrast-violet', 'high-contrast-ocean', 'high-contrast-ink', 'high-contrast-forest']) {
+    const theme = getTheme(id);
+    expect(theme.highContrast).toBe(true);
+    expect(theme.accent).not.toBe(theme.text);
+    expect(cssVariables(theme)['--accent-fill']).toBe(theme.accent);
+    expect(contrastRatio('#ffffff', theme.accent) >= 7 || contrastRatio('#000000', theme.accent) >= 7).toBe(true);
   }
 });

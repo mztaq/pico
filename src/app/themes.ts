@@ -31,7 +31,7 @@ export interface ThemeSeed {
   id: ThemeId;
   name: string;
   appearance: Appearance;
-  /** Pure black/white interface surfaces and foregrounds. */
+  /** Maximum-contrast base text, with optional coloured accents. */
   highContrast?: boolean;
   /** Editor and application background. */
   bg: string;
@@ -41,6 +41,8 @@ export interface ThemeSeed {
   muted: string;
   /** Buttons, focus rings, selection and the active line. */
   accent: string;
+  /** Static gradient stops for buttons and accent previews. */
+  accentGradient?: string[];
   syntax: SyntaxColors;
 }
 
@@ -118,23 +120,50 @@ function isHex(value: string): boolean {
 
 const seeds: ThemeSeed[] = [
   {
+    id: 'high-contrast-red', name: 'High Contrast Red', appearance: 'dark', highContrast: true,
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ff9999',
+    syntax: { keyword: '#ff9999', type: '#ffff99', variable: '#ffffff', func: '#00ffff', number: '#ffcc99', string: '#00ff00', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ff99ff' },
+  },
+  {
+    id: 'high-contrast-blue', name: 'High Contrast Blue', appearance: 'dark', highContrast: true,
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#82baff',
+    syntax: { keyword: '#82baff', type: '#00ffff', variable: '#ffffff', func: '#ffff99', number: '#ffcc99', string: '#00ff00', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ff99ff' },
+  },
+  {
+    id: 'high-contrast-yellow', name: 'High Contrast Yellow', appearance: 'dark', highContrast: true,
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ffe45e',
+    syntax: { keyword: '#ffe45e', type: '#00ffff', variable: '#ffffff', func: '#00ff00', number: '#ffff99', string: '#ffcc99', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ff99ff' },
+  },
+  {
+    id: 'high-contrast-spectrum', name: 'High Contrast Spectrum', appearance: 'dark', highContrast: true,
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ff99ff',
+    accentGradient: ['#ff99ff', '#00ffff', '#ffff99'],
+    syntax: { keyword: '#ff99ff', type: '#00ffff', variable: '#ffffff', func: '#ffff99', number: '#ffcc99', string: '#00ff00', comment: '#cccccc', operator: '#00ffff', punctuation: '#ffffff', bool: '#ffff00' },
+  },
+  {
+    id: 'high-contrast-sunset', name: 'High Contrast Sunset', appearance: 'dark', highContrast: true,
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ff9999',
+    accentGradient: ['#ff9999', '#ffcc99', '#ffff99'],
+    syntax: { keyword: '#ff9999', type: '#ffcc99', variable: '#ffffff', func: '#ffff99', number: '#ff99ff', string: '#00ff00', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#00ffff' },
+  },
+  {
     id: 'high-contrast-violet', name: 'High Contrast Violet', appearance: 'dark', highContrast: true,
-    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ffffff',
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ff99ff',
     syntax: { keyword: '#ff99ff', type: '#00ffff', variable: '#ffffff', func: '#ffff99', number: '#ffcc99', string: '#00ff00', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ffff00' },
   },
   {
     id: 'high-contrast-ocean', name: 'High Contrast Ocean', appearance: 'dark', highContrast: true,
-    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ffffff',
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#00ffff',
     syntax: { keyword: '#00ffff', type: '#ffff99', variable: '#ffffff', func: '#00ff00', number: '#ff99ff', string: '#ffcc99', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ffff00' },
   },
   {
     id: 'high-contrast-ink', name: 'High Contrast Ink', appearance: 'light', highContrast: true,
-    bg: '#ffffff', surface: '#ffffff', text: '#000000', muted: '#000000', accent: '#000000',
+    bg: '#ffffff', surface: '#ffffff', text: '#000000', muted: '#000000', accent: '#660066',
     syntax: { keyword: '#660066', type: '#000080', variable: '#000000', func: '#005500', number: '#6b3000', string: '#800000', comment: '#333333', operator: '#000000', punctuation: '#000000', bool: '#550055' },
   },
   {
     id: 'high-contrast-forest', name: 'High Contrast Forest', appearance: 'light', highContrast: true,
-    bg: '#ffffff', surface: '#ffffff', text: '#000000', muted: '#000000', accent: '#000000',
+    bg: '#ffffff', surface: '#ffffff', text: '#000000', muted: '#000000', accent: '#005500',
     syntax: { keyword: '#005500', type: '#6b3000', variable: '#000000', func: '#000080', number: '#660066', string: '#800000', comment: '#333333', operator: '#000000', punctuation: '#000000', bool: '#550055' },
   },
   {
@@ -274,12 +303,12 @@ function buildTheme(seed: ThemeSeed): PicoTheme {
     ...seed,
     ui: {
       surfaceRaised: bg, surfaceHover: bg, surfaceInput: bg,
-      border: text, borderSoft: text, dim: text,
+      border: accent, borderSoft: accent, dim: text,
       accentStrong: accent, accentSoft: alpha(accent, 0),
       gutter: text, gutterActive: text, lineHighlight: alpha(accent, 0),
-      selection: alpha(accent, 0.3), cursor: text,
+      selection: alpha(accent, 0.3), cursor: accent,
       indentGuide: alpha(text, 0.65), indentGuideActive: text,
-      matchBracket: alpha(accent, 0.2), tooltipBg: bg, tooltipBorder: text,
+      matchBracket: alpha(accent, 0.2), tooltipBg: bg, tooltipBorder: accent,
     },
   };
   return {
@@ -326,6 +355,10 @@ export function normalizeThemeId(value: unknown): ThemeId {
   return DEFAULT_THEME_ID;
 }
 
+export function accentFill(theme: ThemeSeed): string {
+  return theme.accentGradient ? `linear-gradient(120deg, ${theme.accentGradient.join(', ')})` : theme.accent;
+}
+
 /** Theme values that the stylesheet consumes as CSS custom properties. */
 export function cssVariables(theme: PicoTheme): Record<string, string> {
   const { ui, syntax } = theme;
@@ -342,6 +375,7 @@ export function cssVariables(theme: PicoTheme): Record<string, string> {
     '--muted': theme.muted,
     '--dim': ui.dim,
     '--accent': theme.accent,
+    '--accent-fill': accentFill(theme),
     '--accent-strong': ui.accentStrong,
     '--accent-soft': ui.accentSoft,
     '--syntax-keyword': syntax.keyword,
