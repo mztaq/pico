@@ -19,6 +19,8 @@ import { FloatingPanel } from './components/FloatingPanel';
 import { ResizeHandle } from './components/ResizeHandle';
 import { ThemePicker } from './components/ThemePicker';
 import { GuidedTutorial } from './components/GuidedTutorial';
+import { TutorialOffer } from './components/TutorialOffer';
+import { inputEasterEgg } from './inputEasterEgg';
 import { HighlightedCode } from './components/HighlightedCode';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
 import '../app/styles/app.css';
@@ -64,7 +66,11 @@ export default function App() {
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [picoGreeting, setPicoGreeting] = useState(false);
-  const [tutorialOfferOpen, setTutorialOfferOpen] = useState(false);
+  const [tutorialOfferOpen, setTutorialOfferOpen] = useState(() => {
+    try { return Number(localStorage.getItem('pico.visitCount.v1') ?? '0') === 0; }
+    catch { return false; }
+  });
+  const visitRecorded = useRef(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
@@ -113,10 +119,12 @@ export default function App() {
     return () => { if (previousFocus?.isConnected) previousFocus.focus(); };
   }, [referenceExpanded, settings.referenceVisible, tutorialOpen]);
   useEffect(() => {
+    if (visitRecorded.current) return;
+    visitRecorded.current = true;
     try {
       const visits = Number(localStorage.getItem('pico.visitCount.v1') ?? '0') + 1;
       localStorage.setItem('pico.visitCount.v1', String(visits));
-      if (visits <= 2) setTutorialOfferOpen(true);
+      if (visits === 1) setTutorialOfferOpen(true);
     } catch { /* On blocked storage, the app remains usable without onboarding. */ }
   }, []);
   useEffect(() => {
@@ -126,7 +134,7 @@ export default function App() {
   }, [theme]);
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (tutorialOpen) return;
+      if (tutorialOpen || tutorialOfferOpen) return;
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') { event.preventDefault(); runProgram(); }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); try { saveProjects(projects, activeId); setSaveState('saved'); } catch { setSaveState('local-only'); } }
       if (event.key === 'Escape') { setSettingsOpen(false); setFileMenuOpen(false); setReferenceExpanded(false); }
@@ -243,7 +251,8 @@ export default function App() {
   function stopExecution() { jobRef.current?.cancel(); }
   function submitConsoleInput() {
     if (!pendingInput || !jobRef.current?.provideInput(pendingInput.id, inputValue)) return;
-    setConsoleEntries(entries => [...entries, { kind: 'input', text: inputValue }]);
+    const message = inputEasterEgg(inputValue);
+    setConsoleEntries(entries => [...entries, { kind: 'input', text: inputValue }, ...(message ? [{ kind: 'note' as const, text: message }] : [])]);
     setPendingInput(null); setInputValue('');
   }
   function reorderPanels(target: PanelKey) { if (!draggedPanel || draggedPanel === target) return; const order = [...settings.panelOrder]; const from = order.indexOf(draggedPanel); const to = order.indexOf(target); if (from < 0 || to < 0) return; order.splice(from, 1); order.splice(to, 0, draggedPanel); changeSettings({ panelOrder: order }); setDraggedPanel(null); }
@@ -306,7 +315,7 @@ export default function App() {
   const currentDoc = documentationFor(selectedDoc) ?? 'Select a Cambridge pseudocode keyword to read its quick explanation.';
 
   return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--sidebar-width': `${settings.sidebarWidth}px`, '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
-    <header className="topbar" inert={tutorialOpen}>
+    <header className="topbar" inert={tutorialOpen || tutorialOfferOpen}>
       <button className="brand-lockup" title="About Pico" aria-label="Open Pico developer credits" onClick={() => setCreditsOpen(true)}><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">PSEUDOCODE STUDIO</span></button>
       <div className="topbar-divider" />
       <div className="topbar-crumb"><FolderOpen size={14} /><span>Workspace</span><span className="crumb-slash">/</span><span className="crumb-active">Cambridge Core</span><ChevronDown size={12} /></div>
@@ -334,7 +343,7 @@ export default function App() {
       <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
     </header>
 
-    <div inert={tutorialOpen} className={`ide-shell sidebar-${settings.sidebarSide} dock-${layout.dockSide} ${(referenceExpanded || (tutorialOpen && tutorialStep === 4)) ? 'reference-open' : ''}`}>
+    <div inert={tutorialOpen || tutorialOfferOpen} className={`ide-shell ${settings.sidebarVisible ? '' : 'sidebar-hidden'} sidebar-${settings.sidebarSide} dock-${layout.dockSide} ${(referenceExpanded || (tutorialOpen && tutorialStep === 4)) ? 'reference-open' : ''}`}>
       {settings.sidebarVisible && <aside className="project-sidebar">
         <div className="sidebar-head"><span>WORKSPACE</span><button className="small-icon-button" onClick={createBlankProject} title="New project" aria-label="New project"><Plus size={15} /></button></div>
         <div className="side-section-label"><span>PROJECTS</span><span className="count-pill">{projects.length}</span></div>
@@ -403,9 +412,9 @@ export default function App() {
       </main>
     </div>
 
-    {tutorialOfferOpen && <div className="tutorial-offer" role="dialog" aria-label="Pico tutorial offer"><div><strong>New to Pico?</strong><small>Take a quick tour of the workspace.</small></div><div className="tutorial-offer-actions"><button className="subtle-button" onClick={() => setTutorialOfferOpen(false)}>Not now</button><button className="primary-small" onClick={startTutorial}>Show tutorial</button></div></div>}
+    {tutorialOfferOpen && <TutorialOffer onStart={startTutorial} onDismiss={() => setTutorialOfferOpen(false)} />}
     {tutorialOpen && <GuidedTutorial step={tutorialStep} onStep={goToTutorialStep} onClose={closeTutorial} onReference={() => { closeTutorial(); openReference(); }} />}
-    <footer className="statusbar" inert={tutorialOpen}><div className="attribution"><span className="credit-item"><span>Deployed by</span> <strong>Mustaqim</strong> <small>11 Boys Red</small></span><span className="credit-divider" aria-hidden="true">·</span><span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span></div></footer>
+    <footer className="statusbar" inert={tutorialOpen || tutorialOfferOpen}><div className="attribution"><span className="credit-item"><span>Deployed by</span> <strong>Mustaqim</strong> <small>11 Boys Red</small></span><span className="credit-divider" aria-hidden="true">·</span><span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span></div></footer>
     {historyOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setHistoryOpen(false)}><div className="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title" onClick={event => event.stopPropagation()}><div className="input-modal-head"><div><strong id="history-title">Project history</strong><small>{activeProject.name} · browser-local snapshots</small></div><button className="icon-button quiet" onClick={() => setHistoryOpen(false)} aria-label="Close history"><X size={15} /></button></div><div className="history-actions"><button className="primary-small" onClick={saveSnapshot}><History size={13} /> Save snapshot</button></div>{history.length === 0 ? <div className="history-empty">No snapshots yet. Save one before experimenting with a big change.</div> : <div className="history-list">{history.map(version => <div className="history-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()} · {version.files.length} file{version.files.length === 1 ? '' : 's'}</small></div><button className="subtle-button" onClick={() => restoreSnapshot(version)}>Restore</button></div>)}</div>}</div></div>}
     {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>A Cambridge pseudocode studio made with care.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a> or <a href="mailto:b03661@nbabarwa.com">b03661@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
   </div>;

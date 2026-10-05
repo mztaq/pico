@@ -33,5 +33,6 @@
 .pico-app[data-high-contrast="true"] :where(.panel-resize-handle:hover, .panel-resize-handle:focus-visible, .panel-resize-handle.is-dragging) .resize-handle-grip { background: var(--accent); }
 
 .pico-app[data-high-contrast="true"] .switch.checked > span { background: var(--on-accent); }
+.pico-app[data-high-contrast="true"] .console-entry-note { background: var(--bg); border-color: var(--text); }
 
 .pico-app[data-high-contrast="true"] :where(button:hover) { outline: 1px solid var(--text); outline-offset: 1px; }

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createInteractiveSession, runRequests, type InputMessage, type WorkerReply, type WorkerRequest } from '../runtime/worker';
@@ -137,9 +137,88 @@ describe('workspace execution integration',()=>{
     expect(worker.terminated).toBe(true);expect(container.querySelector('.console-input-form')).toBeNull();
     expect(container.querySelector('.output-line')).toBeNull();
   });
+  it.each([
+    ['Amar','These are my creators, Amar the developer, and Mustaqim the deployer'],
+    ['Mustaqim','These are my creators, Amar the developer, and Mustaqim the deployer'],
+    ['Mr.Boyle','Hello, He is my computer science teacher'],
+    ['Mr. Boyle','Hello, He is my computer science teacher'],
+    ['Boyle','Hello, He is my computer science teacher'],
+    ['Fore','Hello, He is the head of computer science and ICT'],
+    ['Mr.Fore','Hello, He is the head of computer science and ICT'],
+    ['Mr. Fore','Hello, He is the head of computer science and ICT'],
+    ['  mUsTaQiM  ','These are my creators, Amar the developer, and Mustaqim the deployer'],
+  ])('shows the %s Easter egg while preserving the exact input and program output',async(value,message)=>{
+    const code='DECLARE Name : STRING\nINPUT Name\nOUTPUT Name';
+    await typeValue(codeEditor(),code);
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await typeValue(consoleInput(),value);await submitInput();
+    expect(container.querySelector('.console-entry-note > span:last-child')?.textContent).toBe(message);
+    expect(container.querySelector('.console-entry-input > span:last-child')?.textContent).toBe(value);
+    expect([...container.querySelectorAll('.output-line:not(.console-entry-input) > span:last-child')].map(line=>line.textContent)).toEqual([value]);
+    expect(codeEditor().value).toBe(code);
+  });
+  it('leaves ordinary input alone and does not match names embedded in other text',async()=>{
+    await typeValue(codeEditor(),'DECLARE Text : STRING\nINPUT Text\nOUTPUT Text');
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await typeValue(consoleInput(),'Amar and Mustaqim are here');await submitInput();
+    expect(container.querySelector('.console-entry-note')).toBeNull();
+    expect(container.querySelector('.output-line:last-child > span:last-child')?.textContent).toBe('Amar and Mustaqim are here');
+  });
 });
 
 describe('guided help and readable reference',()=>{
+  it('shows a first-visit modal, traps focus, and starts the normal tutorial',async()=>{
+    await act(async()=>root.unmount());
+    localStorage.removeItem('pico.visitCount.v1');
+    root=createRoot(container);
+    await act(async()=>root.render(<StrictMode><App/></StrictMode>));
+    const code=codeEditor().value;
+    const offer=container.querySelector('.tutorial-offer')!;
+    expect(offer.getAttribute('aria-modal')).toBe('true');
+    expect(container.querySelector('.tutorial-offer-backdrop')).not.toBeNull();
+    expect(container.querySelector('#tutorial-offer-title')?.textContent).toBe('New to Pico?');
+    expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(true);
+    expect(container.querySelector('.topbar')?.hasAttribute('inert')).toBe(true);
+    expect(container.querySelector('footer')?.hasAttribute('inert')).toBe(true);
+    expect(document.activeElement).toBe(button('Show tutorial'));
+    expect(localStorage.getItem('pico.visitCount.v1')).toBe('1');
+    await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true})));
+    expect(document.activeElement).toBe(button('Not now'));
+    await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true})));
+    expect(document.activeElement).toBe(button('Show tutorial'));
+    await act(async()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true})));
+    expect(BrowserWorker.pending).toHaveLength(0);
+    await click(button('Show tutorial'));
+    expect(container.querySelector('.tutorial-offer-backdrop')).toBeNull();
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Close tutorial');
+    for(let i=0;i<6;i++)await click(button('Next'));
+    await click(button('Finish tour'));
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Your next idea starts here.');
+    await click(button('Start coding'));
+    expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
+    expect(codeEditor().value).toBe(code);
+    await act(async()=>root.unmount());root=createRoot(container);
+    await act(async()=>root.render(<StrictMode><App/></StrictMode>));
+    expect(container.querySelector('.tutorial-offer')).toBeNull();
+    expect(localStorage.getItem('pico.visitCount.v1')).toBe('2');
+  });
+  it('dismisses the welcome with Escape and leaves Help available',async()=>{
+    await act(async()=>root.unmount());localStorage.removeItem('pico.visitCount.v1');root=createRoot(container);
+    await act(async()=>root.render(<App/>));
+    await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+    expect(container.querySelector('.tutorial-offer')).toBeNull();
+    expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
+    await click(button('Help'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
+  });
+  it('dismisses the welcome with Not now and restores the workspace',async()=>{
+    await act(async()=>root.unmount());localStorage.removeItem('pico.visitCount.v1');root=createRoot(container);
+    await act(async()=>root.render(<App/>));
+    await click(button('Not now'));
+    expect(container.querySelector('.tutorial-offer-backdrop')).toBeNull();
+    expect(container.querySelector('.topbar')?.hasAttribute('inert')).toBe(false);
+    expect(container.querySelector('.tutorial-layer')).toBeNull();
+  });
   it('walks through highlights, reaches the end screen, and restores the workspace without editing code',async()=>{
     const editor=container.querySelector('textarea')!.value;
     await click(button('Help'));

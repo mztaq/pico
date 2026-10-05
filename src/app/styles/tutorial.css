@@ -1,7 +1,8 @@
-.tutorial-offer { position: fixed; top: 68px; right: 18px; z-index: 80; width: min(340px, calc(100vw - 28px)); padding: 18px; border: 1px solid var(--accent); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 18px 55px rgba(0,0,0,.35); }
-.tutorial-offer strong, .tutorial-offer small { display: block; }
-.tutorial-offer strong { color: var(--text); font-size: 17px; }
-.tutorial-offer small { margin-top: 6px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.tutorial-offer-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.68); }
+.tutorial-offer { position: relative; width: min(360px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 24px; border: 1px solid var(--accent); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 18px 55px rgba(0,0,0,.35); }
+.tutorial-offer h2 { margin: 0; color: var(--text); font-size: 22px; }
+.tutorial-offer p { margin: 8px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.tutorial-offer button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .tutorial-offer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .tutorial-offer-actions button { min-height: 40px; font-size: 14px; }
 .tutorial-layer { position: fixed; inset: 0; z-index: 200; isolation: isolate; }
