@@ -27,6 +27,7 @@ export interface PicoProject {
 const PROJECTS_KEY = 'pico.projects.v1';
 const ACTIVE_KEY = 'pico.activeProject.v1';
 const starter = examples[1]!;
+const sourceHeader = '// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar';
 function makeFile(
   name: string,
   code: string,
@@ -40,11 +41,12 @@ function makeProject(
   code: string,
   tests: TestCase[],
 ): PicoProject {
-  const file = makeFile('main.pico', code, `${id}-main`);
+  const source = `${sourceHeader}\n\n${code}`;
+  const file = makeFile('main.pico', source, `${id}-main`);
   return {
     id,
     name,
-    code,
+    code: source,
     files: [file],
     activeFileId: file.id,
     tests,

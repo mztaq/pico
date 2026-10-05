@@ -99,6 +99,11 @@
 .file-tab-new { width: 30px; height: 30px; }
 .project-title-input, .file-extension { font-size: 13px; }
 
+.editor-card-foot { height: auto; min-height: 38px; flex: 0 0 auto; padding: 8px 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.editor-card-foot > span { flex-wrap: wrap; gap: 6px; }
+.editor-card-foot kbd { padding: 2px 5px; color: var(--text); border-color: var(--border); font-size: 12px; }
+.editor-card-foot svg { width: 16px; height: 16px; flex-shrink: 0; }
+
 .reference-example { margin-top: 16px; }
 .reference-example pre { margin: 8px 0 0; padding: 10px; overflow-x: auto; background: var(--surface-raised); border-radius: 6px; color: var(--text); font-family: var(--font-code); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; white-space: pre; user-select: text; }
 .reference-example .reference-input-hint { margin: 8px 0 0; color: var(--text); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.5; }
