@@ -138,7 +138,7 @@ describe('workspace execution integration',()=>{
     expect(container.querySelector('.output-line')).toBeNull();
   });
   it.each([
-    ['Amar','The dev who coded me day and night ☾'],
+    ['Amar','The dev who engineered me day and night ☾'],
     ['Mustaqim','The soul who unleashed me to the World Wide Web 🌏︎'],
     ['Mr.Boyle','The Computer Science teacher who backed my creators and their work'],
     ['Mr. Boyle','The Computer Science teacher who backed my creators and their work'],

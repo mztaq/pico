@@ -1,4 +1,4 @@
-const amar = 'The dev who coded me day and night ☾';
+const amar = 'The dev who engineered me day and night ☾';
 const mustaqim = 'The soul who unleashed me to the World Wide Web 🌏︎';
 const teacher = 'The Computer Science teacher who backed my creators and their work';
 const head = 'The head of Computer Science and ICT at our school';
