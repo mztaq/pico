@@ -191,6 +191,10 @@ function checkBlock(
         break;
       }
       case 'ForStatement': {
+        // FOR introduces an INTEGER counter when there is no existing binding.
+        if (!symbols.get(s.name)) {
+          symbols.set(s.name, { type: 'INTEGER', arrayDepth: 0, constant: false });
+        }
         const counter = symbol(symbols, s.name, s);
         if (counter.arrayDepth || counter.type !== 'INTEGER')
           fail(`FOR counter ${s.name} must be an INTEGER scalar.`, s);

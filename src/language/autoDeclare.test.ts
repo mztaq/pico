@@ -11,10 +11,10 @@ describe('autoDeclareVariables', () => {
     expect(autoDeclareVariables('DECLARE Count : INTEGER\nCount ← 1')).toBe('DECLARE Count : INTEGER\nCount ← 1');
   });
 
-  it('declares an undeclared FOR counter as INTEGER', () => {
+  it('keeps implicit FOR counters without inserting a declaration', () => {
     const source = 'FOR Index ← 1 TO 3\n    OUTPUT Index\nNEXT Index';
     const inferred = autoDeclareVariables(source);
-    expect(inferred).toBe(`DECLARE Index : INTEGER\n${source}`);
+    expect(inferred).toBe(source);
     expect(() => compile(inferred)).not.toThrow();
   });
 
