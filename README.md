@@ -33,6 +33,12 @@ requires declared variables, except FOR counters. A FOR loop introduces an INTEG
 when it has not already been declared, even with Auto-declare disabled. Explicit counters
 must still be mutable INTEGER scalars.
 
+Help opens **Pico in a minute**, a seven-step spotlight tour with Back/Next navigation,
+keyboard exit, and a completion screen. The tour preserves code and restores the previous layout.
+The quick reference has larger keyword buttons, saved 14–20px text controls, a draggable divider
+on wide screens, and an accessible Reference button that opens a drawer on smaller screens.
+New source tabs use `.pico`; old `.pseudocode` names are migrated when loading projects or snapshots.
+
 ## The language
 
 `DECLARE`/`CONSTANT`, typed `INPUT`/`OUTPUT`, `IF`/`ELSE`/`ENDIF` (including `THEN` on the next
