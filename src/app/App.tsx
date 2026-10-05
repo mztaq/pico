@@ -19,6 +19,7 @@ import { ResizeHandle } from './components/ResizeHandle';
 import { ThemePicker } from './components/ThemePicker';
 import { GuidedTutorial } from './components/GuidedTutorial';
 import { HighlightedCode } from './components/HighlightedCode';
+import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
 import '../app/styles/app.css';
 import './styles/editor-folding.css';
 import './styles/workspace-upgrades.css';
@@ -28,12 +29,12 @@ import './styles/resizable-workspace.css';
 import './styles/branding-adjustments.css';
 import './styles/readability.css';
 import './styles/high-contrast.css';
+import './styles/motion.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
   { key: 'flowchart', title: 'Flowchart' }, { key: 'coverage', title: 'Coverage' }, { key: 'ast', title: 'AST' }, { key: 'tokens', title: 'Tokens' },
 ];
-const referenceTerms = ['DECLARE', 'CONSTANT', 'INPUT', 'OUTPUT', 'IF', 'THEN', 'ELSE', 'ENDIF', 'WHILE', 'DO', 'ENDWHILE', 'FOR', 'TO', 'STEP', 'NEXT', 'REPEAT', 'UNTIL', 'CASE', 'OF', 'OTHERWISE', 'ENDCASE', 'PROCEDURE', 'FUNCTION', 'CALL', 'RETURN', 'ARRAY', 'INTEGER', 'REAL', 'CHAR', 'STRING', 'BOOLEAN', 'AND', 'OR', 'NOT', 'DIV', 'MOD', 'ROUND', 'LENGTH', 'SUBSTRING', 'UCASE', 'LCASE', 'UPPER', 'LOWER', 'RANDOM', 'OPENFILE', 'READFILE', 'WRITEFILE', 'CLOSEFILE'];
 
 type SaveState = 'saved' | 'saving' | 'local-only';
 interface ParseState { ast: Program | null; tokens: ReturnType<typeof compile>['tokens']; error: unknown | null; }
@@ -55,7 +56,7 @@ export default function App() {
   const [executionError, setExecutionError] = useState<ReturnType<typeof friendlyError> | null>(null);
   const [debugIndex, setDebugIndex] = useState(0);
   const [testOutcomes, setTestOutcomes] = useState<Record<string, TestOutcome>>({});
-  const [selectedDoc, setSelectedDoc] = useState('OUTPUT');
+  const [selectedDoc, setSelectedDoc] = useState<ReferenceKeyword>('OUTPUT');
   const [docSearch, setDocSearch] = useState('');
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [inputPromptOpen, setInputPromptOpen] = useState(false);
@@ -295,6 +296,7 @@ export default function App() {
   const orderedTabs = settings.panelOrder.map(key => panelTabs.find(tab => tab.key === key)).filter(Boolean) as typeof panelTabs;
   const shownTerms = referenceTerms.filter(term => term.includes(docSearch.trim().toUpperCase()));
   const saveText = saveState === 'saving' ? 'Saving…' : saveState === 'local-only' ? 'Storage unavailable' : 'Saved on this device';
+  const currentExample: ReferenceExample = referenceExamples[selectedDoc];
   const currentDoc = documentationFor(selectedDoc) ?? 'Select a Cambridge pseudocode keyword to read its quick explanation.';
 
   return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--sidebar-width': `${settings.sidebarWidth}px`, '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
@@ -370,25 +372,11 @@ export default function App() {
             <div className="reference-head"><div><BookOpen size={15} /><strong>Quick reference</strong></div><button className="reference-close" aria-label="Close quick reference" onClick={closeReference}><X size={18} /></button></div>
             <div className="reference-controls"><span>CAMBRIDGE · <span>Drag the divider to resize</span></span><div><button aria-label="Decrease reference text size" disabled={settings.referenceFontSize <= 12} onClick={() => changeSettings({ referenceFontSize: settings.referenceFontSize - 1 })}>A−</button><output aria-label="Reference text size">{settings.referenceFontSize}px</output><button aria-label="Increase reference text size" disabled={settings.referenceFontSize >= 18} onClick={() => changeSettings({ referenceFontSize: settings.referenceFontSize + 1 })}>A+</button></div></div>
             <div className="reference-search"><Search size={13} /><input value={docSearch} onChange={event => setDocSearch(event.target.value)} placeholder="Find a keyword" aria-label="Search Cambridge keywords" /></div>
-            <div className="reference-keywords"><button className="syntax-cheat-button" onClick={() => setDocSearch('')}>Syntax cheat sheet</button>{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} aria-pressed={selectedDoc === term} onClick={() => setSelectedDoc(term)}>{term}</button>)}{!shownTerms.length && <p className="reference-no-results">No keywords found. Try OUTPUT or FOR.</p>}</div>
-            <div className="reference-explanation"><span className="mini-label">KEYWORD</span><strong>{selectedDoc}</strong><p>{currentDoc}</p></div><details className="syntax-cheat-sheet" open><summary>Syntax cheat sheet · examples</summary><pre><HighlightedCode code={`DECLARE Name : STRING
-Name ← "Pico"
-
-IF Score >= 50 THEN
-    OUTPUT "Pass"
-ELSE
-    OUTPUT "Try again"
-ENDIF
-
-WHILE Number <> -1 DO
-    INPUT Number
-ENDWHILE
-
-CASE OF Choice
-1 : OUTPUT "One"
-OTHERWISE
-    OUTPUT "Other"
-ENDCASE`} /></pre></details>
+            <div className="reference-keywords">{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} aria-pressed={selectedDoc === term} onClick={() => setSelectedDoc(term)}>{term}</button>)}{!shownTerms.length && <p className="reference-no-results">No keywords found. Try OUTPUT or FOR.</p>}</div>
+            <div className="reference-explanation" key={selectedDoc}>
+              <span className="mini-label">KEYWORD</span><strong>{selectedDoc}</strong><p>{currentDoc}</p>
+              <div className="reference-example"><span className="mini-label">EXAMPLE</span><pre aria-label={`${selectedDoc} code example`}><HighlightedCode code={currentExample.code} /></pre>{currentExample.inputs && <p className="reference-input-hint">Example input: <code>{currentExample.inputs.join(', ')}</code></p>}</div>
+            </div>
             <div className="reference-scope"><div className="scope-icon"><Sparkles size={14} /></div><div><strong>A focused subset</strong><p>Cambridge declarations, selection, CASE, all loop styles, routines, arrays, files and booklet library routines.</p></div></div>
             <div className={`hover-doc-setting ${settings.hoverDocs ? 'enabled' : ''}`}><span className="hover-setting-icon">⌕</span><span><b>Hover documentation</b><small>Pause on a keyword in the editor</small></span><Toggle checked={settings.hoverDocs} onChange={() => changeSettings({ hoverDocs: !settings.hoverDocs })} /></div>
           </aside>}
@@ -397,7 +385,7 @@ ENDCASE`} /></pre></details>
         <ResizeHandle axis={layout.dockSide === 'right' ? 'x' : 'y'} label="Resize tool panel" className="dock-resize-handle" onResize={resizeDock} />
         <section className="tool-dock" data-tour="tools">
           <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}{tab.key === 'coverage' && result && <small>{result.coverage.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
-          <div className="dock-content" role="tabpanel">
+          <div className="dock-content" role="tabpanel" key={activePanel}>
             {activePanel === 'console' && <><ConsolePanel output={result?.output ?? []} error={executionError ?? parseError} stdin={inputValues} onInput={setInputValues} ran={Boolean(result)} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
             {activePanel === 'debugger' && <DebuggerPanel trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} truncated={result?.traceTruncated} error={executionError?.message} />}
             {activePanel === 'tests' && <TestsPanel tests={activeProject.tests} outcomes={testOutcomes} onRun={runTests} onUpdate={updateTest} onAdd={addTest} onRemove={removeTest} running={running} />}
