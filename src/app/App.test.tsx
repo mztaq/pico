@@ -140,14 +140,14 @@ describe('workspace execution integration',()=>{
   it.each([
     ['Amar','The dev who engineered me day and night ☾'],
     ['Mustaqim','The soul who unleashed me to the World Wide Web 🌏︎'],
-    ['Mr.Boyle','The Computer Science teacher who backed my creators and their work 📚'],
-    ['Mr. Boyle','The Computer Science teacher who backed my creators and their work 📚'],
-    ['Boyle','The Computer Science teacher who backed my creators and their work 📚'],
-    ['Mr Boyle','The Computer Science teacher who backed my creators and their work 📚'],
-    ['Fore','The head of Computer Science and ICT at our school 💻'],
-    ['mr fore','The head of Computer Science and ICT at our school 💻'],
-    ['Mr.Fore','The head of Computer Science and ICT at our school 💻'],
-    ['Mr. Fore','The head of Computer Science and ICT at our school 💻'],
+    ['Mr.Boyle','The Computer Science teacher who backed my creators and their work 🕮'],
+    ['Mr. Boyle','The Computer Science teacher who backed my creators and their work 🕮'],
+    ['Boyle','The Computer Science teacher who backed my creators and their work 🕮'],
+    ['Mr Boyle','The Computer Science teacher who backed my creators and their work 🕮'],
+    ['Fore','The head of Computer Science and ICT at our school 🖳'],
+    ['mr fore','The head of Computer Science and ICT at our school 🖳'],
+    ['Mr.Fore','The head of Computer Science and ICT at our school 🖳'],
+    ['Mr. Fore','The head of Computer Science and ICT at our school 🖳'],
     ['  mUsTaQiM  ','The soul who unleashed me to the World Wide Web 🌏︎'],
   ])('shows the %s Easter egg while preserving the exact input and program output',async(value,message)=>{
     const code='DECLARE Name : STRING\nINPUT Name\nOUTPUT Name';
