@@ -26,6 +26,15 @@ export interface RunResult {
   files: VirtualFiles;
   traceTruncated: boolean;
 }
+export interface InputRequest {
+  variable: string;
+  dataType: DataType;
+  line: number;
+  error?: string;
+}
+export type ExecutionEvent = ({ type: 'input' } & InputRequest) | { type: 'output'; text: string };
+export type Execution<T> = Generator<ExecutionEvent, T, string>;
+
 export interface ExecutionOptions {
   files?: VirtualFiles;
   trace?: boolean;
@@ -116,6 +125,7 @@ class Interpreter {
   constructor(
     private readonly inputs: string[],
     private readonly options: ExecutionOptions,
+    private readonly interactive = false,
   ) {
     this.limit = Math.min(100_000, Math.max(1, options.limit ?? 10_000));
     this.files = Object.fromEntries(
@@ -125,7 +135,7 @@ class Interpreter {
       ]),
     );
   }
-  run(program: Program): RunResult {
+  *run(program: Program): Execution<RunResult> {
     for (const s of program.statements) {
       if (s.kind === 'Procedure' || s.kind === 'Function') {
         this.routines.set(s.name.toUpperCase(), {
@@ -136,7 +146,7 @@ class Interpreter {
       }
     }
     try {
-      this.executeBlock(
+      yield* this.executeBlock(
         program.statements.filter(
           (s) => s.kind !== 'Procedure' && s.kind !== 'Function',
         ),
@@ -167,15 +177,17 @@ class Interpreter {
       traceTruncated: this.traceTruncated,
     };
   }
-  private executeBlock(statements: Statement[]): void {
-    for (const s of statements) this.execute(s);
+  private *executeBlock(statements: Statement[]): Execution<void> {
+    for (const s of statements) yield* this.execute(s);
   }
-  private withBlock(statements: Statement[], after?: () => boolean): boolean {
+  private *withBlock(statements: Statement[], condition?: Expression): Execution<boolean> {
     const previous = this.scope;
     this.scope = new Scope(previous);
     try {
-      this.executeBlock(statements);
-      return after?.() ?? false;
+      yield* this.executeBlock(statements);
+      if (!condition) return false;
+      this.record(condition.line, 'UNTIL condition');
+      return this.boolean((yield* this.evaluate(condition)), condition.line);
     } finally {
       this.scope = previous;
     }
@@ -212,7 +224,7 @@ class Interpreter {
     this.coverage.add(s.line);
     this.record(s.line, label);
   }
-  private execute(s: Statement): void {
+  private *execute(s: Statement): Execution<void> {
     this.tick(s, s.kind.replace(/([A-Z])/g, ' $1').trim());
     switch (s.kind) {
       case 'Declaration': {
@@ -237,49 +249,58 @@ class Interpreter {
             s.line,
           );
         this.scope.bindings.set(s.name, {
-          value: this.evaluate(s.value),
+          value: (yield* this.evaluate(s.value)),
           constant: true,
         });
         return;
       case 'Assignment':
-        this.setTarget(s.target, this.evaluate(s.value));
+        yield* this.setTarget(s.target, (yield* this.evaluate(s.value)));
         return;
       case 'Input': {
         const binding = this.binding(s.target.name, s.line);
-        if (this.inputPosition >= this.inputs.length)
-          throw new MissingInputError(
-            s.target.name,
-            binding.type ?? 'STRING',
-            s.line,
-          );
-        this.setTarget(
-          s.target,
-          this.convertInput(
-            this.inputs[this.inputPosition++]!,
-            binding.type ?? 'STRING',
-            s.line,
-          ),
-        );
+        const dataType = binding.type ?? 'STRING';
+        let value: unknown;
+        if (this.interactive) {
+          let error: string | undefined;
+          while (true) {
+            const raw = yield { type: 'input', variable: s.target.name, dataType, line: s.line, error };
+            try {
+              value = this.convertInput(raw, dataType, s.line);
+              break;
+            } catch (failure) {
+              if (!(failure instanceof RuntimeError)) throw failure;
+              error = failure.message;
+            }
+          }
+        } else {
+          if (this.inputPosition >= this.inputs.length)
+            throw new MissingInputError(s.target.name, dataType, s.line);
+          value = this.convertInput(this.inputs[this.inputPosition++]!, dataType, s.line);
+        }
+        yield* this.setTarget(s.target, value);
         return;
       }
-      case 'Output':
-        this.output.push(
-          s.expressions.map((e) => this.format(this.evaluate(e))).join(''),
-        );
+      case 'Output': {
+        const parts: string[] = [];
+        for (const expression of s.expressions) parts.push(this.format((yield* this.evaluate(expression))));
+        const text = parts.join('');
+        this.output.push(text);
+        yield { type: 'output', text };
         return;
+      }
       case 'IfStatement':
-        this.withBlock(
-          this.boolean(this.evaluate(s.condition), s.line)
+        (yield* this.withBlock(
+          this.boolean((yield* this.evaluate(s.condition)), s.line)
             ? s.thenBody
             : s.elseBody,
-        );
+        ));
         return;
       case 'WhileStatement':
         while (true) {
           this.consume(s.line);
-          if (!this.boolean(this.evaluate(s.condition), s.line)) break;
+          if (!this.boolean((yield* this.evaluate(s.condition)), s.line)) break;
           this.record(s.line, 'WHILE condition');
-          this.withBlock(s.body);
+          yield* this.withBlock(s.body);
         }
         return;
       case 'ForStatement': {
@@ -297,9 +318,9 @@ class Interpreter {
             `FOR counter ${s.name} must be an INTEGER scalar.`,
             s.line,
           );
-        const first = this.integer(this.evaluate(s.start), s.line),
-          last = this.integer(this.evaluate(s.end), s.line);
-        const step = s.step ? this.integer(this.evaluate(s.step), s.line) : 1;
+        const first = this.integer((yield* this.evaluate(s.start)), s.line),
+          last = this.integer((yield* this.evaluate(s.end)), s.line);
+        const step = s.step ? this.integer((yield* this.evaluate(s.step)), s.line) : 1;
         if (step === 0)
           throw new RuntimeError('A FOR STEP cannot be zero.', s.line);
         binding.value = first;
@@ -307,7 +328,7 @@ class Interpreter {
           this.consume(s.line);
           binding.value = v;
           this.record(s.line, 'FOR iteration');
-          this.withBlock(s.body);
+          yield* this.withBlock(s.body);
           const next = v + step;
           if (!Number.isSafeInteger(next)) {
             if (step > 0 ? next > last : next < last) break;
@@ -323,29 +344,32 @@ class Interpreter {
       case 'RepeatStatement':
         while (true) {
           this.consume(s.line);
-          const finished = this.withBlock(s.body, () => {
-            this.record(s.condition.line, 'UNTIL condition');
-            return this.boolean(this.evaluate(s.condition), s.line);
-          });
+          const finished = (yield* this.withBlock(s.body, s.condition));
           if (finished) return;
         }
       case 'CaseStatement': {
-        const value = this.evaluate(s.expression);
-        const branch = s.branches.find((b) =>
-          b.selectors.some((selector) => this.evaluate(selector) === value),
-        );
-        this.withBlock(branch?.body ?? s.otherwise);
+        const value = (yield* this.evaluate(s.expression));
+        let body = s.otherwise;
+        search: for (const branch of s.branches) {
+          for (const selector of branch.selectors) {
+            if ((yield* this.evaluate(selector)) === value) {
+              body = branch.body;
+              break search;
+            }
+          }
+        }
+        yield* this.withBlock(body);
         return;
       }
       case 'CallStatement':
-        this.callRoutine(s.name, s.arguments, s.line, false);
+        yield* this.callRoutine(s.name, s.arguments, s.line, false);
         return;
       case 'ReturnStatement':
         if (!s.value)
           throw new RuntimeError('FUNCTION must RETURN a value.', s.line);
-        throw new ReturnSignal(this.evaluate(s.value));
+        throw new ReturnSignal((yield* this.evaluate(s.value)));
       case 'FileStatement':
-        this.fileOp(s);
+        yield* this.fileOp(s);
         return;
       case 'Procedure':
       case 'Function':
@@ -355,12 +379,12 @@ class Interpreter {
         );
     }
   }
-  private callRoutine(
+  private *callRoutine(
     name: string,
     args: Expression[],
     line: number,
     asValue = true,
-  ): unknown {
+  ): Execution<unknown> {
     const routine = this.routines.get(name.toUpperCase());
     if (!routine)
       throw new RuntimeError(
@@ -388,7 +412,7 @@ class Interpreter {
         'recursion',
       );
     // Evaluate all arguments in the caller before introducing any parameter bindings.
-    const values = args.map((argument) => this.evaluate(argument));
+    const values = (yield* this.evaluateArguments(args));
     const caller = this.scope;
     const local = new Scope(this.globals);
     routine.parameters.forEach((p, i) => {
@@ -402,7 +426,7 @@ class Interpreter {
     this.scope = local;
     this.depth++;
     try {
-      this.executeBlock(routine.body);
+      yield* this.executeBlock(routine.body);
       if (routine.returnType)
         throw new RuntimeError(`${name} finished without RETURN.`, line);
       return undefined;
@@ -420,7 +444,7 @@ class Interpreter {
       this.depth--;
     }
   }
-  private fileOp(s: FileStatement): void {
+  private *fileOp(s: FileStatement): Execution<void> {
     if (s.operation === 'OPEN') {
       if (!s.name || !s.mode)
         throw new RuntimeError('OPENFILE needs a filename and mode.', s.line);
@@ -459,7 +483,7 @@ class Interpreter {
       if (handle.mode !== 'WRITE')
         throw new RuntimeError(`${name} is not open FOR WRITE.`, s.line);
       if (!s.value) throw new RuntimeError('WRITEFILE needs a value.', s.line);
-      this.files[name]!.push(this.format(this.evaluate(s.value)));
+      this.files[name]!.push(this.format((yield* this.evaluate(s.value))));
       return;
     }
     if (handle.mode !== 'READ')
@@ -469,7 +493,7 @@ class Interpreter {
     if (raw === undefined)
       throw new RuntimeError(`End of file reached in ${name}.`, s.line, 'eof');
     const binding = this.binding(s.target.name, s.line);
-    this.setTarget(
+    yield* this.setTarget(
       s.target,
       this.convertInput(raw, binding.type ?? 'STRING', s.line),
     );
@@ -511,10 +535,10 @@ class Interpreter {
       );
     return binding;
   }
-  private location(
+  private *location(
     target: Target,
     binding: Binding,
-  ): { array: unknown[]; index: number } {
+  ): Execution<{ array: unknown[]; index: number }> {
     if (!binding.array || binding.array.bounds.length !== target.indexes.length)
       throw new RuntimeError(
         `${target.name} needs ${binding.array?.bounds.length ?? 0} ARRAY indexes.`,
@@ -522,8 +546,8 @@ class Interpreter {
       );
     let array = binding.value as unknown[];
     let index = 0;
-    target.indexes.forEach((expression, dimension) => {
-      const value = this.integer(this.evaluate(expression), target.line);
+    for (const [dimension, expression] of target.indexes.entries()) {
+      const value = this.integer((yield* this.evaluate(expression)), target.line);
       const bound = binding.array!.bounds[dimension]!;
       if (value < bound.start || value > bound.end)
         throw new RuntimeError(
@@ -534,10 +558,10 @@ class Interpreter {
       index = value - bound.start;
       if (dimension + 1 < target.indexes.length)
         array = array[index] as unknown[];
-    });
+    }
     return { array, index };
   }
-  private getTarget(target: Target): unknown {
+  private *getTarget(target: Target): Execution<unknown> {
     const binding = this.binding(target.name, target.line);
     if (!target.indexes.length && binding.array)
       throw new RuntimeError(
@@ -545,7 +569,7 @@ class Interpreter {
         target.line,
       );
     const location = target.indexes.length
-      ? this.location(target, binding)
+      ? (yield* this.location(target, binding))
       : undefined;
     const value = location ? location.array[location.index] : binding.value;
     if (value === null || value === undefined)
@@ -556,7 +580,7 @@ class Interpreter {
       );
     return value;
   }
-  private setTarget(target: Target, value: unknown): void {
+  private *setTarget(target: Target, value: unknown): Execution<void> {
     const binding = this.binding(target.name, target.line);
     if (binding.constant)
       throw new RuntimeError(
@@ -570,7 +594,7 @@ class Interpreter {
       target.name,
     );
     if (target.indexes.length) {
-      const location = this.location(target, binding);
+      const location = (yield* this.location(target, binding));
       location.array[location.index] = value;
     } else {
       if (binding.array)
@@ -644,7 +668,12 @@ class Interpreter {
     }
     return raw;
   }
-  private evaluate(e: Expression): unknown {
+  private *evaluateArguments(args: Expression[]): Execution<unknown[]> {
+    const values: unknown[] = [];
+    for (const argument of args) values.push((yield* this.evaluate(argument)));
+    return values;
+  }
+  private *evaluate(e: Expression): Execution<unknown> {
     switch (e.kind) {
       case 'NumberLiteral':
         if (
@@ -660,19 +689,19 @@ class Interpreter {
       case 'BooleanLiteral':
         return e.value;
       case 'Variable':
-        return this.getTarget({ ...e, indexes: [] });
+        return yield* this.getTarget({ ...e, indexes: [] });
       case 'ArrayAccess':
-        return this.getTarget(e);
+        return yield* this.getTarget(e);
       case 'UnaryExpression':
         return e.operator === 'NOT'
-          ? !this.boolean(this.evaluate(e.operand), e.line)
-          : this.finite(-Number(this.evaluate(e.operand)), e.line);
+          ? !this.boolean((yield* this.evaluate(e.operand)), e.line)
+          : this.finite(-Number((yield* this.evaluate(e.operand))), e.line);
       case 'BinaryExpression':
-        return this.binary(e.operator, e.left, e.right, e.line);
+        return yield* this.binary(e.operator, e.left, e.right, e.line);
       case 'CallExpression':
         return ROUTINES.has(e.name.toUpperCase())
-          ? this.call(e.name.toUpperCase(), e.arguments, e.line)
-          : this.callRoutine(e.name, e.arguments, e.line);
+          ? (yield* this.call(e.name.toUpperCase(), e.arguments, e.line))
+          : (yield* this.callRoutine(e.name, e.arguments, e.line));
     }
   }
   private finite(value: number, line: number): number {
@@ -687,16 +716,16 @@ class Interpreter {
       );
     return value;
   }
-  private binary(
+  private *binary(
     op: string,
     a: Expression,
     b: Expression,
     line: number,
-  ): unknown {
-    const left = this.evaluate(a);
+  ): Execution<unknown> {
+    const left = (yield* this.evaluate(a));
     if (op === 'AND' && !this.boolean(left, line)) return false;
     if (op === 'OR' && this.boolean(left, line)) return true;
-    const right = this.evaluate(b);
+    const right = (yield* this.evaluate(b));
     switch (op) {
       case '+':
         return typeof left === 'string' || typeof right === 'string'
@@ -753,8 +782,8 @@ class Interpreter {
       );
     return this.finite(op === 'DIV' ? Math.floor(a / b) : a % b, line);
   }
-  private call(name: string, args: Expression[], line: number): unknown {
-    const values = args.map((a) => this.evaluate(a));
+  private *call(name: string, args: Expression[], line: number): Execution<unknown> {
+    const values = (yield* this.evaluateArguments(args));
     const need = (count: number) => {
       if (values.length !== count)
         throw new RuntimeError(`${name}() takes ${count} arguments.`, line);
@@ -818,7 +847,14 @@ export function execute(
   inputs: string[] = [],
   options: ExecutionOptions = {},
 ): RunResult {
-  return new Interpreter(inputs, options).run(program);
+  const execution = new Interpreter(inputs, options).run(program);
+  let step = execution.next();
+  while (!step.done) step = execution.next();
+  return step.value;
+}
+/** A generator retains scopes, loop positions, file handles and evaluated values across INPUT. */
+export function executeInteractive(program: Program, options: ExecutionOptions = {}): Execution<RunResult> {
+  return new Interpreter([], options, true).run(program);
 }
 function snapshotCost(value: unknown): number {
   if (Array.isArray(value))

@@ -254,11 +254,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .output-line { min-height: 20px; display: flex; align-items: baseline; gap: 10px; color: #e0e2e9; font-family: var(--font-code); font-size: 11px; white-space: pre-wrap; }
 .output-prompt { color: #93d3b5; }
 .muted { color: #777c8a; }
-.stdin-row { min-height: 34px; padding: 5px 11px; display: flex; align-items: center; gap: 9px; border-top: 1px solid #252832; background: #12141a; }
-.stdin-label { flex: 0 0 auto; color: #7e8391; font-size: 7px; font-weight: 700; letter-spacing: .8px; }
-.stdin-row textarea, .stdin-row input { min-width: 0; height: 25px; flex: 1; padding: 4px 7px; resize: vertical; border: 1px solid #2b2e39; border-radius: 4px; outline: 0; background: #0d0f14; color: #d7d8e0; font-family: var(--font-code); font-size: 9px; }
-.stdin-row input::placeholder { color: #737887; }
-.stdin-row kbd { color: #777c89; font-family: var(--font-code); font-size: 8px; }
 .runtime-error-card { max-width: 760px; padding: 10px 12px; border: 1px solid rgba(229,130,138,.2); border-radius: 7px; background: rgba(229,130,138,.065); }
 .error-heading { display: flex; align-items: center; gap: 6px; color: #ec9299; font-size: 10px; }
 .runtime-error-card p { margin: 7px 0 0 21px; color: #e3c2c5; font-family: var(--font-code); font-size: 10px; line-height: 1.5; }
@@ -442,7 +437,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
   .tests-toolbar { align-items: flex-start; }
   .tests-toolbar > div:first-child > .muted { display: none; }
   .test-list { grid-template-columns: 1fr; }
-  .stdin-label { max-width: 68px; font-size: 6px; }
   .status-right .version-mark { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -1,21 +1,47 @@
+import { useEffect, useRef } from 'react';
 import { Braces, CircleCheck, CircleX, Code2, Play, Plus, SkipBack, SkipForward, Terminal, Trash2 } from 'lucide-react';
 import type { Program, Token } from '../../language/ast';
 import type { RunResult, TraceStep } from '../../runtime/interpreter';
+import type { PendingInput } from '../../runtime/worker';
 import type { TestCase } from '../../storage/projects';
 import { executableLines } from '../../visual/execution';
 import { FlowchartPanel } from './FlowchartPanel';
 
 export type PanelKey = 'console' | 'debugger' | 'tests' | 'flowchart' | 'coverage' | 'ast' | 'tokens';
 export interface TestOutcome { passed: boolean; actual: string[]; error?: string; }
-interface ConsoleProps { output: string[]; error?: { message: string; line?: number; column?: number; tip?: string } | null; stdin: string; onInput: (value: string) => void; ran: boolean; }
-export function ConsolePanel({ output, error, stdin, onInput, ran }: ConsoleProps) {
+export interface ConsoleEntry { kind: 'output' | 'input'; text: string; }
+interface ConsoleProps {
+  entries: ConsoleEntry[];
+  error?: { message: string; line?: number; column?: number; tip?: string } | null;
+  pendingInput: PendingInput | null;
+  inputValue: string;
+  onInput: (value: string) => void;
+  onSubmit: () => void;
+  running: boolean;
+  ran: boolean;
+}
+export function ConsolePanel({ entries, error, pendingInput, inputValue, onInput, onSubmit, running, ran }: ConsoleProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (pendingInput) inputRef.current?.focus(); }, [pendingInput?.id]);
+  useEffect(() => { endRef.current?.scrollIntoView?.({ block: 'nearest' }); }, [entries, pendingInput?.id, error]);
   return <div className="console-panel">
     <div className="console-output-area">
-      {error ? <div className="runtime-error-card"><div className="error-heading"><CircleX size={15} /> <strong>{error.line ? `Line ${error.line}` : 'Program error'}</strong></div><p>{error.message}</p>{output.length > 0 && <pre>{output.join('\n')}</pre>}{error.tip && <div className="error-tip">Tip · {error.tip}</div>}</div>
-        : output.length ? <div className="output-list">{output.map((line, index) => <div className="output-line" key={`${index}-${line}`}><span className="output-prompt">›</span><span>{line || <span className="muted">empty line</span>}</span></div>)}</div>
-          : <div className="console-placeholder"><div className="console-placeholder-mark"><Terminal size={18} /></div><div><strong>{ran ? 'Program finished without output' : 'Your output will appear here'}</strong><p>Run your program to see the result in this console.</p></div></div>}
+      {entries.length > 0 && <div className="output-list" role="log" aria-label="Console transcript" aria-live="polite">{entries.map((entry, index) => <div className={`output-line ${entry.kind === 'input' ? 'console-entry-input' : ''}`} key={index}><span className="output-prompt" aria-hidden="true">{entry.kind === 'input' ? '❯' : '›'}</span><span>{entry.text || <span className="muted">{entry.kind === 'input' ? '(empty input)' : 'empty line'}</span>}</span></div>)}</div>}
+      {error && <div className="runtime-error-card" role="alert"><div className="error-heading"><CircleX size={15} /> <strong>{error.line ? `Line ${error.line}` : 'Program error'}</strong></div><p>{error.message}</p>{error.tip && <div className="error-tip">Tip · {error.tip}</div>}</div>}
+      {pendingInput && <div className="console-input-line">
+        <form className="console-input-form" aria-label="Console input" onSubmit={event => { event.preventDefault(); onSubmit(); }}>
+          <span className="output-prompt" aria-hidden="true">❯</span>
+          <input ref={inputRef} aria-label={`Value for ${pendingInput.variable}`} aria-describedby="console-input-hint" autoComplete="off" spellCheck={false} value={inputValue} onChange={event => onInput(event.target.value)} placeholder={`Enter ${pendingInput.dataType} value`} />
+          <button className="console-input-submit" type="submit">Send</button>
+        </form>
+        <p className="console-input-hint" id="console-input-hint" role="status">Waiting for {pendingInput.variable} ({pendingInput.dataType}) · line {pendingInput.line}. Press Enter to continue.</p>
+        {pendingInput.error && <p className="console-input-error" role="alert">{pendingInput.error} Try again.</p>}
+      </div>}
+      {running && !pendingInput && <p className="console-running" role="status">Running…</p>}
+      {!entries.length && !error && !pendingInput && !running && <div className="console-placeholder"><div className="console-placeholder-mark"><Terminal size={18} /></div><div><strong>{ran ? 'Program finished without output' : 'Your output will appear here'}</strong><p>Run your program. Enter values here when it reaches INPUT.</p></div></div>}
+      <div ref={endRef} />
     </div>
-    <div className="stdin-row"><span className="stdin-label">STANDARD INPUT</span><textarea aria-label="Standard input values" rows={1} value={stdin} onChange={event => onInput(event.target.value)} placeholder="Values for INPUT, one per line" /><kbd>↵</kbd></div>
   </div>;
 }
 

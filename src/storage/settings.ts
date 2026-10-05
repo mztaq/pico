@@ -20,7 +20,6 @@ export interface PicoSettings {
   autoDeclare: boolean;
   fontSize: number;
   theme: ThemeId;
-  promptForInput: boolean;
   sidebarSide: 'left' | 'right';
   dockSide: 'bottom' | 'right';
   sidebarWidth: number;
@@ -41,7 +40,6 @@ export const defaultSettings: PicoSettings = {
   autoDeclare: true,
   fontSize: 14,
   theme: DEFAULT_THEME_ID,
-  promptForInput: true,
   sidebarSide: 'left',
   dockSide: 'bottom',
   sidebarWidth: 226,
@@ -82,8 +80,6 @@ export function loadSettings(): PicoSettings {
           autocorrect:
             typeof c.autocorrect === 'boolean' ? c.autocorrect : true,
           hoverDocs: typeof c.hoverDocs === 'boolean' ? c.hoverDocs : true,
-          promptForInput:
-            typeof c.promptForInput === 'boolean' ? c.promptForInput : true,
           sidebarSide: c.sidebarSide === 'right' ? 'right' : 'left',
           dockSide: c.dockSide === 'right' ? 'right' : 'bottom',
           layoutPreset:
