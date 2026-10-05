@@ -117,3 +117,5 @@
 .console-input-line .output-prompt, .console-entry-input .output-prompt { color: var(--accent); }
 .console-entry-input > span:last-child { color: var(--text); }
 .console-output-area > .runtime-error-card { margin-top: 10px; }
+.console-entry-note { display: flex; align-items: baseline; gap: 10px; margin: 4px 0; padding: 8px 10px; border-left: 2px solid var(--accent); border-radius: 4px; background: var(--accent-soft); color: var(--text); font: 13px/1.6 var(--font-code); white-space: pre-wrap; }
+.console-entry-note .output-prompt { color: var(--accent); }
