@@ -1,13 +1,107 @@
 /* Pico Easter eggs: friendly, reversible and kept separate from program output. */
-.brand-lockup { appearance: none; -webkit-appearance: none; border: 0 !important; padding: 0; background: transparent !important; box-shadow: none; cursor: pointer; text-align: left; }
-.brand-lockup:focus, .brand-lockup:active { background: transparent !important; }
-.brand-lockup:hover .brand-mark { transform: translateY(-1px) rotate(-3deg); }
-.brand-mark { transition: transform .18s ease; }
-.pico-easter-egg { margin: 8px 14px 10px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 6px; color: var(--text); background: color-mix(in srgb, var(--accent) 10%, transparent); font-family: var(--font-code); font-size: 10px; }
-.creator-note { margin: 10px 0 0; font-family: var(--font-ui); }
-.credits-modal { width: min(420px, 100%); padding: 22px; border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border)); border-radius: 14px; background: var(--surface-raised); box-shadow: 0 24px 90px rgba(0,0,0,.62); }
-.credits-mark { width: 42px; height: 42px; display: grid; place-items: center; margin-bottom: 13px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 15%, transparent); }
-.credits-mark .brand-mark { width: 34px; height: 34px; margin: 0; }
-.credits-message, .credits-contact { color: var(--text); font-size: 12px; line-height: 1.6; }
-.credits-contact { color: var(--muted); }
-.credits-contact a { color: var(--accent); }
+
+.brand-lockup {
+  appearance: none;
+  -webkit-appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+
+  border: 0 !important;
+  outline: 0;
+  padding: 0;
+  margin: 0;
+
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+
+  color: #f5f4fb;
+  cursor: pointer;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.brand-lockup:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.brand-lockup:focus,
+.brand-lockup:active {
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.brand-lockup:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 4px;
+  background: transparent !important;
+}
+
+.brand-lockup:hover .brand-mark {
+  transform: translateY(-1px) rotate(-3deg);
+}
+
+.brand-mark {
+  transition: transform 0.18s ease;
+}
+
+.pico-easter-egg {
+  margin: 8px 14px 10px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  border-radius: 6px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-family: var(--font-code);
+  font-size: 10px;
+}
+
+.creator-note {
+  margin: 10px 0 0;
+  font-family: var(--font-ui);
+}
+
+.credits-modal {
+  width: min(420px, 100%);
+  padding: 22px;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+  border-radius: 14px;
+  background: var(--surface-raised);
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.62);
+}
+
+.credits-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 13px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.credits-mark .brand-mark {
+  width: 34px;
+  height: 34px;
+  margin: 0;
+}
+
+.credits-message,
+.credits-contact {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.credits-contact {
+  color: var(--muted);
+}
+
+.credits-contact a {
+  color: var(--accent);
+}

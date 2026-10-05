@@ -13,12 +13,14 @@ import { addVersion, loadHistory, type ProjectVersion } from '../storage/history
 import { formatPseudocode } from '../language/formatter';
 import { cssVariables, getTheme } from '../app/themes';
 import { FloatingPanel } from './components/FloatingPanel';
+import { ResizeHandle } from './components/ResizeHandle';
 import { ThemePicker } from './components/ThemePicker';
 import '../app/styles/app.css';
 import './styles/editor-folding.css';
 import './styles/workspace-upgrades.css';
 import './styles/tutorial.css';
 import './styles/file-tabs.css';
+import './styles/resizable-workspace.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
@@ -57,6 +59,7 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(false);
   const editorRef = useRef<EditorHandle>(null);
+  const workspaceMainRef = useRef<HTMLElement>(null);
   const settingsAnchorRef = useRef<HTMLDivElement>(null);
   const fileAnchorRef = useRef<HTMLDivElement>(null);
 
@@ -179,6 +182,19 @@ export default function App() {
     changeSettings({ ...(presets[preset as Exclude<PicoSettings['layoutPreset'], 'custom'>] ?? {}), layoutPreset: preset });
   }
   function resetLayout() { applyLayoutPreset('coding'); }
+  function resizeSidebar(delta: number) {
+    const direction = settings.sidebarSide === 'left' ? 1 : -1;
+    changeSettings({ sidebarWidth: Math.min(360, Math.max(170, settings.sidebarWidth + delta * direction)), layoutPreset: 'custom' });
+  }
+  function resizeReference(delta: number) {
+    changeSettings({ referenceWidth: Math.min(460, Math.max(220, settings.referenceWidth - delta)), layoutPreset: 'custom' });
+  }
+  function resizeDock(delta: number) {
+    const available = settings.dockSide === 'right' ? workspaceMainRef.current?.clientWidth : workspaceMainRef.current?.clientHeight;
+    if (!available) return;
+    const direction = settings.dockSide === 'bottom' ? 1 : -1;
+    changeSettings({ dockSize: Math.min(60, Math.max(22, settings.dockSize + delta * direction / available * 100)), layoutPreset: 'custom' });
+  }
   function runTests() {
     if (!parsed.ast) {
       const message = parseError?.message ?? 'Fix the syntax before running test cases.';
@@ -234,8 +250,9 @@ export default function App() {
         <div className="example-list">{examples.map(example => <button className="example-row" key={example.id} title={example.description} onClick={() => loadExample(example.id)}><span className="example-mark"><Code2 size={13} /></span><span><b>{example.name}</b><small>{example.description}</small></span></button>)}</div>
         <div className="sidebar-bottom"><div className="subset-mark"><span><BookOpen size={14} /></span><div><strong>Cambridge core</strong><small>Focused syllabus subset</small></div></div><span className="local-badge"><span /> LOCAL ONLY</span></div>
       </aside>}
+      {settings.sidebarVisible && <ResizeHandle axis="x" label="Resize project sidebar" className="sidebar-resize-handle" onResize={resizeSidebar} />}
 
-      <main className="workspace-main">
+      <main className="workspace-main" ref={workspaceMainRef}>
         <div className="command-bar">
           <div className="file-crumb"><span className="file-icon"><CodeXml size={15} /></span><input aria-label="Project name" className="project-title-input" value={activeProject.name} onChange={event => renameProject(event.target.value)} /><span className="file-extension">.pseudocode</span><span className="command-dot">·</span><span className="language-pill"><span /> Cambridge pseudocode</span></div>
           <div className="command-spacer" />
@@ -259,6 +276,7 @@ export default function App() {
             <div className="editor-card-foot"><span><Keyboard size={12} /> <kbd>⌘</kbd> <kbd>↵</kbd> to run <span className="shortcut-separator">·</span> <kbd>Ctrl G</kbd> go to line</span><span className="scope-note">Cambridge subset · core statements and expressions</span></div>
           </section>
 
+          {settings.referenceVisible && <ResizeHandle axis="x" label="Resize quick reference panel" className="reference-resize-handle" onResize={resizeReference} />}
           {settings.referenceVisible && <aside className="reference-card" id="quick-reference">
             <div className="reference-head"><div><BookOpen size={15} /><strong>Quick reference</strong></div><span className="reference-level">CAMBRIDGE</span></div>
             <div className="reference-search"><Search size={13} /><input value={docSearch} onChange={event => setDocSearch(event.target.value)} placeholder="Find a keyword" aria-label="Search Cambridge keywords" /></div>
@@ -286,6 +304,7 @@ ENDCASE`}</pre></details>
           </aside>}
         </div>
 
+        <ResizeHandle axis={settings.dockSide === 'right' ? 'x' : 'y'} label="Resize tool panel" className="dock-resize-handle" onResize={resizeDock} />
         <section className="tool-dock">
           <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}{tab.key === 'coverage' && result && <small>{result.coverage.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
           <div className="dock-content" role="tabpanel">
