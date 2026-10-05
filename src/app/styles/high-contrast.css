@@ -36,3 +36,9 @@
 .pico-app[data-high-contrast="true"] .console-entry-note { background: var(--bg); border-color: var(--text); }
 
 .pico-app[data-high-contrast="true"] :where(button:hover) { outline: 1px solid var(--text); outline-offset: 1px; }
+
+.pico-app[data-high-contrast="true"] :where(.debug-current, .debug-vars, .debug-stdout, .variable-row, .coverage-row, .coverage-ring, .coverage-ring::before, .token-type, .console-entry-note) {
+  background: var(--bg);
+  border-color: var(--text);
+}
+.pico-app[data-high-contrast="true"] .coverage-ring { border: 2px solid var(--text); }
