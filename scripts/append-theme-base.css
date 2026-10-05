@@ -1,0 +1,4 @@
+/* The theme lives on :root as well as the shell, so inherited text and the page
+   background follow light and dark palettes instead of the dark fallback. */
+.pico-app { color: var(--text); }
+body { background: var(--bg); color: var(--text); }

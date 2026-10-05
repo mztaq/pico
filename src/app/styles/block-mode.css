@@ -1,0 +1,52 @@
+.mode-switcher { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-input); }
+.mode-switcher button { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border: 0; border-radius: 5px; color: var(--muted); background: transparent; font-size: 9px; font-weight: 700; letter-spacing: .4px; cursor: pointer; }
+.mode-switcher button.active { color: var(--text); background: var(--accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent); }
+.mode-switcher button:hover { color: var(--text); }
+.mode-block-icon { width: 13px; height: 13px; display: grid; place-items: center; color: var(--accent); font-size: 15px; line-height: 1; }
+.block-mode { height: 100%; min-height: 0; display: grid; grid-template-columns: 178px minmax(0, 1fr); background: var(--bg); overflow: hidden; }
+.block-palette { min-width: 0; overflow: auto; padding: 13px 10px; border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 88%, var(--accent) 4%); }
+.block-palette-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 4px 10px; border-bottom: 1px solid var(--border); }
+.block-palette-head strong { color: var(--text); font-size: 11px; }
+.block-palette-head small { color: var(--muted); font-size: 8px; }
+.palette-block { width: 100%; display: flex; align-items: center; gap: 6px; margin-top: 7px; padding: 8px 8px; border: 1px solid transparent; border-radius: 6px; color: #f5f4fb; font-size: 9px; font-weight: 700; text-align: left; cursor: grab; box-shadow: 0 4px 9px rgba(0,0,0,.16); }
+.palette-block:active { cursor: grabbing; }
+.palette-block:hover { filter: brightness(1.12); transform: translateX(2px); }
+.palette-grip { color: rgba(255,255,255,.56); letter-spacing: -2px; }
+.palette-plus { margin-left: auto; color: rgba(255,255,255,.72); font-size: 13px; font-weight: 400; }
+.palette-declare, .block-declare { background: #5c68bd; border-color: #7985dc; }
+.palette-constant, .block-constant { background: #6953ad; border-color: #927bd6; }
+.palette-assignment, .block-assignment { background: #317f91; border-color: #55a9b7; }
+.palette-input, .block-input { background: #2e8d78; border-color: #58bea3; }
+.palette-output, .block-output { background: #a15d39; border-color: #d1875e; }
+.palette-if, .block-if { background: #8b4f78; border-color: #c875aa; }
+.palette-while, .block-while { background: #8d5941; border-color: #cf8a61; }
+.palette-for, .block-for { background: #456a9d; border-color: #709ad4; }
+.palette-repeat, .block-repeat { background: #557c53; border-color: #83b17a; }
+.block-canvas { min-width: 0; overflow: auto; padding: 13px 16px 28px; background: radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 42%), var(--bg); }
+.block-canvas-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+.block-canvas-head strong, .block-canvas-head small { display: block; }
+.block-canvas-head strong { color: var(--text); font-size: 11px; }
+.block-canvas-head small { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.block-canvas-head > span { color: var(--muted); font-family: var(--font-code); font-size: 9px; }
+.block-stack { display: grid; gap: 8px; max-width: 760px; }
+.block-card { width: fit-content; min-width: 300px; max-width: 100%; border: 1px solid rgba(255,255,255,.22); border-radius: 8px; color: #fff; box-shadow: 0 7px 15px rgba(0,0,0,.18); transition: transform .14s ease, opacity .14s ease; }
+.block-card.is-dragged { opacity: .42; transform: scale(.98); }
+.block-card-head { display: flex; align-items: center; gap: 7px; min-height: 27px; padding: 4px 7px 3px 9px; }
+.block-card-head b { font-size: 9px; letter-spacing: .5px; }
+.block-card-head button { width: 20px; height: 20px; margin-left: auto; border: 0; border-radius: 4px; color: rgba(255,255,255,.7); background: transparent; cursor: pointer; font-size: 15px; }
+.block-card-head button:hover { color: #fff; background: rgba(0,0,0,.18); }
+.block-grip { color: rgba(255,255,255,.6); cursor: grab; font-size: 13px; }
+.block-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 6px 10px 9px; font-size: 10px; font-weight: 600; }
+.block-fields input, .block-fields select { min-width: 58px; max-width: 230px; padding: 4px 6px; border: 1px solid rgba(0,0,0,.25); border-radius: 4px; outline: none; color: #1c1d26; background: rgba(255,255,255,.9); font-family: var(--font-code); font-size: 10px; }
+.block-fields input:focus, .block-fields select:focus { box-shadow: 0 0 0 2px rgba(255,255,255,.42); }
+.block-nest { min-height: 39px; margin: 2px 7px 7px 15px; padding: 7px; border-left: 2px solid rgba(255,255,255,.42); border-radius: 0 5px 5px 0; background: rgba(0,0,0,.13); }
+.block-nest > span { display: block; margin-bottom: 5px; color: rgba(255,255,255,.58); font-family: var(--font-code); font-size: 8px; }
+.block-nest > .block-card { min-width: 250px; margin-top: 6px; }
+.block-else { margin: 10px -7px -7px; padding: 7px; border-top: 1px dashed rgba(255,255,255,.36); background: rgba(0,0,0,.1); }
+.block-else strong { display: block; margin-bottom: 4px; color: rgba(255,255,255,.7); font-size: 9px; }
+.block-empty { min-height: 190px; display: grid; place-content: center; justify-items: center; gap: 6px; border: 1px dashed color-mix(in srgb, var(--accent) 50%, var(--border)); border-radius: 10px; color: var(--muted); }
+.block-empty > span { width: 27px; height: 27px; display: grid; place-items: center; border: 1px solid var(--accent); border-radius: 50%; color: var(--accent); font-size: 18px; }
+.block-empty strong { color: var(--text); font-size: 12px; }
+.block-empty small, .block-tip { font-size: 9px; line-height: 1.5; }
+.block-tip { margin-top: 15px; padding: 8px; border: 1px solid var(--border); border-radius: 5px; color: var(--muted); background: rgba(255,255,255,.025); }
+@media (max-width: 800px) { .block-mode { grid-template-columns: 132px minmax(0,1fr); } .palette-block { font-size: 8px; } .block-card { min-width: 240px; } }
