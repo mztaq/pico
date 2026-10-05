@@ -24,7 +24,7 @@ export interface ReturnStatement extends SourceSpan { kind: 'ReturnStatement'; v
 export interface FileStatement extends SourceSpan { kind: 'FileStatement'; operation: 'OPEN' | 'READ' | 'WRITE' | 'CLOSE'; name?: string; mode?: 'READ' | 'WRITE'; target?: Target; value?: Expression; }
 export type Expression = NumberLiteral | StringLiteral | BooleanLiteral | Variable | ArrayAccess | UnaryExpression | BinaryExpression | CallExpression;
 export interface NumberLiteral extends SourceSpan { kind: 'NumberLiteral'; value: number; }
-export interface StringLiteral extends SourceSpan { kind: 'StringLiteral'; value: string; }
+export interface StringLiteral extends SourceSpan { kind: 'StringLiteral'; value: string; dataType?: 'CHAR' | 'STRING'; }
 export interface BooleanLiteral extends SourceSpan { kind: 'BooleanLiteral'; value: boolean; }
 export interface Variable extends SourceSpan { kind: 'Variable'; name: string; }
 export interface ArrayAccess extends SourceSpan { kind: 'ArrayAccess'; name: string; indexes: Expression[]; }

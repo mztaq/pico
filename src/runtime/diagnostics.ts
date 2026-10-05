@@ -23,7 +23,7 @@ const docs: Record<string, string> = {
   NOT: 'Reverses a Boolean condition.', DIV: 'Integer division: 17 DIV 5 is 3.', MOD: 'Remainder: 17 MOD 5 is 2.',
   TRUE: 'Boolean value meaning yes.', FALSE: 'Boolean value meaning no.',
   ROUND: 'Round(number, decimalPlaces).', LENGTH: 'Return the number of characters in a string.',
-  UPPER: 'Return a string in uppercase letters.', LOWER: 'Return a string in lowercase letters.', UCASE: 'Cambridge uppercase routine.', LCASE: 'Cambridge lowercase routine.', SUBSTRING: 'Return part of a string using one-based start and length. Example: SUBSTRING(\"Cambridge\", 1, 4) gives \"Camb\".', RANDOM: 'Return a random real number from 0 up to 1.', OPENFILE: 'Open a browser-local practice file for reading or writing.', READFILE: 'Read the next line from the open practice file.', WRITEFILE: 'Write text to the open practice file.', CLOSEFILE: 'Close the open practice file.',
+  UPPER: 'Return a string in uppercase letters.', LOWER: 'Return a string in lowercase letters.', UCASE: 'Cambridge uppercase routine.', LCASE: 'Cambridge lowercase routine.', SUBSTRING: 'Return part of a string using one-based start and length. Example: SUBSTRING(\"Cambridge\", 1, 4) gives \"Camb\".', RANDOM: 'Return a random real number from 0 up to 1.', OPENFILE: 'Open a browser-local practice file for reading or writing.', READFILE: 'Read a line without deleting it. Example: READFILE \"notes.txt\", Line.', WRITEFILE: 'Write to a project file opened FOR WRITE. Example: WRITEFILE \"notes.txt\", Text.', CLOSEFILE: 'Close the open practice file.',
 };
 export function documentationFor(keyword: string): string | undefined { return docs[keyword.toUpperCase()]; }
 function levenshtein(a: string, b: string): number {
