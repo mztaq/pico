@@ -1,5 +1,6 @@
 import type { VirtualFiles } from '../runtime/interpreter';
 import { examples } from '../examples';
+import { starterCode } from '../starter';
 import type { DataType } from '../language/ast';
 import { isAutoDeclaredType } from '../language/autoDeclare';
 export interface TestCase {
@@ -26,7 +27,6 @@ export interface PicoProject {
 }
 const PROJECTS_KEY = 'pico.projects.v1';
 const ACTIVE_KEY = 'pico.activeProject.v1';
-const starterCode = 'DECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name';
 const sourceHeader = '// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar';
 function makeFile(
   name: string,
@@ -63,7 +63,7 @@ const initialProject: PicoProject = makeProject(
       id: 'test-greeting',
       name: 'Greets the user',
       inputs: ['Ada'],
-      expected: ['Enter your name', 'Hello Ada'],
+      expected: ['Enter your name', 'Hello Ada!'],
     },
   ],
 );
