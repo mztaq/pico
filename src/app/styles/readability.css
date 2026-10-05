@@ -60,7 +60,7 @@
   .credit-divider { display: none; }
 }
 @media (max-height: 720px) {
-  .workspace-main { grid-template-rows: auto minmax(160px, 1fr) 8px minmax(130px, var(--dock-size)); }
+  .workspace-main { grid-template-rows: auto minmax(160px, 1fr) var(--splitter-size) minmax(130px, var(--dock-size)); }
 }
 .command-bar { height: auto; min-height: 53px; flex-wrap: wrap; row-gap: 8px; padding-block: 10px; }
 .panel-empty > strong, .console-placeholder strong { color: var(--text); font-size: 15px; }
