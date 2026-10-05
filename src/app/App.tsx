@@ -21,6 +21,7 @@ import './styles/workspace-upgrades.css';
 import './styles/tutorial.css';
 import './styles/file-tabs.css';
 import './styles/resizable-workspace.css';
+import './styles/branding-adjustments.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
