@@ -34,3 +34,13 @@ it('saves immutable practice files in project snapshots',async()=>{
   addVersion(project.id,'Before changes',project.files,project.activeFileId,files);files.data[0]='edited';
   expect(loadHistory(project.id)[0]!.virtualFiles).toEqual({data:['original']});
 });
+
+it('migrates saved and imported .pseudocode source names without changing code or active file',async()=>{
+  const project=newProject();project.files[0]!.name='lesson.PSEUDOCODE';project.files[0]!.code='OUTPUT "unchanged"';
+  const stored=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(key:string)=>stored.get(key)??null,setItem:(key:string,value:string)=>stored.set(key,value)});
+  saveProjects([project],project.id);const loaded=loadProjects()[0]!;
+  expect(loaded.files[0]!.name).toBe('lesson.pico');expect(loaded.activeFileId).toBe(project.activeFileId);expect(loaded.code).toBe('OUTPUT "unchanged"');
+  const imported=await importProject(asFile(project));expect(imported.files[0]!.name).toBe('lesson.pico');expect(imported.code).toBe(loaded.code);
+  const {addVersion,loadHistory}=await import('./history');addVersion(project.id,'Old source',project.files,project.activeFileId);
+  expect(loadHistory(project.id)[0]!.files[0]!.name).toBe('lesson.pico');
+});

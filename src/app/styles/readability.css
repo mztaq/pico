@@ -1,0 +1,72 @@
+/* Reference and guidance should be as comfortable to read as the code. */
+.reference-card { overflow-y: auto; overscroll-behavior: contain; padding: 0 16px 16px; scrollbar-width: thin; font-size: var(--reference-font-size); }
+.reference-card > * { flex-shrink: 0; }
+.reference-head { position: sticky; top: 0; z-index: 1; min-height: 54px; margin: 0 -16px; padding: 0 16px; }
+.reference-head strong { color: var(--text); font-size: 16px; }
+.reference-close { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 7px; background: transparent; color: var(--text); cursor: pointer; }
+.reference-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0 4px; }
+.reference-controls > span { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.reference-controls > span > span { display: block; }
+.reference-controls > div { display: flex; align-items: center; gap: 7px; }
+.reference-controls button { min-width: 34px; height: 34px; padding: 0 5px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-raised); color: var(--text); font-size: 14px; cursor: pointer; }
+.reference-controls button:disabled { opacity: .4; cursor: default; }
+.reference-controls output { color: var(--muted); font-size: 12px; }
+.reference-search { height: 40px; flex-basis: 40px; padding: 0 10px; margin: 12px 0; }
+.reference-search input { color: var(--text); font-size: 14px; }
+.reference-search input::placeholder { color: var(--muted); }
+.reference-keywords { min-height: 100px; max-height: 220px; flex-shrink: 1; gap: 8px; padding-bottom: 14px; }
+.pico-app[data-pico-theme] .keyword-pill { min-height: 36px; height: auto; padding: 7px 10px; font-size: calc(var(--reference-font-size) - 1px); background: var(--surface-raised); color: var(--text); }
+.pico-app[data-pico-theme] .keyword-pill:hover { border-color: var(--accent); background: var(--accent-soft); }
+.pico-app[data-pico-theme] .syntax-cheat-button { min-height: 40px; margin-bottom: 4px; font-size: 14px; }
+.reference-no-results { margin: 4px 0; color: var(--muted); font-size: 14px; }
+.reference-explanation { padding: 16px 0; border-color: var(--border); user-select: text; }
+.reference-explanation .mini-label { font-size: 11px; color: var(--muted); }
+.reference-explanation > strong { margin-top: 9px; font-size: calc(var(--reference-font-size) + 2px); color: var(--accent); }
+.reference-explanation p { color: var(--text); font-size: var(--reference-font-size); line-height: 1.7; }
+.syntax-cheat-sheet summary { font-size: 14px; line-height: 1.5; }
+.syntax-cheat-sheet pre { max-height: none; font-size: calc(var(--reference-font-size) - 1px); line-height: 1.8; user-select: text; }
+.reference-scope { border-color: var(--border); background: var(--accent-soft); padding: 12px; }
+.reference-scope strong { color: var(--text); font-size: 14px; }
+.reference-scope p { color: var(--text); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; }
+.hover-doc-setting { margin-top: 0; cursor: default; }
+.hover-doc-setting b { color: var(--text); font-size: 13px; }
+.hover-doc-setting small { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.reference-card button:focus-visible, .reference-search:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.reference-resize-handle { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.reference-resize-handle .resize-handle-grip { background: var(--accent); height: 44px; opacity: .9; }
+.statusbar { height: auto; min-height: 38px; flex-basis: auto; gap: 12px; padding: 8px 14px; flex-wrap: wrap; font-size: 11px; line-height: 1.5; }
+.attribution { display: block; max-width: none; overflow: visible; color: var(--text); font-size: 13px; font-weight: 500; white-space: normal; }
+.status-ready, .version-mark { font-size: 10px; }
+.save-indicator { font-size: 12px; }
+.help-button { font-size: 13px; min-height: 36px; }
+.credits-message { font-size: 17px; line-height: 1.6; }
+.credits-contact { font-size: 14px; line-height: 1.7; }
+.input-modal-head strong { font-size: 18px; }
+.input-modal-head small { font-size: 13px; line-height: 1.6; }
+.reference-backdrop { display: none; }
+@media (max-width: 1070px) {
+  .ide-shell.reference-open .reference-card { display: flex; position: fixed; z-index: 75; top: 72px; right: 16px; bottom: 80px; width: min(var(--reference-width), calc(100vw - 32px)); max-width: 600px; box-shadow: 0 20px 70px rgba(0,0,0,.4); }
+  .ide-shell.reference-open .reference-backdrop { display: block; position: fixed; inset: 0; z-index: 70; border: 0; background: rgba(0,0,0,.45); }
+  .reference-controls > span > span { display: none; }
+}
+@media (max-width: 800px) {
+  .statusbar { justify-content: flex-start; }
+  .attribution { width: 100%; font-size: 12px; }
+  .status-right { margin-left: auto; }
+  .save-indicator { font-size: 0; }
+  .help-button { min-width: 36px; }
+}
+@media (max-width: 520px) {
+  .ide-shell.reference-open .reference-card { top: 64px; bottom: 90px; right: 8px; width: calc(100vw - 16px); }
+  .status-left > span:last-child { display: none; }
+}
+@media (max-height: 720px) {
+  .workspace-main { grid-template-rows: auto minmax(160px, 1fr) 8px minmax(130px, var(--dock-size)); }
+}
+.command-bar { height: auto; min-height: 53px; flex-wrap: wrap; row-gap: 8px; padding-block: 10px; }
+.panel-empty > strong, .console-placeholder strong { color: var(--text); font-size: 15px; }
+.panel-empty p, .console-placeholder p { color: var(--muted); font-size: 13px; line-height: 1.65; }
+.runtime-error-card p { color: var(--text); font-size: 13px; line-height: 1.65; }
+.error-tip { font-size: 13px; line-height: 1.65; }
+.output-line { color: var(--text); font-size: 14px; line-height: 1.7; }
+.pico-easter-egg { font-size: 14px; line-height: 1.6; }

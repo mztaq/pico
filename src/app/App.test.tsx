@@ -48,3 +48,60 @@ describe('workspace execution integration',()=>{
     expect(container.querySelector('.result-chip')?.textContent).toBe('Passed');expect(BrowserWorker.pending.at(-1)!.request!.runs[0]!.options.trace).toBe(false);
   });
 });
+
+describe('guided help and readable reference',()=>{
+  it('walks through highlights, reaches the end screen, and restores the workspace without editing code',async()=>{
+    const editor=container.querySelector('textarea')!.value;
+    await click(button('Help'));
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
+    expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(true);
+    expect(container.querySelector('.reference-card')).toBeNull();
+    await click(button('Next'));await click(button('Next'));
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Read the result');
+    await click(button('Back'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Bring your program to life');
+    await click(button('Next'));await click(button('Next'));
+    expect(container.querySelector('.dock-tab[aria-selected="true"]')?.textContent).toBe('Debugger');
+    await click(button('Next'));expect(container.querySelector('[data-tour="reference"]')).not.toBeNull();
+    await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Your next idea starts here.');
+    await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
+    await click(button('Skip for now'));
+    expect(container.querySelector('.tutorial-layer')).toBeNull();
+    expect(container.querySelector('.console-panel')).not.toBeNull();
+    expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
+    expect(container.querySelector('textarea')!.value).toBe(editor);
+    expect(container.querySelector('.reference-card')).not.toBeNull();
+  });
+  it('handles keyboard exit and brings focus back to Help',async()=>{
+    const help=button('Help');help.focus();await click(help);
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Close tutorial');
+    await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+    expect(container.querySelector('.tutorial-layer')).toBeNull();expect(document.activeElement).toBe(help);
+  });
+  it('adjusts and persists reference size with keyboard resizing',async()=>{
+    await click(container.querySelector('[aria-label="Increase reference text size"]')!);
+    expect(container.querySelector('.reference-controls output')?.textContent).toBe('16px');
+    const splitter=container.querySelector('[aria-label="Resize quick reference panel"]')!;
+    await act(async()=>splitter.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true})));
+    const settings=JSON.parse(localStorage.getItem('pico.settings.v4')!);
+    expect(settings.referenceWidth).toBe(370);expect(settings.referenceFontSize).toBe(16);
+    expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--reference-width: 370px');
+    await click(button('FOR'));expect(container.querySelector('.reference-explanation > strong')?.textContent).toBe('FOR');
+  });
+  it('uses .pico for existing and newly created source tabs',async()=>{
+    expect(container.querySelector('.file-extension')?.textContent).toBe('.pico');
+    expect(container.querySelector('.file-tab-select')?.textContent).toBe('main.pico');
+    await click(container.querySelector('[aria-label="New file"]')!);
+    expect(container.querySelector('.file-tab.active .file-tab-select')?.textContent).toBe('untitled-2.pico');
+  });
+  it('opens the reference drawer from the completion screen on a small viewport',async()=>{
+    vi.stubGlobal('matchMedia',()=>({matches:true}));
+    await click(button('Help'));
+    for(let i=0;i<6;i++)await click(button('Next'));
+    await click(button('Finish tour'));await click(button('Open quick reference'));
+    expect(container.querySelector('.tutorial-layer')).toBeNull();
+    expect(container.querySelector('.ide-shell.reference-open .reference-card')).not.toBeNull();
+    await click(container.querySelector('[aria-label="Close quick reference"]')!);
+    expect(container.querySelector('.ide-shell.reference-open')).toBeNull();
+  });
+});

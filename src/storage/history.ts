@@ -1,5 +1,5 @@
 import type { VirtualFiles } from '../runtime/interpreter';
-import { normalizeVirtualFiles } from './projects';
+import { normalizeSourceFilename, normalizeVirtualFiles } from './projects';
 import type { PicoFile } from './projects';
 export interface ProjectVersion {
   id: string;
@@ -13,7 +13,15 @@ const key = (projectId: string) => `pico.history.v1.${projectId}`;
 export function loadHistory(projectId: string): ProjectVersion[] {
   try {
     const value = JSON.parse(localStorage.getItem(key(projectId)) ?? '[]');
-    return Array.isArray(value) ? value.filter(isVersion).slice(0, 30) : [];
+    return Array.isArray(value)
+      ? value.filter(isVersion).slice(0, 30).map(version => ({
+          ...version,
+          files: version.files.map(file => ({
+            ...file,
+            name: normalizeSourceFilename(file.name),
+          })),
+        }))
+      : [];
   } catch {
     return [];
   }
