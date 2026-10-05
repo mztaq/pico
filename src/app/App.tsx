@@ -272,7 +272,7 @@ export default function App() {
           <SettingRow title="Autocomplete" detail="Suggest Cambridge keywords as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} />
           <SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} />
           <SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} />
-          <SettingRow title="Auto-declare variables" detail="Infer and update types from assignments and FOR loops" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />
+          <SettingRow title="Auto-declare variables" detail="Infer and update types from assignments" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />
           <ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} />
           <SettingRow title="Ask for INPUT on Run" detail="Show an input dialog before programs execute" checked={settings.promptForInput} onChange={value => changeSettings({ promptForInput: value })} />
           <label className="font-setting"><span>Sidebar position</span><select value={settings.sidebarSide} onChange={event => changeSettings({ sidebarSide: event.target.value as PicoSettings['sidebarSide'] })}><option value="left">Left</option><option value="right">Right</option></select></label>

@@ -27,9 +27,11 @@ settings and practice files live in `localStorage`.
   scroll internally when taller than the available space.
 
 Auto-declare is an optional editor setting, enabled by default. It inserts inferred declarations
-for assignments and FOR counters and tracks declarations it generated. Explicit declarations
+for assignments and tracks declarations it generated. Explicit declarations
 are preserved. Disable it when practicing declarations for exams. The compiler itself always
-requires declared variables.
+requires declared variables, except FOR counters. A FOR loop introduces an INTEGER counter
+when it has not already been declared, even with Auto-declare disabled. Explicit counters
+must still be mutable INTEGER scalars.
 
 ## The language
 
