@@ -1,12 +1,12 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react';
-import { autocompletion, closeBrackets, closeBracketsKeymap, type CompletionContext } from '@codemirror/autocomplete';
+import { acceptCompletion, autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentLess, indentMore } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
 import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
-import { ROUTINES, TYPES, COMPLETIONS } from '../../language/lexer';
+import { completionSource } from './completions';
 import { documentationFor, type Suggestion } from '../../runtime/diagnostics';
 import type { PicoTheme } from '../themes';
 import '../styles/editor-folding.css';
@@ -55,7 +55,7 @@ function themeExtensions(theme: PicoTheme): Extension[] {
     '.cm-panels': { backgroundColor: ui.surfaceRaised, color: theme.text },
     '.cm-panel.cm-search input, .cm-panel.cm-search button': { backgroundColor: ui.surfaceInput, color: theme.text, border: `1px solid ${ui.border}`, borderRadius: '6px' },
     '.cm-tooltip': { border: `1px solid ${ui.tooltipBorder}`, borderRadius: '10px', backgroundColor: ui.tooltipBg, color: theme.text, boxShadow: '0 18px 44px rgba(0,0,0,.4)' },
-    '.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: ui.surfaceHover, color: theme.text },
+    '.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: ui.surfaceHover, color: theme.text, outline: theme.highContrast ? `1px solid ${theme.text}` : 'none', outlineOffset: '-1px' },
     '.cm-tooltip-autocomplete > ul': { fontFamily: 'var(--font-code)', fontSize: '12px' },
     '.cm-completionLabel': { color: syntax.func },
     '.cm-completionDetail': { color: theme.muted, fontStyle: 'normal', marginLeft: '10px' },
@@ -129,13 +129,6 @@ function createPreferences(preferences: EditorPreferences): Extension[] {
   return options;
 }
 
-function completionSource(context: CompletionContext) {
-  const word = context.matchBefore(/[A-Za-z_][A-Za-z0-9_]*/);
-  if (!word && !context.explicit) return null;
-  const options = COMPLETIONS.map(label => ({ label, type: TYPES.has(label) ? 'type' : ROUTINES.has(label) ? 'function' : 'keyword', detail: 'Cambridge pseudocode', boost: label.startsWith(word?.text.toUpperCase() ?? '') ? 2 : 0 }));
-  return { from: word?.from ?? context.pos, options };
-}
-
 function hoverDocumentation() {
   return hoverTooltip((view, pos) => {
     const line = view.state.doc.lineAt(pos);
@@ -166,7 +159,8 @@ function hoverDocumentation() {
   }, { hoverTime: 420 });
 }
 
-function insertCambridgeNewline(view: EditorView): boolean {
+export function insertCambridgeNewline(view: EditorView): boolean {
+  if (acceptCompletion(view)) return true;
   const head = view.state.selection.main.head;
   const line = view.state.doc.lineAt(head);
   const before = line.text.slice(0, head - line.from);
@@ -180,7 +174,8 @@ function insertCambridgeNewline(view: EditorView): boolean {
 }
 
 /** Tab indents a selection, or inserts one nesting level at the cursor. */
-function handleTab(view: EditorView): boolean {
+export function handleTab(view: EditorView): boolean {
+  if (acceptCompletion(view)) return true;
   if (view.state.selection.ranges.some(range => !range.empty)) return indentMore(view);
   view.dispatch(view.state.replaceSelection(INDENT_TEXT), { scrollIntoView: true, userEvent: 'input' });
   return true;

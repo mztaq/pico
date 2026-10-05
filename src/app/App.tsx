@@ -325,7 +325,7 @@ export default function App() {
         <button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" data-tour="settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>
         <FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover">
           <div className="settings-title"><div><Settings2 size={15} /><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setSettingsOpen(false)}><X size={14} /></button></div>
-          <SettingRow title="Autocomplete" detail="Suggest Cambridge keywords as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} />
+          <SettingRow title="Autocomplete" detail="Suggest keywords and declared names as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} />
           <SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} />
           <SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} />
           <SettingRow title="Auto-declare variables" detail="Infer and update types from assignments" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />
@@ -350,7 +350,6 @@ export default function App() {
         <div className="project-list">{projects.map(project => <div className={`project-row ${project.id === activeId ? 'active' : ''}`} key={project.id}><button className="project-select" onClick={() => selectProject(project.id)} title={project.name}><FileCode2 size={15} /><span>{project.name}</span></button>{project.id === activeId && <button className="project-delete" title="Delete project" aria-label="Delete project" onClick={() => removeProject(project.id)}><Trash2 size={12} /></button>}</div>)}</div>
         <div className="side-section-label examples-label"><span>CAMBRIDGE EXAMPLES</span><Sparkles size={12} /></div>
         <div className="example-list">{examples.map(example => <button className="example-row" key={example.id} title={example.description} onClick={() => loadExample(example.id)}><span className="example-mark"><Code2 size={13} /></span><span><b>{example.name}</b><small>{example.description}</small></span></button>)}</div>
-        <div className="sidebar-bottom"><div className="subset-mark"><span><BookOpen size={14} /></span><div><strong>Cambridge core</strong><small>Focused syllabus subset</small></div></div><span className="local-badge"><span /> LOCAL ONLY</span></div>
       </aside>}
       {settings.sidebarVisible && <ResizeHandle axis="x" label="Resize project sidebar" className="sidebar-resize-handle" onResize={resizeSidebar} />}
 
@@ -391,7 +390,6 @@ export default function App() {
               <span className="mini-label">KEYWORD</span><strong>{selectedDoc}</strong><p>{currentDoc}</p>
               <div className="reference-example"><span className="mini-label">EXAMPLE</span><pre aria-label={`${selectedDoc} code example`}><HighlightedCode code={currentExample.code} /></pre>{currentExample.inputs && <p className="reference-input-hint">Example input: <code>{currentExample.inputs.join(', ')}</code></p>}</div>
             </div>
-            <div className="reference-scope"><div className="scope-icon"><Sparkles size={14} /></div><div><strong>A focused subset</strong><p>Cambridge declarations, selection, CASE, all loop styles, routines, arrays, files and booklet library routines.</p></div></div>
             <div className={`hover-doc-setting ${settings.hoverDocs ? 'enabled' : ''}`}><span className="hover-setting-icon">⌕</span><span><b>Hover documentation</b><small>Pause on a keyword in the editor</small></span><Toggle checked={settings.hoverDocs} onChange={() => changeSettings({ hoverDocs: !settings.hoverDocs })} /></div>
           </aside>}
         </div>
