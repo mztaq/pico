@@ -112,6 +112,8 @@ function collectRoutineTypes(statements: Statement[], routines: RoutineTypes): v
 
 function collectSymbols(statements: Statement[], symbols: SymbolTypes, skipRoutines: boolean): void {
   for (const statement of statements) {
+    // The language supplies FOR counters, so the editor should not insert DECLARE.
+    if (statement.kind === 'ForStatement' && !symbols.has(statement.name)) symbols.set(statement.name, 'INTEGER');
     if (statement.kind === 'Declaration') symbols.set(statement.name, statement.dataType);
     else if (statement.kind === 'Function' || statement.kind === 'Procedure') {
       if (!skipRoutines) collectSymbols(statement.body, symbols, false);
