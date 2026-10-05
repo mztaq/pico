@@ -138,15 +138,17 @@ describe('workspace execution integration',()=>{
     expect(container.querySelector('.output-line')).toBeNull();
   });
   it.each([
-    ['Amar','The gentleman who constructed me from the ground up'],
-    ['Mustaqim','The gentleman who released me to the World Wide Web'],
-    ['Mr.Boyle','Hello, He is my computer science teacher'],
-    ['Mr. Boyle','Hello, He is my computer science teacher'],
-    ['Boyle','Hello, He is my computer science teacher'],
-    ['Fore','Hello, He is the head of computer science and ICT'],
-    ['Mr.Fore','Hello, He is the head of computer science and ICT'],
-    ['Mr. Fore','Hello, He is the head of computer science and ICT'],
-    ['  mUsTaQiM  ','The gentleman who released me to the World Wide Web'],
+    ['Amar','The dev who coded me day and night ☾'],
+    ['Mustaqim','The soul who unleashed me to the World Wide Web 🌏︎'],
+    ['Mr.Boyle','The Computer Science teacher who backed my creators and their work'],
+    ['Mr. Boyle','The Computer Science teacher who backed my creators and their work'],
+    ['Boyle','The Computer Science teacher who backed my creators and their work'],
+    ['Mr Boyle','The Computer Science teacher who backed my creators and their work'],
+    ['Fore','The head of Computer Science and ICT at our school'],
+    ['mr fore','The head of Computer Science and ICT at our school'],
+    ['Mr.Fore','The head of Computer Science and ICT at our school'],
+    ['Mr. Fore','The head of Computer Science and ICT at our school'],
+    ['  mUsTaQiM  ','The soul who unleashed me to the World Wide Web 🌏︎'],
   ])('shows the %s Easter egg while preserving the exact input and program output',async(value,message)=>{
     const code='DECLARE Name : STRING\nINPUT Name\nOUTPUT Name';
     await typeValue(codeEditor(),code);
@@ -196,6 +198,7 @@ describe('guided help and readable reference',()=>{
     await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
     expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Amar, Mustaqim, Boyle, and Fore');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Mr Boyle, Mr. Boyle, Mr Fore, and Mr. Fore');
     await click(button('Start coding'));
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
     expect(codeEditor().value).toBe(code);
@@ -229,6 +232,8 @@ describe('guided help and readable reference',()=>{
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Read the result');
     expect(container.querySelector('.tutorial-tip')?.textContent).toContain('STRING INPUT');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Names ignore capitalisation');
+    expect(container.querySelector('.tutorial-example')?.textContent).toBe('DECLARE Name : STRING\nINPUT Name\nOUTPUT Name');
     await click(button('Back'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Run your program');
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('.dock-tab[aria-selected="true"]')?.textContent).toBe('Debugger');
@@ -236,6 +241,7 @@ describe('guided help and readable reference',()=>{
     await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
     expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Amar, Mustaqim, Boyle, and Fore');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Mr Boyle, Mr. Boyle, Mr Fore, and Mr. Fore');
     await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
     await click(button('Skip for now'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();
