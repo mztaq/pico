@@ -2,12 +2,12 @@ import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowRight, Check, CircleHelp, X } from 'lucide-react';
 
 export const tutorialSteps = [
-  { target: 'editor', title: 'Start with your code', label: 'WRITE', description: 'Write Cambridge pseudocode here. Use the file tabs for separate programs, and Format to tidy your indentation.', tip: 'A FOR counter does not need DECLARE.', example: 'FOR Counter ← 1 TO 5\n    OUTPUT Counter\nNEXT Counter' },
-  { target: 'run', title: 'Bring your program to life', label: 'RUN', description: 'Run executes the current file. When your program reaches INPUT, type a value in the Console and press Enter to continue.', tip: 'Shortcut: Ctrl + Enter on Windows, or ⌘ + Enter on Mac.' },
-  { target: 'tools', title: 'Read the result', label: 'OUTPUT', description: 'The Console shows each OUTPUT line. Errors include a line number so you can return to the part that needs fixing.', tip: 'After running the example above, you should see 1, 2, 3, 4, 5.' },
+  { target: 'editor', title: 'Start with your code', label: 'WRITE', description: 'Write Cambridge pseudocode here. Use the file tabs for separate programs, and Format to tidy your indentation.', tip: 'Declared names appear as you type. Tab or Enter accepts a suggestion; Ctrl + Space opens the list. A FOR counter does not need DECLARE.', example: 'FOR Counter ← 1 TO 5\n    OUTPUT Counter\nNEXT Counter' },
+  { target: 'run', title: 'Run your program', label: 'RUN', description: 'Run executes the current file. When your program reaches INPUT, type a value in the Console and press Enter to continue.', tip: 'Shortcut: Ctrl + Enter on Windows, or ⌘ + Enter on Mac.' },
+  { target: 'tools', title: 'Read the result', label: 'OUTPUT', description: 'The Console shows each OUTPUT line. Errors include a line number so you can return to the part that needs fixing.', tip: 'Try a STRING INPUT with the name of a Pico creator or your Computer Science teacher. You might get a greeting.' },
   { target: 'tools', title: 'Understand each step', label: 'EXPLORE', description: 'Debug runs your code and records its steps. Move through the recorded steps to see variables change. Test cases compare expected output; Flowchart shows the program’s paths.', tip: 'Coverage shows which lines ran. Drag the divider above this panel to give your tools more room.' },
   { target: 'reference', title: 'Keep the syntax close', label: 'REFERENCE', description: 'Search for a keyword, then select it to read its explanation. Select and copy the examples when you need a starting point.', tip: 'Use A− / A+ to change the text size. On a wide screen, drag the left divider to resize this panel.' },
-  { target: 'settings', title: 'Make room for your ideas', label: 'CUSTOMISE', description: 'Settings lets you change your theme, editor text size, layout, and typing helpers. Auto-declare is optional when you want to practise declarations yourself.', tip: 'Panel sizes and settings are remembered in this browser.' },
+  { target: 'settings', title: 'Choose your settings', label: 'CUSTOMISE', description: 'Settings lets you change your theme, editor text size, layout, and typing helpers. Auto-declare is optional when you want to practise declarations yourself.', tip: 'Panel sizes and settings are remembered in this browser.' },
   { target: 'files', title: 'Keep a copy of your work', label: 'SAVE', description: 'Pico saves projects on this device. In File, Export .pico downloads a copy, and Import .pico opens one again. History keeps snapshots before you experiment.', tip: 'Your source tabs use .pico too. Double-click a tab to rename it.' },
 ] as const;
 
@@ -108,10 +108,10 @@ export function GuidedTutorial({ step, onStep, onClose, onReference }: Props) {
       {complete ? <>
         <div className="tutorial-success"><Check size={28} /></div>
         <span className="tutorial-eyebrow">YOU’RE READY</span>
-        <h2 id="tutorial-title">Your next idea starts here.</h2>
+        <h2 id="tutorial-title">Tour complete</h2>
         <p id="tutorial-description">Write a program, press Run, and follow what happens. Your code is right where you left it.</p>
         <div className="tutorial-recap"><span><Check size={16} /> Write and run</span><span><Check size={16} /> Explore and debug</span><span><Check size={16} /> Save as .pico</span></div>
-        <p className="tutorial-tip">Help always brings you back to this tour.</p>
+        <p className="tutorial-tip">A hint: Amar, Mustaqim, Boyle, and Fore have something to say when entered at a STRING INPUT. Help opens this tour again.</p>
         <button className="tutorial-reference-link" onClick={onReference}>Open quick reference <ArrowRight size={16} /></button>
       </> : <>
         <div className="tutorial-progress" aria-label={`Step ${step + 1} of ${tutorialSteps.length}`}>{tutorialSteps.map((item, index) => <button key={item.label} className={index <= step ? 'filled' : ''} onClick={() => onStep(index)} aria-label={`Go to step ${index + 1}: ${item.title}`} aria-current={index === step ? 'step' : undefined} />)}</div>

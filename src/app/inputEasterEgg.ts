@@ -1,9 +1,10 @@
-const creators = 'These are my creators, Amar the developer, and Mustaqim the deployer';
+const amar = 'The gentleman who constructed me from the ground up';
+const mustaqim = 'The gentleman who released me to the World Wide Web';
 const teacher = 'Hello, He is my computer science teacher';
 const head = 'Hello, He is the head of computer science and ICT';
 
 const messages = new Map([
-  ['amar', creators], ['mustaqim', creators],
+  ['amar', amar], ['mustaqim', mustaqim],
   ['mr.boyle', teacher], ['mr. boyle', teacher], ['boyle', teacher],
   ['fore', head], ['mr.fore', head], ['mr. fore', head],
 ]);

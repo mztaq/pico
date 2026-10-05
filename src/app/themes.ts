@@ -118,6 +118,26 @@ function isHex(value: string): boolean {
 
 const seeds: ThemeSeed[] = [
   {
+    id: 'high-contrast-violet', name: 'High Contrast Violet', appearance: 'dark', highContrast: true,
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ffffff',
+    syntax: { keyword: '#ff99ff', type: '#00ffff', variable: '#ffffff', func: '#ffff99', number: '#ffcc99', string: '#00ff00', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ffff00' },
+  },
+  {
+    id: 'high-contrast-ocean', name: 'High Contrast Ocean', appearance: 'dark', highContrast: true,
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ffffff',
+    syntax: { keyword: '#00ffff', type: '#ffff99', variable: '#ffffff', func: '#00ff00', number: '#ff99ff', string: '#ffcc99', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ffff00' },
+  },
+  {
+    id: 'high-contrast-ink', name: 'High Contrast Ink', appearance: 'light', highContrast: true,
+    bg: '#ffffff', surface: '#ffffff', text: '#000000', muted: '#000000', accent: '#000000',
+    syntax: { keyword: '#660066', type: '#000080', variable: '#000000', func: '#005500', number: '#6b3000', string: '#800000', comment: '#333333', operator: '#000000', punctuation: '#000000', bool: '#550055' },
+  },
+  {
+    id: 'high-contrast-forest', name: 'High Contrast Forest', appearance: 'light', highContrast: true,
+    bg: '#ffffff', surface: '#ffffff', text: '#000000', muted: '#000000', accent: '#000000',
+    syntax: { keyword: '#005500', type: '#6b3000', variable: '#000000', func: '#000080', number: '#660066', string: '#800000', comment: '#333333', operator: '#000000', punctuation: '#000000', bool: '#550055' },
+  },
+  {
     id: 'high-contrast-dark', name: 'High Contrast Dark', appearance: 'dark', highContrast: true,
     bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ffffff',
     syntax: { keyword: '#ffff00', type: '#00ffff', variable: '#ffffff', func: '#00ff00', number: '#ffcc99', string: '#ffff99', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ff99ff' },

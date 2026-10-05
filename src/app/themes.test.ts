@@ -45,8 +45,10 @@ describe('theme registry', () => {
   });
 });
 
-it('provides pure black/white interface contrast and readable coloured syntax in both high-contrast themes',()=>{
-  for(const id of ['high-contrast-dark','high-contrast-light']) {
+it('provides 21:1 interface contrast and readable coloured syntax in all six high-contrast themes',()=>{
+  const highContrastThemes = THEMES.filter(theme => theme.highContrast);
+  expect(highContrastThemes).toHaveLength(6);
+  for(const {id} of highContrastThemes) {
     const theme=getTheme(id);
     expect(theme.highContrast).toBe(true);expect(normalizeThemeId(id)).toBe(id);
     expect(contrastRatio(theme.text,theme.bg)).toBe(21);
