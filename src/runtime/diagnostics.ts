@@ -13,7 +13,7 @@ const docs: Record<string, string> = {
   WHILE: 'Repeat its block while the condition stays TRUE. Cambridge syntax requires DO. Example: WHILE Number <> -1 DO.',
   ENDWHILE: 'Closes a WHILE loop.',
   DO: 'Required after a WHILE condition. Example: WHILE Number <> -1 DO.', REPEAT: 'Post-condition loop; example: REPEAT / Number ← Number + 1 / UNTIL Number = 5.', UNTIL: 'Ends REPEAT when its condition becomes TRUE.',
-  FOR: 'Count through values. Example: FOR Counter ← 1 TO 5 / OUTPUT Counter / NEXT Counter.',
+  FOR: 'Count through values. A new counter is implicitly INTEGER, so DECLARE is optional. Example: FOR Counter ← 1 TO 5 / OUTPUT Counter / NEXT Counter.',
   TO: 'Sets the inclusive end value of a FOR loop.',
   STEP: 'Optional change per FOR iteration. A negative step counts downward.',
   NEXT: 'Closes a FOR loop. The counter name after NEXT is optional.',

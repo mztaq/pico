@@ -283,6 +283,9 @@ class Interpreter {
         }
         return;
       case 'ForStatement': {
+        if (!this.scope.find(s.name)) {
+          this.scope.bindings.set(s.name, { value: null, type: 'INTEGER', constant: false });
+        }
         const binding = this.binding(s.name, s.line);
         if (binding.constant)
           throw new RuntimeError(
@@ -299,6 +302,7 @@ class Interpreter {
         const step = s.step ? this.integer(this.evaluate(s.step), s.line) : 1;
         if (step === 0)
           throw new RuntimeError('A FOR STEP cannot be zero.', s.line);
+        binding.value = first;
         for (let v = first; step > 0 ? v <= last : v >= last; ) {
           this.consume(s.line);
           binding.value = v;
