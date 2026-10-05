@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, FolderOpen, GitBranch, History, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
-import { autoDeclareVariables, compile } from '../language';
-import type { Program } from '../language/ast';
+import { compile, synchronizeAutoDeclarations } from '../language';
+import type { DataType, Program } from '../language/ast';
 import { examples } from '../examples';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
 import { AstPanel, ConsolePanel, CoveragePanel, DebuggerPanel, FlowchartDock, panelIcon, TestsPanel, TokensPanel, type PanelKey, type TestOutcome } from './components/Panels';
@@ -63,6 +63,7 @@ export default function App() {
   const workspaceMainRef = useRef<HTMLElement>(null);
   const settingsAnchorRef = useRef<HTMLDivElement>(null);
   const fileAnchorRef = useRef<HTMLDivElement>(null);
+  const autoDeclaredTypesRef = useRef<Record<string, Record<string, DataType>>>({});
 
   const activeProject = projects.find(project => project.id === activeId) ?? projects[0]!;
   const activeFile = activeProject.files.find(file => file.id === activeProject.activeFileId) ?? activeProject.files[0]!;
@@ -87,8 +88,7 @@ export default function App() {
   useEffect(() => { try { saveSettings(settings); } catch { /* The current tab remains usable if storage is blocked. */ } }, [settings]);
   useEffect(() => {
     if (!settings.autoDeclare) return;
-    const analyzed = autoDeclareVariables(activeFile.code);
-    if (analyzed !== activeFile.code) updateCode(analyzed);
+    updateCode(activeFile.code);
   }, [settings.autoDeclare, activeFile.id]);
   useEffect(() => { setHistory(loadHistory(activeProject.id)); }, [activeProject.id]);
   useEffect(() => {
@@ -125,16 +125,23 @@ export default function App() {
   function updateProject(change: (project: PicoProject) => PicoProject) {
     setProjects(current => current.map(project => project.id === activeId ? change({ ...project }) : project));
   }
-  function updateCode(code: string, analyzeNow = false) {
+  function updateCode(code: string) {
     code = code.replace(/<--/g, '←').replace(/[“”]/g, '"');
-    if (settings.autoDeclare && analyzeNow) code = autoDeclareVariables(code);
+    let autoDeclaredTypes = activeFile.autoDeclaredTypes ?? {};
+    if (settings.autoDeclare) {
+      const previous = autoDeclaredTypesRef.current[activeFile.id] ?? autoDeclaredTypes;
+      const synchronized = synchronizeAutoDeclarations(code, previous);
+      code = synchronized.code;
+      autoDeclaredTypes = synchronized.generatedTypes;
+      autoDeclaredTypesRef.current[activeFile.id] = autoDeclaredTypes;
+    }
     setDismissedSuggestions(false);
     setExecutionError(null); setResult(null); setTestOutcomes({});
-    updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code } : file), updatedAt: Date.now() }));
+    updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code, autoDeclaredTypes } : file), updatedAt: Date.now() }));
   }
-  function formatCode() { updateCode(formatPseudocode(activeFile.code), true); }
+  function formatCode() { updateCode(formatPseudocode(activeFile.code)); }
   function saveSnapshot() { const label = window.prompt('Name this snapshot', `Snapshot ${history.length + 1}`); if (label === null) return; setHistory(addVersion(activeProject.id, label, activeProject.files, activeProject.activeFileId)); setHistoryOpen(true); }
-  function restoreSnapshot(version: ProjectVersion) { if (!window.confirm(`Restore “${version.label}”? Current edits will remain available only if you save a snapshot first.`)) return; updateProject(project => ({ ...project, files: version.files.map(file => ({ ...file })), activeFileId: version.activeFileId, code: version.files.find(file => file.id === version.activeFileId)?.code ?? version.files[0]?.code ?? '', updatedAt: Date.now() })); setHistoryOpen(false); setResult(null); setExecutionError(null); }
+  function restoreSnapshot(version: ProjectVersion) { if (!window.confirm(`Restore “${version.label}”? Current edits will remain available only if you save a snapshot first.`)) return; autoDeclaredTypesRef.current = {}; updateProject(project => ({ ...project, files: version.files.map(file => ({ ...file })), activeFileId: version.activeFileId, code: version.files.find(file => file.id === version.activeFileId)?.code ?? version.files[0]?.code ?? '', updatedAt: Date.now() })); setHistoryOpen(false); setResult(null); setExecutionError(null); }
   function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
   function selectProject(id: string) {
     setActiveId(id); setExecutionError(null); setResult(null); setTestOutcomes({}); setInputValues(''); setActivePanel('console');
@@ -250,7 +257,7 @@ export default function App() {
           <SettingRow title="Autocomplete" detail="Suggest Cambridge keywords as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} />
           <SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} />
           <SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} />
-          <SettingRow title="Auto-declare variables" detail="Infer missing scalar types from assignments and FOR loops" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />
+          <SettingRow title="Auto-declare variables" detail="Infer and update types from assignments and FOR loops" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />
           <ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} />
           <SettingRow title="Ask for INPUT on Run" detail="Show an input dialog before programs execute" checked={settings.promptForInput} onChange={value => changeSettings({ promptForInput: value })} />
           <label className="font-setting"><span>Sidebar position</span><select value={settings.sidebarSide} onChange={event => changeSettings({ sidebarSide: event.target.value as PicoSettings['sidebarSide'] })}><option value="left">Left</option><option value="right">Right</option></select></label>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoDeclareVariables } from './autoDeclare';
+import { autoDeclareVariables, synchronizeAutoDeclarations } from './autoDeclare';
 import { compile } from './index';
 
 describe('autoDeclareVariables', () => {
@@ -32,5 +32,31 @@ describe('autoDeclareVariables', () => {
 
   it('leaves incomplete or invalid syntax unchanged', () => {
     expect(autoDeclareVariables('Score ←')).toBe('Score ←');
+  });
+
+  it('updates its generated declaration in real time when an assignment type changes', () => {
+    const initial = synchronizeAutoDeclarations('Score ← 1');
+    expect(initial.code).toBe('DECLARE Score : INTEGER\nScore ← 1');
+    const real = synchronizeAutoDeclarations(initial.code.replace('Score ← 1', 'Score ← 1.5'), initial.generatedTypes);
+    expect(real.code).toBe('DECLARE Score : REAL\nScore ← 1.5');
+    expect(real.generatedTypes['global::Score']).toBe('REAL');
+    const text = synchronizeAutoDeclarations(real.code.replace('Score ← 1.5', 'Score ← "ready"'), real.generatedTypes);
+    expect(text.code).toBe('DECLARE Score : STRING\nScore ← "ready"');
+    expect(() => compile(text.code)).not.toThrow();
+  });
+
+  it('never rewrites an explicit student declaration', () => {
+    const source = 'DECLARE Score : INTEGER\nScore ← 1.5';
+    const result = synchronizeAutoDeclarations(source);
+    expect(result.code).toBe(source);
+    expect(result.generatedTypes).toEqual({});
+  });
+
+  it('recalculates dependent generated declarations when their source variable changes type', () => {
+    const initial = synchronizeAutoDeclarations('Source ← "hello"\nCopy ← Source');
+    const edited = initial.code.replace('Source ← "hello"', 'Source ← TRUE');
+    const updated = synchronizeAutoDeclarations(edited, initial.generatedTypes);
+    expect(updated.code).toBe('DECLARE Source : BOOLEAN\nDECLARE Copy : BOOLEAN\nSource ← TRUE\nCopy ← Source');
+    expect(() => compile(updated.code)).not.toThrow();
   });
 });
