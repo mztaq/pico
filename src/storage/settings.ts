@@ -32,8 +32,8 @@ export interface PicoSettings {
   sidebarVisible: boolean;
   referenceVisible: boolean;
 }
-const KEY = 'pico.settings.v4';
-const LEGACY_KEYS = ['pico.settings.v3'];
+const KEY = 'pico.settings.v5';
+const LEGACY_KEYS = ['pico.settings.v4', 'pico.settings.v3'];
 export const defaultSettings: PicoSettings = {
   autocomplete: true,
   autocorrect: true,
@@ -46,7 +46,7 @@ export const defaultSettings: PicoSettings = {
   dockSide: 'bottom',
   sidebarWidth: 226,
   referenceWidth: 360,
-  referenceFontSize: 15,
+  referenceFontSize: 13,
   dockSize: 33,
   panelOrder: [
     'console',
@@ -114,8 +114,8 @@ export function loadSettings(): PicoSettings {
               : 360,
           referenceFontSize:
             typeof c.referenceFontSize === 'number' && Number.isFinite(c.referenceFontSize)
-              ? Math.min(20, Math.max(14, c.referenceFontSize))
-              : 15,
+              ? Math.min(18, Math.max(12, c.referenceFontSize - (key === KEY ? 0 : 2)))
+              : 13,
           dockSize:
             typeof c.dockSize === 'number'
               ? Math.min(60, Math.max(22, c.dockSize))

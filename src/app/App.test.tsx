@@ -22,7 +22,7 @@ let root:Root;
 const button=(text:string)=>[...container.querySelectorAll('button')].find(b=>b.textContent?.trim()===text)!;
 const click=async(element:HTMLElement)=>act(async()=>{element.click();});
 beforeEach(async()=>{
-  localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.settings.v4',JSON.stringify({autoDeclare:false,promptForInput:false}));
+  localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.settings.v5',JSON.stringify({autoDeclare:false,promptForInput:false}));
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);vi.stubGlobal('Worker',BrowserWorker);BrowserWorker.pending=[];
   container=document.createElement('div');document.body.append(container);root=createRoot(container);
   await act(async()=>root.render(<App/>));
@@ -80,11 +80,11 @@ describe('guided help and readable reference',()=>{
   });
   it('adjusts and persists reference size with keyboard resizing',async()=>{
     await click(container.querySelector('[aria-label="Increase reference text size"]')!);
-    expect(container.querySelector('.reference-controls output')?.textContent).toBe('16px');
+    expect(container.querySelector('.reference-controls output')?.textContent).toBe('14px');
     const splitter=container.querySelector('[aria-label="Resize quick reference panel"]')!;
     await act(async()=>splitter.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true})));
-    const settings=JSON.parse(localStorage.getItem('pico.settings.v4')!);
-    expect(settings.referenceWidth).toBe(370);expect(settings.referenceFontSize).toBe(16);
+    const settings=JSON.parse(localStorage.getItem('pico.settings.v5')!);
+    expect(settings.referenceWidth).toBe(370);expect(settings.referenceFontSize).toBe(14);
     expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--reference-width: 370px');
     await click(button('FOR'));expect(container.querySelector('.reference-explanation > strong')?.textContent).toBe('FOR');
   });
@@ -104,4 +104,16 @@ describe('guided help and readable reference',()=>{
     await click(container.querySelector('[aria-label="Close quick reference"]')!);
     expect(container.querySelector('.ide-shell.reference-open')).toBeNull();
   });
+});
+
+it('shows coloured, selectable reference examples and a credits-only footer',()=>{
+  const example=container.querySelector('.syntax-cheat-sheet pre')!;
+  expect(example.textContent).toContain('DECLARE Name : STRING\nName ← "Pico"');
+  expect(example.querySelector('.syntax-keyword')?.textContent).toBe('DECLARE');
+  expect(example.querySelector('.syntax-type')?.textContent).toBe('STRING');
+  expect(example.querySelector('.syntax-string')?.textContent).toBe('"Pico"');
+  const footer=container.querySelector('footer')!;
+  expect(footer.querySelectorAll('.credit-item strong').length).toBe(2);
+  expect(footer.textContent).toContain('Mustaqim');expect(footer.textContent).toContain('Amar');
+  expect(footer.querySelector('.status-left')).toBeNull();expect(footer.querySelector('.status-right')).toBeNull();
 });
