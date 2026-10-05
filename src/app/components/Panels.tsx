@@ -9,7 +9,7 @@ import { FlowchartPanel } from './FlowchartPanel';
 
 export type PanelKey = 'console' | 'debugger' | 'tests' | 'flowchart' | 'coverage' | 'ast' | 'tokens';
 export interface TestOutcome { passed: boolean; actual: string[]; error?: string; }
-export interface ConsoleEntry { kind: 'output' | 'input'; text: string; }
+export interface ConsoleEntry { kind: 'output' | 'input' | 'note'; text: string; }
 interface ConsoleProps {
   entries: ConsoleEntry[];
   error?: { message: string; line?: number; column?: number; tip?: string } | null;
@@ -27,7 +27,7 @@ export function ConsolePanel({ entries, error, pendingInput, inputValue, onInput
   useEffect(() => { endRef.current?.scrollIntoView?.({ block: 'nearest' }); }, [entries, pendingInput?.id, error]);
   return <div className="console-panel">
     <div className="console-output-area">
-      {entries.length > 0 && <div className="output-list" role="log" aria-label="Console transcript" aria-live="polite">{entries.map((entry, index) => <div className={`output-line ${entry.kind === 'input' ? 'console-entry-input' : ''}`} key={index}><span className="output-prompt" aria-hidden="true">{entry.kind === 'input' ? '❯' : '›'}</span><span>{entry.text || <span className="muted">{entry.kind === 'input' ? '(empty input)' : 'empty line'}</span>}</span></div>)}</div>}
+      {entries.length > 0 && <div className="output-list" role="log" aria-label="Console transcript" aria-live="polite">{entries.map((entry, index) => <div className={entry.kind === 'note' ? 'console-entry-note' : `output-line ${entry.kind === 'input' ? 'console-entry-input' : ''}`} key={index}><span className="output-prompt" aria-hidden="true">{entry.kind === 'note' ? '✦' : entry.kind === 'input' ? '❯' : '›'}</span><span>{entry.text || <span className="muted">{entry.kind === 'input' ? '(empty input)' : 'empty line'}</span>}</span></div>)}</div>}
       {error && <div className="runtime-error-card" role="alert"><div className="error-heading"><CircleX size={15} /> <strong>{error.line ? `Line ${error.line}` : 'Program error'}</strong></div><p>{error.message}</p>{error.tip && <div className="error-tip">Tip · {error.tip}</div>}</div>}
       {pendingInput && <div className="console-input-line">
         <form className="console-input-form" aria-label="Console input" onSubmit={event => { event.preventDefault(); onSubmit(); }}>
