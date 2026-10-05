@@ -14,7 +14,7 @@ describe('project persistence boundaries',()=>{
       expect(project.files[0]!.name).toBe('main.pico');
       expect(project.files[0]!.code.split('\n')[0]).toBe(header);
       expect(project.code).toBe(project.files[0]!.code);
-      const result = execute(compile(project.code).ast, []);
+      const result = execute(compile(project.code).ast, project.tests[0]?.inputs ?? []);
       expect(result.output).toEqual(project.tests.length ? project.tests[0]!.expected : ['42']);
     }
   });

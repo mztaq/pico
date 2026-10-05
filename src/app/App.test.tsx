@@ -51,8 +51,13 @@ describe('workspace execution integration',()=>{
   it('runs through a worker, shows output and replays final debugger state',async()=>{
     await click(button('Run⌘ ↵'));expect(button('Stop')).toBeTruthy();
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
-    expect([...container.querySelectorAll('.output-line')].map(line=>line.textContent)).toEqual(['›1','›2','›3','›4','›5']);
+    expect(codeEditor().value).toBe('// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar\n\nDECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name');
+    expect(container.querySelector('.output-line')?.textContent).toBe('›Enter your name');
+    expect(consoleInput().getAttribute('aria-label')).toBe('Value for Name');
+    await typeValue(consoleInput(),'Ada');await submitInput();
+    expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Enter your name','Ada','Hello Ada']);
     await click(button('Debug'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await typeValue(consoleInput(),'Ada');await submitInput();
     expect(container.querySelector('.debugger-panel')).not.toBeNull();
     const steps=BrowserWorker.pending.at(-1)!.request!;expect(steps.runs[0]!.options.files).toEqual({});
   });
@@ -121,8 +126,8 @@ describe('workspace execution integration',()=>{
   it('uses saved test inputs automatically without opening console input',async()=>{
     await typeValue(codeEditor(),'DECLARE N : INTEGER\nINPUT N\nOUTPUT N * 2');
     await click(button('Test cases1'));
-    await typeValue(container.querySelector<HTMLTextAreaElement>('[aria-label="Counts from 1 to 5 input"]')!,'3');
-    await typeValue(container.querySelector<HTMLTextAreaElement>('[aria-label="Counts from 1 to 5 expected output"]')!,'6');
+    await typeValue(container.querySelector<HTMLTextAreaElement>('[aria-label="Greets the user input"]')!,'3');
+    await typeValue(container.querySelector<HTMLTextAreaElement>('[aria-label="Greets the user expected output"]')!,'6');
     await click(button('Run tests'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     expect(container.querySelector('.result-chip')?.textContent).toBe('Passed');
     expect(BrowserWorker.pending.at(-1)!.request!.interactive).not.toBe(true);
@@ -197,7 +202,7 @@ describe('guided help and readable reference',()=>{
     for(let i=0;i<6;i++)await click(button('Next'));
     await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Help opens this tour again. Pico remembers a few familiar names.');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. Pico might have something to say about its creators. Help opens this tour again.');
     await click(button('Start coding'));
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
     expect(codeEditor().value).toBe(code);
@@ -238,7 +243,7 @@ describe('guided help and readable reference',()=>{
     await click(button('Next'));expect(container.querySelector('[data-tour="reference"]')).not.toBeNull();
     await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Help opens this tour again. Pico remembers a few familiar names.');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. Pico might have something to say about its creators. Help opens this tour again.');
     await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
     await click(button('Skip for now'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();

@@ -68,6 +68,9 @@
 .runtime-error-card p { color: var(--text); font-size: 13px; line-height: 1.65; }
 .error-tip { font-size: 13px; line-height: 1.65; }
 .pico-app { --panel-font-size: 14px; }
+.dock-tab-row { overflow-x: auto; overflow-y: hidden; }
+.dock-tab { flex-shrink: 0; font-size: 11px; }
+.dock-tab small { min-width: 17px; height: 17px; font-size: 10px; }
 .output-line { color: var(--text); font-size: var(--panel-font-size); line-height: 1.7; }
 .pico-easter-egg { font-size: 14px; line-height: 1.6; }
 
