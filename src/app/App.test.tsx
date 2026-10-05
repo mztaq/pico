@@ -2,28 +2,46 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { runRequests, type WorkerRequest } from '../runtime/worker';
+import { createInteractiveSession, runRequests, type InputMessage, type WorkerReply, type WorkerRequest } from '../runtime/worker';
 import App from './App';
 import { referenceExamples, referenceTerms } from './reference';
 
-vi.mock('./components/CodeEditor',()=>({CodeEditor:({value,onChange}:{value:string;onChange:(value:string)=>void})=><textarea aria-label="Test pseudocode editor" value={value} onChange={event=>onChange(event.target.value)} />}));
+vi.mock('./components/CodeEditor',()=>({CodeEditor:({value,onChange}:{value:string;onChange:(value:string)=>void})=><textarea aria-label="Test pseudocode editor" value={value} onInput={event=>onChange(event.currentTarget.value)} />}));
 class BrowserWorker {
   static pending: BrowserWorker[]=[];
-  onmessage?: (event:{data:ReturnType<typeof runRequests>})=>void;
+  onmessage?: (event:{data:WorkerReply})=>void;
   onerror?: (event:{preventDefault:()=>void})=>void;
   terminated=false;
   request?:WorkerRequest;
+  session?:ReturnType<typeof createInteractiveSession>;
   constructor() { BrowserWorker.pending.push(this); }
-  postMessage(request:WorkerRequest) { this.request=request; }
+  postMessage(request:WorkerRequest | InputMessage) {
+    if('type' in request) queueMicrotask(()=>{ if(!this.terminated)this.session?.input(request); });
+    else this.request=request;
+  }
   terminate() { this.terminated=true; }
-  complete() { this.onmessage?.({data:runRequests(this.request!)}); }
+  complete() {
+    if(this.request!.interactive){
+      this.session=createInteractiveSession(this.request!,data=>this.onmessage?.({data}));this.session.start();
+    }else this.onmessage?.({data:runRequests(this.request!)});
+  }
 }
 let container:HTMLDivElement;
 let root:Root;
 const button=(text:string)=>[...container.querySelectorAll('button')].find(b=>b.textContent?.trim()===text)!;
 const click=async(element:HTMLElement)=>act(async()=>{element.click();});
+async function typeValue(element:HTMLInputElement | HTMLTextAreaElement,value:string){
+  await act(async()=>{
+    const prototype=element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype;
+    Object.getOwnPropertyDescriptor(prototype,'value')!.set!.call(element,value);
+    element.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+}
+const codeEditor=()=>container.querySelector<HTMLTextAreaElement>('[aria-label="Test pseudocode editor"]')!;
+const consoleInput=()=>container.querySelector<HTMLInputElement>('.console-input-form input')!;
+const submitInput=async()=>act(async()=>{container.querySelector('form.console-input-form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
 beforeEach(async()=>{
-  localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.settings.v5',JSON.stringify({autoDeclare:false,promptForInput:false}));
+  localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.settings.v5',JSON.stringify({autoDeclare:false}));
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);vi.stubGlobal('Worker',BrowserWorker);BrowserWorker.pending=[];
   container=document.createElement('div');document.body.append(container);root=createRoot(container);
   await act(async()=>root.render(<App/>));
@@ -47,6 +65,77 @@ describe('workspace execution integration',()=>{
     await click(button('Test cases1'));await click(button('Run tests'));
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     expect(container.querySelector('.result-chip')?.textContent).toBe('Passed');expect(BrowserWorker.pending.at(-1)!.request!.runs[0]!.options.trace).toBe(false);
+  });
+  it('pauses for each value inline, retains the transcript and removes preset input',async()=>{
+    await typeValue(codeEditor(),'DECLARE Name : STRING\nDECLARE Age : INTEGER\nOUTPUT "Name?"\nINPUT Name\nOUTPUT "Age?"\nINPUT Age\nOUTPUT Name, " is ", Age');
+    expect(container.querySelector('[aria-label="Standard input values"]')).toBeNull();
+    expect(container.textContent).not.toContain('STANDARD INPUT');
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    expect(container.querySelector('.output-list')?.textContent).toContain('Name?');
+    expect(document.activeElement).toBe(consoleInput());
+    expect(consoleInput().getAttribute('aria-label')).toBe('Value for Name');
+    expect(container.querySelector('.input-modal')).toBeNull();
+    await typeValue(consoleInput(),'Ada');await submitInput();
+    expect(consoleInput().getAttribute('aria-label')).toBe('Value for Age');
+    await typeValue(consoleInput(),'sixteen');await click(button('Send'));
+    expect(container.querySelector('.console-input-error')?.textContent).toContain('not an INTEGER');
+    expect(document.activeElement).toBe(consoleInput());
+    await typeValue(consoleInput(),'16');await submitInput();
+    expect(container.querySelector('.console-input-form')).toBeNull();
+    expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Name?','Ada','Age?','sixteen','16','Ada is 16']);
+    expect(BrowserWorker.pending).toHaveLength(1);
+  });
+  it('stops while waiting, then starts a fresh session without old values',async()=>{
+    await typeValue(codeEditor(),'DECLARE N : INTEGER\nOUTPUT "Enter"\nINPUT N\nOUTPUT N');
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    const oldWorker=BrowserWorker.pending.at(-1)!;
+    await click(button('Stop'));
+    expect(container.querySelector('.console-input-form')).toBeNull();
+    expect(container.textContent).toContain('Execution stopped.');expect(oldWorker.terminated).toBe(true);
+    await act(async()=>oldWorker.session!.input({type:'input',id:1,value:'99'}));
+    expect(container.querySelector('.output-list')?.textContent).not.toContain('99');
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    expect(container.querySelectorAll('.output-line')).toHaveLength(1);
+    await typeValue(consoleInput(),'2');await submitInput();
+    expect(container.querySelector('.output-list')?.textContent).not.toContain('99');
+    expect(container.querySelector('.output-line:last-child')?.textContent).toBe('›2');
+  });
+  it('cancels a waiting run on an editor change and discards late responses',async()=>{
+    await typeValue(codeEditor(),'DECLARE N : INTEGER\nINPUT N\nOUTPUT N');
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    const worker=BrowserWorker.pending.at(-1)!;
+    await typeValue(codeEditor(),'OUTPUT "New program"');
+    expect(worker.terminated).toBe(true);expect(container.querySelector('.console-input-form')).toBeNull();
+    await act(async()=>worker.session!.input({type:'input',id:1,value:'12'}));
+    expect(container.querySelector('.output-line')).toBeNull();
+  });
+  it('accepts an empty string and builds the debugger trace after interactive input',async()=>{
+    await typeValue(codeEditor(),'DECLARE Name : STRING\nINPUT Name\nOUTPUT LENGTH(Name)');
+    await click(button('Debug'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    expect(container.querySelector('.console-input-form')).not.toBeNull();
+    await submitInput();
+    expect(container.querySelector('.debugger-panel')).not.toBeNull();
+    await click(button('Console'));
+    expect(container.querySelector('.output-line:last-child')?.textContent).toBe('›0');
+  });
+  it('uses saved test inputs automatically without opening console input',async()=>{
+    await typeValue(codeEditor(),'DECLARE N : INTEGER\nINPUT N\nOUTPUT N * 2');
+    await click(button('Test cases1'));
+    await typeValue(container.querySelector<HTMLTextAreaElement>('[aria-label="Counts from 1 to 5 input"]')!,'3');
+    await typeValue(container.querySelector<HTMLTextAreaElement>('[aria-label="Counts from 1 to 5 expected output"]')!,'6');
+    await click(button('Run tests'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    expect(container.querySelector('.result-chip')?.textContent).toBe('Passed');
+    expect(BrowserWorker.pending.at(-1)!.request!.interactive).not.toBe(true);
+    expect(BrowserWorker.pending.at(-1)!.request!.runs[0]!.inputs).toEqual(['3']);
+    await click(button('Console'));expect(container.querySelector('.console-input-form')).toBeNull();
+  });
+  it('cancels waiting input when switching source files',async()=>{
+    await typeValue(codeEditor(),'DECLARE N : INTEGER\nOUTPUT "Old file"\nINPUT N');
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    const worker=BrowserWorker.pending.at(-1)!;
+    await click(container.querySelector('[aria-label="New file"]')!);
+    expect(worker.terminated).toBe(true);expect(container.querySelector('.console-input-form')).toBeNull();
+    expect(container.querySelector('.output-line')).toBeNull();
   });
 });
 

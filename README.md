@@ -55,7 +55,7 @@ project-scoped virtual file system, and the library routines `LENGTH`, `SUBSTRIN
 ## Tools
 
 Run and output console, recorded execution debugger, test cases with expected versus actual output,
-code coverage, AST viewer, token viewer, flowchart, Cambridge example programs, syntax cheat sheet,
+code coverage, AST viewer, token viewer, flowchart, Cambridge example programs, keyword reference examples,
 autocomplete, autocorrect suggestions and hover documentation.
 
 ## Execution and practice files
@@ -63,7 +63,13 @@ autocomplete, autocorrect suggestions and hover documentation.
 Run and test batches execute in a dedicated Web Worker. Stop cancels the active job. Each run
 has a 10,000-step budget that includes empty loop iterations, a 100-call recursion limit, and
 a total array allocation limit of 100,000 cells. Integer values must fit JavaScript's safe
-integer range. Worker jobs also have a 10-second timeout.
+integer range. Worker jobs have a 10-second running-time budget. Time spent waiting for console input does not count toward that budget.
+
+When Run or Debug reaches `INPUT`, execution pauses and the Console focuses an inline input field.
+Type one value and press Enter (or Send) to resume. Output and submitted values stay in order.
+Invalid values show an explanation and let you try again at the same INPUT. Stop also works while
+waiting. There is no preset standard input area or input dialog. Saved test cases still use their
+stored inputs automatically.
 
 The debugger replays immutable snapshots taken before instructions, plus a final snapshot.
 It preserves partial output and history on runtime errors. It is a recorded debugger, not a
