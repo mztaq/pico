@@ -10,8 +10,8 @@ it.each([
 });
 
 it.each([
-  ['Boyle', 'The Computer Science teacher who backed my creators and their work'],
-  ['Fore', 'The head of Computer Science and ICT at our school'],
+  ['Boyle', 'The Computer Science teacher who backed my creators and their work 📚'],
+  ['Fore', 'The head of Computer Science and ICT at our school 💻'],
 ])('recognises the name and title variants for %s', (name, message) => {
   for (const prefix of ['', 'Mr ', 'mr ', 'Mr.', 'mr. ', 'MR. ', 'Mr', ' Mr .   ']) {
     for (const spelling of [name, name.toLowerCase(), name.toUpperCase()]) {
