@@ -1,8 +1,32 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { importProject, loadActiveId, loadProjects, newProject, saveProjects } from './projects';
+import { importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects } from './projects';
+import { compile } from '../language';
+import { execute } from '../runtime/interpreter';
+import { examples } from '../examples';
 const asFile=(data:unknown)=>({size:100,text:async()=>JSON.stringify(data)}) as File;
 afterEach(()=>vi.unstubAllGlobals());
 describe('project persistence boundaries',()=>{
+  it('adds the exact credit comment to fresh main.pico files without changing their output',()=>{
+    vi.stubGlobal('localStorage',{getItem:()=>null});
+    const projects = [loadProjects()[0]!, newProject(), projectFromExample(examples[1]!.id)!];
+    const header = '// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar';
+    for (const project of projects) {
+      expect(project.files[0]!.name).toBe('main.pico');
+      expect(project.files[0]!.code.split('\n')[0]).toBe(header);
+      expect(project.code).toBe(project.files[0]!.code);
+      const result = execute(compile(project.code).ast, []);
+      expect(result.output).toEqual(project.tests.length ? project.tests[0]!.expected : ['42']);
+    }
+  });
+  it('keeps edited main.pico contents unchanged during save, load, and import',async()=>{
+    const stored=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(key:string)=>stored.get(key)??null,setItem:(key:string,value:string)=>stored.set(key,value)});
+    const project = newProject();
+    project.files[0]!.code = 'OUTPUT "My existing work"';
+    project.code = project.files[0]!.code;
+    saveProjects([project],project.id);
+    expect(loadProjects()[0]!.code).toBe(project.code);
+    expect((await importProject(asFile(project))).code).toBe(project.code);
+  });
   it('rejects malformed test records instead of crashing the test panel',async()=>{
     const project=newProject();
     await expect(importProject(asFile({...project,tests:[{id:'bad',name:'bad',inputs:42,expected:[]}]}))).rejects.toThrow(/valid Pico/);

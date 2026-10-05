@@ -197,8 +197,7 @@ describe('guided help and readable reference',()=>{
     for(let i=0;i<6;i++)await click(button('Next'));
     await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Amar, Mustaqim, Boyle, and Fore');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Mr Boyle, Mr. Boyle, Mr Fore, and Mr. Fore');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Help opens this tour again. Pico remembers a few familiar names.');
     await click(button('Start coding'));
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
     expect(codeEditor().value).toBe(code);
@@ -231,8 +230,7 @@ describe('guided help and readable reference',()=>{
     expect(container.querySelector('.reference-card')).toBeNull();
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Read the result');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('STRING INPUT');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Names ignore capitalisation');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('press Enter');
     expect(container.querySelector('.tutorial-example')?.textContent).toBe('DECLARE Name : STRING\nINPUT Name\nOUTPUT Name');
     await click(button('Back'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Run your program');
     await click(button('Next'));await click(button('Next'));
@@ -240,8 +238,7 @@ describe('guided help and readable reference',()=>{
     await click(button('Next'));expect(container.querySelector('[data-tour="reference"]')).not.toBeNull();
     await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Amar, Mustaqim, Boyle, and Fore');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('Mr Boyle, Mr. Boyle, Mr Fore, and Mr. Fore');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Help opens this tour again. Pico remembers a few familiar names.');
     await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
     await click(button('Skip for now'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();
@@ -338,4 +335,36 @@ it('lets the user choose either high-contrast theme and saves the preference',as
   await click(button('High Contrast Light'));
   expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--bg: #ffffff');
   expect(JSON.parse(localStorage.getItem('pico.settings.v5')!).theme).toBe('high-contrast-light');
+});
+
+it('offers coloured and gradient high-contrast themes and preserves the chosen palette',async()=>{
+  await click(container.querySelector('[aria-label="Open settings"]')!);
+  expect(container.querySelector('.theme-group-label')?.textContent).toBe('High contrast');
+  for (const [label, id, accent] of [
+    ['High Contrast Red', 'high-contrast-red', '#ff9999'],
+    ['High Contrast Blue', 'high-contrast-blue', '#82baff'],
+    ['High Contrast Yellow', 'high-contrast-yellow', '#ffe45e'],
+    ['High Contrast Spectrum', 'high-contrast-spectrum', '#ff99ff'],
+    ['High Contrast Sunset', 'high-contrast-sunset', '#ff9999'],
+  ]) {
+    await click(button(label!));
+    const app = container.querySelector('.pico-app')!;
+    expect(app.getAttribute('data-pico-theme')).toBe(id);
+    expect(app.getAttribute('data-high-contrast')).toBe('true');
+    expect(app.getAttribute('style')).toContain(`--accent: ${accent}`);
+    expect(app.getAttribute('style')).toContain('--on-accent: #000000');
+    expect(JSON.parse(localStorage.getItem('pico.settings.v5')!).theme).toBe(id);
+    if (id!.includes('spectrum') || id!.includes('sunset')) {
+      expect(app.getAttribute('style')).toContain('--accent-fill: linear-gradient(');
+      expect(button(label!).querySelector('.theme-swatch i:last-child')?.getAttribute('style')).toContain('linear-gradient(');
+    }
+  }
+});
+
+it('keeps editor shortcuts while removing the scope caption shown in the screenshot',()=>{
+  const footer = container.querySelector('.editor-card-foot')!;
+  expect(footer.querySelector('.scope-note')).toBeNull();
+  expect(footer.textContent).toContain('to run');
+  expect(footer.textContent).toContain('go to line');
+  expect(footer.textContent).not.toContain('Cambridge subset');
 });
