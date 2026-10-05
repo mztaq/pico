@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, FolderOpen, GitBranch, History, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
-import { compile } from '../language';
+import { autoDeclareVariables, compile } from '../language';
 import type { Program } from '../language/ast';
 import { examples } from '../examples';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
@@ -85,6 +85,11 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [projects, activeId]);
   useEffect(() => { try { saveSettings(settings); } catch { /* The current tab remains usable if storage is blocked. */ } }, [settings]);
+  useEffect(() => {
+    if (!settings.autoDeclare) return;
+    const analyzed = autoDeclareVariables(activeFile.code);
+    if (analyzed !== activeFile.code) updateCode(analyzed);
+  }, [settings.autoDeclare, activeFile.id]);
   useEffect(() => { setHistory(loadHistory(activeProject.id)); }, [activeProject.id]);
   useEffect(() => {
     try {
@@ -120,13 +125,14 @@ export default function App() {
   function updateProject(change: (project: PicoProject) => PicoProject) {
     setProjects(current => current.map(project => project.id === activeId ? change({ ...project }) : project));
   }
-  function updateCode(code: string) {
+  function updateCode(code: string, analyzeNow = false) {
     code = code.replace(/<--/g, '←').replace(/[“”]/g, '"');
+    if (settings.autoDeclare && analyzeNow) code = autoDeclareVariables(code);
     setDismissedSuggestions(false);
     setExecutionError(null); setResult(null); setTestOutcomes({});
     updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code } : file), updatedAt: Date.now() }));
   }
-  function formatCode() { updateCode(formatPseudocode(activeFile.code)); }
+  function formatCode() { updateCode(formatPseudocode(activeFile.code), true); }
   function saveSnapshot() { const label = window.prompt('Name this snapshot', `Snapshot ${history.length + 1}`); if (label === null) return; setHistory(addVersion(activeProject.id, label, activeProject.files, activeProject.activeFileId)); setHistoryOpen(true); }
   function restoreSnapshot(version: ProjectVersion) { if (!window.confirm(`Restore “${version.label}”? Current edits will remain available only if you save a snapshot first.`)) return; updateProject(project => ({ ...project, files: version.files.map(file => ({ ...file })), activeFileId: version.activeFileId, code: version.files.find(file => file.id === version.activeFileId)?.code ?? version.files[0]?.code ?? '', updatedAt: Date.now() })); setHistoryOpen(false); setResult(null); setExecutionError(null); }
   function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
@@ -237,7 +243,26 @@ export default function App() {
       <div className="topbar-crumb"><FolderOpen size={14} /><span>Workspace</span><span className="crumb-slash">/</span><span className="crumb-active">Cambridge Core</span><ChevronDown size={12} /></div>
       <div className="topbar-spacer" />
       <div className={`save-indicator ${saveState}`}><span className="save-dot">{saveState === 'saved' ? <Check size={9} /> : null}</span>{saveText}</div>
-      <div className="settings-anchor" ref={settingsAnchorRef}><button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>{<FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover"><div className="settings-title"><div><Settings2 size={15} /><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setSettingsOpen(false)}><X size={14} /></button></div><SettingRow title="Autocomplete" detail="Suggest Cambridge keywords as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} /><SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} /><SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} /><ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} /><SettingRow title="Ask for INPUT on Run" detail="Show an input dialog before programs execute" checked={settings.promptForInput} onChange={value => changeSettings({ promptForInput: value })} /><label className="font-setting"><span>Sidebar position</span><select value={settings.sidebarSide} onChange={event => changeSettings({ sidebarSide: event.target.value as PicoSettings['sidebarSide'] })}><option value="left">Left</option><option value="right">Right</option></select></label><label className="font-setting"><span>Tool dock position</span><select value={settings.dockSide} onChange={event => changeSettings({ dockSide: event.target.value as PicoSettings['dockSide'] })}><option value="bottom">Bottom</option><option value="right">Right</option></select></label><label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="20" value={settings.fontSize} onChange={event => changeSettings({ fontSize: Number(event.target.value) })} /></label><label className="font-setting"><span>Layout preset</span><select value={settings.layoutPreset} onChange={event => applyLayoutPreset(event.target.value as PicoSettings['layoutPreset'])}><option value="coding">Coding</option><option value="debugging">Debugging</option><option value="focus">Focus</option><option value="custom">Custom</option></select></label><SettingRow title="Project sidebar" detail="Show the project and example navigator" checked={settings.sidebarVisible} onChange={value => changeSettings({ sidebarVisible: value, layoutPreset: 'custom' })} /><SettingRow title="Quick reference" detail="Show the Cambridge keyword reference" checked={settings.referenceVisible} onChange={value => changeSettings({ referenceVisible: value, layoutPreset: 'custom' })} /><button className="reset-layout-button" onClick={resetLayout}>Reset workspace layout</button><div className="settings-foot">Saved locally in this browser · drag dock tabs to reorder</div></FloatingPanel>}</div>
+      <div className="settings-anchor" ref={settingsAnchorRef}>
+        <button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>
+        <FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover">
+          <div className="settings-title"><div><Settings2 size={15} /><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setSettingsOpen(false)}><X size={14} /></button></div>
+          <SettingRow title="Autocomplete" detail="Suggest Cambridge keywords as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} />
+          <SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => changeSettings({ autocorrect: value })} />
+          <SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} />
+          <SettingRow title="Auto-declare variables" detail="Infer missing scalar types from assignments and FOR loops" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />
+          <ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} />
+          <SettingRow title="Ask for INPUT on Run" detail="Show an input dialog before programs execute" checked={settings.promptForInput} onChange={value => changeSettings({ promptForInput: value })} />
+          <label className="font-setting"><span>Sidebar position</span><select value={settings.sidebarSide} onChange={event => changeSettings({ sidebarSide: event.target.value as PicoSettings['sidebarSide'] })}><option value="left">Left</option><option value="right">Right</option></select></label>
+          <label className="font-setting"><span>Tool dock position</span><select value={settings.dockSide} onChange={event => changeSettings({ dockSide: event.target.value as PicoSettings['dockSide'] })}><option value="bottom">Bottom</option><option value="right">Right</option></select></label>
+          <label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="20" value={settings.fontSize} onChange={event => changeSettings({ fontSize: Number(event.target.value) })} /></label>
+          <label className="font-setting"><span>Layout preset</span><select value={settings.layoutPreset} onChange={event => applyLayoutPreset(event.target.value as PicoSettings['layoutPreset'])}><option value="coding">Coding</option><option value="debugging">Debugging</option><option value="focus">Focus</option><option value="custom">Custom</option></select></label>
+          <SettingRow title="Project sidebar" detail="Show the project and example navigator" checked={settings.sidebarVisible} onChange={value => changeSettings({ sidebarVisible: value, layoutPreset: 'custom' })} />
+          <SettingRow title="Quick reference" detail="Show the Cambridge keyword reference" checked={settings.referenceVisible} onChange={value => changeSettings({ referenceVisible: value, layoutPreset: 'custom' })} />
+          <button className="reset-layout-button" onClick={resetLayout}>Reset workspace layout</button>
+          <div className="settings-foot">Saved locally in this browser · drag dock tabs to reorder</div>
+        </FloatingPanel>
+      </div>
       <div className="file-menu-anchor" ref={fileAnchorRef}><button className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" title="Cambridge subset guide" onClick={() => { setSelectedDoc('DECLARE'); document.getElementById('quick-reference')?.scrollIntoView({ behavior: 'smooth' }); }}><CircleHelp size={15} /><span>Help</span></button>
     </header>
 
