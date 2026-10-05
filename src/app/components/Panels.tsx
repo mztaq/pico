@@ -2,6 +2,7 @@ import { Braces, CircleCheck, CircleX, Code2, Play, Plus, SkipBack, SkipForward,
 import type { Program, Token } from '../../language/ast';
 import type { RunResult, TraceStep } from '../../runtime/interpreter';
 import type { TestCase } from '../../storage/projects';
+import { executableLines } from '../../visual/execution';
 import { FlowchartPanel } from './FlowchartPanel';
 
 export type PanelKey = 'console' | 'debugger' | 'tests' | 'flowchart' | 'coverage' | 'ast' | 'tokens';
@@ -10,7 +11,7 @@ interface ConsoleProps { output: string[]; error?: { message: string; line?: num
 export function ConsolePanel({ output, error, stdin, onInput, ran }: ConsoleProps) {
   return <div className="console-panel">
     <div className="console-output-area">
-      {error ? <div className="runtime-error-card"><div className="error-heading"><CircleX size={15} /> <strong>{error.line ? `Line ${error.line}` : 'Program error'}</strong></div><p>{error.message}</p>{error.tip && <div className="error-tip">Tip · {error.tip}</div>}</div>
+      {error ? <div className="runtime-error-card"><div className="error-heading"><CircleX size={15} /> <strong>{error.line ? `Line ${error.line}` : 'Program error'}</strong></div><p>{error.message}</p>{output.length > 0 && <pre>{output.join('\n')}</pre>}{error.tip && <div className="error-tip">Tip · {error.tip}</div>}</div>
         : output.length ? <div className="output-list">{output.map((line, index) => <div className="output-line" key={`${index}-${line}`}><span className="output-prompt">›</span><span>{line || <span className="muted">empty line</span>}</span></div>)}</div>
           : <div className="console-placeholder"><div className="console-placeholder-mark"><Terminal size={18} /></div><div><strong>{ran ? 'Program finished without output' : 'Your output will appear here'}</strong><p>Run your program to see the result in this console.</p></div></div>}
     </div>
@@ -18,22 +19,23 @@ export function ConsolePanel({ output, error, stdin, onInput, ran }: ConsoleProp
   </div>;
 }
 
-interface DebuggerProps { trace: TraceStep[]; index: number; onIndex: (index: number) => void; }
-export function DebuggerPanel({ trace, index, onIndex }: DebuggerProps) {
+interface DebuggerProps { trace: TraceStep[]; index: number; onIndex: (index: number) => void; truncated?: boolean; error?: string; }
+export function DebuggerPanel({ trace, index, onIndex, truncated, error }: DebuggerProps) {
   const current = trace[index];
   if (!trace.length) return <div className="panel-empty"><div className="empty-icon"><Code2 size={18} /></div><strong>See your program one step at a time</strong><p>Press Debug to build an execution trace. Each step shows the current line and the values that exist at that moment.</p></div>;
   const variables = Object.entries(current?.variables ?? {});
   return <div className="debugger-panel">
+    {error && <p role="alert">{error}</p>}{truncated && <p role="status">History recording stopped at its storage limit. Execution continued.</p>}
     <div className="debugger-controls"><div className="step-indicator"><span className="step-dot" /> Step <strong>{index + 1}</strong><span className="muted">of {trace.length}</span></div><div className="step-actions"><button className="icon-button" aria-label="Previous step" disabled={index <= 0} onClick={() => onIndex(Math.max(0, index - 1))}><SkipBack size={15} /></button><button className="step-next" disabled={index >= trace.length - 1} onClick={() => onIndex(Math.min(trace.length - 1, index + 1))}><SkipForward size={15} /> Step</button></div></div>
     <div className="debugger-content"><div className="debug-current"><span className="mini-label">CURRENT LINE</span><div className="debug-line-chip">{current?.line ?? '—'}</div><div className="debug-action-name">{current?.label ?? 'Ready'}</div></div><div className="debug-vars"><div className="mini-label">VARIABLES <span>{variables.length}</span></div>{variables.length ? <div className="variable-list">{variables.map(([name, value]) => <div className="variable-row" key={name}><span className="variable-name">{name}</span><code>{formatValue(value)}</code></div>)}</div> : <div className="debug-empty">No variables have been declared yet.</div>}</div><div className="debug-stdout"><div className="mini-label">OUTPUT <span>{current?.output.length ?? 0}</span></div>{current?.output.length ? current.output.slice(-3).map((line, i) => <code key={`${i}-${line}`}>{line}</code>) : <span className="debug-empty">Nothing printed yet</span>}</div></div>
     <div className="trace-strip" aria-label="Execution history">{trace.slice(Math.max(0, index - 3), Math.min(trace.length, index + 9)).map((step, offset) => { const actualIndex = Math.max(0, index - 3) + offset; return <button key={`${actualIndex}-${step.line}`} className={`trace-chip ${actualIndex === index ? 'active' : ''}`} onClick={() => onIndex(actualIndex)}><span>{String(actualIndex + 1).padStart(2, '0')}</span><b>L{step.line}</b></button>; })}</div>
   </div>;
 }
 
-interface TestsProps { tests: TestCase[]; outcomes: Record<string, TestOutcome>; onRun: () => void; onUpdate: (id: string, patch: Partial<TestCase>) => void; onAdd: () => void; onRemove: (id: string) => void; }
-export function TestsPanel({ tests, outcomes, onRun, onUpdate, onAdd, onRemove }: TestsProps) {
+interface TestsProps { tests: TestCase[]; outcomes: Record<string, TestOutcome>; onRun: () => void; onUpdate: (id: string, patch: Partial<TestCase>) => void; onAdd: () => void; onRemove: (id: string) => void; running?: boolean; }
+export function TestsPanel({ tests, outcomes, onRun, onUpdate, onAdd, onRemove, running }: TestsProps) {
   return <div className="tests-panel">
-    <div className="tests-toolbar"><div><strong>{tests.length} test case{tests.length === 1 ? '' : 's'}</strong><span className="muted"> · Compare your program with the result you expect</span></div><div className="tests-actions"><button className="subtle-button" onClick={onAdd}><Plus size={14} /> Add case</button><button className="primary-small" onClick={onRun}><Play size={13} fill="currentColor" /> Run tests</button></div></div>
+    <div className="tests-toolbar"><div><strong>{tests.length} test case{tests.length === 1 ? '' : 's'}</strong><span className="muted"> · Compare your program with the result you expect</span></div><div className="tests-actions"><button className="subtle-button" onClick={onAdd}><Plus size={14} /> Add case</button><button className="primary-small" disabled={running} onClick={onRun}><Play size={13} fill="currentColor" /> Run tests</button></div></div>
     {!tests.length ? <div className="panel-empty compact"><strong>No test cases yet</strong><p>Add a case to check expected output against what your program produces.</p></div> : <div className="test-list">{tests.map(test => {
       const outcome = outcomes[test.id];
       return <article className="test-card" key={test.id}>
@@ -44,13 +46,14 @@ export function TestsPanel({ tests, outcomes, onRun, onUpdate, onAdd, onRemove }
   </div>;
 }
 
-interface CoverageProps { source: string; lines: number[]; }
-export function CoveragePanel({ source, lines }: CoverageProps) {
+interface CoverageProps { source: string; lines: number[]; ast: Program | null; }
+export function CoveragePanel({ source, lines, ast }: CoverageProps) {
   const codeLines = source.split('\n');
-  const executable = codeLines.map((text, index) => ({ text, line: index + 1 })).filter(({ text }) => text.trim() && !text.trim().startsWith('//') && !/^(ELSE|ENDIF|ENDWHILE|NEXT\b)/i.test(text.trim()));
+  const eligible = new Set(ast ? executableLines(ast) : []);
+  const executable = codeLines.map((text,index)=>({text,line:index+1})).filter(({line})=>eligible.has(line));
   const covered = executable.filter(item => lines.includes(item.line));
   const percent = executable.length ? Math.round((covered.length / executable.length) * 100) : 0;
-  return <div className="coverage-panel"><div className="coverage-summary"><div className="coverage-ring" style={{ '--coverage': `${percent}%` } as React.CSSProperties}><span>{percent}<small>%</small></span></div><div><strong>Code coverage</strong><p>{lines.length ? `${covered.length} of ${executable.length} executable lines reached` : 'Run your program to see which lines execute.'}</p></div></div><div className="coverage-lines">{codeLines.map((text, index) => { const line = index + 1; const coveredLine = lines.includes(line); const structural = /^(ELSE|ENDIF|ENDWHILE|NEXT\b)/i.test(text.trim()); return <div className={`coverage-row ${coveredLine ? 'covered' : !structural && text.trim() ? 'uncovered' : ''}`} key={line}><span className="coverage-mark">{coveredLine ? '✓' : text.trim() && !structural ? '○' : '·'}</span><span className="coverage-number">{line}</span><code>{text || ' '}</code></div>; })}</div></div>;
+  return <div className="coverage-panel"><div className="coverage-summary"><div className="coverage-ring" style={{ '--coverage': `${percent}%` } as React.CSSProperties}><span>{percent}<small>%</small></span></div><div><strong>Code coverage</strong><p>{lines.length ? `${covered.length} of ${executable.length} executable lines reached` : 'Run your program to see which lines execute.'}</p></div></div><div className="coverage-lines">{codeLines.map((text, index) => { const line = index + 1; const coveredLine = lines.includes(line); const structural = !eligible.has(line); return <div className={`coverage-row ${coveredLine ? 'covered' : !structural && text.trim() ? 'uncovered' : ''}`} key={line}><span className="coverage-mark">{coveredLine ? '✓' : text.trim() && !structural ? '○' : '·'}</span><span className="coverage-number">{line}</span><code>{text || ' '}</code></div>; })}</div></div>;
 }
 
 interface AstProps { ast: Program | null; error?: string; }
@@ -76,5 +79,5 @@ export function panelIcon(key: PanelKey) {
 }
 
 export function DebugSummary({ result }: { result: RunResult | null }) { return <span>{result ? `${result.steps} steps` : 'Ready to debug'}</span>; }
-function formatValue(value: unknown): string { return value === null ? 'UNASSIGNED' : value === true ? 'TRUE' : value === false ? 'FALSE' : String(value); }
+function formatValue(value: unknown): string { return value === null ? 'UNASSIGNED' : value === true ? 'TRUE' : value === false ? 'FALSE' : Array.isArray(value) ? JSON.stringify(value) : String(value); }
 function splitLines(value: string): string[] { return value === '' ? [] : value.split(/\r?\n/); }

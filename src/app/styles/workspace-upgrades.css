@@ -7,3 +7,10 @@
 .history-row strong, .history-row small { display: block; }
 .history-row strong { color: var(--text); font-size: 11px; }
 .history-row small { margin-top: 4px; color: var(--muted); font-size: 9px; }
+
+.practice-files { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 12px; }
+.practice-files summary { cursor: pointer; }
+.practice-files label { display: grid; gap: 6px; margin: 10px 0; }
+.practice-files textarea { min-height: 72px; width: 100%; font-family: var(--font-code); }
+.practice-files input, .practice-files textarea { background: var(--surface-input, #181b25); color: inherit; border: 1px solid var(--border); padding: 8px; }
+.practice-files > div { display: flex; gap: 8px; }
