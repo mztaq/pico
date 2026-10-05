@@ -111,7 +111,7 @@ export function GuidedTutorial({ step, onStep, onClose, onReference }: Props) {
         <h2 id="tutorial-title">Tour complete</h2>
         <p id="tutorial-description">Write a program, press Run, and follow what happens. Your code is right where you left it.</p>
         <div className="tutorial-recap"><span><Check size={16} /> Write and run</span><span><Check size={16} /> Explore and debug</span><span><Check size={16} /> Save as .pico</span></div>
-        <p className="tutorial-tip">Help opens this tour again. Pico remembers a few familiar names.</p>
+        <p className="tutorial-tip">Try Mustaqim or Amar when your program asks for a name. Pico might have something to say about its creators. Help opens this tour again.</p>
         <button className="tutorial-reference-link" onClick={onReference}>Open quick reference <ArrowRight size={16} /></button>
       </> : <>
         <div className="tutorial-progress" aria-label={`Step ${step + 1} of ${tutorialSteps.length}`}>{tutorialSteps.map((item, index) => <button key={item.label} className={index <= step ? 'filled' : ''} onClick={() => onStep(index)} aria-label={`Go to step ${index + 1}: ${item.title}`} aria-current={index === step ? 'step' : undefined} />)}</div>
