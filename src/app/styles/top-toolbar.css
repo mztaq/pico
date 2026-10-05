@@ -1,0 +1,38 @@
+/* One header contains the workspace actions. The editor starts directly below it. */
+.topbar { gap: 8px; padding-inline: 16px; }
+.topbar > .brand-lockup { min-width: 0; flex-shrink: 0; }
+.topbar-project-name { min-width: 92px; width: 150px; padding: 6px 8px; border: 1px solid transparent; border-radius: 5px; }
+.topbar-project-name:hover, .topbar-project-name:focus { border-color: var(--border); }
+.topbar-spacer { min-width: 0; }
+.topbar-actions { display: flex; align-items: center; flex-shrink: 0; gap: 5px; }
+.topbar-actions .toolbar-button { height: 34px; font-size: 12px; }
+.topbar-actions .run-button { height: 34px; font-size: 12px; }
+.topbar-actions .run-button kbd { font-size: 9px; }
+.topbar-actions .stop-button { color: var(--text); border-color: var(--border); }
+.topbar > .settings-anchor, .topbar > .file-menu-anchor, .topbar > .help-button { flex-shrink: 0; }
+.file-menu { width: 240px; }
+.file-menu-project { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px 12px; color: var(--muted); font-size: 12px; }
+.file-menu-project input { min-width: 0; width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface-input); color: var(--text); font-size: 13px; }
+.file-menu button { min-height: 36px; font-size: 13px; }
+
+@media (max-width: 1150px) {
+  .topbar .brand-subtitle { display: none; }
+  .topbar .save-indicator { font-size: 0; }
+  .topbar-actions .toolbar-button span { display: none; }
+  .topbar-actions .toolbar-button { width: 34px; padding: 0; }
+  .topbar-actions .run-button kbd { display: none; }
+  .topbar-actions .run-button { min-width: 58px; justify-content: center; padding-inline: 8px; }
+}
+@media (max-width: 760px) {
+  .topbar { gap: 5px; padding-inline: 10px; }
+  .topbar-project-name, .topbar .save-indicator { display: none; }
+}
+@media (max-width: 520px) {
+  .topbar { gap: 4px; padding-inline: 8px; }
+  .topbar > .brand-lockup { min-width: 64px; }
+  .topbar-actions { gap: 4px; }
+  .topbar-actions .toolbar-button, .topbar .topbar-icon { width: 28px; min-width: 28px; }
+  .topbar-actions .run-button { min-width: 48px; gap: 4px; padding-inline: 5px; }
+  .topbar .help-button { min-width: 28px; padding: 0 5px; }
+  .topbar .help-button > svg:last-child:not(:first-child) { display: none; }
+}
