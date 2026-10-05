@@ -117,3 +117,24 @@ it('shows coloured, selectable reference examples and a credits-only footer',()=
   expect(footer.textContent).toContain('Mustaqim');expect(footer.textContent).toContain('Amar');
   expect(footer.querySelector('.status-left')).toBeNull();expect(footer.querySelector('.status-right')).toBeNull();
 });
+
+it('colours only the example code in the reference, leaving keyword labels plain',async()=>{
+  expect(container.querySelector('.reference-keywords .highlighted-code')).toBeNull();
+  expect(container.querySelector('.reference-explanation .highlighted-code')).toBeNull();
+  expect(button('DECLARE').textContent).toBe('DECLARE');
+  await click(button('DECLARE'));
+  expect(container.querySelector('.reference-explanation > strong')?.textContent).toBe('DECLARE');
+  expect(container.querySelector('.syntax-cheat-sheet .syntax-keyword')).not.toBeNull();
+  expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--reference-label: #ffffff');
+});
+
+it('lets the user choose either high-contrast theme and saves the preference',async()=>{
+  await click(container.querySelector('[aria-label="Open settings"]')!);
+  await click(button('High Contrast Dark'));
+  expect(container.querySelector('.pico-app')?.getAttribute('data-high-contrast')).toBe('true');
+  expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--bg: #000000');
+  expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--text: #ffffff');
+  await click(button('High Contrast Light'));
+  expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--bg: #ffffff');
+  expect(JSON.parse(localStorage.getItem('pico.settings.v5')!).theme).toBe('high-contrast-light');
+});
