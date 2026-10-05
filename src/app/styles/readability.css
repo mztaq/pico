@@ -102,3 +102,18 @@
 .reference-example pre { margin: 8px 0 0; padding: 10px; overflow-x: auto; background: var(--surface-raised); border-radius: 6px; color: var(--text); font-family: var(--font-code); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; white-space: pre; user-select: text; }
 .reference-example .reference-input-hint { margin: 8px 0 0; color: var(--text); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.5; }
 .reference-input-hint code { font-family: var(--font-code); }
+
+.console-panel { min-height: 0; }
+.console-input-line { margin-top: 6px; }
+.console-input-form { display: flex; align-items: baseline; gap: 10px; min-width: 0; font-family: var(--font-code); font-size: 14px; }
+.console-input-form input { flex: 1; min-width: 0; height: 30px; padding: 3px 0; background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; outline: 0; color: var(--text); caret-color: var(--text); font: inherit; }
+.console-input-form input:focus-visible { border-color: var(--accent); }
+.console-input-form input::placeholder { color: var(--muted); font-size: 12px; }
+.console-input-submit { flex-shrink: 0; padding: 5px 9px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-raised); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+.console-input-submit:hover { border-color: var(--accent); }
+.console-input-submit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.console-input-hint, .console-running { margin: 5px 0 0 20px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.console-input-error { margin: 8px 0 0 20px; color: var(--text); font-size: 13px; line-height: 1.5; }
+.console-input-line .output-prompt, .console-entry-input .output-prompt { color: var(--accent); }
+.console-entry-input > span:last-child { color: var(--text); }
+.console-output-area > .runtime-error-card { margin-top: 10px; }
