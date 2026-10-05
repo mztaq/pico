@@ -1,25 +1,46 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
 
 :root {
   color-scheme: dark;
-  --bg: #0b0c10;
-  --surface: #111318;
-  --surface-raised: #15171e;
-  --surface-hover: #1c1f28;
-  --surface-input: #0e1015;
-  --border: #242731;
-  --border-soft: #1d2029;
-  --text: #e9eaf0;
-  --muted: #8d91a0;
-  --dim: #656a78;
-  --accent: #968cff;
-  --accent-strong: #8179ef;
-  --accent-soft: rgba(150, 140, 255, .12);
+  --bg: #1e1e1e;
+  --surface: #252526;
+  --surface-raised: #2a2b2c;
+  --surface-hover: #313234;
+  --surface-input: #141414;
+  --border: #3c3c3c;
+  --border-soft: #2f3030;
+  --text: #d4d4d4;
+  --muted: #8a8a8a;
+  --dim: #6b6b6b;
+  --accent: #0e7ad3;
+  --accent-strong: #0c68b4;
+  --accent-soft: rgba(14, 122, 211, .16);
   --mint: #72cfb3;
   --amber: #e2b978;
   --red: #e5828a;
   --font-ui: 'DM Sans', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-code: 'DM Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --font-code: 'JetBrains Mono', 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  --syntax-keyword: #c586c0;
+  --syntax-type: #4ec9b0;
+  --syntax-variable: #9cdcfe;
+  --syntax-function: #dcdcaa;
+  --syntax-number: #b5cea8;
+  --syntax-string: #ce9178;
+  --syntax-comment: #6a9955;
+  --syntax-operator: #d4d4d4;
+  --syntax-punctuation: #d4d4d4;
+  --syntax-bool: #569cd6;
+  --editor-bg: #1e1e1e;
+  --editor-gutter: #7c7c7c;
+  --editor-gutter-active: #d4d4d4;
+  --editor-line: rgba(14, 122, 211, .09);
+  --editor-selection: rgba(14, 122, 211, .3);
+  --editor-cursor: #0e7ad3;
+  --editor-match: rgba(14, 122, 211, .32);
+  --indent-guide: rgba(212, 212, 212, .16);
+  --indent-guide-active: rgba(212, 212, 212, .38);
+  --tooltip-bg: #34343a;
+  --tooltip-border: #4a4a4a;
   font-family: var(--font-ui);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -59,7 +80,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .help-button { padding: 0 10px; color: #a8aab4; font-size: 11px; }
 .help-button:hover { background: #1a1c24; color: #ededf5; }
 .settings-anchor { position: relative; }
-.settings-popover { position: absolute; width: 304px; top: 42px; right: -30px; padding: 14px; border: 1px solid #30333f; border-radius: 12px; background: #171920; box-shadow: 0 20px 70px rgba(0,0,0,.55); z-index: 50; }
+.settings-popover { width: 320px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 20px 70px rgba(0,0,0,.55); }
 .settings-title, .settings-title > div { display: flex; align-items: center; }
 .settings-title { justify-content: space-between; margin-bottom: 9px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .settings-title > div { gap: 8px; color: #c7c1ff; font-size: 12px; }
@@ -150,9 +171,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .cm-editor { height: 100%; }
 .cm-scroller { scrollbar-color: #353844 transparent; scrollbar-width: thin; }
 .cm-gutters { user-select: none; }
-.cm-line.pico-covered-line { box-shadow: inset 2px 0 0 rgba(95,190,151,.72); }
-.cm-line.pico-debug-line { background: rgba(135,126,245,.15) !important; box-shadow: inset 2px 0 0 #aa9fff; }
-.cm-line.pico-error-line { background: rgba(229,130,138,.11) !important; box-shadow: inset 2px 0 0 #e5828a; }
+.cm-line.pico-covered-line { box-shadow: inset 2px 0 0 var(--mint); }
+.cm-line.pico-debug-line { background-color: var(--editor-line) !important; box-shadow: inset 2px 0 0 var(--accent); }
+.cm-line.pico-error-line { background-color: rgba(229,130,138,.14) !important; box-shadow: inset 2px 0 0 var(--red); }
 .cm-gutterElement:has(+ .pico-debug-line) { color: #aaa0ff; }
 .cm-tooltip .pico-doc-tooltip { width: 245px; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; font-family: var(--font-ui); }
 .pico-doc-tooltip strong { color: #c3bcff; font-family: var(--font-code); font-size: 10px; }
@@ -430,10 +451,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 
 .file-menu-anchor { position: relative; }
 .file-menu-anchor .help-button.active { background: #1a1c24; color: #dedbff; border-color: #2c2d39; }
-.file-menu { position: absolute; top: 38px; right: 0; width: 168px; padding: 6px; border: 1px solid #30333f; border-radius: 9px; background: #171920; box-shadow: 0 18px 50px rgba(0,0,0,.48); z-index: 60; }
-.file-menu button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; color: #c4c5d0; font-size: 10px; text-align: left; cursor: pointer; }
-.file-menu button:hover { background: #252733; color: #f2f1fb; }
-.settings-popover select { width: 100%; margin-top: 8px; padding: 6px 8px; border: 1px solid #363945; border-radius: 5px; background: #101218; color: #d7d8e2; font-family: var(--font-code); font-size: 10px; }
+.file-menu { width: 172px; padding: 6px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-raised); box-shadow: 0 18px 50px rgba(0,0,0,.48); }
+.file-menu button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 10px; text-align: left; cursor: pointer; }
+.file-menu button:hover { background: var(--surface-hover); color: var(--text); }
+.settings-popover select { width: 100%; margin-top: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface-input); color: var(--text); font-family: var(--font-code); font-size: 10px; }
 .syntax-cheat-button { width: 100%; margin: 0 0 8px; padding: 7px 9px; border: 1px solid #35344d; border-radius: 6px; background: rgba(150,140,255,.08); color: #c4beff; font-family: var(--font-code); font-size: 9px; text-align: left; cursor: pointer; }
 .syntax-cheat-button:hover { background: rgba(150,140,255,.16); border-color: #625aa5; }
 .attribution { max-width: 430px; overflow: hidden; color: #727785; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
@@ -454,8 +475,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .ide-shell.dock-right .workspace-main { display: grid; }
 .dock-tab { cursor: grab; }
 .dock-tab:active { cursor: grabbing; }
-.reset-layout-button { width: 100%; margin-top: 12px; padding: 7px 8px; border: 1px solid #3c3b50; border-radius: 6px; background: rgba(150,140,255,.08); color: #c4beff; font-size: 9px; cursor: pointer; }
-.reset-layout-button:hover { background: rgba(150,140,255,.16); }
+.reset-layout-button { width: 100%; margin-top: 12px; padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--accent-soft); color: var(--text); font-size: 9px; cursor: pointer; }
+.reset-layout-button:hover { background: var(--accent-soft); border-color: var(--accent); }
 .input-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(4,5,8,.72); backdrop-filter: blur(8px); }
 .input-modal { width: min(460px, 100%); padding: 18px; border: 1px solid #4a466f; border-radius: 14px; background: var(--surface-raised); box-shadow: 0 24px 90px rgba(0,0,0,.62); }
 .input-modal-head { display: flex; justify-content: space-between; gap: 18px; margin-bottom: 14px; }
@@ -464,46 +485,121 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .input-modal-head small { margin-top: 5px; color: var(--muted); font-size: 10px; }
 .input-modal textarea { width: 100%; min-height: 110px; resize: vertical; padding: 10px; border: 1px solid var(--border); border-radius: 8px; outline: none; background: var(--surface-input); color: var(--text); font-family: var(--font-code); font-size: 12px; line-height: 1.6; }
 .input-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
-.theme-light { --bg:#eef1f5; --surface:#ffffff; --surface-raised:#f8fafc; --surface-hover:#e8edf4; --surface-input:#f1f4f8; --border:#d6dce6; --border-soft:#e4e8ee; --text:#19202b; --muted:#687386; --dim:#8791a1; --accent:#6558d8; --accent-strong:#5548c6; --accent-soft:rgba(101,88,216,.12); }
-.theme-coffee { --bg:#201814; --surface:#2b211b; --surface-raised:#36291f; --surface-hover:#443328; --surface-input:#211812; --border:#594233; --border-soft:#473329; --text:#f4e7d2; --muted:#b79c7f; --accent:#d69b63; --accent-strong:#ba7b47; }
-.theme-matcha { --bg:#101b17; --surface:#16251f; --surface-raised:#1d3028; --surface-hover:#274238; --surface-input:#0e1714; --border:#315344; --border-soft:#243e34; --text:#e4f0df; --muted:#9db6a1; --accent:#98d38e; --accent-strong:#6fb968; }
-.theme-cappuccino { --bg:#231d1b; --surface:#302824; --surface-raised:#3d322b; --surface-hover:#4d3e34; --surface-input:#1c1715; --border:#645044; --border-soft:#4d3d34; --text:#f7e9d7; --muted:#c0a88f; --accent:#e7b77c; --accent-strong:#c9955c; }
-.theme-mocha { --bg:#171014; --surface:#24171b; --surface-raised:#322025; --surface-hover:#422930; --surface-input:#120c10; --border:#583540; --border-soft:#3f2931; --text:#f7e1df; --muted:#c39da3; --accent:#e39aa8; --accent-strong:#c8798b; }
-.theme-raven { --bg:#08090d; --surface:#0d1018; --surface-raised:#141a25; --surface-hover:#1b2533; --surface-input:#06070a; --border:#283346; --border-soft:#1a2433; --text:#e2edf7; --muted:#8296ae; --accent:#79b8e8; --accent-strong:#4c91c9; }
 
 /* Full-surface theme pass: keep the editor, chrome, dock, and cards in sync. */
-.pico-app[class*="theme-"] .topbar,
-.pico-app[class*="theme-"] .command-bar,
-.pico-app[class*="theme-"] .project-sidebar,
-.pico-app[class*="theme-"] .statusbar,
-.pico-app[class*="theme-"] .tool-dock,
-.pico-app[class*="theme-"] .editor-card,
-.pico-app[class*="theme-"] .reference-card { background: var(--surface); color: var(--text); border-color: var(--border); }
-.pico-app[class*="theme-"] .workspace-main { background: var(--bg); }
-.pico-app[class*="theme-"] .dock-tab-row,
-.pico-app[class*="theme-"] .editor-card-head,
-.pico-app[class*="theme-"] .reference-head { background: var(--surface-raised); border-color: var(--border); }
-.pico-app[class*="theme-"] .reference-search,
-.pico-app[class*="theme-"] .test-columns textarea,
-.pico-app[class*="theme-"] .actual-output code,
-.pico-app[class*="theme-"] .actual-pending,
-.pico-app[class*="theme-"] .actual-error,
-.pico-app[class*="theme-"] .input-modal textarea { background: var(--surface-input); border-color: var(--border); color: var(--text); }
-.pico-app[class*="theme-"] .example-row:hover,
-.pico-app[class*="theme-"] .token-table tr:hover td,
-.pico-app[class*="theme-"] .toggle-chip:hover { background: var(--surface-hover); }
-.pico-app[class*="theme-"] .cm-editor,
-.pico-app[class*="theme-"] .cm-scroller,
-.pico-app[class*="theme-"] .cm-gutters { background: var(--surface) !important; color: var(--text) !important; }
-.pico-app[class*="theme-"] .cm-gutters { border-color: var(--border) !important; color: var(--muted) !important; }
-.pico-app[class*="theme-"] .cm-activeLine { background: var(--accent-soft) !important; }
-.pico-app[class*="theme-"] .cm-tooltip { background: var(--surface-raised); border-color: var(--border); color: var(--text); }
-.pico-app[class*="theme-"] .json-view { color: var(--text); }
-.pico-app[class*="theme-"] .coverage-lines { background: var(--surface-input); border-color: var(--border); }
-.pico-app[class*="theme-"] .token-table th { background: var(--surface-raised); color: var(--muted); }
-.pico-app[class*="theme-"] .token-table td { border-color: var(--border-soft); color: var(--muted); }
-.pico-app[class*="theme-"] .statusbar { background: var(--surface); }
-.pico-app[class*="theme-"] .project-sidebar { flex-basis: var(--sidebar-width); width: var(--sidebar-width); }
-.pico-app[class*="theme-"] .syntax-cheat-sheet { margin: 10px 0; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); }
+.pico-app[data-pico-theme] .topbar,
+.pico-app[data-pico-theme] .command-bar,
+.pico-app[data-pico-theme] .project-sidebar,
+.pico-app[data-pico-theme] .statusbar,
+.pico-app[data-pico-theme] .tool-dock,
+.pico-app[data-pico-theme] .editor-card,
+.pico-app[data-pico-theme] .reference-card { background: var(--surface); color: var(--text); border-color: var(--border); }
+.pico-app[data-pico-theme] .workspace-main { background: var(--bg); }
+.pico-app[data-pico-theme] .dock-tab-row,
+.pico-app[data-pico-theme] .editor-card-head,
+.pico-app[data-pico-theme] .reference-head { background: var(--surface-raised); border-color: var(--border); }
+.pico-app[data-pico-theme] .reference-search,
+.pico-app[data-pico-theme] .test-columns textarea,
+.pico-app[data-pico-theme] .actual-output code,
+.pico-app[data-pico-theme] .actual-pending,
+.pico-app[data-pico-theme] .actual-error,
+.pico-app[data-pico-theme] .input-modal textarea { background: var(--surface-input); border-color: var(--border); color: var(--text); }
+.pico-app[data-pico-theme] .example-row:hover,
+.pico-app[data-pico-theme] .token-table tr:hover td,
+.pico-app[data-pico-theme] .toggle-chip:hover { background: var(--surface-hover); }
+.pico-app[data-pico-theme] .cm-editor,
+.pico-app[data-pico-theme] .cm-scroller,
+.pico-app[data-pico-theme] .cm-gutters { background: var(--editor-bg) !important; color: var(--text) !important; }
+.pico-app[data-pico-theme] .cm-gutters { border-color: var(--border) !important; color: var(--editor-gutter) !important; }
+.pico-app[data-pico-theme] .cm-activeLine { background-color: var(--editor-line) !important; }
+.pico-app[data-pico-theme] .cm-tooltip { background: var(--tooltip-bg); border-color: var(--tooltip-border); color: var(--text); }
+.pico-app[data-pico-theme] .json-view { color: var(--text); }
+.pico-app[data-pico-theme] .coverage-lines { background: var(--surface-input); border-color: var(--border); }
+.pico-app[data-pico-theme] .token-table th { background: var(--surface-raised); color: var(--muted); }
+.pico-app[data-pico-theme] .token-table td { border-color: var(--border-soft); color: var(--muted); }
+.pico-app[data-pico-theme] .statusbar { background: var(--surface); }
+.pico-app[data-pico-theme] .project-sidebar { flex-basis: var(--sidebar-width); width: var(--sidebar-width); }
+.pico-app[data-pico-theme] .syntax-cheat-sheet { margin: 10px 0; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-raised); }
 .syntax-cheat-sheet summary { color: var(--accent); cursor: pointer; font-size: 9px; font-weight: 700; }
 .syntax-cheat-sheet pre { max-height: 170px; overflow: auto; margin: 8px 0 0; color: var(--text); font-family: var(--font-code); font-size: 8px; line-height: 1.55; white-space: pre-wrap; }
+/* ==========================================================================
+   IDE layer: floating panels, indentation guides, theme gallery
+   ========================================================================== */
+
+/* --- Anchored panels that can never leave the screen ---------------------- */
+.floating-panel {
+  position: fixed;
+  z-index: 60;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  animation: panel-in .12s ease-out;
+}
+@keyframes panel-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.floating-panel::-webkit-scrollbar { width: 8px; }
+.floating-panel::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 8px; background: var(--border); background-clip: padding-box; }
+.settings-popover .settings-foot { position: sticky; bottom: -14px; margin: 12px -14px -14px; padding: 9px 14px; border-top: 1px solid var(--border); background: var(--surface-raised); color: var(--dim); font-size: 8px; }
+
+/* --- Indentation guides (VS Code style) ----------------------------------- */
+/* The first guide sits at the editor's content padding, which CodeMirror sets
+   to 12px in CodeEditor.tsx; each following guide is one nesting level away. */
+.cm-line.pico-guide-line {
+  background-image: repeating-linear-gradient(to right, var(--indent-guide) 0 1px, transparent 1px var(--pico-indent-step));
+  background-repeat: no-repeat;
+  background-position: 12px 0;
+  background-size: calc(var(--pico-indent-step) * var(--pico-indent-levels)) 100%;
+}
+.cm-line.pico-guide-line.cm-activeLine {
+  background-image: repeating-linear-gradient(to right, var(--indent-guide-active) 0 1px, transparent 1px var(--pico-indent-step));
+}
+.cm-editor .cm-gutters { border-right: 1px solid var(--border-soft); }
+.cm-editor.cm-focused { outline: none; }
+.cm-editor .cm-scroller::-webkit-scrollbar { width: 10px; height: 10px; }
+.cm-editor .cm-scroller::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 10px; background: var(--border); background-clip: padding-box; }
+.cm-editor .cm-scroller::-webkit-scrollbar-thumb:hover { background: var(--muted); background-clip: padding-box; }
+
+/* --- Theme gallery -------------------------------------------------------- */
+.theme-picker { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-soft); }
+.theme-picker-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.theme-picker-head span { color: var(--text); font-size: 10px; font-weight: 600; }
+.theme-picker-head small { color: var(--dim); font-size: 8px; }
+.theme-search { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-input); color: var(--muted); }
+.theme-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font-size: 10px; }
+.theme-list { display: flex; flex-direction: column; gap: 1px; max-height: 236px; margin-top: 8px; padding-right: 2px; overflow-y: auto; scrollbar-width: thin; }
+.theme-group-label { display: block; padding: 7px 4px 3px; color: var(--dim); font-size: 8px; font-weight: 700; letter-spacing: .9px; text-transform: uppercase; }
+.theme-option { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 7px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text); font-size: 10px; text-align: left; cursor: pointer; transition: background .12s ease, border-color .12s ease; }
+.theme-option:hover { background: var(--surface-hover); }
+.theme-option.active { border-color: var(--accent); background: var(--accent-soft); }
+.theme-option-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.theme-option-check { color: var(--accent); flex: 0 0 auto; }
+.theme-swatch { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 2px; padding: 3px 4px; border: 1px solid; border-radius: 5px; }
+.theme-swatch i { display: block; width: 5px; height: 11px; border-radius: 2px; }
+.theme-empty { margin: 10px 4px 0; color: var(--muted); font-size: 10px; }
+
+/* --- Remaining chrome that still carried fixed colours -------------------- */
+.pico-app[data-pico-theme] .settings-popover,
+.pico-app[data-pico-theme] .file-menu { background: var(--surface-raised); border-color: var(--border); color: var(--text); }
+.pico-app[data-pico-theme] .editor-card-body,
+.pico-app[data-pico-theme] .dock-content { color: var(--text); }
+.pico-app[data-pico-theme] .topbar-crumb,
+.pico-app[data-pico-theme] .status-left,
+.pico-app[data-pico-theme] .status-right { color: var(--muted); }
+.pico-app[data-pico-theme] .crumb-active { color: var(--text); }
+.pico-app[data-pico-theme] .topbar-icon:hover,
+.pico-app[data-pico-theme] .topbar-icon.active,
+.pico-app[data-pico-theme] .help-button:hover,
+.pico-app[data-pico-theme] .help-button.active { background: var(--surface-hover); border-color: var(--border); color: var(--text); }
+.pico-app[data-pico-theme] .run-button { background: var(--accent); color: #ffffff; }
+.pico-app[data-pico-theme] .run-button:hover { background: var(--accent-strong); }
+.pico-app[data-pico-theme] .toolbar-button:hover,
+.pico-app[data-pico-theme] .small-icon-button:hover { background: var(--surface-hover); color: var(--text); }
+.pico-app[data-pico-theme] .toggle-chip { border-color: var(--border); color: var(--muted); }
+.pico-app[data-pico-theme] .toggle-chip.on { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+.pico-app[data-pico-theme] .syntax-cheat-button { background: var(--accent-soft); color: var(--text); }
+.pico-app[data-pico-theme] .keyword-pill { border-color: var(--border); color: var(--muted); }
+.pico-app[data-pico-theme] .keyword-pill.active { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.pico-app[data-pico-theme] .project-title-input { color: var(--text); }/* The theme lives on :root as well as the shell, so inherited text and the page
+   background follow light and dark palettes instead of the dark fallback. */
+.pico-app { color: var(--text); }
+body { background: var(--bg); color: var(--text); }
