@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, FolderOpen, GitBranch, History, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
-import type { DataType, Program } from '../language/ast';
+import type { DataType, Program, Statement } from '../language/ast';
 import { examples } from '../examples';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
 import { AstPanel, ConsolePanel, CoveragePanel, DebuggerPanel, FlowchartDock, panelIcon, TestsPanel, TokensPanel, type PanelKey, type TestOutcome } from './components/Panels';
 import { findSuggestions, friendlyError, documentationFor, type Suggestion } from '../runtime/diagnostics';
-import { execute, type RunResult } from '../runtime/interpreter';
+import type { RunResult } from '../runtime/interpreter';
+import { startExecution, type ExecutionJob } from '../runtime/runner';
+import { normalizeSource } from '../language/normalize';
 import { exportProject, importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects, type PicoFile, type PicoProject, type TestCase } from '../storage/projects';
 import { loadSettings, saveSettings, type PicoSettings } from '../storage/settings';
 import { addVersion, loadHistory, type ProjectVersion } from '../storage/history';
@@ -43,6 +45,8 @@ export default function App() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<ProjectVersion[]>([]);
   const [inputValues, setInputValues] = useState('');
+  const jobRef = useRef<ExecutionJob | null>(null);
+  const [running, setRunning] = useState(false);
   const [result, setResult] = useState<RunResult | null>(null);
   const [executionError, setExecutionError] = useState<ReturnType<typeof friendlyError> | null>(null);
   const [debugIndex, setDebugIndex] = useState(0);
@@ -77,6 +81,8 @@ export default function App() {
   const suggestions = useMemo(() => settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeFile.code).slice(0, 3) : [], [activeFile.code, settings.autocorrect, dismissedSuggestions]);
   const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
 
+  useEffect(() => () => { jobRef.current?.cancel(); }, []);
+  useEffect(() => { jobRef.current?.cancel(); jobRef.current = null; setRunning(false); }, [activeId, activeFile.id, activeFile.code, activeProject.tests, activeProject.virtualFiles]);
   useEffect(() => {
     setSaveState('saving');
     const timer = window.setTimeout(() => {
@@ -106,7 +112,7 @@ export default function App() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') { event.preventDefault(); runProgram(); }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); saveProjects(projects, activeId); setSaveState('saved'); }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') { event.preventDefault(); try { saveProjects(projects, activeId); setSaveState('saved'); } catch { setSaveState('local-only'); } }
       if (event.key === 'Escape') { setSettingsOpen(false); setFileMenuOpen(false); }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -126,7 +132,7 @@ export default function App() {
     setProjects(current => current.map(project => project.id === activeId ? change({ ...project }) : project));
   }
   function updateCode(code: string) {
-    code = code.replace(/<--/g, '←').replace(/[“”]/g, '"');
+    code = normalizeSource(code);
     let autoDeclaredTypes = activeFile.autoDeclaredTypes ?? {};
     if (settings.autoDeclare) {
       const previous = autoDeclaredTypesRef.current[activeFile.id] ?? autoDeclaredTypes;
@@ -140,8 +146,8 @@ export default function App() {
     updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code, autoDeclaredTypes } : file), updatedAt: Date.now() }));
   }
   function formatCode() { updateCode(formatPseudocode(activeFile.code)); }
-  function saveSnapshot() { const label = window.prompt('Name this snapshot', `Snapshot ${history.length + 1}`); if (label === null) return; setHistory(addVersion(activeProject.id, label, activeProject.files, activeProject.activeFileId)); setHistoryOpen(true); }
-  function restoreSnapshot(version: ProjectVersion) { if (!window.confirm(`Restore “${version.label}”? Current edits will remain available only if you save a snapshot first.`)) return; autoDeclaredTypesRef.current = {}; updateProject(project => ({ ...project, files: version.files.map(file => ({ ...file })), activeFileId: version.activeFileId, code: version.files.find(file => file.id === version.activeFileId)?.code ?? version.files[0]?.code ?? '', updatedAt: Date.now() })); setHistoryOpen(false); setResult(null); setExecutionError(null); }
+  function saveSnapshot() { const label = window.prompt('Name this snapshot', `Snapshot ${history.length + 1}`); if (label === null) return; try { setHistory(addVersion(activeProject.id, label, activeProject.files, activeProject.activeFileId, activeProject.virtualFiles)); } catch { setSaveState('local-only'); setExecutionError({message:'Snapshot could not be saved. Export your project to keep a copy.'}); return; } setHistoryOpen(true); }
+  function restoreSnapshot(version: ProjectVersion) { if (!window.confirm(`Restore “${version.label}”? Current edits will remain available only if you save a snapshot first.`)) return; autoDeclaredTypesRef.current = {}; updateProject(project => ({ ...project, files: structuredClone(version.files), virtualFiles: version.virtualFiles ? structuredClone(version.virtualFiles) : project.virtualFiles, activeFileId: version.activeFileId, code: version.files.find(file => file.id === version.activeFileId)?.code ?? version.files[0]?.code ?? '', updatedAt: Date.now() })); setHistoryOpen(false); setResult(null); setExecutionError(null); }
   function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
   function selectProject(id: string) {
     setActiveId(id); setExecutionError(null); setResult(null); setTestOutcomes({}); setInputValues(''); setActivePanel('console');
@@ -175,14 +181,23 @@ export default function App() {
     if (settings.promptForInput && hasInputStatements(parsed.ast) && !inputPromptOpen) { setPendingDebug(debug); setInputPromptOpen(true); return; }
     executeProgram(debug);
   }
-  function executeProgram(debug = false) {
+  async function executeProgram(debug = false) {
     if (!parsed.ast) return;
-    try {
-      const values = inputValues === '' ? [] : inputValues.split(/\r?\n/);
-      const next = execute(parsed.ast, values);
-      setResult(next); setDebugIndex(0); setTestOutcomes({}); setPicoGreeting(next.output.some(line => line.trim().toUpperCase() === 'PICO')); setActivePanel(debug ? 'debugger' : 'console');
-    } catch (error) { setResult(null); setExecutionError(friendlyError(error)); setActivePanel('console'); }
+    jobRef.current?.cancel();
+    const values = inputValues === '' ? [] : inputValues.split(/\r?\n/);
+    const job = startExecution({ast:parsed.ast,runs:[{inputs:values,options:{files:activeProject.virtualFiles}}]});
+    jobRef.current=job; setRunning(true);
+    const [reply]=await job.promise;
+    if(jobRef.current!==job)return;
+    jobRef.current=null;setRunning(false);
+    const next=reply?.result;
+    setResult(next??null); setDebugIndex(0); setTestOutcomes({});
+    setExecutionError(reply?.error?{message:reply.error.message,line:reply.error.line}:null);
+    setPicoGreeting(Boolean(next?.output.some(line=>line.trim().toUpperCase()==='PICO')));
+    setActivePanel(debug?'debugger':'console');
+    if(next)updateProject(project=>({...project,virtualFiles:next.files,updatedAt:Date.now()}));
   }
+  function stopExecution() { jobRef.current?.cancel(); }
   function submitInputPrompt() { setInputPromptOpen(false); executeProgram(pendingDebug); }
   const creatorInput = inputValues.split(/\r?\n/).some(value => /^(amar|mustaqim)$/i.test(value.trim()));
   const teacherInput = inputValues.split(/\r?\n/).some(value => /^mr\.boyle$/i.test(value.trim()));
@@ -208,20 +223,20 @@ export default function App() {
     if (!available) return;
     changeSettings({ dockSize: Math.min(60, Math.max(22, settings.dockSize - delta / available * 100)), layoutPreset: 'custom' });
   }
-  function runTests() {
-    if (!parsed.ast) {
-      const message = parseError?.message ?? 'Fix the syntax before running test cases.';
-      setTestOutcomes(Object.fromEntries(activeProject.tests.map(test => [test.id, { passed: false, actual: [], error: message }])));
-      return;
+  async function runTests() {
+    if(!parsed.ast) {
+      setTestOutcomes(Object.fromEntries(activeProject.tests.map(test=>[test.id,{passed:false,actual:[],error:parseError?.message??'Fix the syntax before running test cases.'}])));return;
     }
-    const outcomes: Record<string, TestOutcome> = {};
-    for (const test of activeProject.tests) {
-      try {
-        const actual = execute(parsed.ast, test.inputs).output;
-        outcomes[test.id] = { passed: actual.length === test.expected.length && actual.every((line, index) => line === test.expected[index]), actual };
-      } catch (error) { outcomes[test.id] = { passed: false, actual: [], error: friendlyError(error).message }; }
-    }
-    setTestOutcomes(outcomes); setActivePanel('tests');
+    jobRef.current?.cancel();
+    const tests=activeProject.tests;
+    const job=startExecution({ast:parsed.ast,runs:tests.map(test=>({inputs:test.inputs,options:{files:activeProject.virtualFiles,trace:false}}))});
+    jobRef.current=job;setRunning(true);
+    const replies=await job.promise;
+    if(jobRef.current!==job)return;
+    jobRef.current=null;setRunning(false);
+    const outcomes:Record<string,TestOutcome>={};
+    tests.forEach((test,index)=>{const reply=replies[index];const actual=reply?.result?.output??[];outcomes[test.id]={passed:!reply?.error&&actual.length===test.expected.length&&actual.every((line,i)=>line===test.expected[i]),actual,error:reply?.error?.message};});
+    setTestOutcomes(outcomes);setActivePanel('tests');
   }
   function updateTest(id: string, patch: Partial<TestCase>) {
     setTestOutcomes(current => { const next = { ...current }; delete next[id]; return next; });
@@ -295,8 +310,9 @@ export default function App() {
           </div>
           <div className="command-divider" />
           <button className="toolbar-button" onClick={formatCode} title="Format code · Shift+Alt+F"><CodeXml size={14} /><span>Format</span></button><button className="toolbar-button" onClick={saveSnapshot} title="Save a project snapshot"><History size={14} /><span>History</span></button><button className="toolbar-button" onClick={() => setActivePanel('flowchart')}><GitBranch size={14} /><span>Flowchart</span></button>
-          <button className="toolbar-button debug-button" onClick={() => runProgram(true)}><Code2 size={14} /><span>Debug</span></button>
-          <button className="run-button" onClick={() => runProgram()}><Play size={13} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
+          <button className="toolbar-button debug-button" disabled={running} onClick={() => runProgram(true)}><Code2 size={14} /><span>Debug</span></button>
+          {running && <button className="toolbar-button" onClick={stopExecution}><X size={13} /> Stop</button>}
+          <button className="run-button" disabled={running} onClick={() => runProgram()}><Play size={13} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
         </div>
 
         <div className={`editor-split ${settings.referenceVisible ? '' : 'reference-hidden'}`}>
@@ -340,11 +356,11 @@ ENDCASE`}</pre></details>
         <section className="tool-dock">
           <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}{tab.key === 'coverage' && result && <small>{result.coverage.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
           <div className="dock-content" role="tabpanel">
-            {activePanel === 'console' && <><ConsolePanel output={result?.output ?? []} error={executionError ?? parseError} stdin={inputValues} onInput={setInputValues} ran={Boolean(result)} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
-            {activePanel === 'debugger' && <DebuggerPanel trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} />}
-            {activePanel === 'tests' && <TestsPanel tests={activeProject.tests} outcomes={testOutcomes} onRun={runTests} onUpdate={updateTest} onAdd={addTest} onRemove={removeTest} />}
+            {activePanel === 'console' && <><ConsolePanel output={result?.output ?? []} error={executionError ?? parseError} stdin={inputValues} onInput={setInputValues} ran={Boolean(result)} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
+            {activePanel === 'debugger' && <DebuggerPanel trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} truncated={result?.traceTruncated} error={executionError?.message} />}
+            {activePanel === 'tests' && <TestsPanel tests={activeProject.tests} outcomes={testOutcomes} onRun={runTests} onUpdate={updateTest} onAdd={addTest} onRemove={removeTest} running={running} />}
             {activePanel === 'flowchart' && <FlowchartDock ast={parsed.ast} error={parseError?.message} />}
-            {activePanel === 'coverage' && <CoveragePanel source={activeFile.code} lines={result?.coverage ?? []} />}
+            {activePanel === 'coverage' && <CoveragePanel source={activeFile.code} lines={result?.coverage ?? []} ast={parsed.ast} />}
             {activePanel === 'ast' && <AstPanel ast={parsed.ast} error={parseError?.message} />}
             {activePanel === 'tokens' && <TokensPanel tokens={parsed.tokens} error={parseError?.message} />}
           </div>
@@ -367,4 +383,16 @@ function SettingRow({ title, detail, checked, onChange }: { title: string; detai
 function BrandMark() { return <svg className="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="8" fill="#8179ef"/><path d="M9 7.5h7.6a4.4 4.4 0 0 1 0 8.8H12v4.2H9V7.5Zm3 2.8v3.2h4.3a1.6 1.6 0 0 0 0-3.2H12Z" fill="#11121a"/><circle cx="19.5" cy="20.5" r="1.5" fill="#c9c4ff"/></svg>; }
 
 const defaultPanelOrder: PanelKey[] = ['console','debugger','tests','flowchart','coverage','ast','tokens'];
-function hasInputStatements(program: Program): boolean { const scan = (statements: any[]): boolean => statements.some(statement => statement.kind === 'Input' || (statement.thenBody && (scan(statement.thenBody) || scan(statement.elseBody ?? []))) || (statement.body && scan(statement.body)) || (statement.branches && statement.branches.some((branch: any) => scan(branch.body))) || (statement.otherwise && scan(statement.otherwise))); return scan(program.statements); }
+function hasInputStatements(program: Program): boolean {
+  const scan=(statements:Statement[]):boolean=>statements.some(s=>{
+    if(s.kind==='Input')return true;
+    if(s.kind==='IfStatement')return scan(s.thenBody)||scan(s.elseBody);
+    if(s.kind==='CaseStatement')return s.branches.some(b=>scan(b.body))||scan(s.otherwise);
+    if('body' in s)return scan(s.body);
+    return false;
+  });return scan(program.statements);
+}
+function PracticeFiles({files,onChange}:{files:Record<string,string[]>;onChange:(files:Record<string,string[]>)=>void}) {
+  const [name,setName]=useState('');
+  return <details className="practice-files"><summary>Project practice files ({Object.keys(files).length})</summary><p>Text files used by OPENFILE. Saved with this project.</p>{Object.entries(files).map(([filename,lines])=><label key={filename}><span>{filename}</span><textarea aria-label={`Contents of ${filename}`} value={lines.join('\n')} onChange={event=>onChange({...files,[filename]:event.target.value===''?[]:event.target.value.split(/\r?\n/)})} /></label>)}<div><input aria-label="New practice filename" placeholder="data.txt" value={name} onChange={event=>setName(event.target.value)} /><button className="subtle-button" disabled={!name.trim()||Object.hasOwn(files,name.trim())} onClick={()=>{onChange({...files,[name.trim()]:[]});setName('');}}>Add file</button></div></details>;
+}

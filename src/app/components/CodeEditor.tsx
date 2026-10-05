@@ -54,6 +54,7 @@ const pseudoLanguage = StreamLanguage.define({
     if (stream.eatSpace()) return null;
     if (stream.match('//')) { stream.skipToEnd(); return 'comment'; }
     if (stream.match(/["“](?:\\.|[^"”\\])*["”]?/)) return 'string';
+    if (stream.match(/'(?:\\.|[^'\\])*'?/)) return 'string';
     if (stream.match(/\d+(?:\.\d+)?/)) return 'number';
     if (stream.match(/(?:TRUE|FALSE)\b/i)) return 'boolean';
     if (stream.match(/(?:←|<-|<=|>=|<>|!=|[=<>+\-*/^])/)) return 'operator';
@@ -213,7 +214,7 @@ function insertCambridgeNewline(view: EditorView): boolean {
   const before = line.text.slice(0, head - line.from);
   const leading = (before.match(/^\s*/) ?? [''])[0].length;
   const trimmed = before.trim().toUpperCase();
-  const opens = /^(IF\b.*\bTHEN|WHILE\b.*\bDO|FOR\b.*|REPEAT\b|CASE\s+OF\b|PROCEDURE\b|FUNCTION\b)/.test(trimmed);
+  const opens = /^(THEN\b|IF\b.*\bTHEN|WHILE\b.*\bDO|FOR\b.*|REPEAT\b|CASE\s+OF\b|PROCEDURE\b|FUNCTION\b)/.test(trimmed);
   const closes = /^(ELSE\b|OTHERWISE\b|ENDIF\b|ENDWHILE\b|NEXT\b|UNTIL\b|ENDCASE\b|ENDPROCEDURE\b|ENDFUNCTION\b)/.test(trimmed);
   const indent = Math.max(0, leading + (opens ? INDENT_WIDTH : 0) - (closes ? INDENT_WIDTH : 0));
   view.dispatch({ changes: { from: head, insert: `\n${' '.repeat(indent)}` }, selection: { anchor: head + 1 + indent } });
