@@ -31,6 +31,8 @@ export interface ThemeSeed {
   id: ThemeId;
   name: string;
   appearance: Appearance;
+  /** Pure black/white interface surfaces and foregrounds. */
+  highContrast?: boolean;
   /** Editor and application background. */
   bg: string;
   /** Panels, gutters and cards. */
@@ -115,6 +117,16 @@ function isHex(value: string): boolean {
 /* ------------------------------------------------------------------- themes */
 
 const seeds: ThemeSeed[] = [
+  {
+    id: 'high-contrast-dark', name: 'High Contrast Dark', appearance: 'dark', highContrast: true,
+    bg: '#000000', surface: '#000000', text: '#ffffff', muted: '#ffffff', accent: '#ffffff',
+    syntax: { keyword: '#ffff00', type: '#00ffff', variable: '#ffffff', func: '#00ff00', number: '#ffcc99', string: '#ffff99', comment: '#cccccc', operator: '#ffffff', punctuation: '#ffffff', bool: '#ff99ff' },
+  },
+  {
+    id: 'high-contrast-light', name: 'High Contrast Light', appearance: 'light', highContrast: true,
+    bg: '#ffffff', surface: '#ffffff', text: '#000000', muted: '#000000', accent: '#000000',
+    syntax: { keyword: '#000080', type: '#005500', variable: '#000000', func: '#660066', number: '#6b3000', string: '#800000', comment: '#333333', operator: '#000000', punctuation: '#000000', bool: '#550055' },
+  },
   {
     id: 'dark-plus', name: 'Dark+ (Visual Studio)', appearance: 'dark',
     bg: '#1e1e1e', surface: '#252526', text: '#d4d4d4', muted: '#8a8a8a', accent: '#0e7ad3',
@@ -238,6 +250,18 @@ const LEGACY_THEME_IDS: Record<string, ThemeId> = {
 function buildTheme(seed: ThemeSeed): PicoTheme {
   const dark = seed.appearance === 'dark';
   const { bg, surface, text, muted, accent } = seed;
+  if (seed.highContrast) return {
+    ...seed,
+    ui: {
+      surfaceRaised: bg, surfaceHover: bg, surfaceInput: bg,
+      border: text, borderSoft: text, dim: text,
+      accentStrong: accent, accentSoft: alpha(accent, 0),
+      gutter: text, gutterActive: text, lineHighlight: alpha(accent, 0),
+      selection: alpha(accent, 0.3), cursor: text,
+      indentGuide: alpha(text, 0.65), indentGuideActive: text,
+      matchBracket: alpha(accent, 0.2), tooltipBg: bg, tooltipBorder: text,
+    },
+  };
   return {
     ...seed,
     ui: {
@@ -294,6 +318,7 @@ export function cssVariables(theme: PicoTheme): Record<string, string> {
     '--border': ui.border,
     '--border-soft': ui.borderSoft,
     '--text': theme.text,
+    '--reference-label': theme.appearance === 'dark' ? '#ffffff' : theme.text,
     '--muted': theme.muted,
     '--dim': ui.dim,
     '--accent': theme.accent,

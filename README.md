@@ -9,9 +9,9 @@ settings and practice files live in `localStorage`.
 - **VS Code-style syntax highlighting.** Cambridge pseudocode is tokenised into control keywords,
   statement keywords, data types, variables, routine and function calls, numbers, strings, comments,
   operators, punctuation and Boolean literals.
-- **21 IDE themes.** Dark+, Light+, Dracula, Monokai, One Dark Pro, One Light, Nord, Tokyo Night,
+- **23 IDE themes.** Dark+, Light+, Dracula, Monokai, One Dark Pro, One Light, Nord, Tokyo Night,
   Catppuccin Mocha, Catppuccin Latte, Gruvbox Dark, Solarized Dark, Solarized Light, GitHub Dark,
-  GitHub Light, Ayu Mirage, Night Owl, Palenight, Rosé Pine, SynthWave '84 and Cobalt2.
+  GitHub Light, Ayu Mirage, Night Owl, Palenight, Rosé Pine, SynthWave '84 and Cobalt2, plus High Contrast Dark and High Contrast Light.
   Each theme ships a complete palette — syntax token colours, editor chrome (gutter, active line,
   caret, selection, bracket matching, tooltips) and the surrounding interface — rather than only a
   background colour. The picker previews every theme with its own token swatches and supports search
@@ -35,9 +35,13 @@ must still be mutable INTEGER scalars.
 
 Help opens **Pico in a minute**, a seven-step spotlight tour with Back/Next navigation,
 keyboard exit, and a completion screen. The tour preserves code and restores the previous layout.
-The quick reference has larger keyword buttons, syntax-coloured examples, saved 12–18px text controls, a draggable divider
+The quick reference has larger keyword buttons, syntax-coloured examples, plain keyword labels, saved 12–18px text controls, a draggable divider
 on wide screens, and an accessible Reference button that opens a drawer on smaller screens.
 New source tabs use `.pico`; old `.pseudocode` names are migrated when loading projects or snapshots.
+
+High Contrast Dark and High Contrast Light use pure black/white text and surfaces (21:1 contrast).
+Their coloured syntax tokens each meet at least 7:1 contrast against the editor background.
+Resize dividers use neutral grips at rest and accent colours only on hover, keyboard focus, or drag.
 
 ## The language
 

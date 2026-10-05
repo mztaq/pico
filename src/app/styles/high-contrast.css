@@ -1,0 +1,37 @@
+/* Preserve colour-coded source while keeping interface text on pure black/white. */
+.pico-app[data-high-contrast="true"] :where(button, input, textarea, select, p, label, summary, small, strong, b, kbd, span, code, svg, a):not(.highlighted-code *):not(.cm-editor *):not(.theme-swatch *) {
+  color: var(--text);
+}
+.pico-app[data-high-contrast="true"] :where(.editor-card-foot, .reference-card, .reference-head, .settings-popover, .file-menu, .tutorial-card, .tutorial-offer, .input-modal, .history-modal, .credits-modal, .theme-picker, .theme-option, .theme-search, .stdin-row, .debugger-controls, .debugger-content, .test-card, .test-card-head, .token-table, .token-table th, .runtime-error-card, .syntax-cheat-sheet, .reference-scope, .hover-doc-setting) {
+  background: var(--bg);
+  border-color: var(--border);
+  box-shadow: none;
+}
+.pico-app[data-high-contrast="true"] :where(button, input, textarea, select, kbd):not(.cm-editor *) {
+  background: var(--bg);
+  border-color: var(--border);
+  box-shadow: none;
+}
+.pico-app[data-high-contrast="true"] :where(.project-row.active, .file-tab.active, .dock-tab.active, .theme-option.active, .keyword-pill.active, .toggle-chip.on) {
+  background: var(--bg);
+  outline: 1px solid var(--text);
+  outline-offset: -1px;
+}
+.pico-app[data-high-contrast="true"] :where(button, a, input, textarea, select):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.pico-app[data-high-contrast="true"] :where(.run-button, .primary-small, .tutorial-primary, .switch.checked) {
+  background: var(--accent);
+  color: var(--on-accent) !important;
+}
+.pico-app[data-high-contrast="true"] :where(.run-button, .primary-small, .tutorial-primary) :where(span, svg, kbd) {
+  color: var(--on-accent) !important;
+  background: transparent !important;
+}
+.pico-app[data-high-contrast="true"] .resize-handle-grip { background: var(--text); opacity: 1; }
+.pico-app[data-high-contrast="true"] :where(.panel-resize-handle:hover, .panel-resize-handle:focus-visible, .panel-resize-handle.is-dragging) .resize-handle-grip { background: var(--accent); }
+
+.pico-app[data-high-contrast="true"] .switch.checked > span { background: var(--on-accent); }
+
+.pico-app[data-high-contrast="true"] :where(button:hover) { outline: 1px solid var(--text); outline-offset: 1px; }
