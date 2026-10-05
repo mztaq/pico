@@ -51,11 +51,11 @@ describe('workspace execution integration',()=>{
   it('runs through a worker, shows output and replays final debugger state',async()=>{
     await click(button('Run⌘ ↵'));expect(button('Stop')).toBeTruthy();
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
-    expect(codeEditor().value).toBe('// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar\n\nDECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name');
+    expect(codeEditor().value).toBe('// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar\n\nDECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name, "!"');
     expect(container.querySelector('.output-line')?.textContent).toBe('›Enter your name');
     expect(consoleInput().getAttribute('aria-label')).toBe('Value for Name');
     await typeValue(consoleInput(),'Ada');await submitInput();
-    expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Enter your name','Ada','Hello Ada']);
+    expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Enter your name','Ada','Hello Ada!']);
     await click(button('Debug'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     await typeValue(consoleInput(),'Ada');await submitInput();
     expect(container.querySelector('.debugger-panel')).not.toBeNull();
@@ -202,7 +202,7 @@ describe('guided help and readable reference',()=>{
     for(let i=0;i<6;i++)await click(button('Next'));
     await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. Help opens this tour again.');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. "Help" opens this tour again.');
     await click(button('Start coding'));
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
     expect(codeEditor().value).toBe(code);
@@ -231,19 +231,20 @@ describe('guided help and readable reference',()=>{
     const editor=container.querySelector('textarea')!.value;
     await click(button('Help'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
+    expect(container.querySelector('.tutorial-example')?.textContent).toBe(editor.split('\n\n')[1]);
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(true);
     expect(container.querySelector('.reference-card')).toBeNull();
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Read the result');
     expect(container.querySelector('.tutorial-tip')?.textContent).toContain('press Enter');
-    expect(container.querySelector('.tutorial-example')?.textContent).toBe('DECLARE Name : STRING\nINPUT Name\nOUTPUT Name');
+    expect(container.querySelector('.tutorial-example')?.textContent).toBe(editor.split('\n\n')[1]);
     await click(button('Back'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Run your program');
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('.dock-tab[aria-selected="true"]')?.textContent).toBe('Debugger');
     await click(button('Next'));expect(container.querySelector('[data-tour="reference"]')).not.toBeNull();
     await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. Help opens this tour again.');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. "Help" opens this tour again.');
     await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
     await click(button('Skip for now'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();
@@ -328,7 +329,13 @@ it('shows the selected keyword example for every reference entry without changin
   expect(container.querySelector('.reference-controls')).not.toBeNull();
   expect(container.querySelector('.reference-scope')).toBeNull();
   expect(container.querySelector('.sidebar-bottom')).toBeNull();
-  expect(container.querySelector('.hover-doc-setting')).not.toBeNull();
+  expect(container.querySelector('.reference-controls')?.textContent).not.toContain('CAMBRIDGE');
+  expect(container.querySelector('.reference-controls')?.textContent).toContain('Drag the divider to resize');
+  expect(container.querySelector('.hover-doc-setting')).toBeNull();
+  const hoverDocs = button('Hover docs');
+  const wasEnabled = hoverDocs.classList.contains('on');
+  await click(hoverDocs);
+  expect(hoverDocs.classList.contains('on')).toBe(!wasEnabled);
 });
 
 it('lets the user choose either high-contrast theme and saves the preference',async()=>{
