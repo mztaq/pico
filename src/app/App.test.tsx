@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createInteractiveSession, runRequests, type InputMessage, type WorkerReply, type WorkerRequest } from '../runtime/worker';
 import App from './App';
 import { referenceExamples, referenceTerms } from './reference';
+import { tutorialSteps } from './components/GuidedTutorial';
 
 vi.mock('./components/CodeEditor',()=>({CodeEditor:({value,onChange}:{value:string;onChange:(value:string)=>void})=><textarea aria-label="Test pseudocode editor" value={value} onInput={event=>onChange(event.currentTarget.value)} />}));
 class BrowserWorker {
@@ -49,7 +50,11 @@ beforeEach(async()=>{
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.unstubAllGlobals();});
 describe('workspace execution integration',()=>{
   it('runs through a worker, shows output and replays final debugger state',async()=>{
+    expect(container.querySelector('.pico-app')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
+    expect(button('Run⌘ ↵').closest('.topbar')).not.toBeNull();
+    expect(container.querySelector('.command-bar')).toBeNull();
     await click(button('Run⌘ ↵'));expect(button('Stop')).toBeTruthy();
+    expect(button('Stop').closest('.topbar')).not.toBeNull();
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     expect(codeEditor().value).toBe('// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar\n\nDECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name, "!"');
     expect(container.querySelector('.output-line')?.textContent).toBe('›Enter your name');
@@ -70,6 +75,49 @@ describe('workspace execution integration',()=>{
     await click(button('Test cases1'));await click(button('Run tests'));
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     expect(container.querySelector('.result-chip')?.textContent).toBe('Passed');expect(BrowserWorker.pending.at(-1)!.request!.runs[0]!.options.trace).toBe(false);
+  });
+  it('opens history from the top bar and restores a saved snapshot',async()=>{
+    const original = codeEditor().value;
+    const historyButton = button('History');
+    expect(historyButton.closest('.topbar')).not.toBeNull();
+    await click(historyButton);
+    expect(container.querySelector('#history-title')?.textContent).toBe('Project history');
+    const prompt = vi.spyOn(window, 'prompt').mockReturnValue('Greeting');
+    await click(button('Save snapshot'));
+    prompt.mockRestore();
+    expect(container.querySelector('.history-row strong')?.textContent).toBe('Greeting');
+    await click(container.querySelector('[aria-label="Close history"]')!);
+    await typeValue(codeEditor(),'OUTPUT "Changed"');
+    await click(historyButton);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await click(button('Restore'));confirm.mockRestore();
+    expect(codeEditor().value).toBe(original);
+  });
+  it('keeps formatting and project renaming in File and typing helpers in Settings',async()=>{
+    const workspaceName = container.querySelector<HTMLInputElement>('.topbar [aria-label="Workspace name"]')!;
+    vi.useFakeTimers();
+    try {
+      await typeValue(workspaceName,'Lesson workspace');
+      expect(container.querySelector('.project-row.active .project-select span')?.textContent).toBe('Lesson workspace');
+      await act(async()=>{ vi.advanceTimersByTime(400); });
+      expect(JSON.parse(localStorage.getItem('pico.projects.v1')!)[0].name).toBe('Lesson workspace');
+    } finally { vi.useRealTimers(); }
+    await click(button('File'));
+    await typeValue(container.querySelector<HTMLInputElement>('[aria-label="Workspace name in File menu"]')!,'Greeting');
+    expect(container.querySelector<HTMLInputElement>('.topbar [aria-label="Workspace name"]')?.value).toBe('Greeting');
+    await typeValue(codeEditor(),'IF TRUE THEN\nOUTPUT "Hello"\nENDIF');
+    await click(button('Format code'));
+    expect(codeEditor().value).toBe('IF TRUE THEN\n    OUTPUT "Hello"\nENDIF');
+    expect(container.querySelector('.file-menu')).toBeNull();
+    await click(container.querySelector('[aria-label="Open settings"]')!);
+    for (const label of ['Autocomplete','Autocorrect','Hover documentation']) {
+      const control = container.querySelector<HTMLButtonElement>(`[role="switch"][aria-label="${label}"]`)!;
+      expect(control.getAttribute('aria-checked')).toBe('true');
+      await click(control);
+      expect(control.getAttribute('aria-checked')).toBe('false');
+    }
+    const stored = JSON.parse(localStorage.getItem('pico.settings.v5')!);
+    expect([stored.autocomplete,stored.autocorrect,stored.hoverDocs]).toEqual([false,false,false]);
   });
   it('pauses for each value inline, retains the transcript and removes preset input',async()=>{
     await typeValue(codeEditor(),'DECLARE Name : STRING\nDECLARE Age : INTEGER\nOUTPUT "Name?"\nINPUT Name\nOUTPUT "Age?"\nINPUT Age\nOUTPUT Name, " is ", Age');
@@ -197,9 +245,9 @@ describe('guided help and readable reference',()=>{
     expect(BrowserWorker.pending).toHaveLength(0);
     await click(button('Show tutorial'));
     expect(container.querySelector('.tutorial-offer-backdrop')).toBeNull();
-    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Close tutorial');
-    for(let i=0;i<6;i++)await click(button('Next'));
+    for(let i=0;i<tutorialSteps.length-1;i++)await click(button('Next'));
     await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
     expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. "Help" opens this tour again.');
@@ -217,7 +265,7 @@ describe('guided help and readable reference',()=>{
     await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
     expect(container.querySelector('.tutorial-offer')).toBeNull();
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
-    await click(button('Help'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
+    await click(button('Help'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
   });
   it('dismisses the welcome with Not now and restores the workspace',async()=>{
     await act(async()=>root.unmount());localStorage.removeItem('pico.visitCount.v1');root=createRoot(container);
@@ -229,7 +277,15 @@ describe('guided help and readable reference',()=>{
   });
   it('walks through highlights, reaches the end screen, and restores the workspace without editing code',async()=>{
     const editor=container.querySelector('textarea')!.value;
+    const workspaceName = container.querySelector<HTMLInputElement>('[data-tour="workspace"]')!;
+    const measuredName = vi.spyOn(workspaceName,'getBoundingClientRect').mockReturnValue(new DOMRect(200,80,150,32));
     await click(button('Help'));
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
+    expect(container.querySelector('#tutorial-description')?.textContent).toContain('saves automatically');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toContain('open File');
+    expect(container.querySelector<HTMLElement>('.tutorial-spotlight')?.style.left).toBe('195px');
+    measuredName.mockRestore();
+    await click(button('Next'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
     expect(container.querySelector('.tutorial-example')?.textContent).toBe(editor.split('\n\n')[1]);
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(true);
@@ -245,7 +301,7 @@ describe('guided help and readable reference',()=>{
     await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
     expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. "Help" opens this tour again.');
-    await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
+    await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
     await click(button('Skip for now'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();
     expect(container.querySelector('.console-panel')).not.toBeNull();
@@ -259,6 +315,14 @@ describe('guided help and readable reference',()=>{
     await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
     expect(container.querySelector('.tutorial-layer')).toBeNull();expect(document.activeElement).toBe(help);
   });
+  it('highlights File for renaming when the workspace name is hidden',async()=>{
+    const fileButton = container.querySelector<HTMLElement>('[data-tour="files"]')!;
+    const measure = vi.spyOn(fileButton,'getBoundingClientRect').mockReturnValue(new DOMRect(700,16,60,36));
+    await click(button('Help'));
+    expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
+    expect(container.querySelector<HTMLElement>('.tutorial-spotlight')?.style.left).toBe('695px');
+    measure.mockRestore();
+  });
   it('adjusts and persists reference size with keyboard resizing',async()=>{
     await click(container.querySelector('[aria-label="Increase reference text size"]')!);
     expect(container.querySelector('.reference-controls output')?.textContent).toBe('14px');
@@ -270,7 +334,6 @@ describe('guided help and readable reference',()=>{
     await click(button('FOR'));expect(container.querySelector('.reference-explanation > strong')?.textContent).toBe('FOR');
   });
   it('uses .pico for existing and newly created source tabs',async()=>{
-    expect(container.querySelector('.file-extension')?.textContent).toBe('.pico');
     expect(container.querySelector('.file-tab-select')?.textContent).toBe('main.pico');
     await click(container.querySelector('[aria-label="New file"]')!);
     expect(container.querySelector('.file-tab.active .file-tab-select')?.textContent).toBe('untitled-2.pico');
@@ -278,7 +341,7 @@ describe('guided help and readable reference',()=>{
   it('opens the reference drawer from the completion screen on a small viewport',async()=>{
     vi.stubGlobal('matchMedia',()=>({matches:true}));
     await click(button('Help'));
-    for(let i=0;i<6;i++)await click(button('Next'));
+    for(let i=0;i<tutorialSteps.length-1;i++)await click(button('Next'));
     await click(button('Finish tour'));await click(button('Open quick reference'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();
     expect(container.querySelector('.ide-shell.reference-open .reference-card')).not.toBeNull();
@@ -332,10 +395,12 @@ it('shows the selected keyword example for every reference entry without changin
   expect(container.querySelector('.reference-controls')?.textContent).not.toContain('CAMBRIDGE');
   expect(container.querySelector('.reference-controls')?.textContent).toContain('Drag the divider to resize');
   expect(container.querySelector('.hover-doc-setting')).toBeNull();
-  const hoverDocs = button('Hover docs');
-  const wasEnabled = hoverDocs.classList.contains('on');
+  expect(container.querySelector('.editor-preferences')).toBeNull();
+  await click(container.querySelector('[aria-label="Open settings"]')!);
+  const hoverDocs = container.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Hover documentation"]')!;
+  const wasEnabled = hoverDocs.getAttribute('aria-checked') === 'true';
   await click(hoverDocs);
-  expect(hoverDocs.classList.contains('on')).toBe(!wasEnabled);
+  expect(hoverDocs.getAttribute('aria-checked')).toBe(String(!wasEnabled));
 });
 
 it('lets the user choose either high-contrast theme and saves the preference',async()=>{
