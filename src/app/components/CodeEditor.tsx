@@ -2,14 +2,15 @@ import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react';
 import { autocompletion, closeBrackets, closeBracketsKeymap, type CompletionContext } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentLess, indentMore } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
-import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
+import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
 import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
-import { KEYWORDS, ROUTINES, TYPES, COMPLETIONS } from '../../language/lexer';
+import { ROUTINES, TYPES, COMPLETIONS } from '../../language/lexer';
 import { documentationFor, type Suggestion } from '../../runtime/diagnostics';
 import type { PicoTheme } from '../themes';
 import '../styles/editor-folding.css';
+import { pseudoLanguage } from './pseudocodeSyntax';
 
 export interface EditorPreferences { autocomplete: boolean; hoverDocs: boolean; fontSize: number; }
 export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; }
@@ -29,49 +30,6 @@ const INDENT_WIDTH = 4;
 const INDENT_TEXT = ' '.repeat(INDENT_WIDTH);
 /** Matches the editor content padding so guides line up with the first column. */
 const CONTENT_PADDING = '12px';
-
-/** Statement/control keywords, coloured like a control-flow keyword in an IDE. */
-const CONTROL_KEYWORDS = new Set(['IF', 'THEN', 'ELSE', 'ENDIF', 'CASE', 'OF', 'OTHERWISE', 'ENDCASE', 'WHILE', 'DO', 'ENDWHILE', 'FOR', 'TO', 'STEP', 'NEXT', 'REPEAT', 'UNTIL', 'PROCEDURE', 'ENDPROCEDURE', 'FUNCTION', 'RETURNS', 'ENDFUNCTION', 'RETURN', 'CALL', 'AND', 'OR', 'NOT']);
-
-const tokenTable = {
-  comment: tags.comment,
-  string: tags.string,
-  number: tags.number,
-  boolean: tags.bool,
-  type: tags.typeName,
-  control: tags.controlKeyword,
-  keyword: tags.keyword,
-  routine: tags.standard(tags.variableName),
-  fn: tags.function(tags.variableName),
-  variable: tags.variableName,
-  operator: tags.operator,
-  punctuation: tags.punctuation,
-};
-
-const pseudoLanguage = StreamLanguage.define({
-  tokenTable,
-  token(stream) {
-    if (stream.eatSpace()) return null;
-    if (stream.match('//')) { stream.skipToEnd(); return 'comment'; }
-    if (stream.match(/["“](?:\\.|[^"”\\])*["”]?/)) return 'string';
-    if (stream.match(/'(?:\\.|[^'\\])*'?/)) return 'string';
-    if (stream.match(/\d+(?:\.\d+)?/)) return 'number';
-    if (stream.match(/(?:TRUE|FALSE)\b/i)) return 'boolean';
-    if (stream.match(/(?:←|<-|<=|>=|<>|!=|[=<>+\-*/^])/)) return 'operator';
-    if (stream.match(/[:,()[\]{}]/)) return 'punctuation';
-    if (stream.match(/[A-Za-z_][A-Za-z0-9_]*/)) {
-      const word = stream.current().toUpperCase();
-      if (TYPES.has(word)) return 'type';
-      if (ROUTINES.has(word) || ['DIV', 'MOD'].includes(word)) return 'routine';
-      if (CONTROL_KEYWORDS.has(word)) return 'control';
-      if (KEYWORDS.has(word)) return 'keyword';
-      if (stream.string.slice(stream.pos).trimStart().startsWith('(')) return 'fn';
-      return 'variable';
-    }
-    stream.next();
-    return null;
-  },
-});
 
 /** Editor chrome and syntax colours for one theme. */
 function themeExtensions(theme: PicoTheme): Extension[] {

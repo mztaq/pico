@@ -7,7 +7,14 @@ it('normalizes malformed settings and keeps all tool tabs available',()=>{
 });
 it('loads older reference preferences with readable limits and a default text size',()=>{
   vi.stubGlobal('localStorage',{getItem:()=>JSON.stringify({referenceWidth:220})});
-  expect(loadSettings().referenceWidth).toBe(280);expect(loadSettings().referenceFontSize).toBe(15);
+  expect(loadSettings().referenceWidth).toBe(280);expect(loadSettings().referenceFontSize).toBe(13);
   vi.stubGlobal('localStorage',{getItem:()=>JSON.stringify({referenceWidth:900,referenceFontSize:32})});
-  expect(loadSettings().referenceWidth).toBe(600);expect(loadSettings().referenceFontSize).toBe(20);
+  expect(loadSettings().referenceWidth).toBe(600);expect(loadSettings().referenceFontSize).toBe(18);
+});
+
+it('reduces reference sizes from v4 once and preserves later custom sizes',()=>{
+  vi.stubGlobal('localStorage',{getItem:(key:string)=>key==='pico.settings.v4'?JSON.stringify({referenceFontSize:15}):null});
+  expect(loadSettings().referenceFontSize).toBe(13);
+  vi.stubGlobal('localStorage',{getItem:(key:string)=>key==='pico.settings.v5'?JSON.stringify({referenceFontSize:16}):null});
+  expect(loadSettings().referenceFontSize).toBe(16);
 });

@@ -35,7 +35,7 @@ must still be mutable INTEGER scalars.
 
 Help opens **Pico in a minute**, a seven-step spotlight tour with Back/Next navigation,
 keyboard exit, and a completion screen. The tour preserves code and restores the previous layout.
-The quick reference has larger keyword buttons, saved 14–20px text controls, a draggable divider
+The quick reference has larger keyword buttons, syntax-coloured examples, saved 12–18px text controls, a draggable divider
 on wide screens, and an accessible Reference button that opens a drawer on smaller screens.
 New source tabs use `.pico`; old `.pseudocode` names are migrated when loading projects or snapshots.
 
