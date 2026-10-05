@@ -1,13 +1,42 @@
-.tutorial-offer { position: fixed; top: 68px; right: 18px; z-index: 80; width: min(300px, calc(100vw - 28px)); padding: 13px; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border)); border-radius: 10px; background: var(--surface-raised); box-shadow: 0 18px 55px rgba(0,0,0,.5); }
+.tutorial-offer { position: fixed; top: 68px; right: 18px; z-index: 80; width: min(340px, calc(100vw - 28px)); padding: 18px; border: 1px solid var(--accent); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 18px 55px rgba(0,0,0,.35); }
 .tutorial-offer strong, .tutorial-offer small { display: block; }
-.tutorial-offer strong { color: var(--text); font-size: 12px; }
-.tutorial-offer small { margin-top: 4px; color: var(--muted); font-size: 10px; }
-.tutorial-offer-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 11px; }
-.tutorial-modal { width: min(520px, 100%); padding: 20px; border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border)); border-radius: 14px; background: var(--surface-raised); box-shadow: 0 24px 90px rgba(0,0,0,.62); }
-.tutorial-steps { display: grid; gap: 8px; }
-.tutorial-steps > div { padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-input); }
-.tutorial-steps b, .tutorial-steps span { display: block; }
-.tutorial-steps b { color: var(--text); font-size: 11px; }
-.tutorial-steps span { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.55; }
-.tutorial-steps code, .tutorial-steps kbd { padding: 1px 4px; border: 1px solid var(--border); border-radius: 3px; color: var(--accent); font-family: var(--font-code); font-size: 9px; }
-.tutorial-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; }
+.tutorial-offer strong { color: var(--text); font-size: 17px; }
+.tutorial-offer small { margin-top: 6px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.tutorial-offer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.tutorial-offer-actions button { min-height: 40px; font-size: 14px; }
+.tutorial-layer { position: fixed; inset: 0; z-index: 200; isolation: isolate; }
+.tutorial-shade { position: absolute; inset: 0; }
+.tutorial-spotlight { position: absolute; border: 2px solid var(--accent); border-radius: 10px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent), 0 0 28px color-mix(in srgb, var(--accent) 22%, transparent); pointer-events: none; }
+.tutorial-card { position: absolute; width: min(400px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 24px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 18px; background: var(--surface-raised); color: var(--text); box-shadow: 0 24px 80px rgba(0,0,0,.45); }
+.tutorial-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.tutorial-card-top > span { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .8px; }
+.tutorial-icon { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--text); cursor: pointer; }
+.tutorial-icon:hover { background: var(--surface-hover); }
+.tutorial-progress { display: flex; gap: 6px; margin: 0 0 22px; }
+.tutorial-progress button { position: relative; height: 6px; flex: 1; padding: 0; border: 0; border-radius: 4px; background: var(--border); cursor: pointer; }
+.tutorial-progress button::after { content: ''; position: absolute; inset: -8px 0; }
+.tutorial-progress button.filled { background: var(--accent); }
+.tutorial-eyebrow { display: block; margin-bottom: 10px; color: var(--accent); font-family: var(--font-code); font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+.tutorial-card h2 { margin: 0 0 12px; font-size: 26px; line-height: 1.18; letter-spacing: -.6px; }
+.tutorial-card p { margin: 0 0 18px; font-size: 15px; line-height: 1.65; }
+.tutorial-example { margin: 0 0 16px; padding: 14px; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-input); color: var(--text); font-family: var(--font-code); font-size: 13px; line-height: 1.75; }
+.tutorial-card .tutorial-tip { padding: 12px 14px; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; background: var(--accent-soft); font-size: 13px; line-height: 1.6; }
+.tutorial-navigation { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; }
+.tutorial-navigation button, .tutorial-reference-link { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--border); border-radius: 9px; font: 600 14px var(--font-ui); cursor: pointer; }
+.tutorial-secondary { background: transparent; color: var(--text); }
+.tutorial-primary { background: var(--accent); color: var(--on-accent, #fff); }
+.tutorial-secondary:hover { background: var(--surface-hover); }
+.tutorial-primary:hover { background: var(--accent-strong); }
+.tutorial-navigation button:disabled { opacity: .4; cursor: default; }
+.tutorial-skip { display: block; margin: 16px auto 0; padding: 6px; border: 0; background: transparent; color: var(--muted); font: 13px var(--font-ui); cursor: pointer; }
+.tutorial-card button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.tutorial-success { width: 56px; height: 56px; display: grid; place-items: center; margin-bottom: 20px; border: 1px solid var(--accent); border-radius: 16px; background: var(--accent-soft); color: var(--accent); }
+.tutorial-recap { display: grid; gap: 10px; margin: 20px 0; font-size: 14px; }
+.tutorial-recap span { display: flex; align-items: center; gap: 10px; }
+.tutorial-recap svg { color: var(--accent); }
+.tutorial-reference-link { width: 100%; background: var(--surface-input); color: var(--text); }
+@media (max-width: 520px) {
+  .tutorial-card { padding: 20px; }
+  .tutorial-card h2 { font-size: 24px; }
+  .tutorial-card-top { margin-bottom: 16px; }
+}

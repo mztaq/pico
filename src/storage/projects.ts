@@ -40,7 +40,7 @@ function makeProject(
   code: string,
   tests: TestCase[],
 ): PicoProject {
-  const file = makeFile('main.pseudocode', code, `${id}-main`);
+  const file = makeFile('main.pico', code, `${id}-main`);
   return {
     id,
     name,
@@ -97,7 +97,7 @@ function normalizeProject(value: unknown): PicoProject | undefined {
     : [];
   const files = rawFiles.length
     ? rawFiles
-    : [makeFile('main.pseudocode', legacyCode, `${project.id}-main`)];
+    : [makeFile('main.pico', legacyCode, `${project.id}-main`)];
   const activeFileId = files.some((file) => file.id === project.activeFileId)
     ? project.activeFileId!
     : files[0]!.id;
@@ -135,10 +135,14 @@ function normalizeFile(value: unknown): PicoFile | undefined {
       : undefined;
   return {
     id: file.id,
-    name: file.name,
+    name: normalizeSourceFilename(file.name),
     code: file.code,
     ...(autoDeclaredTypes ? { autoDeclaredTypes } : {}),
   };
+}
+/** Migrate the previous source suffix while preserving user-chosen names. */
+export function normalizeSourceFilename(name: string): string {
+  return name.replace(/\.pseudocode$/i, '.pico');
 }
 export function saveProjects(projects: PicoProject[], activeId: string): void {
   localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
