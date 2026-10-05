@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { inputEasterEgg } from './inputEasterEgg';
 
 it.each([
-  ['amar', 'The dev who coded me day and night ☾'],
+  ['amar', 'The dev who engineered me day and night ☾'],
   ['mustaqim', 'The soul who unleashed me to the World Wide Web 🌏︎'],
 ])('preserves the exact %s message and recognises case and surrounding whitespace', (name, message) => {
   expect(inputEasterEgg(name)).toBe(message);
