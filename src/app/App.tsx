@@ -193,8 +193,7 @@ export default function App() {
   function resizeDock(delta: number) {
     const available = settings.dockSide === 'right' ? workspaceMainRef.current?.clientWidth : workspaceMainRef.current?.clientHeight;
     if (!available) return;
-    const direction = settings.dockSide === 'bottom' ? 1 : -1;
-    changeSettings({ dockSize: Math.min(60, Math.max(22, settings.dockSize + delta * direction / available * 100)), layoutPreset: 'custom' });
+    changeSettings({ dockSize: Math.min(60, Math.max(22, settings.dockSize - delta / available * 100)), layoutPreset: 'custom' });
   }
   function runTests() {
     if (!parsed.ast) {

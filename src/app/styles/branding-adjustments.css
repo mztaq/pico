@@ -1,2 +1,14 @@
 /* Keep the small brand caption beneath Pico subdued rather than near-white. */
 .brand-subtitle { color: #414653; }
+
+/* Reset native button chrome that was creating the gray pill behind the wordmark. */
+.brand-lockup {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  appearance: none;
+  text-align: left;
+  cursor: pointer;
+}
