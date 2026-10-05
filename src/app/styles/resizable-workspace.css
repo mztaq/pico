@@ -2,9 +2,9 @@
 .ide-shell { min-width: 0; }
 .project-sidebar { width: var(--sidebar-width); flex: 0 0 var(--sidebar-width); min-width: 170px; max-width: 360px; resize: none; overflow: hidden; }
 .workspace-main { min-width: 0; min-height: 0; grid-template-rows: auto minmax(260px, 1fr) 8px minmax(220px, var(--dock-size)); }
-.editor-split { grid-template-columns: minmax(0, 1fr) 8px var(--reference-width); }
+.editor-split { grid-template-columns: minmax(0, 1fr) 12px min(var(--reference-width), calc(100% - 252px)); }
 .editor-split.reference-hidden { grid-template-columns: minmax(0, 1fr); }
-.reference-card { min-width: 220px; max-width: 460px; resize: none; }
+.reference-card { min-width: 0; max-width: 600px; resize: none; }
 
 .panel-resize-handle {
   position: relative;
@@ -21,6 +21,7 @@
   transition: background-color .12s ease;
 }
 .panel-resize-handle.resize-handle-x { width: 8px; min-width: 8px; cursor: col-resize; }
+.panel-resize-handle.reference-resize-handle { width: 12px; min-width: 12px; }
 .panel-resize-handle.resize-handle-y { height: 8px; min-height: 8px; cursor: row-resize; }
 .panel-resize-handle:hover, .panel-resize-handle:focus-visible, .panel-resize-handle:active { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .resize-handle-grip { display: block; border-radius: 4px; background: #626879; opacity: .75; transition: background-color .12s ease, opacity .12s ease; }
