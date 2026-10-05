@@ -1,0 +1,65 @@
+/* Additive workspace resizing layer. Original app and editor styles remain intact. */
+.ide-shell { min-width: 0; }
+.project-sidebar { width: var(--sidebar-width); flex: 0 0 var(--sidebar-width); min-width: 170px; max-width: 360px; resize: none; overflow: hidden; }
+.workspace-main { min-width: 0; min-height: 0; grid-template-rows: auto minmax(260px, 1fr) 8px minmax(220px, var(--dock-size)); }
+.editor-split { grid-template-columns: minmax(0, 1fr) 8px var(--reference-width); }
+.editor-split.reference-hidden { grid-template-columns: minmax(0, 1fr); }
+.reference-card { min-width: 220px; max-width: 460px; resize: none; }
+
+.panel-resize-handle {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+  transition: background-color .12s ease;
+}
+.panel-resize-handle.resize-handle-x { width: 8px; min-width: 8px; cursor: col-resize; }
+.panel-resize-handle.resize-handle-y { height: 8px; min-height: 8px; cursor: row-resize; }
+.panel-resize-handle:hover, .panel-resize-handle:focus-visible, .panel-resize-handle:active { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.resize-handle-grip { display: block; border-radius: 4px; background: #626879; opacity: .75; transition: background-color .12s ease, opacity .12s ease; }
+.resize-handle-x .resize-handle-grip { width: 2px; height: 25px; box-shadow: 2px 0 0 rgba(98,104,121,.38); }
+.resize-handle-y .resize-handle-grip { width: 28px; height: 2px; box-shadow: 0 2px 0 rgba(98,104,121,.38); }
+.panel-resize-handle:hover .resize-handle-grip, .panel-resize-handle:focus-visible .resize-handle-grip { background: var(--accent); opacity: 1; }
+
+.ide-shell > .sidebar-resize-handle { align-self: stretch; }
+.ide-shell.sidebar-right > .sidebar-resize-handle { order: 1; }
+.ide-shell.sidebar-right > .workspace-main { order: 0; }
+.ide-shell.sidebar-right > .project-sidebar { order: 2; }
+.editor-split > .reference-resize-handle { grid-column: 2; grid-row: 1; }
+.editor-split > .reference-card { grid-column: 3; grid-row: 1; }
+.workspace-main > .dock-resize-handle { grid-column: 1; grid-row: 3; justify-self: stretch; }
+.workspace-main > .tool-dock { grid-column: 1; grid-row: 4; min-width: 0; min-height: 0; }
+
+/* The right-dock mode uses a column splitter and the same saved size setting. */
+.ide-shell.dock-right .workspace-main { grid-template-columns: minmax(0, 1fr) 8px minmax(220px, var(--dock-size)); grid-template-rows: auto minmax(0, 1fr); }
+.ide-shell.dock-right .workspace-main > .command-bar { grid-column: 1 / 4; grid-row: 1; }
+.ide-shell.dock-right .workspace-main > .editor-split { grid-column: 1; grid-row: 2; }
+.ide-shell.dock-right .workspace-main > .dock-resize-handle { grid-column: 2; grid-row: 2; justify-self: stretch; }
+.ide-shell.dock-right .workspace-main > .tool-dock { grid-column: 3; grid-row: 2; margin: 10px 10px 8px 0; }
+.ide-shell.dock-right .dock-resize-handle { width: 8px; height: auto; min-height: 0; min-width: 8px; cursor: col-resize; }
+.ide-shell.dock-right .dock-resize-handle .resize-handle-grip { width: 2px; height: 28px; }
+
+@media (max-width: 800px) {
+  .workspace-main { grid-template-rows: auto minmax(235px, 1fr) 8px minmax(205px, var(--dock-size)); }
+  .project-sidebar { width: 52px; flex-basis: 52px; min-width: 52px; }
+  .ide-shell > .sidebar-resize-handle { display: none; }
+  .editor-split { grid-template-columns: minmax(0, 1fr); }
+  .editor-split > .reference-resize-handle { display: none; }
+}
+@media (max-width: 1070px) {
+  .editor-split { grid-template-columns: minmax(0, 1fr); }
+  .editor-split > .reference-resize-handle { display: none; }
+}
+@media (max-width: 520px) {
+  .workspace-main { grid-template-rows: auto minmax(220px, 1fr) 8px minmax(190px, var(--dock-size)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel-resize-handle, .resize-handle-grip { transition: none; }
+}
