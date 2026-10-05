@@ -1,4 +1,4 @@
-import { useRef, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useRef, useState, type PointerEvent as ReactPointerEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 interface ResizeHandleProps {
   /** Pointer movement axis: x changes a column width; y changes a row height. */
@@ -12,6 +12,7 @@ interface ResizeHandleProps {
 export function ResizeHandle({ axis, label, onResize, className = '' }: ResizeHandleProps) {
   const pointer = useRef<{ id: number; position: number } | null>(null);
   const vertical = axis === 'x';
+  const [dragging, setDragging] = useState(false);
 
   function coordinate(event: ReactPointerEvent<HTMLDivElement>) {
     return vertical ? event.clientX : event.clientY;
@@ -19,6 +20,7 @@ export function ResizeHandle({ axis, label, onResize, className = '' }: ResizeHa
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button !== 0) return;
     event.preventDefault();
+    setDragging(true);
     pointer.current = { id: event.pointerId, position: coordinate(event) };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
@@ -30,7 +32,10 @@ export function ResizeHandle({ axis, label, onResize, className = '' }: ResizeHa
     pointer.current.position = position;
   }
   function onPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
-    if (pointer.current?.id === event.pointerId) pointer.current = null;
+    if (pointer.current?.id !== event.pointerId) return;
+    pointer.current = null;
+    setDragging(false);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }
   function onKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
     const negative = vertical ? ['ArrowLeft', 'ArrowUp'] : ['ArrowUp', 'ArrowLeft'];
@@ -40,7 +45,7 @@ export function ResizeHandle({ axis, label, onResize, className = '' }: ResizeHa
   }
 
   return <div
-    className={`panel-resize-handle ${vertical ? 'resize-handle-x' : 'resize-handle-y'} ${className}`.trim()}
+    className={`panel-resize-handle ${vertical ? 'resize-handle-x' : 'resize-handle-y'} ${className} ${dragging ? 'is-dragging' : ''}`.trim()}
     role="separator"
     aria-orientation={vertical ? 'vertical' : 'horizontal'}
     aria-label={label}
@@ -50,6 +55,7 @@ export function ResizeHandle({ axis, label, onResize, className = '' }: ResizeHa
     onPointerMove={onPointerMove}
     onPointerUp={onPointerUp}
     onPointerCancel={onPointerUp}
+    onLostPointerCapture={() => { pointer.current = null; setDragging(false); }}
     onKeyDown={onKeyDown}
   ><span className="resize-handle-grip" aria-hidden="true" /></div>;
 }

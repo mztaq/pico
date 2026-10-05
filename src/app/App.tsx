@@ -27,6 +27,7 @@ import './styles/file-tabs.css';
 import './styles/resizable-workspace.css';
 import './styles/branding-adjustments.css';
 import './styles/readability.css';
+import './styles/high-contrast.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
@@ -296,7 +297,7 @@ export default function App() {
   const saveText = saveState === 'saving' ? 'Saving…' : saveState === 'local-only' ? 'Storage unavailable' : 'Saved on this device';
   const currentDoc = documentationFor(selectedDoc) ?? 'Select a Cambridge pseudocode keyword to read its quick explanation.';
 
-  return <div className="pico-app" data-pico-theme={theme.id} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#111111', theme.accent) ? '#ffffff' : '#111111', '--sidebar-width': `${settings.sidebarWidth}px`, '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
+  return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--sidebar-width': `${settings.sidebarWidth}px`, '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <header className="topbar" inert={tutorialOpen}>
       <button className="brand-lockup" title="About Pico" aria-label="Open Pico developer credits" onClick={() => setCreditsOpen(true)}><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">PSEUDOCODE STUDIO</span></button>
       <div className="topbar-divider" />
@@ -369,8 +370,8 @@ export default function App() {
             <div className="reference-head"><div><BookOpen size={15} /><strong>Quick reference</strong></div><button className="reference-close" aria-label="Close quick reference" onClick={closeReference}><X size={18} /></button></div>
             <div className="reference-controls"><span>CAMBRIDGE · <span>Drag the divider to resize</span></span><div><button aria-label="Decrease reference text size" disabled={settings.referenceFontSize <= 12} onClick={() => changeSettings({ referenceFontSize: settings.referenceFontSize - 1 })}>A−</button><output aria-label="Reference text size">{settings.referenceFontSize}px</output><button aria-label="Increase reference text size" disabled={settings.referenceFontSize >= 18} onClick={() => changeSettings({ referenceFontSize: settings.referenceFontSize + 1 })}>A+</button></div></div>
             <div className="reference-search"><Search size={13} /><input value={docSearch} onChange={event => setDocSearch(event.target.value)} placeholder="Find a keyword" aria-label="Search Cambridge keywords" /></div>
-            <div className="reference-keywords"><button className="syntax-cheat-button" onClick={() => setDocSearch('')}>Syntax cheat sheet</button>{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} aria-pressed={selectedDoc === term} onClick={() => setSelectedDoc(term)}><HighlightedCode code={term} /></button>)}{!shownTerms.length && <p className="reference-no-results">No keywords found. Try OUTPUT or FOR.</p>}</div>
-            <div className="reference-explanation"><span className="mini-label">KEYWORD</span><strong><HighlightedCode code={selectedDoc} /></strong><p>{currentDoc}</p></div><details className="syntax-cheat-sheet" open><summary>Syntax cheat sheet · examples</summary><pre><HighlightedCode code={`DECLARE Name : STRING
+            <div className="reference-keywords"><button className="syntax-cheat-button" onClick={() => setDocSearch('')}>Syntax cheat sheet</button>{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} aria-pressed={selectedDoc === term} onClick={() => setSelectedDoc(term)}>{term}</button>)}{!shownTerms.length && <p className="reference-no-results">No keywords found. Try OUTPUT or FOR.</p>}</div>
+            <div className="reference-explanation"><span className="mini-label">KEYWORD</span><strong>{selectedDoc}</strong><p>{currentDoc}</p></div><details className="syntax-cheat-sheet" open><summary>Syntax cheat sheet · examples</summary><pre><HighlightedCode code={`DECLARE Name : STRING
 Name ← "Pico"
 
 IF Score >= 50 THEN

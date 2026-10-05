@@ -44,3 +44,18 @@ describe('theme registry', () => {
     expect(normalizeThemeId(undefined)).toBe(DEFAULT_THEME_ID);
   });
 });
+
+it('provides pure black/white interface contrast and readable coloured syntax in both high-contrast themes',()=>{
+  for(const id of ['high-contrast-dark','high-contrast-light']) {
+    const theme=getTheme(id);
+    expect(theme.highContrast).toBe(true);expect(normalizeThemeId(id)).toBe(id);
+    expect(contrastRatio(theme.text,theme.bg)).toBe(21);
+    expect(contrastRatio(theme.muted,theme.surface)).toBe(21);
+    for(const background of [theme.ui.surfaceRaised,theme.ui.surfaceHover,theme.ui.surfaceInput,theme.ui.tooltipBg]) {
+      expect(background).toBe(theme.bg);expect(contrastRatio(theme.text,background)).toBe(21);
+    }
+    for(const token of Object.values(theme.syntax))expect(contrastRatio(token,theme.bg)).toBeGreaterThanOrEqual(7);
+    expect(contrastRatio(theme.accent,theme.bg)).toBe(21);
+    expect(theme.ui.gutter).toBe(theme.text);expect(theme.ui.dim).toBe(theme.text);
+  }
+});
