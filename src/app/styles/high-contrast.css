@@ -1,4 +1,4 @@
-/* Preserve colour-coded source while keeping interface text on pure black/white. */
+/* Keep body text at maximum contrast; colour only accents and source tokens. */
 .pico-app[data-high-contrast="true"] :where(button, input, textarea, select, p, label, summary, small, strong, b, kbd, span, code, svg, a):not(.highlighted-code *):not(.cm-editor *):not(.theme-swatch *) {
   color: var(--text);
 }
@@ -14,16 +14,19 @@
 }
 .pico-app[data-high-contrast="true"] :where(.project-row.active, .file-tab.active, .dock-tab.active, .theme-option.active, .keyword-pill.active, .toggle-chip.on) {
   background: var(--bg);
-  outline: 1px solid var(--text);
+  outline: 1px solid var(--accent);
   outline-offset: -1px;
 }
 .pico-app[data-high-contrast="true"] :where(button, a, input, textarea, select):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.pico-app[data-high-contrast="true"] :where(.run-button, .primary-small, .tutorial-primary, .switch.checked) {
-  background: var(--accent);
+.pico-app[data-high-contrast="true"] :is(.run-button, .primary-small, .tutorial-primary, .switch.checked) {
+  background: var(--accent-fill);
   color: var(--on-accent) !important;
+}
+.pico-app[data-high-contrast="true"] :is(.run-button, .primary-small, .tutorial-primary):hover {
+  background: var(--accent-fill);
 }
 .pico-app[data-high-contrast="true"] :where(.run-button, .primary-small, .tutorial-primary) :where(span, svg, kbd) {
   color: var(--on-accent) !important;
@@ -33,12 +36,20 @@
 .pico-app[data-high-contrast="true"] :where(.panel-resize-handle:hover, .panel-resize-handle:focus-visible, .panel-resize-handle.is-dragging) .resize-handle-grip { background: var(--accent); }
 
 .pico-app[data-high-contrast="true"] .switch.checked > span { background: var(--on-accent); }
-.pico-app[data-high-contrast="true"] .console-entry-note { background: var(--bg); border-color: var(--text); }
+.pico-app[data-high-contrast="true"] .console-entry-note { background: var(--bg); border-color: var(--accent); }
 
-.pico-app[data-high-contrast="true"] :where(button:hover) { outline: 1px solid var(--text); outline-offset: 1px; }
+.pico-app[data-high-contrast="true"] :where(button:hover) { outline: 1px solid var(--accent); outline-offset: 1px; }
 
 .pico-app[data-high-contrast="true"] :where(.debug-current, .debug-vars, .debug-stdout, .variable-row, .coverage-row, .coverage-ring, .coverage-ring::before, .token-type, .console-entry-note) {
   background: var(--bg);
-  border-color: var(--text);
+  border-color: var(--accent);
 }
-.pico-app[data-high-contrast="true"] .coverage-ring { border: 2px solid var(--text); }
+.pico-app[data-high-contrast="true"] .coverage-ring { border: 2px solid var(--accent); }
+.pico-app[data-high-contrast="true"] .coverage-ring::before { background: var(--bg); }
+
+.pico-app[data-high-contrast="true"] :is(.tutorial-eyebrow, .credit-item strong, .console-output-area .output-prompt, .dock-tab.active, .theme-group-label) {
+  color: var(--accent);
+}
+.pico-app[data-high-contrast="true"] .dock-tab.active::after { background: var(--accent-fill); }
+.pico-app[data-high-contrast="true"] :is(.tutorial-progress .filled, .step-dot) { background: var(--accent-fill); box-shadow: none; }
+.pico-app[data-high-contrast="true"] :is(.credit-item strong, .tutorial-eyebrow) { font-weight: 700; }

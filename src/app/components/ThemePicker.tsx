@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Check, Search } from 'lucide-react';
-import { THEMES, type PicoTheme } from '../themes';
+import { accentFill, THEMES, type PicoTheme } from '../themes';
 
 interface ThemePickerProps { value: string; onChange: (id: string) => void; }
 
@@ -11,8 +11,9 @@ export function ThemePicker({ value, onChange }: ThemePickerProps) {
     const needle = query.trim().toLowerCase();
     const matching = THEMES.filter(theme => !needle || theme.name.toLowerCase().includes(needle) || theme.id.includes(needle));
     return [
-      { label: 'Dark themes', themes: matching.filter(theme => theme.appearance === 'dark') },
-      { label: 'Light themes', themes: matching.filter(theme => theme.appearance === 'light') },
+      { label: 'High contrast', themes: matching.filter(theme => theme.highContrast) },
+      { label: 'Dark themes', themes: matching.filter(theme => theme.appearance === 'dark' && !theme.highContrast) },
+      { label: 'Light themes', themes: matching.filter(theme => theme.appearance === 'light' && !theme.highContrast) },
     ].filter(group => group.themes.length > 0);
   }, [query]);
 
@@ -52,6 +53,6 @@ function ThemeSwatch({ theme }: { theme: PicoTheme }) {
     <i style={{ background: theme.syntax.type }} />
     <i style={{ background: theme.syntax.string }} />
     <i style={{ background: theme.syntax.number }} />
-    <i style={{ background: theme.accent }} />
+    <i style={{ background: accentFill(theme) }} />
   </span>;
 }
