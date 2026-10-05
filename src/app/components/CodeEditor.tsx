@@ -3,7 +3,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap, type CompletionCont
 import { defaultKeymap, history, historyKeymap, indentLess, indentMore } from '@codemirror/commands';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, StreamLanguage, syntaxHighlighting } from '@codemirror/language';
-import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
+import { Compartment, EditorState, Transaction, type Extension, type Range } from '@codemirror/state';
 import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { KEYWORDS, ROUTINES, TYPES, COMPLETIONS } from '../../language/lexer';
@@ -15,7 +15,7 @@ export interface EditorPreferences { autocomplete: boolean; hoverDocs: boolean; 
 export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; }
 interface CodeEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, analyzeNow?: boolean) => void;
   onFormat: () => void;
   preferences: EditorPreferences;
   theme: PicoTheme;
@@ -311,7 +311,15 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
         palette.current.of(themeExtensions(theme)),
         prefs.current.of(createPreferences(preferences)),
         marks.current.of(EditorView.decorations.of(v => buildDecorations(v, coveredLines, currentLine, errorLine))),
-        EditorView.updateListener.of(update => { if (update.docChanged) onChangeRef.current(update.state.doc.toString()); }),
+        EditorView.updateListener.of(update => {
+          if (!update.docChanged) return;
+          const completedLine = update.state.doc.lines > update.startState.doc.lines;
+          const committedEdit = update.transactions.some(transaction => {
+            const event = transaction.annotation(Transaction.userEvent);
+            return event === 'input.paste' || event === 'input.drop' || event === 'input.complete';
+          });
+          onChangeRef.current(update.state.doc.toString(), completedLine || committedEdit);
+        }),
       ],
     });
     view.current = editor;
@@ -323,7 +331,13 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
   useEffect(() => {
     const editor = view.current;
     if (!editor || editor.state.doc.toString() === value) return;
-    editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: value } });
+    const previous = editor.state.doc.toString();
+    let from = 0;
+    while (from < previous.length && from < value.length && previous[from] === value[from]) from += 1;
+    let previousEnd = previous.length;
+    let valueEnd = value.length;
+    while (previousEnd > from && valueEnd > from && previous[previousEnd - 1] === value[valueEnd - 1]) { previousEnd -= 1; valueEnd -= 1; }
+    editor.dispatch({ changes: { from, to: previousEnd, insert: value.slice(from, valueEnd) } });
   }, [value]);
   useEffect(() => { view.current?.dispatch({ effects: prefs.current.reconfigure(createPreferences(preferences)) }); }, [preferences.autocomplete, preferences.hoverDocs, preferences.fontSize]);
   useEffect(() => { view.current?.dispatch({ effects: palette.current.reconfigure(themeExtensions(theme)) }); }, [theme]);
