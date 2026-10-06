@@ -1,132 +1,131 @@
-# Pico — Cambridge Pseudocode Studio
+<p align="center">
+  <img src="public/pico-logo.svg" alt="Pico logo" width="80" height="80">
+</p>
 
-A browser-only studio for writing, running, debugging and learning **Cambridge IGCSE Computer Science
-pseudocode**. Everything runs in the browser: there is no backend and no account, and projects,
-settings and practice files live in `localStorage`.
+<h1 align="center">PICO</h1>
 
-## The editor
+<p align="center">Write, run and inspect Cambridge-style pseudocode in your browser.</p>
 
-- **VS Code-style syntax highlighting.** Cambridge pseudocode is tokenised into control keywords,
-  statement keywords, data types, variables, routine and function calls, numbers, strings, comments,
-  operators, punctuation and Boolean literals.
-- **23 IDE themes.** Dark+, Light+, Dracula, Monokai, One Dark Pro, One Light, Nord, Tokyo Night,
-  Catppuccin Mocha, Catppuccin Latte, Gruvbox Dark, Solarized Dark, Solarized Light, GitHub Dark,
-  GitHub Light, Ayu Mirage, Night Owl, Palenight, Rosé Pine, SynthWave '84 and Cobalt2, plus High Contrast Dark and High Contrast Light.
-  Each theme ships a complete palette — syntax token colours, editor chrome (gutter, active line,
-  caret, selection, bracket matching, tooltips) and the surrounding interface — rather than only a
-  background colour. The picker previews every theme with its own token swatches and supports search
-  plus dark/light grouping.
-- **Readable nesting.** VS Code-style vertical indentation guides are drawn at every nesting level,
-  follow the editor's real character width (so they stay aligned at any font size), and brighten on
-  the active line. Tab inserts one nesting level; `Shift-Tab` outdents a selection.
-- **IDE surface.** JetBrains Mono coding font, line numbers with active-gutter highlighting,
-  active-line highlighting, a themed 2px caret, themed selection and selection-match highlighting,
-  bracket matching and search highlights.
-- **Viewport-safe menus.** The Options menu and the File menu are positioned from the viewport: they
-  flip above their button when that side has more room, stay inside the horizontal margins, and
-  scroll internally when taller than the available space.
+<p align="center">
+  <a href="https://picompiler.pages.dev">Open Pico</a> ·
+  <a href="#getting-started">Getting started</a> ·
+  <a href="#language-support">Language support</a> ·
+  <a href="#development">Development</a>
+</p>
 
-Auto-declare is an optional editor setting, enabled by default. It inserts inferred declarations
-for assignments and tracks declarations it generated. Explicit declarations
-are preserved. Disable it when practicing declarations for exams. The compiler itself always
-requires declared variables, except FOR counters. A FOR loop introduces an INTEGER counter
-when it has not already been declared, even with Auto-declare disabled. Explicit counters
-must still be mutable INTEGER scalars.
+<p align="center">
+  <a href="https://github.com/mztaq/pico/actions/workflows/checks.yml">
+    <img src="https://github.com/mztaq/pico/actions/workflows/checks.yml/badge.svg?branch=main" alt="Tests and production build">
+  </a>
+</p>
 
-Help opens **Pico in a minute**, a seven-step spotlight tour with Back/Next navigation,
-keyboard exit, and a completion screen. The tour preserves code and restores the previous layout.
-The quick reference has larger keyword buttons, syntax-coloured examples, plain keyword labels, saved 12–18px text controls, a draggable divider
-on wide screens, and an accessible Reference button that opens a drawer on smaller screens.
-New source tabs use `.pico`; old `.pseudocode` names are migrated when loading projects or snapshots.
+Pico is a browser-based pseudocode editor and interpreter built for Computer Science learning. It brings source code, interactive input, execution traces and testing into one workspace, with no account or backend required.
 
-High Contrast Dark and High Contrast Light use pure black/white text and surfaces (21:1 contrast).
-Their coloured syntax tokens each meet at least 7:1 contrast against the editor background.
-Resize dividers use neutral grips at rest and accent colours only on hover, keyboard focus, or drag.
+Created by **Amar** and **Mustaqim** for students learning to turn algorithms into working programs.
 
-## The language
+## Getting started
 
-`DECLARE`/`CONSTANT`, typed `INPUT`/`OUTPUT`, `IF`/`ELSE`/`ENDIF` (including `THEN` on the next
-line), `CASE OF`/`OTHERWISE`/`ENDCASE`, `WHILE…DO`/`ENDWHILE`, `FOR`/`TO`/`STEP`/`NEXT`,
-`REPEAT`/`UNTIL`, `PROCEDURE`/`ENDPROCEDURE` and `FUNCTION…RETURNS…ENDFUNCTION` with parameters and
-local scope, one- and two-dimensional `ARRAY`s, `OPENFILE`/`READFILE`/`WRITEFILE`/`CLOSEFILE` over a
-project-scoped virtual file system, and the library routines `LENGTH`, `SUBSTRING`, `UCASE`, `LCASE`,
-`DIV`, `MOD`, `ROUND` and `RANDOM`.
-
-## Tools
-
-Run and output console, recorded execution debugger, test cases with expected versus actual output,
-code coverage, AST viewer, token viewer, flowchart, Cambridge example programs, keyword reference examples,
-autocomplete, autocorrect suggestions and hover documentation.
-
-## Execution and practice files
-
-Run and test batches execute in a dedicated Web Worker. Stop cancels the active job. Each run
-has a 10,000-step budget that includes empty loop iterations, a 100-call recursion limit, and
-a total array allocation limit of 100,000 cells. Integer values must fit JavaScript's safe
-integer range. Worker jobs have a 10-second running-time budget. Time spent waiting for console input does not count toward that budget.
-
-When Run or Debug reaches `INPUT`, execution pauses and the Console focuses an inline input field.
-Type one value and press Enter (or Send) to resume. Output and submitted values stay in order.
-Invalid values show an explanation and let you try again at the same INPUT. Stop also works while
-waiting. There is no preset standard input area or input dialog. Saved test cases still use their
-stored inputs automatically.
-
-The debugger replays immutable snapshots taken before instructions, plus a final snapshot.
-It preserves partial output and history on runtime errors. It is a recorded debugger, not a
-breakpoint-driven live debugger. History recording has a separate memory budget. When that
-budget is exhausted, the UI explains that execution continued without additional snapshots.
-
-The Console's **Project practice files** section lets you create and edit text files. File
-contents are saved in the project, included in `.pico` export/import, and returned after runs.
-Tests receive independent copies and never modify saved files. Opening FOR WRITE truncates a
-file, opening FOR READ starts a new cursor, and reads do not delete file contents. Missing files,
-incorrect modes, out-of-bounds indexes, unassigned values, and end-of-file reads produce errors.
+Open [Pico](https://picompiler.pages.dev), enter a program and press **Run** in the top bar.
 
 ```text
-DECLARE Line : STRING
-OPENFILE "notes.txt" FOR WRITE
-WRITEFILE "notes.txt", "Hello Pico"
-CLOSEFILE "notes.txt"
-OPENFILE "notes.txt" FOR READ
-READFILE "notes.txt", Line
-OUTPUT Line
-CLOSEFILE "notes.txt"
+DECLARE Name : STRING
+OUTPUT "Enter your name"
+INPUT Name
+OUTPUT "Hello ", Name, "!"
 ```
 
-The previous implicit-file forms `READFILE Line`, `WRITEFILE expression`, and `CLOSEFILE`
-remain supported for the most recently opened file. Routine and nested-block declarations
-have local scope. Parameters and locals may shadow globals, and routines update globals when
-no local binding shadows them. Functions must return a value on every statically checked path.
-`CHAR` accepts single-quoted literals and one-character double-quoted literals. Array bounds
-are retained, including zero and negative lower bounds. Comma-separated OUTPUT expressions
-are concatenated without adding spaces. Use a literal space when needed.
+When execution reaches `INPUT`, type your value in the Console and press Enter. Entering `Ada` produces `Hello Ada!`.
 
-Flowcharts show REPEAT conditions after their bodies, CASE branches, FOR initialization and
-increments, and routine definitions in separate subgraphs. Coverage counts executable AST
-instructions rather than block closing markers. Source tabs are independent programs, not
-linked modules. The unused experimental BlockMode component is not exposed in the interface.
+- Edit the workspace name in the top bar. On smaller screens, open **File** to rename it.
+- Use **Debug** to record execution, then step through the results.
+- Open **Reference** for keyword explanations and code examples.
+- Use **File** to format code, import a project or export a `.pico` copy.
+- Open **Help** for the guided tutorial.
+
+## Workspace
+
+| Feature | What it does |
+| --- | --- |
+| **Editor** | Syntax colouring, declared-name autocomplete, indentation guides, folding, search and keyword documentation. |
+| **Console** | Accepts input while the program waits. Keeps output and submitted values in order, with errors and retry prompts. |
+| **Debugger** | Replays recorded execution steps with variable values and output. |
+| **Test cases** | Runs saved inputs and compares expected output with actual output. |
+| **Inspection tools** | Shows code coverage, flowcharts, the abstract syntax tree and lexer tokens. |
+| **Projects and history** | Keeps source tabs, practice files and named snapshots together. |
+| **Quick reference** | Provides selectable examples with syntax colouring, adjustable text size and keyword search. |
+| **Appearance** | Offers editor themes, high-contrast palettes, resizable panels and layout settings. Catppuccin Mocha is the first-launch default. |
+
+Projects and settings save in this browser. Export a `.pico` copy to back up your work or move it to another device. Source tabs are separate programs, rather than linked modules.
+
+## Language support
+
+Pico implements a Cambridge-style pseudocode subset:
+
+| Area | Supported constructs |
+| --- | --- |
+| **Values** | `DECLARE`, `CONSTANT`, `INTEGER`, `REAL`, `STRING`, `CHAR`, `BOOLEAN`. |
+| **Input and output** | Typed `INPUT` and comma-separated `OUTPUT` expressions. |
+| **Selection** | `IF` / `ELSE` / `ENDIF` and `CASE OF` / `OTHERWISE` / `ENDCASE`. |
+| **Iteration** | `FOR` / `TO` / `STEP` / `NEXT`, `WHILE` / `ENDWHILE` and `REPEAT` / `UNTIL`. |
+| **Routines** | Procedures, functions, parameters, return values and local scope. |
+| **Arrays** | One- and two-dimensional arrays with explicit bounds. |
+| **Files** | `OPENFILE`, `READFILE`, `WRITEFILE` and `CLOSEFILE` using project practice files. |
+| **Built-ins** | `LENGTH`, `SUBSTRING`, `UCASE`, `LCASE`, `DIV`, `MOD`, `ROUND` and `RANDOM`. |
+
+Variables require declarations. An undeclared `FOR` counter is introduced as an `INTEGER` automatically. The optional **Auto-declare** editor setting inserts inferred declarations for assignments and is enabled by default. Disable it in Settings to practise writing declarations yourself.
+
+`OUTPUT` joins expressions without inserting spaces. Include spaces in string literals where needed.
+
+### Execution model
+
+Source passes through the lexer, parser and semantic checks, then runs in an interpreter inside a Web Worker. **Stop** cancels the active run, including one waiting for input.
+
+The default execution limits are 10,000 steps, 100 nested routine calls and 100,000 allocated array cells. Worker jobs have a 10-second running-time budget. Waiting for input does not use that budget.
+
+Debugging records snapshots for replay. It does not provide live breakpoints. Trace recording has a separate memory budget, and Pico reports when recording is truncated.
+
+Practice files are virtual text files stored with the project. Test cases receive independent copies, so tests do not overwrite saved file contents.
 
 ## Development
 
+Use **Node.js 24** and **pnpm 11.25.0**, matching the GitHub Actions configuration.
+
 ```sh
-pnpm install
-pnpm dev        # http://localhost:3000
-pnpm test       # vitest: language, runtime, workers, storage and visualization tests
-pnpm build      # tsc --noEmit && vite build  →  dist/
-pnpm preview    # serve the production build
+git clone https://github.com/mztaq/pico.git
+cd pico
+npm install --global pnpm@11.25.0
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-## Source layout
+Open `http://localhost:3000`.
 
-| Path | Responsibility |
+| Command | Purpose |
 | --- | --- |
-| `src/language/` | Lexer, parser, AST and the Cambridge syntax guards |
-| `src/runtime/` | Interpreter, diagnostics and friendly error messages |
-| `src/app/themes.ts` | Theme registry, palette derivation and CSS variables |
-| `src/app/components/CodeEditor.tsx` | CodeMirror setup: highlighting, indent guides, editor chrome |
-| `src/app/components/FloatingPanel.tsx` | Viewport-clamped anchored menus (`computePanelBox` is unit-tested) |
-| `src/app/components/ThemePicker.tsx` | Searchable theme gallery with per-theme swatches |
-| `src/app/components/Panels.tsx`, `src/app/App.tsx` | Tool dock, workspace layout and application shell |
-| `src/storage/` | Browser-local projects and settings |
-| `src/visual/` | Flowchart generation |
-GitHub Actions runs the tests and production build on pushes and pull requests.
+| `pnpm test` | Run the language, runtime, worker, storage and interface tests. |
+| `pnpm check` | Check TypeScript types. |
+| `pnpm build` | Check types and create the production build in `dist/`. |
+| `pnpm preview` | Serve the production build at `http://localhost:3000`. |
+
+The application uses **React**, **TypeScript**, **CodeMirror**, **Vite** and **Mermaid**. GitHub Actions runs the tests and production build on pushes and pull requests.
+
+### Project structure
+
+| Directory | Responsibility |
+| --- | --- |
+| [`src/language/`](src/language/) | Lexer, parser, syntax tree, semantic checks and formatting. |
+| [`src/runtime/`](src/runtime/) | Interpreter, worker execution, diagnostics and input handling. |
+| [`src/app/`](src/app/) | Workspace interface, editor, tool panels, themes and tutorial. |
+| [`src/storage/`](src/storage/) | Projects, settings and snapshot persistence. |
+| [`src/visual/`](src/visual/) | Flowchart generation and execution visualisation. |
+
+### Contributing
+
+For bug reports, include the pseudocode, expected result and actual result. For code changes, run `pnpm test` and `pnpm build` before opening a pull request.
+
+## Creators
+
+| Name | Role |
+| --- | --- |
+| **Amar** | Development |
+| **[Mustaqim](https://github.com/mztaq)** | Deployment and releases |
