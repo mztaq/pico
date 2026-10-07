@@ -18,6 +18,10 @@ describe('Cambridge semantic type checking', () => {
   it('explains misspelled keywords at the statement boundary', () => {
     expect(() => compile('DELCARE Name : STRING')).toThrow(/Did you mean DECLARE/);
   });
+  it('allows array names that resemble keywords', () => {
+    const program = compile('DECLARE Outpu : ARRAY[1:2] OF INTEGER\nOutpu[1] ← 7\nOUTPUT Outpu[1]');
+    expect(execute(program.ast).output).toEqual(['7']);
+  });
   it('checks arrays, function returns, and procedure calls', () => {
     expect(() => compile('DECLARE Values : ARRAY[1:3] OF INTEGER\nValues["one"] ← 1')).toThrow(/ARRAY indexes must be INTEGER/);
     expect(() => compile('FUNCTION Name (N : INTEGER) RETURNS STRING\nRETURN N\nENDFUNCTION')).toThrow(/FUNCTION must return STRING/);

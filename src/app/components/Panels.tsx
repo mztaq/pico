@@ -1,13 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { Braces, CircleCheck, CircleX, Code2, Play, Plus, SkipBack, SkipForward, Terminal, Trash2 } from 'lucide-react';
-import type { Program, Token } from '../../language/ast';
+import { CircleCheck, CircleX, Code2, Play, Plus, SkipBack, SkipForward, Terminal, Trash2 } from 'lucide-react';
+import type { Program } from '../../language/ast';
 import type { RunResult, TraceStep } from '../../runtime/interpreter';
 import type { PendingInput } from '../../runtime/worker';
 import type { TestCase } from '../../storage/projects';
-import { executableLines } from '../../visual/execution';
 import { FlowchartPanel } from './FlowchartPanel';
 
-export type PanelKey = 'console' | 'debugger' | 'tests' | 'flowchart' | 'coverage' | 'ast' | 'tokens';
+export type PanelKey = 'console' | 'debugger' | 'tests' | 'flowchart';
 export interface TestOutcome { passed: boolean; actual: string[]; error?: string; }
 export interface ConsoleEntry { kind: 'output' | 'input' | 'note'; text: string; }
 interface ConsoleProps {
@@ -72,23 +71,6 @@ export function TestsPanel({ tests, outcomes, onRun, onUpdate, onAdd, onRemove, 
   </div>;
 }
 
-interface CoverageProps { source: string; lines: number[]; ast: Program | null; }
-export function CoveragePanel({ source, lines, ast }: CoverageProps) {
-  const codeLines = source.split('\n');
-  const eligible = new Set(ast ? executableLines(ast) : []);
-  const executable = codeLines.map((text,index)=>({text,line:index+1})).filter(({line})=>eligible.has(line));
-  const covered = executable.filter(item => lines.includes(item.line));
-  const percent = executable.length ? Math.round((covered.length / executable.length) * 100) : 0;
-  return <div className="coverage-panel"><div className="coverage-summary"><div className="coverage-ring" style={{ '--coverage': `${percent}%` } as React.CSSProperties}><span>{percent}<small>%</small></span></div><div><strong>Code coverage</strong><p>{lines.length ? `${covered.length} of ${executable.length} executable lines reached` : 'Run your program to see which lines execute.'}</p></div></div><div className="coverage-lines">{codeLines.map((text, index) => { const line = index + 1; const coveredLine = lines.includes(line); const structural = !eligible.has(line); return <div className={`coverage-row ${coveredLine ? 'covered' : !structural && text.trim() ? 'uncovered' : ''}`} key={line}><span className="coverage-mark">{coveredLine ? '✓' : text.trim() && !structural ? '○' : '·'}</span><span className="coverage-number">{line}</span><code>{text || ' '}</code></div>; })}</div></div>;
-}
-
-interface AstProps { ast: Program | null; error?: string; }
-export function AstPanel({ ast, error }: AstProps) { return <div className="code-inspector">{ast ? <pre className="json-view"><code>{JSON.stringify(ast, null, 2)}</code></pre> : <div className="panel-empty"><Braces size={18} /><strong>AST appears after parsing</strong><p>{error ?? 'Write a Cambridge pseudocode program to inspect its Abstract Syntax Tree.'}</p></div>}</div>; }
-interface TokensProps { tokens: Token[]; error?: string; }
-export function TokensPanel({ tokens, error }: TokensProps) {
-  return <div className="token-panel">{error ? <div className="panel-empty"><strong>Tokens are waiting for valid syntax</strong><p>{error}</p></div> : !tokens.length ? <div className="panel-empty"><strong>No tokens yet</strong><p>Start typing a Cambridge statement and its tokens will appear here.</p></div> : <div className="token-table-wrap"><table className="token-table"><thead><tr><th>TYPE</th><th>VALUE</th><th>LINE</th><th>COLUMN</th></tr></thead><tbody>{tokens.map((token, index) => <tr key={`${token.line}-${token.column}-${index}`}><td><span className={`token-type ${token.type === 'IDENTIFIER' ? 'identifier' : token.type === 'NUMBER' ? 'number' : token.type === 'STRING' ? 'string' : 'keyword'}`}>{token.type}</span></td><td><code>{token.value || <span className="muted">empty</span>}</code></td><td>{token.line}</td><td>{token.column}</td></tr>)}</tbody></table></div>}</div>;
-}
-
 interface FlowProps { ast: Program | null; error?: string; }
 export function FlowchartDock({ ast, error }: FlowProps) { return <FlowchartPanel ast={ast} error={error} />; }
 
@@ -98,9 +80,6 @@ export function panelIcon(key: PanelKey) {
     case 'debugger': return <Code2 size={14} />;
     case 'tests': return <CircleCheck size={14} />;
     case 'flowchart': return <span className="flowchart-tab-icon">◇</span>;
-    case 'coverage': return <span className="coverage-tab-icon">◒</span>;
-    case 'ast': return <Braces size={14} />;
-    case 'tokens': return <span className="token-tab-icon">▤</span>;
   }
 }
 

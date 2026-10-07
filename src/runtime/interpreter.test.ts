@@ -66,7 +66,7 @@ describe('arrays, types, and execution bounds', () => {
     expect(() => run('OUTPUT 3 MOD 0')).toThrow(/zero/);
     expect(() => compile('OUTPUT 5.5 MOD 2')).toThrow(/INTEGER/);
     expect(() => run('DECLARE N : REAL\nINPUT N', [''])).toThrow(/REAL/);
-    expect(() => run('DECLARE N : REAL\nINPUT N', ['5'])).toThrow(/5\.0/);
+    expect(run('DECLARE N : REAL\nINPUT N\nOUTPUT N', ['5']).output).toEqual(['5']);
     expect(run('DECLARE N : REAL\nINPUT N\nOUTPUT N', ['5.0']).output).toEqual(['5']);
   });
   it('recreates block locals on each iteration', () => {

@@ -28,6 +28,23 @@ export interface PicoProject {
 const PROJECTS_KEY = 'pico.projects.v1';
 const ACTIVE_KEY = 'pico.activeProject.v1';
 const sourceHeader = '// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar';
+export function normalizeProjectName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').slice(0, 42).trim();
+}
+export function projectNameExists(name: string, projects: readonly PicoProject[], exceptId?: string): boolean {
+  const key = normalizeProjectName(name).toLowerCase();
+  return projects.some(project => project.id !== exceptId && normalizeProjectName(project.name).toLowerCase() === key);
+}
+/** Keep every loaded/imported project, giving collisions a numbered suffix. */
+export function uniqueProjectName(name: string, projects: readonly PicoProject[]): string {
+  const base = normalizeProjectName(name) || 'Untitled program';
+  let candidate = base;
+  for (let number = 2; projectNameExists(candidate, projects); number++) {
+    const suffix = ` (${number})`;
+    candidate = `${base.slice(0, 42 - suffix.length).trimEnd()}${suffix}`;
+  }
+  return candidate;
+}
 function makeFile(
   name: string,
   code: string,
@@ -76,7 +93,11 @@ export function loadProjects(): PicoProject[] {
       const valid = raw
         .map(normalizeProject)
         .filter((p): p is PicoProject => Boolean(p));
-      if (valid.length) return valid;
+      if (valid.length) {
+        const loaded: PicoProject[] = [];
+        for (const project of valid) loaded.push({ ...project, name: uniqueProjectName(project.name, loaded) });
+        return loaded;
+      }
     }
   } catch {}
   return [initialProject];
@@ -161,7 +182,7 @@ export function loadActiveId(projects: PicoProject[]): string {
 export function newProject(name = 'Untitled program'): PicoProject {
   return makeProject(
     crypto.randomUUID(),
-    name,
+    normalizeProjectName(name) || 'Untitled program',
     'DECLARE Number : INTEGER\nNumber ← 42\nOUTPUT Number',
     [],
   );
@@ -205,6 +226,7 @@ export async function importProject(file: File): Promise<PicoProject> {
   return {
     ...project,
     id,
+    name: normalizeProjectName(project.name) || 'Untitled program',
     files,
     activeFileId: active.id,
     code: active.code,

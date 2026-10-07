@@ -651,11 +651,11 @@ class Interpreter {
     }
     if (type === 'REAL') {
       if (
-        !/^[+-]?\d+\.\d+$/.test(text) ||
+        !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text) ||
         !Number.isFinite(Number(text))
       )
-        throw new RuntimeError(`“${raw}” is not a REAL number. Use a decimal such as 5.0.`, line);
-      return Number(text);
+        throw new RuntimeError(`“${raw}” is not a REAL number. Enter a number such as 5 or 5.0.`, line);
+      return this.finite(Number(text), line);
     }
     if (type === 'CHAR') {
       this.ensureValueType(raw, type, line, 'input');

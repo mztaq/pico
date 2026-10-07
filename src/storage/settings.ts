@@ -8,10 +8,7 @@ export type PanelKeyPreference =
   | 'console'
   | 'debugger'
   | 'tests'
-  | 'flowchart'
-  | 'coverage'
-  | 'ast'
-  | 'tokens';
+  | 'flowchart';
 export type LayoutPreset = 'coding' | 'debugging' | 'focus' | 'custom';
 export interface PicoSettings {
   autocomplete: boolean;
@@ -38,7 +35,7 @@ export const defaultSettings: PicoSettings = {
   autocorrect: true,
   hoverDocs: true,
   autoDeclare: true,
-  fontSize: 14,
+  fontSize: 16,
   theme: DEFAULT_THEME_ID,
   sidebarSide: 'left',
   dockSide: 'bottom',
@@ -51,9 +48,6 @@ export const defaultSettings: PicoSettings = {
     'debugger',
     'tests',
     'flowchart',
-    'coverage',
-    'ast',
-    'tokens',
   ],
   layoutPreset: 'coding',
   sidebarVisible: true,
@@ -97,9 +91,9 @@ export function loadSettings(): PicoSettings {
           theme: normalizeThemeId(c.theme),
           panelOrder: orders.length ? orders : defaultSettings.panelOrder,
           fontSize:
-            typeof c.fontSize === 'number'
+            typeof c.fontSize === 'number' && Number.isFinite(c.fontSize)
               ? Math.min(20, Math.max(12, c.fontSize))
-              : 14,
+              : defaultSettings.fontSize,
           sidebarWidth:
             typeof c.sidebarWidth === 'number'
               ? Math.min(360, Math.max(170, c.sidebarWidth))
