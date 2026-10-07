@@ -76,10 +76,6 @@ Variables require declarations. An undeclared `FOR` counter is introduced as an 
 
 `OUTPUT` joins expressions without inserting spaces. Include spaces in string literals where needed.
 
-## What's New updates
-
-Pico can optionally show a theme-matched updates popup sourced directly from recent messages in `#pico-logs`. It checks once on page entry, filters bot/webhook posts and blocked content, and does not persist the feed. See [Discord updates setup](DISCORD_UPDATES_SETUP.md) for configuration and the important warning that any Discord bot token used by a frontend build is public to site visitors.
-
 ### Execution model
 
 Source passes through the lexer, parser and semantic checks, then runs in an interpreter inside a Web Worker. **Stop** cancels the active run, including one waiting for input.
@@ -110,8 +106,13 @@ Open `http://localhost:3000`.
 | `pnpm check` | Check TypeScript types. |
 | `pnpm build` | Check types and create the production build in `dist/`. |
 | `pnpm preview` | Serve the production build at `http://localhost:3000`. |
+| `pnpm update:log -- "IMPROVED UI"` | Append a dated update to `logs.txt` and sync the served copy. |
 
 The application uses **React**, **TypeScript**, **CodeMirror**, **Vite** and **Mermaid**. GitHub Actions runs the tests and production build on pushes and pull requests.
+
+### Local updates and changelog
+
+Updates are stored in the root `logs.txt`, one per line as `[YYYY-MM-DD] : UPDATE TEXT`. Add entries with `pnpm update:log -- "FIXED LOGIN BUG"` (or provide a date with `--date YYYY-MM-DD`). The command appends instead of replacing earlier entries and syncs `public/logs.txt` for static production hosting. The local app checks the file at startup, on tab focus, and every 30 seconds. Each browser stores its last-seen update in local storage; dismissing the toast or opening **Updates** marks the latest entry as seen. No external notification service is used.
 
 ### Project structure
 
