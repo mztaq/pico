@@ -31,16 +31,42 @@ function levenshtein(a: string, b: string): number {
   for (let i = 1; i <= a.length; i += 1) { let diagonal = row[0]!; row[0] = i; for (let j = 1; j <= b.length; j += 1) { const old = row[j]!; row[j] = Math.min(row[j]! + 1, row[j - 1]! + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1)); diagonal = old; } }
   return row[b.length]!;
 }
+function maskStrings(line: string): string {
+  return line.replace(/"(?:\\.|[^"\\])*"|“(?:\\.|[^”\\])*”|'(?:\\.|[^'\\])*'/g, segment => ' '.repeat(segment.length)).split('//')[0] ?? '';
+}
+function declaredNames(source: string): Map<string, string> {
+  const names = new Map<string, string>();
+  for (const rawLine of source.split(/\r?\n/)) {
+    const line = maskStrings(rawLine);
+    const declaration = /^\s*DECLARE\s+([^:]+)/i.exec(line)?.[1];
+    if (declaration) for (const name of declaration.split(',')) {
+      const trimmed = name.trim();
+      if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(trimmed)) names.set(trimmed.toUpperCase(), trimmed);
+    }
+    const constant = /^\s*CONSTANT\s+([A-Za-z_][A-Za-z0-9_]*)/i.exec(line)?.[1];
+    if (constant) names.set(constant.toUpperCase(), constant);
+    const parameters = /^\s*(?:PROCEDURE|FUNCTION)\b[^()]*(?:\(([^)]*)\))?/i.exec(line)?.[1] ?? '';
+    for (const parameter of parameters.matchAll(/([A-Za-z_][A-Za-z0-9_]*)\s*:/g)) names.set(parameter[1]!.toUpperCase(), parameter[1]!);
+    const counter = /^\s*FOR\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:←|<-)/i.exec(line)?.[1];
+    if (counter) names.set(counter.toUpperCase(), counter);
+  }
+  return names;
+}
 export function findSuggestions(source: string): Suggestion[] {
   const result: Suggestion[] = [];
+  const names = declaredNames(source);
+  const expressionCandidates = [...new Set([...ROUTINES, 'TRUE', 'FALSE', 'DIV', 'MOD'])];
   source.split('\n').forEach((line, index) => {
-    const visible = line.replace(/"(?:\\.|[^"\\])*"?/g, segment => ' '.repeat(segment.length)).split('//')[0] ?? '';
+    const visible = maskStrings(line);
     if (!visible.trim()) return;
+    const statement = /^\s*([A-Za-z_][A-Za-z0-9_]*)\b/i.exec(visible)?.[1]?.toUpperCase();
+    const expressionContext = statement === 'OUTPUT' || statement === 'RETURN' || statement === 'IF' || statement === 'WHILE' || statement === 'UNTIL' || statement === 'CASE' || /(?:←|<-)\s*/.test(visible);
     const words = /[A-Za-z_][A-Za-z0-9_]*/g; let match: RegExpExecArray | null;
     while ((match = words.exec(visible))) {
       const word = match[0]!; const upper = word.toUpperCase();
-      if (KEYWORDS.has(upper) || TYPES.has(upper) || ROUTINES.has(upper) || upper === 'RETURN') continue;
-      const best = COMPLETIONS.map(candidate => ({ candidate, distance: levenshtein(upper, candidate) })).sort((a, b) => a.distance - b.distance)[0];
+      if (KEYWORDS.has(upper) || TYPES.has(upper) || ROUTINES.has(upper) || upper === 'RETURN' || names.has(upper)) continue;
+      const candidates = expressionContext && match.index > (visible.search(/\b/) + (statement?.length ?? 0)) ? expressionCandidates : COMPLETIONS;
+      const best = candidates.map(candidate => ({ candidate, distance: levenshtein(upper, candidate) })).sort((a, b) => a.distance - b.distance)[0];
       if (best && best.distance > 0 && best.distance <= Math.max(1, Math.ceil(word.length * 0.3))) result.push({ line: index + 1, column: match.index + 1, endColumn: match.index + word.length + 1, original: word, replacement: best.candidate });
     }
   });
