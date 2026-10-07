@@ -1,6 +1,8 @@
 import type { VirtualFiles } from '../runtime/interpreter';
 import { examples } from '../examples';
 import { starterCode } from '../starter';
+import { PYTHON_STARTER } from '../runtime/python/config';
+export type CompilerLanguage = 'pseudocode' | 'python';
 import type { DataType } from '../language/ast';
 import { isAutoDeclaredType } from '../language/autoDeclare';
 export interface TestCase {
@@ -24,6 +26,7 @@ export interface PicoProject {
   tests: TestCase[];
   virtualFiles: VirtualFiles;
   updatedAt: number;
+  language?: CompilerLanguage;
 }
 const PROJECTS_KEY = 'pico.projects.v1';
 const ACTIVE_KEY = 'pico.activeProject.v1';
@@ -84,15 +87,15 @@ const initialProject: PicoProject = makeProject(
     },
   ],
 );
-export function loadProjects(): PicoProject[] {
+export function loadProjects(language: CompilerLanguage = 'pseudocode'): PicoProject[] {
   try {
     const raw: unknown = JSON.parse(
-      localStorage.getItem(PROJECTS_KEY) ?? 'null',
+      localStorage.getItem(language === 'python' ? 'pico.python.projects.v1' : PROJECTS_KEY) ?? 'null',
     );
     if (Array.isArray(raw)) {
       const valid = raw
         .map(normalizeProject)
-        .filter((p): p is PicoProject => Boolean(p));
+        .filter((p): p is PicoProject => Boolean(p) && (p!.language ?? 'pseudocode') === language);
       if (valid.length) {
         const loaded: PicoProject[] = [];
         for (const project of valid) loaded.push({ ...project, name: uniqueProjectName(project.name, loaded) });
@@ -100,7 +103,7 @@ export function loadProjects(): PicoProject[] {
       }
     }
   } catch {}
-  return [initialProject];
+  return [language === 'python' ? newProject('Untitled program', 'python') : initialProject];
 }
 function normalizeProject(value: unknown): PicoProject | undefined {
   if (!value || typeof value !== 'object') return;
@@ -108,6 +111,7 @@ function normalizeProject(value: unknown): PicoProject | undefined {
   if (
     typeof project.id !== 'string' ||
     typeof project.name !== 'string' ||
+    (project.language !== undefined && project.language !== 'python' && project.language !== 'pseudocode') ||
     !Array.isArray(project.tests) ||
     !project.tests.every(isTestCase)
   )
@@ -167,19 +171,24 @@ function normalizeFile(value: unknown): PicoFile | undefined {
 export function normalizeSourceFilename(name: string): string {
   return name.replace(/\.pseudocode$/i, '.pico');
 }
-export function saveProjects(projects: PicoProject[], activeId: string): void {
-  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
-  localStorage.setItem(ACTIVE_KEY, activeId);
+export function saveProjects(projects: PicoProject[], activeId: string, language: CompilerLanguage = 'pseudocode'): void {
+  localStorage.setItem(language === 'python' ? 'pico.python.projects.v1' : PROJECTS_KEY, JSON.stringify(projects));
+  localStorage.setItem(language === 'python' ? 'pico.python.activeProject.v1' : ACTIVE_KEY, activeId);
 }
-export function loadActiveId(projects: PicoProject[]): string {
+export function loadActiveId(projects: PicoProject[], language: CompilerLanguage = 'pseudocode'): string {
   try {
-    const id = localStorage.getItem(ACTIVE_KEY);
+    const id = localStorage.getItem(language === 'python' ? 'pico.python.activeProject.v1' : ACTIVE_KEY);
     return projects.some((p) => p.id === id) ? id! : projects[0]!.id;
   } catch {
     return projects[0]!.id;
   }
 }
-export function newProject(name = 'Untitled program'): PicoProject {
+export function newProject(name = 'Untitled program', language: CompilerLanguage = 'pseudocode'): PicoProject {
+  if (language === 'python') {
+    const id = crypto.randomUUID();
+    const file = makeFile('main.py', PYTHON_STARTER);
+    return { id, name: normalizeProjectName(name) || 'Untitled program', language, code: file.code, files: [file], activeFileId: file.id, tests: [], virtualFiles: {}, updatedAt: Date.now() };
+  }
   return makeProject(
     crypto.randomUUID(),
     normalizeProjectName(name) || 'Untitled program',
@@ -211,12 +220,21 @@ export function exportProject(project: PicoProject): void {
   a.click();
   URL.revokeObjectURL(url);
 }
-export async function importProject(file: File): Promise<PicoProject> {
+export async function importProject(file: File, language: CompilerLanguage = 'pseudocode'): Promise<PicoProject> {
   if (file.size > 5_000_000)
     throw new Error('Pico projects must be smaller than 5 MB.');
+  if (language === 'python' && file.name?.toLowerCase().endsWith('.py')) {
+    const project = newProject(file.name.slice(0, -3), language);
+    const source = await file.text();
+    project.files[0]!.name = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+    project.files[0]!.code = source;
+    project.code = source;
+    return project;
+  }
   const data = JSON.parse(await file.text());
   const project = normalizeProject(data);
   if (!project) throw new Error('That file is not a valid Pico .pico project.');
+  if ((project.language ?? 'pseudocode') !== language) throw new Error(`Open the ${project.language === 'python' ? 'Python' : 'Pseudocode'} Compiler to import this project.`);
   const id = crypto.randomUUID();
   const files = project.files.map((f) => ({ ...f, id: crypto.randomUUID() }));
   const activeIndex = project.files.findIndex(

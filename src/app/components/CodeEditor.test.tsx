@@ -67,3 +67,31 @@ describe('completion acceptance and indentation', () => {
     expect(editorView.state.doc.toString()).toBe('DECLARE StudentName : STRING\nOUTPUT Stud\n');
   });
 });
+
+it('uses Python syntax, four-space block indentation and assigned-name completion', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const host=document.createElement('div');document.body.append(host);const root=createRoot(host);
+  const code='student_name = "Ada"\nprint(stud)';
+  const rects=Object.getOwnPropertyDescriptor(Range.prototype,'getClientRects');
+  const rect=Object.getOwnPropertyDescriptor(Range.prototype,'getBoundingClientRect');
+  Object.defineProperty(Range.prototype,'getClientRects',{configurable:true,value:()=>[]});
+  Object.defineProperty(Range.prototype,'getBoundingClientRect',{configurable:true,value:()=>new DOMRect()});
+  try {
+    await act(async()=>root.render(<CodeEditor language="python" value={code} onChange={()=>{}} preferences={defaultSettings} theme={getTheme(defaultSettings.theme)} />));
+    const editorView=EditorView.findFromDOM(host.querySelector('.cm-editor')!)!;
+    editorView.dispatch({selection:{anchor:code.length-1}});startCompletion(editorView);
+    await new Promise(resolve=>setTimeout(resolve,250));
+    expect(completionStatus(editorView.state)).toBe('active');
+    expect(host.querySelector('.cm-tooltip-autocomplete')?.textContent).toContain('student_name');
+    handleTab(editorView);expect(editorView.state.doc.toString()).toBe('student_name = "Ada"\nprint(student_name)');
+    closeCompletion(editorView);
+    editorView.dispatch({changes:{from:0,to:editorView.state.doc.length,insert:'if True:'},selection:{anchor:8}});
+    host.querySelector('.cm-content')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',bubbles:true,cancelable:true}));
+    expect(editorView.state.doc.toString()).toBe('if True:\n    ');
+    expect(getComputedStyle(host.querySelector('.cm-editor')!).fontSize).toBe('19px');
+  } finally {
+    await act(async()=>root.unmount());host.remove();vi.unstubAllGlobals();
+    if(rects)Object.defineProperty(Range.prototype,'getClientRects',rects);else Reflect.deleteProperty(Range.prototype,'getClientRects');
+    if(rect)Object.defineProperty(Range.prototype,'getBoundingClientRect',rect);else Reflect.deleteProperty(Range.prototype,'getBoundingClientRect');
+  }
+});

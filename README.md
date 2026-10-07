@@ -4,7 +4,7 @@
 
 <h1 align="center">PICO</h1>
 
-<p align="center">Write, run and inspect Cambridge-style pseudocode in your browser.</p>
+<p align="center">Write, run and debug pseudocode and Python in your browser.</p>
 
 <p align="center">
   <a href="https://picompiler.pages.dev">Open Pico</a> · 
@@ -19,13 +19,13 @@
   </a>
 </p>
 
-Pico is a browser-based pseudocode editor and interpreter built for Computer Science learning. It brings source code, interactive input, execution traces and testing into one workspace, with no account or backend required.
+Pico is a browser-based pseudocode and Python editor built for Computer Science learning. Both compilers share themes, interactive console input, source tabs and recorded debugger steps. No account or backend is required.
 
 Created by **Amar** and **Mustaqim** for students learning to turn algorithms into working programs.
 
 ## Getting started
 
-Open [Pico](https://picompiler.pages.dev), enter a program and press **Run** in the top bar.
+Open [Pico](https://picompiler.pages.dev), choose **Pseudocode Compiler** or **Python Compiler**, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
 
 ```text
 DECLARE Name : STRING
@@ -34,9 +34,9 @@ INPUT Name
 OUTPUT "Hello ", Name, "!"
 ```
 
-When execution reaches `INPUT`, type your value in the Console and press Enter. Entering `Ada` produces `Hello Ada!`. Invalid values show a retry prompt without restarting the program.
+When execution reaches `INPUT`, type your value in the Console and press Enter. Entering `Ada` produces `Hello Ada!`. Invalid typed values terminate the run and appear as a red **Error**, with a source line.
 
-`INTEGER` accepts whole numbers; `REAL` accepts whole numbers, decimals and scientific notation; `BOOLEAN` accepts `TRUE` or `FALSE`; `CHAR` accepts one character. `STRING` preserves your text, including numeric text and spaces. Numbers must stay within the runtime’s supported finite and safe integer limits.
+`INTEGER` accepts whole numbers; pseudocode `REAL` input requires digits on both sides of a decimal point, such as `5.0` or `-0.25`. Entering `5` for a `REAL` ends the run with an error; `BOOLEAN` accepts `TRUE` or `FALSE`; `CHAR` accepts one character. `STRING` preserves your text, including numeric text and spaces. Numbers must stay within the runtime’s supported finite and safe integer limits.
 
 
 - Edit the workspace name in the top bar. On smaller screens, open **File** to rename it.
@@ -49,16 +49,15 @@ When execution reaches `INPUT`, type your value in the Console and press Enter. 
 
 | Feature | What it does |
 | --- | --- |
-| **Editor** | A 16px default font, syntax colouring, declared-name autocomplete, indentation guides, folding, search and keyword documentation. |
-| **Console** | Accepts input while the program waits. Keeps output and submitted values in order, with errors and retry prompts. |
+| **Editor** | A 19px default font, syntax colouring, declared-name autocomplete, indentation guides, folding, search and keyword documentation. |
+| **Console** | Accepts input while the program waits. Keeps output and submitted values in order, with fatal errors shown in red. |
 | **Debugger** | Replays recorded execution steps with variable values and output. |
-| **Test cases** | Runs saved inputs and compares expected output with actual output. |
-| **Flowchart** | Shows the paths through the current program. |
-| **Projects** | Keeps source tabs, test cases and practice files together. Workspace names are unique, ignoring case and extra spaces. |
+| **Flowchart** | Shows the paths through pseudocode programs. |
+| **Projects** | Keeps source tabs and practice files together in horizontal workspace tabs. Workspace names are unique, ignoring case and extra spaces. |
 | **Quick reference** | Provides selectable examples with syntax colouring, adjustable text size and keyword search. |
 | **Appearance** | Offers editor themes, high-contrast palettes, resizable panels and layout settings. Catppuccin Mocha is the first-launch default. |
 
-Projects and settings save in this browser. Export a `.pico` copy to back up your work or move it to another device. Source tabs are separate programs, rather than linked modules.
+Projects and settings save in this browser. Export a `.pico` copy to back up your work or move it to another device. Pseudocode and Python projects use separate storage. Python `.py` tabs also work as importable modules; pseudocode tabs run independently.
 
 ## Language support
 
@@ -83,11 +82,38 @@ Variables require declarations. An undeclared `FOR` counter is introduced as an 
 
 Source passes through the lexer, parser and semantic checks, then runs in an interpreter inside a Web Worker. **Stop** cancels the active run, including one waiting for input.
 
-The default execution limits are 10,000 steps, 100 nested routine calls and 100,000 allocated array cells. Worker jobs have a 10-second running-time budget. Waiting for input does not use that budget.
+Interactive runs have no automatic step or time limit. A `WHILE TRUE` loop runs until **Stop** terminates its worker. Pseudocode retains safety limits of 100 nested routine calls and 100,000 allocated array cells. Output keeps the most recent 2,000 lines and limits each line to 8,192 characters to protect the interface during long runs.
 
 Debugging records snapshots for replay. It does not provide live breakpoints. Trace recording has a separate memory budget, and Pico reports when recording is truncated.
 
-Practice files are virtual text files stored with the project. Test cases receive independent copies, so tests do not overwrite saved file contents.
+Practice files are virtual text files stored with the project. Each run starts with a copy and saves its resulting text files after completion. They do not grant access to files on your computer.
+
+## Python
+
+```python
+name = input("Enter your name: ")
+print(f"Hello {name}!")
+```
+
+Python runs as real CPython in a dedicated Web Worker through [Pyodide](https://pyodide.org/en/stable/). This release pins Pyodide **314.0.7**, which supplies **Python 3.14.2**. The top bar displays `sys.version` from the running interpreter. This is the newest stable Pyodide distribution verified for this change, rather than the newest Python.org patch release.
+
+- `input()` waits for a value in the Console. It returns a string.
+- `int(input())` and `float(input())` use Python's own conversion rules. For example, Python accepts `float("5")`, while pseudocode REAL input requires `5.0`.
+- Unhandled exceptions terminate execution, preserve earlier output, and display a red **Error** with a traceback. Programs that catch their own exceptions continue according to their code.
+- **Debug** records Python line events, including function locals, for step-by-step replay. Trace recording stops at its memory budget while execution continues. This is recorded debugging, without live breakpoints.
+- Use `.py` source tabs as modules, and project practice files with `open()`. Each run uses a fresh interpreter and virtual filesystem.
+- **File** imports `.py` source or Python `.pico` projects and exports the active `.py` file or the complete `.pico` project.
+
+The runtime downloads from jsDelivr when Python starts, so its first run needs an internet connection. Python standard-library code is supported; package installation and desktop features such as native windows and subprocesses are outside this interface.
+
+Console input uses `SharedArrayBuffer`. Hosting must serve these headers, supplied by `public/_headers` for Cloudflare Pages and by the Vite development/preview servers:
+
+```text
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+Use HTTPS in production or `localhost` during development. Other hosting providers must configure the same headers. Runtime code and standard-library assets load using CORS from the pinned CDN URL.
 
 ## Development
 
@@ -105,13 +131,13 @@ Open `http://localhost:3000`.
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm test` | Run the language, runtime, worker, storage and interface tests. |
+| `pnpm test` | Run language, runtime, storage and interface tests, including real CPython and worker tests. |
 | `pnpm check` | Check TypeScript types. |
 | `pnpm build` | Check types and create the production build in `dist/`. |
 | `pnpm preview` | Serve the production build at `http://localhost:3000`. |
 | `pnpm update:log -- "IMPROVED UI"` | Append a dated update to `logs.txt` and sync the served copy. |
 
-The application uses **React**, **TypeScript**, **CodeMirror**, **Vite** and **Mermaid**. GitHub Actions runs the tests and production build on pushes and pull requests.
+The application uses **React**, **TypeScript**, **CodeMirror**, **Vite**, **Pyodide** and **Mermaid**. GitHub Actions runs the tests and production build on pushes and pull requests.
 
 ### Local updates and changelog
 
@@ -129,7 +155,7 @@ Updates are stored in the root `logs.txt`, one per line as `[YYYY-MM-DD] : UPDAT
 
 ### Contributing
 
-For bug reports, include the pseudocode, expected result and actual result. For code changes, run `pnpm test` and `pnpm build` before opening a pull request.
+For bug reports, include the language, source code, input values, expected result and actual result. For code changes, run `pnpm test` and `pnpm build` before opening a pull request.
 
 ## Creators
 

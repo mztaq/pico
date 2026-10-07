@@ -11,6 +11,7 @@ export interface ExecutionFailure {
   message: string;
   line?: number;
   code?: string;
+  diagnostic?: string;
 }
 export interface ExecutionReply {
   result?: RunResult;
@@ -20,11 +21,14 @@ export interface WorkerRequest {
   ast: Program;
   runs: { inputs: string[]; options: ExecutionOptions }[];
   interactive?: boolean;
+  outputAck?: SharedArrayBuffer;
 }
 export interface PendingInput extends InputRequest { id: number; }
 export interface InputMessage { type: 'input'; id: number; value: string; }
 export type WorkerReply = ExecutionReply[]
   | { type: 'output'; lines: string[] }
+  | { type: 'stderr'; lines: string[] }
+  | { type: 'status'; message: string }
   | { type: 'input'; request: PendingInput }
   | { type: 'complete'; replies: ExecutionReply[] };
 
@@ -57,7 +61,13 @@ export function createInteractiveSession(request: WorkerRequest, post: (reply: W
   let finished = false;
   const advance = (value?: string) => {
     const lines: string[] = [];
-    const flush = () => { if (lines.length) post({ type: 'output', lines: lines.splice(0) }); };
+    const flush = () => {
+      if (!lines.length) return;
+      const ack = request.outputAck ? new Int32Array(request.outputAck) : undefined;
+      if (ack) Atomics.store(ack, 0, 0);
+      post({ type: 'output', lines: lines.splice(0) });
+      if (ack) while (Atomics.load(ack, 0) === 0) Atomics.wait(ack, 0, 0);
+    };
     try {
       let step = value === undefined ? execution.next() : execution.next(value);
       while (!step.done) {

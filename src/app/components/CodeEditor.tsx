@@ -11,10 +11,13 @@ import { documentationFor, type Suggestion } from '../../runtime/diagnostics';
 import type { PicoTheme } from '../themes';
 import '../styles/editor-folding.css';
 import { pseudoLanguage } from './pseudocodeSyntax';
+import { python } from '@codemirror/lang-python';
+import type { CompilerLanguage } from '../../storage/projects';
 
 export interface EditorPreferences { autocomplete: boolean; hoverDocs: boolean; fontSize: number; }
 export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; goToLine: (line: number) => void; undo: () => void; redo: () => void; }
 interface CodeEditorProps {
+  language?: CompilerLanguage;
   value: string;
   onChange: (value: string) => void;
   preferences: EditorPreferences;
@@ -118,12 +121,12 @@ const indentationGuides = ViewPlugin.fromClass(class {
   }
 }, { decorations: instance => instance.decorations });
 
-function createPreferences(preferences: EditorPreferences): Extension[] {
+function createPreferences(preferences: EditorPreferences, language: CompilerLanguage): Extension[] {
   const options: Extension[] = [EditorView.theme({ '&': { fontSize: `${preferences.fontSize}px` } })];
   if (preferences.autocomplete) {
-    options.push(autocompletion({ override: [completionSource], activateOnTyping: true, maxRenderedOptions: 9, defaultKeymap: true }));
+    options.push(autocompletion({ ...(language === 'pseudocode' ? { override: [completionSource] } : {}), activateOnTyping: true, maxRenderedOptions: 9, defaultKeymap: true }));
   }
-  if (preferences.hoverDocs) options.push(hoverDocumentation());
+  if (preferences.hoverDocs && language === 'pseudocode') options.push(hoverDocumentation());
   return options;
 }
 
@@ -227,7 +230,7 @@ function buildDecorations(view: EditorView, currentLine?: number, errorLine?: nu
   return Decoration.set(ranges, true);
 }
 
-export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function CodeEditor({ value, onChange, preferences, theme, currentLine, errorLine }, ref) {
+export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function CodeEditor({ language = 'pseudocode', value, onChange, preferences, theme, currentLine, errorLine }, ref) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const prefs = useRef(new Compartment());
@@ -264,10 +267,10 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
       extensions: [
         lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
-        pseudoLanguage, foldService.of(cambridgeFold), indentationGuides,
-        keymap.of([{ key: 'Enter', run: insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+        ...(language === 'python' ? [python()] : [pseudoLanguage, foldService.of(cambridgeFold)]), indentationGuides,
+        keymap.of([{ key: 'Enter', run: language === 'python' ? view => acceptCompletion(view) || false : insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         palette.current.of(themeExtensions(theme)),
-        prefs.current.of(createPreferences(preferences)),
+        prefs.current.of(createPreferences(preferences, language)),
         marks.current.of(EditorView.decorations.of(v => buildDecorations(v, currentLine, errorLine))),
         EditorView.updateListener.of(update => { if (update.docChanged) onChangeRef.current(update.state.doc.toString()); }),
       ],
@@ -289,9 +292,9 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
     while (previousEnd > from && valueEnd > from && previous[previousEnd - 1] === value[valueEnd - 1]) { previousEnd -= 1; valueEnd -= 1; }
     editor.dispatch({ changes: { from, to: previousEnd, insert: value.slice(from, valueEnd) } });
   }, [value]);
-  useEffect(() => { view.current?.dispatch({ effects: prefs.current.reconfigure(createPreferences(preferences)) }); }, [preferences.autocomplete, preferences.hoverDocs, preferences.fontSize]);
+  useEffect(() => { view.current?.dispatch({ effects: prefs.current.reconfigure(createPreferences(preferences, language)) }); }, [preferences.autocomplete, preferences.hoverDocs, preferences.fontSize, language]);
   useEffect(() => { view.current?.dispatch({ effects: palette.current.reconfigure(themeExtensions(theme)) }); }, [theme]);
   useEffect(() => { view.current?.dispatch({ effects: marks.current.reconfigure(EditorView.decorations.of(v => buildDecorations(v, currentLine, errorLine))) }); }, [currentLine, errorLine]);
 
-  return <div className="code-editor" ref={host} aria-label="Cambridge pseudocode editor" />;
+  return <div className="code-editor" ref={host} aria-label={language === 'python' ? 'Python editor' : 'Pseudocode editor'} />;
 });

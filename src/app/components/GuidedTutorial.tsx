@@ -1,19 +1,22 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowRight, Check, CircleHelp, X } from 'lucide-react';
+import type { CompilerLanguage } from '../../storage/projects';
+import { PYTHON_STARTER } from '../../runtime/python/config';
 import { starterCode } from '../../starter';
 
 export const tutorialSteps = [
-  { target: 'workspace', title: 'Name your workspace', label: 'WORKSPACE', description: 'Click the workspace name in the top bar and type a name for your project. Choose a unique name. It updates in the sidebar and saves automatically.', tip: 'On a small screen, open File to edit the workspace name.' },
+  { target: 'workspace', title: 'Name your workspace', label: 'WORKSPACE', description: 'Click the workspace name in the top bar and type a name for your project. Choose a unique name. It updates in the workspace tabs and saves automatically.', tip: 'On a small screen, open File to edit the workspace name.' },
   { target: 'editor', title: 'Start with your code', label: 'WRITE', description: 'Write Cambridge pseudocode here. Use the file tabs for separate programs.', tip: 'DECLARE gives Name its type. Declared names appear as you type. Tab or Enter accepts a suggestion. Ctrl + Space opens the list.', example: starterCode },
   { target: 'run', title: 'Run your program', label: 'RUN', description: 'Run in the top bar executes the current file. When your program reaches INPUT, type a value in the Console and press Enter to continue.', tip: 'Shortcut: Ctrl + Enter on Windows, or ⌘ + Enter on Mac.' },
-  { target: 'tools', title: 'Read the result', label: 'OUTPUT', description: 'The Console shows each OUTPUT line. Errors include a line number so you can return to the part that needs fixing.', tip: 'INPUT waits in the Console. Type a value and press Enter to continue.', example: starterCode },
-  { target: 'tools', title: 'Understand each step', label: 'EXPLORE', description: 'Debug runs your code and records its steps. Move through the recorded steps to see variables change. Test cases compare expected output; Flowchart shows the program’s paths.', tip: 'Drag the divider above this panel to give your tools more room.' },
+  { target: 'tools', title: 'Read the result', label: 'OUTPUT', description: 'The Console shows each OUTPUT line. Errors end the run and include a line number so you can return to the part that needs fixing.', tip: 'INPUT waits in the Console. Type a value and press Enter to continue.', example: starterCode },
+  { target: 'tools', title: 'Understand each step', label: 'EXPLORE', description: 'Debug runs your code and records its steps. Move through the recorded steps to see variables change. Flowchart shows the program’s paths.', tip: 'Drag the divider above this panel to give your tools more room.' },
   { target: 'reference', title: 'Keep the syntax close', label: 'REFERENCE', description: 'Search for a keyword, then select it to read its explanation. Select and copy the examples when you need a starting point.', tip: 'Use A− / A+ to change the text size. On a wide screen, drag the left divider to resize this panel.' },
   { target: 'settings', title: 'Choose your settings', label: 'CUSTOMISE', description: 'Settings lets you change your theme, editor text size, layout, and typing helpers. Auto-declare is optional when you want to practise declarations yourself.', tip: 'Panel sizes and settings are remembered in this browser.' },
   { target: 'files', title: 'Keep a copy of your work', label: 'SAVE', description: 'Pico saves projects on this device. In File, Export .pico downloads a copy, and Import .pico opens one again.', tip: 'Your source tabs use .pico too. Double-click a tab to rename it.' },
 ] as const;
 
 interface Props {
+  language?: CompilerLanguage;
   step: number;
   onStep: (step: number) => void;
   onClose: () => void;
@@ -48,12 +51,24 @@ export function placeTutorialCard(target: Box | null, width: number, height: num
   return { left: Math.min(maxLeft, Math.max(margin, left)), top: Math.min(maxTop, Math.max(margin, top)), width, height };
 }
 
-export function GuidedTutorial({ step, onStep, onClose, onReference }: Props) {
+export function GuidedTutorial({ language = 'pseudocode', step, onStep, onClose, onReference }: Props) {
   const card = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const [target, setTarget] = useState<Box | null>(null);
   const [position, setPosition] = useState<CSSProperties>({});
-  const current = tutorialSteps[step];
+  const steps = useMemo(() => language === 'python' ? tutorialSteps.map(item => {
+    const example = PYTHON_STARTER.split('\n\n')[1]!;
+    switch (item.label) {
+      case 'WRITE': return { ...item, description: 'Write Python here. Indent blocks with four spaces. Use .py tabs for separate programs or modules.', tip: 'Assigned names and Python keywords appear as you type. Tab or Enter accepts a suggestion.', example };
+      case 'RUN': return { ...item, description: 'Run executes the current .py file. input() waits in the Console. Type a value and press Enter to continue.' };
+      case 'OUTPUT': return { ...item, description: 'The Console shows print() output and input prompts. Unhandled errors end the run and appear in red.', tip: 'input() returns text. int() and float() convert it. Invalid text raises ValueError.', example };
+      case 'EXPLORE': return { ...item, description: 'Debug runs Python and records line-by-line snapshots. Use Step to inspect variable values and output.', tip: 'Use Stop to end a loop. Trace recording has a memory limit but execution continues.' };
+      case 'CUSTOMISE': return { ...item, description: 'Settings lets you change your theme, editor text size, layout and autocomplete.' };
+      case 'SAVE': return { ...item, description: 'Use File to export the current .py source or a .pico project containing every tab and practice file.', tip: 'Import .py opens a Python source file. Double-click a tab to rename it.' };
+      default: return item;
+    }
+  }) : tutorialSteps, [language]);
+  const current = steps[step];
   const complete = !current;
 
   useLayoutEffect(() => {
