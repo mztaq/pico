@@ -8,7 +8,11 @@ import type {
   Parameter,
   CaseBranch,
 } from './ast';
+<<<<<<< HEAD
 import { PicoSyntaxError } from './lexer';
+=======
+import { COMPLETIONS, PicoSyntaxError } from './lexer';
+>>>>>>> 66dc25c (Initial commit)
 const PRECEDENCE: Record<string, number> = {
   OR: 1,
   AND: 2,
@@ -123,6 +127,19 @@ export class Parser {
       case 'CLOSEFILE':
         return this.parseFile();
       case 'IDENTIFIER':
+<<<<<<< HEAD
+=======
+        if (this.current.value && this.looksLikeKeywordTypo()) {
+          const typo = this.current;
+          const replacement = this.closestKeyword(typo.value);
+          if (replacement)
+            throw new PicoSyntaxError(
+              `“${typo.value}” is not a Cambridge keyword. Did you mean ${replacement}?`,
+              typo.line,
+              typo.column,
+            );
+        }
+>>>>>>> 66dc25c (Initial commit)
         return this.parseAssignment();
       default:
         throw new PicoSyntaxError(
@@ -252,6 +269,15 @@ export class Parser {
     const s = this.expect('IF'),
       condition = this.parseExpression();
     if (this.current.type === 'NEWLINE') this.skipNewlines();
+<<<<<<< HEAD
+=======
+    if (this.current.type !== 'THEN')
+      throw new PicoSyntaxError(
+        'Expected THEN after IF condition. IF requires THEN before its body.',
+        condition.line,
+        condition.endColumn,
+      );
+>>>>>>> 66dc25c (Initial commit)
     this.expect(
       'THEN',
       'IF requires THEN on the same line or the following line.',
@@ -591,6 +617,10 @@ export class Parser {
       return {
         kind: 'NumberLiteral',
         value: Number(t.value),
+<<<<<<< HEAD
+=======
+        raw: t.value,
+>>>>>>> 66dc25c (Initial commit)
         line: t.line,
         column: t.column,
         endColumn: t.endColumn,
@@ -660,6 +690,36 @@ export class Parser {
   private check(type: string) {
     return this.current.type === type;
   }
+<<<<<<< HEAD
+=======
+
+  private looksLikeKeywordTypo(): boolean {
+    const next = this.tokens[this.position + 1];
+    return next?.type !== 'ARROW' && next?.line === this.current.line;
+  }
+
+  private closestKeyword(word: string): string | null {
+    const best = COMPLETIONS
+      .map((candidate) => ({ candidate, distance: editDistance(word.toUpperCase(), candidate) }))
+      .sort((a, b) => a.distance - b.distance)[0]!.candidate;
+    const distance = editDistance(word.toUpperCase(), best);
+    return distance <= Math.max(1, Math.ceil(word.length * 0.3)) ? best : null;
+  }
+}
+
+function editDistance(a: string, b: string): number {
+  const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i++) {
+    let diagonal = row[0]!;
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const old = row[j]!;
+      row[j] = Math.min(row[j]! + 1, row[j - 1]! + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diagonal = old;
+    }
+  }
+  return row[b.length]!;
+>>>>>>> 66dc25c (Initial commit)
 }
 export function parse(tokens: Token[]): Program {
   return new Parser(tokens).parse();

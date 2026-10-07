@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+<<<<<<< HEAD
 import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, History, Keyboard, PanelRightClose, Play, Plus, Search, Settings2, Sparkles, Trash2, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
+=======
+import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, History, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Trash2, Undo2, Upload, X } from 'lucide-react';
+import { compile, compileToPython, synchronizeAutoDeclarations } from '../language';
+>>>>>>> 66dc25c (Initial commit)
 import type { DataType, Program } from '../language/ast';
 import { examples } from '../examples';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
@@ -92,7 +97,11 @@ export default function App() {
     try { const compilation = compile(activeFile.code); return { ast: compilation.ast, tokens: compilation.tokens, error: null }; }
     catch (error) { return { ast: null, tokens: [], error }; }
   }, [activeFile.code]);
+<<<<<<< HEAD
   const parseError = parsed.error ? friendlyError(parsed.error) : null;
+=======
+  const parseError = parsed.error ? friendlyError(parsed.error, activeFile.code) : null;
+>>>>>>> 66dc25c (Initial commit)
   const visibleError = executionError ?? parseError;
   const suggestions = useMemo(() => settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeFile.code).slice(0, 3) : [], [activeFile.code, settings.autocorrect, dismissedSuggestions]);
   const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
@@ -171,6 +180,23 @@ export default function App() {
     updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code, autoDeclaredTypes } : file), updatedAt: Date.now() }));
   }
   function formatCode() { updateCode(formatPseudocode(activeFile.code)); }
+<<<<<<< HEAD
+=======
+  function exportPython() {
+    try {
+      const source = compileToPython(compile(activeFile.code).ast);
+      const url = URL.createObjectURL(new Blob([source], { type: 'text/x-python' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${activeFile.name.replace(/\.pico$/i, '') || 'program'}.py`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setFileMenuOpen(false);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Fix the program before exporting Python.');
+    }
+  }
+>>>>>>> 66dc25c (Initial commit)
   function saveSnapshot() { const label = window.prompt('Name this snapshot', `Snapshot ${history.length + 1}`); if (label === null) return; try { setHistory(addVersion(activeProject.id, label, activeProject.files, activeProject.activeFileId, activeProject.virtualFiles)); } catch { setSaveState('local-only'); setExecutionError({message:'Snapshot could not be saved. Export your project to keep a copy.'}); return; } setHistoryOpen(true); }
   function restoreSnapshot(version: ProjectVersion) { if (!window.confirm(`Restore “${version.label}”? Current edits will remain available only if you save a snapshot first.`)) return; autoDeclaredTypesRef.current = {}; updateProject(project => ({ ...project, files: structuredClone(version.files), virtualFiles: version.virtualFiles ? structuredClone(version.virtualFiles) : project.virtualFiles, activeFileId: version.activeFileId, code: version.files.find(file => file.id === version.activeFileId)?.code ?? version.files[0]?.code ?? '', updatedAt: Date.now() })); setHistoryOpen(false); setResult(null); setExecutionError(null); }
   function startTutorial() {
@@ -244,7 +270,11 @@ export default function App() {
     jobRef.current=null;setRunning(false);setPendingInput(null);
     const next=reply?.result;
     setResult(next??null); setDebugIndex(0); setTestOutcomes({});
+<<<<<<< HEAD
     setExecutionError(reply?.error?{message:reply.error.message,line:reply.error.line}:null);
+=======
+    setExecutionError(reply?.error ? friendlyError(Object.assign(new Error(reply.error.message), { name: 'RuntimeError', line: reply.error.line }), activeFile.code) : null);
+>>>>>>> 66dc25c (Initial commit)
     setPicoGreeting(Boolean(next?.output.some(line=>line.trim().toUpperCase()==='PICO')));
     setActivePanel(debug?'debugger':'console');
     if(next)updateProject(project=>({...project,virtualFiles:next.files,updatedAt:Date.now()}));
@@ -323,10 +353,19 @@ export default function App() {
       <div className="topbar-spacer" />
       <div className={`save-indicator ${saveState}`}><span className="save-dot">{saveState === 'saved' ? <Check size={9} /> : null}</span>{saveText}</div>
       <div className="topbar-actions">
+<<<<<<< HEAD
         <button className="toolbar-button reference-toggle" aria-label="Toggle quick reference" onClick={toggleReference} title="Quick reference"><BookOpen size={16} /><span>Reference</span></button>
         <button className="toolbar-button" aria-label="Open project history" onClick={() => setHistoryOpen(true)} title="Project history"><History size={16} /><span>History</span></button>
         {running ? <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button> : <button className="toolbar-button debug-button" aria-label="Debug program" onClick={() => runProgram(true)}><Code2 size={16} /><span>Debug</span></button>}
         <button data-tour="run" className="run-button" disabled={running} onClick={() => runProgram()}><Play size={14} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
+=======
+        {running ? <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button> : <button className="toolbar-button debug-button" aria-label="Debug program" onClick={() => runProgram(true)}><Code2 size={16} /><span>Debug</span></button>}
+        <button data-tour="run" className="run-button" disabled={running} onClick={() => runProgram()}><Play size={14} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
+        <button className="toolbar-button editor-history-button" aria-label="Undo last edit" onClick={() => editorRef.current?.undo()} title="Undo"><Undo2 size={16} /><span>Undo</span></button>
+        <button className="toolbar-button editor-history-button" aria-label="Redo last edit" onClick={() => editorRef.current?.redo()} title="Redo"><Redo2 size={16} /><span>Redo</span></button>
+        <button className="toolbar-button reference-toggle" aria-label="Toggle quick reference" onClick={toggleReference} title="Quick reference"><BookOpen size={16} /><span>Reference</span></button>
+        <button className="toolbar-button" aria-label="Open project history" onClick={() => setHistoryOpen(true)} title="Project history"><History size={16} /><span>History</span></button>
+>>>>>>> 66dc25c (Initial commit)
       </div>
       <div className="settings-anchor" ref={settingsAnchorRef}>
         <button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" data-tour="settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>
@@ -347,7 +386,11 @@ export default function App() {
           <div className="settings-foot">Saved locally in this browser · drag dock tabs to reorder</div>
         </FloatingPanel>
       </div>
+<<<<<<< HEAD
       <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={activeProject.name} onChange={event => renameProject(event.target.value)} /></label><button onClick={() => { formatCode(); setFileMenuOpen(false); }} title="Format code · Shift+Alt+F"><CodeXml size={14} /> Format code</button><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+=======
+      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={activeProject.name} onChange={event => renameProject(event.target.value)} /></label><button onClick={() => { formatCode(); setFileMenuOpen(false); }} title="Format code · Shift+Alt+F"><CodeXml size={14} /> Format code</button><button onClick={exportPython}><Code2 size={14} /> Export Python</button><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+>>>>>>> 66dc25c (Initial commit)
     </header>
 
     <div inert={tutorialOpen || tutorialOfferOpen} className={`ide-shell ${settings.sidebarVisible ? '' : 'sidebar-hidden'} sidebar-${settings.sidebarSide} dock-${layout.dockSide} ${(referenceExpanded || tutorialReference) ? 'reference-open' : ''}`}>
@@ -388,7 +431,11 @@ export default function App() {
         <section className="tool-dock" data-tour="tools">
           <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}{tab.key === 'coverage' && result && <small>{result.coverage.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
           <div className="dock-content" role="tabpanel" key={activePanel}>
+<<<<<<< HEAD
             {activePanel === 'console' && <><ConsolePanel entries={consoleEntries} error={executionError ?? parseError} pendingInput={pendingInput} inputValue={inputValue} onInput={setInputValue} onSubmit={submitConsoleInput} running={running} ran={Boolean(result)} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
+=======
+            {activePanel === 'console' && <><ConsolePanel entries={consoleEntries} error={executionError ?? parseError} onErrorClick={() => { const line = (executionError ?? parseError)?.line; if (line) editorRef.current?.goToLine(line); }} pendingInput={pendingInput} inputValue={inputValue} onInput={setInputValue} onSubmit={submitConsoleInput} running={running} ran={Boolean(result)} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
+>>>>>>> 66dc25c (Initial commit)
             {activePanel === 'debugger' && <DebuggerPanel trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} truncated={result?.traceTruncated} error={executionError?.message} />}
             {activePanel === 'tests' && <TestsPanel tests={activeProject.tests} outcomes={testOutcomes} onRun={runTests} onUpdate={updateTest} onAdd={addTest} onRemove={removeTest} running={running} />}
             {activePanel === 'flowchart' && <FlowchartDock ast={parsed.ast} error={parseError?.message} />}

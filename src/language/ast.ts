@@ -23,7 +23,11 @@ export interface CallStatement extends SourceSpan { kind: 'CallStatement'; name:
 export interface ReturnStatement extends SourceSpan { kind: 'ReturnStatement'; value: Expression | null; }
 export interface FileStatement extends SourceSpan { kind: 'FileStatement'; operation: 'OPEN' | 'READ' | 'WRITE' | 'CLOSE'; name?: string; mode?: 'READ' | 'WRITE'; target?: Target; value?: Expression; }
 export type Expression = NumberLiteral | StringLiteral | BooleanLiteral | Variable | ArrayAccess | UnaryExpression | BinaryExpression | CallExpression;
+<<<<<<< HEAD
 export interface NumberLiteral extends SourceSpan { kind: 'NumberLiteral'; value: number; }
+=======
+export interface NumberLiteral extends SourceSpan { kind: 'NumberLiteral'; value: number; raw: string; }
+>>>>>>> 66dc25c (Initial commit)
 export interface StringLiteral extends SourceSpan { kind: 'StringLiteral'; value: string; dataType?: 'CHAR' | 'STRING'; }
 export interface BooleanLiteral extends SourceSpan { kind: 'BooleanLiteral'; value: boolean; }
 export interface Variable extends SourceSpan { kind: 'Variable'; name: string; }

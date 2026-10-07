@@ -8,6 +8,10 @@
 .topbar-actions .toolbar-button { height: 34px; font-size: 12px; }
 .topbar-actions .run-button { height: 34px; font-size: 12px; }
 .topbar-actions .run-button kbd { font-size: 9px; }
+<<<<<<< HEAD
+=======
+.topbar-actions .editor-history-button { color: var(--muted); }
+>>>>>>> 66dc25c (Initial commit)
 .topbar-actions .stop-button { color: var(--text); border-color: var(--border); }
 .topbar > .settings-anchor, .topbar > .file-menu-anchor, .topbar > .help-button { flex-shrink: 0; }
 .file-menu { width: 240px; }
