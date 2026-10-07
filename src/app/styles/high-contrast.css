@@ -59,6 +59,7 @@
   background: var(--bg);
   box-shadow: none;
 }
+.pico-app[data-high-contrast="true"] .update-toast { box-shadow: var(--update-toast-vignette); }
 .pico-app[data-high-contrast="true"] :is(.update-toast-icon, .update-dialog-mark, .update-entry-marker, .update-latest-label) {
   border-color: var(--accent);
   background: var(--bg);

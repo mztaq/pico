@@ -101,10 +101,10 @@ Python runs as real CPython in a dedicated Web Worker through [Pyodide](https://
 - `int(input())` and `float(input())` use Python's own conversion rules. For example, Python accepts `float("5")`, while pseudocode REAL input requires `5.0`.
 - Unhandled exceptions terminate execution, preserve earlier output, and display a red **Error** with a traceback. Programs that catch their own exceptions continue according to their code.
 - **Debug** records Python line events, including function locals, for step-by-step replay. Trace recording stops at its memory budget while execution continues. This is recorded debugging, without live breakpoints.
-- Use `.py` source tabs as modules, and project practice files with `open()`. Each run uses a fresh interpreter and virtual filesystem.
+- Use `.py` source tabs as modules, and project practice files with `open()`. Completed runs reuse the loaded interpreter with a fresh program namespace and reset project files. Python restores standard-module attributes, builtins, environment variables and arguments between runs. Stop terminates the worker, so the next run starts a new interpreter.
 - **File** imports `.py` source or Python `.pico` projects and exports the active `.py` file or the complete `.pico` project.
 
-The runtime downloads from jsDelivr when Python starts, so its first run needs an internet connection. Python standard-library code is supported; package installation and desktop features such as native windows and subprocesses are outside this interface.
+Python begins loading when you enter its workspace. The build copies the pinned runtime from the npm package to `/python-runtime/314.0.7/` and serves it from Pico’s own host. Versioned assets have immutable cache headers. Its first load needs an internet connection, while completed runs reuse the initialized worker. Python standard-library code is supported; package installation and desktop features such as native windows and subprocesses are outside this interface.
 
 Console input uses `SharedArrayBuffer`. Hosting must serve these headers, supplied by `public/_headers` for Cloudflare Pages and by the Vite development/preview servers:
 
@@ -113,7 +113,7 @@ Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
-Use HTTPS in production or `localhost` during development. Other hosting providers must configure the same headers. Runtime code and standard-library assets load using CORS from the pinned CDN URL.
+Use HTTPS in production or `localhost` during development. Other hosting providers must configure the same headers. Runtime code and standard-library assets load from the same origin. Vite serves these assets directly from the installed package during development and copies them into `dist/` during the production build.
 
 ## Development
 
@@ -132,6 +132,7 @@ Open `http://localhost:3000`.
 | Command | Purpose |
 | --- | --- |
 | `pnpm test` | Run language, runtime, storage and interface tests, including real CPython and worker tests. |
+| `node scripts/benchmark-python.mjs` | Measure cold/warm Python execution and console batching using local WebAssembly. Network and browser rendering are excluded. |
 | `pnpm check` | Check TypeScript types. |
 | `pnpm build` | Check types and create the production build in `dist/`. |
 | `pnpm preview` | Serve the production build at `http://localhost:3000`. |
