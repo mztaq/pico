@@ -34,11 +34,8 @@ type Routine = {
 };
 
 const numeric = (t: Type) => t === 'INTEGER' || t === 'REAL';
-<<<<<<< HEAD
-=======
 // Expressions may promote an INTEGER result to REAL; interactive REAL input
 // has its own lexical rule and requires a decimal point.
->>>>>>> 66dc25c (Initial commit)
 const sameOrPromotable = (actual: Type, expected: Type) =>
   actual === expected || (expected === 'REAL' && actual === 'INTEGER');
 
