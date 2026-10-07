@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compile } from '../language';
-import { friendlyError } from './diagnostics';
+import { findSuggestions, friendlyError } from './diagnostics';
 
 describe('source diagnostics', () => {
   it('points missing THEN at the IF condition and includes a caret', () => {
@@ -26,5 +26,18 @@ describe('source diagnostics', () => {
     } catch (error) {
       expect(friendlyError(error, source).diagnostic).toContain('Did you mean DECLARE?');
     }
+  });
+
+  it('does not flag declared names or suggest control-flow keywords inside OUTPUT expressions', () => {
+    const source = 'DECLARE Name : STRING\nOUTPUT "Name: ", LENGTH(Name)';
+    const suggestions = findSuggestions(source);
+    expect(suggestions).toEqual([]);
+  });
+
+  it('suggests a misspelled expression routine without offering unrelated control flow', () => {
+    const suggestions = findSuggestions('DECLARE Name : STRING\nOUTPUT LENGHT(Name)');
+    expect(suggestions).toEqual([
+      { line: 2, column: 8, endColumn: 14, original: 'LENGHT', replacement: 'LENGTH' },
+    ]);
   });
 });
