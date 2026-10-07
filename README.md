@@ -34,24 +34,27 @@ INPUT Name
 OUTPUT "Hello ", Name, "!"
 ```
 
-When execution reaches `INPUT`, type your value in the Console and press Enter. Entering `Ada` produces `Hello Ada!`.
+When execution reaches `INPUT`, type your value in the Console and press Enter. Entering `Ada` produces `Hello Ada!`. Invalid values show a retry prompt without restarting the program.
+
+`INTEGER` accepts whole numbers; `REAL` accepts whole numbers, decimals and scientific notation; `BOOLEAN` accepts `TRUE` or `FALSE`; `CHAR` accepts one character. `STRING` preserves your text, including numeric text and spaces. Numbers must stay within the runtime’s supported finite and safe integer limits.
+
 
 - Edit the workspace name in the top bar. On smaller screens, open **File** to rename it.
 - Use **Debug** to record execution, then step through the results.
 - Open **Reference** for keyword explanations and code examples.
-- Use **File** to format code, import a project or export a `.pico` copy.
+- Use **File** to import a project or export a `.pico` copy.
 - Open **Help** for the guided tutorial.
 
 ## Workspace
 
 | Feature | What it does |
 | --- | --- |
-| **Editor** | Syntax colouring, declared-name autocomplete, indentation guides, folding, search and keyword documentation. |
+| **Editor** | A 16px default font, syntax colouring, declared-name autocomplete, indentation guides, folding, search and keyword documentation. |
 | **Console** | Accepts input while the program waits. Keeps output and submitted values in order, with errors and retry prompts. |
 | **Debugger** | Replays recorded execution steps with variable values and output. |
 | **Test cases** | Runs saved inputs and compares expected output with actual output. |
-| **Inspection tools** | Shows code coverage, flowcharts, the abstract syntax tree and lexer tokens. |
-| **Projects and history** | Keeps source tabs, practice files and named snapshots together. |
+| **Flowchart** | Shows the paths through the current program. |
+| **Projects** | Keeps source tabs, test cases and practice files together. Workspace names are unique, ignoring case and extra spaces. |
 | **Quick reference** | Provides selectable examples with syntax colouring, adjustable text size and keyword search. |
 | **Appearance** | Offers editor themes, high-contrast palettes, resizable panels and layout settings. Catppuccin Mocha is the first-launch default. |
 
@@ -121,7 +124,7 @@ Updates are stored in the root `logs.txt`, one per line as `[YYYY-MM-DD] : UPDAT
 | [`src/language/`](src/language/) | Lexer, parser, syntax tree, semantic checks and formatting. |
 | [`src/runtime/`](src/runtime/) | Interpreter, worker execution, diagnostics and input handling. |
 | [`src/app/`](src/app/) | Workspace interface, editor, tool panels, themes and tutorial. |
-| [`src/storage/`](src/storage/) | Projects, settings and snapshot persistence. |
+| [`src/storage/`](src/storage/) | Projects and settings persistence. |
 | [`src/visual/`](src/visual/) | Flowchart generation and execution visualisation. |
 
 ### Contributing
