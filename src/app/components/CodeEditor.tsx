@@ -1,10 +1,6 @@
 import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react';
 import { acceptCompletion, autocompletion, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
-<<<<<<< HEAD
-import { defaultKeymap, history, historyKeymap, indentLess, indentMore } from '@codemirror/commands';
-=======
 import { defaultKeymap, history, historyKeymap, indentLess, indentMore, redo, undo } from '@codemirror/commands';
->>>>>>> 66dc25c (Initial commit)
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
@@ -17,11 +13,7 @@ import '../styles/editor-folding.css';
 import { pseudoLanguage } from './pseudocodeSyntax';
 
 export interface EditorPreferences { autocomplete: boolean; hoverDocs: boolean; fontSize: number; }
-<<<<<<< HEAD
-export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; }
-=======
 export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; goToLine: (line: number) => void; undo: () => void; redo: () => void; }
->>>>>>> 66dc25c (Initial commit)
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -258,8 +250,6 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
       editor.focus();
     },
     focus: () => view.current?.focus(),
-<<<<<<< HEAD
-=======
     goToLine: lineNumber => {
       const editor = view.current;
       if (!editor) return;
@@ -269,7 +259,6 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
     },
     undo: () => { if (view.current) undo(view.current); },
     redo: () => { if (view.current) redo(view.current); },
->>>>>>> 66dc25c (Initial commit)
   }), []);
 
   useEffect(() => {

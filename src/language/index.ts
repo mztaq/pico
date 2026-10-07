@@ -2,10 +2,7 @@ import type { Program, Token } from './ast';
 import { tokenize } from './lexer';
 import { parse } from './parser';
 import { validate } from './semantic';
-<<<<<<< HEAD
-=======
 export { compileToPython } from './python';
->>>>>>> 66dc25c (Initial commit)
 export { autoDeclareVariables, synchronizeAutoDeclarations } from './autoDeclare';
 export type { AutoDeclarationSync } from './autoDeclare';
 export interface Compilation { tokens: Token[]; ast: Program; }

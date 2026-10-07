@@ -41,20 +41,12 @@ export function findSuggestions(source: string): Suggestion[] {
       const word = match[0]!; const upper = word.toUpperCase();
       if (KEYWORDS.has(upper) || TYPES.has(upper) || ROUTINES.has(upper) || upper === 'RETURN') continue;
       const best = COMPLETIONS.map(candidate => ({ candidate, distance: levenshtein(upper, candidate) })).sort((a, b) => a.distance - b.distance)[0];
-<<<<<<< HEAD
-      if (best && best.distance > 0 && best.distance <= Math.max(1, Math.floor(word.length * 0.22))) result.push({ line: index + 1, column: match.index + 1, endColumn: match.index + word.length + 1, original: word, replacement: best.candidate });
-=======
       if (best && best.distance > 0 && best.distance <= Math.max(1, Math.ceil(word.length * 0.3))) result.push({ line: index + 1, column: match.index + 1, endColumn: match.index + word.length + 1, original: word, replacement: best.candidate });
->>>>>>> 66dc25c (Initial commit)
     }
   });
   return result;
 }
-<<<<<<< HEAD
-export function friendlyError(error: unknown): { message: string; line?: number; column?: number; tip?: string } {
-=======
 export function friendlyError(error: unknown, source?: string): { message: string; line?: number; column?: number; tip?: string; diagnostic?: string } {
->>>>>>> 66dc25c (Initial commit)
   if (error instanceof Error && 'line' in error) {
     const positioned = error as Error & { line: number; column?: number };
     const text = error.message;
@@ -63,12 +55,6 @@ export function friendlyError(error: unknown, source?: string): { message: strin
     else if (/not been declared|used before declaration/i.test(text)) tip = 'Declare each variable before its first use.';
     else if (/ENDIF|ENDWHILE|NEXT/i.test(text)) tip = 'Block markers close a block and should each be on their own line.';
     else if (/arrow|←|assign/i.test(text)) tip = 'Cambridge assignment uses ← (or <-), not =.';
-<<<<<<< HEAD
-    return { message: text, line: positioned.line, column: positioned.column, tip };
-  }
-  return { message: error instanceof Error ? error.message : 'Something unexpected happened while running this program.' };
-}
-=======
     const diagnostic = source && positioned.line
       ? formatDiagnostic(error, source, positioned.line, positioned.column)
       : undefined;
@@ -84,4 +70,3 @@ function formatDiagnostic(error: Error, source: string, line: number, column = 1
   const caretColumn = Math.max(1, Math.min(column, sourceLine.length + 1));
   return `✕ ${label}\nLine ${line}, Column ${column}\n\n${lineLabel}  ${sourceLine}\n${' '.repeat(lineLabel.length + 2 + caretColumn - 1)}↑\n\n${error.message}`;
 }
->>>>>>> 66dc25c (Initial commit)
