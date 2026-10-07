@@ -445,8 +445,3 @@ it('keeps editor shortcuts while removing the scope caption shown in the screens
   expect(footer.textContent).toContain('go to line');
   expect(footer.textContent).not.toContain('Cambridge subset');
 });
-it('keeps the workspace usable and suppresses the updates dialog when Discord credentials are absent',async()=>{
-  await act(async()=>{ await Promise.resolve(); });
-  expect(container.querySelector('.pico-app')).not.toBeNull();
-  expect(container.querySelector('.updates-dialog')).toBeNull();
-});

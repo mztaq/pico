@@ -53,3 +53,18 @@
 .pico-app[data-high-contrast="true"] .dock-tab.active::after { background: var(--accent-fill); }
 .pico-app[data-high-contrast="true"] :is(.tutorial-progress .filled, .step-dot) { background: var(--accent-fill); box-shadow: none; }
 .pico-app[data-high-contrast="true"] :is(.credit-item strong, .tutorial-eyebrow) { font-weight: 700; }
+
+.pico-app[data-high-contrast="true"] :is(.update-toast, .update-dialog) {
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  box-shadow: none;
+}
+.pico-app[data-high-contrast="true"] :is(.update-toast-icon, .update-dialog-mark, .update-entry-marker, .update-latest-label) {
+  border-color: var(--accent);
+  background: var(--bg);
+  color: var(--accent);
+}
+.pico-app[data-high-contrast="true"] :is(.update-toast-heading, .update-toast-copy p, .update-dialog-header h2, .update-entry-content p) { color: var(--text); }
+.pico-app[data-high-contrast="true"] :is(.update-toast-link, .update-trigger.has-unseen > svg, .update-latest-label) { color: var(--accent); }
+.pico-app[data-high-contrast="true"] .update-unread-dot { border-color: var(--bg); background: var(--accent); }
+.pico-app[data-high-contrast="true"] .update-dialog-backdrop { background: rgba(0,0,0,.88); }
