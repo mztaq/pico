@@ -281,6 +281,29 @@ const seeds: ThemeSeed[] = [
     bg: '#193549', surface: '#122738', text: '#ffffff', muted: '#a3bacb', accent: '#ffc600',
     syntax: { keyword: '#ff9d00', type: '#9effff', variable: '#ffffff', func: '#ffc600', number: '#ff628c', string: '#3ad900', comment: '#a3bacb', operator: '#ff9d00', punctuation: '#ffffff', bool: '#ff628c' },
   },
+  {
+  id: 'everforest',
+  name: 'Everforest',
+  appearance: 'dark',
+  bg: '#2d353b',
+  surface: '#343f44',
+  text: '#d3c6aa',
+  muted: '#859289',
+  accent: '#a7c080',
+
+  syntax: {
+    keyword: '#e67e80',
+    type: '#dbbc7f',
+    variable: '#d3c6aa',
+    func: '#a7c080',
+    number: '#d699b6',
+    string: '#a7c080',
+    comment: '#859289',
+    operator: '#e69875',
+    punctuation: '#d3c6aa',
+    bool: '#83c092',
+  },
+},
 ];
 
 export const DEFAULT_THEME_ID: ThemeId = 'catppuccin-mocha';
