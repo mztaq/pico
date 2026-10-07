@@ -69,3 +69,14 @@ describe('local changelog', () => {
     expect(container.querySelector('.update-toast')?.textContent).toContain('FIXED LOGIN BUG');
   });
 });
+
+it('keeps keyboard focus within the update dialog and removes the storage captions',async()=>{
+  await mount();const trigger=container.querySelector<HTMLButtonElement>('[aria-label^="View updates"]')!;trigger.focus();
+  await act(async()=>trigger.click());
+  expect(container.querySelector('[role="dialog"]')?.textContent).not.toMatch(/stored locally|kept right here/i);
+  expect(document.activeElement?.getAttribute('aria-label')).toBe('Close updates');
+  await act(async()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,cancelable:true})));
+  expect(document.activeElement?.textContent).toBe('Done');
+  await act(async()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'})));
+  expect(container.querySelector('[role="dialog"]')).toBeNull();expect(document.activeElement).toBe(trigger);
+});

@@ -43,3 +43,9 @@
 @keyframes update-dialog-in { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (max-width: 520px) { .update-toast { top: 66px; right: 12px; } .update-dialog-header { padding: 16px; } .update-dialog-list { padding-inline: 16px; } .update-dialog-footer { padding-inline: 16px; } }
 @media (prefers-reduced-motion: reduce) { .update-toast, .update-toast.is-exiting, .update-dialog-backdrop, .update-dialog { animation-duration: .01ms !important; } }
+
+.update-toast::before { content: ''; position: absolute; inset: -35px; z-index: -1; border-radius: 30px; pointer-events: none; background: radial-gradient(ellipse, rgba(0,0,0,.72) 15%, rgba(0,0,0,.28) 55%, transparent 75%); }
+.update-dialog-backdrop { background: radial-gradient(ellipse at center, rgba(0,0,0,.25) 10%, rgba(0,0,0,.86) 100%); }
+.update-dialog-footer { justify-content: flex-end; }
+
+.update-toast { isolation: isolate; }

@@ -28,7 +28,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it('pauses the timeout while waiting and preserves the remaining running-time budget', async () => {
+it('runs indefinitely, including after input, until explicitly stopped', async () => {
   vi.useFakeTimers(); vi.stubGlobal('Worker', TestWorker);
   const onInput = vi.fn(); const onOutput = vi.fn();
   const job = startExecution({ ast: compile('DECLARE N : INTEGER\nINPUT N').ast, runs: [{ inputs: [], options: {} }], interactive: true }, { onInput, onOutput });
@@ -43,10 +43,10 @@ it('pauses the timeout while waiting and preserves the remaining running-time bu
   expect(job.provideInput(1, '2')).toBe(true);
   expect(job.provideInput(1, '2')).toBe(false);
   expect(worker.inputs).toEqual([{ type: 'input', id: 1, value: '2' }]);
-  await vi.advanceTimersByTimeAsync(5999);
+  await vi.advanceTimersByTimeAsync(3600000);
   expect(worker.terminated).toBe(false);
-  await vi.advanceTimersByTimeAsync(1);
-  expect((await job.promise)[0]?.error?.code).toBe('timeout');
+  job.cancel();
+  expect((await job.promise)[0]?.error?.code).toBe('cancelled');
 });
 
 it('stops while waiting and ignores late input, output, and completion', async () => {
