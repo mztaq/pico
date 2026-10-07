@@ -7,7 +7,7 @@
 <p align="center">Write, run and inspect Cambridge-style pseudocode in your browser.</p>
 
 <p align="center">
-  <a href="https://picompiler.pages.dev">Open Pico</a> ·
+  <a href="https://picompiler.pages.dev">Open Pico</a> · 
   <a href="#getting-started">Getting started</a> ·
   <a href="#language-support">Language support</a> ·
   <a href="#development">Development</a>
