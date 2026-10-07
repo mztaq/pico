@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight';
 import { pseudoLanguage } from './pseudocodeSyntax';
+import { pythonLanguage } from '@codemirror/lang-python';
+import type { CompilerLanguage } from '../../storage/projects';
 
 const referenceHighlighter = tagHighlighter([
   { tag: tags.keyword, class: 'syntax-keyword' },
@@ -18,10 +20,10 @@ const referenceHighlighter = tagHighlighter([
 interface CodePart { text: string; className?: string; }
 
 /** Reuse the editor tokenizer and preserve every character for selection/copy. */
-export function highlightPseudocode(code: string): CodePart[] {
+export function highlightPseudocode(code: string, language: CompilerLanguage = 'pseudocode'): CodePart[] {
   const parts: CodePart[] = [];
   let position = 0;
-  highlightTree(pseudoLanguage.parser.parse(code), referenceHighlighter, (from, to, className) => {
+  highlightTree((language === 'python' ? pythonLanguage : pseudoLanguage).parser.parse(code), referenceHighlighter, (from, to, className) => {
     if (from > position) parts.push({ text: code.slice(position, from) });
     parts.push({ text: code.slice(from, to), className });
     position = to;
@@ -30,8 +32,8 @@ export function highlightPseudocode(code: string): CodePart[] {
   return parts;
 }
 
-export function HighlightedCode({ code }: { code: string }) {
-  const parts = useMemo(() => highlightPseudocode(code), [code]);
+export function HighlightedCode({ code, language = 'pseudocode' }: { code: string; language?: CompilerLanguage }) {
+  const parts = useMemo(() => highlightPseudocode(code, language), [code, language]);
   return <code className="highlighted-code">{parts.map((part, index) =>
     part.className ? <span className={part.className} key={index}>{part.text}</span> : part.text,
   )}</code>;

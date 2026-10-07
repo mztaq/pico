@@ -25,6 +25,7 @@ export interface RunResult {
   steps: number;
   files: VirtualFiles;
   traceTruncated: boolean;
+  outputTruncated?: boolean;
 }
 export interface InputRequest {
   variable: string;
@@ -113,6 +114,7 @@ class Interpreter {
   >();
   private openFile: string | undefined;
   private readonly output: string[] = [];
+  private outputTruncated = false;
   private readonly trace: TraceStep[] = [];
   private readonly coverage = new Set<number>();
   private steps = 0;
@@ -127,7 +129,9 @@ class Interpreter {
     private readonly options: ExecutionOptions,
     private readonly interactive = false,
   ) {
-    this.limit = Math.min(100_000, Math.max(1, options.limit ?? 10_000));
+    this.limit = interactive && options.limit === undefined
+      ? Infinity
+      : Math.min(100_000, Math.max(1, options.limit ?? 10_000));
     this.files = Object.fromEntries(
       Object.entries(options.files ?? {}).map(([name, lines]) => [
         name,
@@ -175,6 +179,7 @@ class Interpreter {
       steps: this.steps,
       files: structuredClone(this.files),
       traceTruncated: this.traceTruncated,
+      outputTruncated: this.outputTruncated,
     };
   }
   private *executeBlock(statements: Statement[]): Execution<void> {
@@ -261,17 +266,8 @@ class Interpreter {
         const dataType = binding.type ?? 'STRING';
         let value: unknown;
         if (this.interactive) {
-          let error: string | undefined;
-          while (true) {
-            const raw = yield { type: 'input', variable: s.target.name, dataType, line: s.line, error };
-            try {
-              value = this.convertInput(raw, dataType, s.line);
-              break;
-            } catch (failure) {
-              if (!(failure instanceof RuntimeError)) throw failure;
-              error = failure.message;
-            }
-          }
+          const raw = yield { type: 'input', variable: s.target.name, dataType, line: s.line };
+          value = this.convertInput(raw, dataType, s.line);
         } else {
           if (this.inputPosition >= this.inputs.length)
             throw new MissingInputError(s.target.name, dataType, s.line);
@@ -283,7 +279,10 @@ class Interpreter {
       case 'Output': {
         const parts: string[] = [];
         for (const expression of s.expressions) parts.push(this.format((yield* this.evaluate(expression))));
-        const text = parts.join('');
+        const fullText = parts.join('');
+        const text = fullText.slice(0, 8192);
+        if (text.length !== fullText.length) this.outputTruncated = true;
+        if (this.output.length === 2000) { this.output.shift(); this.outputTruncated = true; }
         this.output.push(text);
         yield { type: 'output', text };
         return;
@@ -651,10 +650,10 @@ class Interpreter {
     }
     if (type === 'REAL') {
       if (
-        !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text) ||
+        !/^[+-]?\d+\.\d+$/.test(text) ||
         !Number.isFinite(Number(text))
       )
-        throw new RuntimeError(`“${raw}” is not a REAL number. Enter a number such as 5 or 5.0.`, line);
+        throw new RuntimeError(`“${raw}” is not a REAL number. Use a decimal such as 5.0.`, line, 'type');
       return this.finite(Number(text), line);
     }
     if (type === 'CHAR') {

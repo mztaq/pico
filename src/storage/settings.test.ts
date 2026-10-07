@@ -11,7 +11,7 @@ it('starts with Catppuccin Mocha and preserves saved theme choices',()=>{
 });
 it('normalizes malformed settings and keeps all tool tabs available',()=>{
   vi.stubGlobal('localStorage',{getItem:()=>JSON.stringify({autocomplete:'no',sidebarSide:'bad',dockSide:'bad',panelOrder:['tests','tests','bogus']})});
-  const settings=loadSettings();expect(settings.autocomplete).toBe(true);expect(settings.sidebarSide).toBe('left');expect(settings.dockSide).toBe('bottom');expect(new Set(settings.panelOrder).size).toBe(4);expect(settings.panelOrder[0]).toBe('tests');
+  const settings=loadSettings();expect(settings.autocomplete).toBe(true);expect(settings.sidebarSide).toBe('left');expect(settings.dockSide).toBe('bottom');expect(new Set(settings.panelOrder).size).toBe(3);expect(settings.panelOrder).not.toContain('tests');
 });
 it('loads older reference preferences with readable limits and a default text size',()=>{
   vi.stubGlobal('localStorage',{getItem:()=>JSON.stringify({referenceWidth:220})});
@@ -27,10 +27,17 @@ it('reduces reference sizes from v4 once and preserves later custom sizes',()=>{
   expect(loadSettings().referenceFontSize).toBe(16);
 });
 
-it('uses a 16px editor default, preserves chosen sizes, and removes retired panels',()=>{
+it('uses a 19px editor default, preserves chosen sizes, and removes retired panels',()=>{
   vi.stubGlobal('localStorage',{getItem:()=>JSON.stringify({panelOrder:['tokens','tests','coverage','ast','console'],fontSize:17})});
-  expect(loadSettings().panelOrder).toEqual(['tests','console','debugger','flowchart']);
+  expect(loadSettings().panelOrder).toEqual(['console','debugger','flowchart']);
   expect(loadSettings().fontSize).toBe(17);
   vi.stubGlobal('localStorage',{getItem:()=>null});
+  expect(loadSettings().fontSize).toBe(19);
+});
+
+it('migrates the old default size and preserves a new explicit preference',()=>{
+  vi.stubGlobal('localStorage',{getItem:(key:string)=>key==='pico.settings.v5'?JSON.stringify({fontSize:16}):null});
+  expect(loadSettings().fontSize).toBe(19);
+  vi.stubGlobal('localStorage',{getItem:(key:string)=>key==='pico.settings.v6'?JSON.stringify({fontSize:16}):null});
   expect(loadSettings().fontSize).toBe(16);
 });

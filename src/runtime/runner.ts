@@ -2,6 +2,8 @@ import type { ExecutionReply, PendingInput, WorkerReply, WorkerRequest } from '.
 export interface ExecutionCallbacks {
   onOutput?: (lines: string[]) => void;
   onInput?: (request: PendingInput) => void;
+  onStderr?: (lines: string[]) => void;
+  onStatus?: (message: string) => void;
 }
 export interface ExecutionJob {
   promise: Promise<ExecutionReply[]>;
@@ -9,6 +11,8 @@ export interface ExecutionJob {
   provideInput: (id: number, value: string) => boolean;
 }
 export function startExecution(request: WorkerRequest, callbacks: ExecutionCallbacks = {}): ExecutionJob {
+  const outputAck = request.interactive && globalThis.crossOriginIsolated === true && typeof SharedArrayBuffer !== 'undefined' ? new SharedArrayBuffer(4) : undefined;
+  if (outputAck) request = { ...request, outputAck };
   let worker: Worker;
   try {
     worker = new Worker(new URL('./worker.ts', import.meta.url), {
@@ -31,6 +35,7 @@ export function startExecution(request: WorkerRequest, callbacks: ExecutionCallb
   }
   let finish: (reply: ExecutionReply[]) => void;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let ackTimer: ReturnType<typeof setTimeout> | undefined;
   let pendingId: number | undefined;
   let remainingTime = 10_000;
   let startedAt = 0;
@@ -42,6 +47,7 @@ export function startExecution(request: WorkerRequest, callbacks: ExecutionCallb
     if (settled) return;
     settled = true;
     clearTimeout(timer);
+    clearTimeout(ackTimer);
     worker.terminate();
     finish(reply);
   };
@@ -54,6 +60,7 @@ export function startExecution(request: WorkerRequest, callbacks: ExecutionCallb
     timer = undefined;
   };
   const armTimer = () => {
+    if (request.interactive) return;
     startedAt = performance.now();
     timer = setTimeout(() => fail(
       'Execution timed out after 10 seconds of running. Simplify the program or test batch.', 'timeout',
@@ -64,7 +71,13 @@ export function startExecution(request: WorkerRequest, callbacks: ExecutionCallb
     const reply = event.data;
     if (Array.isArray(reply)) { settle(reply); return; }
     if (reply.type === 'complete') { settle(reply.replies); return; }
-    if (reply.type === 'output') { callbacks.onOutput?.(reply.lines); return; }
+    if (reply.type === 'output') {
+      callbacks.onOutput?.(reply.lines);
+      if (outputAck) ackTimer = setTimeout(() => { if (!settled) { const ack = new Int32Array(outputAck); Atomics.store(ack, 0, 1); Atomics.notify(ack, 0); } }, 16);
+      return;
+    }
+    if (reply.type === 'stderr') { callbacks.onStderr?.(reply.lines); return; }
+    if (reply.type === 'status') { callbacks.onStatus?.(reply.message); return; }
     pauseTimer();
     pendingId = reply.request.id;
     callbacks.onInput?.(reply.request);

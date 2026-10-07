@@ -3,7 +3,8 @@ import { act, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createInteractiveSession, runRequests, type InputMessage, type WorkerReply, type WorkerRequest } from '../runtime/worker';
-import App from './App';
+import { Workspace } from './App';
+const App = () => <Workspace language="pseudocode" onChoose={()=>{}} onHome={()=>{}} />;
 import { referenceExamples, referenceTerms } from './reference';
 import { tutorialSteps } from './components/GuidedTutorial';
 
@@ -71,17 +72,12 @@ describe('workspace execution integration',()=>{
     await click(button('Stop'));await act(async()=>worker.complete());
     expect(container.textContent).toContain('Execution stopped.');expect(worker.terminated).toBe(true);expect(container.querySelector('.output-line')).toBeNull();
   });
-  it('runs saved tests in isolated worker batches',async()=>{
-    await click(button('Test cases1'));await click(button('Run tests'));
-    await act(async()=>BrowserWorker.pending.at(-1)!.complete());
-    expect(container.querySelector('.result-chip')?.textContent).toBe('Passed');expect(BrowserWorker.pending.at(-1)!.request!.runs[0]!.options.trace).toBe(false);
-  });
   it('removes the unwanted sections and File actions',async()=>{
-    expect(codeEditor().dataset.fontSize).toBe('16');
+    expect(codeEditor().dataset.fontSize).toBe('19');
     expect(button('History')).toBeUndefined();
     expect(container.querySelector('.example-list')).toBeNull();
     const tabs=[...container.querySelectorAll('.dock-tab > span:not([class])')].map(tab=>tab.textContent);
-    expect(tabs).toEqual(['Console','Debugger','Test cases','Flowchart']);
+    expect(tabs).toEqual(['Console','Debugger','Flowchart']);
     await click(button('File'));
     expect(button('Format code')).toBeUndefined();
     expect(button('Export Python')).toBeUndefined();
@@ -138,17 +134,23 @@ describe('workspace execution integration',()=>{
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     await click(button('Stop'));
     expect(container.querySelector('.console-input-form')).toBeNull();
-    expect(container.querySelector('.runtime-error-card')?.textContent).toContain('Execution stopped.');
+    expect(container.querySelector('.console-entry-note')?.textContent).toContain('Execution stopped.');
     expect(container.querySelector('.debugger-panel')).toBeNull();
   });
-  it('accepts REAL numbers and retries wrong types in the Console',async()=>{
+  it.each(['hello', '5'])('ends a REAL input run with an Error for %s',async(value)=>{
     await typeValue(codeEditor(),'DECLARE Value : REAL\nINPUT Value\nOUTPUT Value');
     await click(button('Run⌘ ↵'));
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
-    await typeValue(consoleInput(),'hello');await submitInput();
-    expect(container.querySelector('.console-input-error')?.textContent).toContain('not a REAL');
-    await typeValue(consoleInput(),'5');await submitInput();
+    await typeValue(consoleInput(),value);await submitInput();
+    expect(container.querySelector('.runtime-error-card .error-heading')?.textContent).toContain('Error');
+    expect(container.querySelector('.runtime-error-card')?.textContent).toContain('not a REAL');
     expect(container.querySelector('.console-input-form')).toBeNull();
+    expect(button('Run⌘ ↵').disabled).toBe(false);
+    expect(BrowserWorker.pending.at(-1)!.terminated).toBe(true);
+    await click(button('Run⌘ ↵'));
+    await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await typeValue(consoleInput(),'5.0');await submitInput();
+    expect(container.querySelector('.runtime-error-card')).toBeNull();
     expect(container.querySelector('.output-line:last-child')?.textContent).toBe('›5');
   });
   it('keeps project renaming in File and typing helpers in Settings',async()=>{
@@ -170,7 +172,7 @@ describe('workspace execution integration',()=>{
       await click(control);
       expect(control.getAttribute('aria-checked')).toBe('false');
     }
-    const stored = JSON.parse(localStorage.getItem('pico.settings.v5')!);
+    const stored = JSON.parse(localStorage.getItem('pico.settings.v6')!);
     expect([stored.autocomplete,stored.autocorrect,stored.hoverDocs]).toEqual([false,false,false]);
   });
   it('pauses for each value inline, retains the transcript and removes preset input',async()=>{
@@ -184,12 +186,9 @@ describe('workspace execution integration',()=>{
     expect(container.querySelector('.input-modal')).toBeNull();
     await typeValue(consoleInput(),'Ada');await submitInput();
     expect(consoleInput().getAttribute('aria-label')).toBe('Value for Age');
-    await typeValue(consoleInput(),'sixteen');await click(button('Send'));
-    expect(container.querySelector('.console-input-error')?.textContent).toContain('not an INTEGER');
-    expect(document.activeElement).toBe(consoleInput());
     await typeValue(consoleInput(),'16');await submitInput();
     expect(container.querySelector('.console-input-form')).toBeNull();
-    expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Name?','Ada','Age?','sixteen','16','Ada is 16']);
+    expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Name?','Ada','Age?','16','Ada is 16']);
     expect(BrowserWorker.pending).toHaveLength(1);
   });
   it('stops while waiting, then starts a fresh session without old values',async()=>{
@@ -224,17 +223,6 @@ describe('workspace execution integration',()=>{
     expect(container.querySelector('.debugger-panel')).not.toBeNull();
     await click(button('Console'));
     expect(container.querySelector('.output-line:last-child')?.textContent).toBe('›0');
-  });
-  it('uses saved test inputs automatically without opening console input',async()=>{
-    await typeValue(codeEditor(),'DECLARE N : INTEGER\nINPUT N\nOUTPUT N * 2');
-    await click(button('Test cases1'));
-    await typeValue(container.querySelector<HTMLTextAreaElement>('[aria-label="Greets the user input"]')!,'3');
-    await typeValue(container.querySelector<HTMLTextAreaElement>('[aria-label="Greets the user expected output"]')!,'6');
-    await click(button('Run tests'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
-    expect(container.querySelector('.result-chip')?.textContent).toBe('Passed');
-    expect(BrowserWorker.pending.at(-1)!.request!.interactive).not.toBe(true);
-    expect(BrowserWorker.pending.at(-1)!.request!.runs[0]!.inputs).toEqual(['3']);
-    await click(button('Console'));expect(container.querySelector('.console-input-form')).toBeNull();
   });
   it('cancels waiting input when switching source files',async()=>{
     await typeValue(codeEditor(),'DECLARE N : INTEGER\nOUTPUT "Old file"\nINPUT N');
@@ -382,7 +370,7 @@ describe('guided help and readable reference',()=>{
     expect(container.querySelector('.reference-controls output')?.textContent).toBe('14px');
     const splitter=container.querySelector('[aria-label="Resize quick reference panel"]')!;
     await act(async()=>splitter.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true})));
-    const settings=JSON.parse(localStorage.getItem('pico.settings.v5')!);
+    const settings=JSON.parse(localStorage.getItem('pico.settings.v6')!);
     expect(settings.referenceWidth).toBe(370);expect(settings.referenceFontSize).toBe(14);
     expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--reference-width: 370px');
     await click(button('FOR'));expect(container.querySelector('.reference-explanation > strong')?.textContent).toBe('FOR');
@@ -465,7 +453,7 @@ it('lets the user choose either high-contrast theme and saves the preference',as
   expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--text: #ffffff');
   await click(button('High Contrast Light'));
   expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--bg: #ffffff');
-  expect(JSON.parse(localStorage.getItem('pico.settings.v5')!).theme).toBe('high-contrast-light');
+  expect(JSON.parse(localStorage.getItem('pico.settings.v6')!).theme).toBe('high-contrast-light');
 });
 
 it('offers coloured and gradient high-contrast themes and preserves the chosen palette',async()=>{
@@ -484,7 +472,7 @@ it('offers coloured and gradient high-contrast themes and preserves the chosen p
     expect(app.getAttribute('data-high-contrast')).toBe('true');
     expect(app.getAttribute('style')).toContain(`--accent: ${accent}`);
     expect(app.getAttribute('style')).toContain('--on-accent: #000000');
-    expect(JSON.parse(localStorage.getItem('pico.settings.v5')!).theme).toBe(id);
+    expect(JSON.parse(localStorage.getItem('pico.settings.v6')!).theme).toBe(id);
     if (id!.includes('spectrum') || id!.includes('sunset')) {
       expect(app.getAttribute('style')).toContain('--accent-fill: linear-gradient(');
       expect(button(label!).querySelector('.theme-swatch i:last-child')?.getAttribute('style')).toContain('linear-gradient(');

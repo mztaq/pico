@@ -40,6 +40,7 @@ export function UpdateCenter() {
   const [toast, setToast] = useState<ChangelogEntry | null>(null);
   const [exiting, setExiting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const dialogRef = useRef<HTMLElement>(null);
   const latestRef = useRef<ChangelogEntry | null>(null);
   const exitTimer = useRef<number | null>(null);
   const seenRef = useRef(seenId);
@@ -92,9 +93,19 @@ export function UpdateCenter() {
 
   useEffect(() => {
     if (!dialogOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setDialogOpen(false); };
+    const previousFocus = document.activeElement as HTMLElement | null;
+    dialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); setDialogOpen(false); }
+      if (event.key === 'Tab') {
+        const controls = [...(dialogRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])];
+        const first = controls[0], last = controls.at(-1);
+        if (event.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
+      }
+    };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    return () => { window.removeEventListener('keydown', onKeyDown); if (previousFocus?.isConnected) previousFocus.focus(); };
   }, [dialogOpen]);
 
   const openDialog = () => {
@@ -133,10 +144,10 @@ export function UpdateCenter() {
     </aside>}
 
     {dialogOpen && <div className="update-dialog-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setDialogOpen(false); }}>
-      <section className="update-dialog" role="dialog" aria-modal="true" aria-labelledby="update-dialog-title">
+      <section ref={dialogRef} className="update-dialog" role="dialog" aria-modal="true" aria-labelledby="update-dialog-title">
         <header className="update-dialog-header">
           <div className="update-dialog-mark"><Sparkles size={17} /></div>
-          <div><h2 id="update-dialog-title">What’s new</h2><p>Product updates, kept right here on your device.</p></div>
+          <div><h2 id="update-dialog-title">What’s new</h2></div>
           <button className="update-dialog-close" type="button" aria-label="Close updates" onClick={() => setDialogOpen(false)}><X size={17} /></button>
         </header>
         <div className="update-dialog-list">
@@ -146,7 +157,7 @@ export function UpdateCenter() {
             {index === 0 && <span className="update-latest-label">LATEST</span>}
           </article>)}
         </div>
-        <footer className="update-dialog-footer"><span><span className="update-local-indicator" /> Stored locally · refreshes automatically</span><button type="button" onClick={() => setDialogOpen(false)}>Done</button></footer>
+        <footer className="update-dialog-footer"><button type="button" onClick={() => setDialogOpen(false)}>Done</button></footer>
       </section>
     </div>}
   </>;
