@@ -76,6 +76,10 @@ Variables require declarations. An undeclared `FOR` counter is introduced as an 
 
 `OUTPUT` joins expressions without inserting spaces. Include spaces in string literals where needed.
 
+## What's New updates
+
+Pico can optionally show a theme-matched updates popup sourced directly from recent messages in `#pico-logs`. It checks once on page entry, filters bot/webhook posts and blocked content, and does not persist the feed. See [Discord updates setup](DISCORD_UPDATES_SETUP.md) for configuration and the important warning that any Discord bot token used by a frontend build is public to site visitors.
+
 ### Execution model
 
 Source passes through the lexer, parser and semantic checks, then runs in an interpreter inside a Web Worker. **Stop** cancels the active run, including one waiting for input.

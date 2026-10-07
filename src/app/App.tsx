@@ -22,6 +22,9 @@ import { GuidedTutorial, tutorialSteps } from './components/GuidedTutorial';
 import { TutorialOffer } from './components/TutorialOffer';
 import { inputEasterEgg } from './inputEasterEgg';
 import { HighlightedCode } from './components/HighlightedCode';
+import { DiscordUpdatesDialog } from './components/DiscordUpdatesDialog';
+import { configuredDiscordUpdates, fetchDiscordUpdates, type DiscordUpdate } from './discordUpdates';
+import { installInspectionDeterrents } from './inspectionDeterrents';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
 import '../app/styles/app.css';
 import './styles/editor-folding.css';
@@ -34,6 +37,7 @@ import './styles/readability.css';
 import './styles/high-contrast.css';
 import './styles/motion.css';
 import './styles/top-toolbar.css';
+import './styles/updates.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
@@ -66,6 +70,8 @@ export default function App() {
   const [docSearch, setDocSearch] = useState('');
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [discordUpdates, setDiscordUpdates] = useState<DiscordUpdate[]>([]);
+  const [updatesOpen, setUpdatesOpen] = useState(false);
   const [picoGreeting, setPicoGreeting] = useState(false);
   const [tutorialOfferOpen, setTutorialOfferOpen] = useState(() => {
     try { return Number(localStorage.getItem('pico.visitCount.v1') ?? '0') === 0; }
@@ -81,6 +87,7 @@ export default function App() {
   const [dismissedSuggestions, setDismissedSuggestions] = useState(false);
   const editorRef = useRef<EditorHandle>(null);
   const workspaceMainRef = useRef<HTMLElement>(null);
+  const updatesRequestRef = useRef<Promise<DiscordUpdate[]> | null>(null);
   const settingsAnchorRef = useRef<HTMLDivElement>(null);
   const fileAnchorRef = useRef<HTMLDivElement>(null);
   const autoDeclaredTypesRef = useRef<Record<string, Record<string, DataType>>>({});
@@ -98,6 +105,20 @@ export default function App() {
   const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
 
   useEffect(() => () => { jobRef.current?.cancel(); }, []);
+  useEffect(() => {
+    const request = updatesRequestRef.current ??= fetchDiscordUpdates(configuredDiscordUpdates());
+    let active = true;
+    void request.then(items => {
+      if (!active) return;
+      setDiscordUpdates(items);
+      setUpdatesOpen(items.length > 0);
+    });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    if (!import.meta.env.PROD || import.meta.env.VITE_PICO_ANTI_INSPECTION === 'false') return;
+    return installInspectionDeterrents();
+  }, []);
   useEffect(() => { jobRef.current?.cancel(); jobRef.current = null; setRunning(false); setPendingInput(null); setInputValue(''); }, [activeId, activeFile.id, activeFile.code, activeProject.tests, activeProject.virtualFiles]);
   useEffect(() => {
     setSaveState('saving');
@@ -418,6 +439,7 @@ export default function App() {
 
     {tutorialOfferOpen && <TutorialOffer onStart={startTutorial} onDismiss={() => setTutorialOfferOpen(false)} />}
     {tutorialOpen && <GuidedTutorial step={tutorialStep} onStep={goToTutorialStep} onClose={closeTutorial} onReference={() => { closeTutorial(); openReference(); }} />}
+    {updatesOpen && discordUpdates.length > 0 && !tutorialOpen && !tutorialOfferOpen && <DiscordUpdatesDialog updates={discordUpdates} onClose={() => setUpdatesOpen(false)} />}
     <footer className="statusbar" inert={tutorialOpen || tutorialOfferOpen}><div className="attribution"><span className="credit-item"><span>Deployed by</span> <strong>Mustaqim</strong> <small>11 Boys Red</small></span><span className="credit-divider" aria-hidden="true">·</span><span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span></div></footer>
     {historyOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setHistoryOpen(false)}><div className="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title" onClick={event => event.stopPropagation()}><div className="input-modal-head"><div><strong id="history-title">Project history</strong><small>{activeProject.name} · browser-local snapshots</small></div><button className="icon-button quiet" onClick={() => setHistoryOpen(false)} aria-label="Close history"><X size={15} /></button></div><div className="history-actions"><button className="primary-small" onClick={saveSnapshot}><History size={13} /> Save snapshot</button></div>{history.length === 0 ? <div className="history-empty">No snapshots yet. Save one before experimenting with a big change.</div> : <div className="history-list">{history.map(version => <div className="history-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()} · {version.files.length} file{version.files.length === 1 ? '' : 's'}</small></div><button className="subtle-button" onClick={() => restoreSnapshot(version)}>Restore</button></div>)}</div>}</div></div>}
     {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>A Cambridge pseudocode studio made with care.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a> or <a href="mailto:b03661@nbabarwa.com">b03661@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
