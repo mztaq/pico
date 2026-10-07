@@ -303,6 +303,30 @@ const seeds: ThemeSeed[] = [
     punctuation: '#d3c6aa',
     bool: '#83c092',
   },
+    {
+  id: 'kanagawa',
+  name: 'Kanagawa',
+  appearance: 'dark',
+
+  bg: '#1f1f28',
+  surface: '#16161d',
+  text: '#dcd7ba',
+  muted: '#727169',
+  accent: '#7e9cd8',
+
+  syntax: {
+    keyword: '#957fb8',
+    type: '#7e9cd8',
+    variable: '#dcd7ba',
+    func: '#7fb4ca',
+    number: '#d27e99',
+    string: '#98bb6c',
+    comment: '#727169',
+    operator: '#ffa066',
+    punctuation: '#dcd7ba',
+    bool: '#e6c384',
+  },
+},
 },
 ];
 
