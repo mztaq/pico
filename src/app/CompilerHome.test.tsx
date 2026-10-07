@@ -5,10 +5,11 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import App from './App';
 import type { ExecutionCallbacks, ExecutionJob } from '../runtime/runner';
 import type { ExecutionReply } from '../runtime/worker';
+import { preloadPythonRuntime } from '../runtime/python/runner';
 import type { PythonRequest } from '../runtime/python/config';
 const jobs=vi.hoisted(()=>[] as {request:PythonRequest;callbacks:ExecutionCallbacks;job:ExecutionJob;finish:(value:ExecutionReply[])=>void}[]);
 vi.mock('./components/CodeEditor',()=>({CodeEditor:({value,onChange,language,preferences}:{value:string;onChange:(value:string)=>void;language:string;preferences:{fontSize:number}})=><textarea aria-label={`${language} editor`} data-font-size={preferences.fontSize} value={value} onInput={event=>onChange(event.currentTarget.value)} />}));
-vi.mock('../runtime/python/runner',()=>({startPythonExecution:(request:PythonRequest,callbacks:ExecutionCallbacks)=>{
+vi.mock('../runtime/python/runner',()=>({preloadPythonRuntime:vi.fn(),startPythonExecution:(request:PythonRequest,callbacks:ExecutionCallbacks)=>{
   let finish!:(value:ExecutionReply[])=>void;const promise=new Promise<ExecutionReply[]>(resolve=>{finish=resolve;});
   const job={promise,cancel:vi.fn(()=>finish([{error:{code:'cancelled',message:'Execution stopped.'}}])),provideInput:vi.fn(()=>true)};
   jobs.push({request,callbacks,job,finish});return job;
@@ -71,7 +72,7 @@ it('preserves edits in memory even when browser storage rejects saves',async()=>
   await click(button('Go to Python Compiler'));expect(container.querySelector('textarea')?.value).toBe('print("Python kept")');
 });
 it('runs Python source, accepts console input and displays final debugger variables',async()=>{
-  await choose('Python Compiler');await click(button('Debug'));const execution=jobs[0]!;
+  await choose('Python Compiler');expect(preloadPythonRuntime).toHaveBeenCalled();await click(button('Debug'));const execution=jobs[0]!;
   expect(execution.request.code).toContain('input(');expect(execution.request.debug).toBe(true);expect(execution.request.filename).toBe('main.py');
   await act(async()=>{execution.callbacks.onStatus?.('Python 3.14.2');execution.callbacks.onOutput?.(['Enter your name: ']);execution.callbacks.onInput?.({id:1,variable:'input()',dataType:'STRING',line:3});});
   expect(container.querySelector('.brand-subtitle')?.textContent).toBe('Python 3.14.2');
@@ -85,7 +86,7 @@ it('shows Python failures as Error, ends pending input, and cancels runs on comp
   await choose('Python Compiler');await click(button('Run⌘ ↵'));const execution=jobs[0]!;
   await act(async()=>{execution.callbacks.onStderr?.(['problem']);execution.finish([{error:{message:'ValueError: invalid integer',line:3,code:'python',diagnostic:'main.py\nValueError: invalid integer'}}]);});
   expect(container.querySelector('.console-entry-error')?.textContent).toBe('Errorproblem');
-  expect(container.querySelector('.error-heading')?.textContent).toContain('Error');expect(container.querySelector('.diagnostic-message')?.textContent).toContain('ValueError');
+  expect(container.querySelector('.error-heading')?.textContent).toContain('Error');expect(container.querySelector('.diagnostic-message')?.textContent).toContain('ValueError');expect(container.querySelector('.error-tip')).toBeNull();
   expect(button('Run⌘ ↵').disabled).toBe(false);expect(container.querySelector('.console-input-form')).toBeNull();
   await click(button('Run⌘ ↵'));const pending=jobs[1]!;
   await click(button('Go to Pseudocode Compiler'));expect(pending.job.cancel).toHaveBeenCalled();

@@ -22,7 +22,7 @@ import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen, Credits } from './components/HomeScreen';
 import { PythonReference } from './components/PythonReference';
-import { startPythonExecution } from '../runtime/python/runner';
+import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
 import { MAX_CONSOLE_LINES } from '../runtime/python/config';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
 import '../app/styles/app.css';
@@ -115,6 +115,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const suggestions = useMemo(() => !isPython && settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeFile.code).slice(0, 3) : [], [activeFile.code, settings.autocorrect, dismissedSuggestions]);
   const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
 
+  useEffect(() => { if (isPython) preloadPythonRuntime(); }, [isPython]);
   useEffect(() => () => { const job = jobRef.current; jobRef.current = null; job?.cancel(); }, []);
   useEffect(() => { jobRef.current?.cancel(); jobRef.current = null; setRunning(false); setPendingInput(null); setInputValue(''); }, [activeId, activeFile.id, activeFile.code, activeProject.virtualFiles]);
   useEffect(() => {
@@ -292,7 +293,10 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     if (reply?.error?.code === 'cancelled') {
       setConsoleEntries(entries => [...entries, { kind: 'note', text: 'Execution stopped.' }].slice(-MAX_CONSOLE_LINES) as ConsoleEntry[]);
       setExecutionError(null);
-    } else setExecutionError(reply?.error ? { ...friendlyError(Object.assign(new Error(reply.error.message), { name: 'RuntimeError', line: reply.error.line }), activeFile.code), ...(reply.error.diagnostic ? { diagnostic: reply.error.diagnostic } : {}) } : null);
+    } else setExecutionError(reply?.error ? isPython
+      ? { message: reply.error.message, line: reply.error.line, diagnostic: reply.error.diagnostic }
+      : friendlyError(Object.assign(new Error(reply.error.message), { name: 'RuntimeError', line: reply.error.line }), activeFile.code)
+      : null);
     if (next?.outputTruncated) setOutputTruncated(true);
     setPicoGreeting(Boolean(next?.output.some(line=>line.trim().toUpperCase()==='PICO')));
     setActivePanel(debug && next && !reply?.error ? 'debugger' : 'console');

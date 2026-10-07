@@ -1,12 +1,14 @@
 import type { ExecutionReply } from '../worker';
 import type { PythonRequest } from './config';
 
+interface PythonScope { set: (name: string, value: unknown) => void; destroy: () => void; }
 export interface PythonRuntime {
-  runPython: (code: string) => unknown;
-  globals: { set: (name: string, value: unknown) => void };
+  runPython: (code: string, options?: { globals: PythonScope }) => unknown;
   registerJsModule: (name: string, module: unknown) => void;
+  unregisterJsModule: (name: string) => void;
 }
 export interface PythonIO {
+  flush?: () => void;
   stdout: (line: string) => void;
   stderr: (line: string) => void;
   readInput: (prompt: string, line: number) => string;
@@ -14,12 +16,19 @@ export interface PythonIO {
 
 /** The same CPython execution wrapper runs in the browser worker and integration tests. */
 export function runPythonProgram(runtime: PythonRuntime, request: PythonRequest, io: PythonIO): ExecutionReply {
-  runtime.runPython("import sys; sys.modules.pop('_pico_bridge', None)");
+  runtime.runPython("import sys; sys.modules.pop('_pico_bridge', None);");
   runtime.registerJsModule('_pico_bridge', {
-    stdout: io.stdout, stderr: io.stderr, read_input: io.readInput,
+    stdout: io.stdout, stderr: io.stderr, read_input: io.readInput, flush: io.flush ?? (() => {}),
   });
-  runtime.globals.set('_pico_request_json', JSON.stringify(request, (key, value) => key.endsWith('Buffer') || key === 'outputAck' ? undefined : value));
-  return JSON.parse(String(runtime.runPython(PYTHON_DRIVER))) as ExecutionReply;
+  const scope = runtime.runPython('dict()') as PythonScope;
+  try {
+    scope.set('_pico_request_json', JSON.stringify(request, (key, value) => key.endsWith('Buffer') || key === 'outputAck' ? undefined : value));
+    return JSON.parse(String(runtime.runPython(PYTHON_DRIVER, { globals: scope }))) as ExecutionReply;
+  } finally {
+    scope.destroy();
+    runtime.unregisterJsModule('_pico_bridge');
+    runtime.runPython("import sys; sys.modules.pop('_pico_bridge', None);");
+  }
 }
 
 export const PYTHON_DRIVER = String.raw`
@@ -30,6 +39,7 @@ import json as _json
 import os as _os
 import traceback as _traceback
 import types as _types
+import importlib as _importlib
 from collections import deque as _deque
 import _pico_bridge as _bridge
 
@@ -43,7 +53,9 @@ _trace_budget = 200000
 _trace_truncated = False
 _steps = 0
 _current_line = 1
-_namespace = {'__name__': '__main__', '__file__': _filename, '__builtins__': _builtins}
+_main_module = _types.ModuleType('__main__')
+_namespace = _main_module.__dict__
+_namespace.update({'__file__': _filename, '__builtins__': _builtins})
 
 # Never invoke a user's __repr__ while inspecting their variables.
 def _safe(value, depth=0):
@@ -131,6 +143,7 @@ class _Console(_io.TextIOBase):
         if self.pending:
             self._emit(self.pending)
             self.pending = ''
+        _bridge.flush()
 
 _stdout = _Console()
 _stderr = _Console(True)
@@ -138,6 +151,11 @@ _original_stdout, _original_stderr, _original_input = _sys.stdout, _sys.stderr, 
 _original_trace = _sys.gettrace()
 _original_cwd = _os.getcwd()
 _original_path = list(_sys.path)
+_original_argv = list(_sys.argv)
+_original_environment = dict(_os.environ)
+_original_modules = dict(_sys.modules)
+_original_module_dicts = [(module, dict(module.__dict__)) for module in _sys.modules.values() if isinstance(module, _types.ModuleType) and module.__name__ != '__main__']
+_original_settrace = _sys.settrace
 
 def _input(prompt=''):
     if prompt:
@@ -151,7 +169,7 @@ _files = {}
 try:
     _os.makedirs('/workspace', exist_ok=True)
     _os.chdir('/workspace')
-    # Workers start fresh for every run. Also clear previous files for reused test runtimes.
+    # Reset project files and imports while retaining the loaded interpreter.
     for root, dirs, files in _os.walk('.', topdown=False):
         for file in files:
             _os.remove(_os.path.join(root, file))
@@ -175,6 +193,8 @@ try:
                 file.write(source)
     with open(_filename, 'w', encoding='utf-8') as file:
         file.write(_request['code'])
+    _importlib.invalidate_caches()
+    _sys.modules['__main__'] = _main_module
     _sys.stdout, _sys.stderr, _builtins.input = _stdout, _stderr, _input
     _compiled = compile(_request['code'], _filename, 'exec')
     if _request['debug']:
@@ -187,9 +207,18 @@ except BaseException as exception:
         _current_line = line
         _error = {'message': type(exception).__name__ + ': ' + str(exception), 'line': line, 'code': 'python', 'diagnostic': ''.join(_traceback.format_exception_only(exception)) if isinstance(exception, SyntaxError) else ''.join(_traceback.format_list(user_frames)) + type(exception).__name__ + ': ' + str(exception)}
 finally:
-    _sys.settrace(_original_trace)
+    _original_settrace(_original_trace)
     _stdout.flush()
     _stderr.flush()
+    # Restore module attributes and builtins changed by user code before the next run.
+    for module, attributes in _original_module_dicts:
+        module.__dict__.clear()
+        module.__dict__.update(attributes)
+    _sys.modules.clear()
+    _sys.modules.update(_original_modules)
+    _sys.argv[:] = _original_argv
+    _os.environ.clear()
+    _os.environ.update(_original_environment)
     _sys.stdout, _sys.stderr, _builtins.input = _original_stdout, _original_stderr, _original_input
     if _request['debug']:
         _record(_current_line, _namespace, 'Error' if _error else 'Finished')
