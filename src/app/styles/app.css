@@ -267,6 +267,12 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .step-dot { width: 6px; height: 6px; border-radius: 50%; background: #a89fff; box-shadow: 0 0 7px rgba(168,159,255,.5); }
 .step-actions { gap: 5px; }
 .icon-button { width: 27px; height: 26px; display: inline-grid; place-items: center; border: 1px solid #30333e; border-radius: 5px; background: #191b22; color: #a3a7b3; cursor: pointer; }
+<<<<<<< HEAD
+=======
+.diagnostic-message { margin: 8px 0 0; overflow-x: auto; color: var(--text); font: 12px/1.55 var(--font-code); white-space: pre; }
+.runtime-error-card[tabindex] { cursor: pointer; }
+.runtime-error-card[tabindex]:hover { border-color: var(--red); }
+>>>>>>> 66dc25c (Initial commit)
 .icon-button:hover:not(:disabled) { border-color: #504a72; color: #d8d3ff; }
 .icon-button:disabled, .step-next:disabled { opacity: .42; cursor: default; }
 .icon-button.quiet { width: 23px; height: 23px; border-color: transparent; background: transparent; }
@@ -590,4 +596,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .pico-app[data-pico-theme] .project-title-input { color: var(--text); }/* The theme lives on :root as well as the shell, so inherited text and the page
    background follow light and dark palettes instead of the dark fallback. */
 .pico-app { color: var(--text); }
+<<<<<<< HEAD
 body { background: var(--bg); color: var(--text); }
+=======
+body { background: var(--bg); color: var(--text); }
+>>>>>>> 66dc25c (Initial commit)

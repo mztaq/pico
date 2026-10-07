@@ -651,10 +651,17 @@ class Interpreter {
     }
     if (type === 'REAL') {
       if (
+<<<<<<< HEAD
         !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text) ||
         !Number.isFinite(Number(text))
       )
         throw new RuntimeError(`“${raw}” is not a REAL number.`, line);
+=======
+        !/^[+-]?\d+\.\d+$/.test(text) ||
+        !Number.isFinite(Number(text))
+      )
+        throw new RuntimeError(`“${raw}” is not a REAL number. Use a decimal such as 5.0.`, line);
+>>>>>>> 66dc25c (Initial commit)
       return Number(text);
     }
     if (type === 'CHAR') {
