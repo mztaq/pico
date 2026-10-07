@@ -1,19 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Check, ChevronDown, CircleHelp, Code2, CodeXml, Download, FileCode2, History, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Trash2, Undo2, Upload, X } from 'lucide-react';
-import { compile, compileToPython, synchronizeAutoDeclarations } from '../language';
+import { BookOpen, Check, ChevronDown, CircleHelp, Code2, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Trash2, Undo2, Upload, X } from 'lucide-react';
+import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
-import { examples } from '../examples';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
-import { AstPanel, ConsolePanel, CoveragePanel, DebuggerPanel, FlowchartDock, panelIcon, TestsPanel, TokensPanel, type PanelKey, type TestOutcome, type ConsoleEntry } from './components/Panels';
+import { ConsolePanel, DebuggerPanel, FlowchartDock, panelIcon, TestsPanel, type PanelKey, type TestOutcome, type ConsoleEntry } from './components/Panels';
 import { findSuggestions, friendlyError, documentationFor, type Suggestion } from '../runtime/diagnostics';
 import type { RunResult } from '../runtime/interpreter';
 import { startExecution, type ExecutionJob } from '../runtime/runner';
 import type { PendingInput } from '../runtime/worker';
 import { normalizeSource } from '../language/normalize';
-import { exportProject, importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects, type PicoFile, type PicoProject, type TestCase } from '../storage/projects';
+import { exportProject, importProject, loadActiveId, loadProjects, newProject, normalizeProjectName, projectNameExists, uniqueProjectName, saveProjects, type PicoFile, type PicoProject, type TestCase } from '../storage/projects';
 import { loadSettings, saveSettings, type PicoSettings } from '../storage/settings';
-import { addVersion, loadHistory, type ProjectVersion } from '../storage/history';
-import { formatPseudocode } from '../language/formatter';
 import { contrastRatio, cssVariables, getTheme } from '../app/themes';
 import { FloatingPanel } from './components/FloatingPanel';
 import { ResizeHandle } from './components/ResizeHandle';
@@ -38,11 +35,11 @@ import './styles/top-toolbar.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' }, { key: 'tests', title: 'Test cases' },
-  { key: 'flowchart', title: 'Flowchart' }, { key: 'coverage', title: 'Coverage' }, { key: 'ast', title: 'AST' }, { key: 'tokens', title: 'Tokens' },
+  { key: 'flowchart', title: 'Flowchart' },
 ];
 
 type SaveState = 'saved' | 'saving' | 'local-only';
-interface ParseState { ast: Program | null; tokens: ReturnType<typeof compile>['tokens']; error: unknown | null; }
+interface ParseState { ast: Program | null; error: unknown | null; }
 
 export default function App() {
   const [initial] = useState(() => { const projects = loadProjects(); return { projects, activeId: loadActiveId(projects) }; });
@@ -52,8 +49,8 @@ export default function App() {
   const [activePanel, setActivePanel] = useState<PanelKey>('console');
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [history, setHistory] = useState<ProjectVersion[]>([]);
+  const [projectNameDraft, setProjectNameDraft] = useState(() => initial.projects.find(project => project.id === initial.activeId)!.name);
+  const [projectNameError, setProjectNameError] = useState('');
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
   const [pendingInput, setPendingInput] = useState<PendingInput | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -90,8 +87,8 @@ export default function App() {
   const activeFile = activeProject.files.find(file => file.id === activeProject.activeFileId) ?? activeProject.files[0]!;
   const theme = getTheme(settings.theme);
   const parsed = useMemo<ParseState>(() => {
-    try { const compilation = compile(activeFile.code); return { ast: compilation.ast, tokens: compilation.tokens, error: null }; }
-    catch (error) { return { ast: null, tokens: [], error }; }
+    try { const compilation = compile(activeFile.code); return { ast: compilation.ast, error: null }; }
+    catch (error) { return { ast: null, error }; }
   }, [activeFile.code]);
   const parseError = parsed.error ? friendlyError(parsed.error, activeFile.code) : null;
   const visibleError = executionError ?? parseError;
@@ -113,7 +110,7 @@ export default function App() {
     if (!settings.autoDeclare) return;
     updateCode(activeFile.code);
   }, [settings.autoDeclare, activeFile.id]);
-  useEffect(() => { setHistory(loadHistory(activeProject.id)); }, [activeProject.id]);
+  useEffect(() => { setProjectNameDraft(activeProject.name); setProjectNameError(''); }, [activeId]);
   useEffect(() => {
     if (!referenceExpanded || !settings.referenceVisible || tutorialOpen) return;
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -171,27 +168,10 @@ export default function App() {
     setExecutionError(null); setResult(null); setTestOutcomes({}); setConsoleEntries([]);
     updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code, autoDeclaredTypes } : file), updatedAt: Date.now() }));
   }
-  function formatCode() { updateCode(formatPseudocode(activeFile.code)); }
-  function exportPython() {
-    try {
-      const source = compileToPython(compile(activeFile.code).ast);
-      const url = URL.createObjectURL(new Blob([source], { type: 'text/x-python' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${activeFile.name.replace(/\.pico$/i, '') || 'program'}.py`;
-      link.click();
-      URL.revokeObjectURL(url);
-      setFileMenuOpen(false);
-    } catch (error) {
-      window.alert(error instanceof Error ? error.message : 'Fix the program before exporting Python.');
-    }
-  }
-  function saveSnapshot() { const label = window.prompt('Name this snapshot', `Snapshot ${history.length + 1}`); if (label === null) return; try { setHistory(addVersion(activeProject.id, label, activeProject.files, activeProject.activeFileId, activeProject.virtualFiles)); } catch { setSaveState('local-only'); setExecutionError({message:'Snapshot could not be saved. Export your project to keep a copy.'}); return; } setHistoryOpen(true); }
-  function restoreSnapshot(version: ProjectVersion) { if (!window.confirm(`Restore “${version.label}”? Current edits will remain available only if you save a snapshot first.`)) return; autoDeclaredTypesRef.current = {}; updateProject(project => ({ ...project, files: structuredClone(version.files), virtualFiles: version.virtualFiles ? structuredClone(version.virtualFiles) : project.virtualFiles, activeFileId: version.activeFileId, code: version.files.find(file => file.id === version.activeFileId)?.code ?? version.files[0]?.code ?? '', updatedAt: Date.now() })); setHistoryOpen(false); setResult(null); setExecutionError(null); }
   function startTutorial() {
     tutorialPanelRef.current = activePanel;
     setTutorialStep(0); setTutorialOpen(true); setTutorialOfferOpen(false);
-    setSettingsOpen(false); setFileMenuOpen(false); setHistoryOpen(false); setCreditsOpen(false);
+    setSettingsOpen(false); setFileMenuOpen(false); setCreditsOpen(false);
   }
   function closeTutorial() { setTutorialOpen(false); setActivePanel(tutorialPanelRef.current); }
   function goToTutorialStep(step: number) {
@@ -218,20 +198,38 @@ export default function App() {
     try { localStorage.setItem('pico.activeProject.v1', id); } catch { /* Autosave status will explain local-storage availability. */ }
   }
   function createBlankProject() {
-    const requested = window.prompt('Name this project', 'Untitled program');
+    const requested = window.prompt('Name this project', uniqueProjectName('Untitled program', projects));
     if (requested === null) return;
-    const project = newProject(requested.trim().slice(0, 42) || 'Untitled program'); setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
+    const name = normalizeProjectName(requested) || 'Untitled program';
+    if (projectNameExists(name, projects)) { window.alert('A project with that name already exists. Choose a different name.'); return; }
+    const project = newProject(name); setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
   }
-  function loadExample(exampleId: string) {
-    const project = projectFromExample(exampleId);
-    if (!project) return;
-    setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
+  function renameProject(draft: string) {
+    setProjectNameDraft(draft.slice(0, 42));
+    const name = normalizeProjectName(draft);
+    if (!name) { setProjectNameError('Enter a workspace name.'); return; }
+    if (projectNameExists(name, projects, activeId)) { setProjectNameError('A project with that name already exists. Choose a different name.'); return; }
+    setProjectNameError('');
+    updateProject(project => ({ ...project, name, updatedAt: Date.now() }));
   }
-  function renameProject(name: string) { updateProject(project => ({ ...project, name: name.slice(0, 42), updatedAt: Date.now() })); }
+  function finishProjectRename() { setProjectNameDraft(activeProject.name); setProjectNameError(''); }
   function selectFile(fileId: string) { setProjects(current => current.map(project => project.id === activeId ? { ...project, activeFileId: fileId, code: project.files.find(file => file.id === fileId)?.code ?? project.code, updatedAt: Date.now() } : project)); setExecutionError(null); setResult(null); setTestOutcomes({}); setConsoleEntries([]); }
-  function createFile() { const next = activeProject.files.length + 1; const file: PicoFile = { id: crypto.randomUUID(), name: `untitled-${next}.pico`, code: '', }; updateProject(project => ({ ...project, files: [...project.files, file], activeFileId: file.id, code: file.code, updatedAt: Date.now() })); setExecutionError(null); setResult(null); setConsoleEntries([]); }
+  function createFile() {
+    let next = activeProject.files.length + 1;
+    while (activeProject.files.some(file => file.name === `untitled-${next}.pico`)) next++;
+    const file: PicoFile = { id: crypto.randomUUID(), name: `untitled-${next}.pico`, code: '' };
+    updateProject(project => ({ ...project, files: [...project.files, file], activeFileId: file.id, code: file.code, updatedAt: Date.now() }));
+    setExecutionError(null); setResult(null); setConsoleEntries([]);
+  }
   function renameFile(file: PicoFile) { const name = window.prompt('Rename file', file.name); if (name === null) return; const clean = name.trim().replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 48) || file.name; updateProject(project => ({ ...project, files: project.files.map(item => item.id === file.id ? { ...item, name: clean } : item), updatedAt: Date.now() })); }
-  function closeFile(file: PicoFile) { if (activeProject.files.length === 1) { window.alert('A project must keep at least one file.'); return; } if (!window.confirm(`Close “${file.name}” from this project?`)) return; const files = activeProject.files.filter(item => item.id !== file.id); const next = files[0]!; updateProject(project => ({ ...project, files, activeFileId: next.id, code: next.code, updatedAt: Date.now() })); setExecutionError(null); setResult(null); setConsoleEntries([]); }
+  function closeFile(file: PicoFile) {
+    if (activeProject.files.length === 1) { window.alert('A project must keep at least one file.'); return; }
+    if (!window.confirm(`Close “${file.name}” from this project?`)) return;
+    const files = activeProject.files.filter(item => item.id !== file.id);
+    const next = files.find(item => item.id === activeProject.activeFileId) ?? files[0]!;
+    updateProject(project => ({ ...project, files, activeFileId: next.id, code: next.code, updatedAt: Date.now() }));
+    if (file.id === activeProject.activeFileId) { setExecutionError(null); setResult(null); setConsoleEntries([]); }
+  }
   function removeProject(id: string) {
     if (projects.length < 2) { if (!window.confirm('This is your last local project. Replace it with a fresh blank program?')) return; const replacement = newProject(); setProjects([replacement]); selectProject(replacement.id); return; }
     const project = projects.find(item => item.id === id);
@@ -261,7 +259,7 @@ export default function App() {
     setResult(next??null); setDebugIndex(0); setTestOutcomes({});
     setExecutionError(reply?.error ? friendlyError(Object.assign(new Error(reply.error.message), { name: 'RuntimeError', line: reply.error.line }), activeFile.code) : null);
     setPicoGreeting(Boolean(next?.output.some(line=>line.trim().toUpperCase()==='PICO')));
-    setActivePanel(debug?'debugger':'console');
+    setActivePanel(debug && next ? 'debugger' : 'console');
     if(next)updateProject(project=>({...project,virtualFiles:next.files,updatedAt:Date.now()}));
   }
   function stopExecution() { jobRef.current?.cancel(); }
@@ -275,7 +273,7 @@ export default function App() {
   function applyLayoutPreset(preset: PicoSettings['layoutPreset']) {
     const presets: Record<Exclude<PicoSettings['layoutPreset'], 'custom'>, Partial<PicoSettings>> = {
       coding: { sidebarVisible: true, referenceVisible: true, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 360, dockSize: 33, panelOrder: [...defaultPanelOrder] },
-      debugging: { sidebarVisible: true, referenceVisible: false, sidebarSide: 'left', dockSide: 'right', sidebarWidth: 226, referenceWidth: 360, dockSize: 42, panelOrder: ['debugger','console','tests','coverage','flowchart','ast','tokens'] },
+      debugging: { sidebarVisible: true, referenceVisible: false, sidebarSide: 'left', dockSide: 'right', sidebarWidth: 226, referenceWidth: 360, dockSize: 42, panelOrder: ['debugger','console','tests','flowchart'] },
       focus: { sidebarVisible: false, referenceVisible: false, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 360, dockSize: 28, panelOrder: [...defaultPanelOrder] },
     };
     changeSettings({ ...(presets[preset as Exclude<PicoSettings['layoutPreset'], 'custom'>] ?? {}), layoutPreset: preset });
@@ -321,7 +319,18 @@ export default function App() {
     setTestOutcomes(current => { const next = { ...current }; delete next[id]; return next; });
   }
   function applySuggestion(suggestion: Suggestion) { editorRef.current?.applySuggestion(suggestion); setDismissedSuggestions(false); }
-  async function handleImport(event: React.ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (!file) return; try { const project = await importProject(file); setProjects(current => [...current, project]); setActiveId(project.id); } catch (error) { window.alert(error instanceof Error ? error.message : 'Could not import that .pico file.'); } event.target.value = ''; }
+  async function handleImport(event: React.ChangeEvent<HTMLInputElement>) {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const project = await importProject(file);
+      setProjects(current => [...current, { ...project, name: uniqueProjectName(project.name, current) }]);
+      selectProject(project.id);
+    } catch (error) { window.alert(error instanceof Error ? error.message : 'Could not import that .pico file.'); }
+    input.value = '';
+  }
+
 
   const tutorialReference = tutorialOpen && tutorialSteps[tutorialStep]?.target === 'reference';
   const layout = tutorialOpen ? { ...settings, dockSide: 'bottom' as const, referenceVisible: tutorialReference } : settings;
@@ -334,7 +343,7 @@ export default function App() {
   return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--sidebar-width': `${settings.sidebarWidth}px`, '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <header className="topbar" inert={tutorialOpen || tutorialOfferOpen}>
       <button className="brand-lockup" title="About Pico" aria-label="Open Pico developer credits" onClick={() => setCreditsOpen(true)}><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">PSEUDOCODE STUDIO</span></button>
-      <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={activeProject.name} onChange={event => renameProject(event.target.value)} />
+      <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />
       <div className="topbar-spacer" />
       <div className={`save-indicator ${saveState}`}><span className="save-dot">{saveState === 'saved' ? <Check size={9} /> : null}</span>{saveText}</div>
       <div className="topbar-actions">
@@ -343,7 +352,6 @@ export default function App() {
         <button className="toolbar-button editor-history-button" aria-label="Undo last edit" onClick={() => editorRef.current?.undo()} title="Undo"><Undo2 size={16} /><span>Undo</span></button>
         <button className="toolbar-button editor-history-button" aria-label="Redo last edit" onClick={() => editorRef.current?.redo()} title="Redo"><Redo2 size={16} /><span>Redo</span></button>
         <button className="toolbar-button reference-toggle" aria-label="Toggle quick reference" onClick={toggleReference} title="Quick reference"><BookOpen size={16} /><span>Reference</span></button>
-        <button className="toolbar-button" aria-label="Open project history" onClick={() => setHistoryOpen(true)} title="Project history"><History size={16} /><span>History</span></button>
         <UpdateCenter />
       </div>
       <div className="settings-anchor" ref={settingsAnchorRef}>
@@ -365,7 +373,8 @@ export default function App() {
           <div className="settings-foot">Saved locally in this browser · drag dock tabs to reorder</div>
         </FloatingPanel>
       </div>
-      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={activeProject.name} onChange={event => renameProject(event.target.value)} /></label><button onClick={() => { formatCode(); setFileMenuOpen(false); }} title="Format code · Shift+Alt+F"><CodeXml size={14} /> Format code</button><button onClick={exportPython}><Code2 size={14} /> Export Python</button><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} /></label><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> Import .pico</button><button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept=".pico,application/json" hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+      {projectNameError && <p id="project-name-error" className="project-name-error" role="alert">{projectNameError}</p>}
     </header>
 
     <div inert={tutorialOpen || tutorialOfferOpen} className={`ide-shell ${settings.sidebarVisible ? '' : 'sidebar-hidden'} sidebar-${settings.sidebarSide} dock-${layout.dockSide} ${(referenceExpanded || tutorialReference) ? 'reference-open' : ''}`}>
@@ -373,8 +382,6 @@ export default function App() {
         <div className="sidebar-head"><span>WORKSPACE</span><button className="small-icon-button" onClick={createBlankProject} title="New project" aria-label="New project"><Plus size={15} /></button></div>
         <div className="side-section-label"><span>PROJECTS</span><span className="count-pill">{projects.length}</span></div>
         <div className="project-list">{projects.map(project => <div className={`project-row ${project.id === activeId ? 'active' : ''}`} key={project.id}><button className="project-select" onClick={() => selectProject(project.id)} title={project.name}><FileCode2 size={15} /><span>{project.name}</span></button>{project.id === activeId && <button className="project-delete" title="Delete project" aria-label="Delete project" onClick={() => removeProject(project.id)}><Trash2 size={12} /></button>}</div>)}</div>
-        <div className="side-section-label examples-label"><span>CAMBRIDGE EXAMPLES</span><Sparkles size={12} /></div>
-        <div className="example-list">{examples.map(example => <button className="example-row" key={example.id} title={example.description} onClick={() => loadExample(example.id)}><span className="example-mark"><Code2 size={13} /></span><span><b>{example.name}</b><small>{example.description}</small></span></button>)}</div>
       </aside>}
       {settings.sidebarVisible && <ResizeHandle axis="x" label="Resize project sidebar" className="sidebar-resize-handle" onResize={resizeSidebar} />}
 
@@ -384,7 +391,7 @@ export default function App() {
             <div className="editor-card-head"><div className="editor-card-title"><span className="editor-live-dot" /><span>Editor</span><span className="line-count">{activeFile.code.split('\n').length} lines</span></div><div className="editor-card-meta"><span className="mono-tag">IGCSE</span><span>·</span><span>UTF-8</span><span>·</span><span>LF</span></div></div>
             <div className="file-tabs" role="tablist" aria-label="Project files">{activeProject.files.map(file => <div className={`file-tab ${file.id === activeFile.id ? 'active' : ''}`} key={file.id} role="tab" aria-selected={file.id === activeFile.id} onDoubleClick={() => renameFile(file)}><button className="file-tab-select" onClick={() => selectFile(file.id)} title={`${file.name} · double-click to rename`}><FileCode2 size={12} /><span>{file.name}</span></button><button className="file-tab-close" onClick={() => closeFile(file)} aria-label={`Close ${file.name}`} title="Close file"><X size={11} /></button></div>)}<button className="file-tab-new" onClick={createFile} title="New file" aria-label="New file"><Plus size={13} /></button></div>
             {suggestions.length > 0 && <div className="suggestion-ribbon"><Sparkles size={13} /><span>Did you mean?</span>{suggestions.map((suggestion, index) => <button className="suggestion-chip" key={`${suggestion.line}-${suggestion.column}-${index}`} onClick={() => applySuggestion(suggestion)}><code>{suggestion.original}</code><span>→</span><b>{suggestion.replacement}</b><small>line {suggestion.line}</small></button>)}<button className="dismiss-suggestions" title="Dismiss suggestions" onClick={() => setDismissedSuggestions(true)}><X size={13} /></button></div>}
-            <div className="editor-body"><CodeEditor ref={editorRef} value={activeFile.code} onChange={updateCode} onFormat={formatCode} preferences={settings} theme={theme} coveredLines={result?.coverage ?? []} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
+            <div className="editor-body"><CodeEditor ref={editorRef} value={activeFile.code} onChange={updateCode} preferences={settings} theme={theme} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
             <div className="editor-card-foot"><span><Keyboard size={12} /> <kbd>⌘</kbd> <kbd>↵</kbd> to run <span className="shortcut-separator">·</span> <kbd>Ctrl G</kbd> go to line</span></div>
           </section>
 
@@ -404,15 +411,12 @@ export default function App() {
 
         <ResizeHandle axis={layout.dockSide === 'right' ? 'x' : 'y'} label="Resize tool panel" className="dock-resize-handle" onResize={resizeDock} />
         <section className="tool-dock" data-tour="tools">
-          <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}{tab.key === 'coverage' && result && <small>{result.coverage.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
+          <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span>{tab.key === 'tests' && activeProject.tests.length > 0 && <small>{activeProject.tests.length}</small>}</button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
           <div className="dock-content" role="tabpanel" key={activePanel}>
             {activePanel === 'console' && <><ConsolePanel entries={consoleEntries} error={executionError ?? parseError} onErrorClick={() => { const line = (executionError ?? parseError)?.line; if (line) editorRef.current?.goToLine(line); }} pendingInput={pendingInput} inputValue={inputValue} onInput={setInputValue} onSubmit={submitConsoleInput} running={running} ran={Boolean(result)} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
             {activePanel === 'debugger' && <DebuggerPanel trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} truncated={result?.traceTruncated} error={executionError?.message} />}
             {activePanel === 'tests' && <TestsPanel tests={activeProject.tests} outcomes={testOutcomes} onRun={runTests} onUpdate={updateTest} onAdd={addTest} onRemove={removeTest} running={running} />}
             {activePanel === 'flowchart' && <FlowchartDock ast={parsed.ast} error={parseError?.message} />}
-            {activePanel === 'coverage' && <CoveragePanel source={activeFile.code} lines={result?.coverage ?? []} ast={parsed.ast} />}
-            {activePanel === 'ast' && <AstPanel ast={parsed.ast} error={parseError?.message} />}
-            {activePanel === 'tokens' && <TokensPanel tokens={parsed.tokens} error={parseError?.message} />}
           </div>
         </section>
       </main>
@@ -421,7 +425,6 @@ export default function App() {
     {tutorialOfferOpen && <TutorialOffer onStart={startTutorial} onDismiss={() => setTutorialOfferOpen(false)} />}
     {tutorialOpen && <GuidedTutorial step={tutorialStep} onStep={goToTutorialStep} onClose={closeTutorial} onReference={() => { closeTutorial(); openReference(); }} />}
     <footer className="statusbar" inert={tutorialOpen || tutorialOfferOpen}><div className="attribution"><span className="credit-item"><span>Deployed by</span> <strong>Mustaqim</strong> <small>11 Boys Red</small></span><span className="credit-divider" aria-hidden="true">·</span><span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span></div></footer>
-    {historyOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setHistoryOpen(false)}><div className="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-title" onClick={event => event.stopPropagation()}><div className="input-modal-head"><div><strong id="history-title">Project history</strong><small>{activeProject.name} · browser-local snapshots</small></div><button className="icon-button quiet" onClick={() => setHistoryOpen(false)} aria-label="Close history"><X size={15} /></button></div><div className="history-actions"><button className="primary-small" onClick={saveSnapshot}><History size={13} /> Save snapshot</button></div>{history.length === 0 ? <div className="history-empty">No snapshots yet. Save one before experimenting with a big change.</div> : <div className="history-list">{history.map(version => <div className="history-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()} · {version.files.length} file{version.files.length === 1 ? '' : 's'}</small></div><button className="subtle-button" onClick={() => restoreSnapshot(version)}>Restore</button></div>)}</div>}</div></div>}
     {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>A Cambridge pseudocode studio made with care.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a> or <a href="mailto:b03661@nbabarwa.com">b03661@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
   </div>;
 }
@@ -430,7 +433,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () =
 function SettingRow({ title, detail, checked, onChange }: { title: string; detail: string; checked: boolean; onChange: (value: boolean) => void }) { return <div className="setting-row"><div><strong>{title}</strong><small>{detail}</small></div><Toggle label={title} checked={checked} onChange={() => onChange(!checked)} /></div>; }
 function BrandMark() { return <svg className="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="8" fill="#8179ef"/><path d="M9 7.5h7.6a4.4 4.4 0 0 1 0 8.8H12v4.2H9V7.5Zm3 2.8v3.2h4.3a1.6 1.6 0 0 0 0-3.2H12Z" fill="#11121a"/><circle cx="19.5" cy="20.5" r="1.5" fill="#c9c4ff"/></svg>; }
 
-const defaultPanelOrder: PanelKey[] = ['console','debugger','tests','flowchart','coverage','ast','tokens'];
+const defaultPanelOrder: PanelKey[] = ['console','debugger','tests','flowchart'];
 function PracticeFiles({files,onChange}:{files:Record<string,string[]>;onChange:(files:Record<string,string[]>)=>void}) {
   const [name,setName]=useState('');
   return <details className="practice-files"><summary>Project practice files ({Object.keys(files).length})</summary><p>Text files used by OPENFILE. Saved with this project.</p>{Object.entries(files).map(([filename,lines])=><label key={filename}><span>{filename}</span><textarea aria-label={`Contents of ${filename}`} value={lines.join('\n')} onChange={event=>onChange({...files,[filename]:event.target.value===''?[]:event.target.value.split(/\r?\n/)})} /></label>)}<div><input aria-label="New practice filename" placeholder="data.txt" value={name} onChange={event=>setName(event.target.value)} /><button className="subtle-button" disabled={!name.trim()||Object.hasOwn(files,name.trim())} onClick={()=>{onChange({...files,[name.trim()]:[]});setName('');}}>Add file</button></div></details>;

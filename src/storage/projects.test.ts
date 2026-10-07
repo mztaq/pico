@@ -1,11 +1,29 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { importProject, loadActiveId, loadProjects, newProject, projectFromExample, saveProjects } from './projects';
+import { importProject, loadActiveId, loadProjects, newProject, projectFromExample, projectNameExists, uniqueProjectName, saveProjects } from './projects';
 import { compile } from '../language';
 import { execute } from '../runtime/interpreter';
 import { examples } from '../examples';
 const asFile=(data:unknown)=>({size:100,text:async()=>JSON.stringify(data)}) as File;
 afterEach(()=>vi.unstubAllGlobals());
 describe('project persistence boundaries',()=>{
+  it('checks names ignoring case and repeated whitespace, with a rename exemption',()=>{
+    const project=newProject('Lesson One');
+    expect(projectNameExists('  lesson   ONE ',[project])).toBe(true);
+    expect(projectNameExists('Lesson One',[project],project.id)).toBe(false);
+    expect(uniqueProjectName('LESSON ONE',[project,newProject('lesson one (2)')])).toBe('LESSON ONE (3)');
+    const long=newProject('x'.repeat(42));
+    expect(uniqueProjectName(long.name,[long])).toBe(`${'x'.repeat(38)} (2)`);
+  });
+  it('renames existing duplicates without dropping projects or changing their code',()=>{
+    const projects=[newProject('Lesson'),newProject(' lesson '),newProject('LESSON (2)'),newProject('')];
+    const stored=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(key:string)=>stored.get(key)??null,setItem:(key:string,value:string)=>stored.set(key,value)});
+    saveProjects(projects,projects[1]!.id);
+    const loaded=loadProjects();
+    expect(new Set(loaded.map(project=>project.name.toLowerCase())).size).toBe(4);
+    expect(loaded.map(project=>project.id)).toEqual(projects.map(project=>project.id));
+    expect(loaded.map(project=>project.code)).toEqual(projects.map(project=>project.code));
+    expect(loadActiveId(loaded)).toBe(projects[1]!.id);
+  });
   it('adds the exact credit comment to fresh main.pico files without changing their output',()=>{
     vi.stubGlobal('localStorage',{getItem:()=>null});
     const projects = [loadProjects()[0]!, newProject(), projectFromExample(examples[1]!.id)!];

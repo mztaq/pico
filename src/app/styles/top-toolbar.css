@@ -37,3 +37,19 @@
   .topbar .help-button { min-width: 28px; padding: 0 5px; }
   .topbar .help-button > svg:last-child:not(:first-child) { display: none; }
 }
+
+.project-name-error {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  max-width: min(440px, calc(100vw - 32px));
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: 14px;
+}

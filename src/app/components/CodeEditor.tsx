@@ -17,10 +17,8 @@ export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => voi
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
-  onFormat: () => void;
   preferences: EditorPreferences;
   theme: PicoTheme;
-  coveredLines: number[];
   currentLine?: number;
   errorLine?: number;
 }
@@ -36,7 +34,7 @@ function themeExtensions(theme: PicoTheme): Extension[] {
   const { ui, syntax } = theme;
   const dark = theme.appearance === 'dark';
   const chrome = EditorView.theme({
-    '&': { height: '100%', color: theme.text, backgroundColor: theme.bg, fontSize: '14px' },
+    '&': { height: '100%', color: theme.text, backgroundColor: theme.bg },
     '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-code)', lineHeight: '1.9', padding: '6px 0' },
     '.cm-content': { padding: `10px 0 28px`, caretColor: ui.cursor, minHeight: '100%' },
     '.cm-line': { padding: `0 20px 0 ${CONTENT_PADDING}` },
@@ -121,7 +119,7 @@ const indentationGuides = ViewPlugin.fromClass(class {
 }, { decorations: instance => instance.decorations });
 
 function createPreferences(preferences: EditorPreferences): Extension[] {
-  const options: Extension[] = [EditorView.theme({ '.cm-content': { fontSize: `${preferences.fontSize}px` } })];
+  const options: Extension[] = [EditorView.theme({ '&': { fontSize: `${preferences.fontSize}px` } })];
   if (preferences.autocomplete) {
     options.push(autocompletion({ override: [completionSource], activateOnTyping: true, maxRenderedOptions: 9, defaultKeymap: true }));
   }
@@ -216,10 +214,9 @@ function goToLine(view: EditorView): boolean {
   return true;
 }
 
-function buildDecorations(view: EditorView, covered: number[], currentLine?: number, errorLine?: number) {
+function buildDecorations(view: EditorView, currentLine?: number, errorLine?: number) {
   const classes = new Map<number, string>();
-  for (const line of covered) classes.set(line, 'pico-covered-line');
-  if (currentLine) classes.set(currentLine, `${classes.has(currentLine) ? 'pico-covered-line ' : ''}pico-debug-line`);
+  if (currentLine) classes.set(currentLine, 'pico-debug-line');
   if (errorLine) classes.set(errorLine, 'pico-error-line');
   const ranges = [];
   for (const [number, className] of [...classes].sort(([a], [b]) => a - b)) {
@@ -230,7 +227,7 @@ function buildDecorations(view: EditorView, covered: number[], currentLine?: num
   return Decoration.set(ranges, true);
 }
 
-export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function CodeEditor({ value, onChange, onFormat, preferences, theme, coveredLines, currentLine, errorLine }, ref) {
+export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function CodeEditor({ value, onChange, preferences, theme, currentLine, errorLine }, ref) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const prefs = useRef(new Compartment());
@@ -238,8 +235,6 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
   const marks = useRef(new Compartment());
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
-  const onFormatRef = useRef(onFormat);
-  onFormatRef.current = onFormat;
 
   useImperativeHandle(ref, () => ({
     applySuggestion: suggestion => {
@@ -270,10 +265,10 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
         lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
         pseudoLanguage, foldService.of(cambridgeFold), indentationGuides,
-        keymap.of([{ key: 'Enter', run: insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, { key: 'Shift-Alt-f', run: () => { onFormatRef.current(); return true; } }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+        keymap.of([{ key: 'Enter', run: insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         palette.current.of(themeExtensions(theme)),
         prefs.current.of(createPreferences(preferences)),
-        marks.current.of(EditorView.decorations.of(v => buildDecorations(v, coveredLines, currentLine, errorLine))),
+        marks.current.of(EditorView.decorations.of(v => buildDecorations(v, currentLine, errorLine))),
         EditorView.updateListener.of(update => { if (update.docChanged) onChangeRef.current(update.state.doc.toString()); }),
       ],
     });
@@ -296,7 +291,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
   }, [value]);
   useEffect(() => { view.current?.dispatch({ effects: prefs.current.reconfigure(createPreferences(preferences)) }); }, [preferences.autocomplete, preferences.hoverDocs, preferences.fontSize]);
   useEffect(() => { view.current?.dispatch({ effects: palette.current.reconfigure(themeExtensions(theme)) }); }, [theme]);
-  useEffect(() => { view.current?.dispatch({ effects: marks.current.reconfigure(EditorView.decorations.of(v => buildDecorations(v, coveredLines, currentLine, errorLine))) }); }, [coveredLines, currentLine, errorLine]);
+  useEffect(() => { view.current?.dispatch({ effects: marks.current.reconfigure(EditorView.decorations.of(v => buildDecorations(v, currentLine, errorLine))) }); }, [currentLine, errorLine]);
 
   return <div className="code-editor" ref={host} aria-label="Cambridge pseudocode editor" />;
 });
