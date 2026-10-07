@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { compile } from '../language';
 import { execute } from './interpreter';
-import { createInteractiveSession, type PendingInput, type WorkerReply } from './worker';
+import { createInteractiveSession, type WorkerReply } from './worker';
 
 function sessionFor(code: string, files: Record<string, string[]> = {}) {
   const messages: WorkerReply[] = [];
@@ -23,7 +23,7 @@ function sessionFor(code: string, files: Record<string, string[]> = {}) {
 afterEach(() => vi.restoreAllMocks());
 
 describe('interactive execution', () => {
-  it.each(['5', '5.0', '.5', '5.', '-0.25', '+2', '1e3', '-2.5E-2', ' 3.5 '])('accepts REAL input %s in both execution modes', raw => {
+  it.each(['5.0', '-0.25', '+2.0', ' 3.5 '])('accepts REAL input %s in both execution modes', raw => {
     const code = 'DECLARE Value : REAL\nINPUT Value\nOUTPUT Value + 1';
     const run = sessionFor(code);
     run.input(raw);
@@ -33,23 +33,24 @@ describe('interactive execution', () => {
   });
 
   it.each([
-    ['INTEGER', ['hello', '1.5', 'TRUE', '', '0x10', '9007199254740992'], '12'],
-    ['REAL', ['hello', 'TRUE', '', 'Infinity', 'NaN', '0x10', '1e309', '9007199254740993.0'], '1.5'],
-    ['BOOLEAN', ['hello', '1', '1.5', '', 'yes'], 'TRUE'],
-    ['CHAR', ['hello', '12', '', 'TRUE'], 'P'],
-  ])('retains state across repeated invalid %s inputs', (type, invalid, valid) => {
+    ['INTEGER', ['hello', '1.5', 'TRUE', '', '0x10', '9007199254740992']],
+    ['REAL', ['5', '.5', '5.', '+2', '1e3', 'hello', 'TRUE', '', 'Infinity', 'NaN', '0x10', '1e309', '9007199254740993.0']],
+    ['BOOLEAN', ['hello', '1', '1.5', '', 'yes']],
+    ['CHAR', ['hello', '12', '', 'TRUE']],
+  ])('terminates immediately on invalid %s input and preserves partial output', (type, invalid) => {
     const code = `DECLARE Value : ${type}\nOUTPUT "Before"\nINPUT Value\nOUTPUT Value\nOUTPUT "After"`;
-    const run = sessionFor(code);
     for (const value of invalid) {
+      const run = sessionFor(code);
+      const id = run.request().id;
       run.input(value);
-      expect(run.request()).toMatchObject({ variable: 'Value', dataType: type, line: 3 });
-      expect(run.request().error).toBeTruthy();
+      expect(run.result().error).toMatchObject({ line: 3 });
+      expect(run.result().result?.output).toEqual(['Before']);
+      expect(() => execute(compile(code).ast, [value])).toThrow();
+      const count = run.messages.length;
+      run.session.input({ type: 'input', id, value: '12' });
+      expect(run.messages).toHaveLength(count);
+      expect(run.messages.filter(reply => !Array.isArray(reply) && reply.type === 'input')).toHaveLength(1);
     }
-    run.input(valid);
-    expect(run.result().error).toBeUndefined();
-    expect(run.result().result?.output).toEqual(['Before', valid, 'After']);
-    expect(run.result().result?.output).toEqual(execute(compile(code).ast, [valid]).output);
-    for (const value of invalid) expect(() => execute(compile(code).ast, [value])).toThrow();
   });
 
   it('keeps numeric and boolean-looking STRING input as text', () => {
@@ -132,24 +133,6 @@ UNTIL Finished(N)`);
     expect(run.result().result?.output).toEqual(['12']);
   });
 
-  it.each([
-    ['INTEGER', 'bad', '12', '12'],
-    ['REAL', 'NaN', '1.5', '1.5'],
-    ['BOOLEAN', 'yes', 'false', 'FALSE'],
-    ['CHAR', 'AB', 'P', 'P'],
-  ])('retries invalid %s input without repeating preceding output', (type, invalid, valid, expected) => {
-    const run = sessionFor(`DECLARE Value : ${type}\nOUTPUT "Enter value"\nINPUT Value\nOUTPUT Value`);
-    const old: PendingInput = run.request();
-    run.input(invalid);
-    expect(run.request().error).toBeTruthy();
-    expect(run.request().id).not.toBe(old.id);
-    const count = run.messages.length;
-    run.session.input({ type: 'input', id: old.id, value: valid });
-    expect(run.messages).toHaveLength(count);
-    run.input(valid);
-    expect(run.result().result?.output).toEqual(['Enter value', expected]);
-  });
-
   it('accepts an empty STRING and preserves whitespace', () => {
     const run = sessionFor('DECLARE Text : STRING\nINPUT Text\nOUTPUT Text\nINPUT Text\nOUTPUT Text');
     run.input('');
@@ -167,6 +150,13 @@ UNTIL Finished(N)`);
     run.session.input({ type: 'input', id: 1, value: '2' });
     run.session.start();
     expect(run.messages).toHaveLength(count);
+  });
+
+  it('continues interactive loops beyond the old automatic step limit', () => {
+    const run = sessionFor('DECLARE N : INTEGER\nWHILE TRUE DO\nINPUT N\nENDWHILE');
+    for (let i = 0; i < 12000; i++) run.input('1');
+    expect(run.request().variable).toBe('N');
+    expect(run.messages.some(reply => !Array.isArray(reply) && reply.type === 'complete')).toBe(false);
   });
 
   it('keeps the execution step limit across repeated input pauses', () => {

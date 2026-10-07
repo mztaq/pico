@@ -1,0 +1,44 @@
+.pico-home { height: 100dvh; overflow: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; background: radial-gradient(ellipse at 50% 0, var(--accent-soft), transparent 60%), var(--bg); color: var(--text); }
+.home-brand { display: flex; align-items: center; gap: 12px; font-size: 36px; font-weight: 750; letter-spacing: -1.5px; }
+.home-brand img { width: 48px; height: 48px; }
+.pico-home h1 { margin: 32px 0; font-size: clamp(25px, 4vw, 36px); letter-spacing: -1px; font-weight: 600; }
+.compiler-choices { width: min(900px, 100%); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.compiler-choice { min-width: 0; padding: 28px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); text-align: left; cursor: pointer; transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease; }
+.compiler-choice:hover, .compiler-choice:focus-visible { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 12px 36px var(--accent-soft); }
+.compiler-choice-title { display: flex; align-items: center; gap: 12px; }
+.compiler-choice-title > svg { color: var(--accent); flex-shrink: 0; }
+.compiler-choice-title > svg:last-child { margin-left: auto; }
+.compiler-choice h2 { margin: 0; font-size: 20px; font-weight: 650; }
+.compiler-choice p { margin: 18px 0 24px; font-size: 14px; color: var(--muted); line-height: 1.6; }
+.compiler-choice pre { min-height: 90px; margin: 0; overflow: auto; border-top: 1px solid var(--border-soft); padding-top: 20px; font: 14px/1.9 var(--font-code); }
+.home-credits { margin-top: 44px; }
+.compiler-switch { flex-shrink: 0; white-space: nowrap; font-size: 12px; padding: 7px 10px; background: var(--accent-soft); border: 1px solid var(--border); border-radius: 7px; }
+.workspace-tabs { display: flex; flex: 0 0 45px; align-items: stretch; min-width: 0; gap: 6px; padding: 0 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.workspace-tabs .project-list { display: flex; min-width: 0; overflow: auto; gap: 4px; padding: 0; }
+.workspace-tabs .project-row { display: flex; flex-shrink: 0; min-width: 100px; max-width: 280px; margin: 0; border-radius: 0; border: 0; border-bottom: 2px solid transparent; }
+.workspace-tabs .project-row.active { border-bottom-color: var(--accent); background: var(--accent-soft); }
+.workspace-tabs .project-select { display: flex; align-items: center; width: auto; min-width: 0; padding: 0 14px; font-size: 14px; }
+.workspace-tabs .project-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-tabs .project-delete { margin: auto 5px auto 0; position: static; opacity: 1; }
+.workspace-tabs .new-workspace { flex: 0 0 34px; align-self: center; height: 32px; }
+.workspace-shell { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+.workspace-shell .workspace-main { width: 100%; flex: 1; min-height: 0; }
+.workspace-shell .editor-split { padding-top: 10px; padding-inline: 10px; }
+.workspace-shell.dock-right .editor-split { padding-inline-end: 0; }
+.home-button { flex: 0 0 30px; padding: 6px; display: grid; place-items: center; }
+.runtime-error-card { border-color: var(--error-color, #ff7474) !important; background: color-mix(in srgb, var(--error-color, #ff7474) 7%, var(--surface)); }
+.runtime-error-card .error-heading, .runtime-error-card .diagnostic-message, .runtime-error-card > p, .console-entry-error { color: var(--error-color, #ff7474); }
+.console-entry-error { display: flex; align-items: baseline; gap: 12px; font: 13px/1.9 var(--font-code); }
+.console-entry-error .output-prompt { width: auto; flex: 0 0 auto; font-weight: 700; color: inherit; }
+.console-truncated { color: var(--muted); font: 12px/1.6 var(--font-code); }
+.autosave-error { margin: 0; padding: 5px 12px; color: var(--error-color, #ff7474); background: var(--surface); font-size: 13px; }
+.debugger-panel > p[role="alert"] { color: var(--error-color, #ff7474); }
+.pico-app[data-pico-theme="high-contrast-white"] .runtime-error-card .error-heading, .pico-app[data-pico-theme="high-contrast-white"] .runtime-error-card .diagnostic-message { color: #a40000; }
+@media (max-width: 1000px) { .topbar { height: auto; min-height: 58px; flex-basis: auto; flex-wrap: wrap; padding-block: 8px; row-gap: 7px; } .compiler-switch { order: 2; flex-basis: 100%; width: 100%; text-align: center; } .topbar-spacer { flex: 1; } .topbar-actions { margin-left: auto; } }
+@media (max-width: 600px) { .pico-home { justify-content: flex-start; padding: 30px 16px; } .compiler-choices { grid-template-columns: minmax(0, 1fr); gap: 14px; } .compiler-choice { padding: 22px; } .compiler-choice pre { min-height: 0; } .pico-home h1 { margin: 25px 0; } .home-credits { margin-top: 26px; } .workspace-tabs { padding-inline: 6px; } }
+@media (prefers-reduced-motion: reduce) { .compiler-choice { transition: none; } .compiler-choice:hover { transform: none; } }
+
+@media (max-width: 520px) { .topbar-actions { order: 2; flex-basis: 100%; justify-content: center; margin: 0; } .compiler-switch { order: 3; } }
+
+.home-updates { position: absolute; top: 18px; right: 22px; }
+@media (max-width: 600px) { .home-updates { top: 12px; right: 12px; } }

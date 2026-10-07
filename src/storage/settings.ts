@@ -7,7 +7,6 @@ import {
 export type PanelKeyPreference =
   | 'console'
   | 'debugger'
-  | 'tests'
   | 'flowchart';
 export type LayoutPreset = 'coding' | 'debugging' | 'focus' | 'custom';
 export interface PicoSettings {
@@ -28,14 +27,14 @@ export interface PicoSettings {
   sidebarVisible: boolean;
   referenceVisible: boolean;
 }
-const KEY = 'pico.settings.v5';
-const LEGACY_KEYS = ['pico.settings.v4', 'pico.settings.v3'];
+const KEY = 'pico.settings.v6';
+const LEGACY_KEYS = ['pico.settings.v5', 'pico.settings.v4', 'pico.settings.v3'];
 export const defaultSettings: PicoSettings = {
   autocomplete: true,
   autocorrect: true,
   hoverDocs: true,
   autoDeclare: true,
-  fontSize: 16,
+  fontSize: 19,
   theme: DEFAULT_THEME_ID,
   sidebarSide: 'left',
   dockSide: 'bottom',
@@ -46,7 +45,6 @@ export const defaultSettings: PicoSettings = {
   panelOrder: [
     'console',
     'debugger',
-    'tests',
     'flowchart',
   ],
   layoutPreset: 'coding',
@@ -92,7 +90,7 @@ export function loadSettings(): PicoSettings {
           panelOrder: orders.length ? orders : defaultSettings.panelOrder,
           fontSize:
             typeof c.fontSize === 'number' && Number.isFinite(c.fontSize)
-              ? Math.min(20, Math.max(12, c.fontSize))
+              ? key !== KEY && [14, 16].includes(c.fontSize) ? defaultSettings.fontSize : Math.min(24, Math.max(12, c.fontSize))
               : defaultSettings.fontSize,
           sidebarWidth:
             typeof c.sidebarWidth === 'number'
@@ -104,7 +102,7 @@ export function loadSettings(): PicoSettings {
               : 360,
           referenceFontSize:
             typeof c.referenceFontSize === 'number' && Number.isFinite(c.referenceFontSize)
-              ? Math.min(18, Math.max(12, c.referenceFontSize - (key === KEY ? 0 : 2)))
+              ? Math.min(18, Math.max(12, c.referenceFontSize - (['pico.settings.v4', 'pico.settings.v3'].includes(key) ? 2 : 0)))
               : 13,
           dockSize:
             typeof c.dockSize === 'number'

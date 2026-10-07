@@ -86,3 +86,21 @@ it('migrates saved and imported .pseudocode source names without changing code o
   const {addVersion,loadHistory}=await import('./history');addVersion(project.id,'Old source',project.files,project.activeFileId);
   expect(loadHistory(project.id)[0]!.files[0]!.name).toBe('lesson.pico');
 });
+
+it('keeps Python and pseudocode storage separate and imports only matching projects',async()=>{
+  const stored=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(key:string)=>stored.get(key)??null,setItem:(key:string,value:string)=>stored.set(key,value)});
+  const pseudo=newProject('Algorithm'), python=newProject('Python lesson','python');
+  expect(python.files[0]!.name).toBe('main.py');expect(python.code).toContain('input(');
+  saveProjects([pseudo],pseudo.id);saveProjects([python],python.id,'python');
+  expect(loadProjects()[0]!.id).toBe(pseudo.id);expect(loadProjects('python')[0]!.id).toBe(python.id);
+  expect(loadActiveId([python],'python')).toBe(python.id);
+  expect((await importProject(asFile(python),'python')).language).toBe('python');
+  await expect(importProject(asFile(python))).rejects.toThrow(/Python Compiler/);
+  await expect(importProject(asFile(pseudo),'python')).rejects.toThrow(/Pseudocode Compiler/);
+  await expect(importProject(asFile({...python,language:'unknown'}),'python')).rejects.toThrow(/valid Pico/);
+});
+it('imports Python source without applying pseudocode transformations',async()=>{
+  const code='text="<- unchanged"\nprint(f"{text}")';
+  const project=await importProject({name:'lesson.py',size:80,text:async()=>code} as File,'python');
+  expect(project.language).toBe('python');expect(project.files[0]!.name).toBe('lesson.py');expect(project.code).toBe(code);
+});
