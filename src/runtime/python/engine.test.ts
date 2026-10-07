@@ -92,3 +92,9 @@ describe('real browser CPython runtime', () => {
     expect(r.error).toBeUndefined();expect(r.result?.variables.thing).toBe('<Thing>');expect(r.result?.variables.big).toBe('1'+'0'.repeat(50));expect(r.result?.variables.nan).toBe('nan');
   });
 });
+
+it('runs each program in its own __main__ module and releases its driver namespace',()=>{
+  const r=run('import __main__\nvalue=42\nprint(__main__.value)');expect(r.error).toBeUndefined();expect(r.stdout).toEqual(['42']);
+  expect(runtime.runPython("'_pico_request_json' in globals()")).toBe(false);
+  expect(runtime.runPython("import sys; '_pico_bridge' in sys.modules")).toBe(false);
+});

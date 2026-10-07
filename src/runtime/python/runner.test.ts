@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { startPythonExecution } from './runner';
+import { startPythonExecution, disposePythonRuntime, preloadPythonRuntime } from './runner';
 import { MAX_INPUT_BYTES, type PythonRequest } from './config';
 import type { WorkerReply } from '../worker';
 class PythonWorker {
@@ -14,7 +14,7 @@ class PythonWorker {
   emit(data:WorkerReply){this.onmessage?.({data});}
 }
 const request={code:'input()',filename:'main.py',debug:true,files:{},sources:{}};
-afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
+afterEach(()=>{disposePythonRuntime();vi.unstubAllGlobals();vi.useRealTimers();});
 it('exchanges UTF-8 input through shared memory, rejects stale input and ends cleanly',async()=>{
   vi.stubGlobal('Worker',PythonWorker);
   const onInput=vi.fn(),onStatus=vi.fn();
@@ -28,7 +28,7 @@ it('exchanges UTF-8 input through shared memory, rejects stale input and ends cl
   expect(new TextDecoder().decode(new Uint8Array(worker.request.inputBuffer!,8,Atomics.load(header,1)))).toBe('Ada 🌏');
   expect(job.provideInput(1,'late')).toBe(false);
   worker.emit({type:'complete',replies:[{error:{code:'python',message:'ValueError'}}]});
-  expect((await job.promise)[0]?.error?.message).toBe('ValueError');expect(worker.terminated).toBe(true);
+  expect((await job.promise)[0]?.error?.message).toBe('ValueError');expect(worker.terminated).toBe(false);
 });
 it('never auto-times out and Stop cancels pending input and output acknowledgements',async()=>{
   vi.useFakeTimers();vi.stubGlobal('Worker',PythonWorker);
@@ -56,4 +56,22 @@ it('handles worker construction errors and transport failures',async()=>{
   vi.stubGlobal('Worker',class extends PythonWorker {postMessage(){throw Error('blocked');}});
   expect((await startPythonExecution(request).promise)[0]?.error?.code).toBe('python-worker');
   expect(PythonWorker.current.terminated).toBe(true);
+});
+
+it('preloads once, reuses completed workers and ignores input from old jobs',async()=>{
+  vi.stubGlobal('Worker',PythonWorker);
+  preloadPythonRuntime();const warm=PythonWorker.current;preloadPythonRuntime();expect(PythonWorker.current).toBe(warm);
+  const first=startPythonExecution(request);expect(PythonWorker.current).toBe(warm);
+  warm.emit({type:'complete',replies:[{}]});await first.promise;expect(warm.terminated).toBe(false);
+  const second=startPythonExecution(request);expect(PythonWorker.current).toBe(warm);
+  warm.emit({type:'input',request:{id:1,variable:'input()',dataType:'STRING',line:1}});
+  expect(first.provideInput(1,'stale')).toBe(false);first.cancel();expect(warm.terminated).toBe(false);
+  expect(second.provideInput(1,'fresh')).toBe(true);second.cancel();expect(warm.terminated).toBe(true);
+});
+it('discards failed preloads and crashes rather than keeping an unusable interpreter',async()=>{
+  vi.stubGlobal('Worker',PythonWorker);preloadPythonRuntime();const bad=PythonWorker.current;
+  bad.emit({type:'complete',replies:[{error:{code:'python-worker',message:'failed'}}]});expect(bad.terminated).toBe(true);
+  const job=startPythonExecution(request);expect(PythonWorker.current).not.toBe(bad);
+  PythonWorker.current.onerror?.({preventDefault:()=>{}});
+  expect((await job.promise)[0]?.error?.code).toBe('python-worker');
 });
