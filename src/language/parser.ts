@@ -680,7 +680,7 @@ export class Parser {
 
   private looksLikeKeywordTypo(): boolean {
     const next = this.tokens[this.position + 1];
-    return next?.type !== 'ARROW' && next?.line === this.current.line;
+    return next?.type !== 'ARROW' && next?.type !== '[' && next?.line === this.current.line;
   }
 
   private closestKeyword(word: string): string | null {

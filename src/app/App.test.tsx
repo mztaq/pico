@@ -7,7 +7,7 @@ import App from './App';
 import { referenceExamples, referenceTerms } from './reference';
 import { tutorialSteps } from './components/GuidedTutorial';
 
-vi.mock('./components/CodeEditor',()=>({CodeEditor:({value,onChange}:{value:string;onChange:(value:string)=>void})=><textarea aria-label="Test pseudocode editor" value={value} onInput={event=>onChange(event.currentTarget.value)} />}));
+vi.mock('./components/CodeEditor',()=>({CodeEditor:({value,onChange,preferences}:{value:string;onChange:(value:string)=>void;preferences:{fontSize:number}})=><textarea aria-label="Test pseudocode editor" data-font-size={preferences.fontSize} value={value} onInput={event=>onChange(event.currentTarget.value)} />}));
 class BrowserWorker {
   static pending: BrowserWorker[]=[];
   onmessage?: (event:{data:WorkerReply})=>void;
@@ -76,24 +76,82 @@ describe('workspace execution integration',()=>{
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     expect(container.querySelector('.result-chip')?.textContent).toBe('Passed');expect(BrowserWorker.pending.at(-1)!.request!.runs[0]!.options.trace).toBe(false);
   });
-  it('opens history from the top bar and restores a saved snapshot',async()=>{
-    const original = codeEditor().value;
-    const historyButton = button('History');
-    expect(historyButton.closest('.topbar')).not.toBeNull();
-    await click(historyButton);
-    expect(container.querySelector('#history-title')?.textContent).toBe('Project history');
-    const prompt = vi.spyOn(window, 'prompt').mockReturnValue('Greeting');
-    await click(button('Save snapshot'));
-    prompt.mockRestore();
-    expect(container.querySelector('.history-row strong')?.textContent).toBe('Greeting');
-    await click(container.querySelector('[aria-label="Close history"]')!);
-    await typeValue(codeEditor(),'OUTPUT "Changed"');
-    await click(historyButton);
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    await click(button('Restore'));confirm.mockRestore();
-    expect(codeEditor().value).toBe(original);
+  it('removes the unwanted sections and File actions',async()=>{
+    expect(codeEditor().dataset.fontSize).toBe('16');
+    expect(button('History')).toBeUndefined();
+    expect(container.querySelector('.example-list')).toBeNull();
+    const tabs=[...container.querySelectorAll('.dock-tab > span:not([class])')].map(tab=>tab.textContent);
+    expect(tabs).toEqual(['Console','Debugger','Test cases','Flowchart']);
+    await click(button('File'));
+    expect(button('Format code')).toBeUndefined();
+    expect(button('Export Python')).toBeUndefined();
+    expect(button('Import .pico')).toBeDefined();
+    expect(button('Export .pico')).toBeDefined();
   });
-  it('keeps formatting and project renaming in File and typing helpers in Settings',async()=>{
+  it('rejects duplicate project creation and rename while allowing unique names',async()=>{
+    const prompt=vi.spyOn(window,'prompt').mockReturnValue(' untitled   PROGRAM ');
+    const alert=vi.spyOn(window,'alert').mockImplementation(()=>{});
+    try {
+      await click(container.querySelector('[aria-label="New project"]')!);
+      expect(container.querySelectorAll('.project-row')).toHaveLength(1);
+      expect(alert).toHaveBeenCalledWith(expect.stringContaining('already exists'));
+      prompt.mockReturnValue('Lesson');
+      await click(container.querySelector('[aria-label="New project"]')!);
+      expect(container.querySelectorAll('.project-row')).toHaveLength(2);
+      const name=container.querySelector<HTMLInputElement>('[aria-label="Workspace name"]')!;
+      await typeValue(name,'UNTITLED PROGRAM');
+      expect(name.getAttribute('aria-invalid')).toBe('true');
+      expect(container.querySelector('#project-name-error')?.textContent).toContain('already exists');
+      expect(container.querySelector('.project-row.active .project-select span')?.textContent).toBe('Lesson');
+      await typeValue(name,'');
+      expect(container.querySelector('.project-row.active .project-select span')?.textContent).toBe('Lesson');
+      await typeValue(name,'Lesson two');
+      expect(name.getAttribute('aria-invalid')).toBe('false');
+      expect(container.querySelector('.project-row.active .project-select span')?.textContent).toBe('Lesson two');
+    } finally { prompt.mockRestore(); alert.mockRestore(); }
+  });
+  it('imports repeated projects with unique names and preserved source',async()=>{
+    const input=container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const file={size:100,text:async()=>JSON.stringify({id:'import',name:'Untitled program',code:'OUTPUT 91',tests:[]})};
+    for(let i=0;i<2;i++) {
+      Object.defineProperty(input,'files',{value:[file],configurable:true});
+      await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));
+      expect(codeEditor().value).toBe('OUTPUT 91');
+    }
+    expect([...container.querySelectorAll('.project-select span')].map(item=>item.textContent)).toEqual(['Untitled program','Untitled program (2)','Untitled program (3)']);
+  });
+  it('keeps the selected file when another tab closes and avoids repeated default filenames',async()=>{
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(true);
+    try {
+      await click(container.querySelector('[aria-label="New file"]')!);
+      await click(container.querySelector('[aria-label="New file"]')!);
+      await typeValue(codeEditor(),'OUTPUT "Selected"');
+      await click(container.querySelector('[aria-label="Close untitled-2.pico"]')!);
+      expect(codeEditor().value).toBe('OUTPUT "Selected"');
+      expect(container.querySelector('.file-tab.active .file-tab-select span')?.textContent).toBe('untitled-3.pico');
+      await click(container.querySelector('[aria-label="New file"]')!);
+      expect([...container.querySelectorAll('.file-tab-select span')].map(tab=>tab.textContent)).toEqual(['main.pico','untitled-3.pico','untitled-4.pico']);
+    } finally { confirm.mockRestore(); }
+  });
+  it('shows stopped debug runs in the Console instead of an empty debugger',async()=>{
+    await click(button('Debug'));
+    await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await click(button('Stop'));
+    expect(container.querySelector('.console-input-form')).toBeNull();
+    expect(container.querySelector('.runtime-error-card')?.textContent).toContain('Execution stopped.');
+    expect(container.querySelector('.debugger-panel')).toBeNull();
+  });
+  it('accepts REAL numbers and retries wrong types in the Console',async()=>{
+    await typeValue(codeEditor(),'DECLARE Value : REAL\nINPUT Value\nOUTPUT Value');
+    await click(button('Run⌘ ↵'));
+    await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await typeValue(consoleInput(),'hello');await submitInput();
+    expect(container.querySelector('.console-input-error')?.textContent).toContain('not a REAL');
+    await typeValue(consoleInput(),'5');await submitInput();
+    expect(container.querySelector('.console-input-form')).toBeNull();
+    expect(container.querySelector('.output-line:last-child')?.textContent).toBe('›5');
+  });
+  it('keeps project renaming in File and typing helpers in Settings',async()=>{
     const workspaceName = container.querySelector<HTMLInputElement>('.topbar [aria-label="Workspace name"]')!;
     vi.useFakeTimers();
     try {
@@ -105,10 +163,6 @@ describe('workspace execution integration',()=>{
     await click(button('File'));
     await typeValue(container.querySelector<HTMLInputElement>('[aria-label="Workspace name in File menu"]')!,'Greeting');
     expect(container.querySelector<HTMLInputElement>('.topbar [aria-label="Workspace name"]')?.value).toBe('Greeting');
-    await typeValue(codeEditor(),'IF TRUE THEN\nOUTPUT "Hello"\nENDIF');
-    await click(button('Format code'));
-    expect(codeEditor().value).toBe('IF TRUE THEN\n    OUTPUT "Hello"\nENDIF');
-    expect(container.querySelector('.file-menu')).toBeNull();
     await click(container.querySelector('[aria-label="Open settings"]')!);
     for (const label of ['Autocomplete','Autocorrect','Hover documentation']) {
       const control = container.querySelector<HTMLButtonElement>(`[role="switch"][aria-label="${label}"]`)!;

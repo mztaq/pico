@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { compile } from '../language';
+import { execute } from './interpreter';
 import { createInteractiveSession, type PendingInput, type WorkerReply } from './worker';
 
 function sessionFor(code: string, files: Record<string, string[]> = {}) {
@@ -22,6 +23,42 @@ function sessionFor(code: string, files: Record<string, string[]> = {}) {
 afterEach(() => vi.restoreAllMocks());
 
 describe('interactive execution', () => {
+  it.each(['5', '5.0', '.5', '5.', '-0.25', '+2', '1e3', '-2.5E-2', ' 3.5 '])('accepts REAL input %s in both execution modes', raw => {
+    const code = 'DECLARE Value : REAL\nINPUT Value\nOUTPUT Value + 1';
+    const run = sessionFor(code);
+    run.input(raw);
+    expect(run.result().error).toBeUndefined();
+    expect(run.result().result?.variables.Value).toBe(Number(raw));
+    expect(run.result().result?.output).toEqual(execute(compile(code).ast, [raw]).output);
+  });
+
+  it.each([
+    ['INTEGER', ['hello', '1.5', 'TRUE', '', '0x10', '9007199254740992'], '12'],
+    ['REAL', ['hello', 'TRUE', '', 'Infinity', 'NaN', '0x10', '1e309', '9007199254740993.0'], '1.5'],
+    ['BOOLEAN', ['hello', '1', '1.5', '', 'yes'], 'TRUE'],
+    ['CHAR', ['hello', '12', '', 'TRUE'], 'P'],
+  ])('retains state across repeated invalid %s inputs', (type, invalid, valid) => {
+    const code = `DECLARE Value : ${type}\nOUTPUT "Before"\nINPUT Value\nOUTPUT Value\nOUTPUT "After"`;
+    const run = sessionFor(code);
+    for (const value of invalid) {
+      run.input(value);
+      expect(run.request()).toMatchObject({ variable: 'Value', dataType: type, line: 3 });
+      expect(run.request().error).toBeTruthy();
+    }
+    run.input(valid);
+    expect(run.result().error).toBeUndefined();
+    expect(run.result().result?.output).toEqual(['Before', valid, 'After']);
+    expect(run.result().result?.output).toEqual(execute(compile(code).ast, [valid]).output);
+    for (const value of invalid) expect(() => execute(compile(code).ast, [value])).toThrow();
+  });
+
+  it('keeps numeric and boolean-looking STRING input as text', () => {
+    const run = sessionFor('DECLARE Text : STRING\nINPUT Text\nOUTPUT Text\nINPUT Text\nOUTPUT Text');
+    run.input('123');
+    run.input('TRUE');
+    expect(run.result().result?.output).toEqual(['123', 'TRUE']);
+    expect(run.result().result?.variables.Text).toBe('TRUE');
+  });
   it('prints each prompt before waiting, resumes loops and completes once', () => {
     const run = sessionFor('DECLARE N : INTEGER\nFOR I ← 1 TO 2\nOUTPUT "Number ", I\nINPUT N\nOUTPUT N * 2\nNEXT I');
     expect(run.messages[0]).toEqual({ type: 'output', lines: ['Number 1'] });
