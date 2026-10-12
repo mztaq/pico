@@ -265,7 +265,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
       doc: value,
       parent: host.current,
       extensions: [
-        placeholder(`Generate ${language === 'python' ? 'Python' : 'pseudocode'} code…\nMade by Mustaqim and Amar.`),
+        placeholder('Generate code…\nMade by Mustaqim and Amar.'),
         lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
         ...(language === 'python' ? [python()] : [pseudoLanguage, foldService.of(cambridgeFold)]), indentationGuides,
