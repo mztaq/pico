@@ -130,9 +130,13 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     const p=newChart('Practice flowchart');
     practiceLesson.current=p;setLesson(p);setSettingsOpen(false);enterLesson(0);
   }
+  function closeLesson() {
+    resetExecution();setTourStep(null);setSelected(null);setConnection(null);setPanel('console');setZoom(.85);
+    const complete={...store,tutorialCompleted:true};setStore(complete);try{saveCharts(complete);}catch{setSaveError(true);}
+  }
   function nextLesson() {
     if(tourStep===null||running||!lessonReady(tourStep,project,result,panel))return;
-    if(tourStep===9){resetExecution();setTourStep(null);setSelected(null);setConnection(null);setPanel('console');setZoom(.85);const complete={...store,tutorialCompleted:true};setStore(complete);try{saveCharts(complete);}catch{setSaveError(true);}return;}
+    if(tourStep===9){closeLesson();return;}
     // Keep output visible when moving from Run to conversion or into the finish screen.
     if(tourStep===7)setTourStep(tourStep+1);else enterLesson(tourStep+1);
   }
@@ -189,7 +193,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
       <details className="flow-routines" inert={tutorialActive}><summary>Subroutines</summary><p>Define procedures and functions for Subroutine blocks.</p><textarea aria-label="Flowchart subroutine definitions" maxLength={100000} rows={10} value={project.routines} disabled={running} spellCheck={false} placeholder={'PROCEDURE ShowResult()\n  OUTPUT "Done"\nENDPROCEDURE'} onChange={e=>update({...project,routines:e.target.value})}/></details>
       </aside>
     </div>
-    {tutorialActive&&<FlowchartTutorial step={tourStep} project={project} result={result} pending={Boolean(pending)} running={running} panel={panel} onNext={nextLesson} onBack={()=>enterLesson(Math.max(0,tourStep-1))}/>}
+    {tutorialActive&&<FlowchartTutorial step={tourStep} project={project} result={result} pending={Boolean(pending)} running={running} panel={panel} onNext={nextLesson} onBack={()=>enterLesson(Math.max(0,tourStep-1))} onSkip={closeLesson}/>}
     {settingsOpen&&<div className="flow-settings" ref={settingsRef} role="dialog" aria-label="Flowchart appearance"><header><strong>Appearance</strong><button aria-label="Close flowchart settings" onClick={()=>setSettingsOpen(false)}><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id}))}/></div>}
 
   </div>;

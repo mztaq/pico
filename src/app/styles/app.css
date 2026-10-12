@@ -159,13 +159,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .editor-split { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 278px; gap: 9px; padding: 10px 10px 8px; }
 .editor-card, .reference-card { min-width: 0; min-height: 0; border: 1px solid #252833; border-radius: 8px; background: var(--surface); overflow: hidden; }
 .editor-card { display: flex; flex-direction: column; }
-.editor-card-head { height: 37px; flex: 0 0 37px; display: flex; align-items: center; justify-content: space-between; padding: 0 13px; border-bottom: 1px solid #22252e; color: #8e93a1; }
-.editor-card-title, .editor-card-meta { display: flex; align-items: center; gap: 8px; }
-.editor-card-title { color: #c8c9d3; font-size: 10px; font-weight: 600; }
-.editor-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #83cfaa; box-shadow: 0 0 7px rgba(131,207,170,.24); }
-.line-count { padding-left: 8px; border-left: 1px solid #30333d; color: #737886; font-family: var(--font-code); font-size: 8px; font-weight: 400; }
-.editor-card-meta { color: #777c89; font-family: var(--font-code); font-size: 8px; }
-.mono-tag { padding: 2px 4px; border: 1px solid #393748; border-radius: 3px; color: #aaa4ef; font-size: 7px; }
 .editor-body { min-height: 0; flex: 1; position: relative; overflow: hidden; }
 .code-editor { width: 100%; height: 100%; overflow: hidden; }
 .cm-editor { height: 100%; }
@@ -432,8 +425,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
   .workspace-main { grid-template-rows: auto minmax(220px, 1fr) minmax(190px, 38%); }
   .editor-preferences { flex: 1; }
   .toggle-chip { gap: 4px; padding-inline: 4px; font-size: 7px; }
-  .editor-card-meta { display: none; }
-  .editor-card-head { padding-inline: 9px; }
   .editor-card-foot { padding-inline: 8px; }
   .debugger-content { grid-template-columns: 70px minmax(100px, 1fr); }
   .debug-stdout { display: none; }
@@ -491,7 +482,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .pico-app[data-pico-theme] .reference-card { background: var(--surface); color: var(--text); border-color: var(--border); }
 .pico-app[data-pico-theme] .workspace-main { background: var(--bg); }
 .pico-app[data-pico-theme] .dock-tab-row,
-.pico-app[data-pico-theme] .editor-card-head,
 .pico-app[data-pico-theme] .reference-head { background: var(--surface-raised); border-color: var(--border); }
 .pico-app[data-pico-theme] .reference-search,
 .pico-app[data-pico-theme] .test-columns textarea,

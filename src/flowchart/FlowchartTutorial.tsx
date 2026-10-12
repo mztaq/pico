@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FlowchartProject } from './model';
 import type { RunResult } from '../runtime/interpreter';
 export const TUTORIAL_STEPS=10;
-interface Props {step:number;project:FlowchartProject;result:RunResult|null;pending:boolean;running:boolean;panel:string;onNext:()=>void;onBack:()=>void;}
+interface Props {step:number;project:FlowchartProject;result:RunResult|null;pending:boolean;running:boolean;panel:string;onNext:()=>void;onBack:()=>void;onSkip:()=>void;}
 export function lessonReady(step:number,project:FlowchartProject,result:RunResult|null,panel:string):boolean {
   const output=project.nodes.find(n=>n.kind==='output'),start=project.nodes.find(n=>n.kind==='start'),end=project.nodes.find(n=>n.kind==='end');
   if(step===1)return Boolean(start);
@@ -15,7 +15,7 @@ export function lessonReady(step:number,project:FlowchartProject,result:RunResul
   if(step===8)return panel==='pseudocode';
   return true;
 }
-export function FlowchartTutorial({step,project,result,pending,running,panel,onNext,onBack}:Props) {
+export function FlowchartTutorial({step,project,result,pending,running,panel,onNext,onBack,onSkip}:Props) {
   const ready=lessonReady(step,project,result,panel);
   const card=useRef<HTMLElement>(null);
   const instructions=[
@@ -67,7 +67,7 @@ export function FlowchartTutorial({step,project,result,pending,running,panel,onN
       <h2 id="flow-tour-title">{instructions[step][0]}</h2><p id="flow-tour-description">{instructions[step][1]}</p>
       {step===3&&<pre>"Hello, Pico!"</pre>}
       {step>0&&step<9&&<p className={`flow-tour-task ${ready?'is-complete':''}`} role="status">{ready?'Done. Select Next.':'Follow the highlighted step.'}</p>}
-      <div className="flow-tour-actions">{step>0&&<button type="button" disabled={running} onClick={onBack}>Back</button>}<button className="run-button" type="button" disabled={!ready||running} onClick={onNext}>{step===0?'Start walkthrough':step===9?'Finish walkthrough':'Next'}</button></div>
+      <div className="flow-tour-actions"><button className="flow-tour-skip" type="button" onClick={onSkip}>Skip tutorial</button>{step>0&&<button type="button" disabled={running} onClick={onBack}>Back</button>}<button className="run-button" type="button" disabled={!ready||running} onClick={onNext}>{step===0?'Start walkthrough':step===9?'Finish walkthrough':'Next'}</button></div>
     </section>
   </div>;
 }
