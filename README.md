@@ -4,7 +4,7 @@
 
 <h1 align="center">PICO</h1>
 
-<p align="center">Write, run and debug pseudocode and Python in your browser.</p>
+<p align="center">Build flowcharts, write code and run algorithms in your browser.</p>
 
 <p align="center">
   <a href="https://picompiler.pages.dev">Open Pico</a> · 
@@ -25,7 +25,7 @@ Created by **Amar** and **Mustaqim** for students learning to turn algorithms in
 
 ## Getting started
 
-Open [Pico](https://picompiler.pages.dev), choose **Pseudocode Compiler** or **Python Compiler**, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
+Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, or **Flowchart Builder**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
 
 ```text
 DECLARE Name : STRING
@@ -52,12 +52,27 @@ When execution reaches `INPUT`, type your value in the Console and press Enter. 
 | **Editor** | A 19px default font, syntax colouring, declared-name autocomplete, indentation guides, folding, search and keyword documentation. |
 | **Console** | Accepts input while the program waits. Keeps output and submitted values in order, with fatal errors shown in red. |
 | **Debugger** | Replays recorded execution steps with variable values and output. |
-| **Flowchart** | Shows the paths through pseudocode programs. |
+| **Flowchart Builder** | Drag editable blocks onto a canvas, connect branches and loops, run with typed console input, and convert to pseudocode. |
+| **Flowchart view** | Shows the paths through pseudocode programs in the compiler dock. |
 | **Projects** | Keeps source tabs and practice files together in horizontal workspace tabs. Workspace names are unique, ignoring case and extra spaces. |
 | **Quick reference** | Provides selectable examples with syntax colouring, adjustable text size and keyword search. |
 | **Appearance** | Offers editor themes, high-contrast palettes, resizable panels and layout settings. Catppuccin Mocha is the first-launch default. |
 
 Projects and settings save in this browser. Export a `.pico` copy to back up your work or move it to another device. Pseudocode and Python projects use separate storage. Python `.py` tabs also work as importable modules; pseudocode tabs run independently.
+
+## Flowchart Builder
+
+Choose **Flowchart Builder** on the home screen. Drag a block from the palette, or click it to add one. Select a block to edit its expression and type. Click an outgoing port, then a destination block, or use the destination selectors in Block settings. A decision has separate **Yes** and **No** ports. Connect a branch back to an earlier decision or process to make a loop.
+
+The editor uses terminal ovals, input/output parallelograms, process rectangles, decision diamonds, and subroutine rectangles with side bars. Typed Input blocks introduce scalar variables. Variable blocks declare additional variables or arrays before the chart runs. Process blocks accept one assignment or file instruction. Subroutine blocks call procedures defined in the Subroutines panel.
+
+**Run** executes the connected path through Pico’s existing pseudocode worker. The console waits for input and terminates on invalid typed values. **Stop** ends the worker, including an infinite loop. **Debug** records variables and highlights the corresponding blocks as you step through the trace.
+
+**Convert to pseudocode** produces selectable, highlighted code with Copy, Download `.pico`, and **Open in Pseudocode Compiler** actions. Opening code creates a new compiler workspace. Standard selections and pre-test loops convert to `IF` and `WHILE`. More complex connections use a generated control variable with `WHILE` and `CASE` to preserve their exact behaviour. Variables are declared before execution, and assignment types are inferred using Pico’s existing declaration logic.
+
+Examples include greetings, multiplication, choosing the larger number, a temperature decision, and a counting loop. Every block must connect to Start, each outgoing port needs one destination, and every chart needs one Start and at least one End. Errors identify the relevant block. An End still appears in the chart even when a loop’s condition prevents reaching it during a particular run.
+
+Flowchart workspaces save separately from compiler projects. Use Export/Import `.picochart` to back up an editable chart or move it between devices. The canvas supports zoom, panning, keyboard movement, and undo/redo. The console divider resizes, and the appearance settings share Pico’s themes. Flowchart workspaces support up to 250 blocks each, with up to 50 workspaces per browser.
 
 ## Language support
 
