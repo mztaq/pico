@@ -40,7 +40,7 @@
 .flow-canvas-toolbar button:hover { background: var(--surface-hover); }
 .flow-viewport { flex: 1; min-height: 160px; overflow: auto; background-color: var(--bg); background-image: radial-gradient(var(--border) .8px, transparent .8px); background-size: 16px 16px; cursor: grab; touch-action: none; }
 .flow-viewport.is-connecting { cursor: crosshair; }
-.flow-plane-space { position: relative; }
+.flow-plane-space { position: relative; margin-inline: auto; }
 .flow-plane { position: relative; transform-origin: 0 0; }
 .flow-connections { position: absolute; inset: 0; pointer-events: none; overflow: visible; color: var(--muted); }
 .flow-edge > path { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linejoin: round; }

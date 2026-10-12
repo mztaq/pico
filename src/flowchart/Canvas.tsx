@@ -1,4 +1,4 @@
-import { useRef, useId, type PointerEvent } from 'react';
+import { useRef, useId, useEffect, type PointerEvent } from 'react';
 import { BLOCKS, NODE_HEIGHT as H, NODE_WIDTH as W, createNode, nodeLabel, ports, type ChartNode, type FlowchartProject, type NodeKind, type Port } from './model';
 
 interface CanvasProps {
@@ -29,6 +29,12 @@ export function ChartCanvas({project,selected,activeNode,errorNode,connection,zo
   const pan=useRef<{pointerId:number;x:number;y:number;left:number;top:number}|null>(null);
   const moved=useRef(false);const marker=useId().replace(/:/g,'');
   const width=Math.max(1080,...project.nodes.map(n=>n.x+W+180)),height=Math.max(900,...project.nodes.map(n=>n.y+H+180));
+  useEffect(()=>{
+    const id=activeNode??errorNode;
+    if(!id)return;
+    const node=Array.from(plane.current?.querySelectorAll<HTMLElement>('.flow-node')??[]).find(element=>element.dataset.nodeId===id);
+    node?.scrollIntoView?.({block:'nearest',inline:'nearest'});
+  },[activeNode,errorNode,zoom]);
   function startDrag(event:PointerEvent<HTMLDivElement>,node:ChartNode) {
     if(disabled||connection||event.button!==0||(event.target as HTMLElement).closest('button'))return;
     event.preventDefault();event.stopPropagation();onSelect(node.id);moved.current=false;
@@ -55,6 +61,7 @@ export function ChartCanvas({project,selected,activeNode,errorNode,connection,zo
     const d=drag.current;if(!d||d.pointerId!==event.pointerId)return;drag.current=null;
     if(!cancel&&moved.current)onChange({...project,nodes:project.nodes.map(n=>n.id===d.id?d.node:n)});
     else {
+      moved.current=false;
       event.currentTarget.style.left=`${d.x}px`;event.currentTarget.style.top=`${d.y}px`;
       plane.current?.querySelectorAll<SVGPathElement>('path[data-edge]').forEach(path=>{
         const edge=project.edges.find(e=>e.id===path.dataset.edge),source=project.nodes.find(n=>n.id===edge?.from),target=project.nodes.find(n=>n.id===edge?.to);
