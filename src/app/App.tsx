@@ -23,6 +23,8 @@ import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen, Credits } from './components/HomeScreen';
 import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
+import { FlowchartWorkspace } from '../flowchart/FlowchartWorkspace';
+import type { ChartStore } from '../flowchart/storage';
 import { MAX_CONSOLE_LINES } from '../runtime/python/config';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
 import '../app/styles/app.css';
@@ -47,13 +49,23 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 export default function App() {
-  const [language, setLanguage] = useState<CompilerLanguage | null>(null);
+  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | null>(null);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
+  const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
-    if (language) snapshots.current[language] = snapshot;
+    if (language && language !== 'flowchart') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
   if (!language) return <HomeScreen onChoose={setLanguage} />;
+  if (language === 'flowchart') return <FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
+    charts.current = store;
+    const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');
+    const project = newProject(uniqueProjectName(name, projects), 'pseudocode');
+    project.code = code;
+    project.files[0].code = code;
+    snapshots.current.pseudocode = { projects: [...projects, project], activeId: project.id };
+    setLanguage('pseudocode');
+  }} />;
   return <Workspace key={language} language={language} snapshot={snapshots.current[language]} onChoose={(next, snapshot) => navigate(next, snapshot)} onHome={snapshot => navigate(null, snapshot)} />;
 }
 export function Workspace({ language, snapshot, onChoose, onHome }: { language: CompilerLanguage; snapshot?: WorkspaceSnapshot; onChoose: (language: CompilerLanguage, snapshot: WorkspaceSnapshot) => void; onHome: (snapshot: WorkspaceSnapshot) => void }) {

@@ -25,9 +25,9 @@ beforeEach(async()=>{
   container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
-it('opens on a themed home screen with both compiler choices and creator credits',()=>{
+it('opens on a themed home screen with all workspace choices and creator credits',()=>{
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler']);
+  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder']);
   expect(container.querySelector('.home-credits')?.textContent).toContain('Mustaqim');expect(container.querySelector('.home-credits')?.textContent).toContain('Amar');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
