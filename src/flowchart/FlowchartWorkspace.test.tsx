@@ -73,13 +73,23 @@ async function requiredWalkthrough() {
   expect(button('Next').disabled).toBe(true);await click(button('Run'));await click(button('Next'));
   await click(button('Convert to pseudocode'));await click(button('Next'));await click(button('Finish walkthrough'));
 }
-it('requires the full tutorial once, ignores Escape, and preserves saved charts',async()=>{
+it('supports completing the full tutorial and preserves saved charts',async()=>{
   const previous=loadCharts();await act(async()=>root.unmount());saveCharts({...previous,tutorialCompleted:false});root=createRoot(container);await act(async()=>root.render(<App/>));await open();
-  expect(container.querySelector('#flow-tour-title')?.textContent).toBe('Learn the flowchart workspace');expect(button('Skip')).toBeUndefined();
+  expect(container.querySelector('#flow-tour-title')?.textContent).toBe('Learn the flowchart workspace');expect(button('Skip tutorial')).toBeDefined();
   await act(async()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   expect(container.querySelector('.flow-tutorial')).not.toBeNull();expect(container.querySelector<HTMLButtonElement>('[aria-label="Go to home screen"]')!.disabled).toBe(true);
   await requiredWalkthrough();expect(container.querySelector('.flow-tutorial')).toBeNull();expect(container.querySelectorAll('.flow-node')).toHaveLength(5);
   await click(container.querySelector('[aria-label="Go to home screen"]')!);expect(loadCharts().tutorialCompleted).toBe(true);expect(loadCharts().projects).toEqual(previous.projects);await open();expect(container.querySelector('.flow-tutorial')).toBeNull();
+});
+it.each([false,true])('skips the tutorial, preserves user charts and remembers dismissal (practice started: %s)',async started=>{
+  const previous=loadCharts();await act(async()=>root.unmount());saveCharts({...previous,tutorialCompleted:false});root=createRoot(container);await act(async()=>root.render(<App/>));await open();
+  if(started){await click(button('Start walkthrough'));await click(container.querySelector<HTMLElement>('.flow-palette-block.flow-kind-start')!);}
+  await click(button('Skip tutorial'));
+  expect(container.querySelector('.flow-tutorial')).toBeNull();expect(container.querySelectorAll('.flow-node')).toHaveLength(5);
+  expect(loadCharts().tutorialCompleted).toBe(true);expect(loadCharts().projects).toEqual(previous.projects);
+  expect(container.querySelector<HTMLButtonElement>('[aria-label="Go to home screen"]')!.disabled).toBe(false);
+  await click(container.querySelector('[aria-label="Go to home screen"]')!);await open();expect(container.querySelector('.flow-tutorial')).toBeNull();
+  await click(button('Help'));expect(container.querySelector('.flow-tutorial')).not.toBeNull();await click(button('Skip tutorial'));expect(container.querySelector('.flow-tutorial')).toBeNull();
 });
 it('opens new workspaces on an empty canvas without examples or a Variable block',async()=>{
   await click(container.querySelector('[aria-label="New flowchart workspace"]')!);

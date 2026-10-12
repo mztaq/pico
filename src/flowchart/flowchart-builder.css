@@ -104,7 +104,7 @@
 .flow-port { touch-action: none; }
 .flow-tutorial { position: fixed; inset: 0; z-index: 1400; pointer-events: none; }
 .flow-tour-shade { position: fixed; inset: 0; pointer-events: none; }
-.flow-tour-shade path { fill: color-mix(in srgb, var(--bg) 18%, transparent); pointer-events: visiblePainted; }
+.flow-tour-shade path { fill: rgba(0,0,0,.28); pointer-events: visiblePainted; }
 .flow-tour-outline { position: fixed; border: 2px solid var(--accent); border-radius: 3px; pointer-events: none; }
 .flow-tour-card { position: fixed; width: min(380px, calc(100vw - 32px)); padding: 23px; background: var(--surface-raised); color: var(--text); border: 1px solid var(--accent); border-radius: 4px; pointer-events: auto; max-height: calc(100dvh - 32px); overflow: auto; animation: flow-guide-in .18s ease both; }
 .flow-tour-card.at-bottom { bottom: 18px; right: 18px; }
@@ -117,6 +117,7 @@
 .flow-tour-card pre { padding: 10px; margin: 12px 0; font: 14px var(--font-code); color: var(--syntax-string); border: 1px solid var(--border); border-radius: 6px; background: var(--surface-input); }
 .flow-tour-card .flow-tour-task { margin-top: 16px; display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }.flow-tour-task.is-complete { color: var(--accent); }
 .flow-tour-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; margin-top: 20px; }
+.flow-tour-actions > .flow-tour-skip { margin-right: auto; }
 .flow-tour-actions > button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 12px; }.flow-tour-actions > .run-button { background: var(--accent); color: var(--on-accent); }
 .flow-tour-actions button:disabled { opacity: .45; cursor: default; }
 @keyframes flow-guide-in { from { opacity: 0; } to { opacity: 1; } }
