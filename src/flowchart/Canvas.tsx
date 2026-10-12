@@ -128,7 +128,7 @@ export function ChartCanvas({project,selected,activeNode,errorNode,connection,zo
     if(event.button!==0||(event.target as HTMLElement).closest('.flow-node'))return;
     onSelect(null);pan.current={pointerId:event.pointerId,x:event.clientX,y:event.clientY,left:event.currentTarget.scrollLeft,top:event.currentTarget.scrollTop};event.currentTarget.setPointerCapture?.(event.pointerId);
   }} onPointerMove={event=>{const p=pan.current;if(p?.pointerId===event.pointerId){event.currentTarget.scrollLeft=p.left-event.clientX+p.x;event.currentTarget.scrollTop=p.top-event.clientY+p.y;}}} onPointerUp={()=>{pan.current=null;}} onPointerCancel={()=>{pan.current=null;}}>
-    {!project.nodes.length&&<div className="flow-empty-canvas"><strong>Generate your flowchart</strong><p>Made by Mustaqim and Amar.</p><span>Drag a Start block onto the canvas to begin.</span></div>}
+    {!project.nodes.length&&<div className="flow-empty-canvas"><strong>Start your flowchart.</strong><p className="pico-placeholder-credit">Made by <strong>Mustaqim</strong> and <strong>Amar</strong>.</p><span>Drag Start onto the canvas.</span></div>}
     <div className="flow-plane-space" style={{width:width*zoom,height:height*zoom}}><div className="flow-plane" ref={plane} style={{width,height,transform:`scale(${zoom})`}}>
       <svg className="flow-connections" width={width} height={height} aria-label="Connections">
         <defs><marker id={marker} markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M 0 0 L 8 4.5 L 0 9 Z" fill="currentColor"/></marker></defs>

@@ -32,6 +32,22 @@ const INDENT_TEXT = ' '.repeat(INDENT_WIDTH);
 /** Matches the editor content padding so guides line up with the first column. */
 const CONTENT_PADDING = '12px';
 
+function emptyEditorHint() {
+  const hint = document.createElement('span');
+  hint.className = 'pico-editor-hint';
+  const title = document.createElement('span');
+  title.textContent = 'Start typing your code.';
+  const credit = document.createElement('span');
+  credit.className = 'pico-placeholder-credit';
+  const mustaqim = document.createElement('strong');
+  mustaqim.textContent = 'Mustaqim';
+  const amar = document.createElement('strong');
+  amar.textContent = 'Amar';
+  credit.append('Made by ', mustaqim, ' and ', amar, '.');
+  hint.append(title, credit);
+  return hint;
+}
+
 /** Editor chrome and syntax colours for one theme. */
 function themeExtensions(theme: PicoTheme): Extension[] {
   const { ui, syntax } = theme;
@@ -265,7 +281,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
       doc: value,
       parent: host.current,
       extensions: [
-        placeholder('Generate code…\nMade by Mustaqim and Amar.'),
+        placeholder(emptyEditorHint),
         lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
         ...(language === 'python' ? [python()] : [pseudoLanguage, foldService.of(cambridgeFold)]), indentationGuides,

@@ -1,4 +1,3 @@
-import { ArrowRight, Code2, FileCode2, GitBranch } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
@@ -22,17 +21,17 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     <h1>Choose your workspace</h1>
     <div className="compiler-choices">
       <button className="compiler-choice" onClick={() => onChoose('pseudocode')}>
-        <div className="compiler-choice-title"><FileCode2 size={25} /><h2>Pseudocode Compiler</h2><ArrowRight size={22} /></div>
+        <div className="compiler-choice-title"><h2>Pseudocode Compiler</h2><span>Open</span></div>
         <p>Run .pico programs with typed input and a debugger.</p>
         <pre aria-hidden="true"><HighlightedCode code={'DECLARE Name : STRING\nINPUT Name\nOUTPUT "Hello ", Name, "!"'} /></pre>
       </button>
       <button className="compiler-choice" onClick={() => onChoose('python')}>
-        <div className="compiler-choice-title"><Code2 size={25} /><h2>Python Compiler</h2><ArrowRight size={22} /></div>
+        <div className="compiler-choice-title"><h2>Python Compiler</h2><span>Open</span></div>
         <p>Run Python with console input and a debugger.</p>
         <pre aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
       </button>
       <button className="compiler-choice" onClick={() => onChoose('flowchart')}>
-        <div className="compiler-choice-title"><GitBranch size={25} /><h2>Flowchart Builder</h2><ArrowRight size={22} /></div>
+        <div className="compiler-choice-title"><h2>Flowchart Builder</h2><span>Open</span></div>
         <p>Drag blocks, connect steps, and run your flowchart.</p>
 
       </button>

@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, GitBranch } from 'lucide-react';
 import type { FlowchartProject } from './model';
 import type { RunResult } from '../runtime/interpreter';
 export const TUTORIAL_STEPS=10;
@@ -20,19 +19,19 @@ export function FlowchartTutorial({step,project,result,pending,running,panel,onN
   const ready=lessonReady(step,project,result,panel);
   const card=useRef<HTMLElement>(null);
   const instructions=[
-    ['Learn the flowchart workspace','Complete this walkthrough before using the builder. You’ll create your own practice chart, drag connections, run it, and convert it to pseudocode. Your saved charts stay untouched.'],
-    ['Add Start','Drag Start from the Blocks palette onto the empty canvas. Start marks where execution begins. Clicking the block in the palette also adds it.'],
-    ['Add Output','Drag Output onto the canvas below Start. Each block represents one step. Drag a block on the canvas to arrange it.'],
-    ['Edit what it prints','Select your Output block. In Block settings, replace its expression with "Hello, Pico!", including the quotation marks.'],
-    ['Add End','Drag End onto the canvas below Output. End marks where the program finishes.'],
-    ['Connect Start to Output','Hold the round port below Start. Drag its line onto Output and release. The arrow shows which step runs next.'],
-    ['Connect Output to End','Drag from the round port below Output onto End. Dropping a line on empty space leaves the chart unchanged. Escape cancels a line drag.'],
-    ['Run your flowchart','Press Run. The console should display Hello, Pico! Input blocks wait for a typed value here. Invalid values end the run and highlight the affected block in red. Stop ends execution.'],
-    ['Convert it to pseudocode','Press Convert to pseudocode. The panel shows the program behind your chart. Later, copy or download the code, or open it in a new compiler workspace.'],
-    ['You’re ready to build','Input reads a value. Process calculates or assigns it. Decision uses Yes and No branches. Connect a branch back to an earlier block to make a loop. Debug records steps. Your work saves automatically. Help replays this walkthrough.'],
+    ['Learn the flowchart workspace','Build a three-block program. Follow each highlighted step.'],
+    ['Add Start','Drag Start onto the canvas, or click it in Blocks.'],
+    ['Add Output','Drag Output below Start, or click it in Blocks.'],
+    ['Edit what it prints','Type this into the highlighted field, including the quotes.'],
+    ['Add End','Drag End below Output, or click it in Blocks.'],
+    ['Connect Start to Output','Drag the highlighted dot below Start onto Output.'],
+    ['Connect Output to End','Drag the highlighted dot below Output onto End.'],
+    ['Run your flowchart','Click Run. Your message appears in the console below.'],
+    ['Convert it to pseudocode','Click Convert to pseudocode to see your chart as code.'],
+    ['You’re ready to build','Start your own chart. Open Help to repeat these steps.'],
   ];
   const addKind=step===1?'start':step===2?'output':step===4?'end':null;
-  const selectors=addKind?[`.flow-palette-block.flow-kind-${addKind}`,'.flow-viewport']:step===3?['.flow-inspector [aria-label="Block expression"]']:step===5||step===6?['.flow-viewport']:step===7?['.flow-builder > .topbar .run-button','.flow-dock']:step===8?['.flow-convert-button','.flow-code-panel']:[];
+  const selectors=addKind?[`.flow-palette-block.flow-kind-${addKind}`,'.flow-viewport']:step===3?['.flow-inspector [aria-label="Block expression"]']:step===5?['.flow-node.flow-kind-start .port-next','.flow-node.flow-kind-output']:step===6?['.flow-node.flow-kind-output .port-next','.flow-node.flow-kind-end']:step===7?['.flow-builder > .topbar .run-button','.flow-dock']:step===8?['.flow-convert-button','.flow-code-panel']:[];
   const key=selectors.join('|');
   const [rects,setRects]=useState<{x:number;y:number;width:number;height:number}[]>([]);
   useLayoutEffect(()=>{
@@ -64,11 +63,11 @@ export function FlowchartTutorial({step,project,result,pending,running,panel,onN
     <svg className="flow-tour-shade" width="100%" height="100%" aria-hidden="true"><path d={`M 0 0 H ${window.innerWidth} V ${window.innerHeight} H 0 Z ${outline}`} fillRule="evenodd"/></svg>
     {rects.map((r,i)=><div key={i} className="flow-tour-outline" style={{left:r.x,top:r.y,width:r.width,height:r.height}}/>)}
     <section className={`flow-tour-card ${focused}`} ref={card} role="dialog" aria-modal="true" aria-labelledby="flow-tour-title" aria-describedby="flow-tour-description">
-      <div className="flow-tour-progress"><GitBranch size={17}/><span>Flowchart walkthrough</span><strong>{step+1} / {TUTORIAL_STEPS}</strong></div>
+      <div className="flow-tour-progress"><span>Flowchart tutorial</span><strong>{step+1} / {TUTORIAL_STEPS}</strong></div>
       <h2 id="flow-tour-title">{instructions[step][0]}</h2><p id="flow-tour-description">{instructions[step][1]}</p>
       {step===3&&<pre>"Hello, Pico!"</pre>}
-      {step>0&&step<9&&<p className={`flow-tour-task ${ready?'is-complete':''}`} role="status">{ready?<><Check size={15}/>Step complete</>:'Complete this step to continue.'}</p>}
-      <div className="flow-tour-actions">{step>0&&<button type="button" disabled={running} onClick={onBack}><ArrowLeft size={15}/>Back</button>}<button className="run-button" type="button" disabled={!ready||running} onClick={onNext}>{step===0?'Start walkthrough':step===9?'Finish walkthrough':'Next'}<ArrowRight size={15}/></button></div>
+      {step>0&&step<9&&<p className={`flow-tour-task ${ready?'is-complete':''}`} role="status">{ready?'Done. Select Next.':'Follow the highlighted step.'}</p>}
+      <div className="flow-tour-actions">{step>0&&<button type="button" disabled={running} onClick={onBack}>Back</button>}<button className="run-button" type="button" disabled={!ready||running} onClick={onNext}>{step===0?'Start walkthrough':step===9?'Finish walkthrough':'Next'}</button></div>
     </section>
   </div>;
 }
