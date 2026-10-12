@@ -13,6 +13,28 @@ import { completionSource } from './completions';
 
 let view: EditorView | undefined;
 afterEach(() => { view?.destroy(); view = undefined; });
+
+it.each(['python', 'pseudocode'] as const)('shows highlighted credits only while the %s editor is empty', async language => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    const render = (value: string) => root.render(<CodeEditor language={language} value={value} onChange={() => {}} preferences={defaultSettings} theme={getTheme(defaultSettings.theme)} />);
+    await act(async () => render(''));
+    expect(host.querySelector('.cm-placeholder')?.textContent).toContain('Start typing your code.');
+    expect([...host.querySelectorAll('.cm-placeholder strong')].map(e => e.textContent)).toEqual(['Mustaqim', 'Amar']);
+    expect(EditorView.findFromDOM(host.querySelector('.cm-editor')!)?.state.doc.toString()).toBe('');
+    await act(async () => render(language === 'python' ? 'print(1)' : 'OUTPUT 1'));
+    expect(host.querySelector('.cm-placeholder')).toBeNull();
+    await act(async () => render(''));
+    expect(host.querySelector('.cm-placeholder')).not.toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+    vi.unstubAllGlobals();
+  }
+});
 function editor(autocomplete = true) {
   const doc = 'DECLARE StudentName : STRING\nOUTPUT Stud';
   view = new EditorView({ state: EditorState.create({ doc, selection: { anchor: doc.length },

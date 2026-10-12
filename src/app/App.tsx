@@ -3,7 +3,7 @@ import { BookOpen, ArrowLeft, ChevronDown, CircleHelp, Code2, Download, FileCode
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
-import { ConsolePanel, DebuggerPanel, FlowchartDock, panelIcon, type PanelKey, type ConsoleEntry } from './components/Panels';
+import { ConsolePanel, DebuggerPanel, panelIcon, type PanelKey, type ConsoleEntry } from './components/Panels';
 import { findSuggestions, friendlyError, documentationFor, type Suggestion } from '../runtime/diagnostics';
 import type { RunResult } from '../runtime/interpreter';
 import { startExecution, type ExecutionJob } from '../runtime/runner';
@@ -42,7 +42,6 @@ import './styles/compiler-workspace.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' },
-  { key: 'flowchart', title: 'Flowchart' },
 ];
 
 interface ParseState { ast: Program | null; error: unknown | null; }
@@ -327,7 +326,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   function applyLayoutPreset(preset: PicoSettings['layoutPreset']) {
     const presets: Record<Exclude<PicoSettings['layoutPreset'], 'custom'>, Partial<PicoSettings>> = {
       coding: { sidebarVisible: true, referenceVisible: true, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 360, dockSize: 33, panelOrder: [...defaultPanelOrder] },
-      debugging: { sidebarVisible: true, referenceVisible: false, sidebarSide: 'left', dockSide: 'right', sidebarWidth: 226, referenceWidth: 360, dockSize: 42, panelOrder: ['debugger','console','flowchart'] },
+      debugging: { sidebarVisible: true, referenceVisible: false, sidebarSide: 'left', dockSide: 'right', sidebarWidth: 226, referenceWidth: 360, dockSize: 42, panelOrder: ['debugger','console'] },
       focus: { sidebarVisible: false, referenceVisible: false, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 360, dockSize: 28, panelOrder: [...defaultPanelOrder] },
     };
     changeSettings({ ...(presets[preset as Exclude<PicoSettings['layoutPreset'], 'custom'>] ?? {}), layoutPreset: preset });
@@ -357,7 +356,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
 
   const tutorialReference = tutorialOpen && tutorialSteps[tutorialStep]?.target === 'reference';
   const layout = tutorialOpen ? { ...settings, dockSide: 'bottom' as const, referenceVisible: tutorialReference } : settings;
-  const orderedTabs = settings.panelOrder.filter(key => !isPython || key !== 'flowchart').map(key => panelTabs.find(tab => tab.key === key)).filter(Boolean) as typeof panelTabs;
+  const orderedTabs = settings.panelOrder.map(key => panelTabs.find(tab => tab.key === key)).filter(Boolean) as typeof panelTabs;
   const shownTerms = referenceTerms.filter(term => term.includes(docSearch.trim().toUpperCase()));
   const currentExample: ReferenceExample = referenceExamples[selectedDoc];
   const currentDoc = documentationFor(selectedDoc) ?? 'Select a Cambridge pseudocode keyword to read its quick explanation.';
@@ -447,7 +446,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           <div className="dock-content" role="tabpanel" key={activePanel}>
             {activePanel === 'console' && <><ConsolePanel entries={consoleEntries} error={executionError ?? parseError} onErrorClick={() => { const line = (executionError ?? parseError)?.line; if (line) editorRef.current?.goToLine(line); }} pendingInput={pendingInput} inputValue={inputValue} onInput={setInputValue} onSubmit={submitConsoleInput} running={running} ran={Boolean(result)} status={runStatus} outputTruncated={outputTruncated} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
             {activePanel === 'debugger' && <DebuggerPanel language={language} trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} truncated={result?.traceTruncated} error={executionError?.message} />}
-            {activePanel === 'flowchart' && <FlowchartDock ast={parsed.ast} error={parseError?.message} />}
           </div>
         </section>
       </main>
@@ -465,7 +463,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () =
 function SettingRow({ title, detail, checked, onChange }: { title: string; detail: string; checked: boolean; onChange: (value: boolean) => void }) { return <div className="setting-row"><div><strong>{title}</strong><small>{detail}</small></div><Toggle label={title} checked={checked} onChange={() => onChange(!checked)} /></div>; }
 function BrandMark() { return <svg className="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="8" fill="#8179ef"/><path d="M9 7.5h7.6a4.4 4.4 0 0 1 0 8.8H12v4.2H9V7.5Zm3 2.8v3.2h4.3a1.6 1.6 0 0 0 0-3.2H12Z" fill="#11121a"/><circle cx="19.5" cy="20.5" r="1.5" fill="#c9c4ff"/></svg>; }
 
-const defaultPanelOrder: PanelKey[] = ['console','debugger','flowchart'];
+const defaultPanelOrder: PanelKey[] = ['console','debugger'];
 function PracticeFiles({files,onChange}:{files:Record<string,string[]>;onChange:(files:Record<string,string[]>)=>void}) {
   const [name,setName]=useState('');
   return <details className="practice-files"><summary>Project practice files ({Object.keys(files).length})</summary><p>Text files used by OPENFILE. Saved with this project.</p>{Object.entries(files).map(([filename,lines])=><label key={filename}><span>{filename}</span><textarea aria-label={`Contents of ${filename}`} value={lines.join('\n')} onChange={event=>onChange({...files,[filename]:event.target.value===''?[]:event.target.value.split(/\r?\n/)})} /></label>)}<div><input aria-label="New practice filename" placeholder="data.txt" value={name} onChange={event=>setName(event.target.value)} /><button className="subtle-button" disabled={!name.trim()||Object.hasOwn(files,name.trim())} onClick={()=>{onChange({...files,[name.trim()]:[]});setName('');}}>Add file</button></div></details>;

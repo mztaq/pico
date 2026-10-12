@@ -54,10 +54,11 @@ describe('workspace execution integration',()=>{
     expect(container.querySelector('.pico-app')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
     expect(button('Run⌘ ↵').closest('.topbar')).not.toBeNull();
     expect(container.querySelector('.command-bar')).toBeNull();
+    expect(codeEditor().value).toBe('');await typeValue(codeEditor(),'DECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name, "!"');
     await click(button('Run⌘ ↵'));expect(button('Stop')).toBeTruthy();
     expect(button('Stop').closest('.topbar')).not.toBeNull();
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
-    expect(codeEditor().value).toBe('// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar\n\nDECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name, "!"');
+    expect(codeEditor().value).toBe('DECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name, "!"');
     expect(container.querySelector('.output-line')?.textContent).toBe('›Enter your name');
     expect(consoleInput().getAttribute('aria-label')).toBe('Value for Name');
     await typeValue(consoleInput(),'Ada');await submitInput();
@@ -77,7 +78,7 @@ describe('workspace execution integration',()=>{
     expect(button('History')).toBeUndefined();
     expect(container.querySelector('.example-list')).toBeNull();
     const tabs=[...container.querySelectorAll('.dock-tab > span:not([class])')].map(tab=>tab.textContent);
-    expect(tabs).toEqual(['Console','Debugger','Flowchart']);
+    expect(tabs).toEqual(['Console','Debugger']);
     await click(button('File'));
     expect(button('Format code')).toBeUndefined();
     expect(button('Export Python')).toBeUndefined();
@@ -130,6 +131,7 @@ describe('workspace execution integration',()=>{
     } finally { confirm.mockRestore(); }
   });
   it('shows stopped debug runs in the Console instead of an empty debugger',async()=>{
+    await typeValue(codeEditor(),'DECLARE Name : STRING\nINPUT Name');
     await click(button('Debug'));
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     await click(button('Stop'));
@@ -329,13 +331,13 @@ describe('guided help and readable reference',()=>{
     measuredName.mockRestore();
     await click(button('Next'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Start with your code');
-    expect(container.querySelector('.tutorial-example')?.textContent).toBe(editor.split('\n\n')[1]);
+    expect(container.querySelector('.tutorial-example')?.textContent).toBe('DECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name, "!"');
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(true);
     expect(container.querySelector('.reference-card')).toBeNull();
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Read the result');
     expect(container.querySelector('.tutorial-tip')?.textContent).toContain('press Enter');
-    expect(container.querySelector('.tutorial-example')?.textContent).toBe(editor.split('\n\n')[1]);
+    expect(container.querySelector('.tutorial-example')?.textContent).toBe('DECLARE Name : STRING\nOUTPUT "Enter your name"\nINPUT Name\nOUTPUT "Hello ", Name, "!"');
     await click(button('Back'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Run your program');
     await click(button('Next'));await click(button('Next'));
     expect(container.querySelector('.dock-tab[aria-selected="true"]')?.textContent).toBe('Debugger');

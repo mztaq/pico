@@ -1,6 +1,5 @@
 import type { VirtualFiles } from '../runtime/interpreter';
 import { examples } from '../examples';
-import { starterCode } from '../starter';
 import { PYTHON_STARTER } from '../runtime/python/config';
 export type CompilerLanguage = 'pseudocode' | 'python';
 import type { DataType } from '../language/ast';
@@ -30,7 +29,6 @@ export interface PicoProject {
 }
 const PROJECTS_KEY = 'pico.projects.v1';
 const ACTIVE_KEY = 'pico.activeProject.v1';
-const sourceHeader = '// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar';
 export function normalizeProjectName(name: string): string {
   return name.trim().replace(/\s+/g, ' ').slice(0, 42).trim();
 }
@@ -61,7 +59,7 @@ function makeProject(
   code: string,
   tests: TestCase[],
 ): PicoProject {
-  const source = `${sourceHeader}\n\n${code}`;
+  const source = code;
   const file = makeFile('main.pico', source, `${id}-main`);
   return {
     id,
@@ -74,19 +72,6 @@ function makeProject(
     updatedAt: Date.now(),
   };
 }
-const initialProject: PicoProject = makeProject(
-  'project-starter',
-  'Untitled program',
-  starterCode,
-  [
-    {
-      id: 'test-greeting',
-      name: 'Greets the user',
-      inputs: ['Ada'],
-      expected: ['Enter your name', 'Hello Ada!'],
-    },
-  ],
-);
 export function loadProjects(language: CompilerLanguage = 'pseudocode'): PicoProject[] {
   try {
     const raw: unknown = JSON.parse(
@@ -103,7 +88,7 @@ export function loadProjects(language: CompilerLanguage = 'pseudocode'): PicoPro
       }
     }
   } catch {}
-  return [language === 'python' ? newProject('Untitled program', 'python') : initialProject];
+  return [newProject('Untitled program', language)];
 }
 function normalizeProject(value: unknown): PicoProject | undefined {
   if (!value || typeof value !== 'object') return;
@@ -192,7 +177,7 @@ export function newProject(name = 'Untitled program', language: CompilerLanguage
   return makeProject(
     crypto.randomUUID(),
     normalizeProjectName(name) || 'Untitled program',
-    'DECLARE Number : INTEGER\nNumber ← 42\nOUTPUT Number',
+    '',
     [],
   );
 }

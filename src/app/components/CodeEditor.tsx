@@ -4,7 +4,7 @@ import { defaultKeymap, history, historyKeymap, indentLess, indentMore, redo, un
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
-import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
+import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, placeholder, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { completionSource } from './completions';
 import { documentationFor, type Suggestion } from '../../runtime/diagnostics';
@@ -31,6 +31,22 @@ const INDENT_WIDTH = 4;
 const INDENT_TEXT = ' '.repeat(INDENT_WIDTH);
 /** Matches the editor content padding so guides line up with the first column. */
 const CONTENT_PADDING = '12px';
+
+function emptyEditorHint() {
+  const hint = document.createElement('span');
+  hint.className = 'pico-editor-hint';
+  const title = document.createElement('span');
+  title.textContent = 'Start typing your code.';
+  const credit = document.createElement('span');
+  credit.className = 'pico-placeholder-credit';
+  const mustaqim = document.createElement('strong');
+  mustaqim.textContent = 'Mustaqim';
+  const amar = document.createElement('strong');
+  amar.textContent = 'Amar';
+  credit.append('Made by ', mustaqim, ' and ', amar, '.');
+  hint.append(title, credit);
+  return hint;
+}
 
 /** Editor chrome and syntax colours for one theme. */
 function themeExtensions(theme: PicoTheme): Extension[] {
@@ -265,6 +281,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
       doc: value,
       parent: host.current,
       extensions: [
+        placeholder(emptyEditorHint),
         lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
         ...(language === 'python' ? [python()] : [pseudoLanguage, foldService.of(cambridgeFold)]), indentationGuides,
