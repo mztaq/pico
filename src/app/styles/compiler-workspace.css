@@ -15,7 +15,7 @@
 .home-chart-preview { fill: var(--surface-raised); stroke: var(--accent); stroke-width: 1.25; }
 .home-chart-preview .home-chart-link { fill: none; stroke: var(--muted); }
 .home-chart-preview text { fill: var(--text); stroke: none; text-anchor: middle; font: 13px var(--font-code); }
-.home-chart-preview .home-chart-output { fill: var(--syntax-string); }
+.home-chart-preview .home-chart-output { fill: var(--syntax-string); font-size: 11px; }
 @media (max-width: 760px) { .compiler-choice { grid-template-columns: minmax(0,1fr); gap: 14px; min-height: 0; padding: 20px; }.compiler-choice-title { justify-content: space-between; }.home-chart-preview { max-width: 350px; } }
 .pico-placeholder-credit strong { color: var(--accent); font-weight: 650; }
 .code-editor .cm-placeholder { color: var(--muted); white-space: normal; font-style: normal; }

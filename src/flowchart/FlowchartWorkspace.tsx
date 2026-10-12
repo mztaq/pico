@@ -154,7 +154,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
   return <div className="pico-app flow-builder" data-pico-theme={theme.id} data-high-contrast={theme.highContrast?'true':undefined} style={style}>
     <header className="topbar">
       <button className="toolbar-button home-button" aria-label="Go to home screen" disabled={tutorialActive} onClick={()=>onHome(saveNow())}><ArrowLeft size={16}/></button>
-      <div className="brand-lockup"><img src="/pico-logo.svg" alt="" width="27" height="27"/><span>Pico<span className="brand-period">.</span></span><span className="brand-subtitle">FLOWCHART</span></div>
+      <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="27" height="27"/><span>Pico<span className="brand-period">.</span></span><span className="brand-subtitle">FLOWCHART</span></div>
       <input className="project-title-input topbar-project-name" aria-label="Flowchart workspace name" value={nameDraft} maxLength={42} disabled={running||tutorialActive} onChange={e=>setNameDraft(e.target.value)} onBlur={rename} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/>
       <div className="topbar-spacer"/>
       <div className="topbar-actions"><button className="toolbar-button" disabled={running||tutorialActive||!history?.past.length} aria-label="Undo flowchart edit" onClick={()=>undo()}><Undo2 size={16}/></button><button className="toolbar-button" disabled={running||tutorialActive||!history?.future.length} aria-label="Redo flowchart edit" onClick={()=>undo(true)}><Redo2 size={16}/></button>
