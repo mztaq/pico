@@ -72,7 +72,7 @@ it('preserves edits in memory even when browser storage rejects saves',async()=>
   await click(button('Go to Python Compiler'));expect(container.querySelector('textarea')?.value).toBe('print("Python kept")');
 });
 it('runs Python source, accepts console input and displays final debugger variables',async()=>{
-  await choose('Python Compiler');expect(preloadPythonRuntime).toHaveBeenCalled();await click(button('Debug'));const execution=jobs[0]!;
+  await choose('Python Compiler');expect(preloadPythonRuntime).toHaveBeenCalled();expect(container.querySelector('textarea')?.value).toBe('');await type(container.querySelector('textarea')!,'name=input("Enter your name: ")\nprint(f"Hello {name}!")');await click(button('Debug'));const execution=jobs[0]!;
   expect(execution.request.code).toContain('input(');expect(execution.request.debug).toBe(true);expect(execution.request.filename).toBe('main.py');
   await act(async()=>{execution.callbacks.onStatus?.('Python 3.14.2');execution.callbacks.onOutput?.(['Enter your name: ']);execution.callbacks.onInput?.({id:1,variable:'input()',dataType:'STRING',line:3});});
   expect(container.querySelector('.brand-subtitle')?.textContent).toBe('Python 3.14.2');

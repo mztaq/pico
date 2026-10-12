@@ -1,7 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowRight, Check, CircleHelp, X } from 'lucide-react';
 import type { CompilerLanguage } from '../../storage/projects';
-import { PYTHON_STARTER } from '../../runtime/python/config';
 import { starterCode } from '../../starter';
 
 export const tutorialSteps = [
@@ -9,7 +8,7 @@ export const tutorialSteps = [
   { target: 'editor', title: 'Start with your code', label: 'WRITE', description: 'Write Cambridge pseudocode here. Use the file tabs for separate programs.', tip: 'DECLARE gives Name its type. Declared names appear as you type. Tab or Enter accepts a suggestion. Ctrl + Space opens the list.', example: starterCode },
   { target: 'run', title: 'Run your program', label: 'RUN', description: 'Run in the top bar executes the current file. When your program reaches INPUT, type a value in the Console and press Enter to continue.', tip: 'Shortcut: Ctrl + Enter on Windows, or ⌘ + Enter on Mac.' },
   { target: 'tools', title: 'Read the result', label: 'OUTPUT', description: 'The Console shows each OUTPUT line. Errors end the run and include a line number so you can return to the part that needs fixing.', tip: 'INPUT waits in the Console. Type a value and press Enter to continue.', example: starterCode },
-  { target: 'tools', title: 'Understand each step', label: 'EXPLORE', description: 'Debug runs your code and records its steps. Move through the recorded steps to see variables change. Flowchart shows the program’s paths.', tip: 'Drag the divider above this panel to give your tools more room.' },
+  { target: 'tools', title: 'Understand each step', label: 'EXPLORE', description: 'Debug runs your code and records its steps. Move through the recorded steps to see variables change.', tip: 'Drag the divider above this panel to give your tools more room.' },
   { target: 'reference', title: 'Keep the syntax close', label: 'REFERENCE', description: 'Search for a keyword, then select it to read its explanation. Select and copy the examples when you need a starting point.', tip: 'Use A− / A+ to change the text size. On a wide screen, drag the left divider to resize this panel.' },
   { target: 'settings', title: 'Choose your settings', label: 'CUSTOMISE', description: 'Settings lets you change your theme, editor text size, layout, and typing helpers. Auto-declare is optional when you want to practise declarations yourself.', tip: 'Panel sizes and settings are remembered in this browser.' },
   { target: 'files', title: 'Keep a copy of your work', label: 'SAVE', description: 'Pico saves projects on this device. In File, Export .pico downloads a copy, and Import .pico opens one again.', tip: 'Your source tabs use .pico too. Double-click a tab to rename it.' },
@@ -57,7 +56,7 @@ export function GuidedTutorial({ language = 'pseudocode', step, onStep, onClose,
   const [target, setTarget] = useState<Box | null>(null);
   const [position, setPosition] = useState<CSSProperties>({});
   const steps = useMemo(() => language === 'python' ? tutorialSteps.map(item => {
-    const example = PYTHON_STARTER.split('\n\n')[1]!;
+    const example = 'name = input("Enter your name: ")\nprint(f"Hello {name}!")';
     switch (item.label) {
       case 'WRITE': return { ...item, description: 'Write Python here. Indent blocks with four spaces. Use .py tabs for separate programs or modules.', tip: 'Assigned names and Python keywords appear as you type. Tab or Enter accepts a suggestion.', example };
       case 'RUN': return { ...item, description: 'Run executes the current .py file. input() waits in the Console. Type a value and press Enter to continue.' };

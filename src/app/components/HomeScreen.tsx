@@ -34,7 +34,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       <button className="compiler-choice" onClick={() => onChoose('flowchart')}>
         <div className="compiler-choice-title"><GitBranch size={25} /><h2>Flowchart Builder</h2><ArrowRight size={22} /></div>
         <p>Drag blocks, connect steps, and run your flowchart.</p>
-        <div className="home-flow-preview" aria-hidden="true"><span>Start</span><i /><span className="home-flow-decision"><b>Decision</b></span><i /><span>End</span></div>
+
       </button>
     </div>
     <footer className="home-credits"><Credits /></footer>

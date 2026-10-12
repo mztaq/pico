@@ -1,12 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { CircleX, Code2, SkipBack, SkipForward, Terminal } from 'lucide-react';
-import type { Program } from '../../language/ast';
 import type { CompilerLanguage } from '../../storage/projects';
 import type { RunResult, TraceStep } from '../../runtime/interpreter';
 import type { PendingInput } from '../../runtime/worker';
-import { FlowchartPanel } from './FlowchartPanel';
 
-export type PanelKey = 'console' | 'debugger' | 'flowchart';
+export type PanelKey = 'console' | 'debugger';
 export interface ConsoleEntry { kind: 'output' | 'input' | 'note' | 'error'; text: string; }
 interface ConsoleProps {
   entries: ConsoleEntry[];
@@ -59,14 +57,10 @@ export function DebuggerPanel({ language = 'pseudocode', trace, index, onIndex, 
   </div>;
 }
 
-interface FlowProps { ast: Program | null; error?: string; }
-export function FlowchartDock({ ast, error }: FlowProps) { return <FlowchartPanel ast={ast} error={error} />; }
-
 export function panelIcon(key: PanelKey) {
   switch (key) {
     case 'console': return <Terminal size={14} />;
     case 'debugger': return <Code2 size={14} />;
-    case 'flowchart': return <span className="flowchart-tab-icon">◇</span>;
   }
 }
 

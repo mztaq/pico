@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { importProject, loadActiveId, loadProjects, newProject, projectFromExample, projectNameExists, uniqueProjectName, saveProjects } from './projects';
+import { importProject, loadActiveId, loadProjects, newProject, projectNameExists, uniqueProjectName, saveProjects } from './projects';
 import { compile } from '../language';
 import { execute } from '../runtime/interpreter';
-import { examples } from '../examples';
 const asFile=(data:unknown)=>({size:100,text:async()=>JSON.stringify(data)}) as File;
 afterEach(()=>vi.unstubAllGlobals());
 describe('project persistence boundaries',()=>{
@@ -24,16 +23,10 @@ describe('project persistence boundaries',()=>{
     expect(loaded.map(project=>project.code)).toEqual(projects.map(project=>project.code));
     expect(loadActiveId(loaded)).toBe(projects[1]!.id);
   });
-  it('adds the exact credit comment to fresh main.pico files without changing their output',()=>{
+  it('creates empty files so creator credits appear only as editor placeholders',()=>{
     vi.stubGlobal('localStorage',{getItem:()=>null});
-    const projects = [loadProjects()[0]!, newProject(), projectFromExample(examples[1]!.id)!];
-    const header = '// PICO - CAIE Friendly Pseudocode Compiler made by Mustaqim and Amar';
-    for (const project of projects) {
-      expect(project.files[0]!.name).toBe('main.pico');
-      expect(project.files[0]!.code.split('\n')[0]).toBe(header);
-      expect(project.code).toBe(project.files[0]!.code);
-      const result = execute(compile(project.code).ast, project.tests[0]?.inputs ?? []);
-      expect(result.output).toEqual(project.tests.length ? project.tests[0]!.expected : ['42']);
+    for(const project of [loadProjects()[0]!,newProject(),newProject('Python','python')]) {
+      expect(project.code).toBe('');expect(project.files[0].code).toBe('');expect(execute(compile(project.code).ast).output).toEqual([]);
     }
   });
   it('keeps edited main.pico contents unchanged during save, load, and import',async()=>{
@@ -90,7 +83,7 @@ it('migrates saved and imported .pseudocode source names without changing code o
 it('keeps Python and pseudocode storage separate and imports only matching projects',async()=>{
   const stored=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(key:string)=>stored.get(key)??null,setItem:(key:string,value:string)=>stored.set(key,value)});
   const pseudo=newProject('Algorithm'), python=newProject('Python lesson','python');
-  expect(python.files[0]!.name).toBe('main.py');expect(python.code).toContain('input(');
+  expect(python.files[0]!.name).toBe('main.py');expect(python.code).toBe('');
   saveProjects([pseudo],pseudo.id);saveProjects([python],python.id,'python');
   expect(loadProjects()[0]!.id).toBe(pseudo.id);expect(loadProjects('python')[0]!.id).toBe(python.id);
   expect(loadActiveId([python],'python')).toBe(python.id);

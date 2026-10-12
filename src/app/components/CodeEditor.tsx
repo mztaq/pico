@@ -4,7 +4,7 @@ import { defaultKeymap, history, historyKeymap, indentLess, indentMore, redo, un
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
-import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
+import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, placeholder, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { completionSource } from './completions';
 import { documentationFor, type Suggestion } from '../../runtime/diagnostics';
@@ -265,6 +265,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
       doc: value,
       parent: host.current,
       extensions: [
+        placeholder(`Generate ${language === 'python' ? 'Python' : 'pseudocode'} code…\nMade by Mustaqim and Amar.`),
         lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
         ...(language === 'python' ? [python()] : [pseudoLanguage, foldService.of(cambridgeFold)]), indentationGuides,

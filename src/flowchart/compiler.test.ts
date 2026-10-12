@@ -1,6 +1,7 @@
+import {exampleProject} from './fixtures/testCharts';
 import { describe, expect, it } from 'vitest';
 import { compileFlowchart, ChartError } from './compiler';
-import { connectNodes, exampleProject, removeNode, type ChartNode, type FlowchartProject, type Port } from './model';
+import { connectNodes, removeNode, type ChartNode, type FlowchartProject, type Port } from './model';
 import { execute, RuntimeError } from '../runtime/interpreter';
 import { createInteractiveSession } from '../runtime/worker';
 import type { WorkerReply } from '../runtime/worker';

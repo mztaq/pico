@@ -1,7 +1,7 @@
-import { DATA_TYPES, NODE_KINDS, type FlowchartProject, exampleProject } from './model';
+import { DATA_TYPES, NODE_KINDS, type FlowchartProject, newChart } from './model';
 import { normalizeProjectName } from '../storage/projects';
 const KEY='pico.flowcharts.v1';
-export interface ChartStore {projects:FlowchartProject[];activeId:string;}
+export interface ChartStore {projects:FlowchartProject[];activeId:string;tutorialCompleted?:boolean;}
 export function readChart(value:unknown):FlowchartProject {
   if(!value||typeof value!=='object') throw Error('Choose a Pico flowchart file.');
   const p=value as FlowchartProject;
@@ -33,10 +33,10 @@ export function loadCharts():ChartStore {
       for(const raw of stored.projects.slice(0,50)) {
         try {const p=readChart(raw);if(projects.some(x=>x.id===p.id))p.id=crypto.randomUUID();p.name=uniqueChartName(p.name,projects);projects.push(p);}catch {/* Keep other valid projects. */}
       }
-      if(projects.length) return {projects,activeId:projects.some(p=>p.id===stored.activeId)?stored.activeId:projects[0].id};
+      if(projects.length) return {projects,activeId:projects.some(p=>p.id===stored.activeId)?stored.activeId:projects[0].id,...(stored.tutorialCompleted===true?{tutorialCompleted:true}:{})};
     }
   } catch {/* Blocked storage and damaged files do not prevent editing. */}
-  const project=exampleProject();return {projects:[project],activeId:project.id};
+  const project=newChart();return {projects:[project],activeId:project.id};
 }
 export function saveCharts(store:ChartStore) {localStorage.setItem(KEY,JSON.stringify({version:1,...store}));}
 export function serializeChart(project:FlowchartProject) {return JSON.stringify({format:'pico-flowchart',version:1,project},null,2);}

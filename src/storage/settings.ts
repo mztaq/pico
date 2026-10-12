@@ -6,8 +6,7 @@ import {
 
 export type PanelKeyPreference =
   | 'console'
-  | 'debugger'
-  | 'flowchart';
+  | 'debugger';
 export type LayoutPreset = 'coding' | 'debugging' | 'focus' | 'custom';
 export interface PicoSettings {
   autocomplete: boolean;
@@ -45,7 +44,6 @@ export const defaultSettings: PicoSettings = {
   panelOrder: [
     'console',
     'debugger',
-    'flowchart',
   ],
   layoutPreset: 'coding',
   sidebarVisible: true,
