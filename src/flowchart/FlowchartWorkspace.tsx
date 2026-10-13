@@ -31,6 +31,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
   const tutorialActive=tourStep!==null;
   const project=tutorialActive?lesson:store.projects.find(p=>p.id===store.activeId)??store.projects[0];
   const projectRef=useRef(project);projectRef.current=project;
+  const markExported=useExitWarning(JSON.stringify(store.projects));
   const [settings,setSettings]=useState(loadSettings),theme=getTheme(settings.theme);
   const [selected,setSelected]=useState<string|null>(null),[connection,setConnection]=useState<{from:string;port:Port}|null>(null);
   const [zoom,setZoom]=useState(0.85),[dockHeight,setDockHeight]=useState(250),[panel,setPanel]=useState<'console'|'debugger'|'pseudocode'>('console');
