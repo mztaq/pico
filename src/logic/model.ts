@@ -39,6 +39,7 @@ export const NODE_WIDTH=122;
 export function portPosition(node:CircuitNode,pin:string,direction:'in'|'out') {
   const pins=direction==='in'?SPECS[node.kind].inputs:SPECS[node.kind].outputs;
   const index=pins.indexOf(pin);
+  if(node.kind==='lamp'&&direction==='in')return {x:node.x+NODE_WIDTH/2,y:node.y+nodeHeight(node)};
   const x=direction==='in'?node.x:node.x+NODE_WIDTH, y=node.y+(index+1)*nodeHeight(node)/(pins.length+1);
   const radians=node.rotation*Math.PI/180, cx=node.x+NODE_WIDTH/2,cy=node.y+nodeHeight(node)/2;
   const dx=x-cx,dy=y-cy;

@@ -203,9 +203,9 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
       setStatus('Drag from the output to an input terminal.');
     }else if(connecting)attemptConnect(node.id,pin);
   }}>
-   <line x1={pos.x} y1={pos.y} x2={pos.x+(direction==='in'?27:-27)} y2={pos.y} className={'logic-terminal '+signalClass(sig)}/>
+   <line x1={pos.x} y1={pos.y} x2={node.kind==='lamp'?pos.x:pos.x+(direction==='in'?27:-27)} y2={node.kind==='lamp'?pos.y-12:pos.y} className={'logic-terminal '+signalClass(sig)}/>
    <circle cx={pos.x} cy={pos.y} r="13" className={'logic-port-hit '+(isTarget?'target':'')}/>
-   <text x={pos.x+(direction==='in'?15:-15)} y={pos.y-9} textAnchor={direction==='in'?'start':'end'} className="logic-port-label">{pin}</text>
+   {node.kind!=='lamp'&&<text x={pos.x+(direction==='in'?15:-15)} y={pos.y-9} textAnchor={direction==='in'?'start':'end'} className="logic-port-label">{pin}</text>}
    <title>{direction==='in'?'Input':'Output'} {pin}: {stateName[sig]}. Drag to connect.</title>
   </g>;}))}
   </g>;})}

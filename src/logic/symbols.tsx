@@ -67,7 +67,7 @@ export function PaletteSymbol({kind}:{kind:ComponentKind}) {
   return <svg className="logic-palette-symbol" viewBox="0 0 122 80" aria-hidden="true">
     <CircuitSymbol kind={kind} height={80} signal={kind==='lamp'?1:0} hex="A"/>
     {kind!=='label'&&<g className="logic-palette-terminals" fill="var(--surface-raised)" stroke="var(--text)" strokeWidth="1.6">
-      {(['buffer','not','and','nand','or','nor','xor','xnor','tri','sr','dff','jkff','tff','lamp','hex'].includes(kind))&&<circle cx="0" cy="40" r="6"/>}
+      {kind==='lamp'?<circle cx="61" cy="78" r="6"/>:['buffer','not','and','nand','or','nor','xor','xnor','tri','sr','dff','jkff','tff','hex'].includes(kind)?<circle cx="0" cy="40" r="6"/>:null}
       {kind!=='lamp'&&kind!=='hex'&&<circle cx="122" cy="40" r="6"/>}
     </g>}
   </svg>;

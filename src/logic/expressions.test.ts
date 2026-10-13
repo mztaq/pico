@@ -8,12 +8,19 @@ describe('Cambridge IGCSE Boolean expressions',()=>{
   expect(views).toHaveLength(1);expect(views[0].word).toBe('(A AND B)');
   expect(views[0].algebraic).toBe('(A · B)');
   expect(views[0].minimalSOP).toBe('(A AND B)');
-  expect(views[0].minimalPOS).toContain('NOT');
+  expect(views[0].minimalPOS).toMatch(/\(A\).*\(B\)|\(B\).*\(A\)/);
  });
  it('includes SUM and CARRY for the half adder',()=>{
   const views=booleanExpressions(loadSample('half'));
   expect(views.map(v=>v.word)).toEqual(['(A XOR B)','(A AND B)']);
   expect(views[0].minimalSOP).toContain('NOT');
+ });
+ it('generates correct constant and OR forms',()=>{
+  const d=makeDocument(),one=makeNode('high',10,10),out=makeNode('lamp',200,10);
+  d.nodes=[one,out];d.wires=[{id:'constant',from:one.id,fromPin:'Q',to:out.id,toPin:'IN'}];
+  expect(booleanExpressions(d)[0]).toMatchObject({word:'1',minimalSOP:'1',minimalPOS:'1'});
+  one.kind='low';
+  expect(booleanExpressions(d)[0]).toMatchObject({word:'0',minimalSOP:'0',minimalPOS:'0'});
  });
  it('rejects cycles and multiple drivers',()=>{
   const doc=makeDocument();const a=makeNode('not',0,0),b=makeNode('not',100,0),out=makeNode('lamp',220,0);

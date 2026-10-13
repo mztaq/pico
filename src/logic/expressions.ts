@@ -24,8 +24,8 @@ interface Cube{bits:string;covers:Set<number>}
 function minimize(bits:number[],variables:string[],pos=false):string{
  const n=variables.length, target=pos?0:1;
  const minterms=bits.map((b,i)=>b===target?i:-1).filter(i=>i>=0);
- if(!minterms.length)return pos?'0':'0';
- if(minterms.length===bits.length)return '1';
+ if(!minterms.length)return pos?'1':'0';
+ if(minterms.length===bits.length)return pos?'0':'1';
  let levels:Cube[]=minterms.map(i=>({bits:i.toString(2).padStart(n,'0'),covers:new Set([i])})),primes:Cube[]=[];
  while(levels.length){
   const merged=new Set<number>(),next=new Map<string,Cube>();
@@ -62,7 +62,7 @@ function minimize(bits:number[],variables:string[],pos=false):string{
   const literals=[...c.bits].flatMap((bit,i)=>bit==='-'?[]:[pos?(bit==='1'?'NOT '+variables[i]:variables[i]):bit==='1'?variables[i]:'NOT '+variables[i]]);
   return '('+literals.join(pos?' OR ':' AND ')+')';
  });
- return pos?terms.map(t=>'NOT '+t).join(' AND '):terms.join(' OR ');
+ return terms.join(pos?' AND ':' OR ');
 }
 export function booleanExpressions(doc:CircuitDocument):ExpressionView[]{
  const switches=doc.nodes.filter(n=>n.kind==='switch');
