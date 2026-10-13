@@ -5,8 +5,16 @@ import { cssVariables, getTheme } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
 
-export function Credits() {
-  return <div className="attribution"><span className="credit-item"><span>Deployed by</span> <strong>Mustaqim</strong> <small>11 Boys Red</small></span><span className="credit-divider" aria-hidden="true">·</span><span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span></div>;
+export function Credits({ logic = false }: { logic?: boolean } = {}) {
+  return <div className={`attribution${logic ? ' logic-attribution' : ''}`}>
+    <span className="credit-item"><span>Deployed by</span> <strong>Mustaqim</strong> <small>11 Boys Red</small></span>
+    <span className="credit-divider" aria-hidden="true">·</span>
+    {logic && <>
+      <span className="credit-item"><span>Logic Sim conceptualised by</span> <strong>Mohamed Hamza</strong> <small>11 Boys Red</small></span>
+      <span className="credit-divider" aria-hidden="true">·</span>
+    </>}
+    <span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span>
+  </div>;
 }
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic') => void }) {
   const [settings] = useState(loadSettings);

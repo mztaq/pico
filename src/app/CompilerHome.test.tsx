@@ -31,6 +31,20 @@ it('opens on a themed home screen with all workspace choices and creator credits
   expect(container.querySelector('.home-credits')?.textContent).toContain('Mustaqim');expect(container.querySelector('.home-credits')?.textContent).toContain('Amar');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
+it('shows left, center and right contributor credits in Logic Sim',async()=>{
+  const logicChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Logic Simulator');
+  expect(logicChoice).toBeDefined();
+  await click(logicChoice!);
+  const footer=container.querySelector('.logic-app > footer.statusbar.logic-footer');
+  expect(footer).not.toBeNull();
+  expect(footer!.querySelector('.attribution.logic-attribution')).not.toBeNull();
+  expect([...footer!.querySelectorAll('.credit-item')].map(item=>item.textContent)).toEqual([
+    'Deployed by Mustaqim 11 Boys Red',
+    'Logic Sim conceptualised by Mohamed Hamza 11 Boys Red',
+    'Made by Amar 11 Boys Blue',
+  ]);
+  expect(footer!.querySelectorAll('.credit-divider')).toHaveLength(2);
+});
 it('moves workspaces below the top bar and removes the obsolete UI',async()=>{
   await choose('Pseudocode Compiler');
   expect(button('Go to Python Compiler')).toBeDefined();expect(button('Go to Pseudocode Compiler')).toBeUndefined();

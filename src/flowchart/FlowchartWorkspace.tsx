@@ -8,6 +8,7 @@ import { ConsolePanel, DebuggerPanel, type ConsoleEntry } from '../app/component
 import { HighlightedCode } from '../app/components/HighlightedCode';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { UpdateCenter } from '../app/components/UpdateCenter';
+import { Credits } from '../app/components/HomeScreen';
 import { ResizeHandle } from '../app/components/ResizeHandle';
 import { contrastRatio, cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
@@ -193,6 +194,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
       <details className="flow-routines" inert={tutorialActive}><summary>Subroutines</summary><p>Define procedures and functions for Subroutine blocks.</p><textarea aria-label="Flowchart subroutine definitions" maxLength={100000} rows={10} value={project.routines} disabled={running} spellCheck={false} placeholder={'PROCEDURE ShowResult()\n  OUTPUT "Done"\nENDPROCEDURE'} onChange={e=>update({...project,routines:e.target.value})}/></details>
       </aside>
     </div>
+    <footer className="statusbar flow-statusbar"><Credits /></footer>
     {tutorialActive&&<FlowchartTutorial step={tourStep} project={project} result={result} pending={Boolean(pending)} running={running} panel={panel} onNext={nextLesson} onBack={()=>enterLesson(Math.max(0,tourStep-1))} onSkip={closeLesson}/>}
     {settingsOpen&&<div className="flow-settings" ref={settingsRef} role="dialog" aria-label="Flowchart appearance"><header><strong>Appearance</strong><button aria-label="Close flowchart settings" onClick={()=>setSettingsOpen(false)}><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id}))}/></div>}
 

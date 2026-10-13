@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
+import {Credits} from '../app/components/HomeScreen';
 import {ArrowLeft,Check,ChevronDown,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Save,StepForward,Trash2,Undo2,Upload,X,ZoomIn,ZoomOut} from 'lucide-react';
 import {GROUPS,NODE_WIDTH,SPECS,makeDocument,makeNode,nodeHeight,parseDocument,portPosition,isWireValid,type CircuitDocument,type CircuitNode,type ComponentKind,type Signal} from './model';
 import {advanceSimulation,evaluateCircuit,generateTruthTable,initialSimulation,key,stepSimulation,truthTableCSV,type SimulationState} from './engine';
@@ -152,7 +153,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  </section>
  <aside className={'logic-inspector '+(inspectorOpen?'mobile-open':'')}><div className="logic-pane-heading"><b>PROPERTIES</b><button className="logic-mobile-only" onClick={()=>setInspectorOpen(false)} aria-label="Close properties"><X size={16}/></button></div>{inspectorContent}<div className="logic-samples-panel"><div className="logic-eyebrow">EXAMPLE CIRCUITS</div>{activeSample&&<button onClick={()=>{setDoc(loadSample(activeSample));setSimulation(initialSimulation());setRunning(false);setStatus('Sample reset to its original state.');}}><b>Reset sample</b><small>Restore the initial circuit and inputs</small></button>}{SAMPLES.map(sample=><button key={sample.id} onClick={()=>load(sample.id)}><b>{sample.title}</b><small>{sample.description}</small></button>)}<button onClick={fresh}><b>New blank circuit</b><small>Create a fresh workspace</small></button></div></aside>
  </div>
- <footer className="logic-footer"><span>Built with Pico</span><div className="logic-credit">Logic Simulator by <strong>Mohamed Hamza</strong><small>11 Boys Red</small></div><span>Local-first · No account required</span></footer>
+ <footer className="statusbar logic-footer"><Credits logic /></footer>
  {importing&&<button className="logic-import-close" onClick={()=>setImporting(false)}>Cancel import</button>}
  </div>;
 }
