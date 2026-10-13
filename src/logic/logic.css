@@ -13,3 +13,22 @@
   .logic-app .logic-attribution .credit-divider { display: none; }
   .logic-app .logic-attribution .credit-item:first-child, .logic-app .logic-attribution .credit-item:last-child { justify-content: center; text-align: center; }
 }
+
+.logic-node-hitbox{fill:transparent;stroke:transparent}.logic-node.selected .logic-node-hitbox{stroke:#9387e9;stroke-width:1;stroke-dasharray:5 5}
+.logic-symbol-outline{fill:#222330;stroke:#dbd8ed;stroke-width:2.8;stroke-linejoin:round;stroke-linecap:round}
+.logic-symbol-detail,.logic-bulb-filament,.logic-switch-arm{fill:none;stroke:#e6e3f2;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.logic-symbol-letter{font:700 18px var(--font-code,monospace);fill:#e8e5f8}
+.logic-node .logic-node-kind{font:600 10px var(--font-ui,system-ui);fill:#b7b1dc;pointer-events:none}
+.logic-signal-caption{font:700 11px var(--font-code,monospace);fill:#ada8c8;pointer-events:none}
+.logic-bulb-glass{fill:#252735;stroke:#eee9fd;stroke-width:3}.logic-bulb-glass.on{fill:#f5d575;stroke:#fff2a1;filter:drop-shadow(0 0 10px #ffd46b)}.logic-bulb-glass.unknown{stroke:#f5a067}
+.logic-bulb-glass.on~.logic-bulb-filament{stroke:#79500b}
+.logic-terminal{stroke:#a6a9b9;stroke-width:3;stroke-linecap:round;pointer-events:none}.logic-terminal.s0{stroke:#7896d0}.logic-terminal.s1{stroke:#70dcb2}.logic-terminal.sx{stroke:#f5a067}
+.logic-port-hit{fill:transparent;stroke:transparent;cursor:crosshair;touch-action:none}
+.logic-port-hit.target,.logic-port.wire-hover.valid .logic-port-hit{fill:#9e93f744;stroke:#a99eff;stroke-width:2}.logic-port.wire-hover.invalid .logic-port-hit{fill:#e98a6340;stroke:#ed9776;stroke-width:2}
+.logic-connection-preview{stroke:#b9adff;stroke-width:3;stroke-dasharray:7 5}.logic-connection-preview.invalid{stroke:#ec9478}
+.logic-symbol-button{width:57px;height:38px;border:0;background:transparent;color:transparent;cursor:pointer;touch-action:none}
+.logic-part-symbol{width:36px;height:30px;background:transparent;border:0}.logic-palette-symbol{width:36px;height:30px;overflow:visible}
+.logic-palette-symbol .logic-symbol-outline{stroke-width:5;stroke:#b9b3d8}.logic-palette-symbol .logic-symbol-detail,.logic-palette-symbol .logic-bulb-filament,.logic-palette-symbol .logic-switch-arm{stroke-width:5}.logic-palette-symbol .logic-symbol-letter{font-size:20px}
+.logic-footer .logic-attribution{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,1fr)}.logic-footer .logic-attribution>.credit-divider{display:none}
+.logic-footer .logic-attribution>.credit-item:nth-of-type(3){grid-column:2;grid-row:1}.logic-footer .logic-attribution>.credit-item:last-child{grid-column:3;grid-row:1}
+@media(max-width:760px){.logic-footer .logic-attribution{grid-template-columns:1fr}.logic-footer .logic-attribution>.credit-item:nth-of-type(3),.logic-footer .logic-attribution>.credit-item:last-child{grid-column:1;grid-row:auto}}
