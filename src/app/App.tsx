@@ -21,6 +21,7 @@ import { inputEasterEgg } from './inputEasterEgg';
 import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen, Credits } from './components/HomeScreen';
+import {BackupReminder} from './components/BackupReminder';
 import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
 import { FlowchartWorkspace } from '../flowchart/FlowchartWorkspace';
@@ -455,7 +456,8 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
 
     {tutorialOfferOpen && <TutorialOffer onStart={startTutorial} onDismiss={() => setTutorialOfferOpen(false)} />}
     {tutorialOpen && <GuidedTutorial language={language} step={tutorialStep} onStep={goToTutorialStep} onClose={closeTutorial} onReference={() => { closeTutorial(); openReference(); }} />}
-    {saveError && <p className="autosave-error" role="alert">Autosave failed. Export your project to keep a copy.</p>}
+    <BackupReminder workspace={language} onExport={()=>exportProject(activeProject)}/>
+     {saveError && <p className="autosave-error" role="alert">Autosave failed. Export your project to keep a copy.</p>}
     <footer className="statusbar" inert={tutorialOpen || tutorialOfferOpen}><Credits /></footer>
     {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>Pseudocode and Python compilers.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a> or <a href="mailto:b03661@nbabarwa.com">b03661@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
   </div>;

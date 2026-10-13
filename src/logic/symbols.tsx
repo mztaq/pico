@@ -28,11 +28,11 @@ export function CircuitSymbol({kind,height,signal='Z',hex='X'}:{
     {kind==='tri'&&<text className="logic-symbol-letter" x="63" y={mid+5} textAnchor="middle">EN</text>}
   </g>;
   if(kind==='lamp')return <g className="logic-symbol logic-bulb" aria-hidden="true">
-    <circle className={`logic-bulb-glass ${signal===1?'on':signal==='X'?'unknown':''}`} cx={61} cy={mid-3} r={22}/>
-    <path className="logic-bulb-filament" d={`M 48 ${mid-9} L 54 ${mid+3} L 59 ${mid-9} L 64 ${mid+3} L 70 ${mid-9}`}/>
-    <path className="logic-bulb-filament" d={`M 54 ${mid+3} V ${mid+8} H 68 V ${mid+3}`}/>
-    <text className="logic-signal-caption" x={61} y={height-3} textAnchor="middle">{signal===1?'ON':signal===0?'OFF':String(signal)}</text>
-  </g>;
+ <path className="logic-bulb-outline" d={`M 61 ${mid-28} C 44 ${mid-28} 39 ${mid-15} 44 ${mid-2} C 47 ${mid+5} 52 ${mid+8} 52 ${mid+16} H 70 C 70 ${mid+8} 75 ${mid+5} 78 ${mid-2} C 83 ${mid-15} 78 ${mid-28} 61 ${mid-28} Z`}/>
+ <path className="logic-bulb-filament" d={`M 52 ${mid-8} L 56 ${mid-1} L 60 ${mid-8} L 64 ${mid-1} L 68 ${mid-8} M 56 ${mid-1} L 58 ${mid+13} M 64 ${mid-1} L 64 ${mid+13}`}/>
+ <path className="logic-bulb-base" d={`M 52 ${mid+16} H 70 V ${mid+22} H 52 Z M 54 ${mid+24} H 68 V ${mid+27} H 54 Z`}/>
+ {signal===1&&<path className="logic-bulb-light" d={`M 61 ${mid-28} C 44 ${mid-28} 39 ${mid-15} 44 ${mid-2} C 47 ${mid+5} 52 ${mid+8} 52 ${mid+16} H 70 C 70 ${mid+8} 75 ${mid+5} 78 ${mid-2} C 83 ${mid-15} 78 ${mid-28} 61 ${mid-28} Z`}/>}
+ </g>;
   if(kind==='switch'||kind==='button')return <g className="logic-symbol" aria-hidden="true">
     <path className="logic-symbol-outline" d={`M 27 ${mid} H 43 M 80 ${mid} H 100`}/>
     <circle className="logic-symbol-outline" cx={43} cy={mid} r="3"/>

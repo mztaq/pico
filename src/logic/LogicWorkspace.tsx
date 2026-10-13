@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
 import {Credits} from '../app/components/HomeScreen';
+import {BackupReminder} from '../app/components/BackupReminder';
 import {ThemePicker} from '../app/components/ThemePicker';
 import {loadSettings,saveSettings} from '../storage/settings';
 import {cssVariables,getTheme} from '../app/themes';
@@ -221,6 +222,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  <aside className={'logic-inspector '+(inspectorOpen?'mobile-open':'')}><div className="logic-pane-heading"><b>PROPERTIES</b><button className="logic-mobile-only" onClick={()=>setInspectorOpen(false)} aria-label="Close properties"><X size={16}/></button></div>{inspectorContent}</aside>
  </div>
  {themeOpen&&<aside className="logic-theme-menu"><header><strong>Theme</strong><button onClick={()=>setThemeOpen(false)} aria-label="Close theme picker"><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id as typeof s.theme}))}/></aside>}
+ <BackupReminder workspace="logic" onExport={()=>download(JSON.stringify(doc,null,2),filename(doc.title,'.logic.json'),'application/json')}/>
  <footer className="statusbar logic-footer"><Credits logic /></footer>
  {importing&&<button className="logic-import-close" onClick={()=>setImporting(false)}>Cancel import</button>}
  </div>;

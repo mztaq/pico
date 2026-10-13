@@ -8,6 +8,7 @@ import { ConsolePanel, DebuggerPanel, type ConsoleEntry } from '../app/component
 import { HighlightedCode } from '../app/components/HighlightedCode';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { UpdateCenter } from '../app/components/UpdateCenter';
+import {BackupReminder} from '../app/components/BackupReminder';
 import { Credits } from '../app/components/HomeScreen';
 import { ResizeHandle } from '../app/components/ResizeHandle';
 import { contrastRatio, cssVariables, getTheme } from '../app/themes';
@@ -195,6 +196,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
       </aside>
     </div>
     <footer className="statusbar flow-statusbar"><Credits /></footer>
+    {!tutorialActive&&<BackupReminder workspace="flowchart" onExport={()=>download(serializeChart(project),project.name+'.picochart','application/json')}/>}
     {tutorialActive&&<FlowchartTutorial step={tourStep} project={project} result={result} pending={Boolean(pending)} running={running} panel={panel} onNext={nextLesson} onBack={()=>enterLesson(Math.max(0,tourStep-1))} onSkip={closeLesson}/>}
     {settingsOpen&&<div className="flow-settings" ref={settingsRef} role="dialog" aria-label="Flowchart appearance"><header><strong>Appearance</strong><button aria-label="Close flowchart settings" onClick={()=>setSettingsOpen(false)}><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id}))}/></div>}
 
