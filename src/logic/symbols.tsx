@@ -1,5 +1,26 @@
 import type { ComponentKind, Signal } from './model';
 
+/** Symbol and terminal share geometry so inversion bubbles are attached. */
+export function bodyOutputX(kind:ComponentKind,height:number):number {
+  if(kind==='and'||kind==='nand')return 61+height/2-17;
+  if(kind==='not'||kind==='buffer')return 93;
+  if(kind==='or'||kind==='nor'||kind==='xor'||kind==='xnor'||kind==='tri')return 96;
+  if(kind==='switch'||kind==='button')return 100;
+  if(kind==='high'||kind==='low'||kind==='pullup'||kind==='pulldown')return 89;
+  if(kind==='clock')return 95;
+  return 97;
+}
+export function outputLeadStart(kind:ComponentKind,height:number):number {
+  return bodyOutputX(kind,height)+(['not','nand','nor','xnor'].includes(kind)?12:0);
+}
+export function inputLeadEnd(kind:ComponentKind):number {
+  if(kind==='not'||kind==='buffer'||kind==='tri'||kind==='clock')return 30;
+  if(kind==='xor'||kind==='xnor')return 20;
+  if(kind==='high'||kind==='low')return 34;
+  return kind==='and'||kind==='nand'?28:27;
+}
+
+
 /**
  * Original ANSI-style digital logic symbols in a fixed 122-unit coordinate system.
  * Terminals end at x=0 and x=122, matching model.portPosition, while
@@ -14,6 +35,7 @@ export function CircuitSymbol({kind,height,signal='Z',hex='X'}:{
   const isAnd=kind==='and'||kind==='nand';
   const isOr=['or','nor','xor','xnor'].includes(kind);
   const xor=kind==='xor'||kind==='xnor';
+  const bubbleCenter=bodyOutputX(kind,height)+6;
   let outline='';
   if(isTriangle) outline=`M 30 ${top} L 93 ${mid} L 30 ${bottom} Z`;
   else if(isAnd)outline=`M 28 ${top} H 61 A ${mid-top} ${mid-top} 0 0 1 61 ${bottom} H 28 Z`;
@@ -24,7 +46,7 @@ export function CircuitSymbol({kind,height,signal='Z',hex='X'}:{
   if(gate)return <g className="logic-symbol" aria-hidden="true">
     <path className="logic-symbol-outline" d={outline}/>
     {xor&&<path className="logic-symbol-outline" d={`M 17 ${top} Q 37 ${mid} 17 ${bottom}`}/>}
-    {inverse&&<circle className="logic-symbol-outline" cx={102} cy={mid} r={6}/>}
+    {inverse&&<circle className="logic-symbol-outline" cx={bubbleCenter} cy={mid} r={6}/>}
     {kind==='tri'&&<text className="logic-symbol-letter" x="63" y={mid+5} textAnchor="middle">EN</text>}
   </g>;
   if(kind==='lamp')return <g className="logic-symbol logic-bulb" aria-hidden="true">

@@ -6,7 +6,7 @@ import {loadSettings,saveSettings} from '../storage/settings';
 import {cssVariables,getTheme} from '../app/themes';
 import {selectionInRectangle,copyComponents,pasteComponents,deleteSelection,type CircuitClipboard} from './selection';
 import {booleanExpressions} from './expressions';
-import {CircuitSymbol,PaletteSymbol} from './symbols';
+import {CircuitSymbol,PaletteSymbol,inputLeadEnd,outputLeadStart} from './symbols';
 import {connectionPath,inputAtPoint,type InputTarget} from './wiring';
 import {ArrowLeft,ChevronDown,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Settings2,StepForward,Trash2,Undo2,Upload,X,ZoomIn,ZoomOut} from 'lucide-react';
 import {GROUPS,NODE_WIDTH,SPECS,makeDocument,makeNode,nodeHeight,parseDocument,portPosition,isWireValid,type CircuitDocument,type CircuitNode,type ComponentKind,type Signal} from './model';
@@ -203,7 +203,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
       setStatus('Drag from the output to an input terminal.');
     }else if(connecting)attemptConnect(node.id,pin);
   }}>
-   <line x1={pos.x} y1={pos.y} x2={node.kind==='lamp'?pos.x:pos.x+(direction==='in'?27:-27)} y2={node.kind==='lamp'?pos.y-12:pos.y} className={'logic-terminal '+signalClass(sig)}/>
+   <line x1={pos.x} y1={pos.y} x2={node.kind==='lamp'?pos.x:pos.x+Math.cos(node.rotation*Math.PI/180)*(direction==='in'?inputLeadEnd(node.kind):outputLeadStart(node.kind,height)-NODE_WIDTH)} y2={node.kind==='lamp'?pos.y-12:pos.y+Math.sin(node.rotation*Math.PI/180)*(direction==='in'?inputLeadEnd(node.kind):outputLeadStart(node.kind,height)-NODE_WIDTH)} className="logic-terminal"/>
    <circle cx={pos.x} cy={pos.y} r="13" className={'logic-port-hit '+(isTarget?'target':'')}/>
    {node.kind!=='lamp'&&<text x={pos.x+(direction==='in'?15:-15)} y={pos.y-9} textAnchor={direction==='in'?'start':'end'} className="logic-port-label">{pin}</text>}
    <title>{direction==='in'?'Input':'Output'} {pin}: {stateName[sig]}. Drag to connect.</title>

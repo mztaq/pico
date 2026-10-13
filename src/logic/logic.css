@@ -51,3 +51,10 @@
 .logic-palette-symbol .logic-symbol-detail,.logic-palette-symbol .logic-bulb-filament,.logic-palette-symbol .logic-switch-arm{stroke-width:3}
 .logic-palette-symbol .logic-bulb-filament{stroke:#e15a54}
 @media(max-width:1130px){.logic-part-symbol{width:74px}.logic-palette-symbol{width:70px}}
+
+/* Schematic pins stay neutral. Unknown state is shown in simulation feedback. */
+.logic-app .logic-terminal, .logic-app .logic-terminal.s0,
+.logic-app .logic-terminal.s1, .logic-app .logic-terminal.sx,
+.logic-app .logic-terminal.sz {stroke:var(--text);stroke-width:2.6;opacity:.82;stroke-dasharray:none}
+.logic-app .logic-wire.sx {stroke:var(--muted);stroke-dasharray:4 4}
+.logic-app .logic-port-label {display:none}
