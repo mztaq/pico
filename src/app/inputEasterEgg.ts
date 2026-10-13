@@ -1,4 +1,4 @@
-const hamza = 'The man who conceptualised my Logic Gates Sim ⚡︎';
+const hamza = 'The man who conceptualised Logic Sim ⚡︎';
 const amar = 'The dev who engineered me day and night ☾';
 const mustaqim = 'The soul who unleashed me to the World Wide Web 🌏︎';
 const teacher = 'The Computer Science teacher who backed my creators and their work 🕮';
