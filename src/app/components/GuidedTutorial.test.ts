@@ -19,7 +19,8 @@ describe('tutorial placement', () => {
   });
 });
 
-it('teaches the Hamza name easter egg in both Pseudocode and Python tours', () => {
-  expect(tutorialSteps.find(step => step.label === 'RUN')?.tip).toContain('Hamza');
-  expect(tutorialCompletionTip).toContain('Hamza conceptualised the Logic Gates Sim');
+it('gives a subtle hint without naming the hidden inputs', () => {
+  expect(tutorialSteps.find(step => step.label === 'RUN')?.tip).toContain('special greeting');
+  expect(tutorialCompletionTip).toContain('Computer Science department');
+  expect(tutorialCompletionTip).not.toContain('Hamza');
 });
