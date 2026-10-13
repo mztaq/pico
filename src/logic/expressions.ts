@@ -1,5 +1,4 @@
 import {SPECS,type CircuitDocument,type ComponentKind} from './model';
-import {evaluateCircuit,initialSimulation,key} from './engine';
 
 type Expr={type:'var';name:string;id:string}|{type:'const';bit:0|1}|{type:'op';op:'NOT'|'AND'|'OR'|'XOR';args:Expr[]};
 export interface ExpressionView {output:string;word:string;algebraic:string;programming:string;minimalSOP?:string;minimalPOS?:string;variables:string[]}
