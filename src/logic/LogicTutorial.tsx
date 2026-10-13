@@ -1,5 +1,6 @@
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {ArrowLeft,ArrowRight,X} from 'lucide-react';
+import './logic-tour.css';
 export const LOGIC_TOUR_KEY='pico.logic.tutorial.v1';
 export const LOGIC_TOUR_STEPS=[
  {title:'Welcome to Logic Sim',description:'Build digital circuits with switches, logic gates and bulbs. This walkthrough takes about a minute.',selector:null},
