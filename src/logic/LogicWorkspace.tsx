@@ -1,5 +1,7 @@
 import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
 import {Credits} from '../app/components/HomeScreen';
+import {CircuitSymbol,PaletteSymbol} from './symbols';
+import {connectionPath,inputAtPoint,type InputTarget} from './wiring';
 import {ArrowLeft,Check,ChevronDown,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Save,StepForward,Trash2,Undo2,Upload,X,ZoomIn,ZoomOut} from 'lucide-react';
 import {GROUPS,NODE_WIDTH,SPECS,makeDocument,makeNode,nodeHeight,parseDocument,portPosition,isWireValid,type CircuitDocument,type CircuitNode,type ComponentKind,type Signal} from './model';
 import {advanceSimulation,evaluateCircuit,generateTruthTable,initialSimulation,key,stepSimulation,truthTableCSV,type SimulationState} from './engine';
@@ -37,6 +39,8 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [activeSample,setActiveSample]=useState<SampleName|null>(null);
  const [showWelcome,setShowWelcome]=useState(doc.nodes.length===0);
  const [pointer,setPointer]=useState<{x:number;y:number}|null>(null);
+ const wireDrag=useRef<{pointerId:number;from:string;pin:string;startX:number;startY:number;dragged:boolean}|null>(null);
+ const [wireTarget,setWireTarget]=useState<InputTarget|null>(null);
  const [interaction,setInteraction]=useState<Interaction>(null);
  const [importing,setImporting]=useState(false);
  const importRef=useRef<HTMLInputElement>(null);
@@ -79,7 +83,14 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   setInteraction({type:'move',x:event.clientX,y:event.clientY,origX:node.x,origY:node.y,nodeId:node.id,before:doc});
  }
  function pointerMove(event:ReactPointerEvent<SVGSVGElement>){
-  setPointer(canvasPoint(event));
+  const p=canvasPoint(event);
+  setPointer(p);
+  if(wireDrag.current?.pointerId===event.pointerId){
+    const drag=wireDrag.current;
+    if(Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)>4)drag.dragged=true;
+    setWireTarget(inputAtPoint(docRef.current,drag.from,drag.pin,p,Math.max(18,22/zoom)));
+    return;
+  }
   if(!interaction)return;
   if(interaction.type==='pan')setOffset({x:interaction.origX+event.clientX-interaction.x,y:interaction.origY+event.clientY-interaction.y});
   else {
@@ -89,6 +100,20 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
    const x=snap(interaction.origX+dx,doc.snap),y=snap(interaction.origY+dy,doc.snap);
    setDoc(d=>({...d,nodes:d.nodes.map(n=>n.id===interaction.nodeId?{...n,x,y}:n)}));
   }
+ }
+ function finishWire(event:ReactPointerEvent<SVGSVGElement>,cancel=false){
+   const drag=wireDrag.current;
+   if(!drag||drag.pointerId!==event.pointerId)return;
+   const target=cancel?null:inputAtPoint(docRef.current,drag.from,drag.pin,canvasPoint(event),Math.max(18,22/zoom));
+   wireDrag.current=null;
+   if(drag.dragged&&target?.valid){
+     const wire={id:crypto.randomUUID(),from:drag.from,fromPin:drag.pin,to:target.nodeId,toPin:target.pin};
+     change(d=>({...d,wires:[...d.wires,wire]}));
+     setStatus('Wire connected.');setConnecting(null);
+   }else if(drag.dragged){setStatus(target?.reason??'Release on an input terminal to connect.');setConnecting(null);}
+   else{setConnecting({id:drag.from,pin:drag.pin});setStatus('Select an input pin to connect.');}
+   setWireTarget(null);setPointer(null);
+   if(event.currentTarget.hasPointerCapture?.(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
  }
  function pointerUp(){
   if(interaction?.type==='move'&&interaction.before&&!contentEqual(interaction.before,docRef.current)){
@@ -112,7 +137,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){e.preventDefault();duplicate();}
   if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();remove();}
-  if(e.key==='Escape'){setConnecting(null);setPlacement(null);setPaletteOpen(false);setInspectorOpen(false);}
+  if(e.key==='Escape'){wireDrag.current=null;setWireTarget(null);setPointer(null);setConnecting(null);setPlacement(null);setPaletteOpen(false);setInspectorOpen(false);}
  }window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);});
  async function importFile(file:File){try{if(file.size>800000)throw Error('This circuit file exceeds the 800 KB limit.');const data=parseDocument(JSON.parse(await file.text()));if(doc.nodes.length&&!window.confirm('Replace the current circuit with this imported project?'))return;edit(data);setSimulation(initialSimulation());setSelection(null);setRunning(false);setShowWelcome(false);setStatus('Circuit imported successfully.');}catch(error){setStatus(error instanceof Error?error.message:'Invalid circuit file.');}finally{setImporting(false);}}
  const inspectorContent=<div className="logic-inspector-body">
@@ -128,20 +153,38 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  <header className="logic-header"><div className="logic-brand"><button aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17}/></button><img src="/pico-logo.svg" alt=""/><span>Pico<span className="logic-dot">.</span></span><span className="logic-header-slash">/</span><strong>Logic Simulator</strong></div><div className="logic-header-right"><span className={'logic-save '+saveState}>{saveState==='saved'?<Check size={13}/>:<Save size={13}/>} {saveState==='saved'?'Saved locally':saveState==='error'?'Autosave failed':'Unsaved'}</span><button onClick={()=>{setImporting(true);importRef.current?.click();}}><Upload size={15}/> <span>Import</span></button><button className="logic-primary" onClick={()=>download(JSON.stringify(doc,null,2),filename(doc.title,'.logic.json'),'application/json')}><Download size={15}/><span> Export</span></button><input ref={importRef} type="file" accept=".json,application/json" hidden onChange={e=>{const file=e.target.files?.[0];if(file)void importFile(file);e.target.value='';}}/></div></header>
  <div className="logic-toolbar"><button className="logic-mobile-only" onClick={()=>setPaletteOpen(s=>!s)} aria-label="Toggle components"><Menu size={17}/></button><button className={tool==='select'?'active':''} title="Select / Move" aria-label="Select tool" onClick={()=>setTool('select')}><MousePointer2 size={15}/><span>Select</span></button><button className={tool==='pan'?'active':''} onClick={()=>setTool('pan')} title="Pan"><Hand size={15}/><span>Pan</span></button><i/><button disabled={!history.length} onClick={undo} title="Undo" aria-label="Undo"><Undo2 size={16}/></button><button disabled={!future.length} onClick={redo} title="Redo" aria-label="Redo"><Redo2 size={16}/></button><button disabled={!selection} onClick={remove} title="Delete selection" aria-label="Delete selection"><Trash2 size={16}/></button><button disabled={!selectedNode} onClick={rotate} title="Rotate component" aria-label="Rotate"><RotateCw size={16}/></button><i/><button aria-label="Zoom out" onClick={()=>setZoom(z=>validNumber(z-.15,.35,2.5))}><ZoomOut size={16}/></button><span className="logic-zoom">{Math.round(zoom*100)}%</span><button aria-label="Zoom in" onClick={()=>setZoom(z=>validNumber(z+.15,.35,2.5))}><ZoomIn size={16}/></button><button title="Fit circuit" onClick={fit} aria-label="Fit circuit"><Maximize size={16}/></button><i/><button onClick={()=>setTruthVisible(v=>!v)} className={truthVisible?'active':''}>Truth table</button><button onClick={()=>setInspectorOpen(v=>!v)} className="logic-mobile-only">Properties</button></div>
  <div className="logic-main">
- <aside className={'logic-palette '+(paletteOpen?'mobile-open':'')} aria-label="Component palette"><div className="logic-pane-heading"><b>COMPONENTS</b><button className="logic-mobile-only" aria-label="Close components" onClick={()=>setPaletteOpen(false)}><X size={16}/></button></div><div className="logic-palette-scroll">{GROUPS.map(group=><section key={group}><button className="logic-group" onClick={()=>setGroupOpen(g=>g.includes(group)?g.filter(x=>x!==group):[...g,group])}><span>{group}</span><ChevronDown size={15} className={groupOpen.includes(group)?'':'collapsed'}/></button>{groupOpen.includes(group)&&<div className="logic-component-list">{(Object.keys(SPECS) as ComponentKind[]).filter(k=>SPECS[k].group===group).map(kind=><button key={kind} draggable onDragStart={event=>event.dataTransfer.setData('text/pico-logic',kind)} className={'logic-part '+(placement===kind?'active':'')} onClick={()=>{setPlacement(kind);setStatus('Click on the canvas to place '+SPECS[kind].title+'.');setPaletteOpen(false);}}><span className="logic-part-symbol">{kind==='lamp'?'◉':kind==='clock'?'∿':kind==='switch'?'⇄':kind==='hex'?'▣':kind==='label'?'T':kind==='not'?'¬':kind==='and'?'&':kind==='xor'?'⊕':'▱'}</span><span>{SPECS[kind].title}</span><Plus size={12}/></button>)}</div>}</section>)}</div><div className="logic-palette-tip">Click a component, then click the grid to place it. Connect output pins to input pins.</div></aside>
+ <aside className={'logic-palette '+(paletteOpen?'mobile-open':'')} aria-label="Component palette"><div className="logic-pane-heading"><b>COMPONENTS</b><button className="logic-mobile-only" aria-label="Close components" onClick={()=>setPaletteOpen(false)}><X size={16}/></button></div><div className="logic-palette-scroll">{GROUPS.map(group=><section key={group}><button className="logic-group" onClick={()=>setGroupOpen(g=>g.includes(group)?g.filter(x=>x!==group):[...g,group])}><span>{group}</span><ChevronDown size={15} className={groupOpen.includes(group)?'':'collapsed'}/></button>{groupOpen.includes(group)&&<div className="logic-component-list">{(Object.keys(SPECS) as ComponentKind[]).filter(k=>SPECS[k].group===group).map(kind=><button key={kind} draggable onDragStart={event=>event.dataTransfer.setData('text/pico-logic',kind)} className={'logic-part '+(placement===kind?'active':'')} onClick={()=>{setPlacement(kind);setStatus('Click on the canvas to place '+SPECS[kind].title+'.');setPaletteOpen(false);}}><span className="logic-part-symbol"><PaletteSymbol kind={kind}/></span><span>{SPECS[kind].title}</span><Plus size={12}/></button>)}</div>}</section>)}</div><div className="logic-palette-tip">Click a component, then click the grid to place it. Connect output pins to input pins.</div></aside>
  <section className="logic-workarea" aria-label="Circuit workspace">
-  <div className="logic-board" role="region" aria-label="Digital circuit canvas"><svg ref={boardRef} aria-label="Circuit canvas" tabIndex={0} onWheel={e=>{if(e.ctrlKey){e.preventDefault();setZoom(z=>validNumber(z+(e.deltaY<0?.08:-.08),.35,2.5));}}} onPointerDown={e=>{if(e.target===boardRef.current||(e.target as Element).classList.contains('logic-surface')){if(tool==='pan'||e.button===1)setInteraction({type:'pan',x:e.clientX,y:e.clientY,origX:offset.x,origY:offset.y});canvasClick(e);}}} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} onPointerLeave={pointerUp} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const k=e.dataTransfer.getData('text/pico-logic');if(Object.hasOwn(SPECS,k)){const p=canvasPoint(e);addNode(k as ComponentKind,p.x-61,p.y-39);}}} style={{touchAction:'none'}}>
+  <div className="logic-board" role="region" aria-label="Digital circuit canvas"><svg ref={boardRef} aria-label="Circuit canvas" tabIndex={0} onWheel={e=>{if(e.ctrlKey){e.preventDefault();setZoom(z=>validNumber(z+(e.deltaY<0?.08:-.08),.35,2.5));}}} onPointerDown={e=>{if(e.target===boardRef.current||(e.target as Element).classList.contains('logic-surface')){if(tool==='pan'||e.button===1)setInteraction({type:'pan',x:e.clientX,y:e.clientY,origX:offset.x,origY:offset.y});canvasClick(e);}}} onPointerMove={pointerMove} onPointerUp={e=>{finishWire(e);pointerUp();}} onPointerCancel={e=>{finishWire(e,true);pointerUp();}} onPointerLeave={e=>{if(!wireDrag.current)pointerUp();}} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const k=e.dataTransfer.getData('text/pico-logic');if(Object.hasOwn(SPECS,k)){const p=canvasPoint(e);addNode(k as ComponentKind,p.x-61,p.y-39);}}} style={{touchAction:'none'}}>
   <defs><pattern id="logic-grid" width={24*zoom} height={24*zoom} x={offset.x} y={offset.y} patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#545566" opacity=".45"/></pattern><marker id="logic-arrow" markerWidth="7" markerHeight="7" refX="4" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6Z" fill="#85879a"/></marker></defs>
   <rect className="logic-surface" width="100%" height="100%" fill={doc.grid?'url(#logic-grid)':'transparent'}/>
   <g transform={`translate(${offset.x} ${offset.y}) scale(${zoom})`}>
-  {doc.wires.map(w=>{const from=doc.nodes.find(n=>n.id===w.from),to=doc.nodes.find(n=>n.id===w.to);if(!from||!to)return null;const a=portPosition(from,w.fromPin,'out'),b=portPosition(to,w.toPin,'in');const mx=(a.x+b.x)/2;const path=`M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`;const signal=signals[key(w.from,w.fromPin)]??'Z';return <g key={w.id} role="button" aria-label={`Wire ${w.fromPin} to ${w.toPin}, ${stateName[signal]}`} onPointerDown={e=>{e.stopPropagation();setSelection({type:'wire',id:w.id});setSelectedNodes([]);setInspectorOpen(true);}}><path d={path} fill="none" stroke="transparent" strokeWidth="16"/><path d={path} className={'logic-wire '+signalClass(signal)+(selection?.type==='wire'&&selection.id===w.id?' selected':'')} strokeWidth={selection?.type==='wire'&&selection.id===w.id?5:3} fill="none"/><title>{stateName[signal]} ({String(signal)})</title></g>;})}
+  {doc.wires.map(w=>{const from=doc.nodes.find(n=>n.id===w.from),to=doc.nodes.find(n=>n.id===w.to);if(!from||!to)return null;const a=portPosition(from,w.fromPin,'out'),b=portPosition(to,w.toPin,'in');const path=connectionPath(a,b);const signal=signals[key(w.from,w.fromPin)]??'Z';return <g key={w.id} role="button" aria-label={`Wire ${w.fromPin} to ${w.toPin}, ${stateName[signal]}`} onPointerDown={e=>{e.stopPropagation();setSelection({type:'wire',id:w.id});setSelectedNodes([]);setInspectorOpen(true);}}><path d={path} fill="none" stroke="transparent" strokeWidth="16"/><path d={path} className={'logic-wire '+signalClass(signal)+(selection?.type==='wire'&&selection.id===w.id?' selected':'')} strokeWidth={selection?.type==='wire'&&selection.id===w.id?5:3} fill="none"/><title>{stateName[signal]} ({String(signal)})</title></g>;})}
   {doc.nodes.map(node=>{const spec=SPECS[node.kind],height=nodeHeight(node),selected=selection?.type==='node'&&selection.id===node.id||selectedNodes.includes(node.id),output=spec.outputs[0]?signals[key(node.id,spec.outputs[0])]??'Z':'Z',lamp=signals[key(node.id,'IN')]??'Z',hex=spec.inputs.map(pin=>signals[key(node.id,pin)]??'X'),hexValue=hex.some(b=>b!==0&&b!==1)?'X':parseInt(hex.join(''),2).toString(16).toUpperCase();return <g key={node.id} className={'logic-node '+(selected?'selected':'')} onPointerDown={e=>startMove(e,node)} onDoubleClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}} style={{cursor:'move'}}>
-  <g transform={`translate(${node.x+NODE_WIDTH/2} ${node.y+height/2}) rotate(${node.rotation}) translate(${-NODE_WIDTH/2} ${-height/2})`}><rect className="logic-node-body" width={NODE_WIDTH} height={height} rx="8"/><text className="logic-node-kind" x={NODE_WIDTH/2} y="20" textAnchor="middle">{node.label||spec.title}</text>
-  {(node.kind==='switch'||node.kind==='button')?<foreignObject x="29" y="27" width="64" height="37"><button className={'logic-switch '+signalClass(output)} onPointerDown={e=>e.stopPropagation()} onClick={()=>toggleInput(node)} onPointerUp={e=>{if(node.kind==='button'){e.stopPropagation();toggleInput(node,0);}}} onPointerDownCapture={()=>{if(node.kind==='button')toggleInput(node,1);}} aria-label={node.kind==='button'?'Press and hold button':'Toggle switch'}>{String(output)}</button></foreignObject>:node.kind==='lamp'?<g><circle cx={NODE_WIDTH/2} cy="49" r="17" className={'logic-lamp '+signalClass(lamp)}/><text className="logic-value" x={NODE_WIDTH/2} y="54" textAnchor="middle">{String(lamp)}</text></g>:node.kind==='hex'?<text className="logic-hex" x={NODE_WIDTH/2} y="77" textAnchor="middle">{hexValue}</text>:<text className="logic-node-glyph" x={NODE_WIDTH/2} y={Math.max(56,height-17)} textAnchor="middle">{node.kind==='clock'?'∿':node.kind==='xor'?'⊕':node.kind==='not'?'¬':node.kind==='and'||node.kind==='nand'?'&':node.kind==='or'||node.kind==='nor'?'≥1':node.kind.endsWith('ff')||node.kind==='sr'?'Q':node.kind==='label'?'T':String(output)}</text>}
+  <g transform={`translate(${node.x+NODE_WIDTH/2} ${node.y+height/2}) rotate(${node.rotation}) translate(${-NODE_WIDTH/2} ${-height/2})`}>
+    <rect className="logic-node-hitbox" width={NODE_WIDTH} height={height} rx="5"/>
+    <CircuitSymbol kind={node.kind} height={height} signal={node.kind==='lamp'?lamp:output} hex={hexValue}/>
+    <text className="logic-node-kind" x={NODE_WIDTH/2} y="11" textAnchor="middle">{node.label||spec.title}</text>
+    {(node.kind==='switch'||node.kind==='button')&&<foreignObject x="34" y={height/2-15} width="57" height="38">
+      <button className="logic-symbol-button" aria-label={node.kind==='button'?'Press and hold button':'Toggle switch'} onPointerDown={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,1);}} onPointerUp={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onPointerCancel={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}}/>
+    </foreignObject>}
   </g>
-  {(['in','out'] as const).flatMap(direction=>spec[direction==='in'?'inputs':'outputs'].map(pin=>{const pos=portPosition(node,pin,direction),isTarget=connecting&&direction==='in'&&isWireValid(doc,{id:'preview',from:connecting.id,fromPin:connecting.pin,to:node.id,toPin:pin})===null;const sig=signals[key(node.id,pin)]??'Z';return <g key={direction+pin} className="logic-port" onPointerDown={e=>{e.stopPropagation();if(direction==='out'){setConnecting({id:node.id,pin});setStatus('Choose an input pin to connect '+pin+'.');}else if(connecting)attemptConnect(node.id,pin);}}><circle cx={pos.x} cy={pos.y} r={9} className={'logic-port-hit '+(isTarget?'target':'')}/><circle cx={pos.x} cy={pos.y} r={5} className={'logic-port-dot '+signalClass(sig)}/><text x={pos.x+(direction==='in'?13:-13)} y={pos.y-10} textAnchor={direction==='in'?'start':'end'} className="logic-port-label">{pin}</text><title>{direction==='in'?'Input':'Output'} {pin}: {stateName[sig]}</title></g>;}))}
+  {(['in','out'] as const).flatMap(direction=>spec[direction==='in'?'inputs':'outputs'].map(pin=>{const pos=portPosition(node,pin,direction),isTarget=connecting&&direction==='in'&&isWireValid(doc,{id:'preview',from:connecting.id,fromPin:connecting.pin,to:node.id,toPin:pin})===null;const sig=signals[key(node.id,pin)]??'Z';return <g key={direction+pin} className={'logic-port '+(wireTarget?.nodeId===node.id&&wireTarget.pin===pin?'wire-hover '+(wireTarget.valid?'valid':'invalid'):'')} onPointerDown={e=>{
+    e.stopPropagation();if(e.button!==0)return;
+    if(direction==='out'){
+      setConnecting({id:node.id,pin});setPointer(canvasPoint(e));
+      wireDrag.current={pointerId:e.pointerId,from:node.id,pin,startX:e.clientX,startY:e.clientY,dragged:false};
+      boardRef.current?.setPointerCapture?.(e.pointerId);
+      setStatus('Drag from the output to an input terminal.');
+    }else if(connecting)attemptConnect(node.id,pin);
+  }}>
+   <line x1={pos.x} y1={pos.y} x2={pos.x+(direction==='in'?27:-27)} y2={pos.y} className={'logic-terminal '+signalClass(sig)}/>
+   <circle cx={pos.x} cy={pos.y} r="13" className={'logic-port-hit '+(isTarget?'target':'')}/>
+   <text x={pos.x+(direction==='in'?15:-15)} y={pos.y-9} textAnchor={direction==='in'?'start':'end'} className="logic-port-label">{pin}</text>
+   <title>{direction==='in'?'Input':'Output'} {pin}: {stateName[sig]}. Drag to connect.</title>
+  </g>;}))}
   </g>;})}
-  {connecting&&pointer&&(()=>{const source=doc.nodes.find(n=>n.id===connecting.id);if(!source)return null;const p=portPosition(source,connecting.pin,'out');return <path d={`M${p.x},${p.y} L${pointer.x},${pointer.y}`} stroke="#aca4ff" strokeWidth="2" strokeDasharray="8 5" fill="none" pointerEvents="none"/>;})()}
+  {connecting&&pointer&&(()=>{const source=doc.nodes.find(n=>n.id===connecting.id);if(!source)return null;const p=portPosition(source,connecting.pin,'out');return <path d={connectionPath(p,wireTarget?.valid?wireTarget:pointer)} className={'logic-connection-preview '+(wireTarget&&!wireTarget.valid?'invalid':'')} fill="none" pointerEvents="none"/>;})()}
   </g></svg>
   {showWelcome&&doc.nodes.length===0&&<div className="logic-welcome"><span className="logic-welcome-mark">◇</span><h2>Build your first circuit</h2><p>Place logic gates, connect pins, and watch signals move through your circuit.</p><button className="logic-primary" onClick={()=>{setShowWelcome(false);setPlacement('switch');}}>Start blank <Plus size={14}/></button><span>Or open a working example</span><div className="logic-sample-buttons">{SAMPLES.map(s=><button key={s.id} onClick={()=>load(s.id)}>{s.title}</button>)}</div></div>}
   {placement&&<div className="logic-placement-hint">Placing {SPECS[placement].title} <button onClick={()=>setPlacement(null)}>Cancel <X size={12}/></button></div>}
