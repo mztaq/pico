@@ -11,7 +11,7 @@ export function gate(kind:ComponentKind,inputs:Signal[]):Signal {
   if(kind==='tri')return binary[1]===0?'Z':binary[1]===1?(binary[0]??'X'):'X';
   if(kind==='and'||kind==='nand') {const value:Signal=binary.includes(0)?0:binary.every(s=>s===1)?1:'X';return kind==='nand'?invert(value):value;}
   if(kind==='or'||kind==='nor') {const value:Signal=binary.includes(1)?1:binary.every(s=>s===0)?0:'X';return kind==='nor'?invert(value):value;}
-  if(kind==='xor'||kind==='xnor') {const value:Signal=binary.some(s=>s!=='0'&&s!==0&&s!==1)?'X':(binary.reduce<number>((sum,s)=>sum+(s===1?1:0),0)%2) as 0|1;return kind==='xnor'?invert(value):value;}
+  if(kind==='xor'||kind==='xnor') {const value:Signal=binary.some(s=>s!==0&&s!==1)?'X':(binary.reduce<number>((sum,s)=>sum+(s===1?1:0),0)%2) as 0|1;return kind==='xnor'?invert(value):value;}
   return 'X';
 }
 export function resolveDrivers(drivers:Signal[]):Signal {
