@@ -67,7 +67,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  function fresh(){if(doc.nodes.length&&!window.confirm('Start a new blank circuit? Use Undo to return to the previous document.'))return;edit(makeDocument());setSelection(null);setSelectedNodes([]);setActiveSample(null);setSimulation(initialSimulation());setRunning(false);setShowWelcome(false);}
  function reset(){setRunning(false);setSimulation(initialSimulation());setStatus('Simulation reset.');}
  function toggleInput(node:CircuitNode,value?:0|1){setSimulation(s=>({...s,inputs:{...s.inputs,[node.id]:value??(s.inputs[node.id]??node.initial??0?0:1)}}));}
- function canvasPoint(event:ReactPointerEvent<SVGSVGElement>){const b=boardRef.current!.getBoundingClientRect();return {x:(event.clientX-b.left-offset.x)/zoom,y:(event.clientY-b.top-offset.y)/zoom};}
+ function canvasPoint(event:{clientX:number;clientY:number}){const b=boardRef.current!.getBoundingClientRect();return {x:(event.clientX-b.left-offset.x)/zoom,y:(event.clientY-b.top-offset.y)/zoom};}
  function startMove(event:ReactPointerEvent<SVGGElement>,node:CircuitNode){
   if(tool==='pan'||placement)return;event.stopPropagation();
   if(event.shiftKey){setSelectedNodes(s=>s.includes(node.id)?s.filter(id=>id!==node.id):[...s,node.id]);}
