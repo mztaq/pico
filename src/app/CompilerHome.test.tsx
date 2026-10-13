@@ -47,6 +47,17 @@ it('shows left, center and right contributor credits in Logic Sim',async()=>{
   ]);
   expect(footer!.querySelectorAll('.credit-divider')).toHaveLength(2);
 });
+it('shows the updated Logic Sim editor controls and shared theme picker',async()=>{
+  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Simulator');
+  await click(choice!);
+  expect(container.textContent).not.toContain('Saved locally');
+  expect(container.textContent).not.toContain('EXAMPLE CIRCUITS');
+  expect(container.querySelector('.logic-toolbar')?.textContent).toContain('Select all');
+  expect(container.querySelector('.logic-toolbar')?.textContent).toContain('Boolean Expression');
+  await click(container.querySelector<HTMLElement>('[aria-label="Logic Simulator theme"]')!);
+  expect(container.querySelector('.logic-theme-menu .theme-picker')).not.toBeNull();
+  expect(container.querySelector('.logic-theme-menu')?.textContent).toContain('Dracula');
+});
 it('moves workspaces below the top bar and removes the obsolete UI',async()=>{
   await choose('Pseudocode Compiler');
   expect(document.title).toBe('Pico | Pseudocode Compiler');
