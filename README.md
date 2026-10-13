@@ -4,7 +4,7 @@
 
 <h1 align="center">PICO</h1>
 
-<p align="center">Build flowcharts, write code and run algorithms in your browser.</p>
+<p align="center">Write code, build flowcharts and simulate logic circuits in your browser.</p>
 
 <p align="center">
   <a href="https://picompiler.pages.dev">Open Pico</a> · 
@@ -19,13 +19,13 @@
   </a>
 </p>
 
-Pico is a browser-based pseudocode and Python editor built for Computer Science learning. Both compilers open new files with empty source and a creator-credit placeholder. They share themes, interactive console input, source tabs and recorded debugger steps. No account or backend is required.
+Pico is a browser-based Computer Science learning tool with four workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder and Logic Sim. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
 
-Created by **Amar** and **Mustaqim** for students learning to turn algorithms into working programs.
+Developed by **Amar** (11 Boys Blue), deployed by **Mustaqim** (11 Boys Red), with **Logic Sim conceptualised by Mohamed Hamza** (11 Boys Red).
 
 ## Getting started
 
-Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, or **Flowchart Builder**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
+Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, or **Logic Sim**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
 
 ```text
 DECLARE Name : STRING
@@ -43,7 +43,7 @@ When execution reaches `INPUT`, type your value in the Console and press Enter. 
 - Use **Debug** to record execution, then step through the results.
 - Open **Reference** for keyword explanations and code examples.
 - Use **File** to import a project or export a `.pico` copy.
-- Open **Help** for the guided tutorial.
+- Open **Help** for the guided tutorial. Some familiar faces from the Computer Science department receive a hidden greeting when their names are entered.
 
 ## Workspace
 
@@ -53,11 +53,12 @@ When execution reaches `INPUT`, type your value in the Console and press Enter. 
 | **Console** | Accepts input while the program waits. Keeps output and submitted values in order, with fatal errors shown in red. |
 | **Debugger** | Replays recorded execution steps with variable values and output. |
 | **Flowchart Builder** | Drag editable blocks onto a canvas, connect branches and loops, run with typed console input, and convert to pseudocode. |
+| **Logic Sim** | Draw schematic logic circuits, connect terminals, simulate signals, and inspect truth tables and Boolean expressions. |
 | **Projects** | Keeps source tabs and practice files together in horizontal workspace tabs. Workspace names are unique, ignoring case and extra spaces. |
 | **Quick reference** | Provides selectable examples with syntax colouring, adjustable text size and keyword search. |
 | **Appearance** | Offers editor themes, high-contrast palettes, resizable panels and layout settings. Catppuccin Mocha is the first-launch default. |
 
-Projects and settings save in this browser. Export a `.pico` copy to back up your work or move it to another device. Pseudocode and Python projects use separate storage. Python `.py` tabs also work as importable modules; pseudocode tabs run independently.
+Projects and settings save in this browser. Export `.pico` projects, `.picochart` flowcharts and `.logic.json` circuits to keep copies. When a workspace has changed since opening or exporting, the browser may display its native leave-site confirmation when you close or refresh the tab. Pseudocode and Python projects use separate storage. Python `.py` tabs also work as importable modules; pseudocode tabs run independently.
 
 ## Flowchart Builder
 
@@ -72,6 +73,21 @@ Drag a block from the palette or click to add it. Select a block to edit its exp
 **Convert to pseudocode** provides highlighted code with Copy, Download `.pico`, and **Open in Pseudocode Compiler** actions. Opening code creates a new compiler workspace. Standard selections and pre-test loops convert to `IF` and `WHILE`. More complex graphs use a control variable with `WHILE` and `CASE` to preserve their connections. Typed Input blocks declare scalar variables. Assignment types are inferred. The palette has no Variable declaration block. Existing imported declaration blocks remain readable for compatibility.
 
 Workspaces save separately from compiler projects. Export/Import `.picochart` backs up an editable chart or moves it between devices. The canvas supports zoom, panning, keyboard movement, undo/redo, and a resizable console. Limits are 250 blocks per chart and 50 workspaces per browser.
+
+## Logic Sim
+
+Open **Logic Sim** from the home screen. It begins with an empty canvas and offers a skippable seven-step walkthrough on the first visit. Use **Help** to replay the tutorial.
+
+- Select a gate, switch, clock or indicator from the component palette and click to place it, or drag it onto the canvas.
+- Connect circuits by dragging an output terminal onto an input terminal. Move, rotate, box-select, delete, duplicate, copy or paste components. Zoom and pan around the canvas.
+- Available parts include NOT, AND, NAND, OR, NOR, XOR and XNOR gates, buffers, input switches, constant sources, bulbs, a four-bit hex display, clocks, and SR, D, JK and T flip-flops.
+- **Run**, **Pause**, **Step** and **Reset** control the simulation. Logic signals include 0, 1, unknown (X) and high impedance (Z). Floating inputs and conflicting connections are indicated.
+- **Truth table** generates a table for combinational circuits containing up to eight toggle switches. Export as CSV.
+- **Boolean Expression** reads connected combinational gates and shows Boolean word notation, algebraic symbols and programming notation. It also generates supported sum-of-products and product-of-sums forms for up to six inputs. It does not enumerate every possible equivalent expression.
+- **Import** and **Export** use editable `.logic.json` files. Circuit data autosaves in the browser, but browser storage is not a permanent backup.
+- Themes, including Dracula, follow the same preference as the other three workspaces.
+
+Logic Sim is an educational digital model, not an analogue electrical simulator. It does not model real voltage, propagation delay or electrical power. It does not support reusable custom subcircuits yet.
 
 ## Language support
 
@@ -166,6 +182,8 @@ Updates are stored in the root `logs.txt`, one per line as `[YYYY-MM-DD] : UPDAT
 | [`src/runtime/`](src/runtime/) | Interpreter, worker execution, diagnostics and input handling. |
 | [`src/app/`](src/app/) | Workspace interface, editor, tool panels, themes and tutorial. |
 | [`src/storage/`](src/storage/) | Projects and settings persistence. |
+| [`src/flowchart/`](src/flowchart/) | Flowchart editing, execution and conversion. |
+| [`src/logic/`](src/logic/) | Circuit symbols, editor, four-state simulation, expressions and tests. |
 | [`src/visual/`](src/visual/) | Flowchart generation and execution visualisation. |
 
 ### Contributing
@@ -176,5 +194,6 @@ For bug reports, include the language, source code, input values, expected resul
 
 | Name | Role |
 | --- | --- |
-| **Amar** | Development |
-| **[Mustaqim](https://github.com/mztaq)** | Deployment and releases |
+| **Amar** | Development, 11 Boys Blue |
+| **[Mustaqim](https://github.com/mztaq)** | Deployment and releases, 11 Boys Red |
+| **Mohamed Hamza** | Logic Sim concept, 11 Boys Red |

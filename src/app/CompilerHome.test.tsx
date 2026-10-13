@@ -26,13 +26,41 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
 it('opens on a themed home screen with all workspace choices and creator credits',()=>{
+  expect(document.title).toBe('Pico | Home');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder']);
+  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim']);
   expect(container.querySelector('.home-credits')?.textContent).toContain('Mustaqim');expect(container.querySelector('.home-credits')?.textContent).toContain('Amar');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
+it('shows left, center and right contributor credits in Logic Sim',async()=>{
+  const logicChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Logic Sim');
+  expect(logicChoice).toBeDefined();
+  await click(logicChoice!);
+  expect(document.title).toBe('Pico | Logic Sim');
+  const footer=container.querySelector('.logic-app > footer.statusbar.logic-footer');
+  expect(footer).not.toBeNull();
+  expect(footer!.querySelector('.attribution.logic-attribution')).not.toBeNull();
+  expect([...footer!.querySelectorAll('.credit-item')].map(item=>item.textContent)).toEqual([
+    'Deployed by Mustaqim 11 Boys Red',
+    'Logic Sim conceptualised by Mohamed Hamza 11 Boys Red',
+    'Made by Amar 11 Boys Blue',
+  ]);
+  expect(footer!.querySelectorAll('.credit-divider')).toHaveLength(2);
+});
+it('shows the updated Logic Sim editor controls and shared theme picker',async()=>{
+  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
+  await click(choice!);
+  expect(container.textContent).not.toContain('Saved locally');
+  expect(container.textContent).not.toContain('EXAMPLE CIRCUITS');
+  expect(container.querySelector('.logic-toolbar')?.textContent).toContain('Select all');
+  expect(container.querySelector('.logic-toolbar')?.textContent).toContain('Boolean Expression');
+  await click(container.querySelector<HTMLElement>('[aria-label="Logic Simulator theme"]')!);
+  expect(container.querySelector('.logic-theme-menu .theme-picker')).not.toBeNull();
+  expect(container.querySelector('.logic-theme-menu')?.textContent).toContain('Dracula');
+});
 it('moves workspaces below the top bar and removes the obsolete UI',async()=>{
   await choose('Pseudocode Compiler');
+  expect(document.title).toBe('Pico | Pseudocode Compiler');
   expect(button('Go to Python Compiler')).toBeDefined();expect(button('Go to Pseudocode Compiler')).toBeUndefined();
   expect(container.querySelector('.topbar')?.nextElementSibling?.className).toBe('workspace-tabs');
   expect(container.querySelector('.sidebar')).toBeNull();expect(container.querySelector('textarea')?.dataset.fontSize).toBe('19');
@@ -44,6 +72,7 @@ it('preserves separate projects, source and settings through switches and reload
   await type(container.querySelector('textarea')!,'OUTPUT "Pseudocode kept"');
   await click(container.querySelector('[aria-label="Open settings"]')!);await click(button('High Contrast Blue'));
   await click(button('Go to Python Compiler'));
+  expect(document.title).toBe('Pico | Python Compiler');
   expect(container.querySelector('.file-tab-select span')?.textContent).toBe('main.py');
   expect(container.querySelector('textarea')?.getAttribute('aria-label')).toBe('python editor');
   expect(container.querySelector('.pico-app')?.getAttribute('data-pico-theme')).toBe('high-contrast-blue');

@@ -21,9 +21,11 @@ import { inputEasterEgg } from './inputEasterEgg';
 import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen, Credits } from './components/HomeScreen';
+import {useExitWarning} from './components/useExitWarning';
 import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
 import { FlowchartWorkspace } from '../flowchart/FlowchartWorkspace';
+import { LogicWorkspace } from '../logic/LogicWorkspace';
 import type { ChartStore } from '../flowchart/storage';
 import { MAX_CONSOLE_LINES } from '../runtime/python/config';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
@@ -48,14 +50,16 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 export default function App() {
-  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | null>(null);
+  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | null>(null);
+  useEffect(() => { document.title = language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : 'Pico | Home'; }, [language]);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
-    if (language && language !== 'flowchart') snapshots.current[language] = snapshot;
+    if (language && language !== 'flowchart' && language !== 'logic') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
   if (!language) return <HomeScreen onChoose={setLanguage} />;
+  if (language === 'logic') return <LogicWorkspace onHome={() => setLanguage(null)} />;
   if (language === 'flowchart') return <FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
     charts.current = store;
     const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');
@@ -115,6 +119,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
 
   const activeProject = projects.find(project => project.id === activeId) ?? projects[0]!;
   const activeFile = activeProject.files.find(file => file.id === activeProject.activeFileId) ?? activeProject.files[0]!;
+  const markExported=useExitWarning(JSON.stringify(projects.map(p=>({id:p.id,name:p.name,files:p.files,tests:p.tests,virtualFiles:p.virtualFiles}))));
   const theme = getTheme(settings.theme);
   const parsed = useMemo<ParseState>(() => {
     if (isPython) return { ast: null, error: null };
@@ -405,7 +410,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           <div className="settings-foot">Drag tool tabs to reorder</div>
         </FloatingPanel>
       </div>
-      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} /></label><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> {isPython ? "Import .py / .pico" : "Import .pico"}</button>{isPython && <button onClick={exportPythonSource}><Download size={14} /> Export .py</button>}<button onClick={() => { exportProject(activeProject); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept={isPython ? ".py,.pico,application/json" : ".pico,application/json"} hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} /></label><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> {isPython ? "Import .py / .pico" : "Import .pico"}</button>{isPython && <button onClick={exportPythonSource}><Download size={14} /> Export .py</button>}<button onClick={() => { exportProject(activeProject); markExported(); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept={isPython ? ".py,.pico,application/json" : ".pico,application/json"} hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
       {projectNameError && <p id="project-name-error" className="project-name-error" role="alert">{projectNameError}</p>}
     </header>
 
@@ -452,7 +457,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
 
     {tutorialOfferOpen && <TutorialOffer onStart={startTutorial} onDismiss={() => setTutorialOfferOpen(false)} />}
     {tutorialOpen && <GuidedTutorial language={language} step={tutorialStep} onStep={goToTutorialStep} onClose={closeTutorial} onReference={() => { closeTutorial(); openReference(); }} />}
-    {saveError && <p className="autosave-error" role="alert">Autosave failed. Export your project to keep a copy.</p>}
+     {saveError && <p className="autosave-error" role="alert">Autosave failed. Export your project to keep a copy.</p>}
     <footer className="statusbar" inert={tutorialOpen || tutorialOfferOpen}><Credits /></footer>
     {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>Pseudocode and Python compilers.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a> or <a href="mailto:b03661@nbabarwa.com">b03661@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
   </div>;

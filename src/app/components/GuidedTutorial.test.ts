@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { placeTutorialCard } from './GuidedTutorial';
+import { placeTutorialCard, tutorialCompletionTip, tutorialSteps } from './GuidedTutorial';
 
 describe('tutorial placement', () => {
   it('keeps the card beside an editor spotlight on desktop', () => {
@@ -17,4 +17,9 @@ describe('tutorial placement', () => {
       expect(card.top + card.height).toBeLessThanOrEqual(624);
     }
   });
+});
+
+it('shows the exact names hint on both compiler tutorial completion screens', () => {
+  expect(tutorialSteps.find(step => step.label === 'RUN')?.tip).toContain('special greeting');
+  expect(tutorialCompletionTip).toBe('Try Mustaqim, Amar or Hamza when your program asks for a name. Some familiar faces from the Computer Science department receive a special greeting when you enter their names. Help opens this tour again.');
 });
