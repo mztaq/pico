@@ -118,8 +118,8 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
    const dx=(event.clientX-interaction.x)/zoom,dy=(event.clientY-interaction.y)/zoom;
    const x=snap(interaction.origX+dx,doc.snap),y=snap(interaction.origY+dy,doc.snap);
    const moved=selectedNodes.includes(interaction.nodeId!)?selectedNodes:[interaction.nodeId!];
-   const originals=interaction.before!.nodes,dx=x-interaction.origX,dy=y-interaction.origY;
-   setDoc(d=>({...d,nodes:d.nodes.map(n=>{const original=originals.find(o=>o.id===n.id)!;return moved.includes(n.id)?{...n,x:original.x+dx,y:original.y+dy}:n;})}));
+   const originals=interaction.before!.nodes,offsetX=x-interaction.origX,offsetY=y-interaction.origY;
+   setDoc(d=>({...d,nodes:d.nodes.map(n=>{const original=originals.find(o=>o.id===n.id)!;return moved.includes(n.id)?{...n,x:original.x+offsetX,y:original.y+offsetY}:n;})}));
   }
  }
  function finishWire(event:ReactPointerEvent<SVGSVGElement>,cancel=false){
