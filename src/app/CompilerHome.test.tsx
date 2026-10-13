@@ -36,7 +36,7 @@ it('shows left, center and right contributor credits in Logic Sim',async()=>{
   const logicChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Logic Simulator');
   expect(logicChoice).toBeDefined();
   await click(logicChoice!);
-  expect(document.title).toBe('Pico | Logic Simulator');
+  expect(document.title).toBe('Pico | Logic Sim');
   const footer=container.querySelector('.logic-app > footer.statusbar.logic-footer');
   expect(footer).not.toBeNull();
   expect(footer!.querySelector('.attribution.logic-attribution')).not.toBeNull();

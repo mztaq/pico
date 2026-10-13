@@ -51,7 +51,7 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 export default function App() {
   const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | null>(null);
-  useEffect(() => { document.title = language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Simulator' : 'Pico | Home'; }, [language]);
+  useEffect(() => { document.title = language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : 'Pico | Home'; }, [language]);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
