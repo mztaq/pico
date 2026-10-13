@@ -24,6 +24,7 @@ import { HomeScreen, Credits } from './components/HomeScreen';
 import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
 import { FlowchartWorkspace } from '../flowchart/FlowchartWorkspace';
+import { LogicWorkspace } from '../logic/LogicWorkspace';
 import type { ChartStore } from '../flowchart/storage';
 import { MAX_CONSOLE_LINES } from '../runtime/python/config';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
@@ -48,7 +49,7 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 export default function App() {
-  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | null>(null);
+  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | null>(null);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
@@ -56,6 +57,7 @@ export default function App() {
     setLanguage(next);
   };
   if (!language) return <HomeScreen onChoose={setLanguage} />;
+  if (language === 'logic') return <LogicWorkspace onHome={() => setLanguage(null)} />;
   if (language === 'flowchart') return <FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
     charts.current = store;
     const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');

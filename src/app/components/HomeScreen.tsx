@@ -8,7 +8,7 @@ import { UpdateCenter } from './UpdateCenter';
 export function Credits() {
   return <div className="attribution"><span className="credit-item"><span>Deployed by</span> <strong>Mustaqim</strong> <small>11 Boys Red</small></span><span className="credit-divider" aria-hidden="true">·</span><span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span></div>;
 }
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic') => void }) {
   const [settings] = useState(loadSettings);
   const theme = getTheme(settings.theme);
   useEffect(() => {
@@ -45,6 +45,19 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           <path d="M 116 16 H 242 L 229 60 H 103 Z"/>
           <rect x="280" y="22" width="69" height="32" rx="16"/>
           <text x="35" y="43">Start</text><text className="home-chart-output" x="172" y="43">Output "Hello!"</text><text x="314" y="43">End</text>
+        </svg>
+      </button>
+      <button className="compiler-choice" onClick={() => onChoose('logic')}>
+        <div className="compiler-choice-copy">
+          <div className="compiler-choice-title"><h2>Logic Simulator</h2><span>Open</span></div>
+          <p>Build digital circuits with gates, switches, clocks, and live outputs.</p>
+        </div>
+        <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
+          <path className="home-chart-link" d="M49 23 H95 M49 53 H95 M202 38 H261"/>
+          <rect x="1" y="11" width="47" height="24" rx="5"/><rect x="1" y="41" width="47" height="24" rx="5"/>
+          <path d="M 95 13 H 146 C 174 13 190 20 202 38 C 190 56 174 63 146 63 H 95 Z" />
+          <circle cx="288" cy="38" r="18"/>
+          <text x="24" y="27">1</text><text x="24" y="57">0</text><text x="142" y="42">AND</text><text x="288" y="43">0</text>
         </svg>
       </button>
     </div>
