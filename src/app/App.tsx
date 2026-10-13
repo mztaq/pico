@@ -53,7 +53,7 @@ export default function App() {
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
-    if (language && language !== 'flowchart') snapshots.current[language] = snapshot;
+    if (language && language !== 'flowchart' && language !== 'logic') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
   if (!language) return <HomeScreen onChoose={setLanguage} />;
