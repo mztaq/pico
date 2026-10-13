@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, Check, CircleHelp, X } from 'lucide-react';
 import type { CompilerLanguage } from '../../storage/projects';
 import { starterCode } from '../../starter';
 
-export const tutorialCompletionTip = 'Some familiar faces from the Computer Science department receive a special greeting when you enter their names. Help opens this tour again.';
+export const tutorialCompletionTip = 'Try Mustaqim, Amar or Hamza when your program asks for a name. Some familiar faces from the Computer Science department receive a special greeting when you enter their names. Help opens this tour again.';
 
 export const tutorialSteps = [
   { target: 'workspace', title: 'Name your workspace', label: 'WORKSPACE', description: 'Click the workspace name in the top bar and type a name for your project. Choose a unique name. It updates in the workspace tabs and saves automatically.', tip: 'On a small screen, open File to edit the workspace name.' },

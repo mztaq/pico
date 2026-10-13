@@ -19,8 +19,7 @@ describe('tutorial placement', () => {
   });
 });
 
-it('gives a subtle hint without naming the hidden inputs', () => {
+it('shows the exact names hint on both compiler tutorial completion screens', () => {
   expect(tutorialSteps.find(step => step.label === 'RUN')?.tip).toContain('special greeting');
-  expect(tutorialCompletionTip).toContain('Computer Science department');
-  expect(tutorialCompletionTip).not.toContain('Hamza');
+  expect(tutorialCompletionTip).toBe('Try Mustaqim, Amar or Hamza when your program asks for a name. Some familiar faces from the Computer Science department receive a special greeting when you enter their names. Help opens this tour again.');
 });
