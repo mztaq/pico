@@ -1,4 +1,4 @@
-import { NODE_WIDTH, SPECS, isWireValid, portPosition, type CircuitDocument, type CircuitWire } from './model';
+import { SPECS, isWireValid, portPosition, type CircuitDocument, type CircuitWire } from './model';
 
 export interface InputTarget { nodeId:string;pin:string;x:number;y:number;valid:boolean;reason:string|null }
 
@@ -22,9 +22,3 @@ export function connectionPath(a:{x:number;y:number},b:{x:number;y:number}) {
   return `M ${a.x} ${a.y} C ${a.x+delta} ${a.y}, ${b.x-delta} ${b.y}, ${b.x} ${b.y}`;
 }
 
-/** Canvas terminals always use the exact data model port positions. */
-export function terminalPath(node:{x:number;y:number},side:'in'|'out',position:{x:number;y:number}) {
-  return side==='in'
-    ?`M ${position.x} ${position.y} h 27`
-    :`M ${position.x-NODE_WIDTH+96} ${position.y} H ${position.x}`;
-}
