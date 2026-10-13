@@ -28,12 +28,12 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.res
 it('opens on a themed home screen with all workspace choices and creator credits',()=>{
   expect(document.title).toBe('Pico | Home');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Simulator']);
+  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim']);
   expect(container.querySelector('.home-credits')?.textContent).toContain('Mustaqim');expect(container.querySelector('.home-credits')?.textContent).toContain('Amar');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
 it('shows left, center and right contributor credits in Logic Sim',async()=>{
-  const logicChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Logic Simulator');
+  const logicChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Logic Sim');
   expect(logicChoice).toBeDefined();
   await click(logicChoice!);
   expect(document.title).toBe('Pico | Logic Sim');
@@ -48,7 +48,7 @@ it('shows left, center and right contributor credits in Logic Sim',async()=>{
   expect(footer!.querySelectorAll('.credit-divider')).toHaveLength(2);
 });
 it('shows the updated Logic Sim editor controls and shared theme picker',async()=>{
-  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Simulator');
+  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
   await click(choice!);
   expect(container.textContent).not.toContain('Saved locally');
   expect(container.textContent).not.toContain('EXAMPLE CIRCUITS');
