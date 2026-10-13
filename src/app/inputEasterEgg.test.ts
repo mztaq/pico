@@ -4,7 +4,7 @@ import { inputEasterEgg } from './inputEasterEgg';
 it.each([
   ['amar', 'The dev who engineered me day and night ☾'],
   ['mustaqim', 'The soul who unleashed me to the World Wide Web 🌏︎'],
-  ['hamza', 'The man who conceptualised my Logic Gates Sim ⚡︎'],
+  ['hamza', 'The man who conceptualised Logic Sim ⚡︎'],
 ])('preserves the exact %s message and recognises case and surrounding whitespace', (name, message) => {
   expect(inputEasterEgg(name)).toBe(message);
   expect(inputEasterEgg(`  ${name.toUpperCase()}  `)).toBe(message);
