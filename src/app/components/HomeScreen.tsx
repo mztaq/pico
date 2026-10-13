@@ -57,7 +57,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       </button>
       <button className="compiler-choice" onClick={() => onChoose('logic')}>
         <div className="compiler-choice-copy">
-          <div className="compiler-choice-title"><h2>Logic Simulator</h2><span>Open</span></div>
+          <div className="compiler-choice-title"><h2>Logic Sim</h2><span>Open</span></div>
           <p>Build digital circuits with gates, switches, clocks, and live outputs.</p>
         </div>
         <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
