@@ -8,7 +8,7 @@ import { ConsolePanel, DebuggerPanel, type ConsoleEntry } from '../app/component
 import { HighlightedCode } from '../app/components/HighlightedCode';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { UpdateCenter } from '../app/components/UpdateCenter';
-import {BackupReminder} from '../app/components/BackupReminder';
+import {useExitWarning} from '../app/components/useExitWarning';
 import { Credits } from '../app/components/HomeScreen';
 import { ResizeHandle } from '../app/components/ResizeHandle';
 import { contrastRatio, cssVariables, getTheme } from '../app/themes';
@@ -173,7 +173,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     <div className="flow-workspace" ref={layoutRef}>
       <aside className="flow-palette" aria-label="Flowchart blocks"><h2>Blocks</h2><p>Drag a block onto the canvas, or click to add it.</p><div className="flow-block-list">{BLOCKS.map(b=><button key={b.kind} className={`flow-palette-block flow-kind-${b.kind}`} disabled={running||(tutorialActive&&((tourStep===1?'start':tourStep===2?'output':tourStep===4?'end':null)!==b.kind||project.nodes.some(n=>n.kind===b.kind)))} draggable={!running&&(!tutorialActive||((tourStep===1?'start':tourStep===2?'output':tourStep===4?'end':null)===b.kind&&!project.nodes.some(n=>n.kind===b.kind)))} onDragStart={e=>{e.dataTransfer.setData('application/pico-flow-block',b.kind);e.dataTransfer.effectAllowed='copy';}} onClick={()=>add(b.kind)} title={b.hint}><BlockSymbol kind={b.kind}/><span><strong>{b.label}</strong><small>{b.hint}</small></span></button>)}</div>
 
-        <div className="flow-file-actions" inert={tutorialActive}><button onClick={()=>download(serializeChart(project),`${project.name}.picochart`,'application/json')}><Download size={14}/>Export flowchart</button><button onClick={()=>importRef.current?.click()}><Upload size={14}/>Import flowchart</button><button onClick={removeProject}><Trash2 size={14}/>Delete workspace</button></div>
+        <div className="flow-file-actions" inert={tutorialActive}><button onClick={()=>{download(serializeChart(project),`${project.name}.picochart`,'application/json');markExported();}}><Download size={14}/>Export flowchart</button><button onClick={()=>importRef.current?.click()}><Upload size={14}/>Import flowchart</button><button onClick={removeProject}><Trash2 size={14}/>Delete workspace</button></div>
         <input ref={importRef} type="file" accept=".picochart,application/json" hidden onChange={e=>{const file=e.currentTarget.files?.[0];e.currentTarget.value='';if(file)void importFile(file);}}/>
       </aside>
       <main className="flow-main"><div className="flow-canvas-toolbar"><span>{connection?`Choose a destination for ${connection.port==='next'?'Next':connection.port==='yes'?'Yes':'No'}`:'Drag a connection port onto another block. Drag the background to pan.'}</span><div>{connection&&<button aria-label="Cancel connection" onClick={()=>setConnection(null)}><X size={15}/></button>}<button aria-label="Zoom out" disabled={zoom<=0.35} onClick={()=>setZoom(v=>Math.max(0.35,v-0.1))}><ZoomOut size={16}/></button><output>{Math.round(zoom*100)}%</output><button aria-label="Zoom in" disabled={zoom>=1.5} onClick={()=>setZoom(v=>Math.min(1.5,v+0.1))}><ZoomIn size={16}/></button><button aria-label="Fit flowchart" onClick={fit}><Maximize2 size={16}/></button></div></div>
@@ -196,7 +196,6 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
       </aside>
     </div>
     <footer className="statusbar flow-statusbar"><Credits /></footer>
-    {!tutorialActive&&<BackupReminder workspace="flowchart" onExport={()=>download(serializeChart(project),project.name+'.picochart','application/json')}/>}
     {tutorialActive&&<FlowchartTutorial step={tourStep} project={project} result={result} pending={Boolean(pending)} running={running} panel={panel} onNext={nextLesson} onBack={()=>enterLesson(Math.max(0,tourStep-1))} onSkip={closeLesson}/>}
     {settingsOpen&&<div className="flow-settings" ref={settingsRef} role="dialog" aria-label="Flowchart appearance"><header><strong>Appearance</strong><button aria-label="Close flowchart settings" onClick={()=>setSettingsOpen(false)}><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id}))}/></div>}
 
