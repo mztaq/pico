@@ -294,7 +294,7 @@ describe('guided help and readable reference',()=>{
     for(let i=0;i<tutorialSteps.length-1;i++)await click(button('Next'));
     await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. "Help" opens this tour again.');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim, Amar or Hamza when your program asks for a name. Each has a hidden greeting. Hamza conceptualised the Logic Gates Sim. Help opens this tour again.');
     await click(button('Start coding'));
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
     expect(codeEditor().value).toBe(code);
@@ -344,7 +344,7 @@ describe('guided help and readable reference',()=>{
     await click(button('Next'));expect(container.querySelector('[data-tour="reference"]')).not.toBeNull();
     await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. "Help" opens this tour again.');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim, Amar or Hamza when your program asks for a name. Each has a hidden greeting. Hamza conceptualised the Logic Gates Sim. Help opens this tour again.');
     await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
     await click(button('Skip for now'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();
