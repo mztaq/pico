@@ -1,11 +1,16 @@
 import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
 import {Credits} from '../app/components/HomeScreen';
+import {ThemePicker} from '../app/components/ThemePicker';
+import {loadSettings,saveSettings} from '../storage/settings';
+import {cssVariables,getTheme} from '../app/themes';
+import {selectionInRectangle,copyComponents,pasteComponents,deleteSelection,type CircuitClipboard} from './selection';
+import {booleanExpressions} from './expressions';
 import {CircuitSymbol,PaletteSymbol} from './symbols';
 import {connectionPath,inputAtPoint,type InputTarget} from './wiring';
-import {ArrowLeft,Check,ChevronDown,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Save,StepForward,Trash2,Undo2,Upload,X,ZoomIn,ZoomOut} from 'lucide-react';
+import {ArrowLeft,ChevronDown,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Settings2,StepForward,Trash2,Undo2,Upload,X,ZoomIn,ZoomOut} from 'lucide-react';
 import {GROUPS,NODE_WIDTH,SPECS,makeDocument,makeNode,nodeHeight,parseDocument,portPosition,isWireValid,type CircuitDocument,type CircuitNode,type ComponentKind,type Signal} from './model';
 import {advanceSimulation,evaluateCircuit,generateTruthTable,initialSimulation,key,stepSimulation,truthTableCSV,type SimulationState} from './engine';
-import {loadSample,SAMPLES,type SampleName} from './samples';
+
 import './logic.css';
 const STORAGE='pico.logic.document.v1';
 const validNumber=(value:number,min:number,max:number)=>Math.min(max,Math.max(min,value));
@@ -22,6 +27,14 @@ const contentEqual=(a:CircuitDocument,b:CircuitDocument)=>JSON.stringify(a)===JS
 const snap=(n:number,enabled:boolean)=>enabled?Math.round(n/12)*12:n;
 export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [doc,setDoc]=useState<CircuitDocument>(getInitial);
+ const [settings,setSettings]=useState(loadSettings);
+ const theme=getTheme(settings.theme);
+ const [themeOpen,setThemeOpen]=useState(false);
+ const [expressionOpen,setExpressionOpen]=useState(false);
+ const clipboard=useRef<CircuitClipboard|null>(null);
+ const pasteCount=useRef(0);
+ const marqueeRef=useRef<{start:{x:number;y:number};end:{x:number;y:number}}|null>(null);
+ const [marquee,setMarquee]=useState<{start:{x:number;y:number};end:{x:number;y:number}}|null>(null);
  const docRef=useRef(doc);docRef.current=doc;
  const [history,setHistory]=useState<CircuitDocument[]>([]),[future,setFuture]=useState<CircuitDocument[]>([]);
  const [selection,setSelection]=useState<Selection>(null),[selectedNodes,setSelectedNodes]=useState<string[]>([]);
@@ -36,8 +49,8 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [paletteOpen,setPaletteOpen]=useState(false),[inspectorOpen,setInspectorOpen]=useState(false);
  const [groupOpen,setGroupOpen]=useState<string[]>([...GROUPS]);
  const [truthVisible,setTruthVisible]=useState(false);
- const [activeSample,setActiveSample]=useState<SampleName|null>(null);
- const [showWelcome,setShowWelcome]=useState(doc.nodes.length===0);
+
+
  const [pointer,setPointer]=useState<{x:number;y:number}|null>(null);
  const wireDrag=useRef<{pointerId:number;from:string;pin:string;startX:number;startY:number;dragged:boolean}|null>(null);
  const [wireTarget,setWireTarget]=useState<InputTarget|null>(null);
@@ -49,17 +62,22 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const signals=simResult.signals;
  const selectedNode=selection?.type==='node'?doc.nodes.find(n=>n.id===selection.id):undefined;
  const selectedWire=selection?.type==='wire'?doc.wires.find(w=>w.id===selection.id):undefined;
+ const expressions=useMemo(()=>{try{return {rows:booleanExpressions(doc),error:''};}catch(error){return {rows:[],error:error instanceof Error?error.message:'Expression unavailable.'};}},[doc]);
  const truth=useMemo(()=>{if(!truthVisible)return null;try{return {data:generateTruthTable(doc),error:''};}catch(error){return {data:null,error:error instanceof Error?error.message:'Truth table unavailable.'};}},[truthVisible,doc]);
  useEffect(()=>{if(!simResult.warning)return;setStatus(simResult.warning);},[simResult.warning]);
  useEffect(()=>{if(!running)return;const timer=window.setInterval(()=>setSimulation(prev=>advanceSimulation(docRef.current,prev,50).state),50);return()=>window.clearInterval(timer);},[running]);
+ useEffect(()=>{try{saveSettings(settings);}catch{/* Theme stays active in memory. */}for(const [k,v] of Object.entries(cssVariables(theme)))document.documentElement.style.setProperty(k,v);},[settings,theme]);
  useEffect(()=>{setSaveState('unsaved');const timer=window.setTimeout(()=>{try{localStorage.setItem(STORAGE,JSON.stringify(doc));setSaveState('saved');}catch{setSaveState('error');}},350);return()=>window.clearTimeout(timer);},[doc]);
- function edit(next:CircuitDocument){if(contentEqual(docRef.current,next))return;setHistory(prev=>[...prev.slice(-79),docRef.current]);setFuture([]);setDoc(next);setActiveSample(null);}
+ function edit(next:CircuitDocument){if(contentEqual(docRef.current,next))return;setHistory(prev=>[...prev.slice(-79),docRef.current]);setFuture([]);setDoc(next);}
  function change(mutator:(prev:CircuitDocument)=>CircuitDocument){edit(mutator(docRef.current));}
  function undo(){if(!history.length)return;setFuture(f=>[docRef.current,...f]);setDoc(history[history.length-1]!);setHistory(h=>h.slice(0,-1));setSelection(null);}
  function redo(){if(!future.length)return;setHistory(h=>[...h,docRef.current]);setDoc(future[0]!);setFuture(f=>f.slice(1));setSelection(null);}
- function addNode(kind:ComponentKind,x:number,y:number){const n=makeNode(kind,snap(x,doc.snap),snap(y,doc.snap));change(d=>({...d,nodes:[...d.nodes,n]}));setSelection({type:'node',id:n.id});setSelectedNodes([n.id]);setPlacement(null);setPaletteOpen(false);setShowWelcome(false);setStatus(SPECS[kind].title+' added. Drag it or connect its pins.');}
- function remove(){const ids=new Set(selectedNodes.length>1?selectedNodes:selection?.type==='node'?[selection.id]:[]);change(d=>({...d,nodes:d.nodes.filter(n=>!ids.has(n.id)),wires:d.wires.filter(w=>!ids.has(w.from)&&!ids.has(w.to)&&!(selection?.type==='wire'&&w.id===selection.id))}));setSelection(null);setSelectedNodes([]);}
- function duplicate(){const picked=doc.nodes.filter(n=>selectedNodes.length>1?selectedNodes.includes(n.id):selection?.type==='node'&&n.id===selection.id);if(!picked.length)return;const mapping=new Map(picked.map(n=>[n.id,crypto.randomUUID()]));const copies=picked.map(n=>({...n,id:mapping.get(n.id)!,x:n.x+36,y:n.y+36}));const wires=doc.wires.filter(w=>mapping.has(w.from)&&mapping.has(w.to)).map(w=>({...w,id:crypto.randomUUID(),from:mapping.get(w.from)!,to:mapping.get(w.to)!}));change(d=>({...d,nodes:[...d.nodes,...copies],wires:[...d.wires,...wires]}));setSelectedNodes(copies.map(n=>n.id));setSelection({type:'node',id:copies[0]!.id});}
+ function addNode(kind:ComponentKind,x:number,y:number){const n=makeNode(kind,snap(x,doc.snap),snap(y,doc.snap));change(d=>({...d,nodes:[...d.nodes,n]}));setSelection({type:'node',id:n.id});setSelectedNodes([n.id]);setPlacement(null);setPaletteOpen(false);setStatus(SPECS[kind].title+' added. Drag it or connect its pins.');}
+ function remove(){const ids=selectedNodes.length?selectedNodes:selection?.type==='node'?[selection.id]:[];change(d=>deleteSelection(d,ids,selection?.type==='wire'?selection.id:undefined));setSelection(null);setSelectedNodes([]);}
+ function copy(){const ids=selectedNodes.length?selectedNodes:selection?.type==='node'?[selection.id]:[];if(!ids.length)return;clipboard.current=copyComponents(docRef.current,ids);pasteCount.current=0;setStatus(ids.length+' copied.');}
+ function paste(){if(!clipboard.current?.nodes.length)return;pasteCount.current++;const result=pasteComponents(docRef.current,clipboard.current,36*pasteCount.current,36*pasteCount.current);edit(result.doc);setSelectedNodes(result.ids);setSelection(null);setStatus(result.ids.length+' pasted.');}
+ function duplicate(){copy();paste();}
+ function selectAll(){setSelection(null);setSelectedNodes(docRef.current.nodes.map(n=>n.id));}
  function rotate(){const ids=new Set(selectedNodes.length?selectedNodes:selection?.type==='node'?[selection.id]:[]);change(d=>({...d,nodes:d.nodes.map(n=>ids.has(n.id)?{...n,rotation:(n.rotation+90)%360}:n)}));}
  function attemptConnect(to:string,pin:string){
   if(!connecting)return;
@@ -68,15 +86,14 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   if(invalid){setStatus(invalid);return;}
   change(d=>({...d,wires:[...d.wires,wire]}));setConnecting(null);setStatus('Wire connected.');
  }
- function load(id:SampleName){if(doc.nodes.length&&!window.confirm('Replace the current circuit with this sample? Your current circuit is locally saved and can be restored with Undo.'))return;edit(loadSample(id));setActiveSample(id);setShowWelcome(false);setSelection(null);setSimulation(initialSimulation());setRunning(false);setStatus('Sample loaded. Toggle its switches to explore.');setZoom(1);setOffset({x:45,y:45});}
- function fresh(){if(doc.nodes.length&&!window.confirm('Start a new blank circuit? Use Undo to return to the previous document.'))return;edit(makeDocument());setSelection(null);setSelectedNodes([]);setActiveSample(null);setSimulation(initialSimulation());setRunning(false);setShowWelcome(false);}
+ function fresh(){if(doc.nodes.length&&!window.confirm('Start a new blank circuit? Use Undo to return to the previous document.'))return;edit(makeDocument());setSelection(null);setSelectedNodes([]);setSimulation(initialSimulation());setRunning(false);}
  function reset(){setRunning(false);setSimulation(initialSimulation());setStatus('Simulation reset.');}
  function toggleInput(node:CircuitNode,value?:0|1){setSimulation(s=>({...s,inputs:{...s.inputs,[node.id]:value??(s.inputs[node.id]??node.initial??0?0:1)}}));}
  function canvasPoint(event:{clientX:number;clientY:number}){const b=boardRef.current!.getBoundingClientRect();return {x:(event.clientX-b.left-offset.x)/zoom,y:(event.clientY-b.top-offset.y)/zoom};}
  function startMove(event:ReactPointerEvent<SVGGElement>,node:CircuitNode){
   if(tool==='pan'||placement)return;event.stopPropagation();
   if(event.shiftKey){setSelectedNodes(s=>s.includes(node.id)?s.filter(id=>id!==node.id):[...s,node.id]);}
-  else{setSelection({type:'node',id:node.id});setSelectedNodes([node.id]);}
+  else if(!selectedNodes.includes(node.id)){setSelection({type:'node',id:node.id});setSelectedNodes([node.id]);}
   setInspectorOpen(true);
   if(event.button!==0)return;
   const b=boardRef.current?.getBoundingClientRect();if(!b)return;
@@ -91,6 +108,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
     setWireTarget(inputAtPoint(docRef.current,drag.from,drag.pin,p,Math.max(18,22/zoom)));
     return;
   }
+  if(marqueeRef.current){const next={...marqueeRef.current,end:p};marqueeRef.current=next;setMarquee(next);return;}
   if(!interaction)return;
   if(interaction.type==='pan')setOffset({x:interaction.origX+event.clientX-interaction.x,y:interaction.origY+event.clientY-interaction.y});
   else {
@@ -98,7 +116,9 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
    if(!original)return;
    const dx=(event.clientX-interaction.x)/zoom,dy=(event.clientY-interaction.y)/zoom;
    const x=snap(interaction.origX+dx,doc.snap),y=snap(interaction.origY+dy,doc.snap);
-   setDoc(d=>({...d,nodes:d.nodes.map(n=>n.id===interaction.nodeId?{...n,x,y}:n)}));
+   const moved=selectedNodes.includes(interaction.nodeId!)?selectedNodes:[interaction.nodeId!];
+   const originals=interaction.before!.nodes,dx=x-interaction.origX,dy=y-interaction.origY;
+   setDoc(d=>({...d,nodes:d.nodes.map(n=>{const original=originals.find(o=>o.id===n.id)!;return moved.includes(n.id)?{...n,x:original.x+dx,y:original.y+dy}:n;})}));
   }
  }
  function finishWire(event:ReactPointerEvent<SVGSVGElement>,cancel=false){
@@ -116,8 +136,9 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
    if(event.currentTarget.hasPointerCapture?.(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
  }
  function pointerUp(){
+  if(marqueeRef.current){const area=marqueeRef.current;setSelectedNodes(selectionInRectangle(docRef.current,area.start,area.end));setSelection(null);marqueeRef.current=null;setMarquee(null);}
   if(interaction?.type==='move'&&interaction.before&&!contentEqual(interaction.before,docRef.current)){
-   setHistory(h=>[...h.slice(-79),interaction.before!]);setFuture([]);setActiveSample(null);
+   setHistory(h=>[...h.slice(-79),interaction.before!]);setFuture([]);
   }
   setInteraction(null);
  }
@@ -136,10 +157,13 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'){e.preventDefault();duplicate();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='a'){e.preventDefault();selectAll();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='c'){e.preventDefault();copy();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='v'){e.preventDefault();paste();}
   if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();remove();}
   if(e.key==='Escape'){wireDrag.current=null;setWireTarget(null);setPointer(null);setConnecting(null);setPlacement(null);setPaletteOpen(false);setInspectorOpen(false);}
  }window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);});
- async function importFile(file:File){try{if(file.size>800000)throw Error('This circuit file exceeds the 800 KB limit.');const data=parseDocument(JSON.parse(await file.text()));if(doc.nodes.length&&!window.confirm('Replace the current circuit with this imported project?'))return;edit(data);setSimulation(initialSimulation());setSelection(null);setRunning(false);setShowWelcome(false);setStatus('Circuit imported successfully.');}catch(error){setStatus(error instanceof Error?error.message:'Invalid circuit file.');}finally{setImporting(false);}}
+ async function importFile(file:File){try{if(file.size>800000)throw Error('This circuit file exceeds the 800 KB limit.');const data=parseDocument(JSON.parse(await file.text()));if(doc.nodes.length&&!window.confirm('Replace the current circuit with this imported project?'))return;edit(data);setSimulation(initialSimulation());setSelection(null);setRunning(false);setStatus('Circuit imported successfully.');}catch(error){setStatus(error instanceof Error?error.message:'Invalid circuit file.');}finally{setImporting(false);}}
  const inspectorContent=<div className="logic-inspector-body">
   {selectedNode?<><span className="logic-eyebrow">SELECTED COMPONENT</span><h3>{SPECS[selectedNode.kind].title}</h3><p>{SPECS[selectedNode.kind].description}</p>
    <label>Label<input aria-label="Component label" value={selectedNode.label} maxLength={120} onChange={e=>change(d=>({...d,nodes:d.nodes.map(n=>n.id===selectedNode.id?{...n,label:e.target.value}:n)}))}/></label>
@@ -149,13 +173,13 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
    <div className="logic-inspector-actions"><button onClick={rotate}><RotateCw size={14}/> Rotate</button><button onClick={duplicate}><Copy size={14}/> Duplicate</button><button onClick={remove}><Trash2 size={14}/> Delete</button></div>
   </>:selectedWire?<><span className="logic-eyebrow">SELECTED CONNECTION</span><h3>Wire</h3><p>{selectedWire.fromPin} → {selectedWire.toPin}</p><p>Signal: {stateName[signals[key(selectedWire.from,selectedWire.fromPin)]??'Z']}</p><button onClick={remove}><Trash2 size={14}/> Remove wire</button></>:<><span className="logic-eyebrow">CIRCUIT SETTINGS</span><h3>Document</h3><label>Title<input aria-label="Circuit title" value={doc.title} maxLength={120} onChange={e=>change(d=>({...d,title:e.target.value}))}/></label><label className="logic-check"><input type="checkbox" checked={doc.strict} onChange={e=>change(d=>({...d,strict:e.target.checked}))}/> Strict floating inputs</label>{!doc.strict&&<label>Loose input default<select value={doc.looseDefault} onChange={e=>change(d=>({...d,looseDefault:Number(e.target.value) as 0|1}))}><option value="0">LOW (0)</option><option value="1">HIGH (1)</option></select></label>}<label className="logic-check"><input type="checkbox" checked={doc.grid} onChange={e=>change(d=>({...d,grid:e.target.checked}))}/> Show grid</label><label className="logic-check"><input type="checkbox" checked={doc.snap} onChange={e=>change(d=>({...d,snap:e.target.checked}))}/> Snap to grid</label><p className="logic-help">Strict mode treats unconnected inputs as X. Loose mode uses your chosen 0 or 1 for unconnected and high-impedance inputs. A pin with multiple conflicting drivers resolves to X.</p></>}
  </div>;
- return <div className="logic-app">
- <header className="logic-header"><div className="logic-brand"><button aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17}/></button><img src="/pico-logo.svg" alt=""/><span>Pico<span className="logic-dot">.</span></span><span className="logic-header-slash">/</span><strong>Logic Simulator</strong></div><div className="logic-header-right"><span className={'logic-save '+saveState}>{saveState==='saved'?<Check size={13}/>:<Save size={13}/>} {saveState==='saved'?'Saved locally':saveState==='error'?'Autosave failed':'Unsaved'}</span><button onClick={()=>{setImporting(true);importRef.current?.click();}}><Upload size={15}/> <span>Import</span></button><button className="logic-primary" onClick={()=>download(JSON.stringify(doc,null,2),filename(doc.title,'.logic.json'),'application/json')}><Download size={15}/><span> Export</span></button><input ref={importRef} type="file" accept=".json,application/json" hidden onChange={e=>{const file=e.target.files?.[0];if(file)void importFile(file);e.target.value='';}}/></div></header>
- <div className="logic-toolbar"><button className="logic-mobile-only" onClick={()=>setPaletteOpen(s=>!s)} aria-label="Toggle components"><Menu size={17}/></button><button className={tool==='select'?'active':''} title="Select / Move" aria-label="Select tool" onClick={()=>setTool('select')}><MousePointer2 size={15}/><span>Select</span></button><button className={tool==='pan'?'active':''} onClick={()=>setTool('pan')} title="Pan"><Hand size={15}/><span>Pan</span></button><i/><button disabled={!history.length} onClick={undo} title="Undo" aria-label="Undo"><Undo2 size={16}/></button><button disabled={!future.length} onClick={redo} title="Redo" aria-label="Redo"><Redo2 size={16}/></button><button disabled={!selection} onClick={remove} title="Delete selection" aria-label="Delete selection"><Trash2 size={16}/></button><button disabled={!selectedNode} onClick={rotate} title="Rotate component" aria-label="Rotate"><RotateCw size={16}/></button><i/><button aria-label="Zoom out" onClick={()=>setZoom(z=>validNumber(z-.15,.35,2.5))}><ZoomOut size={16}/></button><span className="logic-zoom">{Math.round(zoom*100)}%</span><button aria-label="Zoom in" onClick={()=>setZoom(z=>validNumber(z+.15,.35,2.5))}><ZoomIn size={16}/></button><button title="Fit circuit" onClick={fit} aria-label="Fit circuit"><Maximize size={16}/></button><i/><button onClick={()=>setTruthVisible(v=>!v)} className={truthVisible?'active':''}>Truth table</button><button onClick={()=>setInspectorOpen(v=>!v)} className="logic-mobile-only">Properties</button></div>
+ return <div className="logic-app" data-pico-theme={theme.id} style={{...cssVariables(theme)} as React.CSSProperties}>
+ <header className="logic-header"><div className="logic-brand"><button aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17}/></button><img src="/pico-logo.svg" alt=""/><span>Pico<span className="logic-dot">.</span></span><span className="logic-header-slash">/</span><strong>Logic Simulator</strong></div><div className="logic-header-right">{saveState==='error'&&<span role="alert">Autosave failed. Export your circuit.</span>}<button aria-label="Logic Simulator theme" onClick={()=>setThemeOpen(v=>!v)}><Settings2 size={16}/></button><button onClick={()=>{setImporting(true);importRef.current?.click();}}><Upload size={15}/> <span>Import</span></button><button className="logic-primary" onClick={()=>download(JSON.stringify(doc,null,2),filename(doc.title,'.logic.json'),'application/json')}><Download size={15}/><span> Export</span></button><input ref={importRef} type="file" accept=".json,application/json" hidden onChange={e=>{const file=e.target.files?.[0];if(file)void importFile(file);e.target.value='';}}/></div></header>
+ <div className="logic-toolbar"><button className="logic-mobile-only" onClick={()=>setPaletteOpen(s=>!s)} aria-label="Toggle components"><Menu size={17}/></button><button className={tool==='select'?'active':''} title="Select / Move" aria-label="Select tool" onClick={()=>setTool('select')}><MousePointer2 size={15}/><span>Select</span></button><button className={tool==='pan'?'active':''} onClick={()=>setTool('pan')} title="Pan"><Hand size={15}/><span>Pan</span></button><i/><button disabled={!history.length} onClick={undo} title="Undo" aria-label="Undo"><Undo2 size={16}/></button><button disabled={!future.length} onClick={redo} title="Redo" aria-label="Redo"><Redo2 size={16}/></button><button disabled={!selection&&!selectedNodes.length} onClick={remove} title="Delete selection" aria-label="Delete selection"><Trash2 size={16}/></button><button disabled={!selectedNode&&!selectedNodes.length} onClick={rotate} title="Rotate component" aria-label="Rotate"><RotateCw size={16}/></button><button onClick={copy} disabled={!selectedNodes.length&&selection?.type!=='node'} title="Copy selected"><Copy size={15}/></button><button onClick={paste} disabled={!clipboard.current?.nodes.length} title="Paste">Paste</button><button onClick={duplicate} disabled={!selectedNodes.length&&selection?.type!=='node'}>Duplicate</button><button onClick={selectAll}>Select all</button><i/><button aria-label="Zoom out" onClick={()=>setZoom(z=>validNumber(z-.15,.35,2.5))}><ZoomOut size={16}/></button><span className="logic-zoom">{Math.round(zoom*100)}%</span><button aria-label="Zoom in" onClick={()=>setZoom(z=>validNumber(z+.15,.35,2.5))}><ZoomIn size={16}/></button><button title="Fit circuit" onClick={fit} aria-label="Fit circuit"><Maximize size={16}/></button><i/><button onClick={()=>{setTruthVisible(v=>!v);setExpressionOpen(false);}} className={truthVisible?'active':''}>Truth table</button><button onClick={()=>{setExpressionOpen(v=>!v);setTruthVisible(false);}} className={expressionOpen?'active':''}>Boolean Expression</button><button onClick={()=>setInspectorOpen(v=>!v)} className="logic-mobile-only">Properties</button></div>
  <div className="logic-main">
  <aside className={'logic-palette '+(paletteOpen?'mobile-open':'')} aria-label="Component palette"><div className="logic-pane-heading"><b>COMPONENTS</b><button className="logic-mobile-only" aria-label="Close components" onClick={()=>setPaletteOpen(false)}><X size={16}/></button></div><div className="logic-palette-scroll">{GROUPS.map(group=><section key={group}><button className="logic-group" onClick={()=>setGroupOpen(g=>g.includes(group)?g.filter(x=>x!==group):[...g,group])}><span>{group}</span><ChevronDown size={15} className={groupOpen.includes(group)?'':'collapsed'}/></button>{groupOpen.includes(group)&&<div className="logic-component-list">{(Object.keys(SPECS) as ComponentKind[]).filter(k=>SPECS[k].group===group).map(kind=><button key={kind} draggable onDragStart={event=>event.dataTransfer.setData('text/pico-logic',kind)} className={'logic-part '+(placement===kind?'active':'')} onClick={()=>{setPlacement(kind);setStatus('Click on the canvas to place '+SPECS[kind].title+'.');setPaletteOpen(false);}}><span className="logic-part-symbol"><PaletteSymbol kind={kind}/></span><span>{SPECS[kind].title}</span><Plus size={12}/></button>)}</div>}</section>)}</div><div className="logic-palette-tip">Click a component, then click the grid to place it. Connect output pins to input pins.</div></aside>
  <section className="logic-workarea" aria-label="Circuit workspace">
-  <div className="logic-board" role="region" aria-label="Digital circuit canvas"><svg ref={boardRef} aria-label="Circuit canvas" tabIndex={0} onWheel={e=>{if(e.ctrlKey){e.preventDefault();setZoom(z=>validNumber(z+(e.deltaY<0?.08:-.08),.35,2.5));}}} onPointerDown={e=>{if(e.target===boardRef.current||(e.target as Element).classList.contains('logic-surface')){if(tool==='pan'||e.button===1)setInteraction({type:'pan',x:e.clientX,y:e.clientY,origX:offset.x,origY:offset.y});canvasClick(e);}}} onPointerMove={pointerMove} onPointerUp={e=>{finishWire(e);pointerUp();}} onPointerCancel={e=>{finishWire(e,true);pointerUp();}} onPointerLeave={()=>{if(!wireDrag.current)pointerUp();}} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const k=e.dataTransfer.getData('text/pico-logic');if(Object.hasOwn(SPECS,k)){const p=canvasPoint(e);addNode(k as ComponentKind,p.x-61,p.y-39);}}} style={{touchAction:'none'}}>
+  <div className="logic-board" role="region" aria-label="Digital circuit canvas"><svg ref={boardRef} aria-label="Circuit canvas" tabIndex={0} onWheel={e=>{if(e.ctrlKey){e.preventDefault();setZoom(z=>validNumber(z+(e.deltaY<0?.08:-.08),.35,2.5));}}} onPointerDown={e=>{if(e.target===boardRef.current||(e.target as Element).classList.contains('logic-surface')){if(tool==='pan'||e.button===1)setInteraction({type:'pan',x:e.clientX,y:e.clientY,origX:offset.x,origY:offset.y});else if(tool==='select'&&!placement&&e.button===0){const point=canvasPoint(e);const area={start:point,end:point};marqueeRef.current=area;setMarquee(area);boardRef.current?.setPointerCapture?.(e.pointerId);}canvasClick(e);}}} onPointerMove={pointerMove} onPointerUp={e=>{finishWire(e);pointerUp();}} onPointerCancel={e=>{finishWire(e,true);pointerUp();}} onPointerLeave={()=>{if(!wireDrag.current)pointerUp();}} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const k=e.dataTransfer.getData('text/pico-logic');if(Object.hasOwn(SPECS,k)){const p=canvasPoint(e);addNode(k as ComponentKind,p.x-61,p.y-39);}}} style={{touchAction:'none'}}>
   <defs><pattern id="logic-grid" width={24*zoom} height={24*zoom} x={offset.x} y={offset.y} patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#545566" opacity=".45"/></pattern><marker id="logic-arrow" markerWidth="7" markerHeight="7" refX="4" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6Z" fill="#85879a"/></marker></defs>
   <rect className="logic-surface" width="100%" height="100%" fill={doc.grid?'url(#logic-grid)':'transparent'}/>
   <g transform={`translate(${offset.x} ${offset.y}) scale(${zoom})`}>
@@ -164,7 +188,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   <g transform={`translate(${node.x+NODE_WIDTH/2} ${node.y+height/2}) rotate(${node.rotation}) translate(${-NODE_WIDTH/2} ${-height/2})`}>
     <rect className="logic-node-hitbox" width={NODE_WIDTH} height={height} rx="5"/>
     <CircuitSymbol kind={node.kind} height={height} signal={node.kind==='lamp'?lamp:output} hex={hexValue}/>
-    <text className="logic-node-kind" x={NODE_WIDTH/2} y="11" textAnchor="middle">{node.label||spec.title}</text>
+    
     {(node.kind==='switch'||node.kind==='button')&&<foreignObject x="34" y={height/2-15} width="57" height="38">
       <button className="logic-symbol-button" aria-label={node.kind==='button'?'Press and hold button':'Toggle switch'} onPointerDown={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,1);}} onPointerUp={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onPointerCancel={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}}/>
     </foreignObject>}
@@ -185,17 +209,18 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   </g>;}))}
   </g>;})}
   {connecting&&pointer&&(()=>{const source=doc.nodes.find(n=>n.id===connecting.id);if(!source)return null;const p=portPosition(source,connecting.pin,'out');return <path d={connectionPath(p,wireTarget?.valid?wireTarget:pointer)} className={'logic-connection-preview '+(wireTarget&&!wireTarget.valid?'invalid':'')} fill="none" pointerEvents="none"/>;})()}
-  </g></svg>
-  {showWelcome&&doc.nodes.length===0&&<div className="logic-welcome"><span className="logic-welcome-mark">◇</span><h2>Build your first circuit</h2><p>Place logic gates, connect pins, and watch signals move through your circuit.</p><button className="logic-primary" onClick={()=>{setShowWelcome(false);setPlacement('switch');}}>Start blank <Plus size={14}/></button><span>Or open a working example</span><div className="logic-sample-buttons">{SAMPLES.map(s=><button key={s.id} onClick={()=>load(s.id)}>{s.title}</button>)}</div></div>}
+  </g>{marquee&&<rect className="logic-marquee" x={Math.min(marquee.start.x,marquee.end.x)*zoom+offset.x} y={Math.min(marquee.start.y,marquee.end.y)*zoom+offset.y} width={Math.abs(marquee.end.x-marquee.start.x)*zoom} height={Math.abs(marquee.end.y-marquee.start.y)*zoom} pointerEvents="none"/>}</svg>
   {placement&&<div className="logic-placement-hint">Placing {SPECS[placement].title} <button onClick={()=>setPlacement(null)}>Cancel <X size={12}/></button></div>}
   {connecting&&<div className="logic-placement-hint">Connect to an input pin <button onClick={()=>setConnecting(null)}>Cancel <X size={12}/></button></div>}
   </div>
+  {expressionOpen&&<div className="logic-expression-panel"><header><strong>Boolean expressions</strong><button onClick={()=>setExpressionOpen(false)} aria-label="Close Boolean expressions"><X size={16}/></button></header>{expressions.error?<p role="alert">{expressions.error}</p>:expressions.rows.length?expressions.rows.map((v,i)=><section key={i}><b>{v.output}</b><label>Cambridge word notation <code>{v.word}</code></label><label>Algebraic symbols <code>{v.algebraic}</code></label><label>Programming notation <code>{v.programming}</code></label>{v.minimalSOP&&<label>Simplified sum of products <code>{v.minimalSOP}</code></label>}{v.minimalPOS&&<label>Equivalent product of sums <code>{v.minimalPOS}</code></label>}<button onClick={()=>navigator.clipboard?.writeText(v.word)}>Copy expression</button></section>):<p>Connect switches and gates to a bulb to see the expression.</p>}</div>}
   <div className="logic-bottom"><div><span className={'logic-run-dot '+(running?'active':'')}/><span>{running?'RUNNING':'PAUSED'}</span><span>{doc.nodes.length} components · {doc.wires.length} wires</span></div><div className="logic-sim-controls"><button onClick={()=>setRunning(r=>!r)} className="logic-run">{running?<Pause size={15}/>:<Play size={15}/>} {running?'Pause':'Run'}</button><button title="Step next clock transition" onClick={()=>{setRunning(false);setSimulation(s=>stepSimulation(docRef.current,s).state);}}><StepForward size={16}/> Step</button><button onClick={reset}><RotateCw size={14}/> Reset</button><span>{Math.round(simulation.time)} ms</span></div></div>
   <div className="logic-status" role="status">{status}</div>
   {truthVisible&&<div className="logic-truth"><div className="logic-truth-head"><b>Truth table</b><div>{truth?.data&&<button onClick={()=>download(truthTableCSV(truth.data!),filename(doc.title,'-truth.csv'),'text/csv')}>Export CSV</button>}<button aria-label="Close truth table" onClick={()=>setTruthVisible(false)}><X size={16}/></button></div></div>{truth?.error?<p>{truth.error}</p>:truth?.data?<div className="logic-truth-scroll"><table><thead><tr>{truth.data.headers.map((h,i)=><th key={i}>{h}</th>)}</tr></thead><tbody>{truth.data.rows.map((row,i)=><tr key={i}>{row.map((value,j)=><td key={j}>{value}</td>)}</tr>)}</tbody></table></div>:null}</div>}
  </section>
- <aside className={'logic-inspector '+(inspectorOpen?'mobile-open':'')}><div className="logic-pane-heading"><b>PROPERTIES</b><button className="logic-mobile-only" onClick={()=>setInspectorOpen(false)} aria-label="Close properties"><X size={16}/></button></div>{inspectorContent}<div className="logic-samples-panel"><div className="logic-eyebrow">EXAMPLE CIRCUITS</div>{activeSample&&<button onClick={()=>{setDoc(loadSample(activeSample));setSimulation(initialSimulation());setRunning(false);setStatus('Sample reset to its original state.');}}><b>Reset sample</b><small>Restore the initial circuit and inputs</small></button>}{SAMPLES.map(sample=><button key={sample.id} onClick={()=>load(sample.id)}><b>{sample.title}</b><small>{sample.description}</small></button>)}<button onClick={fresh}><b>New blank circuit</b><small>Create a fresh workspace</small></button></div></aside>
+ <aside className={'logic-inspector '+(inspectorOpen?'mobile-open':'')}><div className="logic-pane-heading"><b>PROPERTIES</b><button className="logic-mobile-only" onClick={()=>setInspectorOpen(false)} aria-label="Close properties"><X size={16}/></button></div>{inspectorContent}</aside>
  </div>
+ {themeOpen&&<aside className="logic-theme-menu"><header><strong>Theme</strong><button onClick={()=>setThemeOpen(false)} aria-label="Close theme picker"><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id as typeof s.theme}))}/></aside>}
  <footer className="statusbar logic-footer"><Credits logic /></footer>
  {importing&&<button className="logic-import-close" onClick={()=>setImporting(false)}>Cancel import</button>}
  </div>;
