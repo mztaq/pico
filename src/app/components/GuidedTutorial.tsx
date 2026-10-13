@@ -3,10 +3,12 @@ import { ArrowLeft, ArrowRight, Check, CircleHelp, X } from 'lucide-react';
 import type { CompilerLanguage } from '../../storage/projects';
 import { starterCode } from '../../starter';
 
+export const tutorialCompletionTip = 'Try Mustaqim, Amar or Hamza when your program asks for a name. Each has a hidden greeting. Hamza conceptualised the Logic Gates Sim. Help opens this tour again.';
+
 export const tutorialSteps = [
   { target: 'workspace', title: 'Name your workspace', label: 'WORKSPACE', description: 'Click the workspace name in the top bar and type a name for your project. Choose a unique name. It updates in the workspace tabs and saves automatically.', tip: 'On a small screen, open File to edit the workspace name.' },
   { target: 'editor', title: 'Start with your code', label: 'WRITE', description: 'Write Cambridge pseudocode here. Use the file tabs for separate programs.', tip: 'DECLARE gives Name its type. Declared names appear as you type. Tab or Enter accepts a suggestion. Ctrl + Space opens the list.', example: starterCode },
-  { target: 'run', title: 'Run your program', label: 'RUN', description: 'Run in the top bar executes the current file. When your program reaches INPUT, type a value in the Console and press Enter to continue.', tip: 'Shortcut: Ctrl + Enter on Windows, or ⌘ + Enter on Mac.' },
+  { target: 'run', title: 'Run your program', label: 'RUN', description: 'Run in the top bar executes the current file. When your program reaches INPUT, type a value in the Console and press Enter to continue.', tip: 'Shortcut: Ctrl + Enter on Windows, or ⌘ + Enter on Mac. Enter Mustaqim, Amar or Hamza when a program asks for a name to see a hidden message.' },
   { target: 'tools', title: 'Read the result', label: 'OUTPUT', description: 'The Console shows each OUTPUT line. Errors end the run and include a line number so you can return to the part that needs fixing.', tip: 'INPUT waits in the Console. Type a value and press Enter to continue.', example: starterCode },
   { target: 'tools', title: 'Understand each step', label: 'EXPLORE', description: 'Debug runs your code and records its steps. Move through the recorded steps to see variables change.', tip: 'Drag the divider above this panel to give your tools more room.' },
   { target: 'reference', title: 'Keep the syntax close', label: 'REFERENCE', description: 'Search for a keyword, then select it to read its explanation. Select and copy the examples when you need a starting point.', tip: 'Use A− / A+ to change the text size. On a wide screen, drag the left divider to resize this panel.' },
@@ -130,7 +132,7 @@ export function GuidedTutorial({ language = 'pseudocode', step, onStep, onClose,
         <h2 id="tutorial-title">Tour complete</h2>
         <p id="tutorial-description">Write a program, press Run, and follow what happens. Your code is right where you left it.</p>
         <div className="tutorial-recap"><span><Check size={16} /> Write and run</span><span><Check size={16} /> Explore and debug</span><span><Check size={16} /> Save as .pico</span></div>
-        <p className="tutorial-tip">Try Mustaqim or Amar when your program asks for a name. A couple of familiar faces from your Computer Science department get a special greeting too. "Help" opens this tour again.</p>
+        <p className="tutorial-tip">{tutorialCompletionTip}</p>
         <button className="tutorial-reference-link" onClick={onReference}>Open quick reference <ArrowRight size={16} /></button>
       </> : <>
         <div className="tutorial-progress" aria-label={`Step ${step + 1} of ${tutorialSteps.length}`}>{tutorialSteps.map((item, index) => <button key={item.label} className={index <= step ? 'filled' : ''} onClick={() => onStep(index)} aria-label={`Go to step ${index + 1}: ${item.title}`} aria-current={index === step ? 'step' : undefined} />)}</div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { placeTutorialCard } from './GuidedTutorial';
+import { placeTutorialCard, tutorialCompletionTip, tutorialSteps } from './GuidedTutorial';
 
 describe('tutorial placement', () => {
   it('keeps the card beside an editor spotlight on desktop', () => {
@@ -17,4 +17,9 @@ describe('tutorial placement', () => {
       expect(card.top + card.height).toBeLessThanOrEqual(624);
     }
   });
+});
+
+it('teaches the Hamza name easter egg in both Pseudocode and Python tours', () => {
+  expect(tutorialSteps.find(step => step.label === 'RUN')?.tip).toContain('Hamza');
+  expect(tutorialCompletionTip).toContain('Hamza conceptualised the Logic Gates Sim');
 });
