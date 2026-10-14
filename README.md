@@ -92,13 +92,16 @@ Logic Sim is an educational digital model, not an analogue electrical simulator.
 
 ## CPU Studio
 
-CPU Studio is an interactive, browser-based educational CPU aligned to Cambridge IGCSE Computer Science 0478/0984 section 3.1. The block diagram follows the lesson PowerPoints: Control Unit, ALU, PC, MAR, MDR, CIR, accumulator, address/data/control buses, and shared RAM.
+CPU Studio follows Cambridge IGCSE Computer Science (0478/0984) section 3.1. It provides two interactive learning modes: **Fetch–Decode** (stops after decoding one instruction), and **Fetch–Decode–Execute** (executes the cycle, including memory access and the ALU).
 
-- Use the built-in assembly editor and **Assemble** to load one-byte instructions and 16 RAM cells. Use `LDA`, `ADD`, `STA`, `HLT`, plus the teaching extras `SUB`, `LDI`, `BRA`, `BRZ`, `DAT` and `.ORG`. Named memory labels are supported.
-- **Step** advances exactly one micro-operation, illustrating PC → MAR, memory reads, MDR → CIR, decode and execution. **Run** advances automatically; **Pause** and **Reset** control playback.
-- Observe animated transfers, highlighted registers, bus activity and a readable explanation for every step. RAM shows both binary data and instructions. The 0.5–5.0 GHz slider scales **animation speed for teaching**, not physical CPU hardware timing.
-- Choose example programs, change Pico's shared theme, import or export `.asm` files, and open the built-in quick guide. Assembly text is stored locally.
-- Architecture is intentionally simplified: 4-bit RAM addresses, 8-bit unsigned data and 8-bit instructions. The original slides' LDA, STA, ADD and HLT opcodes are retained. This model has no instruction cache timing, interrupts, multicore execution or real clock cycles.
+- The CPU diagram is based on the course architecture: PC, MAR, MDR, CIR, accumulator, ALU, control unit, decode unit, CPU cache and RAM, with address, data and control buses.
+- Press **Step** to advance one micro-operation, or **Run** to animate the cycle automatically. The explanation updates after each operation. **Pause** and **Reset** control playback.
+- RAM on the right displays the addresses and binary data while relevant boxes and bus routes highlight.
+- A slider marked GHz adjusts illustrative animation pacing, **not actual CPU speed**.
+- The first visit opens a skippable 10-stage spotlight tutorial; use **Tutorial** to view it again.
+- Uses the current shared Pico theme and automatically applies theme changes from other workspaces.
+
+The simulation uses a fixed teaching program internally. No assembly editor, code examples menu, file import/export or unrelated ISA extensions are presented. The machine model is simplified for teaching and is not a hardware-accurate timing simulation.
 
 ## Language support
 
