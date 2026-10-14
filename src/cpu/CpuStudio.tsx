@@ -16,18 +16,18 @@ const DEFAULT_IMAGE=assemble(DEFAULT_PROGRAM);
 /** Follow visible connections, rather than animating directly through register labels. */
 export function cpuTransferRoute(from:Register,to:Register):string {
  const routes:Record<string,string>={
-  'PC>MAR':'M203 110 H548',
-  'MAR>RAM':'M708 121 H929',
-  'CU>RAM':'M708 485 H929',
-  'RAM>MDR':'M929 343 H708',
-  'MDR>CIR':'M548 350 H514 V448 H480',
-  'CIR>MAR':'M480 445 H527 V142 H548',
-  'MDR>ACC':'M548 349 H511 V228 H480',
-  'ACC>MDR':'M480 225 H511 V350 H548',
-  'MDR>ALU':'M548 350 H480',
-  'ALU>ACC':'M397 283 V265',
-  'CIR>PC':'M315 445 H231 V115 H203',
-  'CIR>ACC':'M397 401 V265',
+  'PC>MAR':'M203 110 C315 110 420 110 548 110',
+  'MAR>RAM':'M708 121 C780 121 850 121 929 121',
+  'CU>RAM':'M708 485 C780 485 850 485 929 485',
+  'RAM>MDR':'M929 343 C850 343 780 343 708 343',
+  'MDR>CIR':'M548 350 C518 350 517 370 517 401 S500 448 480 448',
+  'CIR>MAR':'M480 445 C526 440 515 142 548 142',
+  'MDR>ACC':'M548 349 C505 349 530 228 480 228',
+  'ACC>MDR':'M480 225 C530 225 505 350 548 350',
+  'MDR>ALU':'M548 350 C519 350 501 350 480 350',
+  'ALU>ACC':'M397 283 C388 278 388 272 397 265',
+  'CIR>PC':'M315 445 C230 445 231 115 203 115',
+  'CIR>ACC':'M397 401 C420 367 420 305 397 265',
  };
  const route=routes[from+'>'+to];
  if(route)return route;
@@ -63,6 +63,9 @@ const HELP:Record<Register|string,string>={
  ALU:'Performs arithmetic and logical operations on data held by the CPU.',
  CU:'Decodes instructions and sends signals to coordinate the CPU, registers and buses.',
  RAM:'Stores program instructions and data together, as in Von Neumann architecture.',
+ CLOCK:'Illustrative clock signal: synchronises operations. The numerical tick display is an extended teaching model (out of specification).',
+ STATUS:'Illustrative status register showing whether the accumulator is zero (out of specification).',
+ INTERRUPT:'Illustrative interrupt-control register for the Advanced walkthrough (out of specification).',
  CACHE:'Fast memory close to the CPU that stores frequently used instructions or data. Shown for syllabus context; not simulated here.',
  DECODE:'Interprets the instruction held in CIR and tells the CPU what operation to perform.',
  ADDRESS:'The address bus carries the location of a memory cell from the CPU to RAM.',
@@ -70,7 +73,7 @@ const HELP:Record<Register|string,string>={
  CONTROL:'The control bus carries control signals such as READ and WRITE.',
 };
 export function waitForStep(ghz:number){return Math.max(45,Math.round(1180/Math.pow(ghz+0.7,1.45)));}
-const BOXES:{key:Register|'DECODE'|'CACHE';x:number;y:number;w:number;h:number;label:string;value:(m:Machine)=>string}[]=[
+const BOXES:{key:Register|'DECODE'|'CACHE'|'CLOCK'|'STATUS'|'INTERRUPT';x:number;y:number;w:number;h:number;label:string;value:(m:Machine)=>string}[]=[
  {key:'PC',x:45,y:64,w:158,h:106,label:'Program Counter',value:m=>binary4(m.pc)},
  {key:'MAR',x:548,y:64,w:160,h:102,label:'Memory Address Register',value:m=>binary4(m.mar)},
  {key:'DECODE',x:45,y:185,w:247,h:241,label:'Decode Unit',value:m=>m.frame.phase==='decode'?'DECODING':'CONTROLLED BY CU'},
@@ -137,7 +140,9 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  const focused=machine.cycles>0&&phase!=='error';
  const activeUnits=new Set<string>(active);
  if(phase==='decode'&&mode==='advanced')activeUnits.add('DECODE');
- if(phase==='interrupt')activeUnits.add('CU');
+ if(phase==='interrupt'){activeUnits.add('CU');activeUnits.add('INTERRUPT');}
+ if(mode==='advanced'&&machine.cycles>0)activeUnits.add('CLOCK');
+ if(mode==='advanced'&&phase==='execute'&&machine.frame.active.includes('ACC'))activeUnits.add('STATUS');
  const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
  const memoryActive=activeUnits.has('RAM');
  return <div className="cpu-app" style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
@@ -169,18 +174,18 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
      <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing BRAINROT / Unit</text><title>CPU (Central Processing Unit) is the correct Cambridge IGCSE term.</title>
      <g className={"cpu-connectors"+(focused?" cpu-dimmed":"")}>
-      <path d="M203 112 H548"/>
-      <path d="M548 353 H517 V452 H480"/>
-      <path d="M480 465 H516 V480 H548"/>
-      <path d="M480 354 H503 V464 H548"/>
-      <path d="M378 265 V283"/>
-      <path d="M414 283 V265"/>
-      <path d="M397 386 V401"/>
+      <path d="M203 112 C320 112 431 112 548 112"/>
+      <path d="M548 353 C508 353 525 447 480 452"/>
+      <path d="M480 465 C513 465 524 480 548 480"/>
+      <path d="M480 354 C520 365 500 455 548 464"/>
+      <path d="M378 265 Q360 273 378 283"/>
+      <path d="M414 283 Q431 273 414 265"/>
+      <path d="M397 386 Q410 394 397 401"/>
      </g>
-     {BOXES.filter(box=>mode==='advanced'||box.key!=='DECODE').map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
+     {BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
       <title>{HELP[box.key]}</title><rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
       <text className="cpu-block-title" x={box.x+box.w/2} y={box.y+19} textAnchor="middle">
-       {box.key==='CIR'?<><tspan x={box.x+box.w/2}>Current Instruction</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MAR'?<><tspan x={box.x+box.w/2}>Memory Address</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MDR'?<><tspan x={box.x+box.w/2}>Memory Data</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='ALU'?<><tspan x={box.x+box.w/2}>Arithmetic Logic</tspan><tspan x={box.x+box.w/2} dy="15">Unit</tspan></>:box.label}
+       {box.key==='CIR'?<><tspan x={box.x+box.w/2}>Current Instruction</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MAR'?<><tspan x={box.x+box.w/2}>Memory Address</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MDR'?<><tspan x={box.x+box.w/2}>Memory Data</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='ALU'?<><tspan x={box.x+box.w/2}>Arithmetic Logic</tspan><tspan x={box.x+box.w/2} dy="15">Unit</tspan></>:box.key==='STATUS'?<><tspan x={box.x+box.w/2}>Status</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='INTERRUPT'?'Interrupt Register':box.label}
       </text>
       {box.key==='DECODE'?<g className="cpu-gears"><circle cx="143" cy="272" r="33"/><circle cx="202" cy="348" r="27"/><circle cx="143" cy="272" r="12"/><circle cx="202" cy="348" r="10"/><path d="M143 232V243M143 301V313M105 272H115M171 272H182M202 315V326M202 371V382M171 348H180M226 348H235"/></g>:<text className="cpu-block-value" x={box.x+box.w/2} y={box.y+Math.max(49,box.h*.65)} textAnchor="middle">{box.value(machine)}</text>}
      </g>)}
