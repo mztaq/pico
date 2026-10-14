@@ -13,7 +13,7 @@ export const CPU_TOUR_STEPS=[
  {target:'buses',title:'The three system buses',description:'The address bus carries memory addresses. The data bus transfers instructions and values. The control bus carries READ and WRITE signals.'},
  {target:'control',title:'Understand decoding',description:'The instruction travels RAM → MDR → CIR. The Control Unit decodes its opcode and determines what operation happens next.'},
  {target:'steps',title:'Read the explanations',description:'The panel explains every micro-operation, highlighting the relevant registers and showing information moving between components.'},
- {target:'controls',title:'Step or run the cycle',description:'Step moves forward one operation; Back reverses it. Run plays the cycle automatically. Pause and Reset are alongside.'},
+ {target:'controls',title:'Step or run the cycle',description:'Step moves forward one operation; Back reverses it. Run continuously repeats the teaching program until you press Pause. Reset starts fresh, while stepping manually stops at HLT.'},
  {target:'speed',title:'Adjust playback speed',description:'The illustrative GHz slider runs from 0.5 to 9.2 and controls playback speed only, not real hardware timing. The upper values advance much faster.'},
 ] as const;
 type Bounds={top:number;left:number;width:number;height:number};
