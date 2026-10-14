@@ -27,8 +27,11 @@ beforeEach(async()=>{
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
 it('opens on a themed home screen with all workspace choices and creator credits',()=>{
   expect(document.title).toBe('Pico | Home');
+  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
+  expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
+  expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim']);
+  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio']);
   expect(container.querySelector('.home-credits')?.textContent).toContain('Mustaqim');expect(container.querySelector('.home-credits')?.textContent).toContain('Amar');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
@@ -129,4 +132,56 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
   for(let i=0;i<6;i++)await click(button('Next')??button('Finish tour'));
   expect(container.querySelector('#tutorial-description')?.textContent).toContain('.py');await click(button('Finish tour'));
   expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
+});
+
+it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
+ expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
+ expect(container.querySelectorAll('.compiler-choice')).toHaveLength(5);
+});
+it('offers both CPU simulation modes and a guided tutorial',async()=>{
+ const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');
+ await click(cpuChoice!);
+ expect(document.title).toBe('Pico | CPU Studio');
+ expect(container.querySelector('.cpu-app')).not.toBeNull();
+ expect(container.querySelectorAll('.cpu-ram-row')).toHaveLength(16);
+ expect(container.querySelector('.cpu-workspace-main')).not.toBeNull();
+ expect(container.querySelector('[aria-label="Illustrative CPU clock speed GHz"]')).not.toBeNull();
+ expect(container.querySelector('[aria-label="Assembly source code"]')).toBeNull();
+ expect(container.textContent).not.toContain('EXAMPLE PROGRAMS');
+ expect(container.querySelectorAll('input[name="cpu-mode"]')).toHaveLength(2);
+ expect(container.querySelector('g[aria-label="Decode Unit"]')).toBeNull();
+ expect(container.querySelector('.cpu-app')).not.toBeNull();
+ if(!container.querySelector('[aria-label="Skip CPU Studio tutorial"]'))await click(container.querySelector<HTMLElement>('[aria-label="Open CPU Studio tutorial"]')!);
+ await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
+ await click(container.querySelector<HTMLElement>('[aria-label="Step forward one CPU micro-operation"]')!);
+ expect(container.textContent).toContain('PC identifies');
+ expect(container.querySelector('.cpu-diagram.cpu-has-focus')).not.toBeNull();
+ await click(button('Reset'));
+ expect(container.textContent).toContain('Press Run to start the CPU');
+});
+it('supports Step Back and only shows decode unit in Advanced mode',async()=>{
+ const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
+ await click(choice!);
+ if(!container.querySelector('[aria-label="Skip CPU Studio tutorial"]'))await click(container.querySelector<HTMLElement>('[aria-label="Open CPU Studio tutorial"]')!);
+ await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
+ const back=container.querySelector<HTMLButtonElement>('[aria-label="Step backward one CPU micro-operation"]')!;
+ const forward=container.querySelector<HTMLButtonElement>('[aria-label="Step forward one CPU micro-operation"]')!;
+ expect(back.disabled).toBe(true);
+ await click(forward);
+ expect(back.disabled).toBe(false);
+ expect(container.textContent).toContain('Micro-step 1');
+ await click(back);
+ expect(container.textContent).toContain('Micro-step 0');
+ const advanced=container.querySelectorAll<HTMLInputElement>('input[name="cpu-mode"]')[1]!;
+ await click(advanced);
+ expect(container.querySelector('g[aria-label="Decode Unit"]')).not.toBeNull();
+ for(const name of ['Clock','Status Register','Interrupt Register']){
+  expect(container.querySelector('g.cpu-block[aria-label="'+name+'"]')).not.toBeNull();
+ }
+ expect(container.querySelectorAll('path.cpu-advanced-wire')).toHaveLength(14);
+ expect(container.querySelector('path[data-wire-id="clock-cu"]')).not.toBeNull();
+ expect(container.querySelector('path[data-wire-id="status-cu"]')).not.toBeNull();
+ expect(container.querySelector('path[data-wire-id="interrupt-cu"]')).not.toBeNull();
+ expect(container.querySelector('[aria-label="Request CPU interrupt"]')).not.toBeNull();
+ expect(container.textContent).not.toContain('Von Neumann · Cambridge IGCSE');
 });

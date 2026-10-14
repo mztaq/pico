@@ -19,7 +19,7 @@
   </a>
 </p>
 
-Pico is a browser-based Computer Science learning tool with four workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder and Logic Sim. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
+Pico is a browser-based Computer Science learning tool with five workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim and CPU Studio. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
 
 Developed by **Amar** (11 Boys Blue), deployed by **Mustaqim** (11 Boys Red), with **Logic Sim conceptualised by Mohamed Hamza** (11 Boys Red).
 
@@ -54,6 +54,7 @@ When execution reaches `INPUT`, type your value in the Console and press Enter. 
 | **Debugger** | Replays recorded execution steps with variable values and output. |
 | **Flowchart Builder** | Drag editable blocks onto a canvas, connect branches and loops, run with typed console input, and convert to pseudocode. |
 | **Logic Sim** | Draw schematic logic circuits, connect terminals, simulate signals, and inspect truth tables and Boolean expressions. |
+| **CPU Studio** | Assemble tiny instruction programs and step through fetch–decode–execute with live registers, buses, RAM and ALU animations. |
 | **Projects** | Keeps source tabs and practice files together in horizontal workspace tabs. Workspace names are unique, ignoring case and extra spaces. |
 | **Quick reference** | Provides selectable examples with syntax colouring, adjustable text size and keyword search. |
 | **Appearance** | Offers editor themes, high-contrast palettes, resizable panels and layout settings. Catppuccin Mocha is the first-launch default. |
@@ -88,6 +89,21 @@ Open **Logic Sim** from the home screen. It begins with an empty canvas and offe
 - Themes, including Dracula, follow the same preference as the other three workspaces.
 
 Logic Sim is an educational digital model, not an analogue electrical simulator. It does not model real voltage, propagation delay or electrical power. It does not support reusable custom subcircuits yet.
+
+## CPU Studio
+
+CPU Studio follows Cambridge IGCSE Computer Science (0478/0984) section 3.1. It provides **Normal** and **Advanced** modes. Normal covers the complete fetch–decode–execute cycle. Advanced adds the decode unit, illustration-only Clock, Status Register and Interrupt Register, instruction decoding details and a step-by-step interrupt demonstration. These additional registers are marked as extended model components **(out of specification)**.
+
+- The CPU diagram is based on the course architecture: PC, MAR, MDR, CIR, accumulator, ALU, control unit, CPU cache and RAM, with address, data and control buses. The links between components are drawn as smooth curves for readability, not electrical circuit schematics.
+- Press **Step** to advance one micro-operation and **Back** to reverse it, or **Run** to replay the fixed CPU program continuously until paused, with no automatic stop at HLT. The explanation updates after each operation. **Pause** and **Reset** control playback. Manual Step still halts at HLT.
+- RAM on the right displays the addresses and binary data while relevant boxes and bus routes highlight.
+- A slider marked 0.5–9.2 GHz adjusts illustrative animation pacing, **not actual CPU speed**. Higher settings visibly accelerate Run.
+- **Advanced** permits a triggered interrupt: the current instruction completes, state is saved, an interrupt-service routine is illustrated, and execution resumes. The exact simplified handler implementation is **(out of specification)**.
+- Hover RAM binary addresses and cells for their meanings. Instruction words use an invented eight-bit teaching representation **(out of specification)**, not real machine-code instructions.
+- The first visit opens a skippable 10-stage spotlight tutorial; use **Tutorial** to view it again.
+- Uses the current shared Pico theme and automatically applies theme changes from other workspaces.
+
+The home screen arranges every card as title, description, then an unfaded code or diagram preview, with larger text. The CPU diagram carries the playful title **Central Processing BRAINROT / Unit**; the correct term for exams is **Central Processing Unit (CPU)**. The simulation uses a fixed teaching program internally. No assembly editor, code examples menu, file import/export or unrelated ISA extensions are presented. The machine model is simplified for teaching and is not a hardware-accurate timing simulation.
 
 ## Language support
 
