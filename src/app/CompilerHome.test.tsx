@@ -134,12 +134,17 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
   expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
 });
 
+it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
+ expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
+ expect(container.querySelectorAll('.compiler-choice')).toHaveLength(5);
+});
 it('offers both CPU simulation modes and a guided tutorial',async()=>{
  const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');
  await click(cpuChoice!);
  expect(document.title).toBe('Pico | CPU Studio');
  expect(container.querySelector('.cpu-app')).not.toBeNull();
  expect(container.querySelectorAll('.cpu-ram-row')).toHaveLength(16);
+ expect(container.querySelector('.cpu-workspace-main')).not.toBeNull();
  expect(container.querySelector('[aria-label="Illustrative CPU clock speed GHz"]')).not.toBeNull();
  expect(container.querySelector('[aria-label="Assembly source code"]')).toBeNull();
  expect(container.textContent).not.toContain('EXAMPLE PROGRAMS');
@@ -148,6 +153,7 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
  await click(container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!);
  expect(container.textContent).toContain('PC identifies');
+ expect(container.querySelector('.cpu-diagram.cpu-has-focus')).not.toBeNull();
  await click(button('Reset'));
  expect(container.textContent).toContain('Press Run to start the CPU');
 });
