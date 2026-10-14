@@ -99,17 +99,35 @@ export function waitForStep(ghz:number){return Math.max(45,Math.round(1180/Math.
 const BOXES:{key:Register|'DECODE'|'CACHE'|'CLOCK'|'STATUS'|'INTERRUPT';x:number;y:number;w:number;h:number;label:string;value:(m:Machine)=>string}[]=[
  {key:'PC',x:45,y:64,w:158,h:106,label:'Program Counter',value:m=>binary4(m.pc)},
  {key:'MAR',x:548,y:64,w:160,h:102,label:'Memory Address Register',value:m=>binary4(m.mar)},
- {key:'DECODE',x:45,y:185,w:247,h:133,label:'Decode Unit',value:m=>m.frame.phase==='decode'?'DECODING':'CONTROLLED BY CU'},
- {key:'CLOCK',x:45,y:327,w:115,h:87,label:'Clock',value:m=>'TICK '+m.cycles},
- {key:'STATUS',x:172,y:327,w:120,h:87,label:'Status Register',value:m=>m.acc===0?'Z = 1':'Z = 0'},
- {key:'INTERRUPT',x:45,y:423,w:247,h:52,label:'Interrupt Register',value:()=>'READY'},
+ {key:'DECODE',x:45,y:185,w:247,h:225,label:'Decode Unit',value:m=>m.frame.phase==='decode'?'DECODING':'CONTROLLED BY CU'},
+ {key:'CACHE',x:45,y:423,w:247,h:108,label:'Cache',value:()=>'FAST MEMORY'},
  {key:'ACC',x:315,y:184,w:165,h:81,label:'Accumulator',value:m=>binary8(m.acc)},
- {key:'ALU',x:315,y:283,w:165,h:102,label:'Arithmetic Logic Unit',value:m=>binary8(m.alu)},
- {key:'CIR',x:315,y:401,w:165,h:89,label:'Current Instruction Register',value:m=>binary8(m.cir)},
- {key:'CACHE',x:45,y:483,w:247,h:48,label:'Cache',value:()=>'FAST MEMORY'},
- {key:'MDR',x:548,y:290,w:160,h:102,label:'Memory Data Register',value:m=>binary8(m.mdr)},
- {key:'CU',x:548,y:424,w:160,h:107,label:'Control Unit',value:m=>m.frame.signal??'DECODE / CONTROL'},
+ {key:'ALU',x:315,y:283,w:165,h:95,label:'Arithmetic Logic Unit',value:m=>binary8(m.alu)},
+ {key:'CIR',x:315,y:389,w:165,h:73,label:'Current Instruction Register',value:m=>binary8(m.cir)},
+ {key:'STATUS',x:315,y:468,w:165,h:32,label:'Status Register',value:m=>m.acc===0?'Z = 1':'Z = 0'},
+ {key:'INTERRUPT',x:315,y:505,w:165,h:33,label:'Interrupt Register',value:()=>'READY'},
+ {key:'MDR',x:548,y:268,w:160,h:90,label:'Memory Data Register',value:m=>binary8(m.mdr)},
+ {key:'CLOCK',x:548,y:367,w:160,h:52,label:'Clock',value:m=>'TICK '+m.cycles},
+ {key:'CU',x:548,y:443,w:160,h:95,label:'Control Unit',value:m=>m.frame.signal??'DECODE / CONTROL'},
 ];
+/** Schematic links remain visible throughout the walkthrough.
+ * This is an educational component diagram, not a pin-level circuit. */
+export const ADVANCED_WIRES = [
+ {id:'pc-mar',label:'PC sends the next instruction address to MAR',path:'M203 112 C318 100 433 100 548 112'},
+ {id:'cu-decode',label:'Control Unit directs the Decode Unit',path:'M548 458 H525 Q512 458 512 445 V281 Q512 273 503 273 H304 Q296 273 292 266'},
+ {id:'cir-decode',label:'CIR supplies the instruction for decoding',path:'M315 429 C301 429 303 377 292 377'},
+ {id:'cache-decode',label:'Schematic cache connection to the CPU',path:'M175 423 C175 419 175 414 175 410'},
+ {id:'alu-acc',label:'ALU result enters accumulator',path:'M372 283 C372 277 372 271 372 265'},
+ {id:'acc-alu',label:'Accumulator supplies ALU',path:'M423 265 C423 271 423 277 423 283'},
+ {id:'mdr-cir',label:'Memory Data Register transfers fetched instruction to CIR',path:'M548 319 C516 319 508 395 480 421'},
+ {id:'alu-status',label:'ALU output updates the illustrative status register',path:'M480 344 H490 Q505 344 505 360 V474 Q505 482 480 482'},
+ {id:'clock-cu',label:'Clock signal reaches Control Unit',path:'M616 419 C616 427 616 435 616 443'},
+ {id:'cu-clock',label:'Control Unit and clock schematic connection',path:'M642 443 C642 434 642 427 642 419'},
+ {id:'status-cu',label:'Illustrative status register to Control Unit',path:'M480 479 C510 479 522 470 548 470'},
+ {id:'cu-status',label:'Control Unit to illustrative status register',path:'M548 488 C523 488 508 491 480 491'},
+ {id:'interrupt-cu',label:'Interrupt register to Control Unit',path:'M480 513 C508 513 522 505 548 505'},
+ {id:'cu-interrupt',label:'Control Unit to interrupt register',path:'M548 520 C522 520 506 528 480 528'},
+] as const;
 export function CpuStudio({onHome}:{onHome:()=>void}){
  const [mode,setMode]=useState<CpuMode>('normal');
  const [machine,setMachine]=useState<Machine>(()=>boot(DEFAULT_IMAGE));
@@ -170,6 +188,14 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  if(mode==='advanced'&&(interrupt.pending||interrupt.stage>0))activeUnits.add('INTERRUPT');
  if(mode==='advanced'&&machine.cycles>0)activeUnits.add('CLOCK');
  if(mode==='advanced'&&phase==='execute'&&machine.frame.active.includes('ACC'))activeUnits.add('STATUS');
+ const wireActive=(id:string)=>{
+  if(id.includes('clock'))return machine.cycles>0;
+  if(id.includes('interrupt'))return phase==='interrupt'||interrupt.pending||interrupt.stage>0;
+  if(id.includes('status')||id==='alu-status')return phase==='execute'&&(active.includes('ALU')||active.includes('ACC'));
+  if(id.includes('decode'))return phase==='decode';
+  if(id==='mdr-cir')return transfer?.from==='MDR'&&transfer?.to==='CIR';
+  return id==='pc-mar'&&transfer?.from==='PC'&&transfer?.to==='MAR';
+ };
  const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
  const memoryActive=activeUnits.has('RAM');
  const renderedBoxes=BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=>mode==='normal'&&NORMAL_LAYOUT[box.key]?{...box,...NORMAL_LAYOUT[box.key]}:box);
@@ -198,39 +224,52 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
    <div className="cpu-workspace-main">
    <div className="cpu-diagram-scroll" data-cpu-tour="diagram">
     <svg className={"cpu-diagram"+(focused?" cpu-has-focus":"")} viewBox="0 0 1190 558" role="img" aria-label="CPU architecture with registers, ALU and Control Unit connected to RAM by address, data and control buses">
-     <defs><marker id="cpu-arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5 Z" fill="var(--accent)"/></marker></defs>
+     <defs>
+      <marker id="cpu-arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5 Z" fill="var(--accent)"/></marker>
+      <marker id="cpu-wire-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--muted)"/></marker>
+      <marker id="cpu-wire-active-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--accent)"/></marker>
+     </defs>
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
      <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing BRAINROT / Unit</text><title>CPU (Central Processing Unit) is the correct Cambridge IGCSE term.</title>
-     <g className={"cpu-connectors"+(focused?" cpu-dimmed":"")}>
-      {mode==='normal'?<>
+     {mode==='normal'&&<g className="cpu-connectors">
        <path d="M203 111 C300 96 440 96 548 111"/>
        <path d="M165 279 C150 291 150 291 165 299"/>
        <path d="M285 235 C301 235 301 247 315 247"/>
        <path d="M480 247 C527 247 510 341 548 341"/>
        <path d="M285 350 C415 350 470 351 548 351"/>
        <path d="M480 248 C520 258 510 468 548 478"/>
-      </>:<>
-       <path d="M203 112 C320 112 431 112 548 112"/>
-       <path d="M548 353 C508 353 525 447 480 452"/>
-       <path d="M480 465 C513 465 524 480 548 480"/>
-       <path d="M480 354 C520 365 500 455 548 464"/>
-       <path d="M378 265 Q360 273 378 283"/>
-       <path d="M414 283 Q431 273 414 265"/>
-       <path d="M397 386 Q410 394 397 401"/>
-      </>}
-     </g>
+      </g>}
+     {mode==='advanced'&&<g className="cpu-advanced-wiring" aria-label="Advanced CPU connections">
+      {ADVANCED_WIRES.map(wire=><path key={wire.id}
+       data-wire-id={wire.id}
+       className={'cpu-advanced-wire'+(wireActive(wire.id)?' cpu-wire-active':'')}
+       d={wire.path}
+       markerEnd={wireActive(wire.id)?'url(#cpu-wire-active-arrow)':'url(#cpu-wire-arrow)'}>
+       <title>{wire.label}</title>
+      </path>)}
+     </g>}
      {renderedBoxes.map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
       <title>{HELP[box.key]}</title><rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
-      <text className="cpu-block-title" x={box.x+box.w/2} y={box.y+19} textAnchor="middle">
-       {box.key==='CIR'?<><tspan x={box.x+box.w/2}>Current Instruction</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MAR'?<><tspan x={box.x+box.w/2}>Memory Address</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MDR'?<><tspan x={box.x+box.w/2}>Memory Data</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='ALU'?<><tspan x={box.x+box.w/2}>Arithmetic Logic</tspan><tspan x={box.x+box.w/2} dy="15">Unit</tspan></>:box.key==='STATUS'?<><tspan x={box.x+box.w/2}>Status</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='INTERRUPT'?'Interrupt Register':box.label}
-      </text>
-      {box.key==='DECODE'?<g className="cpu-gears">
+      {box.key==='STATUS'||box.key==='INTERRUPT'?<g className="cpu-compact-register">
+       {box.key==='STATUS'?<text className="cpu-block-title" x={box.x+8} y={box.y+21} textAnchor="start">Status Register</text>:<>
+        <text className="cpu-block-title" x={box.x+8} y={box.y+12} textAnchor="start">Interrupt</text>
+        <text className="cpu-block-title" x={box.x+8} y={box.y+25} textAnchor="start">Register</text>
+       </>}
+       <text className="cpu-block-value" x={box.x+box.w-7} y={box.y+22} textAnchor="end">{box.key==='STATUS'?box.value(machine):interrupt.stage>0?'SERVICING':interrupt.pending?'PENDING':interrupt.handled>0?'HANDLED':'READY'}</text>
+      </g>:<g>
+       <text className="cpu-block-title" x={box.x+box.w/2} y={box.y+19} textAnchor="middle">
+        {box.key==='CIR'?<><tspan x={box.x+box.w/2}>Current Instruction</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MAR'?<><tspan x={box.x+box.w/2}>Memory Address</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MDR'?<><tspan x={box.x+box.w/2}>Memory Data</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='ALU'?<><tspan x={box.x+box.w/2}>Arithmetic Logic</tspan><tspan x={box.x+box.w/2} dy="15">Unit</tspan></>:box.label}
+       </text>
+       {box.key==='DECODE'?<g className="cpu-gears">
         <circle cx="130" cy="259" r="25"/><circle cx="193" cy="266" r="19"/>
         <circle cx="130" cy="259" r="9"/><circle cx="193" cy="266" r="7"/>
         <path d="M130 227V237M130 281V291M98 259H108M152 259H162M193 241V246M193 286V292M169 266H174M212 266H218"/>
-       </g>:<text className="cpu-block-value" x={box.x+box.w/2} y={box.y+(box.h<=60?box.h-9:Math.max(49,box.h*.65))} textAnchor="middle">
-        {box.key==='INTERRUPT'?(interrupt.stage>0?'SERVICING':interrupt.pending?'PENDING':interrupt.handled>0?'HANDLED '+interrupt.handled:'READY'):box.value(machine)}
-       </text>}
+       </g>:box.key==='CLOCK'?<g className="cpu-clock-face" aria-label="Illustrative clock tick">
+        <circle cx={box.x+42} cy={box.y+34} r="13"/>
+        <path d={'M'+(box.x+42)+' '+(box.y+34)+' v-9'} transform={'rotate('+((machine.cycles*30)%360)+' '+(box.x+42)+' '+(box.y+34)+')'}/>
+        <text className="cpu-block-value" x={box.x+box.w-10} y={box.y+35} textAnchor="end">{box.value(machine)}</text>
+       </g>:<text className="cpu-block-value" x={box.x+box.w/2} y={box.y+Math.max(41,box.h*.65)} textAnchor="middle">{box.value(machine)}</text>}
+      </g>}
      </g>)}
      <g className="cpu-connection-buses" data-cpu-tour="buses">
       {([{key:'ADDRESS',y:121,direction:1},{key:'DATA',y:343,direction:0},{key:'CONTROL',y:485,direction:0}] as const).map(b=><g key={b.key} tabIndex={0} role="button" aria-label={b.key+' bus'} className={'cpu-external-bus '+(focused?(activeBus===b.key?'cpu-bus-active ':'cpu-dimmed '):'')+(selected===b.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(b.key)} onKeyDown={e=>{if(e.key==='Enter')setSelected(b.key);}}>
