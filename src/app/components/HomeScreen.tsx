@@ -77,7 +77,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
           <rect x="16" y="7" width="233" height="62" rx="8"/>
           <rect x="29" y="19" width="60" height="39" rx="4"/><rect x="99" y="19" width="139" height="39" rx="4"/>
-          <text x="59" y="43">CU</text><text x="168.5" y="43" style={{fontSize:"12px",fontWeight:700}}>ALU + REGISTERS</text>
+          <text x="59" y="43">CU</text><text className="home-cpu-label" x="168.5" y="43" textLength={124} lengthAdjust="spacingAndGlyphs" style={{fontSize:"14px",fontWeight:700,whiteSpace:"nowrap"}}>ALU + REGISTERS</text>
           <path className="home-chart-link" d="M 250 38 H 271"/>
           <rect x="273" y="15" width="71" height="45" rx="5"/>
           <text x="308.5" y="42">RAM</text>
