@@ -143,3 +143,20 @@ it('opens the CPU Studio workspace with themed registers and memory',async()=>{
   await click(button('Step'));
   expect(container.textContent).toContain('PC identifies the next instruction');
 });
+
+it('assembles new CPU source and restores RAM after reset',async()=>{
+ const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
+ await click(choice!);
+ const editor=container.querySelector<HTMLTextAreaElement>('[aria-label="Assembly source code"]')!;
+ await type(editor,'LDI 7\\nSTA 0101\\nHLT\\n.ORG 0101\\nDAT 0'.replaceAll('\\n','\\n'));
+ await click(button('Assemble'));
+ expect(container.textContent).toContain('Assembled 3 instructions');
+ expect(container.querySelectorAll('.cpu-memory-cell')).toHaveLength(16);
+ const ghz=container.querySelector<HTMLInputElement>('[aria-label="CPU clock speed GHz"]')!;
+ expect(ghz.min).toBe('0.5');
+ expect(ghz.max).toBe('5');
+ await click(button('Step'));
+ expect(container.textContent).toContain('PC identifies');
+ await click(button('Reset'));
+ expect(container.textContent).toContain('Registers and memory restored');
+});
