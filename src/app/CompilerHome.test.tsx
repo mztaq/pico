@@ -146,7 +146,7 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
  await click(container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!);
  expect(container.textContent).toContain('PC identifies');
  await click(button('Reset'));
- expect(container.textContent).toContain('Assemble your program');
+ expect(container.textContent).toContain('Press Run to start the CPU');
 });
 it('completes fetch-decode then switches to the full execute simulation',async()=>{
  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
