@@ -1,11 +1,11 @@
 import {type AssemblyImage,binary4,binary8,decode,type Mnemonic} from './assembler';
-export type Phase='ready'|'fetch'|'decode'|'execute'|'halted'|'error';
+export type Phase='ready'|'fetch'|'decode'|'execute'|'interrupt'|'halted'|'error';
 export type Register='PC'|'MAR'|'MDR'|'CIR'|'ACC'|'ALU'|'CU'|'RAM';
 export type Bus='address'|'data'|'control'|'internal';
 export interface Transfer{from:Register;to:Register;bus:Bus;value:string}
 export interface Frame{phase:Phase;description:string;transfer?:Transfer;active:Register[];signal?:'READ'|'WRITE'|'HALT';address?:number;instruction?:Mnemonic}
 export interface Machine{pc:number;mar:number;mdr:number;cir:number;acc:number;alu:number;memory:number[];kind:('instruction'|'data'|'empty')[];initial:AssemblyImage;micro:number;halted:boolean;error:string|null;cycles:number;instructions:number;frame:Frame}
-const ready:Frame={phase:'ready',description:'Assemble your program, then press Step or Run. PC holds the address of the first instruction.',active:['PC']};
+const ready:Frame={phase:'ready',description:'Press Run to start the CPU, or Step to follow the fetch–decode–execute cycle.',active:['PC']};
 export function boot(image:AssemblyImage):Machine{return {pc:image.entry,mar:0,mdr:0,cir:0,acc:0,alu:0,memory:image.memory.map(c=>c.value),kind:image.memory.map(c=>c.kind),initial:image,micro:0,halted:false,error:null,cycles:0,instructions:0,frame:ready};}
 function flow(m:Machine,delta:Partial<Machine>,phase:Phase,description:string,active:Register[],transfer?:Transfer,signal?:Frame['signal']):Machine{
  return {...m,...delta,cycles:m.cycles+1,frame:{phase,description,active,transfer,signal,address:delta.mar??m.mar}};

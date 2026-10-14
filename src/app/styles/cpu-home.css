@@ -1,0 +1,15 @@
+
+/* Workspace launchpad: distinct cards and easier scanning without losing Pico's style. */
+.pico-home .home-intro{text-align:center;margin:9px auto 27px;max-width:680px}
+.pico-home .home-eyebrow{display:block;color:var(--accent);font-size:10px;letter-spacing:2.3px;font-weight:700;margin-bottom:8px}
+.pico-home .home-intro h1{font-size:clamp(27px,3vw,39px);letter-spacing:-1.5px;margin:0}
+.pico-home .home-intro p{font-size:13px;line-height:1.6;color:var(--muted);margin:12px 0 0}
+.pico-home .compiler-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;width:min(1120px,calc(100% - 40px));max-width:none}
+.pico-home .compiler-choice{min-height:142px;height:auto;transition:transform .18s ease,border-color .18s ease,background .18s ease;overflow:hidden}
+.pico-home .compiler-choice:hover{transform:translateY(-3px);border-color:var(--accent);background:var(--surface-raised)}
+.pico-home .compiler-choice:last-child{grid-column:1/-1;min-height:134px}
+.pico-home .compiler-choice-title h2{font-size:16px}
+.pico-home .compiler-choice-copy p{font-size:12px;line-height:1.6}
+.pico-home .compiler-choice-preview{max-width:49%;flex:0 0 46%}
+@media(max-width:850px){.pico-home .compiler-choices{grid-template-columns:1fr}.pico-home .compiler-choice:last-child{grid-column:auto}.pico-home .compiler-choice-preview{max-width:44%}}
+@media(prefers-reduced-motion:reduce){.pico-home .compiler-choice{transition:none}.pico-home .compiler-choice:hover{transform:none}}
