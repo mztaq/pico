@@ -175,6 +175,13 @@ it('supports Step Back and only shows decode unit in Advanced mode',async()=>{
  const advanced=container.querySelectorAll<HTMLInputElement>('input[name="cpu-mode"]')[1]!;
  await click(advanced);
  expect(container.querySelector('g[aria-label="Decode Unit"]')).not.toBeNull();
+ for(const name of ['Clock','Status Register','Interrupt Register']){
+  expect(container.querySelector('g.cpu-block[aria-label="'+name+'"]')).not.toBeNull();
+ }
+ expect(container.querySelectorAll('path.cpu-advanced-wire')).toHaveLength(14);
+ expect(container.querySelector('path[data-wire-id="clock-cu"]')).not.toBeNull();
+ expect(container.querySelector('path[data-wire-id="status-cu"]')).not.toBeNull();
+ expect(container.querySelector('path[data-wire-id="interrupt-cu"]')).not.toBeNull();
  expect(container.querySelector('[aria-label="Request CPU interrupt"]')).not.toBeNull();
  expect(container.textContent).not.toContain('Von Neumann · Cambridge IGCSE');
 });
