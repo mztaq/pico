@@ -148,7 +148,7 @@ it('assembles new CPU source and restores RAM after reset',async()=>{
  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
  await click(choice!);
  const editor=container.querySelector<HTMLTextAreaElement>('[aria-label="Assembly source code"]')!;
- await type(editor,'LDI 7\\nSTA 0101\\nHLT\\n.ORG 0101\\nDAT 0'.replaceAll('\\n','\\n'));
+ await type(editor,['LDI 7','STA 0101','HLT','.ORG 0101','DAT 0'].join(String.fromCharCode(10)));
  await click(button('Assemble'));
  expect(container.textContent).toContain('Assembled 3 instructions');
  expect(container.querySelectorAll('.cpu-memory-cell')).toHaveLength(16);
