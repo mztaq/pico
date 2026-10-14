@@ -6,14 +6,14 @@ import './cpu-tutorial.css';
 export const CPU_TUTORIAL_KEY='pico.cpu.tutorial.v1';
 export const CPU_TOUR_STEPS=[
  {target:'',title:'Welcome to CPU Studio',description:'Explore the fetch–decode–execute cycle using the same CPU components as your Cambridge IGCSE course. Each Step follows one operation.'},
- {target:'modes',title:'Choose what to study',description:'Fetch–Decode stops after decoding. Fetch–Decode–Execute also runs instructions. Advanced shows detailed opcode decoding and a simplified interrupt service demonstration.'},
+ {target:'modes',title:'Choose what to study',description:'Normal demonstrates fetch–decode–execute. Advanced shows the decode unit, opcode details and a guided interrupt service demonstration.'},
  {target:'diagram',title:'Explore the architecture',description:'This is a Von Neumann CPU. The processor contains registers, an ALU and control unit. Main memory is on the right, connected by three buses.'},
  {target:'pc',title:'Start with the Program Counter',description:'The PC stores the next instruction address. Step copies it to MAR, sends it along the address bus and requests a RAM read.'},
  {target:'ram',title:'Watch the RAM contents',description:'RAM stores both instructions and data. Each row displays a four-bit memory address and eight-bit stored value.'},
  {target:'buses',title:'The three system buses',description:'The address bus carries memory addresses. The data bus transfers instructions and values. The control bus carries READ and WRITE signals.'},
  {target:'control',title:'Understand decoding',description:'The instruction travels RAM → MDR → CIR. The Control Unit decodes its opcode and determines what operation happens next.'},
  {target:'steps',title:'Read the explanations',description:'The panel explains every micro-operation, highlighting the relevant registers and showing information moving between components.'},
- {target:'controls',title:'Step or run the cycle',description:'Step advances one operation. Run animates the whole process. Pause and Reset are available in the same toolbar.'},
+ {target:'controls',title:'Step or run the cycle',description:'Step moves forward one operation; Back reverses it. Run plays the cycle automatically. Pause and Reset are alongside.'},
  {target:'speed',title:'Adjust playback speed',description:'The illustrative GHz slider runs from 0.5 to 9.2 and controls playback speed only, not real hardware timing. The upper values advance much faster.'},
 ] as const;
 type Bounds={top:number;left:number;width:number;height:number};
