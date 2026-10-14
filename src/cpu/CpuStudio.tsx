@@ -43,6 +43,29 @@ export function cpuTransferRoute(from:Register,to:Register):string {
  }
  return '';
 }
+/** Rebalanced Normal layout leaves no large empty Decode Unit hole. */
+const NORMAL_LAYOUT:Partial<Record<Register|'CACHE'|'DECODE'|'CLOCK'|'STATUS'|'INTERRUPT',{x:number;y:number;w:number;h:number}>>={
+ ACC:{x:45,y:189,w:240,h:90},
+ ALU:{x:45,y:299,w:240,h:110},
+ CIR:{x:315,y:197,w:165,h:102},
+ CACHE:{x:45,y:431,w:240,h:100},
+};
+export function normalTransferRoute(from:Register,to:Register):string {
+ const routes:Record<string,string>={
+  'PC>MAR':'M203 111 C300 96 440 96 548 111',
+  'MAR>RAM':'M708 121 C790 121 850 121 929 121',
+  'CU>RAM':'M708 485 C790 485 850 485 929 485',
+  'RAM>MDR':'M929 343 C850 343 786 343 708 343',
+  'MDR>CIR':'M548 341 C505 341 500 248 480 248',
+  'CIR>MAR':'M480 248 C526 237 514 126 548 126',
+  'MDR>ACC':'M548 341 C470 344 365 247 285 235',
+  'ACC>MDR':'M285 235 C367 247 471 344 548 341',
+  'MDR>ALU':'M548 351 C459 351 365 351 285 351',
+  'ALU>ACC':'M165 299 C149 290 149 287 165 279',
+  'CIR>ACC':'M315 248 C303 248 300 235 285 235',
+ };
+ return routes[from+'>'+to]??cpuTransferRoute(from,to);
+}
 const POINTS:Record<Register,{x:number;y:number}>={
  PC:{x:122,y:116},MAR:{x:631,y:115},MDR:{x:629,y:341},
  CIR:{x:396,y:447},ACC:{x:394,y:225},ALU:{x:396,y:334},
@@ -135,7 +158,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
   setStepKey(n=>n+1);
  }
  function finishTutorial(){setTourStep(null);try{localStorage.setItem(CPU_TUTORIAL_KEY,'done');}catch{/* Tutorial still closes. */}}
- const route=transfer?(cpuTransferRoute(transfer.from,transfer.to)||('M '+POINTS[transfer.from].x+' '+POINTS[transfer.from].y+' L'+POINTS[transfer.to].x+' '+POINTS[transfer.to].y)):'';
+ const route=transfer?((mode==='normal'?normalTransferRoute(transfer.from,transfer.to):cpuTransferRoute(transfer.from,transfer.to))||('M '+POINTS[transfer.from].x+' '+POINTS[transfer.from].y+' L'+POINTS[transfer.to].x+' '+POINTS[transfer.to].y)):'';
  const phase=machine.frame.phase;
  const focused=machine.cycles>0&&phase!=='error';
  const activeUnits=new Set<string>(active);
@@ -145,6 +168,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  if(mode==='advanced'&&phase==='execute'&&machine.frame.active.includes('ACC'))activeUnits.add('STATUS');
  const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
  const memoryActive=activeUnits.has('RAM');
+ const renderedBoxes=BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=>mode==='normal'&&NORMAL_LAYOUT[box.key]?{...box,...NORMAL_LAYOUT[box.key]}:box);
  return <div className="cpu-app" style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
   <header className="cpu-topbar">
    <div className="cpu-brand"><button aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><img src="/pico-logo.svg" alt=""/><b>Pico<span>.</span></b><i>/</i><strong>CPU Studio</strong></div>
@@ -174,15 +198,24 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
      <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing BRAINROT / Unit</text><title>CPU (Central Processing Unit) is the correct Cambridge IGCSE term.</title>
      <g className={"cpu-connectors"+(focused?" cpu-dimmed":"")}>
-      <path d="M203 112 C320 112 431 112 548 112"/>
-      <path d="M548 353 C508 353 525 447 480 452"/>
-      <path d="M480 465 C513 465 524 480 548 480"/>
-      <path d="M480 354 C520 365 500 455 548 464"/>
-      <path d="M378 265 Q360 273 378 283"/>
-      <path d="M414 283 Q431 273 414 265"/>
-      <path d="M397 386 Q410 394 397 401"/>
+      {mode==='normal'?<>
+       <path d="M203 111 C300 96 440 96 548 111"/>
+       <path d="M165 279 C150 291 150 291 165 299"/>
+       <path d="M285 235 C301 235 301 247 315 247"/>
+       <path d="M480 247 C527 247 510 341 548 341"/>
+       <path d="M285 350 C415 350 470 351 548 351"/>
+       <path d="M480 248 C520 258 510 468 548 478"/>
+      </>:<>
+       <path d="M203 112 C320 112 431 112 548 112"/>
+       <path d="M548 353 C508 353 525 447 480 452"/>
+       <path d="M480 465 C513 465 524 480 548 480"/>
+       <path d="M480 354 C520 365 500 455 548 464"/>
+       <path d="M378 265 Q360 273 378 283"/>
+       <path d="M414 283 Q431 273 414 265"/>
+       <path d="M397 386 Q410 394 397 401"/>
+      </>}
      </g>
-     {BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
+     {renderedBoxes.map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
       <title>{HELP[box.key]}</title><rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
       <text className="cpu-block-title" x={box.x+box.w/2} y={box.y+19} textAnchor="middle">
        {box.key==='CIR'?<><tspan x={box.x+box.w/2}>Current Instruction</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MAR'?<><tspan x={box.x+box.w/2}>Memory Address</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='MDR'?<><tspan x={box.x+box.w/2}>Memory Data</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='ALU'?<><tspan x={box.x+box.w/2}>Arithmetic Logic</tspan><tspan x={box.x+box.w/2} dy="15">Unit</tspan></>:box.key==='STATUS'?<><tspan x={box.x+box.w/2}>Status</tspan><tspan x={box.x+box.w/2} dy="15">Register</tspan></>:box.key==='INTERRUPT'?'Interrupt Register':box.label}
