@@ -14,9 +14,9 @@ describe('CPU Studio micro-step engine',()=>{
   expect(m.memory[7]).toBe(8);expect(m.instructions).toBe(4);expect(m.halted).toBe(true);
  });
  it('runs branches and arithmetic',()=>{
-  const p=assemble('LDI 0xF\nSTA 0101\nLDA 0101\nSUB 0101\nBRZ DONE\nLDI 9\nDONE: HLT\n.ORG 0101\nDAT 0');
+  const p=assemble('LDI 0xF\nSTA 1111\nLDA 1111\nSUB 1111\nBRZ DONE\nLDI 9\nDONE: HLT\n.ORG 1111\nDAT 0');
   const m=runToHalt(boot(p));
-  expect(m.acc).toBe(0);expect(m.instructions).toBe(6);expect(m.memory[5]).toBe(15);
+  expect(m.acc).toBe(0);expect(m.instructions).toBe(6);expect(m.memory[15]).toBe(15);
  });
  it('stops looping instruction programs at an execution budget',()=>{
   expect(runToHalt(boot(assemble('HERE: BRA HERE')),110).error).toMatch(/Execution limit/);
