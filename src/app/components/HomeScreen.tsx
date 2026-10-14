@@ -31,21 +31,21 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     <div className="compiler-choices">
       <button className="compiler-choice" onClick={() => onChoose('pseudocode')}>
         <div className="compiler-choice-copy">
-        <div className="compiler-choice-title"><h2>Pseudocode Compiler</h2><span>Open</span></div>
+        <div className="compiler-choice-title"><h2>Pseudocode Compiler</h2></div>
         <p>Run .pico programs with typed input and a debugger.</p>
         </div>
         <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode code={'DECLARE Name : STRING\nINPUT Name\nOUTPUT "Hello ", Name, "!"'} /></pre>
       </button>
       <button className="compiler-choice" onClick={() => onChoose('python')}>
         <div className="compiler-choice-copy">
-        <div className="compiler-choice-title"><h2>Python Compiler</h2><span>Open</span></div>
+        <div className="compiler-choice-title"><h2>Python Compiler</h2></div>
         <p>Run Python with console input and a debugger.</p>
         </div>
         <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
       </button>
       <button className="compiler-choice" onClick={() => onChoose('flowchart')}>
         <div className="compiler-choice-copy">
-        <div className="compiler-choice-title"><h2>Flowchart Builder</h2><span>Open</span></div>
+        <div className="compiler-choice-title"><h2>Flowchart Builder</h2></div>
         <p>Connect blocks, run your chart, or turn it into pseudocode.</p>
         </div>
         <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
@@ -58,7 +58,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       </button>
       <button className="compiler-choice" onClick={() => onChoose('logic')}>
         <div className="compiler-choice-copy">
-          <div className="compiler-choice-title"><h2>Logic Sim</h2><span>Open</span></div>
+          <div className="compiler-choice-title"><h2>Logic Sim</h2></div>
           <p>Build digital circuits with gates, switches, clocks, and live outputs.</p>
         </div>
         <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
@@ -71,7 +71,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       </button>
       <button className="compiler-choice" onClick={() => onChoose('cpu')}>
         <div className="compiler-choice-copy">
-          <div className="compiler-choice-title"><h2>CPU Studio</h2><span>Open</span></div>
+          <div className="compiler-choice-title"><h2>CPU Studio</h2></div>
           <p>Fetch, decode and execute instructions inside a visual CPU.</p>
         </div>
         <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
