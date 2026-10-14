@@ -22,3 +22,18 @@
 .cpu-app .cpu-topbar button{font-size:13px}.cpu-brand strong{font-size:15px}
 @media(min-width:1400px){.cpu-diagram{min-height:680px}}
 @media(max-width:850px){.cpu-diagram{min-width:940px;min-height:0;width:940px}.cpu-diagram-scroll{overflow-x:auto}.cpu-explanation{font-size:16px}.cpu-controls{padding:10px}}
+
+/* The entire SVG, including the control unit, cache, RAM and explanation,
+   must be visible in a normal-height desktop viewport. Do not force 680px
+   of diagram into a scrolling pane behind the fixed bottom credits. */
+.cpu-diagram-scroll{flex:0 1 auto;min-height:0;display:flex;justify-content:center;align-items:center;overflow:visible;padding:6px 18px 12px}
+.cpu-diagram{display:block;flex:none;width:min(100%,1100px);height:clamp(290px,calc(100dvh - 370px),510px);max-width:100%;max-height:none;min-height:0;overflow:visible}
+.cpu-content{min-height:0;overflow-y:auto;overflow-x:hidden}
+.cpu-heading{flex:none;padding:11px 22px 7px}
+.cpu-information{flex:none;margin:2px 18px 14px;padding:16px 21px;gap:9px}
+.cpu-explanation{font-size:16px;line-height:1.5}
+.cpu-component-details{font-size:12px;line-height:1.55}
+.cpu-footer{flex:none}
+@media(min-width:1400px){.cpu-diagram{min-height:0;height:clamp(290px,calc(100dvh - 370px),530px)}}
+@media(max-width:850px){.cpu-app{height:auto;min-height:100dvh;overflow:visible}.cpu-content{overflow:visible}.cpu-diagram-scroll{display:block;overflow-x:auto;padding:8px 12px 14px}.cpu-diagram{width:940px;max-width:none;height:auto;min-height:0;max-height:none}.cpu-information{margin:6px 12px 16px}.cpu-explanation{font-size:15px}}
+@media(max-height:700px) and (min-width:851px){.cpu-diagram{height:clamp(235px,calc(100dvh - 360px),370px)}.cpu-information{padding:12px 18px}.cpu-explanation{font-size:14px}}
