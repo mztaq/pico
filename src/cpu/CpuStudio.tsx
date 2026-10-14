@@ -12,6 +12,36 @@ import './cpu.css';
 
 export type CpuMode='fetch-decode'|'fetch-decode-execute'|'advanced';
 const DEFAULT_IMAGE=assemble(DEFAULT_PROGRAM);
+/** Follow visible connections, rather than animating directly through register labels. */
+export function cpuTransferRoute(from:Register,to:Register):string {
+ const routes:Record<string,string>={
+  'PC>MAR':'M203 110 H548',
+  'MAR>RAM':'M708 121 H834',
+  'CU>RAM':'M708 485 H834',
+  'RAM>MDR':'M834 343 H708',
+  'MDR>CIR':'M548 350 H514 V448 H480',
+  'CIR>MAR':'M480 445 H527 V142 H548',
+  'MDR>ACC':'M548 349 H511 V228 H480',
+  'ACC>MDR':'M480 225 H511 V350 H548',
+  'MDR>ALU':'M548 350 H480',
+  'ALU>ACC':'M397 283 V265',
+  'CIR>PC':'M315 445 H231 V115 H203',
+  'CIR>ACC':'M397 401 V265',
+ };
+ const route=routes[from+'>'+to];
+ if(route)return route;
+ const reverse=routes[to+'>'+from];
+ if(reverse){
+   let x=0,y=0;const vertices:{x:number;y:number}[]=[];
+   for(const token of reverse.match(/[MHVL][0-9 .-]+/g)??[]){
+     const op=token[0];const nums=token.slice(1).trim().split(/\s+/).map(Number);
+     if(op==='M'){x=nums[0]!;y=nums[1]!;}else if(op==='H')x=nums[0]!;else if(op==='V')y=nums[0]!;
+     vertices.push({x,y});
+   }
+   if(vertices.length>1)return 'M'+vertices.at(-1)!.x+' '+vertices.at(-1)!.y+vertices.slice(0,-1).reverse().map(p=>' L'+p.x+' '+p.y).join('');
+ }
+ return '';
+}
 const POINTS:Record<Register,{x:number;y:number}>={
  PC:{x:122,y:116},MAR:{x:631,y:115},MDR:{x:629,y:341},
  CIR:{x:396,y:447},ACC:{x:394,y:225},ALU:{x:396,y:334},
@@ -88,9 +118,14 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
   interruptRef.current=result.interrupt;setInterrupt(result.interrupt);const next=result.machine;machineRef.current=next;setMachine(next);setStepKey(n=>n+1);
  }
  function finishTutorial(){setTourStep(null);try{localStorage.setItem(CPU_TUTORIAL_KEY,'done');}catch{/* Tutorial still closes. */}}
- const transferFrom=transfer?POINTS[transfer.from]:null,transferTo=transfer?POINTS[transfer.to]:null;
- const route=transferFrom&&transferTo?'M '+transferFrom.x+' '+transferFrom.y+' C '+((transferFrom.x+transferTo.x)/2)+' '+transferFrom.y+', '+((transferFrom.x+transferTo.x)/2)+' '+transferTo.y+', '+transferTo.x+' '+transferTo.y:'';
+ const route=transfer?(cpuTransferRoute(transfer.from,transfer.to)||('M '+POINTS[transfer.from].x+' '+POINTS[transfer.from].y+' L'+POINTS[transfer.to].x+' '+POINTS[transfer.to].y)):'';
  const phase=machine.frame.phase;
+ const focused=machine.cycles>0&&!machine.halted&&phase!=='error';
+ const activeUnits=new Set<string>(active);
+ if(phase==='decode')activeUnits.add('DECODE');
+ if(phase==='interrupt')activeUnits.add('CU');
+ const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
+ const memoryActive=activeUnits.has('RAM');
  return <div className="cpu-app" style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
   <header className="cpu-topbar">
    <div className="cpu-brand"><button aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><img src="/pico-logo.svg" alt=""/><b>Pico<span>.</span></b><i>/</i><strong>CPU Studio</strong></div>
@@ -113,14 +148,15 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
   </div>
   <main className="cpu-content">
    <div className="cpu-heading"><Cpu size={17}/><strong>CPU architecture</strong><span>Von Neumann · Cambridge IGCSE</span></div>
+   <div className="cpu-workspace-main">
    <div className="cpu-diagram-scroll" data-cpu-tour="diagram">
-    <svg className="cpu-diagram" viewBox="0 0 1085 558" role="img" aria-label="CPU architectural diagram with Program Counter, MAR, decode unit, accumulator, ALU, CIR, cache, MDR and Control Unit on the left; RAM and three buses on the right">
+    <svg className={"cpu-diagram"+(focused?" cpu-has-focus":"")} viewBox="0 0 1085 558" role="img" aria-label="CPU architectural diagram with Program Counter, MAR, decode unit, accumulator, ALU, CIR, cache, MDR and Control Unit on the left; RAM and three buses on the right">
      <defs><marker id="cpu-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="var(--accent)"/></marker></defs>
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
      <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing BRAINROT / Unit</text><title>CPU (Central Processing Unit) is the correct Cambridge IGCSE term.</title>
-     <g className="cpu-connectors">
+     <g className={"cpu-connectors"+(focused?" cpu-dimmed":"")}>
       <path d="M203 110 H548" markerEnd="url(#cpu-arr)"/>
-      <path d="M548 130 H221 V158 H203" markerEnd="url(#cpu-arr)"/>
+      <path d="M548 142 H224 V160 H203" markerEnd="url(#cpu-arr)"/>
       <path d="M292 219 H315"/>
       <path d="M548 350 H480 V447 H480" markerEnd="url(#cpu-arr)"/>
       <path d="M315 225 H294 V322 H315" markerEnd="url(#cpu-arr)"/>
@@ -131,18 +167,18 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
       <path d="M548 465 H520 V363 H480"/>
       <path d="M548 492 H535 V222 H480"/>
      </g>
-     {BOXES.map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(active.includes(box.key as Register)?'cpu-active ':'')+(selected===box.key?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
+     {BOXES.map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
       <title>{HELP[box.key]}</title><rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
       <text className="cpu-block-title" x={box.x+box.w/2} y={box.y+19} textAnchor="middle">{box.label}</text>
       {box.key==='DECODE'?<g className="cpu-gears"><circle cx="143" cy="272" r="33"/><circle cx="202" cy="348" r="27"/><circle cx="143" cy="272" r="12"/><circle cx="202" cy="348" r="10"/><path d="M143 232V243M143 301V313M105 272H115M171 272H182M202 315V326M202 371V382M171 348H180M226 348H235"/></g>:<text className="cpu-block-value" x={box.x+box.w/2} y={box.y+Math.max(49,box.h*.65)} textAnchor="middle">{box.value(machine)}</text>}
      </g>)}
      <g className="cpu-connection-buses" data-cpu-tour="buses">
-      {([{key:'ADDRESS',y:121,start:708,end:833,direction:1},{key:'DATA',y:343,start:708,end:833,direction:0},{key:'CONTROL',y:485,start:708,end:833,direction:0}] as const).map(b=><g key={b.key} tabIndex={0} role="button" aria-label={b.key+' bus'} className={'cpu-external-bus '+(selected===b.key?'cpu-selected':'')+(transfer?.bus.toUpperCase()===b.key?' cpu-bus-active':'')} onClick={()=>setSelected(b.key)} onKeyDown={e=>{if(e.key==='Enter')setSelected(b.key);}}>
-        <path d={'M'+b.start+' '+b.y+' H'+b.end} markerEnd="url(#cpu-arr)"/>{b.direction===0&&<path d={'M'+b.end+' '+(b.y+6)+' H'+b.start} markerEnd="url(#cpu-arr)"/>}
+      {([{key:'ADDRESS',y:121,start:708,end:833,direction:1},{key:'DATA',y:343,start:708,end:833,direction:0},{key:'CONTROL',y:485,start:708,end:833,direction:0}] as const).map(b=><g key={b.key} tabIndex={0} role="button" aria-label={b.key+' bus'} className={'cpu-external-bus '+(focused?(activeBus===b.key?'cpu-bus-active ':'cpu-dimmed '):'')+(selected===b.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(b.key)} onKeyDown={e=>{if(e.key==='Enter')setSelected(b.key);}}>
+        <path d={'M'+b.start+' '+(b.direction===0?b.y-10:b.y)+' H'+b.end} markerEnd="url(#cpu-arr)"/>{b.direction===0&&<path d={'M'+b.end+' '+(b.y+10)+' H'+b.start} markerEnd="url(#cpu-arr)"/>}
         <text x="770" y={b.y-11} textAnchor="middle">{b.key[0]+b.key.slice(1).toLowerCase()} bus</text>
        </g>)}
      </g>
-     <g data-cpu-tour="ram" className="cpu-ram" role="button" aria-label="RAM with sixteen memory addresses" onClick={()=>setSelected('RAM')}>
+     <g data-cpu-tour="ram" className={"cpu-ram"+(focused&&!memoryActive?" cpu-dimmed":"")+(focused&&memoryActive?" cpu-active":"")} role="button" aria-label="RAM with sixteen memory addresses" onClick={()=>setSelected('RAM')}>
       <rect className="cpu-ram-shell" x="834" y="15" width="233" height="532" rx="8"/>
       <text className="cpu-ram-title" x="950" y="40" textAnchor="middle">Main Memory (RAM)</text>
       <rect className="cpu-ram-header" x="847" y="53" width="207" height="31" rx="3"/>
@@ -152,10 +188,10 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
        return <g key={index} tabIndex={0} role="button" aria-label={'RAM address '+binary4(index)+' contains '+binary8(value)} onMouseEnter={()=>setSelected('RAM')} className={'cpu-ram-row '+(machine.mar===index&&phase!=='ready'?'cpu-ram-highlight':'')}><title>{'Address '+binary4(index)+' ('+index+'): '+(machine.kind[index]==='instruction'?'instruction':machine.kind[index]==='data'?'stored data':'unused location')+'. Contents '+binary8(value)+(machine.kind[index]==='instruction'?'. Opcode '+binary4(value>>4)+', operand '+binary4(value)+'. Instruction encoding is a teaching simplification (out of specification).':'.')}</title><rect x="847" y={y} width="207" height="27"/><text x="887" y={y+17} textAnchor="middle">{binary4(index)}</text><text x="998" y={y+17} textAnchor="middle">{binary8(value)}</text></g>;
       })}
      </g>
-     {route&&transfer&&<g className="cpu-flow-token" key={stepKey}><path className="cpu-flow-path" d={route}/><g><circle r="6"/><animateMotion path={route} dur={Math.min(.85,waitForStep(clock)/1000*.88)+'s'} fill="freeze"/></g></g>}
+     {route&&transfer&&<g className="cpu-flow-token cpu-emphasis" key={stepKey}><path className="cpu-flow-path" d={route}/><g><circle r="6"/><animateMotion path={route} dur={Math.min(.85,waitForStep(clock)/1000*.88)+'s'} fill="freeze"/></g></g>}
     </svg>
    </div>
-   <section className="cpu-information" data-cpu-tour="steps">
+   <section className="cpu-information" data-cpu-tour="steps" aria-live="polite">
     <div className="cpu-step-heading"><span className={'cpu-phase cpu-phase-'+phase}>{phase==='ready'?'READY':phase==='halted'?'COMPLETE':phase.toUpperCase()}</span><span>Micro-step {machine.cycles}</span></div>
     <p className="cpu-explanation">{machine.cycles===0?'Press Run to start the CPU, or Step to follow one operation at a time.':machine.frame.description}</p>
     {transfer&&<p className="cpu-transit">{transfer.from} → {transfer.to} · {transfer.value}</p>}
@@ -163,6 +199,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
     {mode==='advanced'&&<div className="cpu-advanced"><strong>Advanced · instruction decode and interrupts</strong><span>Opcode: {binary4(machine.cir>>4)} · Operand: {binary4(machine.cir)}. Four-bit opcodes and 16 memory locations are a teaching model (out of specification), not a Cambridge ISA.</span><span>Interrupt: {interrupt.stage>0?'Servicing request':interrupt.pending?'Waiting until the current instruction finishes':interrupt.handled>0?'Handled '+interrupt.handled+' interrupt(s)':'No pending request'}. Interrupt handling includes finishing the instruction, saving state, servicing the ISR and returning to the program.</span></div>}
     <div className="cpu-component-details"><strong>{selected==='DECODE'?'Decode unit':selected==='CACHE'?'Cache':selected==='ADDRESS'?'Address bus':selected==='DATA'?'Data bus':selected==='CONTROL'?'Control bus':LABELS[selected as Register]}</strong><span>{HELP[selected]}</span></div>
    </section>
+   </div>
   </main>
   <footer className="cpu-footer"><Credits/></footer>
   {themeOpen&&<div className="cpu-overlay" role="dialog" aria-label="Choose CPU Studio theme"><div className="cpu-dialog"><div className="cpu-dialog-head"><strong>Theme</strong><button aria-label="Close themes" onClick={()=>setThemeOpen(false)}><X size={16}/></button></div><ThemePicker value={themeId} onChange={setThemeId}/></div></div>}
