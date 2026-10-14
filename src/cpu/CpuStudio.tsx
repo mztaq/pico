@@ -1,115 +1,163 @@
-import {useCallback,useEffect,useRef,useState} from 'react';
-import {ArrowLeft,BookOpen,Download,Pause,Play,RefreshCw,Settings2,StepForward,Upload,X} from 'lucide-react';
+import {useEffect,useRef,useState} from 'react';
+import {ArrowLeft,BookOpen,Cpu,Gauge,Pause,Play,RotateCcw,Settings2,StepForward,X} from 'lucide-react';
 import {Credits} from '../app/components/HomeScreen';
 import {ThemePicker} from '../app/components/ThemePicker';
 import {cssVariables,getTheme} from '../app/themes';
 import {loadSettings,saveSettings} from '../storage/settings';
-import {useExitWarning} from '../app/components/useExitWarning';
-import {assemble,AssemblyError,binary4,binary8,DEFAULT_PROGRAM,type AssemblyImage} from './assembler';
+import {assemble,binary4,binary8,DEFAULT_PROGRAM} from './assembler';
 import {boot,step,type Machine,type Register} from './engine';
+import {CpuTutorial,CPU_TUTORIAL_KEY} from './CpuTutorial';
 import './cpu.css';
 
-const STORAGE='pico.cpu.source.v1';
-function assembleSafe(source:string):AssemblyImage|null{try{return assemble(source);}catch{return null;}}
-const EXAMPLES=[
- {name:'Add two values',code:DEFAULT_PROGRAM},
- {name:'Load and store',code:'LDA INPUT\nSTA RESULT\nHLT\n.ORG 0101\nINPUT: DAT 13\nRESULT: DAT 0'},
- {name:'Branch if zero',code:'LDI 0\nBRZ FINISH\nLDI 9\nFINISH: STA RESULT\nHLT\n.ORG 1111\nRESULT: DAT 0'},
- {name:'8-bit wraparound',code:'LDA FIRST\nADD SECOND\nSTA RESULT\nHLT\n.ORG 0101\nFIRST: DAT 250\nSECOND: DAT 10\nRESULT: DAT 0'},
+export type CpuMode='fetch-decode'|'fetch-decode-execute';
+const DEFAULT_IMAGE=assemble(DEFAULT_PROGRAM);
+const POINTS:Record<Register,{x:number;y:number}>={
+ PC:{x:122,y:116},MAR:{x:631,y:115},MDR:{x:629,y:341},
+ CIR:{x:396,y:447},ACC:{x:394,y:225},ALU:{x:396,y:334},
+ CU:{x:629,y:480},RAM:{x:940,y:300},
+};
+const LABELS:Record<Register,string>={
+ PC:'Program Counter (PC)',MAR:'Memory Address Register (MAR)',
+ MDR:'Memory Data Register (MDR)',CIR:'Current Instruction Register (CIR)',
+ ACC:'Accumulator (ACC)',ALU:'Arithmetic Logic Unit (ALU)',
+ CU:'Control Unit (CU)',RAM:'Main memory (RAM)',
+};
+const HELP:Record<Register|string,string>={
+ PC:'Holds the address of the next instruction. After fetching, the PC increments.',
+ MAR:'Holds the memory address that the processor needs to access.',
+ MDR:'Holds an instruction or data transferred to or from main memory.',
+ CIR:'Holds the current instruction so the control unit can decode it.',
+ ACC:'Stores a value being processed and receives the result from the ALU.',
+ ALU:'Performs arithmetic and logical operations on data held by the CPU.',
+ CU:'Decodes instructions and sends signals to coordinate the CPU, registers and buses.',
+ RAM:'Stores program instructions and data together, as in Von Neumann architecture.',
+ CACHE:'Fast memory close to the CPU that stores frequently used instructions or data. Shown for syllabus context; not simulated here.',
+ DECODE:'Interprets the instruction held in CIR and tells the CPU what operation to perform.',
+ ADDRESS:'The address bus carries the location of a memory cell from the CPU to RAM.',
+ DATA:'The data bus carries instructions and values between the CPU and RAM in both directions.',
+ CONTROL:'The control bus carries control signals such as READ and WRITE.',
+};
+export function waitForStep(ghz:number){return Math.round(1700/(ghz+1));}
+export function shouldStopAtDecode(mode:CpuMode,m:Machine){return mode==='fetch-decode'&&m.micro===8;}
+const BOXES:{key:Register|'DECODE'|'CACHE';x:number;y:number;w:number;h:number;label:string;value:(m:Machine)=>string}[]=[
+ {key:'PC',x:45,y:64,w:158,h:106,label:'Program Counter',value:m=>binary4(m.pc)},
+ {key:'MAR',x:548,y:64,w:160,h:102,label:'Memory Address Register',value:m=>binary4(m.mar)},
+ {key:'DECODE',x:45,y:185,w:247,h:241,label:'Decode Unit',value:m=>m.frame.phase==='decode'?'DECODING':'CONTROLLED BY CU'},
+ {key:'ACC',x:315,y:184,w:165,h:81,label:'Accumulator',value:m=>binary8(m.acc)},
+ {key:'ALU',x:315,y:283,w:165,h:102,label:'Arithmetic Logic Unit',value:m=>binary8(m.alu)},
+ {key:'CIR',x:315,y:401,w:165,h:89,label:'Current Instruction Register',value:m=>binary8(m.cir)},
+ {key:'CACHE',x:45,y:443,w:247,h:88,label:'Cache',value:()=>'CPU CACHE'},
+ {key:'MDR',x:548,y:290,w:160,h:102,label:'Memory Data Register',value:m=>binary8(m.mdr)},
+ {key:'CU',x:548,y:424,w:160,h:107,label:'Control Unit',value:m=>m.frame.signal??'DECODE / CONTROL'},
 ];
-const DETAILS:Record<string,string>={
- PC:'Program Counter: address of the next instruction.',MAR:'Memory Address Register: the address used for a read or write.',MDR:'Memory Data Register: transfers data or instructions to and from RAM.',CIR:'Current Instruction Register: stores the instruction being decoded and executed.',ACC:'Accumulator: holds input values and arithmetic results.',ALU:'Arithmetic Logic Unit: performs additions and subtractions.',CU:'Control Unit: coordinates instruction decoding and sends control signals.',RAM:'Main memory: instructions and program data share the same address space (Von Neumann).',
-};
-const POS:Record<Register,{x:number;y:number}>={
- PC:{x:125,y:103},MAR:{x:125,y:173},MDR:{x:330,y:173},CIR:{x:330,y:103},
- ACC:{x:330,y:246},ALU:{x:125,y:246},CU:{x:230,y:326},RAM:{x:635,y:174},
-};
-const BUSES={address:{x1:175,y1:174,x2:579,y2:174},data:{x1:381,y1:202,x2:579,y2:202},control:{x1:275,y1:328,x2:581,y2:233}};
-function tone(phase:string){return phase==='error'?'bad':phase==='halted'?'done':phase==='execute'?'execute':phase==='decode'?'decode':phase==='fetch'?'fetch':'ready';}
-function unitTime(ghz:number){return Math.max(180,Math.min(1400,Math.round(1750/(ghz+0.7))));}
-/** GHz is illustrative: it scales the animation rate, not real nanosecond CPU timing. */
 export function CpuStudio({onHome}:{onHome:()=>void}){
- const [source,setSource]=useState(()=>{try{return localStorage.getItem(STORAGE)??DEFAULT_PROGRAM;}catch{return DEFAULT_PROGRAM;}});
- const [themeName,setThemeName]=useState(()=>loadSettings().theme);
- const theme=getTheme(themeName);
- const [themeOpen,setThemeOpen]=useState(false);
- const [tutorial,setTutorial]=useState(false);
- const [ghz,setGhz]=useState(2.5);
+ const [mode,setMode]=useState<CpuMode>('fetch-decode-execute');
+ const [machine,setMachine]=useState<Machine>(()=>boot(DEFAULT_IMAGE));
  const [playing,setPlaying]=useState(false);
- const [selected,setSelected]=useState<Register|'address'|'data'|'control'>('PC');
- const [notice,setNotice]=useState('');
- const [image,setImage]=useState<AssemblyImage>(()=>assemble(DEFAULT_PROGRAM));
- const [machine,setMachine]=useState<Machine>(()=>boot(assemble(DEFAULT_PROGRAM)));
- const [lastStep,setLastStep]=useState(0);
- const [sourceError,setSourceError]=useState<AssemblyError|null>(null);
+ const [selected,setSelected]=useState<string>('PC');
+ const [clock,setClock]=useState(2);
+ const [themeId,setThemeId]=useState(()=>loadSettings().theme);
+ const [themeOpen,setThemeOpen]=useState(false);
+ const [tourStep,setTourStep]=useState<number|null>(()=>{
+  try{return localStorage.getItem(CPU_TUTORIAL_KEY)==='done'?null:0;}catch{return 0;}
+ });
+ const [stepKey,setStepKey]=useState(0);
  const machineRef=useRef(machine);machineRef.current=machine;
- const importRef=useRef<HTMLInputElement>(null);
- const markExported=useExitWarning(source);
- const activeFrame=machine.frame;
- const active=activeFrame.active;
- const running=playing&&!machine.halted;
- useEffect(()=>{try{localStorage.setItem(STORAGE,source);}catch{/* Export remains available. */}},[source]);
- useEffect(()=>{const settings=loadSettings();saveSettings({...settings,theme:themeName});for(const [k,v] of Object.entries(cssVariables(theme)))document.documentElement.style.setProperty(k,v);document.documentElement.style.colorScheme=theme.appearance;},[themeName,theme]);
- const load=useCallback((code=source)=>{
-  try{const compiled=assemble(code);setImage(compiled);setMachine(boot(compiled));setSourceError(null);setPlaying(false);setLastStep(x=>x+1);setNotice('Assembled '+compiled.memory.filter(c=>c.kind==='instruction').length+' instructions. Ready to run.');return true;}
-  catch(error){setSourceError(error as AssemblyError);setPlaying(false);setNotice('Fix the assembly error before running.');return false;}
- },[source]);
- const next=useCallback(()=>{setMachine(current=>step(current));setLastStep(n=>n+1);},[]);
- useEffect(()=>{if(!running)return;const id=window.setInterval(()=>{const m=machineRef.current;if(m.halted){setPlaying(false);return;}if(m.cycles>=10000){setPlaying(false);setNotice('Execution paused after 10,000 micro-steps. Possible infinite loop.');return;}const progressed=step(m);machineRef.current=progressed;setMachine(progressed);setLastStep(x=>x+1);},unitTime(ghz));return()=>window.clearInterval(id);},[running,ghz]);
- useEffect(()=>{if(machine.halted)setPlaying(false);},[machine.halted]);
- function run(){if(source!==image.code&&!load())return;setPlaying(true);}
- function single(){if(source!==image.code){const compiled=assembleSafe(source);if(!compiled){load();return;}setImage(compiled);setSourceError(null);setPlaying(false);setMachine(step(boot(compiled)));setLastStep(x=>x+1);return;}next();}
- function reset(){setMachine(boot(image));setPlaying(false);setLastStep(x=>x+1);setNotice('Registers and memory restored to the assembled program.');}
- function exportFile(){const file=new Blob([source],{type:'text/plain'});const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download='cpu-studio.asm';a.click();URL.revokeObjectURL(url);markExported();}
- async function importFile(file:File){const content=await file.text();if(content.length>16000){setNotice('File exceeds 16,000 characters.');return;}setSource(content);setPlaying(false);setNotice('Assembly loaded. Select Assemble.');}
- const transfer=activeFrame.transfer;
- const from=transfer?POS[transfer.from]:undefined;
- const to=transfer?POS[transfer.to]:undefined;
- const focused=selected in POS?DETAILS[selected]:({address:'Address bus: MAR sends a memory location address toward RAM.',data:'Data bus: RAM and MDR exchange binary instructions or values in either direction.',control:'Control bus: CU sends READ or WRITE requests and receives status signals.'} as Record<string,string>)[selected];
- return <div className="cpu-app" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
-  <header className="cpu-topbar"><div className="cpu-identity"><button aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17}/></button><img src="/pico-logo.svg" alt=""/><b>Pico<span>.</span></b><i>/</i><strong>CPU Studio</strong></div>
-   <div className="cpu-header-actions"><button onClick={()=>setTutorial(true)}><BookOpen size={15}/> Guide</button><button aria-label="Choose theme" onClick={()=>setThemeOpen(v=>!v)}><Settings2 size={15}/> Themes</button><button onClick={()=>importRef.current?.click()}><Upload size={15}/> Import</button><button onClick={exportFile}><Download size={15}/> Export</button></div>
-   <input ref={importRef} type="file" hidden accept=".asm,.txt,text/plain" onChange={e=>{const f=e.target.files?.[0];if(f)void importFile(f);e.target.value='';}}/>
+ const theme=getTheme(themeId);
+ const active=machine.frame.active;
+ const transfer=machine.frame.transfer;
+ const modeDone=shouldStopAtDecode(mode,machine)||machine.halted;
+ const isRunning=playing&&!modeDone;
+ useEffect(()=>{const previous=loadSettings();saveSettings({...previous,theme:themeId});for(const [k,v] of Object.entries(cssVariables(theme)))document.documentElement.style.setProperty(k,v);document.documentElement.style.colorScheme=theme.appearance;},[theme,themeId]);
+ useEffect(()=>{if(!isRunning)return;const interval=window.setInterval(()=>{
+  const current=machineRef.current;
+  if(shouldStopAtDecode(mode,current)||current.halted){setPlaying(false);return;}
+  const next=step(current);
+  machineRef.current=next;setMachine(next);setStepKey(n=>n+1);
+  if(shouldStopAtDecode(mode,next)||next.halted)setPlaying(false);
+ },waitForStep(clock));return()=>window.clearInterval(interval);},[isRunning,mode,clock]);
+ useEffect(()=>{if(modeDone)setPlaying(false);},[modeDone]);
+ function reset(nextMode=mode){setMode(nextMode);setPlaying(false);const fresh=boot(DEFAULT_IMAGE);machineRef.current=fresh;setMachine(fresh);setStepKey(n=>n+1);}
+ function advance(){
+  if(playing||modeDone)return;
+  const next=step(machineRef.current);machineRef.current=next;setMachine(next);setStepKey(n=>n+1);
+ }
+ function finishTutorial(){setTourStep(null);try{localStorage.setItem(CPU_TUTORIAL_KEY,'done');}catch{/* Tutorial still closes. */}}
+ const transferFrom=transfer?POINTS[transfer.from]:null,transferTo=transfer?POINTS[transfer.to]:null;
+ const route=transferFrom&&transferTo?'M '+transferFrom.x+' '+transferFrom.y+' C '+((transferFrom.x+transferTo.x)/2)+' '+transferFrom.y+', '+((transferFrom.x+transferTo.x)/2)+' '+transferTo.y+', '+transferTo.x+' '+transferTo.y:'';
+ const phase=machine.frame.phase;
+ return <div className="cpu-app" style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
+  <header className="cpu-topbar">
+   <div className="cpu-brand"><button aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><img src="/pico-logo.svg" alt=""/><b>Pico<span>.</span></b><i>/</i><strong>CPU Studio</strong></div>
+   <div className="cpu-actions"><button aria-label="Open CPU Studio tutorial" onClick={()=>{setPlaying(false);setTourStep(0);}}><BookOpen size={15}/> Tutorial</button><button aria-label="Choose CPU Studio theme" onClick={()=>setThemeOpen(true)}><Settings2 size={15}/> Theme</button></div>
   </header>
-  <div className="cpu-toolbar">
-   <button className="cpu-assemble" onClick={()=>load()}><RefreshCw size={15}/> Assemble</button>
-   <button onClick={single} disabled={playing||machine.halted} aria-label="Step one micro-operation"><StepForward size={16}/> Step</button>
-   <button className="cpu-run" onClick={playing?()=>setPlaying(false):run} disabled={machine.halted}>{playing?<><Pause size={15}/> Pause</>:<><Play size={15}/> Run</>}</button>
-   <button onClick={reset}><RefreshCw size={15}/> Reset</button>
-   <div className="cpu-toolbar-separator"/>
-   <label className="cpu-speed">Clock <strong>{ghz.toFixed(1)} GHz</strong><input aria-label="CPU clock speed GHz" type="range" min="0.5" max="5" step=".5" value={ghz} onChange={e=>setGhz(Number(e.target.value))}/></label>
-   <span className="cpu-clock-note">Illustrative GHz · adjusts playback speed</span>
-   <span className="cpu-counter">Cycle {machine.cycles} · Instructions {machine.instructions}</span>
+  <div className="cpu-controls">
+   <fieldset className="cpu-mode-switch" data-cpu-tour="modes"><legend>SIMULATION</legend>
+    <label><input type="radio" name="cpu-mode" checked={mode==='fetch-decode'} onChange={()=>reset('fetch-decode')}/> Fetch–Decode</label>
+    <label><input type="radio" name="cpu-mode" checked={mode==='fetch-decode-execute'} onChange={()=>reset('fetch-decode-execute')}/> Fetch–Decode–Execute</label>
+   </fieldset>
+   <div className="cpu-playback" data-cpu-tour="controls">
+    <button aria-label="Step one CPU micro-operation" onClick={advance} disabled={playing||modeDone}><StepForward size={16}/> Step</button>
+    <button className="cpu-play" onClick={()=>setPlaying(v=>!v)} disabled={modeDone}>{playing?<><Pause size={16}/> Pause</>:<><Play size={16}/> Run</>}</button>
+    <button onClick={()=>reset()}><RotateCcw size={16}/> Reset</button>
+   </div>
+   <label className="cpu-speed" data-cpu-tour="speed"><Gauge size={17}/><span>Playback speed <strong>{clock.toFixed(1)} GHz</strong></span><input aria-label="Illustrative CPU clock speed GHz" type="range" min="0.5" max="5" step=".5" value={clock} onChange={e=>setClock(Number(e.target.value))}/></label>
+   <span className="cpu-counter">Step {machine.cycles} · {machine.instructions} instruction(s)</span>
   </div>
-  <div className="cpu-body">
-   <aside className="cpu-editor"><div className="cpu-pane-head"><strong>ASSEMBLY EDITOR</strong><small>8-bit · 16 RAM cells</small></div>
-    <textarea aria-label="Assembly source code" spellCheck={false} value={source} onChange={e=>{setSource(e.target.value);setSourceError(null);setPlaying(false);}}/>
-    <div className="cpu-error" role={sourceError?'alert':undefined}>{sourceError?sourceError.message:'One instruction per line. Use labels, DAT and .ORG to set RAM.'}</div>
-    <div className="cpu-section-label">EXAMPLE PROGRAMS</div><div className="cpu-samples">{EXAMPLES.map(example=><button key={example.name} onClick={()=>{setSource(example.code);load(example.code);}}>{example.name}</button>)}</div>
-    <div className="cpu-isa"><b>INSTRUCTION SET</b><dl>{[['0000','LDA','Load RAM → ACC'],['0001','STA','Store ACC → RAM'],['0010','ADD','Add RAM to ACC'],['0011','HLT','Stop'],['0100','SUB','Subtract'],['0101','BRA','Branch'],['0110','BRZ','Branch if zero'],['0111','LDI','Load immediate']].map(([bits,op,desc])=><div key={op}><dt><code>{bits}</code> <strong>{op}</strong></dt><dd>{desc}</dd></div>)}</dl><small>The first four opcodes follow the slides. Extras are Pico teaching extensions.</small></div>
-   </aside>
-   <main className="cpu-stage"><div className="cpu-pane-head"><strong>VON NEUMANN ARCHITECTURE</strong><small>Click any register, bus or memory unit to learn its role</small></div>
-    <div className={'cpu-visual cpu-'+tone(activeFrame.phase)}>
-     <svg viewBox="0 0 780 425" role="img" aria-label="Live CPU architecture with control unit, ALU, PC, MAR, MDR, CIR, accumulator and RAM">
-      <defs><marker id="cpu-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7" fill="var(--accent)"/></marker></defs>
-      <rect className="cpu-unit-outline" x="38" y="36" width="443" height="337" rx="17"/><text className="cpu-legend" x="56" y="58">CENTRAL PROCESSING UNIT (CPU)</text>
-      <rect className="cpu-memory-outline" x="568" y="89" width="182" height="202" rx="14"/><text className="cpu-legend" x="588" y="110">MAIN MEMORY (RAM)</text>
-      {Object.entries(BUSES).map(([key,pos])=><g key={key} className={'cpu-bus cpu-bus-'+key+(transfer?.bus===key?' is-active':'')} onClick={()=>setSelected(key as 'address'|'data'|'control')} role="button" tabIndex={0} aria-label={key+' bus'}><line x1={pos.x1} y1={pos.y1} x2={pos.x2} y2={pos.y2} /><circle cx={pos.x2} cy={pos.y2} r="4"/><text x="508" y={pos.y2-8}>{key.toUpperCase()} BUS</text></g>)}
-      {([[125,103,330,103],[125,173,330,173],[125,246,330,246],[230,305,230,240]] as number[][]).map(([x,y,xx,yy],i)=><line className="cpu-internal" key={i} x1={x} y1={y} x2={xx} y2={yy}/>)}
-      {(Object.entries(POS) as [Register,{x:number;y:number}][]).filter(([key])=>key!=='RAM').map(([key,pos])=><g key={key} className={'cpu-register '+(active.includes(key)?'cpu-lit ':'')+(selected===key?'cpu-picked':'')} role="button" tabIndex={0} aria-label={DETAILS[key]} onClick={()=>setSelected(key)} onKeyDown={e=>{if(e.key==='Enter')setSelected(key);}}><rect x={pos.x-73} y={pos.y-26} width="146" height="53" rx="7"/><text className="cpu-register-label" x={pos.x} y={pos.y-9}>{key==='ACC'?'ACCUMULATOR':key==='CU'?'CONTROL UNIT':key==='ALU'?'ALU':key}</text><text className="cpu-register-value" x={pos.x} y={pos.y+12}>{key==='CU'?'READ · DECODE':key==='ALU'?binary8(machine.alu):key==='PC'||key==='MAR'?binary4(machine[key.toLowerCase() as 'pc'|'mar']):binary8(machine[key.toLowerCase() as 'mdr'|'cir'|'acc'])}</text></g>)}
-      <g className={'cpu-ram-unit '+(active.includes('RAM')?'cpu-lit':'')} role="button" tabIndex={0} onClick={()=>setSelected('RAM')}><rect x="584" y="121" width="151" height="156" rx="7"/>{[0,1,2,3,4].map(i=><g key={i}><text x="599" y={144+i*26}>{binary4(i)}</text><text x="722" y={144+i*26} textAnchor="end">{binary8(machine.memory[i]!)}</text></g>)}<text x="659" y="266" textAnchor="middle">… 16 CELLS</text></g>
-      {transfer&&from&&to&&<g key={lastStep} className={'cpu-packet-track bus-'+transfer.bus}><path d={'M '+from.x+' '+from.y+' Q '+((from.x+to.x)/2)+' '+(Math.min(from.y,to.y)-40)+' '+to.x+' '+to.y} className="cpu-packet-path"/><g className="cpu-moving" style={{animationDuration:Math.max(.15,unitTime(ghz)/1000*.85)+'s'}}><circle r="8"/><text textAnchor="middle" y="-14">{transfer.value}</text><animateMotion dur={Math.max(.15,unitTime(ghz)/1000*.85)+'s'} fill="freeze" path={'M '+from.x+' '+from.y+' Q '+((from.x+to.x)/2)+' '+(Math.min(from.y,to.y)-40)+' '+to.x+' '+to.y}/></g></g>}
-      <text className="cpu-svg-caption" x="390" y="402" textAnchor="middle">One Step = one micro-operation, not a complete instruction</text>
-     </svg>
-    </div>
-    <section className="cpu-step-detail"><div className="cpu-phase-row"><span className={'cpu-phase cpu-phase-'+tone(activeFrame.phase)}>{activeFrame.phase.toUpperCase()}</span><strong>{activeFrame.description}</strong></div>{transfer&&<p><b>{transfer.from} → {transfer.to}</b> · {transfer.bus} bus · {transfer.value}</p>}<div className="cpu-component-explain"><strong>{selected.toUpperCase()}</strong> {focused}</div></section>
-    <div className="cpu-pane-head cpu-memory-head"><strong>RAM CONTENTS</strong><small>Instruction and data share one memory</small></div>
-    <div className="cpu-memory-grid">{machine.memory.map((value,address)=><div key={address} className={'cpu-memory-cell '+(machine.mar===address&&activeFrame.phase!=='ready'?'cpu-addressed':'')+(image.memory[address]?.kind==='instruction'?' cpu-instruction':'')} title={image.memory[address]?.text||'Empty memory'}><small>{binary4(address)} <span>{image.memory[address]?.kind==='instruction'?'INS':image.memory[address]?.kind==='data'?'DAT':'—'}</span></small><b>{binary8(value)}</b><span>{image.memory[address]?.text||'—'}</span></div>)}</div>
-   </main>
-  </div>
-  <div className="cpu-status" role="status">{notice||'Ready for CPU simulation.'}<span>{machine.error?'Execution stopped: '+machine.error:machine.halted?'CPU halted.':playing?'Running micro-operations.':'Paused / ready.'}</span></div>
+  <main className="cpu-content">
+   <div className="cpu-heading"><Cpu size={17}/><strong>CPU architecture</strong><span>Von Neumann · Cambridge IGCSE</span></div>
+   <div className="cpu-diagram-scroll" data-cpu-tour="diagram">
+    <svg className="cpu-diagram" viewBox="0 0 1085 558" role="img" aria-label="CPU architectural diagram with Program Counter, MAR, decode unit, accumulator, ALU, CIR, cache, MDR and Control Unit on the left; RAM and three buses on the right">
+     <defs><marker id="cpu-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="var(--accent)"/></marker></defs>
+     <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
+     <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing Unit (CPU)</text>
+     <g className="cpu-connectors">
+      <path d="M203 110 H548" markerEnd="url(#cpu-arr)"/>
+      <path d="M548 130 H221 V158 H203" markerEnd="url(#cpu-arr)"/>
+      <path d="M292 219 H315"/>
+      <path d="M548 350 H480 V447 H480" markerEnd="url(#cpu-arr)"/>
+      <path d="M315 225 H294 V322 H315" markerEnd="url(#cpu-arr)"/>
+      <path d="M397 265 V283" markerEnd="url(#cpu-arr)"/>
+      <path d="M397 283 V265"/>
+      <path d="M397 385 V401" markerEnd="url(#cpu-arr)"/>
+      <path d="M548 478 H504 V445 H480" markerEnd="url(#cpu-arr)"/>
+      <path d="M548 465 H520 V363 H480"/>
+      <path d="M548 492 H535 V222 H480"/>
+     </g>
+     {BOXES.map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(active.includes(box.key as Register)?'cpu-active ':'')+(selected===box.key?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
+      <rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
+      <text className="cpu-block-title" x={box.x+box.w/2} y={box.y+19} textAnchor="middle">{box.label}</text>
+      {box.key==='DECODE'?<g className="cpu-gears"><circle cx="143" cy="272" r="33"/><circle cx="202" cy="348" r="27"/><circle cx="143" cy="272" r="12"/><circle cx="202" cy="348" r="10"/><path d="M143 232V243M143 301V313M105 272H115M171 272H182M202 315V326M202 371V382M171 348H180M226 348H235"/></g>:<text className="cpu-block-value" x={box.x+box.w/2} y={box.y+Math.max(49,box.h*.65)} textAnchor="middle">{box.value(machine)}</text>}
+     </g>)}
+     <g className="cpu-connection-buses" data-cpu-tour="buses">
+      {([{key:'ADDRESS',y:121,start:708,end:833,direction:1},{key:'DATA',y:343,start:708,end:833,direction:0},{key:'CONTROL',y:485,start:708,end:833,direction:0}] as const).map(b=><g key={b.key} tabIndex={0} role="button" aria-label={b.key+' bus'} className={'cpu-external-bus '+(selected===b.key?'cpu-selected':'')+(transfer?.bus.toUpperCase()===b.key?' cpu-bus-active':'')} onClick={()=>setSelected(b.key)} onKeyDown={e=>{if(e.key==='Enter')setSelected(b.key);}}>
+        <path d={'M'+b.start+' '+b.y+' H'+b.end} markerEnd="url(#cpu-arr)"/>{b.direction===0&&<path d={'M'+b.end+' '+(b.y+6)+' H'+b.start} markerEnd="url(#cpu-arr)"/>}
+        <text x="770" y={b.y-11} textAnchor="middle">{b.key[0]+b.key.slice(1).toLowerCase()} bus</text>
+       </g>)}
+     </g>
+     <g data-cpu-tour="ram" className="cpu-ram" role="button" aria-label="RAM with sixteen memory addresses" onClick={()=>setSelected('RAM')}>
+      <rect className="cpu-ram-shell" x="834" y="15" width="233" height="532" rx="8"/>
+      <text className="cpu-ram-title" x="950" y="40" textAnchor="middle">Main Memory (RAM)</text>
+      <rect className="cpu-ram-header" x="847" y="53" width="207" height="31" rx="3"/>
+      <text className="cpu-column-title" x="887" y="73" textAnchor="middle">Address</text><text className="cpu-column-title" x="997" y="73" textAnchor="middle">Data</text>
+      {machine.memory.map((value,index)=>{
+       const y=85+index*27;
+       return <g key={index} className={'cpu-ram-row '+(machine.mar===index&&phase!=='ready'?'cpu-ram-highlight':'')}><rect x="847" y={y} width="207" height="27"/><text x="887" y={y+17} textAnchor="middle">{binary4(index)}</text><text x="998" y={y+17} textAnchor="middle">{binary8(value)}</text></g>;
+      })}
+     </g>
+     {route&&transfer&&<g className="cpu-flow-token" key={stepKey}><path className="cpu-flow-path" d={route}/><g><circle r="6"/><animateMotion path={route} dur={Math.min(.85,waitForStep(clock)/1000*.88)+'s'} fill="freeze"/></g></g>}
+    </svg>
+   </div>
+   <section className="cpu-information" data-cpu-tour="steps">
+    <div className="cpu-step-heading"><span className={'cpu-phase cpu-phase-'+phase}>{phase==='ready'?'READY':phase==='halted'?'COMPLETE':phase.toUpperCase()}</span><span>Micro-step {machine.cycles}</span></div>
+    <p className="cpu-explanation">{machine.frame.description}</p>
+    {transfer&&<p className="cpu-transit">{transfer.from} → {transfer.to} · {transfer.value}</p>}
+    {shouldStopAtDecode(mode,machine)&&<p className="cpu-end-message">Fetch–Decode complete. Select Fetch–Decode–Execute to continue through execution.</p>}
+    <div className="cpu-component-details"><strong>{selected==='DECODE'?'Decode unit':selected==='CACHE'?'Cache':selected==='ADDRESS'?'Address bus':selected==='DATA'?'Data bus':selected==='CONTROL'?'Control bus':LABELS[selected as Register]}</strong><span>{HELP[selected]}</span></div>
+   </section>
+  </main>
   <footer className="cpu-footer"><Credits/></footer>
-  {themeOpen&&<div className="cpu-overlay" role="dialog" aria-label="Choose CPU Studio theme"><div className="cpu-dialog"><div className="cpu-dialog-title"><b>Theme</b><button aria-label="Close theme picker" onClick={()=>setThemeOpen(false)}><X size={17}/></button></div><ThemePicker value={themeName} onChange={id=>setThemeName(id)}/></div></div>}
-  {tutorial&&<div className="cpu-overlay" role="dialog" aria-modal="true" aria-label="CPU Studio tutorial"><div className="cpu-dialog cpu-guide"><div className="cpu-dialog-title"><b>CPU Studio · Quick Guide</b><button aria-label="Close CPU tutorial" onClick={()=>setTutorial(false)}><X size={17}/></button></div><p>Write instructions in the editor, then select <b>Assemble</b>. The CPU and RAM diagram follows the stored-program architecture in your Cambridge CPU lessons.</p><p><b>Step</b> advances one operation: PC → MAR → address bus → control READ → RAM → MDR → CIR → increment PC → decode → execute.</p><p><b>Run</b> animates consecutive steps. Pause or Reset anytime. Change the GHz slider to adjust how quickly the simulation plays, not actual CPU time.</p><p>Try the supplied addition program: 3 + 5 is stored as 8 at address 0111. Hover over RAM cells to inspect the original source lines.</p><button className="cpu-run" onClick={()=>setTutorial(false)}>Start learning</button></div></div>}
+  {themeOpen&&<div className="cpu-overlay" role="dialog" aria-label="Choose CPU Studio theme"><div className="cpu-dialog"><div className="cpu-dialog-head"><strong>Theme</strong><button aria-label="Close themes" onClick={()=>setThemeOpen(false)}><X size={16}/></button></div><ThemePicker value={themeId} onChange={setThemeId}/></div></div>}
+  {tourStep!==null&&<CpuTutorial step={tourStep} onStep={setTourStep} onClose={finishTutorial}/>}
  </div>;
 }
