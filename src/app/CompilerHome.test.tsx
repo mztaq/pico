@@ -131,32 +131,33 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
   expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
 });
 
-it('opens the CPU Studio workspace with themed registers and memory',async()=>{
-  const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');
-  expect(cpuChoice).toBeDefined();
-  await click(cpuChoice!);
-  expect(document.title).toBe('Pico | CPU Studio');
-  expect(container.querySelector('.cpu-app')).not.toBeNull();
-  expect(container.querySelectorAll('.cpu-memory-cell')).toHaveLength(16);
-  expect(container.querySelector('[aria-label="CPU clock speed GHz"]')).not.toBeNull();
-  expect(container.querySelector('[aria-label="Assembly source code"]')).not.toBeNull();
-  await click(button('Step'));
-  expect(container.textContent).toContain('PC identifies the next instruction');
-});
-
-it('assembles new CPU source and restores RAM after reset',async()=>{
- const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
- await click(choice!);
- const editor=container.querySelector<HTMLTextAreaElement>('[aria-label="Assembly source code"]')!;
- await type(editor,['LDI 7','STA 0101','HLT','.ORG 0101','DAT 0'].join(String.fromCharCode(10)));
- await click(button('Assemble'));
- expect(container.textContent).toContain('Assembled 3 instructions');
- expect(container.querySelectorAll('.cpu-memory-cell')).toHaveLength(16);
- const ghz=container.querySelector<HTMLInputElement>('[aria-label="CPU clock speed GHz"]')!;
- expect(ghz.min).toBe('0.5');
- expect(ghz.max).toBe('5');
- await click(button('Step'));
+it('offers both CPU simulation modes and a guided tutorial',async()=>{
+ const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');
+ await click(cpuChoice!);
+ expect(document.title).toBe('Pico | CPU Studio');
+ expect(container.querySelector('.cpu-app')).not.toBeNull();
+ expect(container.querySelectorAll('.cpu-ram-row')).toHaveLength(16);
+ expect(container.querySelector('[aria-label="Illustrative CPU clock speed GHz"]')).not.toBeNull();
+ expect(container.querySelector('[aria-label="Assembly source code"]')).toBeNull();
+ expect(container.textContent).not.toContain('EXAMPLE PROGRAMS');
+ expect(container.querySelectorAll('input[name="cpu-mode"]')).toHaveLength(2);
+ expect(container.querySelector('.cpu-tour')).not.toBeNull();
+ await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
+ await click(container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!);
  expect(container.textContent).toContain('PC identifies');
  await click(button('Reset'));
- expect(container.textContent).toContain('Registers and memory restored');
+ expect(container.textContent).toContain('Assemble your program');
+});
+it('completes fetch-decode then switches to the full execute simulation',async()=>{
+ const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
+ await click(choice!);
+ await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
+ const fetchRadio=container.querySelectorAll<HTMLInputElement>('input[name="cpu-mode"]')[0]!;
+ await act(async()=>{fetchRadio.checked=true;fetchRadio.dispatchEvent(new Event('change',{bubbles:true}));});
+ const step=container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!;
+ for(let i=0;i<8;i++)await click(step);
+ expect(container.textContent).toContain('Fetch–Decode complete');
+ expect(step.hasAttribute('disabled')).toBe(true);
+ await click(container.querySelector<HTMLElement>('button[aria-label="Open CPU Studio tutorial"]')!);
+ expect(container.querySelector('.cpu-tour')).not.toBeNull();
 });
