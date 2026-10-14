@@ -1,3 +1,4 @@
+import '../styles/cpu-home.css';
 import { useEffect, useState } from 'react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
