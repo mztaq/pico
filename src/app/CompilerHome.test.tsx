@@ -153,7 +153,7 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
  expect(container.querySelector('.cpu-app')).not.toBeNull();
  if(!container.querySelector('[aria-label="Skip CPU Studio tutorial"]'))await click(container.querySelector<HTMLElement>('[aria-label="Open CPU Studio tutorial"]')!);
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
- await click(container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!);
+ await click(container.querySelector<HTMLElement>('[aria-label="Step forward one CPU micro-operation"]')!);
  expect(container.textContent).toContain('PC identifies');
  expect(container.querySelector('.cpu-diagram.cpu-has-focus')).not.toBeNull();
  await click(button('Reset'));
