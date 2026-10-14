@@ -1,3 +1,4 @@
+import '../styles/cpu-home.css';
 import { useEffect, useState } from 'react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
@@ -16,7 +17,7 @@ export function Credits({ logic = false }: { logic?: boolean } = {}) {
     <span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span>
   </div>;
 }
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
   const theme = getTheme(settings.theme);
   useEffect(() => {
@@ -30,21 +31,21 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     <div className="compiler-choices">
       <button className="compiler-choice" onClick={() => onChoose('pseudocode')}>
         <div className="compiler-choice-copy">
-        <div className="compiler-choice-title"><h2>Pseudocode Compiler</h2><span>Open</span></div>
+        <div className="compiler-choice-title"><h2>Pseudocode Compiler</h2></div>
         <p>Run .pico programs with typed input and a debugger.</p>
         </div>
         <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode code={'DECLARE Name : STRING\nINPUT Name\nOUTPUT "Hello ", Name, "!"'} /></pre>
       </button>
       <button className="compiler-choice" onClick={() => onChoose('python')}>
         <div className="compiler-choice-copy">
-        <div className="compiler-choice-title"><h2>Python Compiler</h2><span>Open</span></div>
+        <div className="compiler-choice-title"><h2>Python Compiler</h2></div>
         <p>Run Python with console input and a debugger.</p>
         </div>
         <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
       </button>
       <button className="compiler-choice" onClick={() => onChoose('flowchart')}>
         <div className="compiler-choice-copy">
-        <div className="compiler-choice-title"><h2>Flowchart Builder</h2><span>Open</span></div>
+        <div className="compiler-choice-title"><h2>Flowchart Builder</h2></div>
         <p>Connect blocks, run your chart, or turn it into pseudocode.</p>
         </div>
         <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
@@ -57,7 +58,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       </button>
       <button className="compiler-choice" onClick={() => onChoose('logic')}>
         <div className="compiler-choice-copy">
-          <div className="compiler-choice-title"><h2>Logic Sim</h2><span>Open</span></div>
+          <div className="compiler-choice-title"><h2>Logic Sim</h2></div>
           <p>Build digital circuits with gates, switches, clocks, and live outputs.</p>
         </div>
         <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
@@ -66,6 +67,20 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           <path d="M 95 13 H 146 C 174 13 190 20 202 38 C 190 56 174 63 146 63 H 95 Z" />
           <circle cx="288" cy="38" r="18"/>
           <text x="24" y="27">1</text><text x="24" y="57">0</text><text x="142" y="42">AND</text><text x="288" y="43">0</text>
+        </svg>
+      </button>
+      <button className="compiler-choice" onClick={() => onChoose('cpu')}>
+        <div className="compiler-choice-copy">
+          <div className="compiler-choice-title"><h2>CPU Studio</h2></div>
+          <p>Fetch, decode and execute instructions inside a visual CPU.</p>
+        </div>
+        <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
+          <rect x="16" y="7" width="233" height="62" rx="8"/>
+          <rect x="29" y="19" width="60" height="39" rx="4"/><rect x="99" y="19" width="139" height="39" rx="4"/>
+          <text x="59" y="43">CU</text><text className="home-cpu-label" x="168.5" y="43" textLength={124} lengthAdjust="spacingAndGlyphs" style={{fontSize:"14px",fontWeight:700,whiteSpace:"nowrap"}}>ALU + REGISTERS</text>
+          <path className="home-chart-link" d="M 250 38 H 271"/>
+          <rect x="273" y="15" width="71" height="45" rx="5"/>
+          <text x="308.5" y="42">RAM</text>
         </svg>
       </button>
     </div>
