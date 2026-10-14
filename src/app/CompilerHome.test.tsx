@@ -140,7 +140,7 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
  expect(container.querySelector('[aria-label="Illustrative CPU clock speed GHz"]')).not.toBeNull();
  expect(container.querySelector('[aria-label="Assembly source code"]')).toBeNull();
  expect(container.textContent).not.toContain('EXAMPLE PROGRAMS');
- expect(container.querySelectorAll('input[name="cpu-mode"]')).toHaveLength(2);
+ expect(container.querySelectorAll('input[name="cpu-mode"]')).toHaveLength(3);
  expect(container.querySelector('.cpu-tour')).not.toBeNull();
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
  await click(container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!);
