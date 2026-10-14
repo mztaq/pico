@@ -153,7 +153,7 @@ it('completes fetch-decode then switches to the full execute simulation',async()
  await click(choice!);
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
  const fetchRadio=container.querySelectorAll<HTMLInputElement>('input[name="cpu-mode"]')[0]!;
- await act(async()=>{fetchRadio.checked=true;fetchRadio.dispatchEvent(new Event('change',{bubbles:true}));});
+ await click(fetchRadio);
  const step=container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!;
  for(let i=0;i<8;i++)await click(step);
  expect(container.textContent).toContain('Fetch–Decode complete');
