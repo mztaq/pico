@@ -8,6 +8,7 @@ import {assemble,binary4,binary8,DEFAULT_PROGRAM} from './assembler';
 import {boot,step,type Machine,type Register} from './engine';
 import {CpuTutorial,CPU_TUTORIAL_KEY} from './CpuTutorial';
 import {advanceWithInterrupt,initialInterrupt,requestInterrupt} from './advanced';
+import {advanceRunFrame} from './playback';
 import './cpu.css';
 
 export type CpuMode='normal'|'advanced';
@@ -101,7 +102,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  const active=machine.frame.active;
  const transfer=machine.frame.transfer;
  const modeDone=machine.halted;
- const isRunning=playing&&!modeDone;
+ const isRunning=playing;
  function recordPrevious(previous:Machine,prior:ReturnType<typeof initialInterrupt>){
   historyRef.current.push({machine:previous,interrupt:prior});
   if(historyRef.current.length>2048)historyRef.current.shift();
@@ -110,14 +111,12 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  useEffect(()=>{const previous=loadSettings();saveSettings({...previous,theme:themeId});for(const [k,v] of Object.entries(cssVariables(theme)))document.documentElement.style.setProperty(k,v);document.documentElement.style.colorScheme=theme.appearance;},[theme,themeId]);
  useEffect(()=>{if(!isRunning)return;const interval=window.setInterval(()=>{
   const current=machineRef.current;
-  if(current.halted){setPlaying(false);return;}
-  const result=mode==='advanced'?advanceWithInterrupt(current,interruptRef.current):{machine:step(current),interrupt:interruptRef.current};
+  const result=advanceRunFrame(current,interruptRef.current,mode);
   const next=result.machine;recordPrevious(current,interruptRef.current);
   interruptRef.current=result.interrupt;setInterrupt(result.interrupt);
   machineRef.current=next;setMachine(next);setStepKey(n=>n+1);
-  if(next.halted)setPlaying(false);
+  if(next.error)setPlaying(false);
  },waitForStep(clock));return()=>window.clearInterval(interval);},[isRunning,mode,clock]);
- useEffect(()=>{if(modeDone)setPlaying(false);},[modeDone]);
  function reset(nextMode=mode){setMode(nextMode);setPlaying(false);historyRef.current=[];setHistoryLength(0);const fresh=boot(DEFAULT_IMAGE);const empty=initialInterrupt();interruptRef.current=empty;setInterrupt(empty);machineRef.current=fresh;setMachine(fresh);setStepKey(n=>n+1);}
  function advance(){
   if(playing||modeDone)return;
@@ -154,7 +153,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
    <div className="cpu-playback" data-cpu-tour="controls">
     <button aria-label="Step backward one CPU micro-operation" onClick={back} disabled={playing||historyLength===0}><StepBack size={16}/> Back</button>
     <button aria-label="Step forward one CPU micro-operation" onClick={advance} disabled={playing||modeDone}><StepForward size={16}/> Step</button>
-    <button className="cpu-play" onClick={()=>setPlaying(v=>!v)} disabled={modeDone}>{playing?<><Pause size={16}/> Pause</>:<><Play size={16}/> Run</>}</button>
+    <button className="cpu-play" onClick={()=>setPlaying(v=>!v)} disabled={Boolean(machine.error)}>{playing?<><Pause size={16}/> Pause</>:<><Play size={16}/> Run</>}</button>
     <button onClick={()=>reset()}><RotateCcw size={16}/> Reset</button>
     {mode==='advanced'&&<button aria-label="Request CPU interrupt" disabled={machine.halted||interrupt.pending||interrupt.stage>0} onClick={()=>{const pending=requestInterrupt(interruptRef.current);interruptRef.current=pending;setInterrupt(pending);}}>Trigger interrupt</button>}
    </div>
