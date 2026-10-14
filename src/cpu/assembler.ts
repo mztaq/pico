@@ -17,7 +17,7 @@ export interface AssemblyImage {
 export class AssemblyError extends Error {
  constructor(message:string,public readonly line:number){super('Line '+line+': '+message);this.name='AssemblyError';}
 }
-export const DEFAULT_PROGRAM=String.raw\` ; Add the two values stored in RAM and save the result
+export const DEFAULT_PROGRAM=String.raw` ; Add the two values stored in RAM and save the result
 LDA FIRST
 ADD SECOND
 STA RESULT
@@ -26,7 +26,7 @@ HLT
 .ORG 0101
 FIRST:  DAT 3
 SECOND: DAT 5
-RESULT: DAT 0\`;
+RESULT: DAT 0`;
 const blank=():MemoryCell=>({value:0,kind:'empty',line:null,text:''});
 type SourceLine={line:number;address:number;kind:'instruction'|'data';mnemonic:string;operand:string;source:string};
 function valueOf(token:string,line:number):number{

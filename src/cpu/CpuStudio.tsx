@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {ArrowLeft,BookOpen,Download,Pause,Play,RefreshCw,Settings2,StepForward,Upload,X} from 'lucide-react';
 import {Credits} from '../app/components/HomeScreen';
 import {ThemePicker} from '../app/components/ThemePicker';
@@ -6,7 +6,7 @@ import {cssVariables,getTheme} from '../app/themes';
 import {loadSettings,saveSettings} from '../storage/settings';
 import {useExitWarning} from '../app/components/useExitWarning';
 import {assemble,AssemblyError,binary4,binary8,DEFAULT_PROGRAM,type AssemblyImage} from './assembler';
-import {boot,step,type Frame,type Machine,type Register} from './engine';
+import {boot,step,type Machine,type Register} from './engine';
 import './cpu.css';
 
 const STORAGE='pico.cpu.source.v1';
@@ -42,10 +42,8 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  const [lastStep,setLastStep]=useState(0);
  const [sourceError,setSourceError]=useState<AssemblyError|null>(null);
  const machineRef=useRef(machine);machineRef.current=machine;
- const frameCount=useRef(0);
  const importRef=useRef<HTMLInputElement>(null);
  const markExported=useExitWarning(source);
- const assembled=useMemo(()=>{try{return {value:assemble(source),error:null};}catch(error){return {value:null,error:error as AssemblyError};}},[source]);
  const activeFrame=machine.frame;
  const active=activeFrame.active;
  const running=playing&&!machine.halted;
@@ -59,7 +57,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  useEffect(()=>{if(!running)return;const id=window.setInterval(()=>{const m=machineRef.current;if(m.halted){setPlaying(false);return;}setMachine(step(m));setLastStep(x=>x+1);},unitTime(ghz));return()=>window.clearInterval(id);},[running,ghz]);
  useEffect(()=>{if(machine.halted)setPlaying(false);},[machine.halted]);
  function run(){if(source!==image.code&&!load())return;setPlaying(true);}
- function single(){if(source!==image.code&&!load())return;next();}
+ function single(){if(source!==image.code){load();return;}next();}
  function reset(){setMachine(boot(image));setPlaying(false);setLastStep(x=>x+1);setNotice('Registers and memory restored to the assembled program.');}
  function exportFile(){const file=new Blob([source],{type:'text/plain'});const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download='cpu-studio.asm';a.click();URL.revokeObjectURL(url);markExported();}
  async function importFile(file:File){const content=await file.text();if(content.length>16000){setNotice('File exceeds 16,000 characters.');return;}setSource(content);setPlaying(false);setNotice('Assembly loaded. Select Assemble.');}

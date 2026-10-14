@@ -130,3 +130,14 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
   expect(container.querySelector('#tutorial-description')?.textContent).toContain('.py');await click(button('Finish tour'));
   expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
 });
+
+it('opens the CPU Studio workspace with themed registers and memory',async()=>{
+  await choose('CPU Studio');
+  expect(document.title).toBe('Pico | CPU Studio');
+  expect(container.querySelector('.cpu-app')).not.toBeNull();
+  expect(container.querySelectorAll('.cpu-memory-cell')).toHaveLength(16);
+  expect(container.querySelector('[aria-label="CPU clock speed GHz"]')).not.toBeNull();
+  expect(container.querySelector('[aria-label="Assembly source code"]')).not.toBeNull();
+  await click(button('Step'));
+  expect(container.textContent).toContain('PC identifies the next instruction');
+});

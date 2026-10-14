@@ -19,7 +19,7 @@
   </a>
 </p>
 
-Pico is a browser-based Computer Science learning tool with four workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder and Logic Sim. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
+Pico is a browser-based Computer Science learning tool with five workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim and CPU Studio. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
 
 Developed by **Amar** (11 Boys Blue), deployed by **Mustaqim** (11 Boys Red), with **Logic Sim conceptualised by Mohamed Hamza** (11 Boys Red).
 
@@ -54,6 +54,7 @@ When execution reaches `INPUT`, type your value in the Console and press Enter. 
 | **Debugger** | Replays recorded execution steps with variable values and output. |
 | **Flowchart Builder** | Drag editable blocks onto a canvas, connect branches and loops, run with typed console input, and convert to pseudocode. |
 | **Logic Sim** | Draw schematic logic circuits, connect terminals, simulate signals, and inspect truth tables and Boolean expressions. |
+| **CPU Studio** | Assemble tiny instruction programs and step through fetch–decode–execute with live registers, buses, RAM and ALU animations. |
 | **Projects** | Keeps source tabs and practice files together in horizontal workspace tabs. Workspace names are unique, ignoring case and extra spaces. |
 | **Quick reference** | Provides selectable examples with syntax colouring, adjustable text size and keyword search. |
 | **Appearance** | Offers editor themes, high-contrast palettes, resizable panels and layout settings. Catppuccin Mocha is the first-launch default. |
@@ -88,6 +89,16 @@ Open **Logic Sim** from the home screen. It begins with an empty canvas and offe
 - Themes, including Dracula, follow the same preference as the other three workspaces.
 
 Logic Sim is an educational digital model, not an analogue electrical simulator. It does not model real voltage, propagation delay or electrical power. It does not support reusable custom subcircuits yet.
+
+## CPU Studio
+
+CPU Studio is an interactive, browser-based educational CPU aligned to Cambridge IGCSE Computer Science 0478/0984 section 3.1. The block diagram follows the lesson PowerPoints: Control Unit, ALU, PC, MAR, MDR, CIR, accumulator, address/data/control buses, and shared RAM.
+
+- Use the built-in assembly editor and **Assemble** to load one-byte instructions and 16 RAM cells. Use `LDA`, `ADD`, `STA`, `HLT`, plus the teaching extras `SUB`, `LDI`, `BRA`, `BRZ`, `DAT` and `.ORG`. Named memory labels are supported.
+- **Step** advances exactly one micro-operation, illustrating PC → MAR, memory reads, MDR → CIR, decode and execution. **Run** advances automatically; **Pause** and **Reset** control playback.
+- Observe animated transfers, highlighted registers, bus activity and a readable explanation for every step. RAM shows both binary data and instructions. The 0.5–5.0 GHz slider scales **animation speed for teaching**, not physical CPU hardware timing.
+- Choose example programs, change Pico's shared theme, import or export `.asm` files, and open the built-in quick guide. Assembly text is stored locally.
+- Architecture is intentionally simplified: 4-bit RAM addresses, 8-bit unsigned data and 8-bit instructions. The original slides' LDA, STA, ADD and HLT opcodes are retained. This model has no instruction cache timing, interrupts, multicore execution or real clock cycles.
 
 ## Language support
 

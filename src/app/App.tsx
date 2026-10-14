@@ -26,6 +26,7 @@ import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
 import { FlowchartWorkspace } from '../flowchart/FlowchartWorkspace';
 import { LogicWorkspace } from '../logic/LogicWorkspace';
+import { CpuStudio } from '../cpu/CpuStudio';
 import type { ChartStore } from '../flowchart/storage';
 import { MAX_CONSOLE_LINES } from '../runtime/python/config';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
@@ -50,16 +51,17 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 export default function App() {
-  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | null>(null);
-  useEffect(() => { document.title = language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : 'Pico | Home'; }, [language]);
+  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | null>(null);
+  useEffect(() => { document.title = language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : 'Pico | Home'; }, [language]);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
-    if (language && language !== 'flowchart' && language !== 'logic') snapshots.current[language] = snapshot;
+    if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
   if (!language) return <HomeScreen onChoose={setLanguage} />;
   if (language === 'logic') return <LogicWorkspace onHome={() => setLanguage(null)} />;
+  if (language === 'cpu') return <CpuStudio onHome={() => setLanguage(null)} />;
   if (language === 'flowchart') return <FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
     charts.current = store;
     const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');
