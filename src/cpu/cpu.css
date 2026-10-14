@@ -39,3 +39,17 @@
 @media(max-height:700px) and (min-width:851px){.cpu-diagram{height:clamp(235px,calc(100dvh - 360px),370px)}.cpu-information{padding:12px 18px}.cpu-explanation{font-size:14px}}
 
 .cpu-content{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}.cpu-heading{flex:none}.cpu-workspace-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,345px);gap:14px;padding:6px 16px 16px}.cpu-diagram-scroll{min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px 0}.cpu-diagram{width:100%;max-width:100%;height:auto;max-height:100%;min-width:0;min-height:0;aspect-ratio:1085/558;object-fit:contain;overflow:visible}.cpu-information{min-width:0;min-height:0;margin:0;padding:20px 19px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}.cpu-explanation{font-size:17px;line-height:1.55}.cpu-transit{white-space:normal;overflow-wrap:anywhere}.cpu-component-details{margin-top:auto;flex-direction:column;align-items:flex-start;gap:7px}.cpu-advanced{font-size:12px}.cpu-diagram .cpu-block,.cpu-diagram .cpu-ram,.cpu-diagram .cpu-external-bus,.cpu-diagram .cpu-connectors{transition:opacity .22s ease,filter .22s ease}.cpu-diagram.cpu-has-focus .cpu-dimmed{opacity:.16}.cpu-diagram.cpu-has-focus .cpu-active,.cpu-diagram.cpu-has-focus .cpu-bus-active{opacity:1;filter:drop-shadow(0 0 5px var(--accent))}.cpu-diagram .cpu-flow-token{opacity:1;filter:drop-shadow(0 0 6px var(--accent))}.cpu-diagram .cpu-flow-path{stroke-width:5;opacity:.85}.cpu-diagram .cpu-external-bus path{stroke-width:3.2}.cpu-diagram .cpu-external-bus.cpu-bus-active path{stroke-width:5.2}.cpu-diagram .cpu-external-bus text{font-size:12px}.cpu-diagram .cpu-connectors path{stroke-width:2.5}.cpu-footer{flex:none}@media(max-width:1150px){.cpu-content{overflow:auto}.cpu-workspace-main{grid-template-columns:1fr;grid-template-rows:auto auto;overflow:visible}.cpu-diagram-scroll{max-height:none;overflow-x:auto}.cpu-diagram{height:auto;min-width:710px;max-height:none}.cpu-information{overflow:visible}.cpu-component-details{margin-top:4px}}@media(max-width:850px){.cpu-workspace-main{padding:4px 12px 16px}.cpu-diagram-scroll{justify-content:flex-start}.cpu-diagram{min-width:820px;width:820px}}@media(prefers-reduced-motion:reduce){.cpu-diagram .cpu-block,.cpu-diagram .cpu-ram,.cpu-diagram .cpu-external-bus,.cpu-diagram .cpu-connectors{transition:none}}
+
+/* Keep arrowheads distinct and bus directions separated. */
+.cpu-diagram{aspect-ratio:1190/558}
+.cpu-external-bus path{stroke-width:2.5;stroke-linecap:round}
+.cpu-external-bus.cpu-bus-active path{stroke-width:3.8}
+.cpu-external-bus text{font-size:12px;font-weight:650}
+.cpu-connectors path{stroke-width:2.2;opacity:.48;stroke-linejoin:round}
+.cpu-block.cpu-active rect{filter:none;stroke:var(--accent);stroke-width:2.2}
+.cpu-block.cpu-selected rect{filter:none;stroke:var(--accent);stroke-width:2}
+.cpu-diagram.cpu-has-focus .cpu-active,.cpu-diagram.cpu-has-focus .cpu-bus-active{filter:none}
+.cpu-flow-token circle{filter:none}
+.cpu-block-title{font-size:11px}
+.cpu-block-value{font-size:12px}
+.cpu-flow-path{filter:none;stroke-width:3;stroke-dasharray:7 7}

@@ -148,7 +148,8 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
  expect(container.querySelector('[aria-label="Illustrative CPU clock speed GHz"]')).not.toBeNull();
  expect(container.querySelector('[aria-label="Assembly source code"]')).toBeNull();
  expect(container.textContent).not.toContain('EXAMPLE PROGRAMS');
- expect(container.querySelectorAll('input[name="cpu-mode"]')).toHaveLength(3);
+ expect(container.querySelectorAll('input[name="cpu-mode"]')).toHaveLength(2);
+ expect(container.querySelector('g[aria-label="Decode Unit"]')).toBeNull();
  expect(container.querySelector('.cpu-tour')).not.toBeNull();
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
  await click(container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!);
@@ -157,16 +158,21 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
  await click(button('Reset'));
  expect(container.textContent).toContain('Press Run to start the CPU');
 });
-it('completes fetch-decode then switches to the full execute simulation',async()=>{
+it('supports Step Back and only shows decode unit in Advanced mode',async()=>{
  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
  await click(choice!);
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
- const fetchRadio=container.querySelectorAll<HTMLInputElement>('input[name="cpu-mode"]')[0]!;
- await click(fetchRadio);
- const step=container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!;
- for(let i=0;i<8;i++)await click(step);
- expect(container.textContent).toContain('Fetch–Decode complete');
- expect(step.hasAttribute('disabled')).toBe(true);
- await click(container.querySelector<HTMLElement>('button[aria-label="Open CPU Studio tutorial"]')!);
- expect(container.querySelector('.cpu-tour')).not.toBeNull();
+ const back=container.querySelector<HTMLButtonElement>('[aria-label="Step backward one CPU micro-operation"]')!;
+ const forward=container.querySelector<HTMLButtonElement>('[aria-label="Step forward one CPU micro-operation"]')!;
+ expect(back.disabled).toBe(true);
+ await click(forward);
+ expect(back.disabled).toBe(false);
+ expect(container.textContent).toContain('Micro-step 1');
+ await click(back);
+ expect(container.textContent).toContain('Micro-step 0');
+ const advanced=container.querySelectorAll<HTMLInputElement>('input[name="cpu-mode"]')[1]!;
+ await click(advanced);
+ expect(container.querySelector('g[aria-label="Decode Unit"]')).not.toBeNull();
+ expect(container.querySelector('[aria-label="Request CPU interrupt"]')).not.toBeNull();
+ expect(container.textContent).not.toContain('Von Neumann · Cambridge IGCSE');
 });

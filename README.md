@@ -92,10 +92,10 @@ Logic Sim is an educational digital model, not an analogue electrical simulator.
 
 ## CPU Studio
 
-CPU Studio follows Cambridge IGCSE Computer Science (0478/0984) section 3.1. It provides **Fetch–Decode**, **Fetch–Decode–Execute**, and **Advanced** modes. Advanced adds instruction decoding details and a step-by-step interrupt demonstration.
+CPU Studio follows Cambridge IGCSE Computer Science (0478/0984) section 3.1. It provides **Normal** and **Advanced** modes. Normal covers the complete fetch–decode–execute cycle. Advanced adds the decode unit, instruction decoding details and a step-by-step interrupt demonstration.
 
-- The CPU diagram is based on the course architecture: PC, MAR, MDR, CIR, accumulator, ALU, control unit, decode unit, CPU cache and RAM, with address, data and control buses.
-- Press **Step** to advance one micro-operation, or **Run** to animate the cycle automatically. The explanation updates after each operation. **Pause** and **Reset** control playback.
+- The CPU diagram is based on the course architecture: PC, MAR, MDR, CIR, accumulator, ALU, control unit, CPU cache and RAM, with address, data and control buses.
+- Press **Step** to advance one micro-operation and **Back** to reverse it, or **Run** to animate the cycle automatically. The explanation updates after each operation. **Pause** and **Reset** control playback.
 - RAM on the right displays the addresses and binary data while relevant boxes and bus routes highlight.
 - A slider marked 0.5–9.2 GHz adjusts illustrative animation pacing, **not actual CPU speed**. Higher settings visibly accelerate Run.
 - **Advanced** permits a triggered interrupt: the current instruction completes, state is saved, an interrupt-service routine is illustrated, and execution resumes. The exact simplified handler implementation is **(out of specification)**.

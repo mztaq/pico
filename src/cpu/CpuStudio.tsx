@@ -16,9 +16,9 @@ const DEFAULT_IMAGE=assemble(DEFAULT_PROGRAM);
 export function cpuTransferRoute(from:Register,to:Register):string {
  const routes:Record<string,string>={
   'PC>MAR':'M203 110 H548',
-  'MAR>RAM':'M708 121 H834',
-  'CU>RAM':'M708 485 H834',
-  'RAM>MDR':'M834 343 H708',
+  'MAR>RAM':'M708 121 H929',
+  'CU>RAM':'M708 485 H929',
+  'RAM>MDR':'M929 343 H708',
   'MDR>CIR':'M548 350 H514 V448 H480',
   'CIR>MAR':'M480 445 H527 V142 H548',
   'MDR>ACC':'M548 349 H511 V228 H480',
@@ -165,7 +165,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
    <div className="cpu-heading"><Cpu size={17}/><strong>CPU architecture</strong></div>
    <div className="cpu-workspace-main">
    <div className="cpu-diagram-scroll" data-cpu-tour="diagram">
-    <svg className={"cpu-diagram"+(focused?" cpu-has-focus":"")} viewBox="0 0 1190 558" role="img" aria-label="CPU architectural diagram with Program Counter, MAR, decode unit, accumulator, ALU, CIR, cache, MDR and Control Unit on the left; RAM and three buses on the right">
+    <svg className={"cpu-diagram"+(focused?" cpu-has-focus":"")} viewBox="0 0 1190 558" role="img" aria-label="CPU architecture with registers, ALU and Control Unit connected to RAM by address, data and control buses">
      <defs><marker id="cpu-arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5 Z" fill="var(--accent)"/></marker></defs>
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
      <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing BRAINROT / Unit</text><title>CPU (Central Processing Unit) is the correct Cambridge IGCSE term.</title>
