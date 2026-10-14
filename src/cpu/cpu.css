@@ -53,3 +53,14 @@
 .cpu-block-title{font-size:11px}
 .cpu-block-value{font-size:12px}
 .cpu-flow-path{filter:none;stroke-width:3;stroke-dasharray:7 7}
+
+/* Advanced circuit wires stay visible during step focus; active routes glow subtly. */
+.cpu-advanced-wiring{pointer-events:none}
+.cpu-advanced-wire{fill:none;stroke:var(--muted);stroke-width:2;opacity:.62;stroke-linecap:round;stroke-linejoin:round;transition:stroke .18s,opacity .18s,stroke-width .18s}
+.cpu-advanced-wire.cpu-wire-active{stroke:var(--accent);stroke-width:3;opacity:1}
+.cpu-diagram.cpu-has-focus .cpu-advanced-wire{opacity:.35}
+.cpu-diagram.cpu-has-focus .cpu-advanced-wire.cpu-wire-active{opacity:1}
+.cpu-compact-register .cpu-block-title{font-size:10px}
+.cpu-compact-register .cpu-block-value{font-size:10px}
+.cpu-clock-face circle{fill:none;stroke:var(--accent);stroke-width:2}
+.cpu-clock-face path{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;transform-box:fill-box;transition:transform .12s linear}
