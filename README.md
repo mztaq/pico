@@ -92,10 +92,10 @@ Logic Sim is an educational digital model, not an analogue electrical simulator.
 
 ## CPU Studio
 
-CPU Studio follows Cambridge IGCSE Computer Science (0478/0984) section 3.1. It provides **Normal** and **Advanced** modes. Normal covers the complete fetch–decode–execute cycle. Advanced adds the decode unit, instruction decoding details and a step-by-step interrupt demonstration.
+CPU Studio follows Cambridge IGCSE Computer Science (0478/0984) section 3.1. It provides **Normal** and **Advanced** modes. Normal covers the complete fetch–decode–execute cycle. Advanced adds the decode unit, illustration-only Clock, Status Register and Interrupt Register, instruction decoding details and a step-by-step interrupt demonstration. These additional registers are marked as extended model components **(out of specification)**.
 
-- The CPU diagram is based on the course architecture: PC, MAR, MDR, CIR, accumulator, ALU, control unit, CPU cache and RAM, with address, data and control buses.
-- Press **Step** to advance one micro-operation and **Back** to reverse it, or **Run** to animate the cycle automatically. The explanation updates after each operation. **Pause** and **Reset** control playback.
+- The CPU diagram is based on the course architecture: PC, MAR, MDR, CIR, accumulator, ALU, control unit, CPU cache and RAM, with address, data and control buses. The links between components are drawn as smooth curves for readability, not electrical circuit schematics.
+- Press **Step** to advance one micro-operation and **Back** to reverse it, or **Run** to replay the fixed CPU program continuously until paused, with no automatic stop at HLT. The explanation updates after each operation. **Pause** and **Reset** control playback. Manual Step still halts at HLT.
 - RAM on the right displays the addresses and binary data while relevant boxes and bus routes highlight.
 - A slider marked 0.5–9.2 GHz adjusts illustrative animation pacing, **not actual CPU speed**. Higher settings visibly accelerate Run.
 - **Advanced** permits a triggered interrupt: the current instruction completes, state is saved, an interrupt-service routine is illustrated, and execution resumes. The exact simplified handler implementation is **(out of specification)**.
@@ -103,7 +103,7 @@ CPU Studio follows Cambridge IGCSE Computer Science (0478/0984) section 3.1. It 
 - The first visit opens a skippable 10-stage spotlight tutorial; use **Tutorial** to view it again.
 - Uses the current shared Pico theme and automatically applies theme changes from other workspaces.
 
-The CPU diagram carries the playful title **Central Processing BRAINROT / Unit**; the correct term for exams is **Central Processing Unit (CPU)**. The simulation uses a fixed teaching program internally. No assembly editor, code examples menu, file import/export or unrelated ISA extensions are presented. The machine model is simplified for teaching and is not a hardware-accurate timing simulation.
+The home screen arranges every card as title, description, then an unfaded code or diagram preview, with larger text. The CPU diagram carries the playful title **Central Processing BRAINROT / Unit**; the correct term for exams is **Central Processing Unit (CPU)**. The simulation uses a fixed teaching program internally. No assembly editor, code examples menu, file import/export or unrelated ISA extensions are presented. The machine model is simplified for teaching and is not a hardware-accurate timing simulation.
 
 ## Language support
 
