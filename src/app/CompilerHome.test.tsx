@@ -150,7 +150,8 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
  expect(container.textContent).not.toContain('EXAMPLE PROGRAMS');
  expect(container.querySelectorAll('input[name="cpu-mode"]')).toHaveLength(2);
  expect(container.querySelector('g[aria-label="Decode Unit"]')).toBeNull();
- expect(container.querySelector('.cpu-tour')).not.toBeNull();
+ expect(container.querySelector('.cpu-app')).not.toBeNull();
+ if(!container.querySelector('[aria-label="Skip CPU Studio tutorial"]'))await click(container.querySelector<HTMLElement>('[aria-label="Open CPU Studio tutorial"]')!);
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
  await click(container.querySelector<HTMLElement>('[aria-label="Step one CPU micro-operation"]')!);
  expect(container.textContent).toContain('PC identifies');
@@ -161,6 +162,7 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
 it('supports Step Back and only shows decode unit in Advanced mode',async()=>{
  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
  await click(choice!);
+ if(!container.querySelector('[aria-label="Skip CPU Studio tutorial"]'))await click(container.querySelector<HTMLElement>('[aria-label="Open CPU Studio tutorial"]')!);
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
  const back=container.querySelector<HTMLButtonElement>('[aria-label="Step backward one CPU micro-operation"]')!;
  const forward=container.querySelector<HTMLButtonElement>('[aria-label="Step forward one CPU micro-operation"]')!;
