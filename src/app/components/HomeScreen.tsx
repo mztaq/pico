@@ -16,7 +16,7 @@ export function Credits({ logic = false }: { logic?: boolean } = {}) {
     <span className="credit-item"><span>Made by</span> <strong>Amar</strong> <small>11 Boys Blue</small></span>
   </div>;
 }
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
   const theme = getTheme(settings.theme);
   useEffect(() => {
@@ -66,6 +66,20 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           <path d="M 95 13 H 146 C 174 13 190 20 202 38 C 190 56 174 63 146 63 H 95 Z" />
           <circle cx="288" cy="38" r="18"/>
           <text x="24" y="27">1</text><text x="24" y="57">0</text><text x="142" y="42">AND</text><text x="288" y="43">0</text>
+        </svg>
+      </button>
+      <button className="compiler-choice" onClick={() => onChoose('cpu')}>
+        <div className="compiler-choice-copy">
+          <div className="compiler-choice-title"><h2>CPU Studio</h2><span>Open</span></div>
+          <p>Fetch, decode and execute instructions inside a visual CPU.</p>
+        </div>
+        <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
+          <rect x="16" y="7" width="210" height="62" rx="8"/>
+          <rect x="29" y="19" width="60" height="39" rx="4"/><rect x="102" y="19" width="108" height="39" rx="4"/>
+          <text x="59" y="43">CU</text><text x="154" y="43">ALU + REGISTERS</text>
+          <path className="home-chart-link" d="M 227 38 H 259"/>
+          <rect x="261" y="15" width="74" height="45" rx="5"/>
+          <text x="299" y="42">RAM</text>
         </svg>
       </button>
     </div>
