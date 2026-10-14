@@ -13,6 +13,7 @@ it.each([
 it.each([
   ['Boyle', 'The Computer Science teacher who backed my creators and their work 🕮'],
   ['Fore', 'The head of Computer Science and ICT at our school 🖳'],
+  ['Creegan', 'The teacher who inspired us to add SQL Explorer ᨒ'],
 ])('recognises the name and title variants for %s', (name, message) => {
   for (const prefix of ['', 'Mr ', 'mr ', 'Mr.', 'mr. ', 'MR. ', 'Mr', ' Mr .   ']) {
     for (const spelling of [name, name.toLowerCase(), name.toUpperCase()]) {
@@ -21,10 +22,14 @@ it.each([
   }
 });
 
+it.each(['Mr Creegan', 'creegan', 'Creegan', 'Mr . Creegan', 'CREEGAN', 'mr.creegan', ' MR    .   CREEGAN '])('recognises every requested Creegan variation: %s', value => {
+  expect(inputEasterEgg(value)).toBe('The teacher who inspired us to add SQL Explorer ᨒ');
+});
+
 it.each(['Hamzah', 'Mohamed Hamza', 'Hamza is here', 'Mr Hamza'])('only matches Hamza as a complete name: %s', value => {
   expect(inputEasterEgg(value)).toBeUndefined();
 });
 
-it.each(['Boyles', 'Foreman', 'Mr Boyle is here', 'Hello Fore', 'Mr Amar', 'Mr Mustaqim', '', 'Amar and Mustaqim'])('does not match unrelated input: %s', value => {
+it.each(['Boyles', 'Foreman', 'Mr Boyle is here', 'Hello Fore', 'Mr Amar', 'Mr Mustaqim', '', 'Amar and Mustaqim', 'Creegans', 'Mr Creegan is here', 'Dr Creegan', 'Creegan and Amar'])('does not match unrelated input: %s', value => {
   expect(inputEasterEgg(value)).toBeUndefined();
 });

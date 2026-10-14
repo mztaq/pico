@@ -1,17 +1,18 @@
 const hamza = 'The man who conceptualised Logic Sim ⚡︎';
 const amar = 'The dev who engineered me day and night ☾';
 const mustaqim = 'The soul who unleashed me to the World Wide Web 🌏︎';
+const creegan = 'The teacher who inspired us to add SQL Explorer ᨒ';
 const teacher = 'The Computer Science teacher who backed my creators and their work 🕮';
 const head = 'The head of Computer Science and ICT at our school 🖳';
 
 const messages = new Map([
   ['amar', amar], ['mustaqim', mustaqim], ['hamza', hamza],
-  ['boyle', teacher], ['fore', head],
+  ['boyle', teacher], ['fore', head], ['creegan', creegan],
 ]);
 
 /** Display-only lookup. The original input value is still sent to the worker. */
 export function inputEasterEgg(value: string): string | undefined {
   const name = value.trim().toLowerCase().replace(/\s+/g, ' ');
-  const teacherName = /^(?:mr\s*\.?\s*)?(boyle|fore)$/.exec(name)?.[1];
+  const teacherName = /^(?:mr\s*\.?\s*)?(boyle|fore|creegan)$/.exec(name)?.[1];
   return messages.get(teacherName ?? name);
 }
