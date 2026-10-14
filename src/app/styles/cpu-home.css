@@ -1,18 +1,1 @@
-
-/* Workspace launchpad: distinct cards and easier scanning without losing Pico's style. */
-.pico-home .compiler-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;width:min(1120px,calc(100% - 40px));max-width:none}
-.pico-home .compiler-choice{min-height:142px;height:auto;transition:transform .18s ease,border-color .18s ease,background .18s ease;overflow:hidden}
-.pico-home .compiler-choice:hover{transform:translateY(-3px);border-color:var(--accent);background:var(--surface-raised)}
-.pico-home .compiler-choice:last-child{grid-column:1/-1;min-height:134px}
-.pico-home .compiler-choice-title h2{font-size:16px}
-.pico-home .compiler-choice-copy p{font-size:12px;line-height:1.6}
-.pico-home .compiler-choice-preview{max-width:49%;flex:0 0 46%}
-@media(max-width:850px){.pico-home .compiler-choices{grid-template-columns:1fr}.pico-home .compiler-choice:last-child{grid-column:auto}.pico-home .compiler-choice-preview{max-width:44%}}
-@media(prefers-reduced-motion:reduce){.pico-home .compiler-choice{transition:none}.pico-home .compiler-choice:hover{transform:none}}
-
-/* Keep the home header simple and the launcher balanced. */
-.pico-home>h1{font-size:clamp(25px,2.6vw,33px);letter-spacing:-.7px;margin:28px auto 26px;text-align:center}
-.pico-home .compiler-choices{gap:12px}
-.pico-home .compiler-choice{min-height:130px}
-.pico-home .compiler-choice:last-child{min-height:130px}
-@media(max-width:850px){.pico-home .compiler-choices{width:min(100% - 24px,600px)}}
+.pico-home .compiler-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;width:min(1150px,calc(100% - 40px));max-width:none}.pico-home .compiler-choice{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center;gap:17px;min-width:0;min-height:150px;padding:21px;border-radius:8px;overflow:hidden;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.pico-home .compiler-choice::before{content:"";position:absolute;left:0;top:15px;bottom:15px;width:3px;background:var(--accent);opacity:0;transition:opacity .18s}.pico-home .compiler-choice:hover,.pico-home .compiler-choice:focus-visible{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 12px 30px color-mix(in srgb,var(--accent) 10%,transparent)}.pico-home .compiler-choice:hover::before,.pico-home .compiler-choice:focus-visible::before{opacity:1}.pico-home .compiler-choice-copy{min-width:0}.pico-home .compiler-choice-title h2{font-size:16px;line-height:1.35}.pico-home .compiler-choice-copy p{font-size:11px;line-height:1.6;margin:8px 0 0}.pico-home .compiler-choice-preview{display:block;flex:none;min-width:0;max-width:100%;width:100%;margin:0;overflow:hidden;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 0%,#000 88%,transparent 100%)}.pico-home .compiler-choice-preview::-webkit-scrollbar{display:none}.pico-home pre.compiler-choice-preview{font-size:10px;line-height:1.7;white-space:pre}.pico-home .home-chart-preview{max-height:82px}.pico-home .compiler-choice:last-child{grid-column:1/-1;grid-template-columns:minmax(0,1fr) minmax(0,350px);min-height:135px}.pico-home .compiler-choice:last-child .compiler-choice-preview{max-width:350px;justify-self:end}.pico-home>h1{font-size:clamp(25px,2.6vw,33px);margin:28px auto 26px;text-align:center}@media(max-width:880px){.pico-home .compiler-choices{grid-template-columns:1fr;width:min(640px,calc(100% - 24px))}.pico-home .compiler-choice:last-child{grid-column:auto;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}}@media(max-width:440px){.pico-home .compiler-choice,.pico-home .compiler-choice:last-child{grid-template-columns:minmax(0,1fr) minmax(0,.8fr);gap:8px;padding:16px}.pico-home .compiler-choice-title h2{font-size:14px}}@media(prefers-reduced-motion:reduce){.pico-home .compiler-choice{transition:none}.pico-home .compiler-choice:hover{transform:none}}
