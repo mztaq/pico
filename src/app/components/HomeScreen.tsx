@@ -26,7 +26,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   }, [theme]);
   return <main className="pico-home" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
     <div className="home-updates"><UpdateCenter /></div>
-    <div className="home-brand"><img src="/pico-logo.svg" alt="" /><span>PiCompiler<span className="brand-period">.</span></span></div>
+    <div className="home-brand"><img src="/pico-logo.svg" alt="" /><span>Pico<span className="brand-period">.</span></span></div>
     <h1>Choose your workspace</h1>
     <div className="compiler-choices">
       <button className="compiler-choice" onClick={() => onChoose('pseudocode')}>
