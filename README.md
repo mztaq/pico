@@ -2,7 +2,7 @@
   <img src="public/pico-logo.svg" alt="Pico logo" width="80" height="80">
 </p>
 
-<h1 align="center">PICO</h1>
+<h1 align="center">PiCompiler</h1>
 
 <p align="center">Write code, build flowcharts and simulate logic circuits in your browser.</p>
 
