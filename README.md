@@ -7,7 +7,7 @@
 <p align="center">Write code, build flowcharts and simulate logic circuits in your browser.</p>
 
 <p align="center">
-  <a href="https://picompiler.pages.dev">Open Pico</a> · 
+  <a href="https://picompiler.pages.dev">Open PiCompiler</a> · 
   <a href="#getting-started">Getting started</a> ·
   <a href="#language-support">Language support</a> ·
   <a href="#development">Development</a>
@@ -19,13 +19,13 @@
   </a>
 </p>
 
-Pico is a browser-based Computer Science learning tool with five workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim and CPU Studio. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
+PiCompiler is a browser-based Computer Science learning tool with five workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim and CPU Studio. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
 
 Developed by **Amar** (11 Boys Blue), deployed by **Mustaqim** (11 Boys Red), with **Logic Sim conceptualised by Mohamed Hamza** (11 Boys Red).
 
 ## Getting started
 
-Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, or **Logic Sim**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
+Open [PiCompiler](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, or **Logic Sim**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
 
 ```text
 DECLARE Name : STRING
@@ -101,13 +101,13 @@ CPU Studio follows Cambridge IGCSE Computer Science (0478/0984) section 3.1. It 
 - **Advanced** permits a triggered interrupt: the current instruction completes, state is saved, an interrupt-service routine is illustrated, and execution resumes. The exact simplified handler implementation is **(out of specification)**.
 - Hover RAM binary addresses and cells for their meanings. Instruction words use an invented eight-bit teaching representation **(out of specification)**, not real machine-code instructions.
 - The first visit opens a skippable 10-stage spotlight tutorial; use **Tutorial** to view it again.
-- Uses the current shared Pico theme and automatically applies theme changes from other workspaces.
+- Uses the current shared PiCompiler theme and automatically applies theme changes from other workspaces.
 
 The home screen arranges every card as title, description, then an unfaded code or diagram preview, with larger text. The CPU diagram carries the playful title **Central Processing BRAINROT / Unit**; the correct term for exams is **Central Processing Unit (CPU)**. The simulation uses a fixed teaching program internally. No assembly editor, code examples menu, file import/export or unrelated ISA extensions are presented. The machine model is simplified for teaching and is not a hardware-accurate timing simulation.
 
 ## Language support
 
-Pico implements a Cambridge-style pseudocode subset:
+PiCompiler implements a Cambridge-style pseudocode subset:
 
 | Area | Supported constructs |
 | --- | --- |
@@ -130,7 +130,7 @@ Source passes through the lexer, parser and semantic checks, then runs in an int
 
 Interactive runs have no automatic step or time limit. A `WHILE TRUE` loop runs until **Stop** terminates its worker. Pseudocode retains safety limits of 100 nested routine calls and 100,000 allocated array cells. Output keeps the most recent 2,000 lines and limits each line to 8,192 characters to protect the interface during long runs.
 
-Debugging records snapshots for replay. It does not provide live breakpoints. Trace recording has a separate memory budget, and Pico reports when recording is truncated.
+Debugging records snapshots for replay. It does not provide live breakpoints. Trace recording has a separate memory budget, and PiCompiler reports when recording is truncated.
 
 Practice files are virtual text files stored with the project. Each run starts with a copy and saves its resulting text files after completion. They do not grant access to files on your computer.
 
@@ -150,7 +150,7 @@ Python runs as real CPython in a dedicated Web Worker through [Pyodide](https://
 - Use `.py` source tabs as modules, and project practice files with `open()`. Completed runs reuse the loaded interpreter with a fresh program namespace and reset project files. Python restores standard-module attributes, builtins, environment variables and arguments between runs. Stop terminates the worker, so the next run starts a new interpreter.
 - **File** imports `.py` source or Python `.pico` projects and exports the active `.py` file or the complete `.pico` project.
 
-Python begins loading when you enter its workspace. The build copies the pinned runtime from the npm package to `/python-runtime/314.0.7/` and serves it from Pico’s own host. Versioned assets have immutable cache headers. Its first load needs an internet connection, while completed runs reuse the initialized worker. Python standard-library code is supported; package installation and desktop features such as native windows and subprocesses are outside this interface.
+Python begins loading when you enter its workspace. The build copies the pinned runtime from the npm package to `/python-runtime/314.0.7/` and serves it from PiCompiler’s own host. Versioned assets have immutable cache headers. Its first load needs an internet connection, while completed runs reuse the initialized worker. Python standard-library code is supported; package installation and desktop features such as native windows and subprocesses are outside this interface.
 
 Console input uses `SharedArrayBuffer`. Hosting must serve these headers, supplied by `public/_headers` for Cloudflare Pages and by the Vite development/preview servers:
 
