@@ -99,7 +99,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  function startMove(event:ReactPointerEvent<SVGGElement>,node:CircuitNode){
   if(tool==='pan'||placement)return;event.stopPropagation();
   if(event.shiftKey){setSelectedNodes(s=>s.includes(node.id)?s.filter(id=>id!==node.id):[...s,node.id]);}
-  else if(!selectedNodes.includes(node.id)){setSelection({type:'node',id:node.id});setSelectedNodes([node.id]);}
+  else {setSelection({type:'node',id:node.id});if(!selectedNodes.includes(node.id))setSelectedNodes([node.id]);}
   setInspectorOpen(true);
   if(event.button!==0)return;
   const b=boardRef.current?.getBoundingClientRect();if(!b)return;
@@ -172,7 +172,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  async function importFile(file:File){try{if(file.size>800000)throw Error('This circuit file exceeds the 800 KB limit.');const data=parseDocument(JSON.parse(await file.text()));if(doc.nodes.length&&!window.confirm('Replace the current circuit with this imported project?'))return;edit(data);setSimulation(initialSimulation());setSelection(null);setRunning(false);setStatus('Circuit imported successfully.');}catch(error){setStatus(error instanceof Error?error.message:'Invalid circuit file.');}finally{setImporting(false);}}
  const inspectorContent=<div className="logic-inspector-body">
   {selectedNode?<><span className="logic-eyebrow">SELECTED COMPONENT</span><h3>{SPECS[selectedNode.kind].title}</h3><p>{SPECS[selectedNode.kind].description}</p>
-   <label>Label<input aria-label="Component label" value={selectedNode.label} maxLength={120} onChange={e=>change(d=>({...d,nodes:d.nodes.map(n=>n.id===selectedNode.id?{...n,label:e.target.value}:n)}))}/></label>
+   <label>Label<input aria-label="Component label" value={selectedNode.label} placeholder={selectedNode.kind==='label'?'Text':undefined} maxLength={120} onChange={e=>change(d=>({...d,nodes:d.nodes.map(n=>n.id===selectedNode.id?{...n,label:e.target.value}:n)}))}/></label>
    <div className="logic-ports"><b>Inputs</b><span>{SPECS[selectedNode.kind].inputs.join(', ')||'None'}</span><b>Outputs</b><span>{SPECS[selectedNode.kind].outputs.join(', ')||'None'}</span></div>
    {(selectedNode.kind==='switch'||selectedNode.kind==='button')&&<label>Initial value<select aria-label="Initial value" value={selectedNode.initial??0} onChange={e=>change(d=>({...d,nodes:d.nodes.map(n=>n.id===selectedNode.id?{...n,initial:Number(e.target.value) as 0|1}:n)}))}><option value="0">LOW (0)</option><option value="1">HIGH (1)</option></select></label>}
    {selectedNode.kind==='clock'&&<><label>Period (ms)<input aria-label="Clock period" type="number" min="100" max="60000" value={selectedNode.period??1000} onChange={e=>{const v=Number(e.target.value);if(v>=100&&v<=60000)change(d=>({...d,nodes:d.nodes.map(n=>n.id===selectedNode.id?{...n,period:v}:n)}));}}/></label><label>Duty cycle (%)<input aria-label="Clock duty cycle" type="number" min="1" max="99" value={selectedNode.duty??50} onChange={e=>{const v=Number(e.target.value);if(v>=1&&v<=99)change(d=>({...d,nodes:d.nodes.map(n=>n.id===selectedNode.id?{...n,duty:v}:n)}));}}/></label></>}
@@ -193,12 +193,13 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   {doc.nodes.map(node=>{const spec=SPECS[node.kind],height=nodeHeight(node),selected=selection?.type==='node'&&selection.id===node.id||selectedNodes.includes(node.id),output=spec.outputs[0]?signals[key(node.id,spec.outputs[0])]??'Z':'Z',lamp=signals[key(node.id,'IN')]??'Z',hex=spec.inputs.map(pin=>signals[key(node.id,pin)]??'X'),hexValue=hex.some(b=>b!==0&&b!==1)?'X':parseInt(hex.join(''),2).toString(16).toUpperCase();return <g key={node.id} className={'logic-node '+(selected?'selected':'')} onPointerDown={e=>startMove(e,node)} onDoubleClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}} style={{cursor:'move'}}>
   <g transform={`translate(${node.x+NODE_WIDTH/2} ${node.y+height/2}) rotate(${node.rotation}) translate(${-NODE_WIDTH/2} ${-height/2})`}>
     <rect className="logic-node-hitbox" width={NODE_WIDTH} height={height} rx="5"/>
-    <CircuitSymbol kind={node.kind} height={height} signal={node.kind==='lamp'?lamp:output} hex={hexValue}/>
+    <CircuitSymbol kind={node.kind} height={height} signal={node.kind==='lamp'?lamp:output} hex={hexValue} label={node.label}/>
     
     {(node.kind==='switch'||node.kind==='button')&&<foreignObject x="34" y={height/2-15} width="57" height="38">
       <button className="logic-symbol-button" aria-label={node.kind==='button'?'Press and hold button':'Toggle switch'} onPointerDown={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,1);}} onPointerUp={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onPointerCancel={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}}/>
     </foreignObject>}
   </g>
+  {node.kind!=='label'&&node.label&&<text className="logic-component-label" x={node.x+NODE_WIDTH/2} y={node.y+height+17} textAnchor="middle">{node.label}</text>}
   {(['in','out'] as const).flatMap(direction=>spec[direction==='in'?'inputs':'outputs'].map(pin=>{const pos=portPosition(node,pin,direction),isTarget=connecting&&direction==='in'&&isWireValid(doc,{id:'preview',from:connecting.id,fromPin:connecting.pin,to:node.id,toPin:pin})===null;const sig=signals[key(node.id,pin)]??'Z';return <g key={direction+pin} className={'logic-port '+(wireTarget?.nodeId===node.id&&wireTarget.pin===pin?'wire-hover '+(wireTarget.valid?'valid':'invalid'):'')} onPointerDown={e=>{
     e.stopPropagation();if(e.button!==0)return;
     if(direction==='out'){
