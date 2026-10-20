@@ -9,6 +9,7 @@ import type {
   Statement,
   Target,
 } from '../language/ast';
+import { assignable, binaryType, BUILTINS, builtinType, numberLiteralType, unaryType } from '../language/typeRules';
 
 export interface TraceStep {
   line: number;
@@ -29,7 +30,7 @@ export interface RunResult {
 }
 export interface InputRequest {
   variable: string;
-  dataType: DataType;
+  dataType: DataType | 'AUTO';
   line: number;
   error?: string;
 }
@@ -56,7 +57,7 @@ export class MissingInputError extends RuntimeError {
   name = 'MissingInputError';
   constructor(
     public variable: string,
-    public dataType: DataType,
+    public dataType: DataType | 'AUTO',
     line: number,
   ) {
     super(`Enter a value for ${variable} (${dataType}).`, line, 'input');
@@ -84,6 +85,7 @@ type Binding = {
   type?: DataType;
   constant: boolean;
   array?: ArraySpec;
+  inferredTypes?: DataType[];
 };
 class Scope {
   readonly bindings = new Map<string, Binding>();
@@ -124,6 +126,7 @@ class Interpreter {
   private traceBudget = 200_000;
   private traceTruncated = false;
   private readonly limit: number;
+  private inferredInputs: Program['inferredInputs'];
   constructor(
     private readonly inputs: string[],
     private readonly options: ExecutionOptions,
@@ -140,6 +143,8 @@ class Interpreter {
     );
   }
   *run(program: Program): Execution<RunResult> {
+    this.inferredInputs = program.inferredInputs;
+    this.seedInputs('global', this.globals);
     for (const s of program.statements) {
       if (s.kind === 'Procedure' || s.kind === 'Function') {
         this.routines.set(s.name.toUpperCase(), {
@@ -181,6 +186,12 @@ class Interpreter {
       traceTruncated: this.traceTruncated,
       outputTruncated: this.outputTruncated,
     };
+  }
+  private seedInputs(scope: string, target: Scope): void {
+    for (const input of this.inferredInputs ?? []) {
+      if (input.scope !== scope) continue;
+      target.bindings.set(input.name, { value: null, type: input.types.length === 1 ? input.types[0] : undefined, inferredTypes: input.types, constant: false });
+    }
   }
   private *executeBlock(statements: Statement[]): Execution<void> {
     for (const s of statements) yield* this.execute(s);
@@ -247,33 +258,40 @@ class Interpreter {
         });
         return;
       }
-      case 'Constant':
+      case 'Constant': {
         if (this.scope.bindings.has(s.name))
           throw new RuntimeError(
             `${s.name} has already been declared.`,
             s.line,
           );
+        const value = yield* this.evaluate(s.value);
         this.scope.bindings.set(s.name, {
-          value: (yield* this.evaluate(s.value)),
+          value,
+          type: this.valueType(s.value, value),
           constant: true,
         });
         return;
-      case 'Assignment':
-        yield* this.setTarget(s.target, (yield* this.evaluate(s.value)));
+      }
+      case 'Assignment': {
+        const value = yield* this.evaluate(s.value);
+        yield* this.setTarget(s.target, value, this.valueType(s.value, value));
         return;
+      }
       case 'Input': {
         const binding = this.binding(s.target.name, s.line);
-        const dataType = binding.type ?? 'STRING';
+        const dataType = binding.type ?? (binding.inferredTypes ? 'AUTO' : 'STRING');
+        let raw: string;
         let value: unknown;
         if (this.interactive) {
-          const raw = yield { type: 'input', variable: s.target.name, dataType, line: s.line };
-          value = this.convertInput(raw, dataType, s.line);
+          raw = yield { type: 'input', variable: s.target.name, dataType, line: s.line };
         } else {
           if (this.inputPosition >= this.inputs.length)
             throw new MissingInputError(s.target.name, dataType, s.line);
-          value = this.convertInput(this.inputs[this.inputPosition++]!, dataType, s.line);
+          raw = this.inputs[this.inputPosition++]!;
         }
-        yield* this.setTarget(s.target, value);
+        const detected = dataType === 'AUTO' ? this.detectInputType(raw, binding.inferredTypes!, s.line) : dataType;
+        value = this.convertInput(raw, detected, s.line);
+        yield* this.setTarget(s.target, value, detected);
         return;
       }
       case 'Output': {
@@ -422,6 +440,7 @@ class Interpreter {
         constant: false,
       });
     });
+    this.seedInputs(`routine:${name.toUpperCase()}`, local);
     this.scope = local;
     this.depth++;
     try {
@@ -579,19 +598,27 @@ class Interpreter {
       );
     return value;
   }
-  private *setTarget(target: Target, value: unknown): Execution<void> {
+  private *setTarget(target: Target, value: unknown, actualType?: DataType): Execution<void> {
     const binding = this.binding(target.name, target.line);
     if (binding.constant)
       throw new RuntimeError(
         `${target.name} is a CONSTANT and cannot be changed.`,
         target.line,
       );
+    if (!binding.type && binding.inferredTypes) {
+      const actual = actualType ?? this.primitiveType(value);
+      const type = binding.inferredTypes.includes(actual) ? actual : binding.inferredTypes.find(type => assignable(actual, type));
+      if (!type) throw new RuntimeError(`${target.name} needs ${binding.inferredTypes.join(' or ')} values, received ${actual}.`, target.line, 'type');
+      binding.type = type;
+    }
     this.ensureValueType(
       value,
       binding.type ?? 'STRING',
       target.line,
       target.name,
     );
+    if (actualType && binding.type && !assignable(actualType, binding.type) && !(binding.type === 'CHAR' && typeof value === 'string' && [...value].length === 1))
+      throw new RuntimeError(`Cannot assign ${actualType} to ${target.name} (${binding.type}).`, target.line, 'type');
     if (target.indexes.length) {
       const location = (yield* this.location(target, binding));
       location.array[location.index] = value;
@@ -640,6 +667,30 @@ class Interpreter {
     if (typeof value !== 'boolean')
       throw new RuntimeError('Condition must be BOOLEAN.', line, 'type');
     return value;
+  }
+  private detectInputType(raw: string, allowed: DataType[], line: number): DataType {
+    const text = raw.trim();
+    const detected: DataType = /^[+-]?\d+$/.test(text) ? 'INTEGER'
+      : /^[+-]?\d+\.\d+$/.test(text) ? 'REAL'
+      : /^(TRUE|FALSE)$/i.test(text) ? 'BOOLEAN' : 'STRING';
+    if (allowed.includes(detected)) return detected;
+    // Text-only constraints establish that digits or TRUE are text here.
+    if (allowed.every(type => type === 'CHAR' || type === 'STRING')) return allowed.includes('STRING') ? 'STRING' : 'CHAR';
+    throw new RuntimeError(`${JSON.stringify(raw)} is not valid input. Expected ${allowed.join(' or ')}.`, line, 'type');
+  }
+  private primitiveType(value: unknown): DataType {
+    return typeof value === 'boolean' ? 'BOOLEAN' : typeof value === 'number' ? Number.isInteger(value) ? 'INTEGER' : 'REAL' : 'STRING';
+  }
+  private valueType(expression: Expression, value?: unknown): DataType {
+    switch (expression.kind) {
+      case 'NumberLiteral': return numberLiteralType(expression);
+      case 'StringLiteral': return expression.dataType ?? 'STRING';
+      case 'BooleanLiteral': return 'BOOLEAN';
+      case 'Variable': case 'ArrayAccess': return this.scope.find(expression.name)?.type ?? this.primitiveType(value);
+      case 'UnaryExpression': return unaryType(expression.operator, this.valueType(expression.operand)) ?? this.primitiveType(value);
+      case 'BinaryExpression': return binaryType(expression.operator, this.valueType(expression.left), this.valueType(expression.right)) ?? this.primitiveType(value);
+      case 'CallExpression': return this.routines.get(expression.name.toUpperCase())?.returnType ?? builtinType(expression.name.toUpperCase(), expression.arguments.map(argument => this.valueType(argument))) ?? this.primitiveType(value);
+    }
   }
   private convertInput(raw: string, type: DataType, line: number): unknown {
     const text = raw.trim();
@@ -691,10 +742,12 @@ class Interpreter {
         return yield* this.getTarget({ ...e, indexes: [] });
       case 'ArrayAccess':
         return yield* this.getTarget(e);
-      case 'UnaryExpression':
-        return e.operator === 'NOT'
-          ? !this.boolean((yield* this.evaluate(e.operand)), e.line)
-          : this.finite(-Number((yield* this.evaluate(e.operand))), e.line);
+      case 'UnaryExpression': {
+        const value = yield* this.evaluate(e.operand);
+        if (e.operator === 'NOT') return !this.boolean(value, e.line);
+        if (typeof value !== 'number') throw new RuntimeError('Unary minus needs a numeric value.', e.line, 'type');
+        return this.finite(-value, e.line);
+      }
       case 'BinaryExpression':
         return yield* this.binary(e.operator, e.left, e.right, e.line);
       case 'CallExpression':
@@ -725,6 +778,11 @@ class Interpreter {
     if (op === 'AND' && !this.boolean(left, line)) return false;
     if (op === 'OR' && this.boolean(left, line)) return true;
     const right = (yield* this.evaluate(b));
+    if (!binaryType(op, this.valueType(a, left), this.valueType(b, right))) {
+      const message = ['=', '<>', '!=', '<', '<=', '>', '>='].includes(op) ? 'Cannot compare values of different types.'
+        : `${op} needs ${['AND', 'OR'].includes(op) ? 'BOOLEAN' : ['DIV', 'MOD'].includes(op) ? 'INTEGER' : 'numeric'} values.`;
+      throw new RuntimeError(message, line, 'type');
+    }
     switch (op) {
       case '+':
         if (typeof left !== 'number' || typeof right !== 'number')
@@ -783,6 +841,10 @@ class Interpreter {
   }
   private *call(name: string, args: Expression[], line: number): Execution<unknown> {
     const values = (yield* this.evaluateArguments(args));
+    const builtin = BUILTINS[name];
+    const validArity = builtin && (name === 'ROUND' ? args.length >= 1 && args.length <= 2 : args.length === builtin.args);
+    if (validArity && !builtinType(name, args.map((arg, index) => this.valueType(arg, values[index]))))
+      throw new RuntimeError(`${name} received incompatible argument types.`, line, 'type');
     const need = (count: number) => {
       if (values.length !== count)
         throw new RuntimeError(`${name}() takes ${count} arguments.`, line);

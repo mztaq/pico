@@ -489,3 +489,38 @@ it('keeps editor shortcuts while removing the scope caption shown in the screens
   expect(footer.textContent).toContain('go to line');
   expect(footer.textContent).not.toContain('Cambridge subset');
 });
+
+describe('automatic input type integration', () => {
+  async function enableAutoDeclare() {
+    await click(container.querySelector('[aria-label="Open settings"]')!);
+    await click(container.querySelector('[role="switch"][aria-label="Auto-declare variables"]')!);
+    await click(container.querySelector('[aria-label="Open settings"]')!);
+  }
+
+  it.each(['Alex', '5', '5.0', 'TRUE'])('runs untyped INPUT with %s through the console', async raw => {
+    await enableAutoDeclare();
+    const code = 'INPUT AnyName\nOUTPUT "Value: ", AnyName';
+    await typeValue(codeEditor(), code);
+    expect(codeEditor().value).toBe(code);
+    expect(container.querySelector('.runtime-error-card')).toBeNull();
+    await click(button('Run⌘ ↵'));
+    const worker = BrowserWorker.pending.at(-1)!;
+    expect(worker.request?.ast.inferredInputs).toEqual([{ scope: 'global', name: 'AnyName', types: ['INTEGER', 'REAL', 'CHAR', 'STRING', 'BOOLEAN'] }]);
+    await act(async () => worker.complete());
+    expect(consoleInput().placeholder).toContain('Type detected automatically');
+    await typeValue(consoleInput(), raw);
+    await submitInput();
+    expect(container.querySelector('.runtime-error-card')).toBeNull();
+    expect(container.querySelector('.console-input-form')).toBeNull();
+    expect(container.querySelector('.output-line:last-child')?.textContent).toBe(`›Value: ${raw === '5.0' ? '5' : raw}`);
+  });
+
+  it('restores strict declaration errors when Auto-declare is disabled', async () => {
+    await enableAutoDeclare();
+    await typeValue(codeEditor(), 'INPUT Value\nOUTPUT Value');
+    expect(container.querySelector('.runtime-error-card')).toBeNull();
+    await click(container.querySelector('[aria-label="Open settings"]')!);
+    await click(container.querySelector('[role="switch"][aria-label="Auto-declare variables"]')!);
+    expect(container.querySelector('.runtime-error-card')?.textContent).toContain('has not been declared');
+  });
+});
