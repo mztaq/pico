@@ -18,6 +18,7 @@
 .logic-symbol-outline{fill:#222330;stroke:#dbd8ed;stroke-width:2.8;stroke-linejoin:round;stroke-linecap:round}
 .logic-symbol-detail,.logic-bulb-filament,.logic-switch-arm{fill:none;stroke:#e6e3f2;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
 .logic-symbol-letter{font:700 18px var(--font-code,monospace);fill:#e8e5f8}
+.logic-component-label{font:12px var(--font-code,monospace);fill:var(--text);pointer-events:none}
 .logic-node .logic-node-kind{font:600 10px var(--font-ui,system-ui);fill:#b7b1dc;pointer-events:none}
 .logic-signal-caption{font:700 11px var(--font-code,monospace);fill:#ada8c8;pointer-events:none}
 .logic-bulb-glass{fill:#252735;stroke:#eee9fd;stroke-width:3}.logic-bulb-glass.on{fill:#f5d575;stroke:#fff2a1;filter:drop-shadow(0 0 10px #ffd46b)}.logic-bulb-glass.unknown{stroke:#f5a067}

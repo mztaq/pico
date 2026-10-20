@@ -26,8 +26,8 @@ export function inputLeadEnd(kind:ComponentKind):number {
  * Terminals end at x=0 and x=122, matching model.portPosition, while
  * the body scales vertically with the component's actual pin count.
  */
-export function CircuitSymbol({kind,height,signal='Z',hex='X'}:{
-  kind:ComponentKind;height:number;signal?:Signal;hex?:string;
+export function CircuitSymbol({kind,height,signal='Z',hex='X',label=''}:{
+  kind:ComponentKind;height:number;signal?:Signal;hex?:string;label?:string;
 }) {
   const mid=height/2, top=17, bottom=height-17;
   const inverse=['not','nand','nor','xnor'].includes(kind);
@@ -75,7 +75,7 @@ export function CircuitSymbol({kind,height,signal='Z',hex='X'}:{
     <text className="logic-hex" x="62" y={mid+13} textAnchor="middle">{hex}</text>
   </g>;
   if(kind==='label')return <g className="logic-symbol" aria-hidden="true">
-    <text className="logic-symbol-letter" x="61" y={mid+7} textAnchor="middle">Text</text>
+    <text className="logic-symbol-letter" x="61" y={mid+7} textAnchor="middle">{label||'Text'}</text>
   </g>;
   const titles:Partial<Record<ComponentKind,string>>={sr:'SR',dff:'D',jkff:'JK',tff:'T'};
   return <g className="logic-symbol" aria-hidden="true">
