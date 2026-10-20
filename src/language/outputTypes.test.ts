@@ -34,3 +34,12 @@ describe('arithmetic and comma-separated OUTPUT values',()=>{
     expect(messages[0]).toEqual({type:'output',lines:['74']});
   });
 });
+
+describe('numeric literal types shared with auto declaration', () => {
+  it('keeps whole-valued decimal constants REAL', () => {
+    expect(() => compile('CONSTANT N ← 3.0\nDECLARE Count : INTEGER\nCount ← N')).toThrow(/Cannot assign REAL/);
+    expect(() => compile('OUTPUT 3.0 DIV 2')).toThrow(/INTEGER/);
+    expect(() => compile('OUTPUT MOD(3.0, 2)')).toThrow(/INTEGER/);
+    expect(execute(compile('OUTPUT 3.0 + 4, ",", 3 DIV 2').ast).output).toEqual(['7,1']);
+  });
+});

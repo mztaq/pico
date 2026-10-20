@@ -1,3 +1,4 @@
+import { assignable, binaryType, BUILTINS, builtinType, comparable, numberLiteralType, numeric } from './typeRules';
 import type {
   CallExpression,
   DataType,
@@ -32,11 +33,6 @@ type Routine = {
   parameters: { name: string; dataType: DataType }[];
   returnType?: DataType;
 };
-
-const numeric = (t: Type) => t === 'INTEGER' || t === 'REAL';
-// INTEGER values are also valid for REAL variables.
-const sameOrPromotable = (actual: Type, expected: Type) =>
-  actual === expected || (expected === 'REAL' && actual === 'INTEGER');
 
 export function validate(program: Program): void {
   const symbols = new Symbols();
@@ -296,7 +292,7 @@ function expressionType(
         (Number.isInteger(e.value) && !Number.isSafeInteger(e.value))
       )
         fail('Number is outside the supported safe range.', e);
-      return Number.isInteger(e.value) ? 'INTEGER' : 'REAL';
+      return numberLiteralType(e);
     case 'StringLiteral':
       return e.dataType ?? 'STRING';
     case 'BooleanLiteral':
@@ -338,11 +334,7 @@ function expressionType(
           ensureInteger(l, e.left.line, `${e.operator} needs INTEGER values.`);
           ensureInteger(r, e.right.line, `${e.operator} needs INTEGER values.`);
         }
-        return ['DIV', 'MOD'].includes(e.operator)
-          ? 'INTEGER'
-          : l === 'REAL' || r === 'REAL' || e.operator === '/'
-            ? 'REAL'
-            : 'INTEGER';
+        return binaryType(e.operator, l as DataType, r as DataType) ?? 'UNKNOWN';
       }
       return 'UNKNOWN';
     }
@@ -358,19 +350,7 @@ function checkCall(
   asValue: boolean,
 ): Type {
   const name = e.name.toUpperCase();
-  const builtins: Record<string, { args: number; returnType: DataType }> = {
-    DIV: { args: 2, returnType: 'INTEGER' },
-    MOD: { args: 2, returnType: 'INTEGER' },
-    ROUND: { args: 1, returnType: 'REAL' },
-    LENGTH: { args: 1, returnType: 'INTEGER' },
-    SUBSTRING: { args: 3, returnType: 'STRING' },
-    UCASE: { args: 1, returnType: 'STRING' },
-    LCASE: { args: 1, returnType: 'STRING' },
-    UPPER: { args: 1, returnType: 'STRING' },
-    LOWER: { args: 1, returnType: 'STRING' },
-    RANDOM: { args: 0, returnType: 'REAL' },
-  };
-  const builtin = builtins[name];
+  const builtin = BUILTINS[name];
   if (builtin) {
     if (name === 'ROUND' && (e.arguments.length < 1 || e.arguments.length > 2))
       fail('ROUND takes one or two arguments.', e);
@@ -409,10 +389,7 @@ function checkCall(
           );
       });
     if (!asValue) fail(`${name} is a FUNCTION and must be used as a value.`, e);
-    return ['UCASE', 'LCASE', 'UPPER', 'LOWER'].includes(name) &&
-      argumentTypes[0] === 'CHAR'
-      ? 'CHAR'
-      : builtin.returnType;
+    return builtinType(name, argumentTypes as DataType[]) ?? 'UNKNOWN';
   }
   const routine = routines.get(name);
   if (!routine)
@@ -492,9 +469,6 @@ function ensureNumeric(type: Type, line: number, message: string) {
 function ensureBoolean(type: Type, line: number, message: string) {
   if (type !== 'BOOLEAN') fail(message, { line });
 }
-function comparable(a: Type, b: Type) {
-  return (numeric(a) && numeric(b)) || a === b;
-}
 function ensureAssignable(
   actual: Type,
   expected: Type,
@@ -504,11 +478,10 @@ function ensureAssignable(
 ) {
   if (
     !(
-      sameOrPromotable(actual, expected) ||
+      assignable(actual, expected) ||
       (expected === 'CHAR' &&
         expression?.kind === 'StringLiteral' &&
-        [...expression.value].length === 1) ||
-      (expected === 'STRING' && actual === 'CHAR')
+        [...expression.value].length === 1)
     )
   )
     fail(message, { line });
