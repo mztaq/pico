@@ -1,4 +1,4 @@
-import type { DataType, Declaration, Expression, InferredInput, Program, Statement, Target } from './ast';
+import type { DataType, Declaration, Expression, Program, Statement, Target } from './ast';
 import { tokenize } from './lexer';
 import { parse } from './parser';
 import { assignable, binaryType, BUILTINS, builtinType, comparable, DATA_TYPES, numberLiteralType, unaryType } from './typeRules';
@@ -23,49 +23,8 @@ export function synchronizeAutoDeclarations(source: string, previouslyGenerated:
   catch { return { code: source, generatedTypes: { ...previouslyGenerated } }; }
 
   const lines = source.split(/\r?\n/);
-  const { solver, scopes } = analyze(program, previouslyGenerated, globalInsertionLine(lines));
-  solver.solve();
-  const chosen = solver.choose();
-  const generatedTypes: Record<string, DataType> = {};
-  const insertions: { line: number; declarations: string[] }[] = [];
-  const removals = new Set<number>();
-  let runtimeInputKeys: Set<string> | undefined;
-  for (const scope of scopes) {
-    const declarations: string[] = [];
-    for (const [name, binding] of scope.candidates) {
-      const type = binding.arrayDepth === 0 ? chosen.get(binding.slot) : undefined;
-      const key = `${scope.key}::${name}`;
-      if (!type) {
-        if (binding.declaration) {
-          runtimeInputKeys ??= new Set(solver.runtimeInputs(scopes).map(input => `${input.scope}::${input.name}`));
-          const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          if (runtimeInputKeys.has(key) && new RegExp(`^\\s*DECLARE\\s+${escapedName}\\s*:`,'i').test(lines[binding.declaration.line - 1]!)) {
-            const index = binding.declaration.line - 1;
-            const comment = lines[index]!.indexOf('//');
-            if (comment >= 0) lines[index] = lines[index]!.match(/^\s*/)![0] + lines[index]!.slice(comment);
-            else removals.add(index);
-            continue;
-          }
-        }
-        // Retain existing generated declarations on ambiguous/conflicting edits so
-        // the normal compiler can explain the error without silently changing intent.
-        if (binding.declaration) generatedTypes[key] = binding.declaration.dataType;
-        continue;
-      }
-      if (binding.declaration) replaceDeclarationType(lines, binding.declaration, type);
-      else declarations.push(`DECLARE ${name} : ${type}`);
-      generatedTypes[key] = type;
-    }
-    if (declarations.length) insertions.push({ line: scope.insertionLine, declarations });
-  }
-  const edits = [...insertions.map(item => ({ ...item, count: 0 })), ...[...removals].map(line => ({ line, count: 1, declarations: [] as string[] }))];
-  for (const edit of edits.sort((a, b) => b.line - a.line || b.count - a.count)) lines.splice(edit.line, edit.count, ...edit.declarations);
-  return { code: lines.join(source.includes('\r\n') ? '\r\n' : '\n'), generatedTypes };
-}
-
-function analyze(program: Program, tracked: Record<string, DataType> = {}, insertionLine = 0) {
-  const solver = new Inference(tracked);
-  const global = solver.scope(program.statements, 'global', insertionLine);
+  const solver = new Inference(previouslyGenerated);
+  const global = solver.scope(program.statements, 'global', globalInsertionLine(lines));
   const scopes = [global];
   for (const statement of program.statements) {
     if (statement.kind !== 'Procedure' && statement.kind !== 'Function') continue;
@@ -79,14 +38,29 @@ function analyze(program: Program, tracked: Record<string, DataType> = {}, inser
     solver.block(statement.body, local, statement.kind === 'Function' ? statement.returnType : undefined);
     scopes.push(local);
   }
-  return { solver, scopes };
-}
-
-/** Only unknown INPUT bindings and their derived values qualify for deferred checking. */
-export function inferRuntimeInputs(program: Program): InferredInput[] {
-  const { solver, scopes } = analyze(program);
   solver.solve();
-  return solver.runtimeInputs(scopes);
+  const chosen = solver.choose();
+  const generatedTypes: Record<string, DataType> = {};
+  const insertions: { line: number; declarations: string[] }[] = [];
+  for (const scope of scopes) {
+    const declarations: string[] = [];
+    for (const [name, binding] of scope.candidates) {
+      const type = binding.arrayDepth === 0 ? chosen.get(binding.slot) : undefined;
+      const key = `${scope.key}::${name}`;
+      if (!type) {
+        // Retain existing generated declarations on ambiguous/conflicting edits so
+        // the normal compiler can explain the error without silently changing intent.
+        if (binding.declaration) generatedTypes[key] = binding.declaration.dataType;
+        continue;
+      }
+      if (binding.declaration) replaceDeclarationType(lines, binding.declaration, type);
+      else declarations.push(`DECLARE ${name} : ${type}`);
+      generatedTypes[key] = type;
+    }
+    if (declarations.length) insertions.push({ line: scope.insertionLine, declarations });
+  }
+  for (const insertion of insertions.sort((a, b) => b.line - a.line)) lines.splice(insertion.line, 0, ...insertion.declarations);
+  return { code: lines.join(source.includes('\r\n') ? '\r\n' : '\n'), generatedTypes };
 }
 
 export function autoDeclareVariables(source: string): string { return synchronizeAutoDeclarations(source).code; }
@@ -97,7 +71,6 @@ class Inference {
   private readonly relations: Relation[] = [];
   private readonly expressions = new Map<Expression, Slot>();
   private readonly bindings: Binding[] = [];
-  private readonly inputs = new Set<Slot>();
   constructor(private readonly tracked: Record<string, DataType>) {}
 
   private slot(type?: DataType): Slot { return { types: new Set(type ? [type] : DATA_TYPES), relations: new Set() }; }
@@ -227,7 +200,7 @@ class Inference {
           this.constrain([value, target], ([actual, expected]) => assignable(actual!, expected!) || (charLiteral && expected === 'CHAR'));
           break;
         }
-        case 'Input': this.inputs.add(this.target(statement.target, scope)); break;
+        case 'Input': this.target(statement.target, scope); break;
         case 'Output': statement.expressions.forEach(expression => this.expression(expression, scope)); break;
         case 'IfStatement':
           this.require(this.expression(statement.condition, scope), 'BOOLEAN');
@@ -287,30 +260,6 @@ class Inference {
         }
       });
     }
-  }
-
-  runtimeInputs(scopes: Scope[]): InferredInput[] {
-    const dependent = new Set(this.inputs);
-    const dependsOnInput = (expression: Expression): boolean => {
-      if (dependent.has(this.expressions.get(expression)!)) return true;
-      if (expression.kind === 'UnaryExpression') return dependsOnInput(expression.operand);
-      if (expression.kind === 'BinaryExpression') return dependsOnInput(expression.left) || dependsOnInput(expression.right);
-      if (expression.kind === 'CallExpression') return expression.arguments.some(dependsOnInput);
-      return false;
-    };
-    for (let pass = 0; pass < this.bindings.length; pass += 1) {
-      let changed = false;
-      for (const binding of this.bindings) {
-        if (!dependent.has(binding.slot) && binding.assignments.some(dependsOnInput)) { dependent.add(binding.slot); changed = true; }
-      }
-      if (!changed) break;
-    }
-    const chosen = this.choose();
-    return scopes.flatMap(scope => [...scope.candidates].flatMap(([name, binding]) => {
-      if (binding.arrayDepth !== 0 || !binding.slot.types.size || !dependent.has(binding.slot)) return [];
-      const known = chosen.get(binding.slot);
-      return [{ scope: scope.key, name, types: known ? [known] : [...binding.slot.types] }];
-    }));
   }
 
   choose(): Map<Slot, DataType> {
