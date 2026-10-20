@@ -31,10 +31,10 @@ export function ConsolePanel({ entries, error, pendingInput, inputValue, onInput
       {pendingInput && <div className="console-input-line">
         <form className="console-input-form" aria-label="Console input" onSubmit={event => { event.preventDefault(); onSubmit(); }}>
           <span className="output-prompt" aria-hidden="true">❯</span>
-          <input ref={inputRef} aria-label={`Value for ${pendingInput.variable}`} aria-describedby="console-input-hint" autoComplete="off" spellCheck={false} value={inputValue} onChange={event => onInput(event.target.value)} placeholder={`Enter ${pendingInput.dataType} value`} />
+          <input ref={inputRef} aria-label={`Value for ${pendingInput.variable}`} aria-describedby="console-input-hint" autoComplete="off" spellCheck={false} value={inputValue} onChange={event => onInput(event.target.value)} placeholder={pendingInput.dataType === 'AUTO' ? 'Enter a value. Type detected automatically' : `Enter ${pendingInput.dataType} value`} />
           <button className="console-input-submit" type="submit">Send</button>
         </form>
-        <p className="console-input-hint" id="console-input-hint" role="status">Waiting for {pendingInput.variable} ({pendingInput.dataType}) · line {pendingInput.line}. Press Enter to continue.</p>
+        <p className="console-input-hint" id="console-input-hint" role="status">Waiting for {pendingInput.variable} ({pendingInput.dataType === 'AUTO' ? 'type detected automatically' : pendingInput.dataType}) · line {pendingInput.line}. Press Enter to continue.</p>
       </div>}
       {running && !pendingInput && <p className="console-running" role="status">{status || 'Running…'}</p>}
       {!entries.length && !error && !pendingInput && !running && <div className="console-placeholder"><div className="console-placeholder-mark"><Terminal size={18} /></div><div><strong>{ran ? 'Program finished without output' : 'Your output will appear here'}</strong><p>Run your program. Enter values here when it asks for input.</p></div></div>}

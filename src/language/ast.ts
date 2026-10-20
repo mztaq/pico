@@ -1,6 +1,8 @@
 export interface SourceSpan { line: number; column: number; endColumn: number; }
 export interface Token extends SourceSpan { type: string; value: string; }
-export interface Program { kind: 'Program'; statements: Statement[]; }
+export interface Program { kind: 'Program'; statements: Statement[]; inferredInputs?: InferredInput[]; }
+/** Internal Auto-declare metadata, never a new pseudocode keyword or data type. */
+export interface InferredInput { scope: string; name: string; types: DataType[]; }
 export type DataType = 'INTEGER' | 'REAL' | 'CHAR' | 'STRING' | 'BOOLEAN';
 export interface ArraySpec { bounds: { start: number; end: number }[]; dataType: DataType; }
 export type Target = { name: string; indexes: Expression[]; line: number; column: number; endColumn: number };

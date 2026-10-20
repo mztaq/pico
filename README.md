@@ -120,7 +120,7 @@ Pico implements a Cambridge-style pseudocode subset:
 | **Files** | `OPENFILE`, `READFILE`, `WRITEFILE` and `CLOSEFILE` using project practice files. |
 | **Built-ins** | `LENGTH`, `SUBSTRING`, `UCASE`, `LCASE`, `DIV`, `MOD`, `ROUND` and `RANDOM`. |
 
-Variables require declarations. An undeclared `FOR` counter is introduced as an `INTEGER` automatically. The optional **Auto-declare** editor setting infers `INTEGER`, `REAL`, `CHAR`, `STRING` and `BOOLEAN` from assignments and unambiguous usage, and is enabled by default. It updates declarations it generated while preserving manual declarations. Ambiguous inputs and arrays with unknown bounds still need explicit declarations. See [Auto-declare type inference](docs/auto-declare.md) for examples and limitations. Disable it in Settings to practise writing declarations yourself.
+Variables require declarations. An undeclared `FOR` counter is introduced as an `INTEGER` automatically. The optional **Auto-declare** editor setting infers `INTEGER`, `REAL`, `CHAR`, `STRING` and `BOOLEAN` from assignments and unambiguous usage, and is enabled by default. It updates declarations it generated while preserving manual declarations. Inputs whose types remain unresolved are detected from the entered values at runtime, without guessing from variable names. Manual declarations stay strict, and arrays with unknown bounds still need declarations. See [Auto-declare type inference](docs/auto-declare.md) for examples and limitations. Disable it in Settings to practise writing declarations yourself.
 
 `OUTPUT` joins expressions without inserting spaces. Include spaces in string literals where needed.
 
