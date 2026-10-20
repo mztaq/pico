@@ -8,7 +8,7 @@ export type PanelKey = 'console' | 'debugger';
 export interface ConsoleEntry { kind: 'output' | 'input' | 'note' | 'error'; text: string; }
 interface ConsoleProps {
   entries: ConsoleEntry[];
-  error?: { message: string; line?: number; column?: number; tip?: string; diagnostic?: string } | null;
+  error?: { message: string; line?: number; column?: number; diagnostic?: string } | null;
   pendingInput: PendingInput | null;
   inputValue: string;
   onInput: (value: string) => void;
@@ -27,7 +27,7 @@ export function ConsolePanel({ entries, error, pendingInput, inputValue, onInput
   return <div className="console-panel">
     <div className="console-output-area">
       {entries.length > 0 && <div className="output-list" role="log" aria-label="Console transcript" aria-live="polite">{entries.map((entry, index) => <div className={entry.kind === 'error' ? 'console-entry-error' : entry.kind === 'note' ? 'console-entry-note' : `output-line ${entry.kind === 'input' ? 'console-entry-input' : ''}`} key={index}><span className="output-prompt" aria-hidden="true">{entry.kind === 'error' ? 'Error' : entry.kind === 'note' ? '✦' : entry.kind === 'input' ? '❯' : '›'}</span><span>{entry.text || <span className="muted">{entry.kind === 'input' ? '(empty input)' : 'empty line'}</span>}</span></div>)}</div>}
-      {error && <div className="runtime-error-card" role="alert" onClick={onErrorClick} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onErrorClick?.(); }} tabIndex={onErrorClick ? 0 : undefined} title={onErrorClick ? errorActionLabel ?? 'Jump to the error in the editor' : undefined}><div className="error-heading"><CircleX size={15} /> <strong>{error.line ? `Error · line ${error.line}` : 'Error'}</strong></div>{error.diagnostic ? <pre className="diagnostic-message">{error.diagnostic}</pre> : <p>{error.message}</p>}{error.tip && <div className="error-tip">Tip · {error.tip}</div>}</div>}
+      {error && <div className="runtime-error-card" role="alert" onClick={onErrorClick} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onErrorClick?.(); }} tabIndex={onErrorClick ? 0 : undefined} title={onErrorClick ? errorActionLabel ?? 'Jump to the error in the editor' : undefined}><div className="error-heading"><CircleX size={15} /> <strong>{error.line ? `Error · line ${error.line}` : 'Error'}</strong></div>{error.diagnostic ? <pre className="diagnostic-message">{error.diagnostic}</pre> : <p>{error.message}</p>}</div>}
       {pendingInput && <div className="console-input-line">
         <form className="console-input-form" aria-label="Console input" onSubmit={event => { event.preventDefault(); onSubmit(); }}>
           <span className="output-prompt" aria-hidden="true">❯</span>

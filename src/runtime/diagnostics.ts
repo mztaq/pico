@@ -72,19 +72,14 @@ export function findSuggestions(source: string): Suggestion[] {
   });
   return result;
 }
-export function friendlyError(error: unknown, source?: string): { message: string; line?: number; column?: number; tip?: string; diagnostic?: string } {
+export function friendlyError(error: unknown, source?: string): { message: string; line?: number; column?: number; diagnostic?: string } {
   if (error instanceof Error && 'line' in error) {
     const positioned = error as Error & { line: number; column?: number };
     const text = error.message;
-    let tip: string | undefined;
-    if (/cannot assign|must return|needs numeric|must be BOOLEAN|must be an INTEGER|type/i.test(text)) tip = 'Check the declared data type. Cambridge pseudocode does not silently convert incompatible values; use a compatible literal, expression, or variable.';
-    else if (/not been declared|used before declaration/i.test(text)) tip = 'Declare each variable before its first use.';
-    else if (/ENDIF|ENDWHILE|NEXT/i.test(text)) tip = 'Block markers close a block and should each be on their own line.';
-    else if (/arrow|←|assign/i.test(text)) tip = 'Cambridge assignment uses ← (or <-), not =.';
     const diagnostic = source && positioned.line
       ? formatDiagnostic(error, source, positioned.line, positioned.column)
       : undefined;
-    return { message: text, line: positioned.line, column: positioned.column, tip, diagnostic };
+    return { message: text, line: positioned.line, column: positioned.column, diagnostic };
   }
   return { message: error instanceof Error ? error.message : 'Something unexpected happened while running this program.' };
 }

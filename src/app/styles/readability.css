@@ -65,7 +65,6 @@
 .panel-empty > strong, .console-placeholder strong { color: var(--text); font-size: 15px; }
 .panel-empty p, .console-placeholder p { color: var(--muted); font-size: 13px; line-height: 1.65; }
 .runtime-error-card p { color: var(--text); font-size: 13px; line-height: 1.65; }
-.error-tip { font-size: 13px; line-height: 1.65; }
 .pico-app { --panel-font-size: 14px; }
 .dock-tab-row { overflow-x: auto; overflow-y: hidden; }
 .dock-tab { flex-shrink: 0; font-size: 11px; }
