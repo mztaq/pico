@@ -31,6 +31,7 @@ it('updates text annotations immediately and restores them through undo and redo
   await act(async()=>host.querySelector<HTMLButtonElement>('[title="Redo"]')!.click());
   expect(nodes()[0]!.querySelector('.logic-symbol-letter')?.textContent).toBe('Input A');
   await select(0);await label('');expect(nodes()[0]!.querySelector('.logic-symbol-letter')?.textContent).toBe('Text');
+  expect(host.querySelector<HTMLInputElement>('[aria-label="Component label"]')?.placeholder).toBe('Text');
 });
 it('shows edited component labels without replacing their logic symbol or signal',async()=>{
   await select(1);await label('Door sensor');
