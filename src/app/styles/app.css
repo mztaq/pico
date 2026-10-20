@@ -250,7 +250,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .runtime-error-card { max-width: 760px; padding: 10px 12px; border: 1px solid rgba(229,130,138,.2); border-radius: 7px; background: rgba(229,130,138,.065); }
 .error-heading { display: flex; align-items: center; gap: 6px; color: #ec9299; font-size: 10px; }
 .runtime-error-card p { margin: 7px 0 0 21px; color: #e3c2c5; font-family: var(--font-code); font-size: 10px; line-height: 1.5; }
-.error-tip { margin: 8px 0 0 21px; color: #bfaa84; font-size: 9px; }
 
 .debugger-panel { min-height: 100%; padding: 9px 13px; display: flex; flex-direction: column; gap: 9px; }
 .debugger-controls, .step-actions, .step-indicator { display: flex; align-items: center; }
