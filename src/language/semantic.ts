@@ -332,14 +332,6 @@ function expressionType(
         return 'BOOLEAN';
       }
       if (['+', '-', '*', '/', '^', 'DIV', 'MOD'].includes(e.operator)) {
-        // Cambridge OUTPUT examples commonly concatenate text with numbers
-        // (for example: "Total: " + Total). The interpreter formats the
-        // non-string operand, so preserve that language behavior here.
-        if (
-          e.operator === '+' &&
-          (['STRING', 'CHAR'].includes(l) || ['STRING', 'CHAR'].includes(r))
-        )
-          return 'STRING';
         ensureNumeric(l, e.left.line, `${e.operator} needs numeric values.`);
         ensureNumeric(r, e.right.line, `${e.operator} needs numeric values.`);
         if (['DIV', 'MOD'].includes(e.operator)) {

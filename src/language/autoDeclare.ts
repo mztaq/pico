@@ -203,7 +203,6 @@ function inferExpression(expression: Expression, symbols: SymbolTypes, routines:
       if (['=', '<>', '!=', '<', '<=', '>', '>=', 'AND', 'OR'].includes(operator)) return 'BOOLEAN';
       const left = inferExpression(expression.left, symbols, routines);
       const right = inferExpression(expression.right, symbols, routines);
-      if (operator === '+' && (left === 'STRING' || right === 'STRING')) return 'STRING';
       if (operator === 'DIV' || operator === 'MOD') return 'INTEGER';
       if (operator === '/') return 'REAL';
       if (['+', '-', '*', '^'].includes(operator) && left && right && ['INTEGER', 'REAL'].includes(left) && ['INTEGER', 'REAL'].includes(right)) return left === 'REAL' || right === 'REAL' ? 'REAL' : 'INTEGER';
