@@ -72,10 +72,19 @@ function themeExtensions(theme: PicoTheme): Extension[] {
     '.cm-panels': { backgroundColor: ui.surfaceRaised, color: theme.text },
     '.cm-panel.cm-search input, .cm-panel.cm-search button': { backgroundColor: ui.surfaceInput, color: theme.text, border: `1px solid ${ui.border}`, borderRadius: '6px' },
     '.cm-tooltip': { border: `1px solid ${ui.tooltipBorder}`, borderRadius: '10px', backgroundColor: ui.tooltipBg, color: theme.text, boxShadow: '0 18px 44px rgba(0,0,0,.4)' },
-    '.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: ui.surfaceHover, color: theme.text, outline: theme.highContrast ? `1px solid ${theme.text}` : 'none', outlineOffset: '-1px' },
-    '.cm-tooltip-autocomplete > ul': { fontFamily: 'var(--font-code)', fontSize: '12px' },
-    '.cm-completionLabel': { color: syntax.func },
-    '.cm-completionDetail': { color: theme.muted, fontStyle: 'normal', marginLeft: '10px' },
+    '.cm-tooltip.cm-tooltip-autocomplete': { backgroundColor: ui.tooltipBg, color: theme.text, borderColor: ui.tooltipBorder, borderRadius: '8px', overflow: 'hidden', maxWidth: 'calc(100vw - 24px)' },
+    '.cm-tooltip.cm-tooltip-autocomplete > ul': { fontFamily: 'var(--font-code)', fontSize: 'var(--pico-completion-font-size)', lineHeight: '1.5', minWidth: '260px', maxWidth: 'min(520px, calc(100vw - 24px))', maxHeight: '300px', padding: '5px 0' },
+    '.cm-tooltip.cm-tooltip-autocomplete > ul > li': { padding: '6px 12px', lineHeight: '1.5', minHeight: '34px', boxSizing: 'border-box', color: theme.text },
+    '.cm-tooltip.cm-tooltip-autocomplete > ul > li:hover': { backgroundColor: ui.surfaceHover, color: theme.text },
+    '.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected="true"]': { backgroundColor: ui.accentSoft, color: theme.text, outline: theme.highContrast ? `1px solid ${theme.accent}` : 'none', outlineOffset: '-1px' },
+    '.cm-completionLabel': { color: theme.text },
+    '.cm-completionMatchedText': { color: theme.accent, fontWeight: '700', textDecoration: 'none' },
+    '.cm-completionDetail': { color: theme.muted, fontSize: '0.85em', fontStyle: 'normal', marginLeft: '14px' },
+    '.cm-completionIcon': { color: theme.muted, opacity: '1', fontSize: '1em', width: '1.3em', paddingRight: '8px' },
+    '.cm-completionIcon-keyword': { color: syntax.keyword },
+    '.cm-completionIcon-function': { color: syntax.func },
+    '.cm-completionIcon-variable, .cm-completionIcon-constant': { color: syntax.variable },
+    '.cm-completionIcon-type': { color: syntax.type },
   }, { dark });
 
   const highlight = HighlightStyle.define([
@@ -138,7 +147,7 @@ const indentationGuides = ViewPlugin.fromClass(class {
 }, { decorations: instance => instance.decorations });
 
 function createPreferences(preferences: EditorPreferences, language: CompilerLanguage): Extension[] {
-  const options: Extension[] = [EditorView.theme({ '&': { fontSize: `${preferences.fontSize}px` } })];
+  const options: Extension[] = [EditorView.theme({ '&': { fontSize: `${preferences.fontSize}px`, '--pico-completion-font-size': `${Math.max(15, Math.min(20, preferences.fontSize - 2))}px` } })];
   if (preferences.autocomplete) {
     options.push(autocompletion({ ...(language === 'pseudocode' ? { override: [completionSource] } : {}), activateOnTyping: true, maxRenderedOptions: 9, defaultKeymap: true }));
   }
