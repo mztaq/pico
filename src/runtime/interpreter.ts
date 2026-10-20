@@ -727,9 +727,9 @@ class Interpreter {
     const right = (yield* this.evaluate(b));
     switch (op) {
       case '+':
-        return typeof left === 'string' || typeof right === 'string'
-          ? this.format(left) + this.format(right)
-          : this.finite(Number(left) + Number(right), line);
+        if (typeof left !== 'number' || typeof right !== 'number')
+          throw new RuntimeError('+ needs numeric values. Use commas to combine values in OUTPUT.', line, 'type');
+        return this.finite(left + right, line);
       case '-':
         return this.finite(Number(left) - Number(right), line);
       case '*':
