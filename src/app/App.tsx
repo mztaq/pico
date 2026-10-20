@@ -125,9 +125,9 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const theme = getTheme(settings.theme);
   const parsed = useMemo<ParseState>(() => {
     if (isPython) return { ast: null, error: null };
-    try { const compilation = compile(activeFile.code, { autoDeclare: settings.autoDeclare }); return { ast: compilation.ast, error: null }; }
+    try { const compilation = compile(activeFile.code); return { ast: compilation.ast, error: null }; }
     catch (error) { return { ast: null, error }; }
-  }, [activeFile.code, isPython, settings.autoDeclare]);
+  }, [activeFile.code, isPython]);
   const parseError = parsed.error ? friendlyError(parsed.error, activeFile.code) : null;
   const visibleError = executionError ?? parseError;
   const suggestions = useMemo(() => !isPython && settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeFile.code).slice(0, 3) : [], [activeFile.code, settings.autocorrect, dismissedSuggestions]);
@@ -323,7 +323,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   function stopExecution() { jobRef.current?.cancel(); }
   function submitConsoleInput() {
     if (!pendingInput || !jobRef.current?.provideInput(pendingInput.id, inputValue)) return;
-    const message = (pendingInput.dataType === 'STRING' || pendingInput.dataType === 'AUTO') ? inputEasterEgg(inputValue) : undefined;
+    const message = pendingInput.dataType === 'STRING' ? inputEasterEgg(inputValue) : undefined;
     consoleCount.current += message ? 2 : 1;
     if (consoleCount.current > MAX_CONSOLE_LINES) setOutputTruncated(true);
     setConsoleEntries(entries => [...entries, { kind: 'input' as const, text: inputValue }, ...(message ? [{ kind: 'note' as const, text: message }] : [])].slice(-MAX_CONSOLE_LINES));
@@ -402,7 +402,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           <SettingRow title="Autocomplete" detail="Suggest keywords and declared names as you type" checked={settings.autocomplete} onChange={value => changeSettings({ autocomplete: value })} />
           {!isPython && <SettingRow title="Autocorrect" detail="Spot likely keyword misspellings" checked={settings.autocorrect} onChange={value => { changeSettings({ autocorrect: value }); setDismissedSuggestions(false); }} />}
           {!isPython && <SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} />}
-          {!isPython && <SettingRow title="Auto-declare variables" detail="Detect types from code and input" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />}
+          {!isPython && <SettingRow title="Auto-declare variables" detail="Infer types from assignments and usage" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />}
           <ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} />
           <label className="font-setting"><span>Tool dock position</span><select value={settings.dockSide} onChange={event => changeSettings({ dockSide: event.target.value as PicoSettings['dockSide'] })}><option value="bottom">Bottom</option><option value="right">Right</option></select></label>
           <label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="24" value={settings.fontSize} onChange={event => changeSettings({ fontSize: Number(event.target.value) })} /></label>

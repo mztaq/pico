@@ -1,4 +1,4 @@
-import { assignable, binaryType, BUILTINS, builtinType, comparable as comparableTypes, numberLiteralType, numeric as numericType } from './typeRules';
+import { assignable, binaryType, BUILTINS, builtinType, comparable, numberLiteralType, numeric } from './typeRules';
 import type {
   CallExpression,
   DataType,
@@ -19,9 +19,7 @@ export class PicoTypeError extends Error {
   }
 }
 
-type Type = DataType | 'UNKNOWN' | 'DEFERRED';
-const numeric = (type: Type) => type === 'DEFERRED' || numericType(type);
-const comparable = (left: Type, right: Type) => left === 'DEFERRED' || right === 'DEFERRED' || comparableTypes(left, right);
+type Type = DataType | 'UNKNOWN';
 type Symbol = { type: Type; arrayDepth: number; constant: boolean };
 class Symbols extends Map<string, Symbol> {
   constructor(private readonly parent?: Symbols) {
@@ -39,7 +37,6 @@ type Routine = {
 export function validate(program: Program): void {
   const symbols = new Symbols();
   const routines = new Map<string, Routine>();
-  seedInputs(program, 'global', symbols);
   for (const statement of program.statements) {
     if (statement.kind === 'Procedure' || statement.kind === 'Function') {
       const name = statement.name.toUpperCase();
@@ -85,7 +82,6 @@ export function validate(program: Program): void {
         { type: p.dataType, arrayDepth: 0, constant: false },
         s,
       );
-    seedInputs(program, `routine:${s.name.toUpperCase()}`, local);
     checkBlock(
       s.body,
       local,
@@ -94,13 +90,6 @@ export function validate(program: Program): void {
     );
     if (s.kind === 'Function' && !alwaysReturns(s.body))
       fail(`${s.name} must RETURN a value on every path.`, s);
-  }
-}
-
-function seedInputs(program: Program, scope: string, symbols: Symbols): void {
-  for (const inferred of program.inferredInputs ?? []) {
-    if (inferred.scope !== scope) continue;
-    symbols.set(inferred.name, { type: inferred.types.length === 1 ? inferred.types[0]! : 'DEFERRED', arrayDepth: 0, constant: false });
   }
 }
 
@@ -345,7 +334,6 @@ function expressionType(
           ensureInteger(l, e.left.line, `${e.operator} needs INTEGER values.`);
           ensureInteger(r, e.right.line, `${e.operator} needs INTEGER values.`);
         }
-        if (l === 'DEFERRED' || r === 'DEFERRED') return ['DIV', 'MOD'].includes(e.operator) ? 'INTEGER' : 'DEFERRED';
         return binaryType(e.operator, l as DataType, r as DataType) ?? 'UNKNOWN';
       }
       return 'UNKNOWN';
@@ -376,32 +364,31 @@ function checkCall(
     );
     if (['DIV', 'MOD'].includes(name))
       argumentTypes.forEach((t, i) => {
-        if (t !== 'INTEGER' && t !== 'DEFERRED')
+        if (t !== 'INTEGER')
           fail(`${name} argument ${i + 1} must be INTEGER.`, e.arguments[i]!);
       });
     if (name === 'ROUND') {
       if (!numeric(argumentTypes[0]!))
         fail('ROUND first argument must be numeric.', e.arguments[0]!);
-      if (argumentTypes[1] && argumentTypes[1] !== 'INTEGER' && argumentTypes[1] !== 'DEFERRED')
+      if (argumentTypes[1] && argumentTypes[1] !== 'INTEGER')
         fail('ROUND decimal places must be INTEGER.', e.arguments[1]!);
     }
     if (
       ['LENGTH', 'SUBSTRING', 'UCASE', 'LCASE', 'UPPER', 'LOWER'].includes(
         name,
       ) &&
-      !['STRING', 'CHAR', 'DEFERRED'].includes(argumentTypes[0]!)
+      !['STRING', 'CHAR'].includes(argumentTypes[0]!)
     )
       fail(`${name} first argument must be STRING.`, e.arguments[0]!);
     if (name === 'SUBSTRING')
       argumentTypes.slice(1).forEach((t, i) => {
-        if (t !== 'INTEGER' && t !== 'DEFERRED')
+        if (t !== 'INTEGER')
           fail(
             `SUBSTRING argument ${i + 2} must be INTEGER.`,
             e.arguments[i + 1]!,
           );
       });
     if (!asValue) fail(`${name} is a FUNCTION and must be used as a value.`, e);
-    if (argumentTypes.includes('DEFERRED')) return ['UCASE', 'LCASE', 'UPPER', 'LOWER'].includes(name) ? 'DEFERRED' : builtin.returnType;
     return builtinType(name, argumentTypes as DataType[]) ?? 'UNKNOWN';
   }
   const routine = routines.get(name);
@@ -446,8 +433,7 @@ function targetType(
       target,
     );
   target.indexes.forEach((i) => {
-    const type = expressionType(i, symbols, routines);
-    if (type !== 'INTEGER' && type !== 'DEFERRED')
+    if (expressionType(i, symbols, routines) !== 'INTEGER')
       fail('ARRAY indexes must be INTEGER values.', i);
   });
   return { type: found.type, arrayDepth: 0, constant: found.constant };
@@ -481,7 +467,7 @@ function ensureNumeric(type: Type, line: number, message: string) {
   if (!numeric(type)) fail(message, { line });
 }
 function ensureBoolean(type: Type, line: number, message: string) {
-  if (type !== 'BOOLEAN' && type !== 'DEFERRED') fail(message, { line });
+  if (type !== 'BOOLEAN') fail(message, { line });
 }
 function ensureAssignable(
   actual: Type,
@@ -492,7 +478,6 @@ function ensureAssignable(
 ) {
   if (
     !(
-      actual === 'DEFERRED' || expected === 'DEFERRED' ||
       assignable(actual, expected) ||
       (expected === 'CHAR' &&
         expression?.kind === 'StringLiteral' &&
@@ -509,7 +494,7 @@ function fail(message: string, node: { line: number; column?: number }): never {
 }
 
 function ensureInteger(type: Type, line: number, message: string) {
-  if (type !== 'INTEGER' && type !== 'DEFERRED') fail(message, { line });
+  if (type !== 'INTEGER') fail(message, { line });
 }
 function alwaysReturns(statements: Statement[]): boolean {
   return statements.some(
