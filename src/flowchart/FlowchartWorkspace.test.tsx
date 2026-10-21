@@ -31,11 +31,9 @@ async function change(element:HTMLInputElement|HTMLTextAreaElement|HTMLSelectEle
 const open=async()=>{await click([...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(b=>b.querySelector('h2')?.textContent==='Flowchart Builder')!);};
 beforeEach(async()=>{localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');(()=>{const p=exampleProject();saveCharts({projects:[p],activeId:p.id,tutorialCompleted:true});})();executions.length=0;vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));await open();});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
-it('uses the same compiler footer credits in the flowchart workspace',()=>{
-  const footer=container.querySelector('.flow-builder > footer.statusbar');
-  expect(footer).not.toBeNull();
-  expect([...footer!.querySelectorAll('.credit-item')].map(item=>item.textContent)).toEqual(['Deployed by Mustaqim 11 Boys Red','Made by Amar 11 Boys Blue']);
-  expect(footer!.querySelectorAll('.credit-divider')).toHaveLength(1);
+it('shows the flowchart workspace without a personal footer',()=>{
+  expect(container.querySelector('.flow-builder')).not.toBeNull();
+  expect(container.querySelector('footer')).toBeNull();
 });
 it('opens a themed canvas and replays the guided walkthrough from Help',async()=>{expect(container.querySelector('.flow-builder')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');expect(container.querySelectorAll('.flow-palette-block[draggable="true"]')).toHaveLength(7);expect(container.querySelectorAll('.flow-node')).toHaveLength(5);await click(button('Help'));expect(container.querySelector('#flow-tour-title')?.textContent).toBe('Learn the flowchart workspace');expect(container.querySelector<HTMLButtonElement>('[aria-label="Go to home screen"]')?.disabled).toBe(true);expect(container.querySelectorAll('.flow-node')).toHaveLength(0);});
 it('adds, edits, connects, deletes, undoes and redoes blocks',async()=>{await click(container.querySelector<HTMLElement>('.flow-palette-block.flow-kind-process')!);expect(container.querySelectorAll('.flow-node')).toHaveLength(6);await change(container.querySelector('[aria-label="Block expression"]')!,'Total ← 2 * 5');expect(container.querySelector('.flow-node.is-selected')?.textContent).toContain('Total ← 2 * 5');await click(button('Delete block'));expect(container.querySelectorAll('.flow-node')).toHaveLength(5);await click(container.querySelector('[aria-label="Undo flowchart edit"]')!);expect(container.querySelectorAll('.flow-node')).toHaveLength(6);await click(container.querySelector('[aria-label="Redo flowchart edit"]')!);expect(container.querySelectorAll('.flow-node')).toHaveLength(5);
@@ -99,7 +97,7 @@ it.each([false,true])('skips the tutorial, preserves user charts and remembers d
 });
 it('opens new workspaces on an empty canvas without examples or a Variable block',async()=>{
   await click(container.querySelector('[aria-label="New flowchart workspace"]')!);
-  expect(container.querySelectorAll('.flow-node')).toHaveLength(0);expect(container.querySelector('.flow-empty-canvas')?.textContent).toContain('Made by Mustaqim and Amar');
+  expect(container.querySelectorAll('.flow-node')).toHaveLength(0);expect(container.querySelector('.flow-empty-canvas')?.textContent).toContain('Start your flowchart.');
   expect(container.querySelector('[aria-label="New flowchart from example"]')).toBeNull();expect(container.querySelector('.flow-palette-block.flow-kind-declare')).toBeNull();
   await click(container.querySelector<HTMLElement>('.flow-palette-block.flow-kind-start')!);expect(container.querySelector('.flow-empty-canvas')).toBeNull();
   expect(container.querySelector('.flow-node.has-error')).not.toBeNull();

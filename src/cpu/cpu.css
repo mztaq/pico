@@ -25,7 +25,7 @@
 
 /* The entire SVG, including the control unit, cache, RAM and explanation,
    must be visible in a normal-height desktop viewport. Do not force 680px
-   of diagram into a scrolling pane behind the fixed bottom credits. */
+   of diagram into a scrolling pane behind the fixed bottom bar. */
 .cpu-diagram-scroll{flex:0 1 auto;min-height:0;display:flex;justify-content:center;align-items:center;overflow:visible;padding:6px 18px 12px}
 .cpu-diagram{display:block;flex:none;width:min(100%,1100px);height:clamp(290px,calc(100dvh - 370px),510px);max-width:100%;max-height:none;min-height:0;overflow:visible}
 .cpu-content{min-height:0;overflow-y:auto;overflow-x:hidden}

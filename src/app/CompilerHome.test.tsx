@@ -25,30 +25,21 @@ beforeEach(async()=>{
   container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
-it('opens on a themed home screen with all workspace choices and creator credits',()=>{
+it('opens on a themed home screen with all workspace choices',()=>{
   expect(document.title).toBe('Pico | Home');
   expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
   expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio']);
-  expect(container.querySelector('.home-credits')?.textContent).toContain('Mustaqim');expect(container.querySelector('.home-credits')?.textContent).toContain('Amar');
+  expect(container.querySelector('footer')).toBeNull();
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
-it('shows left, center and right contributor credits in Logic Sim',async()=>{
-  const logicChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Logic Sim');
-  expect(logicChoice).toBeDefined();
-  await click(logicChoice!);
-  expect(document.title).toBe('Pico | Logic Sim');
-  const footer=container.querySelector('.logic-app > footer.statusbar.logic-footer');
-  expect(footer).not.toBeNull();
-  expect(footer!.querySelector('.attribution.logic-attribution')).not.toBeNull();
-  expect([...footer!.querySelectorAll('.credit-item')].map(item=>item.textContent)).toEqual([
-    'Deployed by Mustaqim 11 Boys Red',
-    'Logic Sim conceptualised by Mohamed Hamza 11 Boys Red',
-    'Made by Amar 11 Boys Blue',
-  ]);
-  expect(footer!.querySelectorAll('.credit-divider')).toHaveLength(2);
+it('shows the Logic Sim workspace without a personal footer',async()=>{
+  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
+  await click(choice!);
+  expect(container.querySelector('.logic-app')).not.toBeNull();
+  expect(container.querySelector('footer')).toBeNull();
 });
 it('shows the updated Logic Sim editor controls and shared theme picker',async()=>{
   const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
