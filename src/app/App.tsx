@@ -17,10 +17,9 @@ import { ResizeHandle } from './components/ResizeHandle';
 import { ThemePicker } from './components/ThemePicker';
 import { GuidedTutorial, tutorialSteps } from './components/GuidedTutorial';
 import { TutorialOffer } from './components/TutorialOffer';
-import { inputEasterEgg } from './inputEasterEgg';
 import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
-import { HomeScreen, Credits } from './components/HomeScreen';
+import { HomeScreen } from './components/HomeScreen';
 import {useExitWarning} from './components/useExitWarning';
 import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
@@ -99,8 +98,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const [selectedDoc, setSelectedDoc] = useState<ReferenceKeyword>('OUTPUT');
   const [docSearch, setDocSearch] = useState('');
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
-  const [creditsOpen, setCreditsOpen] = useState(false);
-  const [picoGreeting, setPicoGreeting] = useState(false);
   const [tutorialOfferOpen, setTutorialOfferOpen] = useState(() => {
     try { return Number(localStorage.getItem(isPython ? 'pico.python.visitCount.v1' : 'pico.visitCount.v1') ?? '0') === 0; }
     catch { return false; }
@@ -209,7 +206,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   function startTutorial() {
     tutorialPanelRef.current = activePanel;
     setTutorialStep(0); setTutorialOpen(true); setTutorialOfferOpen(false);
-    setSettingsOpen(false); setFileMenuOpen(false); setCreditsOpen(false);
+    setSettingsOpen(false); setFileMenuOpen(false);
   }
   function closeTutorial() { setTutorialOpen(false); setActivePanel(tutorialPanelRef.current); }
   function goToTutorialStep(step: number) {
@@ -284,7 +281,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   async function executeProgram(debug = false) {
     if (!isPython && !parsed.ast) return;
     jobRef.current?.cancel();
-    setConsoleEntries([]); setOutputTruncated(false); setPendingInput(null); setInputValue(''); setResult(null); setPicoGreeting(false); setActivePanel('console');
+    setConsoleEntries([]); setOutputTruncated(false); setPendingInput(null); setInputValue(''); setResult(null); setActivePanel('console');
     setOutputTruncated(false); setRunStatus(''); consoleCount.current = 0;
     function appendOutput(lines: string[], kind: 'output' | 'error') {
       if (jobRef.current !== job) return;
@@ -316,17 +313,15 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       : friendlyError(Object.assign(new Error(reply.error.message), { name: 'RuntimeError', line: reply.error.line }), activeFile.code)
       : null);
     if (next?.outputTruncated) setOutputTruncated(true);
-    setPicoGreeting(Boolean(next?.output.some(line=>line.trim().toUpperCase()==='PICO')));
     setActivePanel(debug && next && !reply?.error ? 'debugger' : 'console');
     if(next)updateProject(project=>({...project,virtualFiles:next.files,updatedAt:Date.now()}));
   }
   function stopExecution() { jobRef.current?.cancel(); }
   function submitConsoleInput() {
     if (!pendingInput || !jobRef.current?.provideInput(pendingInput.id, inputValue)) return;
-    const message = pendingInput.dataType === 'STRING' ? inputEasterEgg(inputValue) : undefined;
-    consoleCount.current += message ? 2 : 1;
+    consoleCount.current += 1;
     if (consoleCount.current > MAX_CONSOLE_LINES) setOutputTruncated(true);
-    setConsoleEntries(entries => [...entries, { kind: 'input' as const, text: inputValue }, ...(message ? [{ kind: 'note' as const, text: message }] : [])].slice(-MAX_CONSOLE_LINES));
+    setConsoleEntries(entries => [...entries, { kind: 'input' as const, text: inputValue }].slice(-MAX_CONSOLE_LINES));
     setPendingInput(null); setInputValue('');
   }
   function reorderPanels(target: PanelKey) { if (!draggedPanel || draggedPanel === target) return; const order = [...settings.panelOrder]; const from = order.indexOf(draggedPanel); const to = order.indexOf(target); if (from < 0 || to < 0) return; order.splice(from, 1); order.splice(to, 0, draggedPanel); changeSettings({ panelOrder: order }); setDraggedPanel(null); }
@@ -383,7 +378,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <header className="topbar" inert={tutorialOpen || tutorialOfferOpen}>
       <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
-      <button className="brand-lockup" title="About Pico" aria-label="Open Pico developer credits" onClick={() => setCreditsOpen(true)}><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">{isPython ? pythonVersion || "PYTHON" : "PSEUDOCODE"}</span></button>
+      <div className="brand-lockup"><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">{isPython ? pythonVersion || "PYTHON" : "PSEUDOCODE"}</span></div>
       <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />
       <div className="topbar-spacer" />
       <button className="toolbar-button compiler-switch" onClick={() => leaveWorkspace(isPython ? "pseudocode" : "python")}>{isPython ? "Go to Pseudocode Compiler" : "Go to Python Compiler"}</button>
@@ -450,7 +445,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
         <section className="tool-dock" data-tour="tools">
           <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span></button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
           <div className="dock-content" role="tabpanel" key={activePanel}>
-            {activePanel === 'console' && <><ConsolePanel entries={consoleEntries} error={executionError ?? parseError} onErrorClick={() => { const line = (executionError ?? parseError)?.line; if (line) editorRef.current?.goToLine(line); }} pendingInput={pendingInput} inputValue={inputValue} onInput={setInputValue} onSubmit={submitConsoleInput} running={running} ran={Boolean(result)} status={runStatus} outputTruncated={outputTruncated} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} />{picoGreeting && <div className="pico-easter-egg" role="status">Hi, I’m Pico. Thanks for saying hello.</div>}</>}
+            {activePanel === 'console' && <><ConsolePanel entries={consoleEntries} error={executionError ?? parseError} onErrorClick={() => { const line = (executionError ?? parseError)?.line; if (line) editorRef.current?.goToLine(line); }} pendingInput={pendingInput} inputValue={inputValue} onInput={setInputValue} onSubmit={submitConsoleInput} running={running} ran={Boolean(result)} status={runStatus} outputTruncated={outputTruncated} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} /></>}
             {activePanel === 'debugger' && <DebuggerPanel language={language} trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} truncated={result?.traceTruncated} error={executionError?.message} />}
           </div>
         </section>
@@ -460,8 +455,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     {tutorialOfferOpen && <TutorialOffer onStart={startTutorial} onDismiss={() => setTutorialOfferOpen(false)} />}
     {tutorialOpen && <GuidedTutorial language={language} step={tutorialStep} onStep={goToTutorialStep} onClose={closeTutorial} onReference={() => { closeTutorial(); openReference(); }} />}
      {saveError && <p className="autosave-error" role="alert">Autosave failed. Export your project to keep a copy.</p>}
-    <footer className="statusbar" inert={tutorialOpen || tutorialOfferOpen}><Credits /></footer>
-    {creditsOpen && <div className="input-modal-backdrop" role="presentation" onClick={() => setCreditsOpen(false)}><div className="credits-modal" role="dialog" aria-modal="true" aria-labelledby="credits-title" onClick={event => event.stopPropagation()}><div className="credits-mark"><BrandMark /></div><div className="input-modal-head"><div><strong id="credits-title">About Pico</strong><small>Pseudocode and Python compilers.</small></div><button className="icon-button quiet" onClick={() => setCreditsOpen(false)} aria-label="Close developer credits"><X size={15} /></button></div><p className="credits-message">Thanks to <strong>Amar</strong> and <strong>Mustaqim</strong> — this was made by them.</p><p className="credits-contact">If you have any problems, contact <a href="mailto:b04557@nbabarwa.com">b04557@nbabarwa.com</a> or <a href="mailto:b03661@nbabarwa.com">b03661@nbabarwa.com</a>.</p><div className="input-modal-actions"><button className="primary-small" onClick={() => setCreditsOpen(false)}>Close</button></div></div></div>}
+
   </div>;
 }
 

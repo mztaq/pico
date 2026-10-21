@@ -234,34 +234,12 @@ describe('workspace execution integration',()=>{
     expect(worker.terminated).toBe(true);expect(container.querySelector('.console-input-form')).toBeNull();
     expect(container.querySelector('.output-line')).toBeNull();
   });
-  it.each([
-    ['Amar','The dev who engineered me day and night ☾'],
-    ['Mustaqim','The soul who unleashed me to the World Wide Web 🌏︎'],
-    ['Mr.Boyle','The Computer Science teacher who backed my creators and their work 🕮'],
-    ['Mr. Boyle','The Computer Science teacher who backed my creators and their work 🕮'],
-    ['Boyle','The Computer Science teacher who backed my creators and their work 🕮'],
-    ['Mr Boyle','The Computer Science teacher who backed my creators and their work 🕮'],
-    ['Fore','The head of Computer Science and ICT at our school 🖳'],
-    ['mr fore','The head of Computer Science and ICT at our school 🖳'],
-    ['Mr.Fore','The head of Computer Science and ICT at our school 🖳'],
-    ['Mr. Fore','The head of Computer Science and ICT at our school 🖳'],
-    ['  mUsTaQiM  ','The soul who unleashed me to the World Wide Web 🌏︎'],
-  ])('shows the %s Easter egg while preserving the exact input and program output',async(value,message)=>{
-    const code='DECLARE Name : STRING\nINPUT Name\nOUTPUT Name';
-    await typeValue(codeEditor(),code);
-    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
-    await typeValue(consoleInput(),value);await submitInput();
-    expect(container.querySelector('.console-entry-note > span:last-child')?.textContent).toBe(message);
-    expect(container.querySelector('.console-entry-input > span:last-child')?.textContent).toBe(value);
-    expect([...container.querySelectorAll('.output-line:not(.console-entry-input) > span:last-child')].map(line=>line.textContent)).toEqual([value]);
-    expect(codeEditor().value).toBe(code);
-  });
-  it('leaves ordinary input alone and does not match names embedded in other text',async()=>{
+  it('preserves ordinary input and program output without adding messages',async()=>{
     await typeValue(codeEditor(),'DECLARE Text : STRING\nINPUT Text\nOUTPUT Text');
     await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
-    await typeValue(consoleInput(),'Amar and Mustaqim are here');await submitInput();
+    await typeValue(consoleInput(),'Sample input text');await submitInput();
     expect(container.querySelector('.console-entry-note')).toBeNull();
-    expect(container.querySelector('.output-line:last-child > span:last-child')?.textContent).toBe('Amar and Mustaqim are here');
+    expect(container.querySelector('.output-line:last-child > span:last-child')?.textContent).toBe('Sample input text');
   });
 });
 
@@ -278,7 +256,7 @@ describe('guided help and readable reference',()=>{
     expect(container.querySelector('#tutorial-offer-title')?.textContent).toBe('New to Pico?');
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(true);
     expect(container.querySelector('.topbar')?.hasAttribute('inert')).toBe(true);
-    expect(container.querySelector('footer')?.hasAttribute('inert')).toBe(true);
+    expect(container.querySelector('footer')).toBeNull();
     expect(document.activeElement).toBe(button('Show tutorial'));
     expect(localStorage.getItem('pico.visitCount.v1')).toBe('1');
     await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true})));
@@ -294,7 +272,7 @@ describe('guided help and readable reference',()=>{
     for(let i=0;i<tutorialSteps.length-1;i++)await click(button('Next'));
     await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim, Amar or Hamza when your program asks for a name. Some familiar faces from the Computer Science department receive a special greeting when you enter their names. Help opens this tour again.');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Open Help to revisit this tutorial whenever you need it.');
     await click(button('Start coding'));
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
     expect(codeEditor().value).toBe(code);
@@ -344,7 +322,7 @@ describe('guided help and readable reference',()=>{
     await click(button('Next'));expect(container.querySelector('[data-tour="reference"]')).not.toBeNull();
     await click(button('Next'));await click(button('Next'));await click(button('Finish tour'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
-    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Try Mustaqim, Amar or Hamza when your program asks for a name. Some familiar faces from the Computer Science department receive a special greeting when you enter their names. Help opens this tour again.');
+    expect(container.querySelector('.tutorial-tip')?.textContent).toBe('Open Help to revisit this tutorial whenever you need it.');
     await click(button('Replay tour'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
     await click(button('Skip for now'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();
@@ -394,17 +372,14 @@ describe('guided help and readable reference',()=>{
   });
 });
 
-it('shows coloured, selectable reference examples and a credits-only footer',async()=>{
+it('shows coloured, selectable reference examples without a personal footer',async()=>{
   await click(button('DECLARE'));
   const example=container.querySelector('.reference-example pre')!;
   expect(example.textContent).toBe(referenceExamples.DECLARE.code);
   expect(example.querySelector('.syntax-keyword')?.textContent).toBe('DECLARE');
   expect(example.querySelector('.syntax-type')?.textContent).toBe('STRING');
   expect(example.querySelector('.syntax-string')?.textContent).toBe('"Pico"');
-  const footer=container.querySelector('footer')!;
-  expect(footer.querySelectorAll('.credit-item strong').length).toBe(2);
-  expect(footer.textContent).toContain('Mustaqim');expect(footer.textContent).toContain('Amar');
-  expect(footer.querySelector('.status-left')).toBeNull();expect(footer.querySelector('.status-right')).toBeNull();
+  expect(container.querySelector('footer')).toBeNull();
 });
 
 it('colours only the example code in the reference, leaving keyword labels plain',async()=>{
@@ -488,4 +463,12 @@ it('keeps editor shortcuts while removing the scope caption shown in the screens
   expect(footer.textContent).toContain('to run');
   expect(footer.textContent).toContain('go to line');
   expect(footer.textContent).not.toContain('Cambridge subset');
+});
+
+it('keeps program output free of additional UI messages',async()=>{
+  await typeValue(codeEditor(),'OUTPUT "PICO"');
+  await click(button('Run⌘ ↵'));
+  await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+  expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['PICO']);
+  expect(container.querySelectorAll('.console-panel [role="status"]')).toHaveLength(0);
 });

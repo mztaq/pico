@@ -17,12 +17,9 @@
 .home-chart-preview text { fill: var(--text); stroke: none; text-anchor: middle; font: 13px var(--font-code); }
 .home-chart-preview .home-chart-output { fill: var(--syntax-string); font-size: 11px; }
 @media (max-width: 760px) { .compiler-choice { grid-template-columns: minmax(0,1fr); gap: 14px; min-height: 0; padding: 20px; }.compiler-choice-title { justify-content: space-between; }.home-chart-preview { max-width: 350px; } }
-.pico-placeholder-credit strong { color: var(--accent); font-weight: 650; }
 .code-editor .cm-placeholder { color: var(--muted); white-space: normal; font-style: normal; }
 .pico-editor-hint { display: inline-block; font-family: var(--font-ui); line-height: 1.7; }
 .pico-editor-hint > span { display: block; }
-.pico-editor-hint .pico-placeholder-credit { font-size: .75em; }
-.home-credits { margin-top: 44px; }
 .compiler-switch { flex-shrink: 0; white-space: nowrap; font-size: 12px; padding: 7px 10px; background: var(--accent-soft); border: 1px solid var(--border); border-radius: 7px; }
 .workspace-tabs { display: flex; flex: 0 0 45px; align-items: stretch; min-width: 0; gap: 6px; padding: 0 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
 .workspace-tabs .project-list { display: flex; min-width: 0; overflow: auto; gap: 4px; padding: 0; }
@@ -46,7 +43,7 @@
 .debugger-panel > p[role="alert"] { color: var(--error-color, #ff7474); }
 .pico-app[data-pico-theme="high-contrast-white"] .runtime-error-card .error-heading, .pico-app[data-pico-theme="high-contrast-white"] .runtime-error-card .diagnostic-message { color: #a40000; }
 @media (max-width: 1000px) { .topbar { height: auto; min-height: 58px; flex-basis: auto; flex-wrap: wrap; padding-block: 8px; row-gap: 7px; } .compiler-switch { order: 2; flex-basis: 100%; width: 100%; text-align: center; } .topbar-spacer { flex: 1; } .topbar-actions { margin-left: auto; } }
-@media (max-width: 600px) { .pico-home { justify-content: flex-start; padding: 30px 16px; } .compiler-choice { padding: 18px 12px; } .pico-home h1 { margin: 25px 0; } .home-credits { margin-top: 26px; } .workspace-tabs { padding-inline: 6px; } }
+@media (max-width: 600px) { .pico-home { justify-content: flex-start; padding: 30px 16px; } .compiler-choice { padding: 18px 12px; } .pico-home h1 { margin: 25px 0; } .workspace-tabs { padding-inline: 6px; } }
 @media (prefers-reduced-motion: reduce) { .compiler-choice { transition: none; } .compiler-choice:hover { transform: none; } }
 
 @media (max-width: 520px) { .topbar-actions { order: 2; flex-basis: 100%; justify-content: center; margin: 0; } .compiler-switch { order: 3; } }

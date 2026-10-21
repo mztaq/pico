@@ -9,7 +9,6 @@ import { HighlightedCode } from '../app/components/HighlightedCode';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { UpdateCenter } from '../app/components/UpdateCenter';
 import {useExitWarning} from '../app/components/useExitWarning';
-import { Credits } from '../app/components/HomeScreen';
 import { ResizeHandle } from '../app/components/ResizeHandle';
 import { contrastRatio, cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
@@ -17,7 +16,6 @@ import { normalizeProjectName } from '../storage/projects';
 import { startExecution, type ExecutionJob } from '../runtime/runner';
 import type { ExecutionFailure, PendingInput } from '../runtime/worker';
 import type { RunResult } from '../runtime/interpreter';
-import { inputEasterEgg } from '../app/inputEasterEgg';
 import { FlowchartTutorial, lessonReady } from './FlowchartTutorial';
 import './flowchart-builder.css';
 const OUTPUT_LIMIT=2000;
@@ -117,7 +115,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     if(reply?.error?.line)setSelected(compiled.lineNodes[reply.error.line]??null);
     if(debug&&reply?.result&&!reply.error)setPanel('debugger');if(reply?.result?.outputTruncated)setTruncated(true);
   }
-  function submit() {if(!pending||!jobRef.current?.provideInput(pending.id,input))return;const egg=pending.dataType==='STRING'?inputEasterEgg(input):undefined;setEntries(items=>[...items,{kind:'input' as const,text:input},...(egg?[{kind:'note' as const,text:egg}]:[])].slice(-OUTPUT_LIMIT));setPending(null);setInput('');}
+  function submit() {if(!pending||!jobRef.current?.provideInput(pending.id,input))return;setEntries(items=>[...items,{kind:'input' as const,text:input}].slice(-OUTPUT_LIMIT));setPending(null);setInput('');}
   function fit() {
     const viewport=layoutRef.current?.querySelector<HTMLElement>('.flow-viewport');if(!viewport)return;
     const width=Math.max(...project.nodes.map(n=>n.x+NODE_WIDTH+80),600),height=Math.max(...project.nodes.map(n=>n.y+NODE_HEIGHT+80),450);
@@ -196,7 +194,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
       <details className="flow-routines" inert={tutorialActive}><summary>Subroutines</summary><p>Define procedures and functions for Subroutine blocks.</p><textarea aria-label="Flowchart subroutine definitions" maxLength={100000} rows={10} value={project.routines} disabled={running} spellCheck={false} placeholder={'PROCEDURE ShowResult()\n  OUTPUT "Done"\nENDPROCEDURE'} onChange={e=>update({...project,routines:e.target.value})}/></details>
       </aside>
     </div>
-    <footer className="statusbar flow-statusbar"><Credits /></footer>
+
     {tutorialActive&&<FlowchartTutorial step={tourStep} project={project} result={result} pending={Boolean(pending)} running={running} panel={panel} onNext={nextLesson} onBack={()=>enterLesson(Math.max(0,tourStep-1))} onSkip={closeLesson}/>}
     {settingsOpen&&<div className="flow-settings" ref={settingsRef} role="dialog" aria-label="Flowchart appearance"><header><strong>Appearance</strong><button aria-label="Close flowchart settings" onClick={()=>setSettingsOpen(false)}><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id}))}/></div>}
 

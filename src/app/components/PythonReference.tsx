@@ -9,7 +9,7 @@ const entries = [
   {word:'for',description:'Repeat over a sequence. The end of range is exclusive.',code:'for number in range(1, 6):\n    print(number)'},
   {word:'while',description:'Repeat while a condition is true. Use Stop to end an infinite loop.',code:'number = 1\nwhile number <= 5:\n    print(number)\n    number += 1'},
   {word:'def',description:'Define a function with parameters and a return value.',code:'def double(number):\n    return number * 2\n\nprint(double(5))'},
-  {word:'list',description:'Store a sequence of values. List indexes start at zero.',code:'names = ["Amar", "Mustaqim"]\nprint(names[0])\nnames.append("Pico")'},
+  {word:'list',description:'Store a sequence of values. List indexes start at zero.',code:'names = ["Pico", "Learner"]\nprint(names[0])\nnames.append("Pico")'},
   {word:'dict',description:'Store values under named keys.',code:'student = {"name": "Ada", "score": 90}\nprint(student["name"])'},
   {word:'try',description:'Handle an exception explicitly. Unhandled exceptions end the run.',code:'try:\n    number = int(input("Enter a number: "))\nexcept ValueError:\n    print("Invalid number")'},
   {word:'open',description:'Read or write a project practice file.',code:'with open("notes.txt", "w") as file:\n    file.write("Hello Pico")\n\nwith open("notes.txt") as file:\n    print(file.read())'},
