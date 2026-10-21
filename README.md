@@ -7,21 +7,13 @@
 <p align="center">Write code, build flowcharts and simulate logic circuits in your browser.</p>
 
 <p align="center">
-  <a href="https://picompiler.pages.dev">Open Pico</a> · 
+  <a href="https://picompiler.pages.dev">Open Pico</a> ·
   <a href="#getting-started">Getting started</a> ·
   <a href="#language-support">Language support</a> ·
   <a href="#development">Development</a>
 </p>
 
-<p align="center">
-  <a href="https://github.com/mztaq/pico/actions/workflows/checks.yml">
-    <img src="https://github.com/mztaq/pico/actions/workflows/checks.yml/badge.svg?branch=main" alt="Tests and production build">
-  </a>
-</p>
-
 Pico is a browser-based Computer Science learning tool with five workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim and CPU Studio. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
-
-Developed by **Amar** (11 Boys Blue), deployed by **Mustaqim** (11 Boys Red), with **Logic Sim conceptualised by Mohamed Hamza** (11 Boys Red).
 
 ## Getting started
 
@@ -37,7 +29,6 @@ OUTPUT "Hello ", Name, "!"
 When execution reaches `INPUT`, type your value in the Console and press Enter. Entering `Ada` produces `Hello Ada!`. Invalid typed values terminate the run and appear as a red **Error**, with a source line.
 
 `INTEGER` accepts whole numbers; pseudocode `REAL` input requires digits on both sides of a decimal point, such as `5.0` or `-0.25`. Entering `5` for a `REAL` ends the run with an error; `BOOLEAN` accepts `TRUE` or `FALSE`; `CHAR` accepts one character. `STRING` preserves your text, including numeric text and spaces. Numbers must stay within the runtime’s supported finite and safe integer limits.
-
 
 - Edit the workspace name in the top bar. On smaller screens, open **File** to rename it.
 - Use **Debug** to record execution, then step through the results.
@@ -166,7 +157,7 @@ Use HTTPS in production or `localhost` during development. Other hosting provide
 Use **Node.js 24** and **pnpm 11.25.0**, matching the GitHub Actions configuration.
 
 ```sh
-git clone https://github.com/mztaq/pico.git
+git clone <repository-url>
 cd pico
 npm install --global pnpm@11.25.0
 pnpm install --frozen-lockfile
@@ -205,11 +196,3 @@ Updates are stored in the root `logs.txt`, one per line as `[YYYY-MM-DD] : UPDAT
 ### Contributing
 
 For bug reports, include the language, source code, input values, expected result and actual result. For code changes, run `pnpm test` and `pnpm build` before opening a pull request.
-
-## Creators
-
-| Name | Role |
-| --- | --- |
-| **Amar** | Development, 11 Boys Blue |
-| **[Mustaqim](https://github.com/mztaq)** | Deployment and releases, 11 Boys Red |
-| **Mohamed Hamza** | Logic Sim concept, 11 Boys Red |

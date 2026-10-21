@@ -1,5 +1,4 @@
 import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
-import {Credits} from '../app/components/HomeScreen';
 import {LogicTutorial,LOGIC_TOUR_KEY} from './LogicTutorial';
 import {useExitWarning} from '../app/components/useExitWarning';
 import {ThemePicker} from '../app/components/ThemePicker';
@@ -194,7 +193,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   <g transform={`translate(${node.x+NODE_WIDTH/2} ${node.y+height/2}) rotate(${node.rotation}) translate(${-NODE_WIDTH/2} ${-height/2})`}>
     <rect className="logic-node-hitbox" width={NODE_WIDTH} height={height} rx="5"/>
     <CircuitSymbol kind={node.kind} height={height} signal={node.kind==='lamp'?lamp:output} hex={hexValue} label={node.label}/>
-    
+
     {(node.kind==='switch'||node.kind==='button')&&<foreignObject x="34" y={height/2-15} width="57" height="38">
       <button className="logic-symbol-button" aria-label={node.kind==='button'?'Press and hold button':'Toggle switch'} onPointerDown={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,1);}} onPointerUp={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onPointerCancel={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}}/>
     </foreignObject>}
@@ -228,7 +227,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  <aside className={'logic-inspector '+(inspectorOpen?'mobile-open':'')}><div className="logic-pane-heading"><b>PROPERTIES</b><button className="logic-mobile-only" onClick={()=>setInspectorOpen(false)} aria-label="Close properties"><X size={16}/></button></div>{inspectorContent}</aside>
  </div>
  {themeOpen&&<aside className="logic-theme-menu"><header><strong>Theme</strong><button onClick={()=>setThemeOpen(false)} aria-label="Close theme picker"><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id as typeof s.theme}))}/></aside>}
- <footer className="statusbar logic-footer"><Credits logic /></footer>
+
  {tutorialActive&&<LogicTutorial step={tourStep!} onStep={setTourStep} onClose={closeTour}/>}
  {importing&&<button className="logic-import-close" onClick={()=>setImporting(false)}>Cancel import</button>}
  </div>;

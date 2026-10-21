@@ -58,8 +58,8 @@ it('preloads Python and reuses the interpreter while resetting variables, files,
   vi.stubGlobal('Worker',BrowserWorkerAdapter);preloadPythonRuntime();
   const code='import builtins, os, sys, math\nfrom helper import value\nimport __main__\nname=input("Name? ")\nprint(__main__.name, value)\nwith open("old.txt", "w") as f: f.write("old")\nbuiltins.leaked=42\nmath.sqrt=lambda x: 99\nos.environ["PICO_LEAK"]="old"\nsys.argv.append("old")';
   let first:ReturnType<typeof startPythonExecution>;
-  first=startPythonExecution({code,filename:'main.py',debug:true,files:{},sources:{'helper.py':'value=1'}},{onInput:request=>first.provideInput(request.id,'Mustaqim 🌏')});
-  const [result]=await first.promise;expect(result?.error).toBeUndefined();expect(result?.result?.output).toContain('Mustaqim 🌏 1');
+  first=startPythonExecution({code,filename:'main.py',debug:true,files:{},sources:{'helper.py':'value=1'}},{onInput:request=>first.provideInput(request.id,'Pico 🌏')});
+  const [result]=await first.promise;expect(result?.error).toBeUndefined();expect(result?.result?.output).toContain('Pico 🌏 1');
   const worker=BrowserWorkerAdapter.all[0]!;expect(worker.termination).toBeUndefined();
   const nextCode='import math, builtins, os, sys\nfrom helper import value\nprint(math.sqrt(9), hasattr(builtins,"leaked"), "PICO_LEAK" in os.environ, os.path.exists("old.txt"), "old" in sys.argv)\nprint(value)';
   const second=startPythonExecution({code:nextCode,filename:'main.py',debug:true,files:{},sources:{'helper.py':'value=2'}});

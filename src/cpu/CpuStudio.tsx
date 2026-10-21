@@ -1,6 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
 import {ArrowLeft,BookOpen,Cpu,Gauge,Pause,Play,RotateCcw,Settings2,StepBack,StepForward,X} from 'lucide-react';
-import {Credits} from '../app/components/HomeScreen';
 import {ThemePicker} from '../app/components/ThemePicker';
 import {cssVariables,getTheme} from '../app/themes';
 import {loadSettings,saveSettings} from '../storage/settings';
@@ -299,7 +298,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
    </section>
    </div>
   </main>
-  <footer className="cpu-footer"><Credits/></footer>
+
   {themeOpen&&<div className="cpu-overlay" role="dialog" aria-label="Choose CPU Studio theme"><div className="cpu-dialog"><div className="cpu-dialog-head"><strong>Theme</strong><button aria-label="Close themes" onClick={()=>setThemeOpen(false)}><X size={16}/></button></div><ThemePicker value={themeId} onChange={setThemeId}/></div></div>}
   {tourStep!==null&&<CpuTutorial step={tourStep} onStep={setTourStep} onClose={finishTutorial}/>}
  </div>;

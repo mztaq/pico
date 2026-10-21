@@ -37,14 +37,7 @@ function emptyEditorHint() {
   hint.className = 'pico-editor-hint';
   const title = document.createElement('span');
   title.textContent = 'Start typing your code.';
-  const credit = document.createElement('span');
-  credit.className = 'pico-placeholder-credit';
-  const mustaqim = document.createElement('strong');
-  mustaqim.textContent = 'Mustaqim';
-  const amar = document.createElement('strong');
-  amar.textContent = 'Amar';
-  credit.append('Made by ', mustaqim, ' and ', amar, '.');
-  hint.append(title, credit);
+  hint.append(title);
   return hint;
 }
 

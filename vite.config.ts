@@ -48,6 +48,7 @@ function pythonRuntime(): Plugin {
 }
 export default defineConfig({
   plugins: [react(), pythonRuntime()],
+  build: { emptyOutDir: true },
   server: { host: '0.0.0.0', port: 3000, strictPort: true, allowedHosts: true, headers },
   preview: { host: '0.0.0.0', port: 3000, strictPort: true, allowedHosts: true, headers },
 });
