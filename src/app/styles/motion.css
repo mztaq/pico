@@ -3,7 +3,7 @@
   .reference-explanation, .dock-content {
     animation: content-enter 150ms ease-out;
   }
-  .input-modal, .history-modal, .credits-modal, .tutorial-offer {
+  .input-modal, .history-modal, .tutorial-offer {
     animation: content-enter 180ms ease-out;
   }
   /* The tutorial positions itself from measured bounds; fade without moving it. */

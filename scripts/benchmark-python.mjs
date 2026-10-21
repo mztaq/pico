@@ -19,7 +19,7 @@ const request = {code:'name=input("Name? ")\nprint(f"Hello {name}!")',filename:'
 async function run(code=request.code) {
   const start = performance.now();
   let job;
-  job = startPythonExecution({...request,code},{onInput:input=>job.provideInput(input.id,'Mustaqim')});
+  job = startPythonExecution({...request,code},{onInput:input=>job.provideInput(input.id,'Pico')});
   const [reply] = await job.promise;
   if (reply?.error) throw new Error(reply.error.message);
   return performance.now()-start;

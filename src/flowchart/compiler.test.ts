@@ -14,7 +14,7 @@ describe('flowcharts to executable pseudocode',()=>{
   it('greets a typed name and emits ordinary sequential pseudocode',()=>{
     const p=exampleProject('greeting'),c=compileFlowchart(p);
     expect(c.mode).toBe('structured');expect(c.code).toContain('DECLARE Name : STRING');expect(c.code).not.toContain('PicoFlowStep');
-    expect(run(p,['Mustaqim']).output).toEqual(['Enter your name','Hello Mustaqim!']);
+    expect(run(p,['Pico']).output).toEqual(['Enter your name','Hello Pico!']);
   });
   it.each([[9,3,9],[3,9,9],[7,7,7]])('takes the correct largest-number branch for %s and %s',(a,b,max)=>{
     const p=exampleProject('largest');expect(compileFlowchart(p).code).toContain('IF Number1 > Number2 THEN');

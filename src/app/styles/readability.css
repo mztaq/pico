@@ -33,15 +33,8 @@
 .reference-card button:focus-visible, .reference-search:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 .reference-resize-handle .resize-handle-grip { height: 36px; }
 .statusbar { height: auto; min-height: 40px; flex-basis: auto; justify-content: center; padding: 9px 16px; }
-.attribution { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 16px; max-width: none; overflow: visible; color: var(--muted); font: 12px/1.6 var(--font-code); text-align: center; white-space: normal; }
-.credit-item { display: inline-flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 6px; }
-.credit-item strong { color: var(--accent); font-weight: 600; }
-.credit-item small { color: var(--muted); font-size: 11px; }
-.credit-divider { color: var(--accent); }
 .save-indicator { font-size: 12px; }
 .help-button { font-size: 13px; min-height: 36px; }
-.credits-message { font-size: 17px; line-height: 1.6; }
-.credits-contact { font-size: 14px; line-height: 1.7; }
 .input-modal-head strong { font-size: 18px; }
 .input-modal-head small { font-size: 13px; line-height: 1.6; }
 .reference-backdrop { display: none; }
@@ -56,8 +49,6 @@
 }
 @media (max-width: 520px) {
   .ide-shell.reference-open .reference-card { top: 64px; bottom: 90px; right: 8px; width: calc(100vw - 16px); }
-  .attribution { flex-direction: column; gap: 3px; }
-  .credit-divider { display: none; }
 }
 @media (max-height: 720px) {
   .workspace-main { grid-template-rows: minmax(160px, 1fr) var(--splitter-size) minmax(130px, var(--dock-size)); }
@@ -70,7 +61,6 @@
 .dock-tab { flex-shrink: 0; font-size: 11px; }
 .dock-tab small { min-width: 17px; height: 17px; font-size: 10px; }
 .output-line { color: var(--text); font-size: var(--panel-font-size); line-height: 1.7; }
-.pico-easter-egg { font-size: 14px; line-height: 1.6; }
 
 /* Source examples use the same token categories and theme palette as the editor. */
 .highlighted-code { font-family: var(--font-code); font-size: inherit; }

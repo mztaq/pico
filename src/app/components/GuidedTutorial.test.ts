@@ -19,7 +19,7 @@ describe('tutorial placement', () => {
   });
 });
 
-it('shows the exact names hint on both compiler tutorial completion screens', () => {
-  expect(tutorialSteps.find(step => step.label === 'RUN')?.tip).toContain('special greeting');
-  expect(tutorialCompletionTip).toBe('Try Mustaqim, Amar or Hamza when your program asks for a name. Some familiar faces from the Computer Science department receive a special greeting when you enter their names. Help opens this tour again.');
+it('shows a help reminder on both compiler tutorial completion screens', () => {
+  expect(tutorialSteps.find(step => step.label === 'RUN')?.tip).toContain('Ctrl + Enter');
+  expect(tutorialCompletionTip).toBe('Open Help to revisit this tutorial whenever you need it.');
 });

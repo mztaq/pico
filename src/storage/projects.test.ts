@@ -23,7 +23,7 @@ describe('project persistence boundaries',()=>{
     expect(loaded.map(project=>project.code)).toEqual(projects.map(project=>project.code));
     expect(loadActiveId(loaded)).toBe(projects[1]!.id);
   });
-  it('creates empty files so creator credits appear only as editor placeholders',()=>{
+  it('creates empty files without injecting default code',()=>{
     vi.stubGlobal('localStorage',{getItem:()=>null});
     for(const project of [loadProjects()[0]!,newProject(),newProject('Python','python')]) {
       expect(project.code).toBe('');expect(project.files[0].code).toBe('');expect(execute(compile(project.code).ast).output).toEqual([]);

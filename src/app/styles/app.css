@@ -442,8 +442,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .file-menu button { width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font-size: 10px; text-align: left; cursor: pointer; }
 .file-menu button:hover { background: var(--surface-hover); color: var(--text); }
 .settings-popover select { width: 100%; margin-top: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface-input); color: var(--text); font-family: var(--font-code); font-size: 10px; }
-.attribution { max-width: 430px; overflow: hidden; color: #727785; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 900px) { .attribution { display: none; } .editor-preferences { display: none; } }
+@media (max-width: 900px) { .editor-preferences { display: none; } }
 
 /* Adobe-inspired workspace customization */
 .pico-app { background: var(--bg); }
