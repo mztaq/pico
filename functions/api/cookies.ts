@@ -1,4 +1,5 @@
 import {body, checkOrigin, clearCookie, cookie, fail, hash, json, now, ninetyDays, randomId, session, setCookie, type Context} from '../_lib/core';
+import {rateLimit} from '../_lib/rate-limit';
 
 export const onRequestGet = async (ctx: Context) => {
   // A request without a cookie still verifies the actual D1 binding and tables.
@@ -20,6 +21,8 @@ export const onRequestGet = async (ctx: Context) => {
 export const onRequestPost = async (ctx: Context) => {
   const error = checkOrigin(ctx.request);
   if (error) return error;
+  const limited = await rateLimit(ctx, 'cookies', 12);
+  if (limited) return limited;
   const data = await body(ctx.request);
   if (!data || typeof data.analytics !== 'boolean' || typeof data.preferences !== 'boolean')
     return fail(400, 'Expected boolean analytics and preferences');
