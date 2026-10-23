@@ -22,12 +22,15 @@ export const onRequestPost = async (ctx: Context) => {
   }
   const token = existing && previousToken ? previousToken : randomId();
   const id = await hash(token);
+  const ua = ctx.request.headers.get('user-agent') ?? '';
+  const operatingSystem = /Windows/i.test(ua) ? 'Windows' : /Android/i.test(ua) ? 'Android' : /iPhone|iPad/i.test(ua) ? 'iOS' : /Mac OS X/i.test(ua) ? 'macOS' : /Linux/i.test(ua) ? 'Linux' : 'Unknown';
+  const browser = /Edg\//i.test(ua) ? 'Edge' : /Firefox\//i.test(ua) ? 'Firefox' : /Chrome\//i.test(ua) ? 'Chrome' : /Safari\//i.test(ua) ? 'Safari' : 'Other';
   const timestamp = now();
   const expiry = timestamp + ninetyDays;
   if (!existing) {
     await ctx.env.DB.prepare(
-      'INSERT INTO pico_visitors (visitor_id,first_visit,last_visit,expires_at) VALUES (?,?,?,?)'
-    ).bind(id,timestamp,timestamp,expiry).run();
+      'INSERT INTO pico_visitors (visitor_id,first_visit,last_visit,expires_at,operating_system,browser) VALUES (?,?,?,?,?,?)'
+    ).bind(id,timestamp,timestamp,expiry,operatingSystem,browser).run();
   }
   await ctx.env.DB.prepare(
     `INSERT INTO pico_consent (visitor_id,analytics_allowed,preferences_allowed,updated_at,expires_at)
