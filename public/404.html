@@ -237,7 +237,7 @@
     });
     nextStep.addEventListener('click', () => {
       if (debugIndex >= steps.length) return;
-      log.textContent += (debugIndex ? '\\n' : '') + steps[debugIndex++];
+      log.textContent += (debugIndex ? '\n' : '') + steps[debugIndex++];
       log.scrollTop = log.scrollHeight;
       if (debugIndex === steps.length) {
         nextStep.textContent = 'Run again ↻';
