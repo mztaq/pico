@@ -53,6 +53,27 @@
       .scatter{display:none}
     }
     @media(prefers-reduced-motion:reduce){*{transition:none!important}.shell[data-layout="tilt"] .content,.shell[data-layout="tilt-right"] .content{transform:none}}
+
+    .status{position:relative}
+    .status-trigger{appearance:none;border:0;padding:0;margin:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;cursor:pointer;text-align:inherit;user-select:none}
+    .status-trigger:hover{filter:brightness(1.15)}
+    .status-trigger:focus-visible{outline:3px dashed var(--accent);outline-offset:8px;border-radius:6px}
+    .reaction{position:absolute;top:100%;left:0;min-width:210px;max-width:min(80vw,450px);font:600 clamp(12px,1vw,15px)/1.4 "Space Mono",monospace;letter-spacing:0;color:var(--text);white-space:normal;z-index:3}
+    .shell[data-layout="right"] .reaction,.shell[data-layout="tilt-right"] .reaction{left:auto;right:0}
+    .extra{appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:7px;padding:13px 18px;font:600 13px "Space Mono",monospace;cursor:pointer}
+    .extra:hover{border-color:var(--accent)}
+    .extra:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+    .debug-panel{width:min(100%,610px);margin-top:22px;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:18px;text-align:left}
+    .debug-label{font:700 12px "Space Mono",monospace;color:var(--accent);margin-bottom:12px}
+    .debug-log{margin:0 0 14px;font:12px/1.9 "Space Mono",monospace;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere;max-height:230px;overflow:auto}
+    .debug-next{font:600 12px "Space Mono",monospace;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);cursor:pointer;padding:9px 12px}
+    .debug-next:hover{border-color:var(--accent)}
+    .debug-next:disabled{opacity:.45;cursor:default}
+    .secret-toast{position:fixed;right:clamp(16px,4vw,45px);bottom:clamp(16px,4vw,45px);z-index:10;max-width:min(90vw,370px);border:1px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--text);padding:15px 18px;font:600 13px/1.5 "Space Mono",monospace;box-shadow:0 12px 40px #0003;pointer-events:none}
+    [hidden]{display:none!important}
+    .shell[data-layout="split"] .debug-panel{grid-column:2}
+    .shell[data-layout="swap"] .debug-panel{grid-column:1}
+    @media(max-width:720px){.reaction{font-size:12px;max-width:80vw}.status{margin-bottom:28px}.debug-panel{width:100%}.actions{flex-wrap:wrap;gap:10px}.secret-toast{left:16px;right:16px;max-width:none}}
   </style>
 </head>
 <body>
@@ -61,12 +82,21 @@
     <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt="">Pico<span>.</span></a>
     <div class="main">
       <section class="content" aria-labelledby="joke-title">
-        <div class="status" aria-hidden="true">404</div>
+        <div class="status"><button class="status-trigger" type="button" id="poke-404" aria-label="404. Click for a surprise">404</button><span id="click-reaction" class="reaction" aria-live="polite"></span></div>
         <h1 id="joke-title">Well, that's awkward.</h1>
         <p class="sub" id="joke-description">There's nothing at this address.</p>
-        <div class="actions"><button class="back" type="button" id="go-back">← Go back</button></div>
+        <div class="actions">
+          <button class="back" type="button" id="go-back">← Go back</button>
+          <button class="extra" type="button" id="debug-toggle" aria-expanded="false" aria-controls="debug-panel">Debug this mess</button>
+        </div>
+        <section id="debug-panel" class="debug-panel" hidden aria-label="Pico fake debugger">
+          <div class="debug-label">PICO DEBUGGER / very official</div>
+          <pre id="debug-log" class="debug-log" aria-live="polite"></pre>
+          <button type="button" class="debug-next" id="debug-next">Run next step →</button>
+        </section>
       </section>
     </div>
+    <div class="secret-toast" id="secret-toast" role="status" aria-live="polite" hidden></div>
   </main>
   <script>
 
@@ -162,6 +192,88 @@
       item.style.setProperty('--rotate', (-27 + Math.floor(Math.random()*55))+'deg');
       scatter.appendChild(item);
     }
+
+    // No external calls. All three Easter eggs run entirely inside this static page.
+    const replies = [
+      "Stop poking me.",
+      "I'm literally just a 404.",
+      "Amar, can you make this a feature?",
+      "Hamza, PLEASE stop filming.",
+      "Mustaqim. Deploy help.",
+      "The CPU cannot process this level of disrespect.",
+      "Clicking harder will not compile the page.",
+      "I have 160 jokes and zero working routes.",
+      "Now you're just testing my patience.",
+      "Congrats. You've debugged absolutely nothing."
+    ];
+    let pokeCount = 0;
+    document.getElementById('poke-404').addEventListener('click', () => {
+      const message = replies[Math.min(pokeCount,replies.length-1)];
+      pokeCount++;
+      document.getElementById('click-reaction').textContent = message;
+    });
+
+    const panel = document.getElementById('debug-panel');
+    const toggle = document.getElementById('debug-toggle');
+    const nextStep = document.getElementById('debug-next');
+    const log = document.getElementById('debug-log');
+    const steps = [
+      '> pico debug /404',
+      '[OK] Started investigation.',
+      '[OK] Found Mustaqim. He opened DevTools.',
+      '[OK] Found Amar. He has 12 feature ideas.',
+      '[OK] Found Hamza. The trailer is already finished.',
+      '[WARN] Page not detected in any workspace.',
+      '[FAIL] Attempted to compile missing URL.',
+      'OUTPUT "bro there is no page"',
+      'Process exited with code 404.'
+    ];
+    let debugIndex = 0;
+    toggle.addEventListener('click', () => {
+      panel.hidden = !panel.hidden;
+      toggle.setAttribute('aria-expanded', String(!panel.hidden));
+      toggle.textContent = panel.hidden ? 'Debug this mess' : 'Hide debugger';
+      if (!panel.hidden && debugIndex === 0) nextStep.click();
+    });
+    nextStep.addEventListener('click', () => {
+      if (debugIndex >= steps.length) return;
+      log.textContent += (debugIndex ? '\\n' : '') + steps[debugIndex++];
+      log.scrollTop = log.scrollHeight;
+      if (debugIndex === steps.length) {
+        nextStep.textContent = 'Run again ↻';
+        nextStep.onclick = () => {
+          debugIndex = 0;
+          log.textContent = '';
+          nextStep.textContent = 'Run next step →';
+          nextStep.onclick = null;
+        };
+      }
+    });
+
+    const secrets = {
+      PICO: 'PICO activated. Still no page. Incredible.',
+      AMAR: 'Amar has been summoned. Expect 14 new features.',
+      HAMZA: 'Hamza has entered cinematic mode. Cue the trailer.',
+      MUSTAQIM: 'Mustaqim is deploying... still 404.',
+      CPU: 'FETCH → DECODE → PANIC.',
+      OUTPUT: 'OUTPUT "404, but make it educational."'
+    };
+    let typed = '';
+    let toastTimeout;
+    const toast = document.getElementById('secret-toast');
+    document.addEventListener('keydown', event => {
+      if (event.ctrlKey || event.altKey || event.metaKey || event.key.length !== 1) return;
+      if (event.target instanceof HTMLElement && event.target.matches('input,textarea,[contenteditable]')) return;
+      typed = (typed + event.key.toUpperCase()).slice(-24);
+      const key = Object.keys(secrets).find(word => typed.endsWith(word));
+      if (!key) return;
+      typed = '';
+      toast.textContent = secrets[key];
+      toast.hidden = false;
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {toast.hidden = true;}, 5500);
+    });
+
     // A single back action returns to the previous browser page;
     // direct visitors without history have the homepage as a safe fallback.
     document.getElementById('go-back').addEventListener('click', () => {
