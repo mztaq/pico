@@ -19,7 +19,7 @@ This feature branch adds an opt-in prototype for anonymous workspace usage and a
 ## Before merging
 - Run `pnpm install`, `pnpm check`, `pnpm test`, and `pnpm build`. Those checks have not been run by the authoring assistant.
 - Test endpoint requests and cookie behavior using a Pages preview deployment with a dedicated preview D1 database.
-- Integrate cloud preferences with existing settings storage. This draft currently exposes the preference API but does not automatically synchronize settings.
+- Verify cloud preference synchronization in a Pages preview: accept Preferences, change the compiler theme and font size, wait at least 2 seconds, and query `pico_preferences`. Verify it stops sending writes when consent is revoked.
 - Review privacy policy, cookie text, accessibility and consent-revocation behavior, including cross-tab behavior.
 - Add durable rate limiting, idempotent telemetry updates, abuse defenses, and scheduled deletion of expired records before enabling production tracking.
 - Test the backup and restore plan before real visitor data collection.
@@ -36,3 +36,11 @@ Cookie values are browser-specific random identifiers, not hardware fingerprints
 6. Run `SELECT COUNT(*) AS visitors FROM pico_visitors;` in the **preview** D1 Console to inspect inserts/removals.
 
 A 404 indicates the Functions route is not deployed. A 503 indicates the D1 binding or table is missing or unavailable. A failed POST can be inspected in Network for its response code.
+
+## Preferences implementation
+- Existing `pico.settings.v6` localStorage remains the immediate source of truth.
+- When Preferences is enabled, the client uploads a compact settings JSON to `PUT /api/preferences` after a 1.2-second debounce.
+- When no current local settings exist, the client attempts `GET /api/preferences` and restores the stored preferences before reloading the UI.
+- If local settings exist, they take priority; the client syncs these to D1. No projects, code or flowcharts are uploaded.
+- A declined Preferences choice disables the sync listener, and the consent API deletes the remote preference record.
+- Verify synchronization with real changes before release; cross-device syncing and account identity are out of scope.
