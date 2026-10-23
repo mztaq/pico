@@ -13,7 +13,7 @@ export const onRequestPut = async (ctx: Context) => {
   const user = await session(ctx);
   if (!user?.preferences_allowed) return fail(403,'Preferences consent required');
   const data = await body(ctx.request);
-  if (!data || !['dark','light'].includes(String(data.theme)) ||
+  if (!data || !(typeof data.theme === 'string' && /^[a-z0-9-]{1,80}$/.test(data.theme)) ||
       (data.lastWorkspace !== null && data.lastWorkspace !== undefined && !isWorkspace(data.lastWorkspace)) ||
       !data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings))
     return fail(400,'Invalid preferences');
