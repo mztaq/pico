@@ -20,6 +20,7 @@ import { TutorialOffer } from './components/TutorialOffer';
 import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen } from './components/HomeScreen';
+import { SiteInfo, informationPageFromHash } from './components/SiteInfo';
 import {useExitWarning} from './components/useExitWarning';
 import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
@@ -51,13 +52,24 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 export default function App() {
   const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | null>(null);
-  useEffect(() => { document.title = language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : 'Pico | Home'; }, [language]);
+  const [informationPage, setInformationPage] = useState(() => informationPageFromHash(window.location.hash));
+  useEffect(() => {
+    const onHashChange = () => {
+      const page = informationPageFromHash(window.location.hash);
+      setInformationPage(page);
+      if (page) setLanguage(null);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'authors' ? 'Authors' : informationPage === 'privacy' ? 'Privacy Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : 'Pico | Home'; }, [language, informationPage]);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
     if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
+  if (informationPage) return <SiteInfo page={informationPage} />;
   if (!language) return <HomeScreen onChoose={setLanguage} />;
   if (language === 'logic') return <LogicWorkspace onHome={() => setLanguage(null)} />;
   if (language === 'cpu') return <CpuStudio onHome={() => setLanguage(null)} />;
