@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0c0d10">
+  <link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
+  <title>404 | Pico</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,"DM Sans",system-ui,-apple-system,sans-serif;background:#0c0d10;color:#eeeefa}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100svh;display:grid;place-items:center;padding:30px 20px;background:radial-gradient(ellipse 54% 42% at 50% 46%,#181b27 0%,#0c0d10 100%)}
+    .shell{width:min(100%,690px)}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:750;font-size:19px;letter-spacing:-.7px;text-decoration:none;color:#f0f0f6}
+    .brand img{width:30px;height:30px}
+    .brand span{color:#8f89f7}
+    .rule{margin:34px 0 42px;border:0;border-top:1px solid #282a34}
+    .eyebrow{font:600 11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:2.6px;color:#9893fb}
+    .status{margin:8px 0 0;font-size:clamp(108px,24vw,182px);font-weight:760;line-height:1.06;letter-spacing:-.095em;color:#f1f1fb}
+    h1{font-size:clamp(25px,4.5vw,36px);font-weight:670;letter-spacing:-1.2px;margin:12px 0}
+    .sub{color:#999cae;line-height:1.65;font-size:15px;max-width:510px;margin:0 0 30px}
+    .diagnostic{border:1px solid #2c3040;background:#11141b;border-radius:9px;overflow:hidden;margin-bottom:27px}
+    .diagnostic .top{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#181b25;border-bottom:1px solid #2c3040;padding:11px 16px;font:500 11px ui-monospace,SFMono-Regular,Consolas,monospace;color:#a2a6bb}
+    .dots{display:flex;gap:6px}.dots i{width:7px;height:7px;background:#474b5e;border-radius:50%}
+    .code{font:13px/1.95 ui-monospace,SFMono-Regular,Consolas,monospace;color:#c4cada;padding:16px 19px;overflow-wrap:anywhere}
+    .line{color:#626c82;padding-right:16px;user-select:none}
+    .keyword{color:#a59aff}.string{color:#8bd3b4}.comment{color:#858c9d}
+    .actions{display:flex;align-items:center;flex-wrap:wrap;gap:20px}
+    .back{background:#e9e9fa;color:#11131b;padding:12px 19px;border-radius:7px;text-decoration:none;font-size:13px;font-weight:700;transition:background .15s ease}
+    .back:hover{background:#bdb9ff}
+    .secondary{font-size:13px;color:#989eae;text-decoration:none}.secondary:hover{color:#eeeefa}
+    .footer{margin-top:56px;color:#616575;font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
+    @media(max-width:480px){.rule{margin:25px 0 34px}.status{font-size:112px}.footer{margin-top:40px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt="">Pico<span>.</span></a>
+    <hr class="rule">
+    <div class="eyebrow">ROUTE_DIAGNOSTIC / 404</div>
+    <div class="status" aria-hidden="true">404</div>
+    <h1>Page not found.</h1>
+    <p class="sub">This route doesn't exist. The link may be incorrect, or the page may have moved.</p>
+    <div class="diagnostic" aria-label="Route diagnostic">
+      <div class="top"><span>route-check.pico</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+      <div class="code">
+        <div><span class="line">01</span><span class="keyword">ROUTE</span> <span id="missing-route" class="string">"/unknown"</span></div>
+        <div><span class="line">02</span><span class="comment">// No matching page found.</span></div>
+        <div><span class="line">03</span><span class="keyword">STATUS</span> 404_NOT_FOUND</div>
+      </div>
+    </div>
+    <div class="actions"><a class="back" href="/">Return to Pico →</a><a class="secondary" href="/">Go back</a></div>
+    <div class="footer">PICO / ERROR 404</div>
+  </main>
+  <script>
+    const route = document.getElementById('missing-route');
+    route.textContent = JSON.stringify(location.pathname + location.search).slice(0,180);
+  </script>
+</body>
+</html>
