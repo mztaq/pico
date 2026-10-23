@@ -116,4 +116,6 @@ export function loadSettings(): PicoSettings {
 }
 export function saveSettings(settings: PicoSettings): void {
   localStorage.setItem(KEY, JSON.stringify(settings));
+  window.dispatchEvent(new Event('pico:settings-saved'));
 }
+
