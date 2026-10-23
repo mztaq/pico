@@ -73,16 +73,86 @@
     const route = document.getElementById('missing-route');
     route.textContent = (location.pathname + location.search).slice(0,180);
     const messages = [
-      ["Well, that's awkward.", "There's nothing at this address. We checked."],
-      ["This page called in sick.", "No return date. No explanation."],
-      ["Even Pico can't find this one.", "And Pico is literally a compiler."],
-      ["You weren't supposed to find this.", "Mostly because there's nothing here."],
-      ["The page has left the chat.", "It didn't even say goodbye."],
-      ["404. Impressive.", "You found a URL that leads absolutely nowhere."],
-      ["This URL is fictional.", "Great concept. No actual page."],
-      ["Something's missing.", "Spoiler: it's the page."],
-      ["Nice try.", "Unfortunately, this route does not exist."],
-      ["That link is cooked.", "The page you're looking for isn't here."]
+          [
+                "Mustaqim hasn't deployed this one.",
+                "For once, that's probably a good thing."
+          ],
+          [
+                "Amar has an idea for this page.",
+                "Mustaqim is still waiting for the implementation details."
+          ],
+          [
+                "Hamza could market this URL.",
+                "Shame there's literally nothing to market."
+          ],
+          [
+                "Pico compiled everything except this link.",
+                "That's not in the syllabus."
+          ],
+          [
+                "404. Not even pseudocode can explain this.",
+                "OUTPUT \"Where did the page go?\""
+          ],
+          [
+                "Mustaqim checked the deployment.",
+                "The page was never invited."
+          ],
+          [
+                "Amar said it needs one more feature.",
+                "A page would be a good start."
+          ],
+          [
+                "Hamza's working on the launch trailer.",
+                "We should probably find the page first."
+          ],
+          [
+                "Pico returned absolutely nothing.",
+                "Which is still more than this URL does."
+          ],
+          [
+                "404: skill issue?",
+                "Not yours. This route genuinely doesn't exist."
+          ],
+          [
+                "The CPU fetched nothing.",
+                "Decode and execute are taking the day off."
+          ],
+          [
+                "We ran this URL through Pico.",
+                "Even the debugger gave up."
+          ],
+          [
+                "Amar's got a plan.",
+                "Unfortunately, this page isn't part of it."
+          ],
+          [
+                "Mustaqim can't push a page that doesn't exist.",
+                "GitHub has standards. Apparently."
+          ],
+          [
+                "Hamza can make it look good.",
+                "But first, someone has to make it exist."
+          ],
+          [
+                "Syntax error: page not found.",
+                "This isn't one Pico can autocorrect."
+          ],
+          [
+                "The flowchart ends here.",
+                "There isn't even a decision block."
+          ],
+          [
+                "Pico searched every register.",
+                "No page. Just disappointment."
+          ],
+          [
+                "This URL failed the vibe check.",
+                "Try the homepage instead."
+          ],
+          [
+                "The compiler has questions.",
+                "Mainly: who sent you this link?"
+          ]
     ];
     // Avoid showing the same joke twice in a row, including on refresh.
     let previous = -1;
