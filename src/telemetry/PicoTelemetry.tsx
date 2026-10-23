@@ -42,6 +42,7 @@ export function PicoTelemetry() {
     const totals = new Map<string, number>();
     let pending: UsageBatch | null = null;
     let posting = false;
+    let retryAfter = 0;
     let lastTick = performance.now();
     let activeWorkspace = workspaces[document.title] ?? null;
 
@@ -56,7 +57,7 @@ export function PicoTelemetry() {
       }
     };
     const flush = async (keepalive = false) => {
-      if (closed || posting) return;
+      if (closed || posting || Date.now() < retryAfter) return;
       if (!pending) pending=buildUsageBatch(totals,crypto.randomUUID());
       if (!pending) return;
       const batch = pending;
@@ -67,7 +68,10 @@ export function PicoTelemetry() {
           headers:{'content-type':'application/json'},
           body:JSON.stringify(batch),
         });
-        if (!response.ok) throw new Error('Usage sync failed');
+        if (!response.ok) {
+          retryAfter = Date.now() + (response.status===429 ? 60000 : 10000);
+          throw new Error('Usage sync failed');
+        }
         if (closed) return;
         acknowledgeUsageBatch(totals,batch);
         pending=null;
