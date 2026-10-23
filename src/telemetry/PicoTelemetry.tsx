@@ -33,39 +33,92 @@ export function PicoTelemetry() {
   const [draft,setDraft] = useState<Choice>(()=>storedChoice() ?? {analytics:false,preferences:false});
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
-  const seconds = useRef(0);
   const lastActivity = useRef(Date.now());
-  const workspace = useRef<string | null>(null);
 
-  useEffect(()=>{
+  useEffect(() => {
     if (!choice?.analytics) return;
-    let stopped = false;
-    const syncWorkspace = () => {workspace.current = workspaces[document.title] ?? null;};
-    syncWorkspace();
-    const observer = new MutationObserver(syncWorkspace);
-    const title = document.querySelector('title');
-    if (title) observer.observe(title,{childList:true,characterData:true,subtree:true});
-    const noteActivity = () => {lastActivity.current = Date.now();};
-    for(const type of ['pointerdown','keydown','wheel']) window.addEventListener(type,noteActivity,{passive:true});
-    let sending = false;
-    const flush = async () => {
-      if (stopped || sending || seconds.current < 50 || !workspace.current) return;
-      const duration = Math.min(60,seconds.current);
-      sending = true;
-      try {
-        await post('/api/usage',{workspace:workspace.current,seconds:duration});
-        seconds.current -= duration;
-      } catch { /* Don't interrupt compilers when analytics is unavailable. */ }
-      finally { sending = false; }
+    let closed = false;
+    const totals = new Map<string, number>();
+    let pending: {batchId:string, entries:{workspace:string, seconds:number}[]} | null = null;
+    let posting = false;
+    let lastTick = performance.now();
+    let activeWorkspace = workspaces[document.title] ?? null;
+
+    const totalSeconds = () => [...totals.values()].reduce((a,b) => a+b,0);
+    const record = () => {
+      const current = performance.now();
+      const delta = Math.min(2,Math.max(0,(current-lastTick)/1000));
+      lastTick = current;
+      if (activeWorkspace && !document.hidden && document.hasFocus() &&
+          Date.now()-lastActivity.current < 120000) {
+        totals.set(activeWorkspace,(totals.get(activeWorkspace) ?? 0)+delta);
+      }
     };
-    const timer = window.setInterval(()=>{
-      if (!document.hidden && workspace.current && Date.now()-lastActivity.current < 120000) seconds.current++;
-      if (seconds.current>=60) void flush();
+    const flush = async (keepalive = false) => {
+      if (closed || posting) return;
+      if (!pending) {
+        const entries:{workspace:string,seconds:number}[] = [];
+        let remaining=60;
+        for (const [name, value] of totals) {
+          const seconds=Math.min(remaining,Math.floor(value));
+          if (seconds > 0) { entries.push({workspace:name,seconds}); remaining-=seconds; }
+          if (remaining===0) break;
+        }
+        if (!entries.length) return;
+        pending={batchId:crypto.randomUUID(),entries};
+      }
+      const batch = pending;
+      posting=true;
+      try {
+        const response=await fetch('/api/usage',{
+          method:'POST',credentials:'same-origin',keepalive,
+          headers:{'content-type':'application/json'},
+          body:JSON.stringify(batch),
+        });
+        if (!response.ok) throw new Error('Usage sync failed');
+        if (closed) return;
+        for (const entry of batch.entries) {
+          const left=(totals.get(entry.workspace) ?? 0)-entry.seconds;
+          if(left>0) totals.set(entry.workspace,left); else totals.delete(entry.workspace);
+        }
+        pending=null;
+      } catch {
+        // Retain the same batch identifier, so a retry cannot count twice.
+      } finally {posting=false;}
+    };
+    const syncWorkspace = () => {
+      record();
+      const next = workspaces[document.title] ?? null;
+      if(next!==activeWorkspace) {
+        activeWorkspace=next;
+        if(totalSeconds()>=5) void flush();
+      }
+    };
+    const title=document.querySelector('title');
+    const observer=new MutationObserver(syncWorkspace);
+    if(title) observer.observe(title,{childList:true,characterData:true,subtree:true});
+    const noteActivity=()=>{lastActivity.current=Date.now();};
+    for(const type of ['pointerdown','keydown','wheel']) {
+      window.addEventListener(type,noteActivity,{passive:true});
+    }
+    const onVisibility = () => {
+      record();
+      if(document.hidden) void flush(true);
+      lastTick=performance.now();
+    };
+    document.addEventListener('visibilitychange',onVisibility);
+    const onPageHide=()=>{record();void flush(true);};
+    window.addEventListener('pagehide',onPageHide);
+    const timer=window.setInterval(()=>{
+      record();
+      if(totalSeconds()>=30) void flush();
     },1000);
-    return () => {
-      stopped = true;
+    return ()=>{
+      closed=true;
       window.clearInterval(timer);
       observer.disconnect();
+      document.removeEventListener('visibilitychange',onVisibility);
+      window.removeEventListener('pagehide',onPageHide);
       for(const type of ['pointerdown','keydown','wheel']) window.removeEventListener(type,noteActivity);
     };
   },[choice?.analytics]);
