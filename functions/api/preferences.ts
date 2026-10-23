@@ -1,4 +1,5 @@
 import {body, checkOrigin, fail, isWorkspace, json, now, ninetyDays, session, type Context} from '../_lib/core';
+import {rateLimit} from '../_lib/rate-limit';
 
 export const onRequestGet = async (ctx: Context) => {
   const user = await session(ctx);
@@ -10,6 +11,8 @@ export const onRequestGet = async (ctx: Context) => {
 };
 export const onRequestPut = async (ctx: Context) => {
   const originError = checkOrigin(ctx.request); if (originError) return originError;
+  const limited = await rateLimit(ctx, 'preferences', 20);
+  if (limited) return limited;
   const user = await session(ctx);
   if (!user?.preferences_allowed) return fail(403,'Preferences consent required');
   const data = await body(ctx.request);
