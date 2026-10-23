@@ -36,8 +36,9 @@ it('opens the Authors link and supports direct links to all information pages', 
   await navigate('#authors');
   expect(document.title).toBe('Pico | Authors');
   const cards = [...host.querySelectorAll('.author-card')];
-  expect(cards.map(card => card.querySelector('h2')?.textContent)).toEqual(['Muhammed Mustaqim 11BR', 'Amar Ayache 11BB', 'Mohamed Hamza']);
-  expect(cards.map(card => card.querySelector('.author-role')?.textContent)).toEqual(['Head of development, innovator, editor and media manager', 'Main developer, innovator, editor and media manager', 'Concept developer, entrepreneur and media manager']);
+  expect(cards.map(card => card.querySelector('h2')?.textContent)).toEqual(['Muhammad Mustaqim 11BR', 'Amar Ayache 11BB', 'Mohamed Hamza 11BR']);
+  expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual(['Implements features and manages deployment and releases.', 'Built Pico’s foundation and guides its development.', 'Develops concepts and supports marketing and promotion.']);
+  expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([['Head of Deployment', 'Media Manager'], ['Head of Development', 'Media Manager'], ['Concept Developer', 'Media Manager']]);
   expect(host.querySelectorAll('.author-icon svg')).toHaveLength(3);
   expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Authors');
   expect(document.activeElement).toBe(host.querySelector('h1'));
