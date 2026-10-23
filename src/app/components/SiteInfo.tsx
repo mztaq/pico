@@ -29,9 +29,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Authors() {
   const authors = [
-    { name: 'Muhammad Mustaqim 11BR', role: 'Head of development and deployment, innovator, editor and media manager', icon: GitBranch },
-    { name: 'Amar Ayache 11BB', role: 'Head of development, innovator, editor and media manager', icon: Code2 },
-    { name: 'Mohamed Hamza 11BR', role: 'Concept developer, entrepreneur and media manager', icon: Lightbulb },
+    { name: 'Muhammad Mustaqim 11BR', role: 'Implements features and manages deployment and releases', icon: GitBranch },
+    { name: 'Amar Ayache 11BB', role: 'Built Pico’s foundation and guides new features and their implementation', icon: Code2 },
+    { name: 'Mohamed Hamza 11BR', role: 'Develops concepts and supports marketing and promotion', icon: Lightbulb },
   ];
   return <>
     <div className="author-grid">{authors.map(({ name, role, icon: Icon }) => <section className="author-card" key={name}>
