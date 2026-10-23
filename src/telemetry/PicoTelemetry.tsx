@@ -72,7 +72,7 @@ export function PicoTelemetry() {
   const save = async (next:Choice) => {
     setBusy(true);setError('');
     try {
-      await post('/api/consent',next);
+      await post('/api/cookies',next);
       localStorage.setItem(KEY,JSON.stringify(next));
       setChoice(next);setDraft(next);setEditing(false);
     } catch {
