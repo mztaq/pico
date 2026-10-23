@@ -4,7 +4,7 @@ export const onRequestGet = async (ctx: Context) => {
   const user = await session(ctx);
   if (!user?.preferences_allowed) return fail(403,'Preferences consent required');
   const row = await ctx.env.DB.prepare(
-    'SELECT theme,last_workspace,settings_json FROM pico_preferences WHERE visitor_id=?'
+    'SELECT p.theme,v.last_workspace,p.settings_json FROM pico_preferences p JOIN pico_visitors v ON v.visitor_id=p.visitor_id WHERE p.visitor_id=?'
   ).bind(user.visitor_id).first<{theme:string,last_workspace:string|null,settings_json:string}>();
   return json(row ? {theme:row.theme,lastWorkspace:row.last_workspace,settings:JSON.parse(row.settings_json)} : null);
 };
