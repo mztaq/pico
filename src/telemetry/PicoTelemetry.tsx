@@ -31,6 +31,7 @@ function storedChoice(): Choice | null {
 export function PicoTelemetry() {
   const [choice,setChoice] = useState<Choice | null>(()=>storedChoice());
   const [editing,setEditing] = useState(false);
+  const [isHome,setIsHome] = useState(() => document.title === 'Pico | Home');
   const [draft,setDraft] = useState<Choice>(()=>storedChoice() ?? {analytics:false,preferences:false});
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
@@ -213,13 +214,28 @@ export function PicoTelemetry() {
     return () => window.removeEventListener('keydown', onEscape);
   }, [editing, choice]);
 
+  // Consent controls belong to the home screen only. Tracking remains active in workspaces.
+  useEffect(() => {
+    const update = () => setIsHome(document.title === 'Pico | Home');
+    update();
+    const title = document.querySelector('title');
+    if (!title) return;
+    const observer = new MutationObserver(update);
+    observer.observe(title,{childList:true,characterData:true,subtree:true});
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isHome) setEditing(false);
+  }, [isHome]);
+
   return <>
-    {choice && !editing && <button className="pico-cookie-reopen" type="button"
+    {isHome && choice && !editing && <button className="pico-cookie-reopen" type="button"
       onClick={() => { setDraft(choice); setEditing(true); }} aria-label="Open cookie settings">
       Cookie Settings
     </button>}
 
-    {!choice && !editing && <section className="pico-cookie-banner" aria-label="Cookie consent">
+    {isHome && !choice && !editing && <section className="pico-cookie-banner" aria-label="Cookie consent">
       <p>
         We use cookies to remember your settings and improve Pico. Choose what works for you. <a href="#cookies">Cookie Policy</a>
       </p>
@@ -236,7 +252,7 @@ export function PicoTelemetry() {
       </div>
     </section>}
 
-    {editing && <div className="pico-cookie-overlay"
+    {isHome && editing && <div className="pico-cookie-overlay"
       onMouseDown={event => { if (event.target === event.currentTarget && choice) setEditing(false); }}>
       <section role="dialog" aria-modal="true" aria-labelledby="pico-cookie-title"
         aria-describedby="pico-cookie-description" className="pico-cookie-modal">
