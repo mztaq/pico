@@ -29,7 +29,7 @@
     .actions{display:flex;align-items:center;flex-wrap:wrap;gap:20px}
     .back{background:#e9e9fa;color:#11131b;padding:12px 19px;border-radius:7px;text-decoration:none;font-size:13px;font-weight:700;transition:background .15s ease}
     .back:hover{background:#bdb9ff}
-    .secondary{font-size:13px;color:#989eae;text-decoration:none}.secondary:hover{color:#eeeefa}
+    .secondary{font-size:13px;color:#989eae;text-decoration:none;border:0;background:transparent;cursor:pointer;padding:10px 0;font-family:inherit}.secondary:hover{color:#eeeefa}
     .footer{margin-top:56px;color:#616575;font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
     @media(max-width:480px){.rule{margin:25px 0 34px}.status{font-size:112px}.footer{margin-top:40px}}
     @media(prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -51,12 +51,13 @@
         <div><span class="line">03</span><span class="keyword">STATUS</span> 404_NOT_FOUND</div>
       </div>
     </div>
-    <div class="actions"><a class="back" href="/">Return to Pico →</a><a class="secondary" href="/">Go back</a></div>
+    <div class="actions"><a class="back" href="/">Return to Pico →</a><button class="secondary" type="button" id="go-back">Go back</button></div>
     <div class="footer">PICO / ERROR 404</div>
   </main>
   <script>
     const route = document.getElementById('missing-route');
     route.textContent = JSON.stringify(location.pathname + location.search).slice(0,180);
+    document.getElementById('go-back').addEventListener('click', () => history.length > 1 ? history.back() : location.assign('/'));
   </script>
 </body>
 </html>
