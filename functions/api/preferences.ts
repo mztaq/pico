@@ -1,4 +1,4 @@
-import {body, checkOrigin, fail, isWorkspace, json, now, ninetyDays, session, type Context} from '../_lib/core';
+import {body, checkOrigin, fail, isWorkspace, json, now, ninetyDays, session, renewedCookieHeaders, type Context} from '../_lib/core';
 import {rateLimit} from '../_lib/rate-limit';
 
 export const onRequestGet = async (ctx: Context) => {
@@ -29,10 +29,15 @@ export const onRequestPut = async (ctx: Context) => {
      ON CONFLICT(visitor_id) DO UPDATE SET
      theme=excluded.theme,settings_json=excluded.settings_json,updated_at=excluded.updated_at`
   ).bind(user.visitor_id,data.theme,settings,timestamp).run();
-  await ctx.env.DB.prepare(
-    'UPDATE pico_visitors SET last_workspace=?,last_visit=?,expires_at=? WHERE visitor_id=?'
-  ).bind(data.lastWorkspace ?? null,timestamp,expiry,user.visitor_id).run();
-  return json({ok:true});
+  await ctx.env.DB.batch([
+    ctx.env.DB.prepare(
+      'UPDATE pico_visitors SET last_workspace=?,last_visit=?,expires_at=? WHERE visitor_id=?'
+    ).bind(data.lastWorkspace ?? null,timestamp,expiry,user.visitor_id),
+    ctx.env.DB.prepare(
+      'UPDATE pico_consent SET expires_at=? WHERE visitor_id=?'
+    ).bind(expiry,user.visitor_id),
+  ]);
+  return json({ok:true},200,renewedCookieHeaders(ctx.request));
 };
 export const onRequestDelete = async (ctx: Context) => {
   const error=checkOrigin(ctx.request); if(error) return error;
