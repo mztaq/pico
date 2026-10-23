@@ -14,14 +14,14 @@ This feature branch adds an opt-in prototype for anonymous workspace usage and a
 - `GET /api/preferences`: read settings, gated by preference consent.
 - `PUT /api/preferences`: update theme, last workspace, and settings JSON.
 - `DELETE /api/preferences`: delete stored preferences.
-- `POST /api/usage`: submit 1-60 active seconds and one of `logic`, `python`, `pseudocode`, `flowchart`, `cpu` when analytics is permitted.
+- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to five workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice.
 
 ## Before merging
 - Run `pnpm install`, `pnpm check`, `pnpm test`, and `pnpm build`. Those checks have not been run by the authoring assistant.
 - Test endpoint requests and cookie behavior using a Pages preview deployment with a dedicated preview D1 database.
 - Verify cloud preference synchronization in a Pages preview: accept Preferences, change the compiler theme and font size, wait at least 2 seconds, and query `pico_preferences`. Verify it stops sending writes when consent is revoked.
 - Review privacy policy, cookie text, accessibility and consent-revocation behavior, including cross-tab behavior.
-- Add durable rate limiting, idempotent telemetry updates, abuse defenses, and scheduled deletion of expired records before enabling production tracking.
+- Deploy and verify the D1 migration, rate-limit secret, and separate cleanup Worker before merging. Rate limits are basic D1/IP protections, not a substitute for Cloudflare WAF controls.
 - Test the backup and restore plan before real visitor data collection.
 
 ## Security notes
@@ -44,3 +44,31 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 - If local settings exist, they take priority; the client syncs these to D1. No projects, code or flowcharts are uploaded.
 - A declined Preferences choice disables the sync listener, and the consent API deletes the remote preference record.
 - Verify synchronization with real changes before release; cross-device syncing and account identity are out of scope.
+
+## Required migration and setup before testing the latest branch
+
+**The updated API intentionally rejects POST requests with HTTP 503 until the rate-limit secret is configured.** Do not rotate the secret during active requests without considering the temporary effect on counters.
+
+1. Open the D1 Console for the matching Preview database and execute `migrations/0002_usage_safety.sql`. It creates `pico_usage_events`, `pico_rate_limits`, and `pico_usage_windows`. Apply the same migration to Production only before a production release.
+2. In Cloudflare Pages → picompiler → Settings → Preview → Variables and secrets, add a secret variable named `RATE_LIMIT_SECRET`. Generate a unique random value at least 32 characters long. Do not commit the secret to GitHub or paste it into chat.
+3. Redeploy the feature-branch preview.
+4. Verify `GET /api/cookies` still returns `database: connected`. Click Accept All and verify POST returns 200.
+5. Verify `POST /api/usage` sends a batch ID and one to five workspace entries. Replaying the **same** batch ID must return `applied:false` and leave totals unchanged.
+6. Check that excessively repeated requests return HTTP 429. The current per-minute ceilings are cookies 12, preferences 20 and usage 24 requests per IP address. Shared school networks may hit these sooner.
+
+## Scheduled retention cleanup
+
+Pages Functions do not support scheduled cron handlers. Create a **separate Cloudflare Worker** from `workers/pico-cleanup.ts`, bind the appropriate D1 database as `DB`, and configure the Cron Trigger `0 2 * * *` (02:00 UTC daily). Deploy Preview cleanup against the Preview D1 database. After review, deploy a separate Production cleanup Worker bound to Production D1. Do not share D1 with another environment unintentionally.
+
+This Worker removes expired consent/visitor records, seven-day-old usage batch IDs, expired request-limit counters, and obsolete minute windows. Foreign-key cascades remove related preferences and usage. Do not enable production collection before confirming the Worker executes and deletion works.
+
+## Regression checklist
+
+1. GET /api/cookies works with or without a cookie.
+2. Accept All creates one visitor and consent record.
+3. Change theme and font size. One preferences row updates after debounce. Browser theme changes immediately.
+4. Track 20 active seconds in Python, 20 in Flowchart, then 20 in CPU Studio. Expect these specific workspace totals (with one-second sampling tolerance), not all seconds in the last workspace.
+5. Send the exact same usage batch ID twice. Expect `applied:true` then `applied:false`; totals must increase only once.
+6. Leave the tab inactive or hidden. No additional active seconds should be recorded.
+7. Reject All. Existing visitor, consent, usage, and preferences rows are deleted.
+8. Set a test visitor's `expires_at` to the past and run the cleanup Worker manually in a nonproduction environment. Confirm that its dependent rows disappear.
