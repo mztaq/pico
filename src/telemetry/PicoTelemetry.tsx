@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import './cookie-consent.css';
 
 type Choice = { analytics: boolean; preferences: boolean };
 const KEY = 'pico.consent.v1';
@@ -79,32 +80,82 @@ export function PicoTelemetry() {
     } finally {setBusy(false);}
   };
 
+  useEffect(() => {
+    if (!editing) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && choice) setEditing(false);
+    };
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, [editing, choice]);
+
   return <>
-    {!editing && choice && <button type="button" onClick={()=>{setDraft(choice);setEditing(true);}}
-      style={{position:'fixed',bottom:12,right:12,zIndex:9999,padding:'6px 10px',fontSize:12,
-        border:'1px solid #707070',borderRadius:6,background:'#171b24',color:'#f4f4f4',cursor:'pointer'}}>
-      Privacy settings
+    {choice && !editing && <button className="pico-cookie-reopen" type="button"
+      onClick={() => { setDraft(choice); setEditing(true); }} aria-label="Open cookie settings">
+      Cookie Settings
     </button>}
-    {(!choice || editing) && <div role="dialog" aria-label="Pico privacy choices" aria-modal="false"
-      style={{position:'fixed',bottom:16,left:16,zIndex:10000,maxWidth:390,width:'calc(100% - 32px)',
-        padding:18,borderRadius:10,background:'#181b24',color:'#fff',border:'1px solid #515866',
-        boxShadow:'0 6px 30px #0009',fontFamily:'system-ui,sans-serif',fontSize:14}}>
-      <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>Pico privacy settings</div>
-      <p style={{lineHeight:1.45,margin:'0 0 12px'}}>Pico works without optional tracking. You choose whether to share anonymous workspace usage and save preferences in the cloud.</p>
-      <label style={{display:'flex',gap:10,marginBottom:12,alignItems:'center'}}>
-        <input type="checkbox" checked={draft.analytics} onChange={e=>setDraft(v=>({...v,analytics:e.target.checked}))}/>
-        Anonymous usage analytics
-      </label>
-      <label style={{display:'flex',gap:10,marginBottom:14,alignItems:'center'}}>
-        <input type="checkbox" checked={draft.preferences} onChange={e=>setDraft(v=>({...v,preferences:e.target.checked}))}/>
-        Store preferences on Pico's database
-      </label>
-      {error && <p role="alert" style={{color:'#ff9999'}}>{error}</p>}
-      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-        <button type="button" disabled={busy} onClick={()=>void save({analytics:false,preferences:false})}>Reject optional</button>
-        <button type="button" disabled={busy} onClick={()=>void save(draft)}>Save choices</button>
-        <button type="button" disabled={busy} onClick={()=>void save({analytics:true,preferences:true})}>Accept all</button>
+
+    {!choice && !editing && <section className="pico-cookie-banner" aria-label="Cookie consent">
+      <p>
+        We use optional cookies to remember your preferences and understand how Pico is used.
+        You choose what to allow. <a href="#cookies">Cookie Policy</a>
+      </p>
+      {error && <span className="pico-cookie-error" role="alert">{error}</span>}
+      <div className="pico-cookie-actions">
+        <button className="pico-cookie-btn pico-cookie-outline" type="button"
+          onClick={() => { setDraft({analytics:false, preferences:false}); setEditing(true); }}>
+          Cookie Settings
+        </button>
+        <button className="pico-cookie-btn pico-cookie-neutral" type="button" disabled={busy}
+          onClick={() => void save({analytics:false, preferences:false})}>Reject All</button>
+        <button className="pico-cookie-btn pico-cookie-primary" type="button" disabled={busy}
+          onClick={() => void save({analytics:true, preferences:true})}>Accept All</button>
       </div>
+    </section>}
+
+    {editing && <div className="pico-cookie-overlay"
+      onMouseDown={event => { if (event.target === event.currentTarget && choice) setEditing(false); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="pico-cookie-title"
+        aria-describedby="pico-cookie-description" className="pico-cookie-modal">
+        <header className="pico-cookie-modal-head">
+          <div>
+            <span className="pico-cookie-eyebrow">PRIVACY PREFERENCES</span>
+            <h2 id="pico-cookie-title">Cookie Settings</h2>
+          </div>
+          {choice && <button className="pico-cookie-close" type="button"
+            onClick={() => setEditing(false)} aria-label="Close cookie settings">×</button>}
+        </header>
+        <p id="pico-cookie-description" className="pico-cookie-description">
+          Essential storage keeps Pico working. Optional cookies help us understand feature usage
+          and remember selected settings. You can change your choices at any time.
+        </p>
+        <div className="pico-cookie-categories">
+          <div className="pico-cookie-category">
+            <div><strong>Strictly Necessary</strong><p>Required to remember consent and support essential website functionality.</p></div>
+            <span className="pico-cookie-required">Always active</span>
+          </div>
+          <label className="pico-cookie-category">
+            <div><strong>Analytics</strong><p>Helps us measure workspace activity and improve Pico.</p></div>
+            <input aria-label="Allow analytics cookies" type="checkbox" checked={draft.analytics}
+              onChange={event => setDraft(v => ({...v, analytics:event.target.checked}))} />
+          </label>
+          <label className="pico-cookie-category">
+            <div><strong>Preferences</strong><p>Remembers selected settings across visits in this browser.</p></div>
+            <input aria-label="Allow preference cookies" type="checkbox" checked={draft.preferences}
+              onChange={event => setDraft(v => ({...v, preferences:event.target.checked}))} />
+          </label>
+        </div>
+        <a className="pico-cookie-policy" href="#cookies" onClick={() => setEditing(false)}>Read our Cookie Policy →</a>
+        {error && <p className="pico-cookie-error" role="alert">{error}</p>}
+        <div className="pico-cookie-modal-actions">
+          <button className="pico-cookie-btn pico-cookie-outline" type="button" disabled={busy}
+            onClick={() => void save({analytics:false, preferences:false})}>Reject All</button>
+          <button className="pico-cookie-btn pico-cookie-neutral" type="button" disabled={busy}
+            onClick={() => void save(draft)}>Save Preferences</button>
+          <button className="pico-cookie-btn pico-cookie-primary" type="button" disabled={busy}
+            onClick={() => void save({analytics:true, preferences:true})}>Accept All</button>
+        </div>
+      </section>
     </div>}
   </>;
 }
