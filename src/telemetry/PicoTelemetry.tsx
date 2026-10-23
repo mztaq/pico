@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import './cookie-consent.css';
-import { loadSettings, saveSettings } from '../storage/settings';
+import { loadSettings } from '../storage/settings';
 
 type Choice = { analytics: boolean; preferences: boolean };
 const KEY = 'pico.consent.v1';
