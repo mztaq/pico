@@ -10,7 +10,6 @@ export default {
       await env.DB.batch([
         env.DB.prepare('DELETE FROM pico_rate_limits WHERE expires_at < ?').bind(timestamp),
         env.DB.prepare('DELETE FROM pico_usage_events WHERE created_at < ?').bind(timestamp-7*86400),
-        env.DB.prepare('DELETE FROM pico_usage_windows WHERE minute_bucket < ?').bind(Math.floor(timestamp/60)-1440),
         env.DB.prepare('DELETE FROM pico_consent WHERE expires_at < ?').bind(timestamp),
         env.DB.prepare('DELETE FROM pico_visitors WHERE expires_at < ?').bind(timestamp),
       ]);
