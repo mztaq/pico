@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './cookie-consent.css';
 import { loadSettings } from '../storage/settings';
+import { attributeSeconds, buildUsageBatch, acknowledgeUsageBatch, type UsageBatch } from './usage-batches';
 
 type Choice = { analytics: boolean; preferences: boolean };
 const KEY = 'pico.consent.v1';
@@ -39,7 +40,7 @@ export function PicoTelemetry() {
     if (!choice?.analytics) return;
     let closed = false;
     const totals = new Map<string, number>();
-    let pending: {batchId:string, entries:{workspace:string, seconds:number}[]} | null = null;
+    let pending: UsageBatch | null = null;
     let posting = false;
     let lastTick = performance.now();
     let activeWorkspace = workspaces[document.title] ?? null;
@@ -51,22 +52,13 @@ export function PicoTelemetry() {
       lastTick = current;
       if (activeWorkspace && !document.hidden && document.hasFocus() &&
           Date.now()-lastActivity.current < 120000) {
-        totals.set(activeWorkspace,(totals.get(activeWorkspace) ?? 0)+delta);
+        attributeSeconds(totals,activeWorkspace,delta);
       }
     };
     const flush = async (keepalive = false) => {
       if (closed || posting) return;
-      if (!pending) {
-        const entries:{workspace:string,seconds:number}[] = [];
-        let remaining=60;
-        for (const [name, value] of totals) {
-          const seconds=Math.min(remaining,Math.floor(value));
-          if (seconds > 0) { entries.push({workspace:name,seconds}); remaining-=seconds; }
-          if (remaining===0) break;
-        }
-        if (!entries.length) return;
-        pending={batchId:crypto.randomUUID(),entries};
-      }
+      if (!pending) pending=buildUsageBatch(totals,crypto.randomUUID());
+      if (!pending) return;
       const batch = pending;
       posting=true;
       try {
@@ -77,10 +69,7 @@ export function PicoTelemetry() {
         });
         if (!response.ok) throw new Error('Usage sync failed');
         if (closed) return;
-        for (const entry of batch.entries) {
-          const left=(totals.get(entry.workspace) ?? 0)-entry.seconds;
-          if(left>0) totals.set(entry.workspace,left); else totals.delete(entry.workspace);
-        }
+        acknowledgeUsageBatch(totals,batch);
         pending=null;
       } catch {
         // Retain the same batch identifier, so a retry cannot count twice.
