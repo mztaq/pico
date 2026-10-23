@@ -1,4 +1,4 @@
-import {body, checkOrigin, fail, isWorkspace, json, now, ninetyDays, session, type Context} from '../_lib/core';
+import {body, checkOrigin, fail, isWorkspace, json, now, ninetyDays, session, renewedCookieHeaders, type Context} from '../_lib/core';
 import {rateLimit} from '../_lib/rate-limit';
 
 export const WORKSPACE_COLUMNS: Record<string,string> = {
@@ -64,9 +64,14 @@ export const onRequestPost = async (ctx: Context) => {
     ).bind(id).first<Record<string,number>>();
     const mostUsed=Object.entries(WORKSPACE_COLUMNS).sort((a,b)=>
       (usage?.[b[1]] ?? 0)-(usage?.[a[1]] ?? 0))[0]![0];
-    await ctx.env.DB.prepare(
-      'UPDATE pico_visitors SET last_visit=?,expires_at=?,last_workspace=?,most_used_workspace=? WHERE visitor_id=?'
-    ).bind(timestamp,timestamp+ninetyDays,mostRecent,mostUsed,id).run();
+    await ctx.env.DB.batch([
+      ctx.env.DB.prepare(
+        'UPDATE pico_visitors SET last_visit=?,expires_at=?,last_workspace=?,most_used_workspace=? WHERE visitor_id=?'
+      ).bind(timestamp,timestamp+ninetyDays,mostRecent,mostUsed,id),
+      ctx.env.DB.prepare(
+        'UPDATE pico_consent SET expires_at=? WHERE visitor_id=?'
+      ).bind(timestamp+ninetyDays,id),
+    ]);
   }
-  return json({ok:true,applied});
+  return json({ok:true,applied},200,applied ? renewedCookieHeaders(ctx.request) : {});
 };
