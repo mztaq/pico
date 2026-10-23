@@ -28,10 +28,6 @@ export async function hash(token: string) {
   const bytes = await crypto.subtle.digest('SHA-256', encoder.encode(token));
   return [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
-export function newToken() {
-  const b = crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(b, v => String.fromCharCode(v)).reduce((s,c)=>s+c,'');
-}
 export function randomId() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   let s = '';
