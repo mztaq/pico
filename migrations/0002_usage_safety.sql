@@ -22,13 +22,3 @@ CREATE TABLE IF NOT EXISTS pico_rate_limits (
 CREATE INDEX IF NOT EXISTS idx_pico_rate_limits_expiry
 ON pico_rate_limits(expires_at);
 
--- A per-visitor total of accepted active seconds for each wall-clock minute.
-CREATE TABLE IF NOT EXISTS pico_usage_windows (
-  visitor_id TEXT NOT NULL,
-  minute_bucket INTEGER NOT NULL,
-  seconds INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY(visitor_id, minute_bucket),
-  FOREIGN KEY(visitor_id) REFERENCES pico_visitors(visitor_id) ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS idx_pico_usage_windows_expiry
-ON pico_usage_windows(minute_bucket);
