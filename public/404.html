@@ -55,6 +55,18 @@
     .secret-toast{position:fixed;right:clamp(16px,4vw,45px);bottom:clamp(16px,4vw,45px);z-index:10;max-width:min(90vw,370px);border:1px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--text);padding:15px 18px;font:600 13px/1.5 "Space Mono",monospace;box-shadow:0 12px 40px #0003;pointer-events:none}
     [hidden]{display:none!important}
     @media(max-width:720px){.reaction{font-size:12px;max-width:80vw}.status{margin-bottom:28px}.actions{flex-wrap:wrap;gap:10px}.secret-toast{left:16px;right:16px;max-width:none}}
+
+    .shell[data-rare="tiny"] .status{font-size:clamp(42px,5vw,70px);letter-spacing:0}
+    .shell[data-rare="inverted"] .status{transform:rotate(180deg)}
+    .shell[data-rare="stamp"] .status{font-size:clamp(85px,12vw,160px);border:3px dashed var(--accent);padding:8px 20px;transform:rotate(-3deg)}
+    .shell[data-rare="large"] .status{font-size:clamp(120px,18vw,235px)}
+    .conversation{display:grid;gap:12px;margin:0 0 29px;max-width:min(100%,650px);text-align:left}
+    .conversation-line{font-size:clamp(14px,1.45vw,17px);line-height:1.5;color:var(--text)}
+    .conversation-line strong{font-family:"Space Mono",monospace;font-size:.88em;color:var(--accent)}
+    .achievement{position:fixed;z-index:12;left:clamp(14px,3vw,40px);bottom:clamp(14px,3vw,40px);max-width:min(90vw,400px);border:1px solid var(--accent);border-radius:8px;background:var(--surface);padding:14px 19px;color:var(--text);box-shadow:0 9px 35px #0003}
+    .achievement strong{display:block;font:700 11px "Space Mono",monospace;letter-spacing:.08em;color:var(--accent);margin-bottom:5px}
+    .achievement span{font:600 14px/1.5 "DM Sans",sans-serif}
+    @media(max-width:720px){.shell[data-rare="large"] .status{font-size:clamp(100px,22vw,156px)}.shell[data-rare="stamp"] .status{font-size:clamp(78px,18vw,118px);transform:none}}
   </style>
 </head>
 <body>
@@ -66,10 +78,12 @@
         <div class="status" aria-hidden="true">404</div>
         <h1 id="joke-title">Well, that's awkward.</h1>
         <p class="sub" id="joke-description">There's nothing at this address.</p>
+        <div class="conversation" id="conversation" hidden aria-label="Pico team conversation"></div>
         <div class="actions"><button class="back" type="button" id="go-back">← Go back</button></div>
       </section>
     </div>
     <div class="secret-toast" id="secret-toast" role="status" aria-live="polite" hidden></div>
+    <div class="achievement" id="achievement" role="status" aria-live="polite" hidden><strong>ACHIEVEMENT UNLOCKED</strong><span id="achievement-text"></span></div>
   </main>
   <script>
 
