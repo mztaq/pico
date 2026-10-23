@@ -72,3 +72,9 @@ This Worker removes expired consent/visitor records, seven-day-old usage batch I
 6. Leave the tab inactive or hidden. No additional active seconds should be recorded.
 7. Reject All. Existing visitor, consent, usage, and preferences rows are deleted.
 8. Set a test visitor's `expires_at` to the past and run the cleanup Worker manually in a nonproduction environment. Confirm that its dependent rows disappear.
+
+## Consent lifetime renewal
+
+Successful consented activity in `POST /api/usage` and `PUT /api/preferences` extends both `pico_visitors.expires_at` and `pico_consent.expires_at` by 90 days. The server also renews the Secure, HttpOnly visitor cookie using `Set-Cookie`. Reading public pages or rejecting optional consent does not extend tracking. The `pico_consent.updated_at` field is changed only when a visitor explicitly updates their consent choice.
+
+Regression test: with Analytics accepted, record a valid usage batch and verify both expiry timestamps move forward together; check the response refreshes the cookie. Repeat with Preferences accepted and an updated editor setting. Verify Reject All clears the cookie and deletes related data.
