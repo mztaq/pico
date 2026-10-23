@@ -16,21 +16,15 @@
     .brand img{width:30px;height:30px}
     .brand span{color:var(--accent)}
     .rule{margin:34px 0 42px;border:0;border-top:1px solid var(--border)}
-    .eyebrow{font:600 11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:2.6px;color:var(--accent)}
     .status{margin:8px 0 0;font-size:clamp(108px,24vw,182px);font-weight:760;line-height:1.06;letter-spacing:-.095em;color:var(--text)}
     h1{font-size:clamp(25px,4.5vw,36px);font-weight:670;letter-spacing:-1.2px;margin:12px 0}
     .sub{color:var(--muted);line-height:1.65;font-size:15px;max-width:510px;margin:0 0 30px}
-    .diagnostic{border:1px solid var(--border);background:var(--surface);border-radius:9px;overflow:hidden;margin-bottom:27px}
-    .diagnostic .top{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--soft);border-bottom:1px solid var(--border);padding:11px 16px;font:500 11px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
-    .dots{display:flex;gap:6px}.dots i{width:7px;height:7px;background:var(--muted);border-radius:50%}
-    .code{font:13px/1.95 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--text);padding:16px 19px;overflow-wrap:anywhere}
-    .line{color:var(--muted);padding-right:16px;user-select:none}
-    .keyword{color:var(--accent)}.string{color:var(--accent)}.comment{color:var(--muted)}
+    .path{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin:4px 0 28px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+    .path strong{color:var(--accent);font-weight:500}
     .actions{display:flex;align-items:center;flex-wrap:wrap;gap:20px}
     .back{background:var(--accent);color:var(--button-text);padding:12px 19px;border-radius:7px;text-decoration:none;font-size:13px;font-weight:700;transition:background .15s ease}
     .back:hover{filter:brightness(1.12)}
     .secondary{font-size:13px;color:var(--muted);text-decoration:none;border:0;background:transparent;cursor:pointer;padding:10px 0;font-family:inherit}.secondary:hover{color:var(--text)}
-    .footer{margin-top:56px;color:var(--muted);font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
     @media(max-width:480px){.rule{margin:25px 0 34px}.status{font-size:112px}.footer{margin-top:40px}}
     @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
@@ -39,20 +33,11 @@
   <main class="shell">
     <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt="">Pico<span>.</span></a>
     <hr class="rule">
-    <div class="eyebrow">ROUTE_DIAGNOSTIC / 404</div>
     <div class="status" aria-hidden="true">404</div>
-    <h1>Page not found.</h1>
-    <p class="sub">This route doesn't exist. The link may be incorrect, or the page may have moved.</p>
-    <div class="diagnostic" aria-label="Route diagnostic">
-      <div class="top"><span>route-check.pico</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-      <div class="code">
-        <div><span class="line">01</span><span class="keyword">ROUTE</span> <span id="missing-route" class="string">"/unknown"</span></div>
-        <div><span class="line">02</span><span class="comment">// No matching page found.</span></div>
-        <div><span class="line">03</span><span class="keyword">STATUS</span> 404_NOT_FOUND</div>
-      </div>
-    </div>
+    <h1 id="joke-title">Well, that's awkward.</h1>
+    <p class="sub" id="joke-description">There's nothing at this address.</p>
+    <div class="path">Tried: <strong id="missing-route">/unknown</strong></div>
     <div class="actions"><a class="back" href="/">Return to Pico →</a><button class="secondary" type="button" id="go-back">Go back</button></div>
-    <div class="footer">PICO / ERROR 404</div>
   </main>
   <script>
 
@@ -86,7 +71,29 @@
     root.style.colorScheme=theme.appearance;
     document.querySelector('meta[name="theme-color"]').setAttribute('content',theme.bg);
     const route = document.getElementById('missing-route');
-    route.textContent = JSON.stringify(location.pathname + location.search).slice(0,180);
+    route.textContent = (location.pathname + location.search).slice(0,180);
+    const messages = [
+      ["Well, that's awkward.", "There's nothing at this address. We checked."],
+      ["This page called in sick.", "No return date. No explanation."],
+      ["Even Pico can't find this one.", "And Pico is literally a compiler."],
+      ["You weren't supposed to find this.", "Mostly because there's nothing here."],
+      ["The page has left the chat.", "It didn't even say goodbye."],
+      ["404. Impressive.", "You found a URL that leads absolutely nowhere."],
+      ["This URL is fictional.", "Great concept. No actual page."],
+      ["Something's missing.", "Spoiler: it's the page."],
+      ["Nice try.", "Unfortunately, this route does not exist."],
+      ["That link is cooked.", "The page you're looking for isn't here."]
+    ];
+    // Avoid showing the same joke twice in a row, including on refresh.
+    let previous = -1;
+    try { previous = Number(sessionStorage.getItem('pico.404.lastJoke') ?? '-1'); } catch {}
+    const candidates = messages.map((_,index) => index).filter(index => index !== previous);
+    const random = new Uint32Array(1);
+    crypto.getRandomValues(random);
+    const index = candidates[random[0] % candidates.length];
+    try { sessionStorage.setItem('pico.404.lastJoke', String(index)); } catch {}
+    document.getElementById('joke-title').textContent = messages[index][0];
+    document.getElementById('joke-description').textContent = messages[index][1];
     document.getElementById('go-back').addEventListener('click', () => history.length > 1 ? history.back() : location.assign('/'));
   </script>
 </body>
