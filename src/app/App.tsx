@@ -62,7 +62,7 @@ export default function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
-  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'authors' ? 'Authors' : informationPage === 'privacy' ? 'Privacy Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : 'Pico | Home'; }, [language, informationPage]);
+  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'authors' ? 'Authors' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : 'Pico | Home'; }, [language, informationPage]);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
