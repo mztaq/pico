@@ -97,8 +97,7 @@ export function PicoTelemetry() {
 
     {!choice && !editing && <section className="pico-cookie-banner" aria-label="Cookie consent">
       <p>
-        We use optional cookies to remember your preferences and understand how Pico is used.
-        You choose what to allow. <a href="#cookies">Cookie Policy</a>
+        We use cookies to remember your settings and improve Pico. Choose what works for you. <a href="#cookies">Cookie Policy</a>
       </p>
       {error && <span className="pico-cookie-error" role="alert">{error}</span>}
       <div className="pico-cookie-actions">
@@ -126,26 +125,25 @@ export function PicoTelemetry() {
             onClick={() => setEditing(false)} aria-label="Close cookie settings">×</button>}
         </header>
         <p id="pico-cookie-description" className="pico-cookie-description">
-          Essential storage keeps Pico working. Optional cookies help us understand feature usage
-          and remember selected settings. You can change your choices at any time.
+          Choose how Pico uses optional cookies. You can update your choices at any time.
         </p>
         <div className="pico-cookie-categories">
           <div className="pico-cookie-category">
-            <div><strong>Strictly Necessary</strong><p>Required to remember consent and support essential website functionality.</p></div>
+            <div><strong>Strictly Necessary</strong><p>Remember your cookie choices.</p></div>
             <span className="pico-cookie-required">Always active</span>
           </div>
           <label className="pico-cookie-category">
-            <div><strong>Analytics</strong><p>Helps us measure workspace activity and improve Pico.</p></div>
+            <div><strong>Analytics</strong><p>Measure feature usage to improve Pico.</p></div>
             <input aria-label="Allow analytics cookies" type="checkbox" checked={draft.analytics}
               onChange={event => setDraft(v => ({...v, analytics:event.target.checked}))} />
           </label>
           <label className="pico-cookie-category">
-            <div><strong>Preferences</strong><p>Remembers selected settings across visits in this browser.</p></div>
+            <div><strong>Preferences</strong><p>Save your settings for future visits in this browser.</p></div>
             <input aria-label="Allow preference cookies" type="checkbox" checked={draft.preferences}
               onChange={event => setDraft(v => ({...v, preferences:event.target.checked}))} />
           </label>
         </div>
-        <a className="pico-cookie-policy" href="#cookies" onClick={() => setEditing(false)}>Read our Cookie Policy →</a>
+        <a className="pico-cookie-policy" href="#cookies" onClick={() => setEditing(false)}>Cookie Policy →</a>
         {error && <p className="pico-cookie-error" role="alert">{error}</p>}
         <div className="pico-cookie-modal-actions">
           <button className="pico-cookie-btn pico-cookie-outline" type="button" disabled={busy}
