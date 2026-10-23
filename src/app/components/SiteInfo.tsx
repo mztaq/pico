@@ -29,14 +29,15 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Authors() {
   const authors = [
-    { name: 'Muhammad Mustaqim 11BR', role: 'Implements features and manages deployment and releases', icon: GitBranch },
-    { name: 'Amar Ayache 11BB', role: 'Built Pico’s foundation and guides new features and their implementation', icon: Code2 },
-    { name: 'Mohamed Hamza 11BR', role: 'Develops concepts and supports marketing and promotion', icon: Lightbulb },
+    { name: 'Muhammad Mustaqim 11BR', description: 'Implements features and manages deployment and releases.', roles: ['Head of Deployment', 'Media Manager'], icon: GitBranch },
+    { name: 'Amar Ayache 11BB', description: 'Built Pico’s foundation and guides its development.', roles: ['Head of Development', 'Media Manager'], icon: Code2 },
+    { name: 'Mohamed Hamza 11BR', description: 'Develops concepts and supports marketing and promotion.', roles: ['Concept Developer', 'Media Manager'], icon: Lightbulb },
   ];
   return <>
-    <div className="author-grid">{authors.map(({ name, role, icon: Icon }) => <section className="author-card" key={name}>
+    <div className="author-grid">{authors.map(({ name, description, roles, icon: Icon }) => <section className="author-card" key={name}>
       <span className="author-icon"><Icon size={24} aria-hidden="true" /></span>
-      <h2>{name}</h2><p className="author-role">{role}</p>
+      <h2>{name}</h2><p className="author-description">{description}</p>
+      <div className="author-roles"><h3>Roles</h3><ul aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul></div>
     </section>)}</div>
     <Section title="Built with">
       <p>Pico uses <a href="https://react.dev/">React</a>, <a href="https://codemirror.net/">CodeMirror</a>, <a href="https://pyodide.org/">Pyodide</a> and <a href="https://lucide.dev/">Lucide</a>, alongside other third-party libraries.</p>
