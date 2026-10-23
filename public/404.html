@@ -15,11 +15,11 @@
     .shell{position:relative;isolation:isolate;min-height:100svh;padding:clamp(22px,4.6vw,64px);display:flex;flex-direction:column;overflow:hidden}
     .brand{display:inline-flex;align-items:center;gap:10px;width:max-content;font-size:19px;font-weight:800;letter-spacing:-.8px;color:var(--text);text-decoration:none;position:relative;z-index:5}
     .brand img{width:30px;height:30px}.brand span{color:var(--accent)}
-    .main{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;min-height:420px;padding:36px 2vw}
-    .content{width:min(100%,960px);position:relative;display:grid;grid-template-columns:minmax(0,1fr);align-content:center;justify-items:start;gap:0}
-    .status{color:var(--accent);font:700 clamp(115px,19vw,260px)/.9 var(--numeral);letter-spacing:-.095em;white-space:nowrap;user-select:none;margin:0 0 12px}
-    h1{font:800 clamp(29px,4.2vw,58px)/1.05 var(--headline);letter-spacing:-.06em;max-width:800px;margin:0 0 18px;text-wrap:balance;overflow-wrap:anywhere}
-    .sub{font-size:clamp(15px,1.5vw,19px);color:var(--muted);line-height:1.5;max-width:620px;margin:0 0 29px;text-wrap:pretty}
+    .main{flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;min-height:0;padding:clamp(32px,5vw,78px) 2vw}
+    .content{width:min(100%,870px);min-width:0;position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+    .status{flex:none;color:var(--accent);font:700 clamp(102px,16vw,210px)/1 var(--numeral);letter-spacing:-.07em;white-space:nowrap;user-select:none;margin:0 0 clamp(22px,3vw,38px);max-width:100%}
+    h1{font:800 clamp(27px,4vw,52px)/1.16 var(--headline);letter-spacing:-.045em;max-width:790px;overflow-wrap:anywhere;text-wrap:balance;margin:0 0 18px}
+    .sub{font-size:clamp(15px,1.5vw,19px);color:var(--muted);line-height:1.6;max-width:630px;margin:0 0 30px;overflow-wrap:anywhere;text-wrap:pretty}
     .actions{display:flex;align-items:center;gap:18px}
     .back{appearance:none;background:var(--accent);color:var(--button-text);border:1px solid transparent;border-radius:7px;padding:13px 23px;font:700 14px "DM Sans",sans-serif;cursor:pointer;transition:transform .16s ease,filter .16s ease}
     .back:hover{transform:translateY(-2px);filter:brightness(1.08)}.back:focus-visible{outline:3px solid var(--text);outline-offset:3px}
@@ -28,32 +28,29 @@
     .bit:nth-child(3n){font-family:"Fredoka",sans-serif;font-weight:700}
     .bit:nth-child(4n){font-family:"Archivo Black",sans-serif}
     .bit:nth-child(5n){color:var(--text)}
-    .shell[data-layout="left"] .main{justify-content:flex-start}
-    .shell[data-layout="right"] .main{justify-content:flex-end}
-    .shell[data-layout="right"] .content{justify-items:end;text-align:right}
-    .shell[data-layout="center"] .content{justify-items:center;text-align:center}
-    .shell[data-layout="up"] .main{align-items:flex-start;padding-top:clamp(70px,11vh,180px)}
-    .shell[data-layout="down"] .main{align-items:flex-end;padding-bottom:clamp(75px,11vh,160px)}
-    .shell[data-layout="tilt"] .content{transform:rotate(-2.2deg)}
-    .shell[data-layout="tilt-right"] .content{transform:rotate(2.2deg);justify-items:end;text-align:right}
-    .shell[data-layout="split"] .content{grid-template-columns:minmax(185px,.85fr) minmax(0,1.5fr);column-gap:clamp(30px,6vw,90px)}
-    .shell[data-layout="split"] .status{grid-row:1/span 3;grid-column:1;align-self:center;font-size:clamp(130px,17vw,230px)}
-    .shell[data-layout="split"] h1,.shell[data-layout="split"] .sub,.shell[data-layout="split"] .actions{grid-column:2}
-    .shell[data-layout="swap"] .content{grid-template-columns:minmax(0,1.3fr) minmax(180px,.75fr);column-gap:clamp(25px,4vw,70px)}
-    .shell[data-layout="swap"] .status{grid-column:2;grid-row:1/span 3;align-self:center;justify-self:end}
-    .shell[data-layout="swap"] h1,.shell[data-layout="swap"] .sub,.shell[data-layout="swap"] .actions{grid-column:1}
+    /* Every layout uses a single text column, never a collision-prone two-column grid. */
+    .shell[data-layout="left"] .main,.shell[data-layout="stagger"] .main{justify-content:flex-start}
+    .shell[data-layout="right"] .main,.shell[data-layout="reverse"] .main{justify-content:flex-end}
+    .shell[data-layout="right"] .content{align-items:flex-end;text-align:right}
+    .shell[data-layout="center"] .content{align-items:center;text-align:center}
+    .shell[data-layout="up"] .main{align-items:flex-start}
+    .shell[data-layout="down"] .main{align-items:flex-end}
+    .shell[data-layout="tilt"] .content{transform:rotate(-1deg);transform-origin:center}
+    .shell[data-layout="tilt-right"] .content{transform:rotate(1deg);transform-origin:center;align-items:flex-end;text-align:right}
+    .shell[data-layout="stagger"] .status{align-self:flex-end}
+    .shell[data-layout="reverse"] .status{order:2;margin:10px 0 24px}
+    .shell[data-layout="reverse"] h1{order:1}
+    .shell[data-layout="reverse"] .sub{order:3}
+    .shell[data-layout="reverse"] .actions{order:4}
     @media(max-width:720px){
       .shell{padding:26px 23px}
-      .main{min-height:450px;padding:35px 0}
-      .content,.shell[data-layout="split"] .content,.shell[data-layout="swap"] .content{display:flex;flex-direction:column;align-items:flex-start;text-align:left;transform:none}
-      .shell[data-layout="right"] .content,.shell[data-layout="center"] .content,.shell[data-layout="tilt-right"] .content{align-items:flex-start;text-align:left}
-      .status,.shell[data-layout="split"] .status{font-size:clamp(100px,25vw,160px)}
-      h1{font-size:clamp(30px,8vw,44px)}
-      .bit{opacity:calc(var(--opacity,.22) * .5)}
+      .main{padding:45px 0;min-height:380px}
+      .content{width:100%;align-items:flex-start!important;text-align:left!important;transform:none!important}
+      .status{font-size:clamp(90px,21vw,145px);letter-spacing:-.06em;align-self:flex-start!important}
+      h1{font-size:clamp(28px,7vw,42px)}
       .scatter{display:none}
     }
-    @media(prefers-reduced-motion:reduce){*{transition:none!important}.shell[data-layout="tilt"] .content,.shell[data-layout="tilt-right"] .content{transform:none}}
-
+    @media(prefers-reduced-motion:reduce){*{transition:none!important}.content{transform:none!important}}
     .status{position:relative}
     .secret-toast{position:fixed;right:clamp(16px,4vw,45px);bottom:clamp(16px,4vw,45px);z-index:10;max-width:min(90vw,370px);border:1px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--text);padding:15px 18px;font:600 13px/1.5 "Space Mono",monospace;box-shadow:0 12px 40px #0003;pointer-events:none}
     [hidden]{display:none!important}
@@ -117,7 +114,7 @@
     document.getElementById('joke-title').textContent = messages[index][0];
     document.getElementById('joke-description').textContent = messages[index][1];
     // Change the composition and type styles on each refresh.
-    const layouts = ['left','center','right','split','swap','up','down','tilt','tilt-right'];
+    const layouts = ['left','center','right','up','down','tilt','tilt-right','stagger','reverse'];
     let previousLayout = '';
     try { previousLayout = sessionStorage.getItem('pico.404.lastLayout') || ''; } catch {}
     const otherLayouts = layouts.filter(layout => layout !== previousLayout);
