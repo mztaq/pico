@@ -33,6 +33,9 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
   expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio']);
   expect(container.querySelector('footer')).toBeNull();
+  expect(container.querySelector('nav[aria-label="Pico information"] a[href="#authors"]')?.textContent).toBe('Authors');
+  expect(container.querySelector('nav[aria-label="Pico information"] a[href="#privacy"]')?.textContent).toBe('Privacy Policy');
+  expect(container.querySelector('nav[aria-label="Pico information"] a[href="#terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
 it('shows the Logic Sim workspace without a personal footer',async()=>{
