@@ -25,6 +25,10 @@ export function setCookie(value: string): string {
   return `${COOKIE}=${value}; Path=/; Max-Age=${ninetyDays}; Secure; HttpOnly; SameSite=Lax`;
 }
 export const clearCookie = `${COOKIE}=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax`;
+export function renewedCookieHeaders(request: Request): HeadersInit {
+  const token = cookie(request);
+  return token ? {'Set-Cookie':setCookie(token)} : {};
+}
 export async function hash(token: string) {
   const bytes = await crypto.subtle.digest('SHA-256', encoder.encode(token));
   return [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2, '0')).join('');
