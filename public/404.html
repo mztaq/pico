@@ -238,6 +238,22 @@
       scatter.appendChild(item);
     }
 
+
+    // Decorative labels must never cover the content, controls or brand.
+    // Check their real rendered bounds after webfonts finish loading.
+    const removeOverlaps = () => {
+      const elements = [...document.querySelectorAll('.brand,.status,h1,.sub:not([hidden]),.conversation:not([hidden]),.actions,.achievement:not([hidden])')];
+      const zones = elements.map(element => element.getBoundingClientRect());
+      for (const bit of [...scatter.children]) {
+        const box = bit.getBoundingClientRect();
+        if (zones.some(zone => box.left < zone.right + 24 && box.right > zone.left - 24 &&
+                    box.top < zone.bottom + 24 && box.bottom > zone.top - 24)) bit.remove();
+      }
+    };
+    removeOverlaps();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(removeOverlaps);
+    window.addEventListener('resize', removeOverlaps);
+
     // Secret keyboard Easter eggs work entirely inside this static page.
     const secrets = {
       PICO: 'PICO activated. Still no page. Incredible.',
