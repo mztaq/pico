@@ -90,6 +90,7 @@ function Cookies() {
       <p>If you accept preference storage, Pico uses the same browser cookie to associate selected themes and editor settings with that browser. Your projects and code are not uploaded as part of this feature. This cloud preference-sync feature is still under development.</p>
     </Section>
     <Section title="Duration and choice">
+      <p>To protect the service from excessive requests, Pico also temporarily stores rotating, non-reversible identifiers derived from connection information. The service does not store raw IP addresses in its application database for this rate limiting.</p>
       <p>The optional identifier cookie is set for up to 90 days. Server visitor and consent records carry expiry timestamps, with automated deletion being prepared. Browser-local consent choices last until site storage is removed or you change the choice.</p>
       <p>All optional categories are off until you choose to accept them. You may reject optional cookies, accept them, or adjust each category in Cookie Settings. Rejecting them does not prevent you from using Pico.</p>
     </Section>
