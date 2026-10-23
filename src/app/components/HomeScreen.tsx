@@ -5,6 +5,7 @@ import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
+import { SiteInfoLinks } from './SiteInfo';
 
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
@@ -73,6 +74,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </svg>
       </button>
     </div>
-
+    <SiteInfoLinks />
   </main>;
 }
