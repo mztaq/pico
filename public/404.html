@@ -127,6 +127,57 @@
     try { sessionStorage.setItem('pico.404.lastJoke', String(index)); } catch {}
     document.getElementById('joke-title').textContent = messages[index][0];
     document.getElementById('joke-description').textContent = messages[index][1];
+
+    // Occasionally the 404 is a team conversation instead of a normal joke.
+    const conversations = [
+      [['Amar','I have an idea.'],['Mustaqim','Does it fix the page?'],['Hamza','I made a trailer.']],
+      [['Mustaqim','Who broke this route?'],['Amar','What if we add five features?'],['Hamza','Can we film this?']],
+      [['Hamza','The launch looks incredible.'],['Mustaqim','Where is the page?'],['Amar','Hear me out.']],
+      [['Amar','We need a flowchart.'],['Mustaqim','For a missing page?'],['Hamza','I can animate it.']],
+      [['Mustaqim','The build passed.'],['Hamza','So where is the page?'],['Amar','Not in the specification.']],
+      [['Hamza','404 has potential.'],['Amar','I have 12 ideas.'],['Mustaqim','I just wanted to go home.']],
+      [['Mustaqim','Works on my machine.'],['Amar','Add a compatibility layer.'],['Hamza','Say that again for the camera.']]
+    ];
+    const chance = new Uint32Array(1);
+    crypto.getRandomValues(chance);
+    if (chance[0] % 100 < 16) {
+      const convo = conversations[Math.floor(chance[0] / 100) % conversations.length];
+      const container = document.getElementById('conversation');
+      document.getElementById('joke-description').hidden = true;
+      document.getElementById('joke-title').textContent = 'The team is investigating.';
+      for (const [speaker, line] of convo) {
+        const item = document.createElement('div');
+        item.className = 'conversation-line';
+        const name = document.createElement('strong');
+        name.textContent = speaker + ': ';
+        item.append(name, document.createTextNode(line));
+        container.appendChild(item);
+      }
+      container.hidden = false;
+    }
+
+    // Visit milestones are stored only for this browser tab, never sent to a server.
+    let visits = 1;
+    try {
+      visits = Math.min(10000, Number(sessionStorage.getItem('pico.404.visits') || '0') + 1);
+      sessionStorage.setItem('pico.404.visits', String(visits));
+    } catch {}
+    const achievements = {
+      1: 'Welcome to a page that does not exist.',
+      5: 'Five wrong turns. Impressive dedication.',
+      10: 'Professional 404 Tester: 10 consecutive failures.',
+      25: '404% Complete. Mustaqim deployed it. Amar approved it. Hamza marketed it. Nobody made the page.',
+      50: 'You visited a nonexistent page fifty times.',
+      100: 'A hundred 404s. The page is not coming back.'
+    };
+    const award = achievements[visits] || (visits > 0 && visits % 200 === 0 ? '404 world record. Please go outside.' : '');
+    if (award) {
+      const toast = document.getElementById('achievement');
+      document.getElementById('achievement-text').textContent = award;
+      toast.hidden = false;
+      setTimeout(() => { toast.hidden = true; }, 5200);
+    }
+
     // Change the composition and type styles on each refresh.
     const layouts = ['left','center','right','up','down','tilt','tilt-right','stagger','reverse'];
     let previousLayout = '';
@@ -136,6 +187,13 @@
     const layout = otherLayouts[random[0] % otherLayouts.length];
     document.getElementById('error-shell').dataset.layout = layout;
     try { sessionStorage.setItem('pico.404.lastLayout', layout); } catch {}
+    // A rare font treatment appears on roughly two percent of refreshes.
+    crypto.getRandomValues(random);
+    if (random[0] % 100 < 2) {
+      const rare = ['tiny','inverted','stamp','large'];
+      document.getElementById('error-shell').dataset.rare = rare[Math.floor(random[0] / 100) % rare.length];
+    }
+
 
     const headlineFonts = [
       '"Fredoka",sans-serif','"Bricolage Grotesque",sans-serif',
