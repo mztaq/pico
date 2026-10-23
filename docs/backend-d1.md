@@ -49,7 +49,7 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 
 **The updated API intentionally rejects POST requests with HTTP 503 until the rate-limit secret is configured.** Do not rotate the secret during active requests without considering the temporary effect on counters.
 
-1. Open the D1 Console for the matching Preview database and execute `migrations/0002_usage_safety.sql`. It creates `pico_usage_events`, `pico_rate_limits`, and `pico_usage_windows`. Apply the same migration to Production only before a production release.
+1. Open the D1 Console for the matching Preview database and execute `migrations/0002_usage_safety.sql`. It creates `pico_usage_events`, `pico_rate_limits`.. Apply the same migration to Production only before a production release.
 2. In Cloudflare Pages → picompiler → Settings → Preview → Variables and secrets, add a secret variable named `RATE_LIMIT_SECRET`. Generate a unique random value at least 32 characters long. Do not commit the secret to GitHub or paste it into chat.
 3. Redeploy the feature-branch preview.
 4. Verify `GET /api/cookies` still returns `database: connected`. Click Accept All and verify POST returns 200.
@@ -60,7 +60,7 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 
 Pages Functions do not support scheduled cron handlers. Create a **separate Cloudflare Worker** from `workers/pico-cleanup.ts`, bind the appropriate D1 database as `DB`, and configure the Cron Trigger `0 2 * * *` (02:00 UTC daily). Deploy Preview cleanup against the Preview D1 database. After review, deploy a separate Production cleanup Worker bound to Production D1. Do not share D1 with another environment unintentionally.
 
-This Worker removes expired consent/visitor records, seven-day-old usage batch IDs, expired request-limit counters, and obsolete minute windows. Foreign-key cascades remove related preferences and usage. Do not enable production collection before confirming the Worker executes and deletion works.
+This Worker removes expired consent/visitor records, seven-day-old usage batch IDs, expired request-limit counters,. Foreign-key cascades remove related preferences and usage. Do not enable production collection before confirming the Worker executes and deletion works.
 
 ## Regression checklist
 
