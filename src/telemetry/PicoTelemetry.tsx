@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import './cookie-consent.css';
+import { loadSettings, saveSettings } from '../storage/settings';
 
 type Choice = { analytics: boolean; preferences: boolean };
 const KEY = 'pico.consent.v1';
@@ -68,6 +69,83 @@ export function PicoTelemetry() {
       for(const type of ['pointerdown','keydown','wheel']) window.removeEventListener(type,noteActivity);
     };
   },[choice?.analytics]);
+
+  // Local settings remain authoritative on this device. Only consented preferences sync.
+  useEffect(() => {
+    if (!choice?.preferences) return;
+    let cancelled = false;
+    let timer: number | undefined;
+    let lastSent = '';
+    let inFlight = false;
+    let pending = false;
+    const payload = () => {
+      const settings = loadSettings();
+      return JSON.stringify({
+        theme: settings.theme,
+        lastWorkspace: workspaces[document.title] ?? null,
+        settings,
+      });
+    };
+    const upload = async () => {
+      if (cancelled || inFlight) { pending = true; return; }
+      const serialized = payload();
+      if (serialized === lastSent) return;
+      inFlight = true;
+      try {
+        const response = await fetch('/api/preferences', {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: {'content-type':'application/json'},
+          body:serialized,
+        });
+        if (!response.ok) throw new Error('Preference sync failed');
+        if (!cancelled) lastSent = serialized;
+      } catch {
+        // Keep settings locally and retry on the next settings change.
+      } finally {
+        inFlight = false;
+        if (pending && !cancelled) { pending = false; schedule(); }
+      }
+    };
+    const schedule = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void upload(), 1200);
+    };
+    const start = async () => {
+      let hasLocalSettings = false;
+      try { hasLocalSettings = localStorage.getItem('pico.settings.v6') !== null; }
+      catch { /* Browser-local storage may be blocked. */ }
+      if (!hasLocalSettings) {
+        try {
+          const response = await fetch('/api/preferences', {credentials:'same-origin',cache:'no-store'});
+          if (response.ok) {
+            const remote: unknown = await response.json();
+            if (cancelled) return;
+            if (remote && typeof remote === 'object' && 'settings' in remote) {
+              const saved = (remote as {settings:unknown}).settings;
+              if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+                // Normalized by loadSettings on the next mount. No code or projects are synced.
+                try {
+                  localStorage.setItem('pico.settings.v6',JSON.stringify(saved));
+                  window.location.reload();
+                  return;
+                } catch { /* Continue with local defaults */ }
+              }
+            }
+          }
+        } catch { /* Offline use remains available */ }
+      }
+      if (!cancelled) schedule();
+    };
+    const onSaved = () => schedule();
+    window.addEventListener('pico:settings-saved', onSaved);
+    void start();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      window.removeEventListener('pico:settings-saved',onSaved);
+    };
+  }, [choice?.preferences]);
 
   const save = async (next:Choice) => {
     setBusy(true);setError('');
