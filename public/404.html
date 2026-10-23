@@ -8,36 +8,49 @@
   <link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
   <title>404 | Pico</title>
   <style>
-    :root{color-scheme:dark;font-family:Inter,"DM Sans",system-ui,-apple-system,sans-serif;--bg:#1e1e2e;--surface:#181825;--text:#cdd6f4;--muted:#9ba0bb;--accent:#cba6f7;--border:#393b4d;--soft:#222438;--button-text:#080a10;background:var(--bg);color:var(--text)}
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+    :root{color-scheme:dark;font-family:"DM Sans",system-ui,sans-serif;--bg:#1e1e2e;--surface:#181825;--text:#cdd6f4;--muted:#9ba0bb;--accent:#cba6f7;--border:#393b4d;--soft:#222438;--button-text:#080a10;background:var(--bg);color:var(--text)}
     *{box-sizing:border-box}
-    body{margin:0;min-height:100svh;display:grid;place-items:center;padding:30px 20px;background:var(--bg)}
-    .shell{width:min(100%,690px)}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:750;font-size:19px;letter-spacing:-.7px;text-decoration:none;color:var(--text)}
-    .brand img{width:30px;height:30px}
-    .brand span{color:var(--accent)}
-    .rule{margin:34px 0 42px;border:0;border-top:1px solid var(--border)}
-    .status{margin:8px 0 0;font-size:clamp(108px,24vw,182px);font-weight:760;line-height:1.06;letter-spacing:-.095em;color:var(--text)}
-    h1{font-size:clamp(25px,4.5vw,36px);font-weight:670;letter-spacing:-1.2px;margin:12px 0}
-    .sub{color:var(--muted);line-height:1.65;font-size:15px;max-width:510px;margin:0 0 30px}
-    .path{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin:4px 0 28px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
-    .path strong{color:var(--accent);font-weight:500}
+    body{min-height:100svh;margin:0;background:var(--bg)}
+    .shell{width:min(100%,1100px);min-height:100svh;margin:auto;padding:clamp(26px,5vw,62px);display:flex;flex-direction:column}
+    .brand{display:inline-flex;width:max-content;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:800;font-size:19px;letter-spacing:-.8px}
+    .brand img{width:30px;height:30px}.brand span{color:var(--accent)}
+    .main{flex:1;display:flex;align-items:center;padding:55px 0}
+    .content{width:min(100%,780px);transition:none}
+    .status{font:700 clamp(100px,18vw,200px)/.93 "Space Grotesk","DM Sans",sans-serif;letter-spacing:-.085em;color:var(--accent);margin:0 0 20px;opacity:.93}
+    h1{font:700 clamp(27px,4vw,48px)/1.11 "Space Grotesk","DM Sans",sans-serif;letter-spacing:-.055em;margin:0 0 16px;max-width:770px}
+    .sub{font-size:clamp(15px,1.6vw,18px);color:var(--muted);line-height:1.6;margin:0 0 23px;max-width:680px}
+    .path{display:inline-flex;gap:9px;align-items:baseline;max-width:100%;overflow-wrap:anywhere;margin:0 0 32px;padding:8px 12px;border:1px solid var(--border);border-radius:5px;background:var(--surface);font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+    .path strong{color:var(--text);font-weight:500;overflow-wrap:anywhere}
     .actions{display:flex;align-items:center;flex-wrap:wrap;gap:20px}
-    .back{background:var(--accent);color:var(--button-text);padding:12px 19px;border-radius:7px;text-decoration:none;font-size:13px;font-weight:700;transition:background .15s ease}
-    .back:hover{filter:brightness(1.12)}
-    .secondary{font-size:13px;color:var(--muted);text-decoration:none;border:0;background:transparent;cursor:pointer;padding:10px 0;font-family:inherit}.secondary:hover{color:var(--text)}
-    @media(max-width:480px){.rule{margin:25px 0 34px}.status{font-size:112px}.footer{margin-top:40px}}
+    .back{appearance:none;border:1px solid transparent;background:var(--accent);color:var(--button-text);padding:12px 19px;border-radius:6px;font:700 14px "DM Sans",sans-serif;cursor:pointer;transition:filter .15s ease}
+    .back:hover{filter:brightness(1.1)}.back:focus-visible{outline:3px solid var(--text);outline-offset:3px}
+    .shell[data-layout="center"] .content{margin-inline:auto;text-align:center}
+    .shell[data-layout="center"] .path,.shell[data-layout="center"] .actions{justify-content:center}
+    .shell[data-layout="right"] .content{margin-left:auto;text-align:right}
+    .shell[data-layout="right"] .path,.shell[data-layout="right"] .actions{justify-content:flex-end}
+    .shell[data-layout="split"] .content{width:100%;display:grid;grid-template-columns:minmax(145px,.9fr) minmax(0,1.7fr);column-gap:clamp(24px,5vw,75px);align-items:center}
+    .shell[data-layout="split"] .status{grid-row:1 / span 4;align-self:center;margin:0}
+    .shell[data-layout="split"] .path{justify-self:start}
+    .footer{border-top:1px solid var(--border);padding-top:19px;color:var(--muted);font:11px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.06em}
+    @media(max-width:700px){.main{padding:35px 0}.shell[data-layout="split"] .content{display:block}.shell[data-layout="split"] .status{margin-bottom:20px}}
+    @media(max-width:480px){.shell{padding:24px}.status{font-size:110px}.shell[data-layout="right"] .content,.shell[data-layout="center"] .content{text-align:left}.shell[data-layout="right"] .path,.shell[data-layout="right"] .actions,.shell[data-layout="center"] .path,.shell[data-layout="center"] .actions{justify-content:flex-start}}
     @media(prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
 </head>
 <body>
-  <main class="shell">
+  <main class="shell" id="error-shell">
     <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt="">Pico<span>.</span></a>
-    <hr class="rule">
-    <div class="status" aria-hidden="true">404</div>
-    <h1 id="joke-title">Well, that's awkward.</h1>
-    <p class="sub" id="joke-description">There's nothing at this address.</p>
-    <div class="path">Tried: <strong id="missing-route">/unknown</strong></div>
-    <div class="actions"><a class="back" href="/">Return to Pico →</a><button class="secondary" type="button" id="go-back">Go back</button></div>
+    <div class="main">
+      <section class="content" aria-labelledby="joke-title">
+        <div class="status" aria-hidden="true">404</div>
+        <h1 id="joke-title">Well, that's awkward.</h1>
+        <p class="sub" id="joke-description">There's nothing at this address.</p>
+        <div class="path">404 <strong id="missing-route">/unknown</strong></div>
+        <div class="actions"><button class="back" type="button" id="go-back">← Go back</button></div>
+      </section>
+    </div>
+    <div class="footer">PICO / 404</div>
   </main>
   <script>
 
@@ -72,88 +85,7 @@
     document.querySelector('meta[name="theme-color"]').setAttribute('content',theme.bg);
     const route = document.getElementById('missing-route');
     route.textContent = (location.pathname + location.search).slice(0,180);
-    const messages = [
-          [
-                "Mustaqim hasn't deployed this one.",
-                "For once, that's probably a good thing."
-          ],
-          [
-                "Amar has an idea for this page.",
-                "Mustaqim is still waiting for the implementation details."
-          ],
-          [
-                "Hamza could market this URL.",
-                "Shame there's literally nothing to market."
-          ],
-          [
-                "Pico compiled everything except this link.",
-                "That's not in the syllabus."
-          ],
-          [
-                "404. Not even pseudocode can explain this.",
-                "OUTPUT \"Where did the page go?\""
-          ],
-          [
-                "Mustaqim checked the deployment.",
-                "The page was never invited."
-          ],
-          [
-                "Amar said it needs one more feature.",
-                "A page would be a good start."
-          ],
-          [
-                "Hamza's working on the launch trailer.",
-                "We should probably find the page first."
-          ],
-          [
-                "Pico returned absolutely nothing.",
-                "Which is still more than this URL does."
-          ],
-          [
-                "404: skill issue?",
-                "Not yours. This route genuinely doesn't exist."
-          ],
-          [
-                "The CPU fetched nothing.",
-                "Decode and execute are taking the day off."
-          ],
-          [
-                "We ran this URL through Pico.",
-                "Even the debugger gave up."
-          ],
-          [
-                "Amar's got a plan.",
-                "Unfortunately, this page isn't part of it."
-          ],
-          [
-                "Mustaqim can't push a page that doesn't exist.",
-                "GitHub has standards. Apparently."
-          ],
-          [
-                "Hamza can make it look good.",
-                "But first, someone has to make it exist."
-          ],
-          [
-                "Syntax error: page not found.",
-                "This isn't one Pico can autocorrect."
-          ],
-          [
-                "The flowchart ends here.",
-                "There isn't even a decision block."
-          ],
-          [
-                "Pico searched every register.",
-                "No page. Just disappointment."
-          ],
-          [
-                "This URL failed the vibe check.",
-                "Try the homepage instead."
-          ],
-          [
-                "The compiler has questions.",
-                "Mainly: who sent you this link?"
-          ]
-    ];
+    const messages = [["Mustaqim hasn't deployed this one.","For once, that's probably a good thing."],["Amar has an idea for this page.","Mustaqim is still waiting for the implementation details."],["Hamza could market this URL.","Shame there's literally nothing to market."],["Pico compiled everything except this link.","That's not in the syllabus."],["404. Not even pseudocode can explain this.","OUTPUT \"Where did the page go?\""],["Mustaqim checked the deployment.","The page was never invited."],["Amar said it needs one more feature.","A page would be a good start."],["Hamza's working on the launch trailer.","We should probably find the page first."],["Pico returned absolutely nothing.","Which is still more than this URL does."],["404: skill issue?","Not yours. This route genuinely doesn't exist."],["The CPU fetched nothing.","Decode and execute are taking the day off."],["We ran this URL through Pico.","Even the debugger gave up."],["Amar's got a plan.","Unfortunately, this page isn't part of it."],["Mustaqim can't push a page that doesn't exist.","GitHub has standards. Apparently."],["Hamza can make it look good.","But first, someone has to make it exist."],["Syntax error: page not found.","This isn't one Pico can autocorrect."],["The flowchart ends here.","There isn't even a decision block."],["Pico searched every register.","No page. Just disappointment."],["This URL failed the vibe check.","Try the homepage instead."],["The compiler has questions.","Mainly: who sent you this link?"],["Mustaqim forgot to deploy the universe.","This page was apparently outside the release scope."],["Amar has a feature request.","Step one: invent the missing page."],["Hamza is already making a trailer.","It's 90 seconds of a 404 screen."],["Pico tried its best.","This URL did not."],["Page not found. Ego intact.","Mustaqim says it's a feature."],["Amar's cooking something.","Unfortunately, it's not this page."],["Hamza gave this URL a rebrand.","It still doesn't exist, but the logo's incredible."],["Mustaqim deployed at 3 AM.","The page decided to sleep instead."],["Pico has five workspaces.","And precisely zero of them are here."],["Our CPU fetched the void.","ALU says the answer is still 404."],["Amar approved the concept.","Nobody approved the URL."],["Mustaqim checked Cloudflare.","Cloudflare checked Mustaqim."],["Hamza said 'trust the process'.","The process returned 404."],["Pico compiled the excuses.","Zero errors. Zero pages."],["We're blaming the semicolon.","There isn't even any code on this page."],["The debugger rage quit.","It saw your URL and went home."],["Mustaqim pushed the wrong reality.","Try refreshing into a better timeline."],["Amar has an entire roadmap.","This route didn't make the cut."],["Hamza's marketing department is devastated.","There is literally nothing to announce."],["Pico said OUTPUT 404.","For once, the compiler isn't wrong."],["The page failed its mock exam.","Even the mark scheme couldn't find it."],["404 marks out of 404.","Unfortunately, that's not a good thing."],["Mustaqim is opening VS Code.","This should concern everyone involved."],["Amar said 'quick change'.","It's been three deployments."],["Hamza said the launch is cinematic.","We forgot to launch the page."],["The flowchart points to nowhere.","Surprisingly accurate."],["Pico found a runtime error.","Runtime: the page's entire existence."],["This link is in beta.","The beta is also missing."],["Mustaqim renamed the branch.","The page took it personally."],["Amar proposed another feature.","This one needs a page first, chief."],["Hamza could sell an empty URL.","We're honestly considering it."],["404, sponsored by absolutely nobody.","Hamza hasn't found a sponsor for nothingness."],["Pico's CPU is confused.","The instruction says FETCH. There's nothing to fetch."],["Mustaqim's GitHub says it exists.","GitHub has never heard of it."],["Amar is drawing a diagram.","It's just an arrow pointing to 404."],["Hamza has a thumbnail ready.","The actual page is still a rumour."],["The compiler isn't the problem.","For once."],["That URL is pure imagination.","We respect the creativity."],["Mustaqim has 47 tabs open.","Not one of them contains this page."],["Amar called it phase two.","We're still looking for phase one."],["Hamza said it'll go viral.","A missing page would be impressive marketing."],["This was not in the pseudocode.","Neither was the part where you clicked it."],["Pico has run out of words.","Unlike this 404 message collection."],["Error 404: common sense missing.","Who gave you this link?"],["Mustaqim opened a pull request.","For the page you were hoping existed."],["Amar gave Mustaqim 12 ideas.","The missing page was idea number 13."],["Hamza approved the visuals.","There was nothing to visualize."],["The CPU clock is still ticking.","Waiting for this page to materialize."],["Pico has checked every variable.","page_exists = FALSE."],["404 is technically an output.","Please don't submit it for your IGCSE."],["Mustaqim says 'works on my machine'.","Your browser would like a word."],["Amar said 'it'll be simple'.","Those were his final words before the backlog."],["Hamza wrote a press release.","Headline: Absolutely Nothing Happens."],["The route got expelled.","Attendance was zero."],["Pico checked the syntax.","The URL failed the vibe check."],["Even a bubble sort can't fix this.","The page is missing, not unsorted."],["Mustaqim hit deploy.","The page dodged it."],["Amar's feature list is growing.","This URL is not keeping up."],["Hamza is preparing a reveal.","Spoiler: there's nothing behind the curtain."],["Your request has entered the void.","The void declined it."],["Pico attempted a logical AND.","Page AND existence = FALSE."],["We tried a while loop.","WHILE page_missing: keep_looking."],["Mustaqim said 'one final fix'.","History suggests otherwise."],["Amar submitted another suggestion.","This URL filed for leave."],["Hamza's promo is better than the product.","Mostly because this product is a 404."],["A register contains your page.","Just kidding. It's zero."],["The ALU did the maths.","404 + 0 = still 404."],["Someone unplugged this route.","Nobody's volunteering to plug it back in."],["Mustaqim wrote the code.","The code respectfully denies knowing this page."],["Amar is brainstorming.","The missing page is now a 17-slide presentation."],["Hamza made a logo for the void.","It's honestly kind of fire."],["Pico's instruction pointer got lost.","It's pointing straight at nowhere."],["ERROR: no such destination.","Pico would like to see the source code."],["Mustaqim tried Ctrl+Z.","The page was already gone."],["Amar added a sticky note.","It says 'add page eventually'."],["Hamza posted a teaser.","The teaser shows absolutely nothing."],["The page took an unauthorized break.","HR has been informed."],["Pico is running at 20 TPS.","Wrong game. Still no page."],["Mustaqim's deployment was successful.","The page's existence was not."],["Amar said 'hear me out'.","We are now on feature request number 86."],["Hamza put this URL on a poster.","That's one way to advertise nothing."],["Pico's flowchart has one step.","Start → 404."],["The stack overflowed.","Not enough room for all these excuses."],["404, but make it educational.","Lesson one: check your links."],["Mustaqim is checking the logs.","The logs are checking Mustaqim."],["Amar called this a hidden feature.","It's so hidden that we can't find it either."],["Hamza wants a countdown.","Counting down to the page existing."],["Pico threw an exception.","We decided not to catch this one."],["The URL went AFK.","No estimated return time."],["Mustaqim said 'I'll fix it in prod'.","Please do not tell Cloudflare."],["Amar has a new UI idea.","A working link is apparently optional."],["Hamza is promoting a mystery.","The mystery is where the page went."],["Pico is not an AI mind reader.","You still have to use a real URL."],["Pseudocode couldn't save this.","Even OUTPUT gave us silence."],["The browser asked for a page.","We sent it character development."],["404 detected in the wild.","Do not feed the missing route."],["Mustaqim has the keyboard.","Amar has another idea. Hamza has the camera."],["The CPU is fetching excuses.","Memory address: 0x404."],["Hamza called it an exclusive drop.","Extremely exclusive. Zero people can access it."],["Amar said the idea was revolutionary.","Revolutionary levels of not found."],["Mustaqim checked the DNS.","It wasn't DNS this time. Miraculous."],["Pico is buffering disbelief.","At least the 404 loaded instantly."],["The algorithm did its job.","It successfully proved this page doesn't exist."],["404 speedrun completed.","New personal best: one click."],["The demo went perfectly.","Except for the part where there's no demo."],["Pico's compiler passed the tests.","The URL skipped school."],["Mustaqim has another commit ready.","The page has another excuse ready."],["Amar has a better approach.","Still begins with having an actual page."],["Hamza is planning a cinematic reveal.","First reveal: the 404 itself."],["The route has been deleted from reality.","Please file a support ticket with the universe."],["We tried to use recursion.","404 → 404 → 404."],["Pico couldn't parse this URL.","Maybe try writing it in pseudocode."],["Mustaqim asked 'where's the bug?'","The missing page raised its hand."],["Amar requested three more buttons.","We'd settle for one functioning URL."],["Hamza asked for more aura.","The page disappeared dramatically."],["Nothing to see here.","No, literally. We checked twice."],["The RAM remembers nothing.","Especially not this route."],["Pico's clock speed is fine.","Its page-finding speed is zero."],["Mustaqim opened DevTools.","The missing page closed the tab."],["Amar has moved on to version two.","This page never made version one."],["Hamza is making a documentary.","Title: The Page That Never Was."],["The URL got zero marks.","No working shown."],["Pico says 404.","That's about as precise as it gets."],["This link has a backstory.","Sadly, it doesn't have a webpage."],["Mustaqim's branch is clean.","Suspiciously clean. No page in sight."],["Amar designed a solution.","Turns out the problem was the URL."],["Hamza added dramatic music.","The empty page needed emotional support."],["The CPU hit a breakpoint.","Right before finding absolutely nothing."],["Pico ran a simulation.","Outcome: still 404."],["Mustaqim said 'ship it'.","The page missed the boat."],["Amar made a whole specification.","Requirement one: the page must exist."],["Hamza gave this error a brand identity.","It's now the best-dressed 404 online."],["We checked the cache.","Even the cache shrugged."],["The compiler issued a warning.","This is a questionable life choice."],["Pico found your request.","Then promptly lost the page."],["This route is a work of fiction.","Please do not cite it in your coursework."],["The page failed its own validation.","Reason: not being a page."],["Mustaqim, Amar and Hamza are on it.","Nobody knows what 'it' is yet."],["The whole team searched.","Hamza found a thumbnail. Amar found ideas. Mustaqim found 404."],["Pico has officially entered the void.","The void returned a 404 too."]];
     // Avoid showing the same joke twice in a row, including on refresh.
     let previous = -1;
     try { previous = Number(sessionStorage.getItem('pico.404.lastJoke') ?? '-1'); } catch {}
@@ -164,7 +96,21 @@
     try { sessionStorage.setItem('pico.404.lastJoke', String(index)); } catch {}
     document.getElementById('joke-title').textContent = messages[index][0];
     document.getElementById('joke-description').textContent = messages[index][1];
-    document.getElementById('go-back').addEventListener('click', () => history.length > 1 ? history.back() : location.assign('/'));
+    // Choose from a few intentional layouts. Never overlap text or controls.
+    const layouts = ['left','center','right','split'];
+    let previousLayout = '';
+    try { previousLayout = sessionStorage.getItem('pico.404.lastLayout') || ''; } catch {}
+    const otherLayouts = layouts.filter(layout => layout !== previousLayout);
+    crypto.getRandomValues(random);
+    const layout = otherLayouts[random[0] % otherLayouts.length];
+    document.getElementById('error-shell').dataset.layout = layout;
+    try { sessionStorage.setItem('pico.404.lastLayout', layout); } catch {}
+    // A single back action returns to the previous browser page;
+    // direct visitors without history have the homepage as a safe fallback.
+    document.getElementById('go-back').addEventListener('click', () => {
+      if (history.length > 1) history.back();
+      else location.assign('/');
+    });
   </script>
 </body>
 </html>
