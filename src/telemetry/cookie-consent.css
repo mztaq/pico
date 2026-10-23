@@ -1,0 +1,73 @@
+/* Pico consent surfaces use the active workspace theme tokens. */
+.pico-cookie-banner,.pico-cookie-overlay,.pico-cookie-reopen {
+  font-family:var(--font-ui,system-ui,sans-serif);color:var(--text,#eee);
+}
+.pico-cookie-banner {
+  position:fixed;bottom:0;left:0;right:0;z-index:10000;
+  background:var(--surface-raised,var(--surface,#222));border-top:1px solid var(--border,#444);
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+  padding:18px clamp(18px,3vw,46px);box-shadow:0 -10px 35px #0003;
+}
+.pico-cookie-banner p {margin:0;max-width:850px;font-size:13px;line-height:1.6;color:var(--text,#eee)}
+.pico-cookie-banner a,.pico-cookie-policy {color:var(--accent,#9292ff);font-weight:650;text-decoration:underline;text-underline-offset:3px}
+.pico-cookie-actions,.pico-cookie-modal-actions {display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pico-cookie-actions {flex-shrink:0}
+.pico-cookie-btn {
+  display:inline-flex;align-items:center;justify-content:center;min-height:42px;
+  padding:9px 18px;border-radius:999px;border:1px solid transparent;cursor:pointer;
+  font-size:12px;line-height:1.25;font-weight:700;white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,opacity .15s ease;
+}
+.pico-cookie-btn:disabled {opacity:.55;cursor:wait}
+.pico-cookie-outline {background:transparent;color:var(--text,#eee);border-color:var(--border,#555)}
+.pico-cookie-outline:hover:not(:disabled){border-color:var(--accent,#9292ff);background:var(--surface-hover,#333)}
+.pico-cookie-neutral {background:var(--surface-hover,#333);color:var(--text,#eee);border-color:var(--border,#555)}
+.pico-cookie-neutral:hover:not(:disabled) {background:var(--surface-input,#171717)}
+.pico-cookie-primary {background:var(--accent,#9292ff);color:var(--bg,#111)}
+.pico-cookie-primary:hover:not(:disabled) {filter:brightness(1.12)}
+.pico-cookie-reopen {
+  position:fixed;right:16px;bottom:14px;z-index:9900;font-size:11px;font-weight:650;
+  padding:9px 14px;border:1px solid var(--border,#555);background:var(--surface-raised,#222);
+  border-radius:999px;cursor:pointer;box-shadow:0 3px 16px #0004;
+}
+.pico-cookie-reopen:hover {border-color:var(--accent,#9292ff)}
+.pico-cookie-overlay {
+  position:fixed;inset:0;z-index:10001;background:#0009;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.pico-cookie-modal {
+  width:min(100%,550px);max-height:min(92vh,760px);overflow:auto;
+  background:var(--surface-raised,var(--surface,#222));border:1px solid var(--border,#444);
+  border-radius:12px;box-shadow:0 24px 80px #0007;padding:28px;
+}
+.pico-cookie-modal-head {display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.pico-cookie-eyebrow {color:var(--accent,#9292ff);font-size:10px;font-weight:800;letter-spacing:.13em}
+.pico-cookie-modal h2 {font-size:24px;margin:7px 0 0;font-weight:750;line-height:1.2;color:var(--text,#fff)}
+.pico-cookie-close {font:inherit;font-size:26px;line-height:1;background:transparent;border:0;color:var(--muted,#bbb);cursor:pointer}
+.pico-cookie-description {font-size:13px;line-height:1.65;color:var(--muted,#bbb);margin:17px 0 20px}
+.pico-cookie-categories {border-top:1px solid var(--border,#444)}
+.pico-cookie-category {display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid var(--border,#444);padding:18px 0;cursor:default}
+label.pico-cookie-category {cursor:pointer}
+.pico-cookie-category strong {display:block;font-size:13px;color:var(--text,#eee);margin-bottom:6px}
+.pico-cookie-category p {margin:0;font-size:12px;line-height:1.55;color:var(--muted,#bbb)}
+.pico-cookie-required {font-size:11px;color:var(--muted,#bbb);white-space:nowrap;font-weight:650}
+.pico-cookie-category input[type="checkbox"] {appearance:none;flex:0 0 auto;width:37px;height:22px;border:1px solid var(--border,#555);background:var(--surface-input,#333);border-radius:20px;position:relative;cursor:pointer}
+.pico-cookie-category input[type="checkbox"]::after {content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;border-radius:50%;background:var(--muted,#bbb);transition:transform .15s}
+.pico-cookie-category input[type="checkbox"]:checked {background:var(--accent,#9292ff);border-color:var(--accent,#9292ff)}
+.pico-cookie-category input[type="checkbox"]:checked::after {transform:translateX(15px);background:var(--bg,#111)}
+.pico-cookie-policy {display:inline-block;font-size:12px;margin:20px 0 22px}
+.pico-cookie-modal-actions {justify-content:flex-end}
+.pico-cookie-error {font-size:12px;color:var(--red,#e5828a)}
+@media(max-width:850px) {
+  .pico-cookie-banner {flex-direction:column;align-items:stretch;gap:12px;padding:16px}
+  .pico-cookie-actions {justify-content:flex-end}
+}
+@media(max-width:540px) {
+  .pico-cookie-banner p {font-size:12px}
+  .pico-cookie-btn {font-size:11px;padding:9px 12px;min-height:38px}
+  .pico-cookie-actions,.pico-cookie-modal-actions {gap:7px}
+  .pico-cookie-modal {padding:20px}
+  .pico-cookie-modal-actions {justify-content:stretch}
+  .pico-cookie-modal-actions .pico-cookie-btn {flex:1 1 auto}
+}
+@media(prefers-reduced-motion:reduce) {.pico-cookie-btn,.pico-cookie-category input[type="checkbox"]::after {transition:none}}
