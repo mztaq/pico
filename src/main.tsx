@@ -9,3 +9,11 @@ createRoot(document.getElementById('root')!).render(
     <PicoTelemetry />
   </React.StrictMode>,
 );
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Installation is an enhancement; Pico stays usable without it.
+    });
+  }, { once: true });
+}
