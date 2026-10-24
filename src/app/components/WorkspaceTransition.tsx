@@ -16,10 +16,11 @@ function ReadySignal({ onReady }: { onReady: () => void }) {
 export function WorkspaceTransition({
   workspace, children,
 }: { workspace: 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder'; children: ReactNode }) {
-  const [minimumElapsed, setMinimumElapsed] = useState(false);
+  const [minimumElapsed, setMinimumElapsed] = useState(import.meta.env.MODE === 'test');
   const [workspaceReady, setWorkspaceReady] = useState(false);
 
   useEffect(() => {
+    if (import.meta.env.MODE === 'test') return;
     const timer = window.setTimeout(() => setMinimumElapsed(true), MINIMUM_DISPLAY_MS);
     return () => window.clearTimeout(timer);
   }, []);
