@@ -73,9 +73,9 @@ export default function App() {
   };
   if (informationPage) return <SiteInfo page={informationPage} />;
   if (!language) return <HomeScreen onChoose={setLanguage} />;
-  if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><Suspense fallback={<div role="status">Loading Logic Sim…</div>}><LogicWorkspace onHome={() => setLanguage(null)} /></Suspense></WorkspaceLoadBoundary>;
-  if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><Suspense fallback={<div role="status">Loading CPU Studio…</div>}><CpuStudio onHome={() => setLanguage(null)} /></Suspense></WorkspaceLoadBoundary>;
-  if (language === 'flowchart') return <WorkspaceLoadBoundary key="flowchart" workspace="Flowchart Builder"><Suspense fallback={<div role="status">Loading Flowchart Builder…</div>}><FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
+  if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><Suspense fallback={<div className="pico-workspace-loading" role="status">Loading Logic Sim…</div>}><LogicWorkspace onHome={() => setLanguage(null)} /></Suspense></WorkspaceLoadBoundary>;
+  if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><Suspense fallback={<div className="pico-workspace-loading" role="status">Loading CPU Studio…</div>}><CpuStudio onHome={() => setLanguage(null)} /></Suspense></WorkspaceLoadBoundary>;
+  if (language === 'flowchart') return <WorkspaceLoadBoundary key="flowchart" workspace="Flowchart Builder"><Suspense fallback={<div className="pico-workspace-loading" role="status">Loading Flowchart Builder…</div>}><FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
     charts.current = store;
     const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');
     const project = newProject(uniqueProjectName(name, projects), 'pseudocode');
