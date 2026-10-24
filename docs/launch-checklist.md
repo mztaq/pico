@@ -16,13 +16,13 @@ This is a suggested review, not a claim that any external accounts or campaigns 
 - Test pages on a slow connection and after a Cloudflare deployment.
 
 ## Public profile
-- Link a professional README, clear usage instructions, changelog, security policy and contribution guidelines.
+- Maintain clear usage instructions, release notes and internal security documentation.
 - Announce a stable, verified build, not an untested preview branch.
-- Share accurate learning examples rather than invented performance claims.
+- Publish accurate learning examples rather than invented performance claims.
 - Keep credit consistent with the actual contributors and their respective roles.
 
 ## After launch
 - Review accessibility feedback and browser compatibility reports.
 - Monitor error rates, cache behavior and Cloudflare D1 quotas.
-- Review Dependabot proposals and new security advisories; test updates before merging.
+- Review dependency updates and security advisories internally; test updates before merging.
 - Publish concise change notes for important releases.
