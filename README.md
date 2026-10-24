@@ -187,7 +187,7 @@ Open `http://localhost:3000`.
 | `pnpm preview` | Serve the production build at `http://localhost:3000`. |
 | `pnpm update:log -- "IMPROVED UI"` | Append a dated update to `logs.txt` and sync the served copy. |
 
-The application uses **React**, **TypeScript**, **CodeMirror**, **Vite**, **Pyodide** and **Mermaid**. Automated checks run the tests and production build before releases.
+The application uses **React**, **TypeScript**, **CodeMirror**, **Vite**, **Pyodide**. Automated checks run the tests and production build before releases.
 
 ### Local updates and changelog
 
@@ -203,7 +203,6 @@ Updates are stored in the root `logs.txt`, one per line as `[YYYY-MM-DD] : UPDAT
 | [`src/storage/`](src/storage/) | Projects and settings persistence. |
 | [`src/flowchart/`](src/flowchart/) | Flowchart editing, execution and conversion. |
 | [`src/logic/`](src/logic/) | Circuit symbols, editor, four-state simulation, expressions and tests. |
-| [`src/visual/`](src/visual/) | Flowchart generation and execution visualisation. |
 
 ### Development and maintenance
 
