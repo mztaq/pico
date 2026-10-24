@@ -79,5 +79,5 @@ it('keeps policy navigation, focus, scroll and the selected theme consistent', a
   expect(host.textContent).toContain("Cloudflare");
   expect(host.textContent).toContain("Google Fonts");
   expect(host.querySelector('a[href*="github.com"]')).toBeNull();
-  expect(host.textContent).toContain('Analytics');
+  expect(host.textContent).toContain('analytics');
 });
