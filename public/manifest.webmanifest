@@ -1,0 +1,18 @@
+{
+  "name": "Pico — Computer Science Studio",
+  "short_name": "Pico",
+  "description": "Run pseudocode and Python, build flowcharts and logic circuits, and explore CPU execution.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1e1e2e",
+  "theme_color": "#8179ef",
+  "icons": [
+    {
+      "src": "/pico-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

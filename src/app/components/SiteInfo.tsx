@@ -48,55 +48,36 @@ function Authors() {
 
 function Privacy() {
   return <>
-    <Section title="Your projects and input">
-      <p>Pico runs its compilers and simulations in your browser. It does not automatically upload your code, console input, practice files or diagrams to the maintainers.</p>
-      <p>Code you choose to run can make network requests where supported. Only run code you trust, and avoid entering passwords or sensitive personal information.</p>
+    <Section title="Your work">
+      <p>Pico runs code and simulations in your browser. Your code, console input, projects and diagrams are not collected by Pico's optional analytics. Saved projects stay in your browser unless you export or share them yourself.</p>
     </Section>
-    <Section title="Browser storage">
-      <p>Pico uses local storage to remember compiler projects, flowcharts, settings, tutorial progress and which updates you have seen. This data stays in that browser profile until you delete it or the browser clears it. It does not sync through a Pico account.</p>
-      <p>People who share your browser profile may be able to access saved projects. Export anything you want to keep, then clear this site's data in your browser settings to remove its saved data. Clearing site data also resets your preferences and tutorials.</p>
+    <Section title="Service and storage">
+      <p>Browser storage keeps your projects, settings and consent choices. Our hosting and font providers may process connection details needed to deliver the website. Pico uses Cloudflare for hosting and Google Fonts for some typography.</p>
     </Section>
-    <Section title="Hosting, fonts and updates">
-      <p>Cloudflare Pages hosts Pico. Requests for the site, its runtime files and its update log pass through Cloudflare, which may process connection information such as your IP address and request details to deliver and protect the service. See <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's privacy policy</a>.</p>
-      <p>Pico loads fonts from Google Fonts. Your browser contacts Google to download them, sharing connection information such as your IP address and browser details. See the <a href="https://fonts.google.com/faq">Google Fonts FAQ</a> and <a href="https://policies.google.com/privacy">Google's privacy policy</a>.</p>
-      <p>Pico does not show advertisements. If you enable optional analytics, Pico records anonymous workspace activity and browser details to understand usage. If you enable preferences, Pico stores selected settings for this browser. See the <a href="#cookies">Cookie Policy</a> to manage these choices.</p>
+    <Section title="Optional data">
+      <p>With your permission, Pico collects limited usage statistics, including browser information, visits and time spent in workspaces. If you allow preferences, selected settings are also stored to remember your choices. A random browser identifier helps associate those records. Neither option is required to use Pico.</p>
     </Section>
-    <Section title="Optional analytics and preferences">
-      <p>Optional analytics record a random browser identifier, broad browser and operating-system information, visit times, and time spent in Pico's five workspaces. This is not a hardware device ID. No source code or editor input is sent for analytics.</p>
-      <p>Optional preferences store a browser identifier and your selected theme and settings. You may withdraw permission using Cookie Settings, which removes the corresponding active records. Data expires after approximately 90 days without renewal, with expired-record cleanup still being introduced.</p>
+    <Section title="Retention and controls">
+      <p>Optional records are retained for up to approximately 90 days, subject to renewal when Pico is used, and expired records are routinely removed. Use Cookie Settings to change or withdraw your choice. Withdrawing both optional permissions clears the identifier cookie and requests deletion of its associated records. You can also clear browser storage at any time.</p>
     </Section>
-    <Section title="Links and feedback">
-      <p>External links take you to services with their own privacy practices. If you choose to post a report on <a href="https://github.com/mztaq/pico/issues">GitHub Issues</a>, GitHub processes it under its own policies and the report may be public. Do not include private information.</p>
-    </Section>
-    <Section title="Changes and questions">
-      <p>We will update this page when Pico's data practices change. For general privacy questions, contact the maintainers through <a href="https://github.com/mztaq/pico/issues">the project repository</a> without posting personal information.</p>
+    <Section title="More information">
+      <p>Other websites and services linked from Pico have their own policies. See our <a href="#cookies">Cookie Policy</a> for the optional categories. Material changes to these practices will be reflected here.</p>
     </Section>
   </>;
 }
 
 function Cookies() {
   return <>
-    <Section title="What are cookies?">
-      <p>Cookies are small values stored by your browser and sent to a website with requests. Pico also uses browser-local storage for projects, settings and your cookie choices.</p>
-    </Section>
     <Section title="Essential storage">
-      <p>Pico remembers your cookie choices in browser storage under <code>pico.consent.v1</code>. This choice is used to avoid repeatedly displaying the consent banner. Local projects and compiler settings continue working without optional cookies.</p>
+      <p>Pico uses browser storage to keep your projects, settings and consent choice. This allows core features to work without optional tracking.</p>
     </Section>
-    <Section title="Optional analytics">
-      <p>If you accept analytics, Pico sets an HttpOnly, Secure cookie named <code>__Host-pico_id</code>. It stores a randomly generated identifier, not your hardware ID. The server stores a one-way hash of this identifier.</p>
-      <p>With consent, Pico collects broad browser and operating-system information, recent visits and active time spent in its Logic Simulator, Python Compiler, Pseudocode Compiler, Flowchart Builder and CPU Studio. This helps us understand which tools are used. We do not send the contents of code files or console inputs for analytics.</p>
+    <Section title="Your choices">
+      <p><strong>Analytics</strong> helps us understand visits, browser types and workspace usage. <strong>Preferences</strong> remembers your chosen theme and settings. Both are optional and off until you agree. Your source code, project files and console input are not collected through either category.</p>
+      <p>When enabled, a secure browser cookie identifies the consented session so related records can be managed. Basic security measures also help protect the service from misuse.</p>
     </Section>
-    <Section title="Optional preferences">
-      <p>If you accept preference storage, Pico uses the same browser cookie to associate selected themes and editor settings with that browser. Your projects and code are not uploaded as part of this feature. This cloud preference-sync feature is still under development.</p>
-    </Section>
-    <Section title="Duration and choice">
-      <p>To protect the service from excessive requests, Pico also temporarily stores rotating, non-reversible identifiers derived from connection information. The service does not store raw IP addresses in its application database for this rate limiting.</p>
-      <p>The optional identifier cookie is set for up to 90 days. Server visitor and consent records carry expiry timestamps, with automated deletion being prepared. Browser-local consent choices last until site storage is removed or you change the choice.</p>
-      <p>All optional categories are off until you choose to accept them. You may reject optional cookies, accept them, or adjust each category in Cookie Settings. Rejecting them does not prevent you from using Pico.</p>
-    </Section>
-    <Section title="Changing or withdrawing consent">
-      <p>Select Cookie Settings in the page corner to update your choices. Turning off both optional categories causes Pico to request deletion of the associated server records and clear the identifier cookie. You may also clear Pico's cookies and local storage using your browser settings.</p>
-      <p>See our <a href="#privacy">Privacy Policy</a> for more information about local projects, hosting providers and external links.</p>
+    <Section title="Control and retention">
+      <p>Optional records normally expire after approximately 90 days unless renewed. You can change your choices using Cookie Settings. Turning both optional categories off clears the identifier and requests deletion of its associated records. Rejecting them does not affect access to Pico.</p>
+      <p>For more detail, see the <a href="#privacy">Privacy Policy</a>.</p>
     </Section>
   </>;
 }
@@ -120,7 +101,7 @@ function Terms() {
       <p>The <a href="#privacy">Privacy Policy</a> explains local storage and requests to hosting and font providers. External services have their own terms, and third-party software retains its own licences.</p>
     </Section>
     <Section title="Updates and questions">
-      <p>Features and these terms may change as Pico develops. Updates to these terms will appear here with a new date. Report problems or ask general questions through <a href="https://github.com/mztaq/pico/issues">the project repository</a>.</p>
+      <p>Features and these terms may change as Pico develops. Updates to these terms will appear here.</p>
     </Section>
   </>;
 }
@@ -147,7 +128,7 @@ export function SiteInfo({ page }: { page: InformationPage }) {
       </header>
       <main>
         <div className="site-info-title"><span className="site-info-mark"><Icon size={28} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
-        <p className="site-info-intro">{page === 'authors' ? 'The people behind Pico.' : <>Last updated <time dateTime="2026-10-23">23 October 2026</time></>}</p>
+        <p className="site-info-intro">{page === 'authors' ? 'The people behind Pico.' : <>Last updated <time dateTime="2026-10-24">24 October 2026</time></>}</p>
         {page === 'authors' ? <Authors /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
       </main>
       <SiteInfoLinks current={page} />

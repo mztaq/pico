@@ -16,7 +16,14 @@ vi.mock('../runtime/python/runner',()=>({preloadPythonRuntime:vi.fn(),startPytho
 }}));
 let container:HTMLDivElement,root:Root;
 const button=(text:string)=>[...container.querySelectorAll('button')].find(b=>b.textContent?.trim()===text)!;
-const click=async(element:HTMLElement)=>act(async()=>element.click());
+const click=async(element:HTMLElement)=>{
+  const chosen=element.classList.contains('compiler-choice') ? element.querySelector('h2')?.textContent : '';
+  await act(async()=>element.click());
+  // Lazy visual workspaces resolve asynchronously; wait for the actual UI, not the loading fallback.
+  if(chosen==='Logic Sim') await vi.waitFor(()=>expect(container.querySelector('.logic-app')).not.toBeNull());
+  if(chosen==='CPU Studio') await vi.waitFor(()=>expect(container.querySelector('.cpu-app')).not.toBeNull());
+  if(chosen==='Flowchart Builder') await vi.waitFor(()=>expect(container.querySelector('.flow-builder')).not.toBeNull());
+};
 const choose=async(language:string)=>{await click(container.querySelector(`.compiler-choice h2`)?.textContent===language?container.querySelector<HTMLElement>('.compiler-choice')!:container.querySelectorAll<HTMLElement>('.compiler-choice')[1]!);};
 async function type(element:HTMLInputElement|HTMLTextAreaElement,value:string){await act(async()=>{Object.getOwnPropertyDescriptor(element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event('input',{bubbles:true}));});}
 beforeEach(async()=>{

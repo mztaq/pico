@@ -15,6 +15,19 @@
 
 Pico is a browser-based Computer Science learning tool with five workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim and CPU Studio. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
 
+## Install, offline use and privacy
+
+Pico works as a website without an account. Supported browsers can also install it as an app using the **Install** action in the browser menu. The service worker caches the homepage and previously visited static workspace bundles, but full offline execution is **not guaranteed**: Python's large runtime and Pico's optional APIs require network access. A simple offline page appears for uncached navigation.
+
+Projects and editor files remain in your browser. Optional analytics and preferences only operate with consent. Export projects regularly to keep backups; browser storage can be cleared.
+
+## Project resources
+
+- [Security reporting](SECURITY.md)
+- [Production readiness checklist](docs/production-readiness.md)
+
+**Ownership:** Pico is developed and maintained by its original team. No open-source license has been granted. Usage of the website does not grant permission to copy, redistribute or modify its source code. Third-party dependencies remain under their own licenses.
+
 ## Getting started
 
 Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, or **Logic Sim**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
@@ -157,7 +170,6 @@ Use HTTPS in production or `localhost` during development. Other hosting provide
 Use **Node.js 24** and **pnpm 11.25.0**, matching the GitHub Actions configuration.
 
 ```sh
-git clone <repository-url>
 cd pico
 npm install --global pnpm@11.25.0
 pnpm install --frozen-lockfile
@@ -175,7 +187,7 @@ Open `http://localhost:3000`.
 | `pnpm preview` | Serve the production build at `http://localhost:3000`. |
 | `pnpm update:log -- "IMPROVED UI"` | Append a dated update to `logs.txt` and sync the served copy. |
 
-The application uses **React**, **TypeScript**, **CodeMirror**, **Vite**, **Pyodide** and **Mermaid**. GitHub Actions runs the tests and production build on pushes and pull requests.
+The application uses **React**, **TypeScript**, **CodeMirror**, **Vite**, **Pyodide**. Automated checks run the tests and production build before releases.
 
 ### Local updates and changelog
 
@@ -191,8 +203,7 @@ Updates are stored in the root `logs.txt`, one per line as `[YYYY-MM-DD] : UPDAT
 | [`src/storage/`](src/storage/) | Projects and settings persistence. |
 | [`src/flowchart/`](src/flowchart/) | Flowchart editing, execution and conversion. |
 | [`src/logic/`](src/logic/) | Circuit symbols, editor, four-state simulation, expressions and tests. |
-| [`src/visual/`](src/visual/) | Flowchart generation and execution visualisation. |
 
-### Contributing
+### Development and maintenance
 
-For bug reports, include the language, source code, input values, expected result and actual result. For code changes, run `pnpm test` and `pnpm build` before opening a pull request.
+Pico is maintained by its original development team. External code contributions are not currently being accepted.

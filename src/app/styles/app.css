@@ -344,12 +344,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .token-type.identifier { background: #2b271c; color: #dfc886; }
 .token-type.number { background: #34251d; color: #e6a97a; }
 .token-type.string { background: #1c2c24; color: #a7d394; }
-.flowchart-canvas { height: 100%; min-height: 180px; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 8px; }
-.mermaid-output { min-width: 300px; width: 100%; display: flex; justify-content: center; }
-.mermaid-output svg { max-width: 100%; height: auto; }
-.diagram-loading { min-height: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #858998; font-size: 9px; }
-.spinner { width: 14px; height: 14px; border: 2px solid #3a3d49; border-top-color: #a49cff; border-radius: 50%; animation: spin .7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
 
 .statusbar { height: 24px; flex: 0 0 24px; padding: 0 13px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #252832; background: #101116; color: #7c818e; font-size: 8px; }
 .status-left, .status-right { display: flex; align-items: center; gap: 9px; }
