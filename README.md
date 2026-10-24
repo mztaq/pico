@@ -15,6 +15,20 @@
 
 Pico is a browser-based Computer Science learning tool with five workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim and CPU Studio. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
 
+## Install, offline use and privacy
+
+Pico works as a website without an account. Supported browsers can also install it as an app using the **Install** action in the browser menu. The service worker caches the homepage and previously visited static workspace bundles, but full offline execution is **not guaranteed**: Python's large runtime and Pico's optional APIs require network access. A simple offline page appears for uncached navigation.
+
+Projects and editor files remain in your browser. Optional analytics and preferences only operate with consent. Export projects regularly to keep backups; browser storage can be cleared.
+
+## Project resources
+
+- [Contributing](CONTRIBUTING.md)
+- [Security reporting](SECURITY.md)
+- [Production readiness checklist](docs/production-readiness.md)
+
+**Licensing:** No project license is declared in this repository. Do not assume that the absence of a license gives permission to redistribute or modify the source; the maintainers should choose and add an explicit license before soliciting outside contributions.
+
 ## Getting started
 
 Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, or **Logic Sim**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
