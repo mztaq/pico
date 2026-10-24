@@ -1,17 +1,14 @@
-.pico-load-stage{box-sizing:border-box;min-height:75dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(24px,6vw,60px);background:var(--bg,#1e1e2e);color:var(--text,#cdd6f4);font-family:inherit;text-align:center}
-.pico-load-visual{width:min(390px,100%);padding:28px;border:1px solid var(--border,#3d4050);border-radius:10px;background:var(--surface,#181825);box-shadow:0 16px 42px #00000014}
-.pico-load-mark{font:800 24px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent,#cba6f7);letter-spacing:.14em;margin-bottom:26px}
-.pico-load-rail{display:flex;justify-content:space-between;position:relative;gap:12px}
-.pico-load-rail:before{content:"";position:absolute;left:15px;right:15px;top:7px;height:1px;background:var(--border,#3d4050)}
-.pico-load-node{position:relative;display:flex;align-items:center;flex-direction:column;gap:12px;min-width:0;flex:1;font:600 10px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;color:var(--muted,#9ba0bb);animation:pico-node-cycle 1.7s ease-in-out infinite}
-.pico-load-led{width:15px;height:15px;border-radius:50%;background:var(--surface,#181825);border:2px solid var(--accent,#cba6f7);animation:pico-led-cycle 1.7s ease-in-out infinite;animation-delay:inherit}
-.pico-load-progress{height:3px;border-radius:8px;overflow:hidden;background:var(--border,#3d4050);margin-top:26px}
-.pico-load-progress span{display:block;width:30%;height:100%;border-radius:8px;background:var(--accent,#cba6f7);animation:pico-indeterminate 1.8s ease-in-out infinite}
-.pico-load-title{font-weight:750;font-size:clamp(19px,3vw,24px);letter-spacing:-.02em;margin:22px 0 6px}
-.pico-load-subtitle{font-size:13px;opacity:.72;margin:0}
-.pico-load-dots{display:inline-block;min-width:22px;color:var(--accent,#cba6f7);animation:pico-dots 1.8s steps(3,end) infinite}
-@keyframes pico-node-cycle{0%,100%{opacity:.55}30%,55%{opacity:1}}
-@keyframes pico-led-cycle{0%,100%{background:var(--surface,#181825);box-shadow:none}30%,55%{background:var(--accent,#cba6f7);box-shadow:0 0 12px var(--accent,#cba6f7)}}
-@keyframes pico-indeterminate{0%{transform:translateX(-130%)}100%{transform:translateX(440%)}}
-@keyframes pico-dots{0%{opacity:.25}100%{opacity:1}}
-@media(prefers-reduced-motion:reduce){.pico-load-node,.pico-load-led,.pico-load-progress span,.pico-load-dots{animation:none!important}.pico-load-node{opacity:1}.pico-load-progress span{width:45%}}
+/* Compact, theme-aware loader. It is shown for at least 700ms in production. */
+.pico-transition-shell{position:relative;min-height:100dvh;min-width:0}
+.pico-transition-content[aria-hidden="true"]{position:absolute;inset:0;width:100%;visibility:hidden;pointer-events:none;overflow:hidden}
+.pico-load-stage{min-height:100dvh;box-sizing:border-box;display:grid;place-items:center;padding:32px;background:var(--bg,#1e1e2e);color:var(--text,#cdd6f4);font-family:inherit}
+.pico-load-content{width:min(230px,90vw);display:flex;flex-direction:column;align-items:center;text-align:center}
+.pico-load-icon{width:46px;height:46px;margin-bottom:14px}
+.pico-load-icon img{width:100%;height:100%;display:block}
+.pico-load-title{font-size:22px;font-weight:750;letter-spacing:-.05em;line-height:1.2}
+.pico-load-title span{color:var(--accent,#8179ef)}
+.pico-load-bar{width:140px;height:2px;overflow:hidden;border-radius:2px;background:var(--border,#393b4d);margin:22px auto 15px}
+.pico-load-bar>div{height:100%;width:35%;border-radius:2px;background:var(--accent,#8179ef);animation:pico-loading-sweep 1s ease-in-out infinite alternate}
+.pico-load-description{margin:0;font-size:12px;font-weight:500;letter-spacing:.01em;color:var(--muted,#9ba0bb)}
+@keyframes pico-loading-sweep{from{transform:translateX(-100%)}to{transform:translateX(390%)}}
+@media(prefers-reduced-motion:reduce){.pico-load-bar>div{animation:none;width:50%;transform:none}}
