@@ -21,6 +21,7 @@ import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen } from './components/HomeScreen';
 import { SiteInfo, informationPageFromHash } from './components/SiteInfo';
+import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
 import {useExitWarning} from './components/useExitWarning';
 import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
@@ -72,9 +73,9 @@ export default function App() {
   };
   if (informationPage) return <SiteInfo page={informationPage} />;
   if (!language) return <HomeScreen onChoose={setLanguage} />;
-  if (language === 'logic') return <Suspense fallback={<div role="status">Loading Logic Sim…</div>}><LogicWorkspace onHome={() => setLanguage(null)} /></Suspense>;
-  if (language === 'cpu') return <Suspense fallback={<div role="status">Loading CPU Studio…</div>}><CpuStudio onHome={() => setLanguage(null)} /></Suspense>;
-  if (language === 'flowchart') return <Suspense fallback={<div role="status">Loading Flowchart Builder…</div>}><FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
+  if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><Suspense fallback={<div role="status">Loading Logic Sim…</div>}><LogicWorkspace onHome={() => setLanguage(null)} /></Suspense></WorkspaceLoadBoundary>;
+  if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><Suspense fallback={<div role="status">Loading CPU Studio…</div>}><CpuStudio onHome={() => setLanguage(null)} /></Suspense></WorkspaceLoadBoundary>;
+  if (language === 'flowchart') return <WorkspaceLoadBoundary key="flowchart" workspace="Flowchart Builder"><Suspense fallback={<div role="status">Loading Flowchart Builder…</div>}><FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
     charts.current = store;
     const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');
     const project = newProject(uniqueProjectName(name, projects), 'pseudocode');
@@ -82,7 +83,7 @@ export default function App() {
     project.files[0].code = code;
     snapshots.current.pseudocode = { projects: [...projects, project], activeId: project.id };
     setLanguage('pseudocode');
-  }} /></Suspense>;
+  }} /></Suspense></WorkspaceLoadBoundary>;
   return <Workspace key={language} language={language} snapshot={snapshots.current[language]} onChoose={(next, snapshot) => navigate(next, snapshot)} onHome={snapshot => navigate(null, snapshot)} />;
 }
 export function Workspace({ language, snapshot, onChoose, onHome }: { language: CompilerLanguage; snapshot?: WorkspaceSnapshot; onChoose: (language: CompilerLanguage, snapshot: WorkspaceSnapshot) => void; onHome: (snapshot: WorkspaceSnapshot) => void }) {
