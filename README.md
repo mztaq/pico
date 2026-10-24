@@ -1,17 +1,19 @@
-<p align="center">
-  <img src="public/pico-logo.svg" alt="Pico logo" width="80" height="80">
-</p>
+<div align="center">
+  <img src="public/pico-logo.svg" alt="Pico logo" width="76" height="76">
 
-<h1 align="center">Pico.</h1>
+  # Pico.
 
-<p align="center">Write code, build flowcharts and simulate logic circuits in your browser.</p>
+  **Computer Science, made interactive.**
 
-<p align="center">
-  <a href="https://picompiler.pages.dev">Open Pico</a> ·
-  <a href="#getting-started">Getting started</a> ·
-  <a href="#language-support">Language support</a> ·
-  <a href="#development">Development</a>
-</p>
+  A browser-based workspace for pseudocode, Python, flowcharts, digital logic and CPU architecture.
+
+  [![Tests and production build](https://github.com/mztaq/pico/actions/workflows/checks.yml/badge.svg)](https://github.com/mztaq/pico/actions/workflows/checks.yml)
+  ![Five workspaces](https://img.shields.io/badge/WORKSPACES-05-8179EF?style=flat-square)
+  ![Browser based](https://img.shields.io/badge/PLATFORM-WEB-242733?style=flat-square)
+  ![Team maintained](https://img.shields.io/badge/MAINTAINED-BY%20THE%20PICO%20TEAM-242733?style=flat-square)
+
+  **[Launch Pico](https://picompiler.pages.dev)** · [Getting started](#getting-started) · [Language support](#language-support) · [Development](#development)
+</div>
 
 Pico is a browser-based Computer Science learning tool with five workspaces: Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim and CPU Studio. Themes are shared across workspaces. Projects are stored in your browser. No account is required.
 
@@ -30,7 +32,7 @@ Projects and editor files remain in your browser. Optional analytics and prefere
 
 ## Getting started
 
-Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, or **Logic Sim**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
+Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, **Logic Sim**, or **CPU Studio**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
 
 ```text
 DECLARE Name : STRING
@@ -47,7 +49,7 @@ When execution reaches `INPUT`, type your value in the Console and press Enter. 
 - Use **Debug** to record execution, then step through the results.
 - Open **Reference** for keyword explanations and code examples.
 - Use **File** to import a project or export a `.pico` copy.
-- Open **Help** for the guided tutorial. Some familiar faces from the Computer Science department receive a hidden greeting when their names are entered.
+- Open **Help** for the guided tutorial.
 
 ## Workspace
 
