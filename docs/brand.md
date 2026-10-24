@@ -1,6 +1,6 @@
 # Pico brand reference
 
-Keep the product presentation concise and consistent across the website, GitHub, launch material and social profiles.
+Keep the product presentation concise and consistent across the website, launch material and official profiles.
 
 ## Name and purpose
 - **Name:** Pico. (include the final period as part of the wordmark; never space it as `Pico .`).
