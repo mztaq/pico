@@ -14,7 +14,7 @@ This is a practical checklist, **not** a claim that a formal penetration test, f
 - **Do not add a blanket CSP with `unsafe-eval`, block inline code or block WebAssembly until it has been verified against the language workers, theme editor and 404 page.** A stricter, nonce/hash-based CSP needs a dedicated test cycle.
 - Cloudflare Pages `_headers` applies to static responses. Confirm Pages Functions set appropriate no-store and content-type headers themselves; review proxy/cache configuration.
 - Keep the service-worker cache restricted to static same-origin shell and versioned `/assets/` files. Never store user files, interpreter traffic, API calls or anonymous identifiers in Cache Storage.
-- Run dependency audits in CI or periodically and review advisories. No claim of zero vulnerabilities is made.
+- Run dependency audits in automated checks or periodically and review advisories. No claim of zero vulnerabilities is made.
 
 ## Progressive web app
 - The manifest offers standalone installation where browsers support SVG icons.
