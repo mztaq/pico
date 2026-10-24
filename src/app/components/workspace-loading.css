@@ -1,0 +1,12 @@
+/* Compact, theme-aware loader shown only while a workspace chunk is pending. */
+.pico-load-stage{min-height:100dvh;box-sizing:border-box;display:grid;place-items:center;padding:32px;background:var(--bg,#1e1e2e);color:var(--text,#cdd6f4);font-family:inherit}
+.pico-load-content{width:min(230px,90vw);display:flex;flex-direction:column;align-items:center;text-align:center}
+.pico-load-icon{width:46px;height:46px;margin-bottom:14px}
+.pico-load-icon img{width:100%;height:100%;display:block}
+.pico-load-title{font-size:22px;font-weight:750;letter-spacing:-.05em;line-height:1.2}
+.pico-load-title span{color:var(--accent,#8179ef)}
+.pico-load-bar{width:140px;height:2px;overflow:hidden;border-radius:2px;background:var(--border,#393b4d);margin:22px auto 15px}
+.pico-load-bar>div{height:100%;width:35%;border-radius:2px;background:var(--accent,#8179ef);animation:pico-loading-sweep 1s ease-in-out infinite alternate}
+.pico-load-description{margin:0;font-size:12px;font-weight:500;letter-spacing:.01em;color:var(--muted,#9ba0bb)}
+@keyframes pico-loading-sweep{from{transform:translateX(-100%)}to{transform:translateX(390%)}}
+@media(prefers-reduced-motion:reduce){.pico-load-bar>div{animation:none;width:50%;transform:none}}

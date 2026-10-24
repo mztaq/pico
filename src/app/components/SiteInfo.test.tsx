@@ -49,7 +49,7 @@ it('opens the Authors link and supports direct links to all information pages', 
 });
 
 it.each([
-  ['#privacy', 'Privacy Policy', 'Browser storage'],
+  ['#privacy', 'Privacy Policy', 'Service and storage'],
   ['#terms', 'Terms and Conditions', 'Your work'],
 ] as const)('loads %s on first entry and preserves saved projects', async (hash, title, section) => {
   const savedProjects = JSON.stringify([{ id: 'untouched', code: 'OUTPUT 42' }]);
@@ -60,7 +60,7 @@ it.each([
   expect(document.title).toBe(`Pico | ${title}`);
   expect([...host.querySelectorAll('h2')].some(heading => heading.textContent === section)).toBe(true);
   expect(localStorage.getItem('pico.projects.v1')).toBe(savedProjects);
-  expect(host.querySelector('time')?.getAttribute('dateTime')).toBe('2026-10-23');
+  expect(host.querySelector('time')?.getAttribute('dateTime')).toBe('2026-10-24');
 });
 
 it('keeps policy navigation, focus, scroll and the selected theme consistent', async () => {
@@ -76,7 +76,8 @@ it('keeps policy navigation, focus, scroll and the selected theme consistent', a
   expect(page.scrollTop).toBe(0);
   expect(document.activeElement).toBe(host.querySelector('h1'));
   expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Privacy Policy');
-  expect(host.querySelector('a[href="https://www.cloudflare.com/privacypolicy/"]')).not.toBeNull();
-  expect(host.querySelector('a[href="https://fonts.google.com/faq"]')).not.toBeNull();
-  expect(host.querySelector('a[href="https://github.com/mztaq/pico/issues"]')).not.toBeNull();
+  expect(host.textContent).toContain("Cloudflare");
+  expect(host.textContent).toContain("Google Fonts");
+  expect(host.querySelector('a[href*="github.com"]')).toBeNull();
+  expect(host.textContent).toContain('analytics');
 });
