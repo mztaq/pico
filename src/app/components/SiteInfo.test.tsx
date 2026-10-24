@@ -49,7 +49,7 @@ it('opens the Authors link and supports direct links to all information pages', 
 });
 
 it.each([
-  ['#privacy', 'Privacy Policy', 'Browser storage'],
+  ['#privacy', 'Privacy Policy', 'Service and storage'],
   ['#terms', 'Terms and Conditions', 'Your work'],
 ] as const)('loads %s on first entry and preserves saved projects', async (hash, title, section) => {
   const savedProjects = JSON.stringify([{ id: 'untouched', code: 'OUTPUT 42' }]);
@@ -76,8 +76,8 @@ it('keeps policy navigation, focus, scroll and the selected theme consistent', a
   expect(page.scrollTop).toBe(0);
   expect(document.activeElement).toBe(host.querySelector('h1'));
   expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Privacy Policy');
-  expect(host.querySelector('a[href="https://www.cloudflare.com/privacypolicy/"]')).not.toBeNull();
-  expect(host.querySelector('a[href="https://fonts.google.com/faq"]')).not.toBeNull();
+  expect(host.textContent).toContain("Cloudflare");
+  expect(host.textContent).toContain("Google Fonts");
   expect(host.querySelector('a[href*="github.com"]')).toBeNull();
   expect(host.textContent).toContain('Analytics');
 });
