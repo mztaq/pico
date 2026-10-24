@@ -1,6 +1,4 @@
-/* Compact, theme-aware loader. It is shown for at least 700ms in production. */
-.pico-transition-shell{position:relative;min-height:100dvh;min-width:0}
-.pico-transition-content[aria-hidden="true"]{position:absolute;inset:0;width:100%;visibility:hidden;pointer-events:none;overflow:hidden}
+/* Compact, theme-aware loader shown only while a workspace chunk is pending. */
 .pico-load-stage{min-height:100dvh;box-sizing:border-box;display:grid;place-items:center;padding:32px;background:var(--bg,#1e1e2e);color:var(--text,#cdd6f4);font-family:inherit}
 .pico-load-content{width:min(230px,90vw);display:flex;flex-direction:column;align-items:center;text-align:center}
 .pico-load-icon{width:46px;height:46px;margin-bottom:14px}
