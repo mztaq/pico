@@ -3,9 +3,7 @@
 Pico executes educational programs in the browser. Browser isolation, parsers and runtime limits reduce risk, but no browser interpreter should be regarded as a hardened sandbox for hostile workloads.
 
 ## Reporting a vulnerability
-**Please do not publish exploit details in an issue.** Use [GitHub's private vulnerability reporting](https://github.com/mztaq/pico/security/advisories/new) if it is available for this repository. Otherwise open a non-sensitive issue asking maintainers how to submit a private report; do not post payloads, keys or user data.
-
-Describe the affected version, reproducible steps, expected and observed behavior, and impact. We cannot promise a fixed response time.
+Pico is maintained by its development team. Do not post security issues, exploit payloads, credentials or private information publicly. Report security concerns directly to a team member through an existing private communication channel. No public issue tracker or outside contribution channel is advertised.
 
 ## Supported versions
 The currently deployed production version is the only actively maintained version. Old preview deployments and forks are not covered by this policy.
