@@ -30,7 +30,7 @@ Projects and editor files remain in your browser. Optional analytics and prefere
 
 ## Getting started
 
-Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, or **Logic Sim**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
+Open [Pico](https://picompiler.pages.dev) and choose **Pseudocode Compiler**, **Python Compiler**, **Flowchart Builder**, **Logic Sim**, or **CPU Studio**. In either compiler, enter a program and press **Run** in the top bar. Use the compiler switch to change languages or the back button to return home.
 
 ```text
 DECLARE Name : STRING
@@ -47,7 +47,7 @@ When execution reaches `INPUT`, type your value in the Console and press Enter. 
 - Use **Debug** to record execution, then step through the results.
 - Open **Reference** for keyword explanations and code examples.
 - Use **File** to import a project or export a `.pico` copy.
-- Open **Help** for the guided tutorial. Some familiar faces from the Computer Science department receive a hidden greeting when their names are entered.
+- Open **Help** for the guided tutorial.
 
 ## Workspace
 
