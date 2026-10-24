@@ -23,11 +23,10 @@ Projects and editor files remain in your browser. Optional analytics and prefere
 
 ## Project resources
 
-- [Contributing](CONTRIBUTING.md)
 - [Security reporting](SECURITY.md)
 - [Production readiness checklist](docs/production-readiness.md)
 
-**Licensing:** No project license is declared in this repository. Do not assume that the absence of a license gives permission to redistribute or modify the source; the maintainers should choose and add an explicit license before soliciting outside contributions.
+**Ownership:** Pico is developed and maintained by its original team. No open-source license has been granted. Usage of the website does not grant permission to copy, redistribute or modify its source code. Third-party dependencies remain under their own licenses.
 
 ## Getting started
 
@@ -171,7 +170,6 @@ Use HTTPS in production or `localhost` during development. Other hosting provide
 Use **Node.js 24** and **pnpm 11.25.0**, matching the GitHub Actions configuration.
 
 ```sh
-git clone <repository-url>
 cd pico
 npm install --global pnpm@11.25.0
 pnpm install --frozen-lockfile
@@ -189,7 +187,7 @@ Open `http://localhost:3000`.
 | `pnpm preview` | Serve the production build at `http://localhost:3000`. |
 | `pnpm update:log -- "IMPROVED UI"` | Append a dated update to `logs.txt` and sync the served copy. |
 
-The application uses **React**, **TypeScript**, **CodeMirror**, **Vite**, **Pyodide** and **Mermaid**. GitHub Actions runs the tests and production build on pushes and pull requests.
+The application uses **React**, **TypeScript**, **CodeMirror**, **Vite**, **Pyodide** and **Mermaid**. Automated checks run the tests and production build before releases.
 
 ### Local updates and changelog
 
@@ -207,6 +205,6 @@ Updates are stored in the root `logs.txt`, one per line as `[YYYY-MM-DD] : UPDAT
 | [`src/logic/`](src/logic/) | Circuit symbols, editor, four-state simulation, expressions and tests. |
 | [`src/visual/`](src/visual/) | Flowchart generation and execution visualisation. |
 
-### Contributing
+### Development and maintenance
 
-For bug reports, include the language, source code, input values, expected result and actual result. For code changes, run `pnpm test` and `pnpm build` before opening a pull request.
+Pico is maintained by its original development team. External code contributions are not currently being accepted.
