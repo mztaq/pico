@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, ArrowLeft, ChevronDown, CircleHelp, Code2, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
@@ -22,7 +22,7 @@ import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen } from './components/HomeScreen';
 import { SiteInfo, informationPageFromHash } from './components/SiteInfo';
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
-import { WorkspaceLoading } from './components/WorkspaceLoading';
+import { WorkspaceTransition } from './components/WorkspaceTransition';
 import {useExitWarning} from './components/useExitWarning';
 import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
@@ -74,9 +74,9 @@ export default function App() {
   };
   if (informationPage) return <SiteInfo page={informationPage} />;
   if (!language) return <HomeScreen onChoose={setLanguage} />;
-  if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><Suspense fallback={<WorkspaceLoading workspace="Logic Sim" />}><LogicWorkspace onHome={() => setLanguage(null)} /></Suspense></WorkspaceLoadBoundary>;
-  if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><Suspense fallback={<WorkspaceLoading workspace="CPU Studio" />}><CpuStudio onHome={() => setLanguage(null)} /></Suspense></WorkspaceLoadBoundary>;
-  if (language === 'flowchart') return <WorkspaceLoadBoundary key="flowchart" workspace="Flowchart Builder"><Suspense fallback={<WorkspaceLoading workspace="Flowchart Builder" />}><FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
+  if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
+  if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><WorkspaceTransition workspace="CPU Studio"><CpuStudio onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
+  if (language === 'flowchart') return <WorkspaceLoadBoundary key="flowchart" workspace="Flowchart Builder"><WorkspaceTransition workspace="Flowchart Builder"><FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
     charts.current = store;
     const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');
     const project = newProject(uniqueProjectName(name, projects), 'pseudocode');
@@ -84,7 +84,7 @@ export default function App() {
     project.files[0].code = code;
     snapshots.current.pseudocode = { projects: [...projects, project], activeId: project.id };
     setLanguage('pseudocode');
-  }} /></Suspense></WorkspaceLoadBoundary>;
+  }} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   return <Workspace key={language} language={language} snapshot={snapshots.current[language]} onChoose={(next, snapshot) => navigate(next, snapshot)} onHome={snapshot => navigate(null, snapshot)} />;
 }
 export function Workspace({ language, snapshot, onChoose, onHome }: { language: CompilerLanguage; snapshot?: WorkspaceSnapshot; onChoose: (language: CompilerLanguage, snapshot: WorkspaceSnapshot) => void; onHome: (snapshot: WorkspaceSnapshot) => void }) {
