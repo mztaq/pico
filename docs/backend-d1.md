@@ -1,12 +1,12 @@
-# Pico Cloudflare D1 backend (draft)
+# Pico Cloudflare D1 backend
 
-This feature branch adds an opt-in prototype for anonymous workspace usage and a preference API. It does **not** upload code, editor files, typed inputs, or flowcharts.
+Pico uses an opt-in Cloudflare D1 backend for anonymous workspace usage and optional preference synchronization. It does **not** upload code, editor files, typed inputs, or flowcharts.
 
 ## Setup
 - Bind production and preview Cloudflare Pages to the existing `pico-db` D1 database using binding name `DB`. For safe previews, prefer a separate preview D1 database with the same schema.
 - `public/_routes.json` runs Functions only for `/api/*` URLs. All compiler assets stay static.
 - Tables required: `pico_visitors`, `pico_consent`, `pico_usage`, `pico_preferences`, per the setup already performed in D1 Console.
-- Production is unchanged until the branch is merged.
+- Review changes in a preview before updating Production. Deployments require matching D1 bindings and a configured rate-limit secret.
 
 ## API
 - `GET /api/cookies`: current server-recognized opt-in state.
@@ -16,8 +16,8 @@ This feature branch adds an opt-in prototype for anonymous workspace usage and a
 - `DELETE /api/preferences`: delete stored preferences.
 - `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to five workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice.
 
-## Before merging
-- Run `pnpm install`, `pnpm check`, `pnpm test`, and `pnpm build`. Those checks have not been run by the authoring assistant.
+## Before new releases
+- Run `pnpm install`, `pnpm check`, `pnpm test`, and `pnpm build`. Review GitHub Actions results and run these checks locally when changing the backend.
 - Test endpoint requests and cookie behavior using a Pages preview deployment with a dedicated preview D1 database.
 - Verify cloud preference synchronization in a Pages preview: accept Preferences, change the compiler theme and font size, wait at least 2 seconds, and query `pico_preferences`. Verify it stops sending writes when consent is revoked.
 - Review privacy policy, cookie text, accessibility and consent-revocation behavior, including cross-tab behavior.
@@ -45,7 +45,7 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 - A declined Preferences choice disables the sync listener, and the consent API deletes the remote preference record.
 - Verify synchronization with real changes before release; cross-device syncing and account identity are out of scope.
 
-## Required migration and setup before testing the latest branch
+## Required migration and deployment configuration
 
 **The updated API intentionally rejects POST requests with HTTP 503 until the rate-limit secret is configured.** Do not rotate the secret during active requests without considering the temporary effect on counters.
 
