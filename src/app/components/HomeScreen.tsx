@@ -1,5 +1,5 @@
 import '../../styles/home.css';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Binary, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
@@ -8,6 +8,8 @@ import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
 import { SoundButton } from './SoundToggle';
+import { HomeGroup, WorkspaceChoice } from './home/HomeWorkspace';
+import { PicoSignalCore } from './home/PicoSignalCore';
 
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
@@ -22,7 +24,8 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     </div>
     <div className="home-inner">
       <div className="home-hero">
-      <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
+        <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
+        <PicoSignalCore />
         <h1>Choose your workspace</h1>
       </div>
       <div className="compiler-choices">
@@ -68,21 +71,4 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       <SiteInfoLinks />
     </div>
   </main>;
-}
-
-function HomeGroup({ label, detail, children }: { label: string; detail: string; children: ReactNode }) {
-  return <section className="home-group" aria-label={label}>
-    <div className="home-group-head"><span className="home-group-label">{label}</span><span className="home-group-detail">{detail}</span></div>
-    <div className="home-group-grid">{children}</div>
-  </section>;
-}
-
-function WorkspaceChoice({ icon, tag, title, description, onClick, children }: { icon: ReactNode; tag?: string; title: string; description: string; onClick: () => void; children: ReactNode }) {
-  return <button className="compiler-choice" onClick={onClick}>
-    <div className="compiler-choice-stage" aria-hidden="true">{children}</div>
-    <div className="compiler-choice-copy">
-      <div className="compiler-choice-title"><i className="compiler-choice-icon" aria-hidden="true">{icon}</i><h2>{title}</h2>{tag && <code className="compiler-choice-tag" aria-hidden="true">{tag}</code>}</div>
-      <p>{description}</p>
-    </div>
-  </button>;
 }
