@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {gate,resolveDrivers,evaluateCircuit,initialSimulation,stepSimulation,generateTruthTable,truthTableCSV} from './engine';
+import {gate,resolveDrivers,evaluateCircuit,initialSimulation,stepSimulation,generateTruthTable,truthTableCSV,propagationFrames,key} from './engine';
 import {makeDocument,makeNode,parseDocument} from './model';
 import {loadSample} from './samples';
 describe('four state digital logic',()=>{
@@ -64,5 +64,17 @@ describe('four state digital logic',()=>{
     expect(parseDocument(JSON.parse(JSON.stringify(doc)))).toEqual(doc);
     expect(()=>parseDocument({...doc,nodes:[{...doc.nodes[0],kind:'script'}]})).toThrow();
     expect(()=>parseDocument({...doc,wires:[{id:'x',from:'bad',fromPin:'Q',to:'bad',toPin:'A'}]})).toThrow();
+  });
+
+  it('replays a change one gate level at a time and ends on the real result',()=>{
+    const doc=loadSample('full');
+    const before=evaluateCircuit(doc,initialSimulation());
+    const a=doc.nodes.find(n=>n.label==='A')!;
+    const after=evaluateCircuit(doc,{...initialSimulation(),inputs:{[a.id]:1}});
+    const frames=propagationFrames(doc,before.signals,after);
+    expect(frames.length).toBeGreaterThan(2);
+    expect(frames.at(-1)).toEqual(after.signals);
+    const sum=doc.nodes.find(n=>n.label==='Sum')!;
+    expect(frames[0]![key(sum.id,'IN')]).toBe(before.signals[key(sum.id,'IN')]);
   });
 });

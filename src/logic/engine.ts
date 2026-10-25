@@ -24,11 +24,8 @@ export function clockOutput(node:CircuitNode,time:number):Signal {
   const period=node.period??1000,duty=node.duty??50;
   return time%period>=period*(1-duty/100)?1:0;
 }
-function propagate(doc:CircuitDocument,state:SimulationState) {
-  let signals:Record<string,Signal>={};
-  for(const n of doc.nodes)for(const p of [...SPECS[n.kind].inputs,...SPECS[n.kind].outputs])signals[key(n.id,p)]='Z';
-  let warning='';
-  for(let iteration=0;iteration<Math.min(80,doc.nodes.length*2+8);iteration++) {
+/** One synchronous update of every component from the current wire values. */
+function propagateOnce(doc:CircuitDocument,state:SimulationState,signals:Record<string,Signal>):Record<string,Signal> {
     const next={...signals};
     for(const node of doc.nodes) {
       const spec=SPECS[node.kind];
@@ -53,6 +50,14 @@ function propagate(doc:CircuitDocument,state:SimulationState) {
       }
       spec.outputs.forEach((pin,i)=>{next[key(node.id,pin)]=outputs[i]??'X';});
     }
+    return next;
+}
+function propagate(doc:CircuitDocument,state:SimulationState) {
+  let signals:Record<string,Signal>={};
+  for(const n of doc.nodes)for(const p of [...SPECS[n.kind].inputs,...SPECS[n.kind].outputs])signals[key(n.id,p)]='Z';
+  let warning='';
+  for(let iteration=0;iteration<Math.min(80,doc.nodes.length*2+8);iteration++) {
+    const next=propagateOnce(doc,state,signals);
     if(Object.keys(next).every(k=>next[k]===signals[k]))return {signals:next,warning};
     signals=next;
   }
@@ -127,4 +132,23 @@ export function generateTruthTable(doc:CircuitDocument) {
 export function truthTableCSV(table:{headers:string[];rows:string[][]}) {
   const cell=(value:string)=>'"'+value.replace(/"/g,'""')+'"';
   return [table.headers,...table.rows].map(row=>row.map(cell).join(',')).join('\r\n')+'\r\n';
+}
+
+/**
+ * Slow-motion playback: the intermediate wire values as a change ripples through the
+ * circuit one gate level at a time, starting from what was on screen and ending at the
+ * settled result. Purely for display; simulation results are unchanged.
+ */
+export function propagationFrames(doc:CircuitDocument,from:Record<string,Signal>,target:SimulationResult):Record<string,Signal>[] {
+  const frames:Record<string,Signal>[]=[];
+  let signals:Record<string,Signal>={...target.signals,...from};
+  for(const k of Object.keys(signals))if(!(k in target.signals))delete signals[k];
+  for(let iteration=0;iteration<Math.min(40,doc.nodes.length*2+8);iteration++) {
+    const next=propagateOnce(doc,target.state,signals);
+    if(Object.keys(next).every(k=>next[k]===signals[k]))break;
+    frames.push(next);signals=next;
+  }
+  const last=frames.at(-1);
+  if(!last||Object.keys(target.signals).some(k=>last[k]!==target.signals[k]))frames.push(target.signals);
+  return frames;
 }
