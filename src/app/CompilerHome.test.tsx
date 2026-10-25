@@ -45,6 +45,16 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="#terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
+it('uses Pico renderer primitives for each homepage product example without imitation UI chrome', () => {
+  expect(container.querySelectorAll('.compiler-choice')).toHaveLength(5);
+  expect(container.querySelector('.home-product-code .syntax-keyword')).not.toBeNull();
+  expect(container.querySelector('.home-product-flow .home-product-flow-node')).not.toBeNull();
+  expect(container.querySelector('.home-product-logic .logic-symbol-outline')).not.toBeNull();
+  expect(container.querySelector('.home-product-cpu .home-product-cpu-block')).not.toBeNull();
+  expect(container.querySelector('.home-mini-window')).toBeNull();
+  expect(container.querySelector('.home-showcase')).toBeNull();
+  expect(container.querySelectorAll('.compiler-choice-stage button')).toHaveLength(0);
+});
 it('shows the Logic Sim workspace without a personal footer',async()=>{
   const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
   await click(choice!);
