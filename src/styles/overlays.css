@@ -42,6 +42,7 @@
 .pico-load-description { font-size: var(--ds-text-sm); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .cpu-tour-card, .logic-tour-card, .flow-tour-card { animation: ds-pop .22s var(--ds-ease) both; }
+  /* Keep each dialog's own centering transform: ds-pop animates transform to none. */
+  .cpu-tour-card, .logic-tour-card, .flow-tour-card { animation: ds-fade .22s var(--ds-ease) both; }
   .pico-load-content { animation: ds-rise .3s var(--ds-ease) both; }
 }
