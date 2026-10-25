@@ -104,3 +104,91 @@
   .cpu-app .cpu-controls { gap: 8px; padding: 8px; }
   .cpu-app .cpu-playback button { padding: 0 9px; }
 }
+
+/* ── Stage: the diagram sits in a framed canvas at a calm, capped scale ── */
+.cpu-app .cpu-content { overflow: hidden; }
+.cpu-app .cpu-heading { padding: 12px 16px 8px; }
+.cpu-app .cpu-heading strong { font-size: var(--ds-text-sm); }
+.cpu-app .cpu-workspace-main {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+.cpu-app .cpu-diagram-scroll {
+  padding: 20px 24px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-lg);
+  background:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 10%, transparent) 1px, transparent 0) 0 0 / 20px 20px,
+    var(--ds-sunken);
+}
+/* Never scale the 1190-unit drawing past ~0.85× so labels stay proportionate. */
+.cpu-app .cpu-diagram {
+  width: 100%;
+  max-width: 1190px;
+  max-height: 100%;
+  min-height: 0;
+  height: auto;
+}
+.cpu-app .cpu-shell, .cpu-app .cpu-ram-shell { fill: color-mix(in srgb, var(--ds-panel) 92%, transparent); stroke: var(--ds-line-strong); stroke-width: 1.2; }
+.cpu-app .cpu-main-title, .cpu-app .cpu-ram-title { font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
+.cpu-app .cpu-block rect { fill: var(--ds-panel-raised); stroke: var(--ds-line-strong); stroke-width: 1; }
+.cpu-app .cpu-block.cpu-selected rect, .cpu-app .cpu-block.cpu-active rect { stroke: var(--accent); stroke-width: 1.8; }
+.cpu-app .cpu-block-title { font-size: 12.5px; font-weight: 600; }
+.cpu-app .cpu-block-value { font-size: 13px; }
+.cpu-app .cpu-compact-register .cpu-block-title, .cpu-app .cpu-compact-register .cpu-block-value { font-size: 10px; }
+.cpu-app .cpu-ram-row rect { stroke: var(--ds-line); stroke-width: .5; }
+.cpu-app .cpu-ram-row text { font-size: 12.5px; }
+.cpu-app .cpu-external-bus text { font-size: 12.5px; font-weight: 600; fill: var(--ds-muted); }
+.cpu-app .cpu-external-bus.cpu-bus-active text { fill: var(--ds-text); }
+.cpu-app .cpu-external-bus path { stroke-width: 2; }
+.cpu-app .cpu-external-bus.cpu-bus-active path { stroke-width: 3.2; }
+.cpu-app .cpu-connectors path { stroke-width: 1.6; opacity: .55; }
+
+/* ── Explanation panel ── */
+.cpu-app .cpu-information { align-self: start; max-height: 100%; padding: 16px; gap: 12px; }
+.cpu-app .cpu-component-details { margin-top: 4px; }
+.cpu-app .cpu-explanation { font-size: var(--ds-text-lg); line-height: 1.55; font-weight: 600; }
+.cpu-app .cpu-step-heading { font-size: var(--ds-text-2xs); }
+.cpu-app .cpu-phase { padding: 3px 9px; border-radius: var(--ds-radius-pill); font-size: var(--ds-text-2xs); }
+.cpu-app .cpu-transit, .cpu-app .cpu-end-message { font-size: var(--ds-text-sm); }
+.cpu-app .cpu-component-details { padding-top: 12px; font-size: var(--ds-text-xs); }
+.cpu-app .cpu-component-details strong { font-size: var(--ds-text-sm); }
+.cpu-app .cpu-advanced { font-size: var(--ds-text-xs); }
+
+@media (max-width: 1150px) {
+  .cpu-app .cpu-content { overflow: auto; }
+  .cpu-app .cpu-workspace-main { grid-template-columns: 1fr; }
+  .cpu-app .cpu-diagram { min-width: 760px; max-width: 1190px; }
+  .cpu-app .cpu-diagram-scroll { overflow-x: auto; justify-content: flex-start; }
+}
+@media (min-width: 1151px) {
+  .cpu-app .cpu-diagram-scroll { justify-content: center; }
+}
+@media (max-width: 850px) {
+  .cpu-app .cpu-diagram { min-width: 760px; width: 760px; }
+  .cpu-app .cpu-diagram-scroll { padding: 12px; }
+  .cpu-app .cpu-workspace-main { padding: 0 8px 12px; }
+}
+
+/* ── Motion ── */
+@media (prefers-reduced-motion: no-preference) {
+  .cpu-app .cpu-block rect { transition: stroke .25s ease, fill .25s ease, stroke-width .25s ease; }
+  .cpu-app .cpu-block.cpu-active rect { animation: cpu-pulse 1.6s ease-in-out infinite; }
+  .cpu-app .cpu-flow-path { animation: cpu-dash .6s linear infinite; }
+  .cpu-app .cpu-ram-row rect { transition: fill .25s ease, stroke .25s ease; }
+  .cpu-app .cpu-ram-row.cpu-ram-highlight rect { animation: cpu-row-flash .6s ease-out; }
+  .cpu-app .cpu-explanation, .cpu-app .cpu-transit, .cpu-app .cpu-component-details { animation: ds-rise .28s var(--ds-ease) both; }
+  .cpu-app .cpu-transit { animation-delay: .06s; }
+  .cpu-app .cpu-phase { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
+  .cpu-app .cpu-diagram-scroll { animation: ds-fade .4s ease both; }
+  .cpu-app .cpu-information { animation: ds-rise .35s var(--ds-ease) .08s both; }
+}
+@keyframes cpu-pulse {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: .45; }
+}
+@keyframes cpu-dash { to { stroke-dashoffset: -14; } }
+@keyframes cpu-row-flash {
+  from { fill: color-mix(in srgb, var(--accent) 45%, transparent); }
+}

@@ -293,10 +293,10 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
    </div>
    <section className="cpu-information" data-cpu-tour="steps" aria-live="polite">
     <div className="cpu-step-heading"><span className={'cpu-phase cpu-phase-'+phase}>{phase==='ready'?'READY':phase==='halted'?'COMPLETE':phase.toUpperCase()}</span><span>Micro-step {machine.cycles}</span></div>
-    <p className="cpu-explanation">{machine.cycles===0?'Press Run to start the CPU, or Step to follow one operation at a time.':machine.frame.description}</p>
-    {transfer&&<p className="cpu-transit">{transfer.from} → {transfer.to} · {transfer.value}</p>}
+    <p className="cpu-explanation" key={machine.cycles}>{machine.cycles===0?'Press Run to start the CPU, or Step to follow one operation at a time.':machine.frame.description}</p>
+    {transfer&&<p className="cpu-transit" key={'t'+machine.cycles}>{transfer.from} → {transfer.to} · {transfer.value}</p>}
     {mode==='advanced'&&<div className="cpu-advanced"><strong>Advanced · instruction decode and interrupts</strong><span>Opcode: {binary4(machine.cir>>4)} · Operand: {binary4(machine.cir)}. Four-bit opcodes and 16 memory locations are a teaching model (out of specification), not a Cambridge ISA.</span><span>Interrupt: {interrupt.stage>0?'Servicing request':interrupt.pending?'Waiting until the current instruction finishes':interrupt.handled>0?'Handled '+interrupt.handled+' interrupt(s)':'No pending request'}. Interrupt handling includes finishing the instruction, saving state, servicing the ISR and returning to the program.</span></div>}
-    <div className="cpu-component-details"><strong>{selected==='DECODE'?'Decode unit':selected==='CACHE'?'Cache':selected==='ADDRESS'?'Address bus':selected==='DATA'?'Data bus':selected==='CONTROL'?'Control bus':LABELS[selected as Register]}</strong><span>{HELP[selected]}</span></div>
+    <div className="cpu-component-details" key={selected}><strong>{selected==='DECODE'?'Decode unit':selected==='CACHE'?'Cache':selected==='ADDRESS'?'Address bus':selected==='DATA'?'Data bus':selected==='CONTROL'?'Control bus':LABELS[selected as Register]}</strong><span>{HELP[selected]}</span></div>
    </section>
    </div>
   </main>
