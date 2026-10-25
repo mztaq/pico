@@ -1,0 +1,156 @@
+/* Flowchart Builder — palette, canvas, inspector and dock. */
+
+.flow-builder .flow-convert-button {
+  height: var(--ds-control-h);
+  padding: 0 12px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-panel);
+  color: var(--ds-text);
+  font-size: var(--ds-text-xs);
+  font-weight: 600;
+}
+.flow-builder .flow-convert-button:hover:not(:disabled) { border-color: var(--accent); background: var(--ds-accent-soft); }
+
+/* Side rails */
+.flow-builder .flow-palette,
+.flow-builder .flow-inspector {
+  padding: 16px 14px;
+  background: var(--ds-chrome);
+  border-color: var(--ds-line);
+}
+.flow-builder .flow-palette h2,
+.flow-builder .flow-inspector h2 {
+  margin: 0 0 6px;
+  color: var(--ds-muted);
+  font: 600 var(--ds-text-2xs)/1.2 var(--ds-font-code);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.flow-builder .flow-palette p,
+.flow-builder .flow-inspector p { margin-bottom: 14px; color: var(--ds-muted); font-size: var(--ds-text-xs); line-height: 1.55; }
+.flow-builder .flow-block-list { gap: 6px; }
+.flow-builder .flow-palette-block {
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-panel);
+  transition: border-color var(--ds-fast) ease, background-color var(--ds-fast) ease;
+}
+.flow-builder .flow-palette-block:hover { border-color: color-mix(in srgb, var(--flow-color, var(--accent)) 60%, var(--ds-line)); background: var(--ds-panel-raised); }
+.flow-builder .flow-palette-block strong { font-size: var(--ds-text-sm); }
+.flow-builder .flow-palette-block small { color: var(--ds-muted); font-size: var(--ds-text-2xs); }
+.flow-builder .flow-symbol { stroke-width: 3; }
+.flow-builder .flow-file-actions { gap: 2px; border-color: var(--ds-line); }
+.flow-builder .flow-file-actions button,
+.flow-builder .flow-delete-block,
+.flow-builder .flow-code-actions button,
+.flow-builder .flow-validation button {
+  min-height: 32px;
+  border-radius: var(--ds-radius-md);
+  font-size: var(--ds-text-sm);
+}
+.flow-builder .flow-file-actions button { color: var(--ds-muted); }
+.flow-builder .flow-file-actions button:hover,
+.flow-builder .flow-code-actions button:hover,
+.flow-builder .flow-delete-block:hover,
+.flow-builder .flow-validation button:hover { border-color: transparent; background: var(--ds-hover); color: var(--ds-text); }
+
+.flow-builder .flow-inspector > label { gap: 6px; color: var(--ds-text); font-size: var(--ds-text-xs); }
+.flow-builder .flow-inspector textarea {
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--surface-input);
+}
+.flow-builder .flow-inspector textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent) 40%, transparent); outline-offset: 0; border-color: var(--accent); }
+.flow-builder .flow-routines { border-color: var(--ds-line); }
+.flow-builder .flow-validation {
+  border: 1px solid color-mix(in srgb, var(--ds-danger) 50%, var(--ds-line));
+  border-radius: var(--ds-radius-md);
+  background: color-mix(in srgb, var(--ds-danger) 7%, transparent);
+}
+
+/* Canvas */
+.flow-builder .flow-main { background: var(--ds-sunken); }
+.flow-builder .flow-canvas-toolbar {
+  min-height: 42px;
+  padding: 0 8px 0 14px;
+  border-color: var(--ds-line);
+  background: var(--ds-panel);
+  color: var(--ds-muted);
+  font-size: var(--ds-text-xs);
+}
+.flow-builder .flow-canvas-toolbar > div {
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-chrome);
+}
+.flow-builder .flow-canvas-toolbar button { width: 28px; height: 28px; border-radius: var(--ds-radius-sm); color: var(--ds-muted); }
+.flow-builder .flow-canvas-toolbar button:hover:not(:disabled) { background: var(--ds-hover); color: var(--ds-text); }
+.flow-builder .flow-canvas-toolbar output { color: var(--ds-text); font-size: var(--ds-text-2xs); }
+.flow-builder .flow-viewport {
+  background:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 0) 0 0 / 20px 20px,
+    var(--ds-sunken);
+}
+.flow-builder .flow-node-shape { fill: var(--ds-panel-raised); }
+.flow-builder .flow-node-type { font: 600 var(--ds-text-2xs) var(--ds-font-code); letter-spacing: .07em; }
+
+/* Dock */
+.flow-builder .flow-dock { border-color: var(--ds-line); background: var(--ds-panel); }
+.flow-builder .flow-dock .dock-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  min-height: 42px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--ds-line);
+}
+.flow-builder .flow-dock .dock-tab {
+  position: relative;
+  height: 42px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ds-muted);
+  font: 550 var(--ds-text-sm)/1 var(--ds-font-ui);
+  cursor: pointer;
+}
+.flow-builder .flow-dock .dock-tab:hover { color: var(--ds-text); }
+.flow-builder .flow-dock .dock-tab.active { color: var(--ds-text); }
+.flow-builder .flow-dock .dock-tab.active::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px 2px 0 0; background: var(--accent); }
+.flow-builder .flow-code-panel pre {
+  padding: 12px 14px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-md);
+  background: var(--editor-bg, var(--bg));
+}
+.flow-builder .flow-code-actions button { border-color: var(--ds-line-strong); }
+.flow-builder .flow-message { border-bottom: 1px solid var(--ds-line); font-size: var(--ds-text-sm); }
+
+/* Popovers & help */
+.flow-builder .flow-settings {
+  top: calc(var(--ds-appbar-h) + 8px);
+  right: 12px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-float);
+}
+.flow-builder .flow-settings header strong { font-size: var(--ds-text-md); }
+.flow-builder .flow-settings header button, .flow-help header button { border-radius: var(--ds-radius-sm); background: transparent; }
+.flow-builder .flow-settings header button:hover, .flow-help header button:hover { background: var(--ds-hover); }
+.flow-help-backdrop { background: color-mix(in srgb, #000 58%, transparent); backdrop-filter: blur(3px); }
+.flow-help { border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-xl); background: var(--ds-panel-raised); box-shadow: var(--ds-shadow-dialog); }
+
+@media (max-width: 850px) {
+  .flow-builder .flow-settings { top: calc(var(--ds-appbar-h) + 8px); }
+  .flow-builder .flow-canvas-toolbar { padding-left: 8px; }
+}
+@media (max-width: 520px) {
+  .flow-builder .flow-palette { padding: 12px 6px; }
+  .flow-builder .flow-palette-block { gap: 4px; padding: 8px 4px; }
+}

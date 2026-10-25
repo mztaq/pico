@@ -1,0 +1,228 @@
+/* Code workspaces (Pseudocode & Python) — editor, reference and tool dock. */
+
+.pico-app:not(.flow-builder) { background: var(--ds-sunken); }
+.pico-app .ide-shell { background: var(--ds-sunken); }
+.pico-app .workspace-main { --workspace-inset: 12px; background: transparent; }
+.pico-app .workspace-shell .editor-split { padding-top: 12px; }
+.pico-app .ide-shell.dock-right .workspace-main > .editor-split { padding-block: 12px; }
+.pico-app .ide-shell.dock-right .workspace-main > .tool-dock { margin-block: 12px; }
+.pico-app .workspace-main > .tool-dock { margin-bottom: 12px; }
+
+/* Panels share one card language */
+.pico-app .editor-card,
+.pico-app .reference-card,
+.pico-app .tool-dock {
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+}
+.pico-app .editor-card { background: var(--editor-bg, var(--ds-panel)); }
+
+/* File tabs */
+.pico-app .file-tabs {
+  min-height: 40px;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  border-bottom: 1px solid var(--ds-line);
+  background: var(--ds-panel);
+}
+.pico-app .file-tab {
+  height: 30px;
+  align-self: center;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-md);
+  color: var(--ds-muted);
+}
+.pico-app .file-tab:hover { background: var(--ds-hover); }
+.pico-app .file-tab.active { border-color: var(--ds-line-strong); background: var(--editor-bg, var(--bg)); color: var(--ds-text); }
+.pico-app .file-tab-select { min-height: 28px; padding: 0 6px 0 10px; font: 500 var(--ds-text-xs) var(--ds-font-code); }
+.pico-app .file-tab-select:hover, .pico-app .file-tab-close:hover { background: transparent; }
+.pico-app .file-tab-close { min-width: 22px; min-height: 22px; margin-right: 3px; border-radius: var(--ds-radius-sm); }
+.pico-app .file-tab-close:hover { background: var(--ds-hover); color: var(--ds-text); }
+.pico-app .file-tab-new { width: 28px; height: 28px; border-radius: var(--ds-radius-md); }
+.pico-app .file-tab-new:hover { background: var(--ds-hover); color: var(--ds-text); }
+
+.pico-app .editor-card-foot {
+  min-height: 34px;
+  padding: 0 14px;
+  border-top: 1px solid var(--ds-line);
+  background: var(--ds-panel);
+  color: var(--ds-muted);
+  font-size: var(--ds-text-xs);
+}
+.pico-app .editor-card-foot kbd {
+  min-width: 20px;
+  padding: 2px 5px;
+  border: 1px solid var(--ds-line-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--ds-panel-raised);
+  color: var(--ds-text);
+  font-size: var(--ds-text-2xs);
+  text-align: center;
+}
+.pico-app .editor-card-foot svg { width: 14px; height: 14px; }
+
+/* Autocorrect ribbon */
+.pico-app .suggestion-ribbon {
+  min-height: 38px;
+  gap: 8px;
+  padding: 4px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--syntax-type, #e2b978) 25%, var(--ds-line));
+  background: color-mix(in srgb, var(--syntax-type, #e2b978) 8%, var(--ds-panel));
+  color: var(--ds-text);
+  font-size: var(--ds-text-xs);
+}
+.pico-app .suggestion-ribbon > svg { color: var(--syntax-type, #e2b978); }
+.pico-app .suggestion-chip {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--syntax-type, #e2b978) 35%, transparent);
+  border-radius: var(--ds-radius-pill);
+  background: color-mix(in srgb, var(--syntax-type, #e2b978) 10%, transparent);
+  font-size: var(--ds-text-xs);
+}
+.pico-app .suggestion-chip:hover { background: color-mix(in srgb, var(--syntax-type, #e2b978) 18%, transparent); }
+.pico-app .suggestion-chip code { color: var(--ds-muted); }
+.pico-app .suggestion-chip > span, .pico-app .suggestion-chip small { color: var(--ds-muted); }
+.pico-app .suggestion-chip b { color: var(--syntax-type, #e2b978); }
+
+/* Quick reference */
+.pico-app .reference-card { padding: 0 14px 14px; }
+.pico-app .reference-head {
+  min-height: 44px;
+  margin: 0 -14px 4px;
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid var(--ds-line);
+  background: var(--ds-panel);
+}
+.pico-app .reference-head > div { color: var(--accent); }
+.pico-app .reference-head strong { color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 650; }
+.pico-app .reference-close { border-radius: var(--ds-radius-sm); }
+.pico-app .reference-close:hover { background: var(--ds-hover); }
+.pico-app .reference-controls { color: var(--ds-muted); font-size: var(--ds-text-xs); }
+.pico-app .reference-controls button, .pico-app .reference-controls output { border-radius: var(--ds-radius-sm); }
+.pico-app .reference-search {
+  height: 36px;
+  flex-basis: 36px;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--surface-input);
+}
+.pico-app .reference-search input { color: var(--ds-text); font-size: var(--ds-text-sm); }
+.pico-app .reference-search input::placeholder { color: var(--ds-muted); }
+.pico-app .reference-keywords { gap: 6px; }
+.pico-app .keyword-pill {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-muted);
+  font: 500 var(--ds-text-2xs) var(--ds-font-code);
+}
+.pico-app .keyword-pill:hover { border-color: var(--ds-line-strong); background: var(--ds-hover); color: var(--ds-text); }
+.pico-app .keyword-pill.active { border-color: var(--accent); background: var(--ds-accent-soft); color: var(--ds-text); font-weight: 650; }
+.pico-app .reference-explanation { border-color: var(--ds-line); }
+.pico-app .mini-label { color: var(--ds-muted); font: 600 var(--ds-text-2xs)/1 var(--ds-font-code); letter-spacing: .07em; }
+.pico-app .reference-explanation > strong { color: var(--accent); font-size: var(--ds-text-md); }
+.pico-app .reference-explanation p { color: var(--ds-text); font-size: 1em; line-height: 1.6; }
+.pico-app .reference-example pre {
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-md);
+  background: var(--editor-bg, var(--bg));
+}
+
+/* Tool dock */
+.pico-app .dock-tab-row {
+  height: 42px;
+  min-height: 42px;
+  gap: 2px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--ds-line);
+  background: var(--ds-panel);
+}
+.pico-app .dock-tab {
+  height: 42px;
+  padding: 0 10px;
+  gap: 7px;
+  color: var(--ds-muted);
+  font: 550 var(--ds-text-sm)/1 var(--ds-font-ui);
+}
+.pico-app .dock-tab:hover { color: var(--ds-text); }
+.pico-app .dock-tab > svg { color: currentColor; }
+.pico-app .dock-tab.active { color: var(--ds-text); }
+.pico-app .dock-tab.active > svg { color: var(--accent); }
+.pico-app .dock-tab.active::after { left: 10px; right: 10px; height: 2px; bottom: -1px; background: var(--accent); }
+.pico-app .dock-panel-state {
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-pill);
+  color: var(--ds-muted);
+  font: 600 var(--ds-text-2xs)/1 var(--ds-font-code);
+  letter-spacing: .06em;
+}
+.pico-app .panel-state-dot { background: var(--accent); }
+.pico-app .dock-content { background: var(--ds-panel); }
+
+/* Console */
+.pico-app .console-output-area { padding: 14px 16px 8px; }
+.pico-app .console-placeholder-mark {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-accent-soft);
+  color: var(--accent);
+}
+.pico-app .output-line { color: var(--ds-text); }
+.pico-app .output-prompt { color: var(--ds-success); }
+.pico-app .runtime-error-card { border-radius: var(--ds-radius-md); }
+.pico-app .console-input-submit { border-radius: var(--ds-radius-sm); }
+.pico-app .practice-files { padding: 12px 16px; border-top: 1px solid var(--ds-line); color: var(--ds-muted); font-size: var(--ds-text-sm); }
+.pico-app .practice-files summary { color: var(--ds-text); font-weight: 600; }
+.pico-app .practice-files p { margin: 8px 0; }
+.pico-app .practice-files input, .pico-app .practice-files textarea {
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--surface-input);
+  color: var(--ds-text);
+}
+.pico-app .practice-files input { height: 34px; padding: 0 10px; }
+
+/* Debugger */
+.pico-app .debugger-panel { padding: 12px 16px; gap: 12px; }
+.pico-app .step-indicator { color: var(--ds-muted); font-size: var(--ds-text-xs); }
+.pico-app .step-indicator strong { color: var(--ds-text); }
+.pico-app .step-dot { background: var(--accent); box-shadow: 0 0 0 3px var(--ds-accent-soft); }
+.pico-app .step-actions button, .pico-app .step-next {
+  height: 30px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-panel-raised);
+  color: var(--ds-text);
+}
+.pico-app .step-next { border-color: transparent; background: var(--ds-accent-fill); color: var(--ds-on-accent); font-weight: 600; }
+.pico-app .debug-line-chip { border: 1px solid var(--accent); border-radius: var(--ds-radius-md); background: var(--ds-accent-soft); color: var(--ds-text); }
+.pico-app .variable-row { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: var(--ds-panel-raised); }
+.pico-app .variable-name { color: var(--syntax-variable, var(--ds-text)); }
+.pico-app .variable-row code { color: var(--ds-text); }
+.pico-app .trace-chip { border: 1px solid var(--ds-line); border-radius: var(--ds-radius-sm); background: transparent; color: var(--ds-muted); }
+.pico-app .trace-chip span { color: var(--ds-muted); }
+.pico-app .trace-chip b { color: var(--ds-text); }
+.pico-app .trace-chip.active { border-color: var(--accent); background: var(--ds-accent-soft); }
+
+/* Splitters */
+.pico-app .resize-handle-grip { background: var(--ds-line-strong); opacity: 1; }
+
+@media (max-width: 800px) {
+  .pico-app .workspace-main { --workspace-inset: 8px; }
+  .pico-app .workspace-shell .editor-split { padding-top: 8px; }
+  .pico-app .workspace-main > .tool-dock { margin-bottom: 8px; }
+  .pico-app .editor-card-foot { display: none; }
+}
