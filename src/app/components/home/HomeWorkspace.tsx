@@ -19,9 +19,9 @@ export function WorkspaceChoice({ icon, tag, title, description, onClick, childr
       <ArrowUpRight className="compiler-choice-open-icon" size={19} aria-hidden="true" />
     </div>
     <div className="compiler-choice-stage" aria-hidden="true">
-      <div className="compiler-choice-stage-bar"><span className="compiler-choice-stage-indicator" /><span>{tag ? `main${tag}` : title === 'Flowchart Builder' ? 'flowchart' : title === 'Logic Sim' ? 'circuit' : 'architecture'}</span><span className="compiler-choice-stage-mode">PREVIEW</span></div>
+      <div className="compiler-choice-stage-bar"><span className="compiler-choice-stage-indicator" /><span>{tag ? `main${tag}` : title === 'Flowchart Builder' ? 'flowchart' : title === 'Logic Sim' ? 'circuit' : 'architecture'}</span></div>
       <div className="compiler-choice-stage-content">{children}</div>
     </div>
-    <div className="compiler-choice-footer"><span>Open workspace</span><ArrowUpRight size={15} aria-hidden="true" /></div>
+    
   </button>;
 }
