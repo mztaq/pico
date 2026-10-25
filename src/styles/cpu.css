@@ -1,0 +1,106 @@
+/* CPU Studio — control strip, diagram stage and explanation panel. */
+
+.cpu-app { font-family: var(--ds-font-ui); background: var(--ds-sunken); }
+.cpu-app .cpu-topbar {
+  min-height: var(--ds-appbar-h);
+  height: var(--ds-appbar-h);
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 0 12px;
+  border-color: var(--ds-line);
+  background: var(--ds-chrome);
+}
+.cpu-app .cpu-topbar .cpu-brand { gap: 6px; }
+.cpu-app .cpu-topbar .cpu-actions { gap: 6px; }
+
+/* Control strip */
+.cpu-app .cpu-controls {
+  gap: 12px;
+  padding: 8px 12px;
+  border-color: var(--ds-line);
+  background: var(--ds-panel);
+}
+.cpu-app .cpu-mode-switch {
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-chrome);
+}
+.cpu-app .cpu-mode-switch label {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-sm);
+  color: var(--ds-muted);
+  font-size: var(--ds-text-sm);
+  font-weight: 550;
+}
+.cpu-app .cpu-mode-switch label:hover { color: var(--ds-text); }
+.cpu-app .cpu-mode-switch label:has(input:checked) { border-color: var(--ds-line-strong); background: var(--ds-panel-raised); color: var(--ds-text); box-shadow: 0 1px 2px rgba(0, 0, 0, .15); }
+.cpu-app .cpu-mode-switch label:has(input:focus-visible) { outline: 2px solid var(--ds-focus); outline-offset: 1px; }
+.cpu-app .cpu-playback { gap: 4px; padding-left: 12px; border-left: 1px solid var(--ds-line); }
+.cpu-app .cpu-playback button {
+  height: var(--ds-control-h);
+  padding: 0 12px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: transparent;
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
+  font-weight: 550;
+}
+.cpu-app .cpu-playback button:hover:not(:disabled) { background: var(--ds-hover); }
+.cpu-app .cpu-playback .cpu-play {
+  border-color: transparent;
+  background: var(--ds-accent-fill);
+  color: var(--ds-on-accent);
+  font-weight: 650;
+}
+.cpu-app .cpu-playback .cpu-play:hover:not(:disabled) { background: var(--ds-accent-fill); filter: brightness(1.08); }
+.cpu-app .cpu-speed { gap: 8px; padding-left: 12px; border-left: 1px solid var(--ds-line); color: var(--ds-muted); font-size: var(--ds-text-sm); }
+.cpu-app .cpu-speed strong { color: var(--ds-text); font-family: var(--ds-font-code); font-size: var(--ds-text-xs); }
+.cpu-app .cpu-counter {
+  padding: 4px 10px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-pill);
+  color: var(--ds-muted);
+  font: 500 var(--ds-text-2xs) var(--ds-font-code);
+}
+
+/* Stage */
+.cpu-app .cpu-heading { padding: 14px 16px 8px; color: var(--ds-muted); }
+.cpu-app .cpu-heading strong { color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 650; }
+.cpu-app .cpu-diagram-scroll {
+  border-radius: var(--ds-radius-lg);
+}
+.cpu-app .cpu-information {
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+}
+.cpu-app .cpu-step-heading { color: var(--ds-muted); font-family: var(--ds-font-code); }
+.cpu-app .cpu-component-details { border-color: var(--ds-line); }
+
+/* Dialogs */
+.cpu-app .cpu-overlay, .cpu-overlay { background: color-mix(in srgb, #000 58%, transparent); backdrop-filter: blur(3px); }
+.cpu-dialog {
+  border: 1px solid var(--ds-line-strong) !important;
+  border-radius: var(--ds-radius-xl) !important;
+  background: var(--ds-panel-raised) !important;
+  box-shadow: var(--ds-shadow-dialog);
+}
+.cpu-dialog-head button { border-radius: var(--ds-radius-sm); }
+.cpu-dialog-head button:hover { background: var(--ds-hover); }
+
+@media (max-width: 850px) {
+  .cpu-app .cpu-topbar { flex-wrap: nowrap; }
+  .cpu-app .cpu-playback, .cpu-app .cpu-speed { padding-left: 0; border-left: 0; }
+  .cpu-app .cpu-counter { margin-left: 0; }
+}
+@media (max-width: 520px) {
+  .cpu-app .cpu-topbar { padding: 0 6px; }
+  .cpu-app .cpu-controls { gap: 8px; padding: 8px; }
+  .cpu-app .cpu-playback button { padding: 0 9px; }
+}

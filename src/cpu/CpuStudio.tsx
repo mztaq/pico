@@ -9,6 +9,7 @@ import {CpuTutorial,CPU_TUTORIAL_KEY} from './CpuTutorial';
 import {advanceWithInterrupt,initialInterrupt,requestInterrupt} from './advanced';
 import {advanceRunFrame} from './playback';
 import './cpu.css';
+import '../styles/cpu.css';
 
 export type CpuMode='normal'|'advanced';
 const DEFAULT_IMAGE=assemble(DEFAULT_PROGRAM);
@@ -199,9 +200,10 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  const memoryActive=activeUnits.has('RAM');
  const renderedBoxes=BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=>mode==='normal'&&NORMAL_LAYOUT[box.key]?{...box,...NORMAL_LAYOUT[box.key]}:box);
  return <div className="cpu-app" style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
-  <header className="cpu-topbar">
-   <div className="cpu-brand"><button aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><img src="/pico-logo.svg" alt=""/><b>Pico<span>.</span></b><i>/</i><strong>CPU Studio</strong></div>
-   <div className="cpu-actions"><button aria-label="Open CPU Studio tutorial" onClick={()=>{setPlaying(false);setTourStep(0);}}><BookOpen size={15}/> Tutorial</button><button aria-label="Choose CPU Studio theme" onClick={()=>setThemeOpen(true)}><Settings2 size={15}/> Theme</button></div>
+  <header className="cpu-topbar topbar pico-appbar">
+   <div className="pico-appbar-lead cpu-brand"><button className="toolbar-button home-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></div><span className="pico-appbar-sep" aria-hidden="true">/</span><strong className="brand-subtitle pico-appbar-tool">CPU Studio</strong></div>
+   <div className="topbar-spacer"/>
+   <div className="topbar-actions cpu-actions"><div className="pico-appbar-group" role="group" aria-label="Help and appearance"><button className="help-button" aria-label="Open CPU Studio tutorial" onClick={()=>{setPlaying(false);setTourStep(0);}}><BookOpen size={15}/><span>Tutorial</span></button><button className="toolbar-button" aria-label="Choose CPU Studio theme" onClick={()=>setThemeOpen(true)}><Settings2 size={15}/><span>Theme</span></button></div></div>
   </header>
   <div className="cpu-controls">
    <fieldset className="cpu-mode-switch" data-cpu-tour="modes" aria-label="CPU learning mode">
