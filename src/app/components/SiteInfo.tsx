@@ -42,6 +42,9 @@ function Authors() {
       <h2>{name}</h2><p className="author-description">{description}</p>
       <div className="author-roles"><h3>Roles</h3><ul aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul></div>
     </section>)}</div>
+    <Section title="Built with">
+      <p>Pico uses <a href="https://react.dev/">React</a>, <a href="https://codemirror.net/">CodeMirror</a>, <a href="https://pyodide.org/">Pyodide</a> and <a href="https://lucide.dev/">Lucide</a>.</p>
+    </Section>
   </>;
 }
 
@@ -134,6 +137,7 @@ export function SiteInfo({ page }: { page: InformationPage }) {
     <div className="site-info-hero">
       <div className="site-info-hero-inner">
         <div className="site-info-title"><span className="site-info-mark"><Icon size={24} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
+        {page === 'authors' && <p className="site-info-author-subtitle">The team behind Pico and what each person works on.</p>}
         {page !== 'authors' && <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
       </div>
     </div>
