@@ -175,3 +175,35 @@ body:has(.pico-cookie-banner) .pico-home .home-inner {
 @media (prefers-reduced-motion: reduce) {
   .pico-home .compiler-choice:hover { transform: none; }
 }
+
+/* Developer workspace launcher: information first, preview second. */
+.pico-home .home-hero { margin-bottom: 36px; gap: 12px; }
+.pico-home .compiler-choice { border-radius: 12px; background: var(--ds-panel); }
+.pico-home .compiler-choice-head { display:flex; align-items:center; gap:13px; min-width:0; padding:20px 20px 18px; }
+.pico-home .compiler-choice-heading { display:flex; flex:1; min-width:0; flex-direction:column; gap:5px; }
+.pico-home .compiler-choice-title { display:flex; align-items:center; gap:10px; min-width:0; }
+.pico-home .compiler-choice-title h2 { font-size:17px; }
+.pico-home .compiler-choice-description { color:var(--ds-muted); font-size:13px; line-height:1.5; }
+.pico-home .compiler-choice-icon { flex:0 0 38px; width:38px; height:38px; border:1px solid var(--ds-line); background:var(--ds-sunken); color:var(--ds-text); }
+.pico-home .compiler-choice-open-icon { flex-shrink:0; align-self:flex-start; color:var(--ds-muted); opacity:.65; transition:transform var(--ds-fast) var(--ds-ease), color var(--ds-fast) var(--ds-ease); }
+.pico-home .compiler-choice:hover .compiler-choice-open-icon { color:var(--accent); transform:translate(2px,-2px); }
+.pico-home .compiler-choice-stage { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; height:180px; padding:0; border-top:1px solid var(--ds-line); border-bottom:1px solid var(--ds-line); background:var(--ds-sunken); }
+.pico-home .compiler-choice-stage-bar { display:flex; align-items:center; gap:8px; height:34px; min-height:34px; padding:0 14px; border-bottom:1px solid var(--ds-line); color:var(--ds-muted); font:500 11px/1 var(--ds-font-code); }
+.pico-home .compiler-choice-stage-indicator { width:7px; height:7px; border-radius:50%; background:var(--ds-muted); opacity:.65; }
+.pico-home .compiler-choice-stage-mode { margin-left:auto; font-size:10px; letter-spacing:.08em; opacity:.7; }
+.pico-home .compiler-choice-stage-content { display:grid; place-items:center; flex:1; min-height:0; padding:14px 20px; overflow:hidden; }
+.pico-home .compiler-choice-stage-content .compiler-choice-preview { width:100%; max-width:340px; }
+.pico-home .compiler-choice-stage-content pre { width:100%; max-width:none; border:0; border-radius:0; background:transparent; padding:4px 6px; font-size:12.5px; line-height:1.75; }
+.pico-home .compiler-choice-footer { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; color:var(--ds-muted); font-size:12px; font-weight:600; }
+.pico-home .compiler-choice:hover .compiler-choice-footer { color:var(--ds-text); }
+.pico-home .compiler-choice-tag { margin-left:0; border-radius:5px; }
+@media (max-width:640px) {
+  .pico-home .compiler-choice-head { padding:16px; gap:11px; }
+  .pico-home .compiler-choice-stage { height:154px; }
+  .pico-home .compiler-choice-stage-content { padding:10px 16px; }
+  .pico-home .compiler-choice-footer { padding:11px 16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .pico-home .compiler-choice-open-icon { transition:none; }
+  .pico-home .compiler-choice:hover .compiler-choice-open-icon { transform:none; }
+}
