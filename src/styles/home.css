@@ -135,3 +135,43 @@ body:has(.pico-cookie-banner) .pico-home .home-inner {
   .pico-home .compiler-choice { transition: none; }
   .pico-home .compiler-choice:hover { transform: none; }
 }
+
+/* Research-informed visual refinement: one computing motif, clear hierarchy, deliberate depth. */
+.pico-home .home-inner { max-width: 1200px; padding-top: 72px; }
+.pico-home .home-hero { gap: 14px; margin-bottom: 42px; }
+.pico-home .home-brand { font-size: clamp(60px, 7.2vw, 86px); line-height: 1; font-weight: 750; letter-spacing: -.065em; }
+.pico-home .home-brand img { width: clamp(52px, 6vw, 72px); height: clamp(52px, 6vw, 72px); }
+.pico-home h1 { font-size: clamp(28px, 3.3vw, 39px); font-weight: 650; letter-spacing: -.045em; }
+.home-signal-core { width: min(600px, 100%); aspect-ratio: 600 / 220; margin: -6px 0 -12px; pointer-events: none; }
+.home-signal-core svg { width: 100%; height: 100%; overflow: visible; }
+.signal-core-node rect { fill: var(--ds-panel); stroke: var(--ds-line-strong); stroke-width: 1.5; }
+.signal-core-node path { fill: none; stroke: var(--ds-muted); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.signal-core-center > rect { fill: var(--ds-panel-raised); stroke: var(--accent); stroke-width: 1.5; }
+.signal-core-center > circle:nth-child(2) { fill: color-mix(in srgb, var(--accent) 13%, var(--ds-panel)); stroke: color-mix(in srgb, var(--accent) 55%, transparent); }
+.signal-core-center-dot, .signal-core-points { fill: var(--accent); }
+.pico-home .home-group-head { margin-bottom: 18px; padding-bottom: 12px; }
+.pico-home .home-group-label { font-size: 20px; }
+.pico-home .home-group-detail { font-size: 13px; }
+.pico-home .home-group-grid { gap: 16px; }
+.pico-home .compiler-choice { border-color: var(--ds-line); box-shadow: 0 1px 2px rgba(0,0,0,.10); }
+.pico-home .compiler-choice:hover { border-color: var(--ds-line-strong); box-shadow: 0 10px 30px -18px rgba(0,0,0,.38); }
+.pico-home .compiler-choice-stage { height: 176px; padding: 22px; background: radial-gradient(ellipse at 50% 55%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 75%), var(--ds-sunken); }
+.pico-home .compiler-choice-stage pre { padding: 16px 18px; font-size: 13px; line-height: 1.7; }
+.pico-home .compiler-choice-copy { padding: 20px 22px 22px; }
+.pico-home .compiler-choice h2 { font-size: 17px; letter-spacing: -.02em; }
+.pico-home .compiler-choice p { margin-top: 8px; }
+.pico-home .compiler-choice-tag { opacity: .8; }
+.pico-home .site-info-links { margin-top: 54px; }
+@media (max-width: 640px) {
+  .pico-home .home-inner { padding-top: 82px; }
+  .pico-home .home-hero { gap: 10px; margin-bottom: 32px; }
+  .pico-home .home-brand { font-size: clamp(44px, 11vw, 58px); }
+  .pico-home .home-brand img { width: 44px; height: 44px; }
+  .pico-home h1 { font-size: clamp(26px, 7vw, 32px); }
+  .home-signal-core { margin: -2px 0 -8px; }
+  .pico-home .compiler-choice-stage { height: 146px; }
+  .pico-home .compiler-choice-copy { padding: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pico-home .compiler-choice:hover { transform: none; }
+}
