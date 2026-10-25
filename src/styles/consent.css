@@ -10,13 +10,13 @@ body .pico-cookie-banner {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 14px clamp(18px, 3vw, 46px);
+  gap: 16px;
+  padding: 11px clamp(18px, 3vw, 46px);
   border: 0;
   border-top: 1px solid var(--ds-line-strong);
   border-radius: 0;
   background: var(--ds-panel-raised);
-  box-shadow: 0 -8px 28px rgba(0,0,0,.18);
+  box-shadow: 0 -3px 18px rgba(0,0,0,.11);
   font-family: var(--ds-font-ui);
 }
 .pico-cookie-banner-icon,
@@ -29,9 +29,11 @@ body .pico-cookie-banner {
   background: var(--ds-accent-soft);
   color: var(--accent);
 }
-body .pico-cookie-banner p { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.5; }
+body .pico-cookie-banner p { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.45; }
 body .pico-cookie-banner .pico-cookie-error { flex: 0 1 auto; }
 body .pico-cookie-banner .pico-cookie-actions { flex: 0 0 auto; justify-content: flex-end; gap: 8px; margin: 0; }
+body .pico-cookie-banner-icon { width: 30px; height: 30px; flex: 0 0 30px; }
+body .pico-cookie-banner .pico-cookie-btn { min-height: 34px; }
 
 body .pico-cookie-btn {
   min-height: 36px;
