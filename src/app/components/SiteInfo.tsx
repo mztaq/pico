@@ -42,28 +42,25 @@ function Authors() {
       <h2>{name}</h2><p className="author-description">{description}</p>
       <div className="author-roles"><h3>Roles</h3><ul aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul></div>
     </section>)}</div>
-    <Section title="Built with">
-      <p>Pico uses <a href="https://react.dev/">React</a>, <a href="https://codemirror.net/">CodeMirror</a>, <a href="https://pyodide.org/">Pyodide</a> and <a href="https://lucide.dev/">Lucide</a>, alongside other third-party libraries.</p>
-    </Section>
   </>;
 }
 
 function Privacy() {
   return <>
     <Section title="Your work">
-      <p>Pico runs code and simulations in your browser. Your code, console input, projects and diagrams are not collected by Pico's optional analytics. Saved projects stay in your browser unless you export or share them yourself.</p>
+      <p>Your code, console input, projects and diagrams remain in your browser. Optional analytics does not collect their contents. They leave your device only if you export or share them.</p>
     </Section>
     <Section title="Service and storage">
-      <p>Browser storage keeps your projects, settings and consent choices. Our hosting and font providers may process connection details needed to deliver the website. Pico uses Cloudflare for hosting and Google Fonts for some typography.</p>
+      <p>Browser storage saves projects, settings and consent choices. Cloudflare hosts Pico and Google Fonts serves some typography; those providers may process connection information.</p>
     </Section>
     <Section title="Optional data">
-      <p>With your permission, Pico collects limited usage statistics, including browser information, visits and time spent in workspaces. If you allow preferences, selected settings are also stored to remember your choices. A random browser identifier helps associate those records. Neither option is required to use Pico.</p>
+      <p>If you opt in, analytics records browser information, visits and time spent in workspaces. Optional preferences store selected settings. A random browser identifier links those records; neither option is required.</p>
     </Section>
     <Section title="Retention and controls">
-      <p>Optional records are retained for up to approximately 90 days, subject to renewal when Pico is used, and expired records are routinely removed. Use Cookie Settings to change or withdraw your choice. Withdrawing both optional permissions clears the identifier cookie and requests deletion of its associated records. You can also clear browser storage at any time.</p>
+      <p>Optional records are retained for approximately 90 days, potentially renewed through continued use. Cookie Settings lets you withdraw consent; turning both optional categories off clears the identifier and requests deletion of linked records. You can clear local browser storage yourself.</p>
     </Section>
     <Section title="More information">
-      <p>Other websites and services linked from Pico have their own policies. See our <a href="#cookies">Cookie Policy</a> for the optional categories. Material changes to these practices will be reflected here.</p>
+      <p>External services have their own policies. See the <a href="#cookies">Cookie Policy</a> for storage choices.</p>
     </Section>
   </>;
 }
@@ -71,14 +68,14 @@ function Privacy() {
 function Cookies() {
   return <>
     <Section title="Essential storage">
-      <p>Pico uses browser storage to keep your projects, settings and consent choice. This allows core features to work without optional tracking.</p>
+      <p>Browser storage saves projects, settings and consent choices needed for Pico to work.</p>
     </Section>
     <Section title="Your choices">
-      <p><strong>Analytics</strong> helps us understand visits, browser types and workspace usage. <strong>Preferences</strong> remembers your chosen theme and settings. Both are optional and off until you agree. Your source code, project files and console input are not collected through either category.</p>
-      <p>When enabled, a secure browser cookie identifies the consented session so related records can be managed. Basic security measures also help protect the service from misuse.</p>
+      <p><strong>Analytics</strong> records visits, browser information and workspace usage. <strong>Preferences</strong> remembers selected settings. Both are off until you opt in. Neither collects your code, project files or console input.</p>
+      <p>With consent, an identifier cookie links optional records so your choices can be managed. Security measures also help prevent abuse.</p>
     </Section>
     <Section title="Control and retention">
-      <p>Optional records normally expire after approximately 90 days unless renewed. You can change your choices using Cookie Settings. Turning both optional categories off clears the identifier and requests deletion of its associated records. Rejecting them does not affect access to Pico.</p>
+      <p>Optional records generally expire after approximately 90 days unless renewed. Change consent in Cookie Settings; disabling both optional categories clears the identifier and requests deletion of linked records. Pico remains usable without them.</p>
       <p>For more detail, see the <a href="#privacy">Privacy Policy</a>.</p>
     </Section>
   </>;
@@ -87,23 +84,23 @@ function Cookies() {
 function Terms() {
   return <>
     <Section title="Using Pico">
-      <p>Pico is a free tool for learning and practising programming and Computer Science. Use it lawfully, respect other people's work and follow any rules set by your school or exam centre.</p>
+      <p>Pico is a free educational tool. Use it lawfully and respect others' work and applicable school or exam rules.</p>
     </Section>
     <Section title="Results and learning materials">
-      <p>Compiler behaviour, examples and simulations may contain mistakes or simplify real systems. Check important results against your course materials. Pico is an independent project and is not affiliated with or endorsed by Cambridge International or another exam board.</p>
+      <p>Simulations and examples can be simplified or incorrect; verify important results against course materials. Pico is not affiliated with or endorsed by Cambridge International or any exam board.</p>
     </Section>
     <Section title="Your work">
-      <p>You keep your rights to the code and other work you create. Running or saving it in Pico does not transfer ownership to the maintainers. Only import, run or share material you have permission to use.</p>
-      <p>Export important projects regularly. Browser storage can be cleared or become unavailable, and Pico does not provide account-based backups.</p>
+      <p>Your work remains yours. Using Pico does not transfer ownership. Only use material you have permission to access.</p>
+      <p>Export important projects: browser storage can be lost, and Pico has no account-based backups.</p>
     </Section>
     <Section title="Availability and responsibility">
-      <p>Pico is provided as available, without a promise of uninterrupted access, error-free results or recovery of lost work. To the extent permitted by applicable law, the maintainers disclaim warranties and liability for losses arising from its use. Nothing here excludes rights or responsibilities that cannot legally be excluded.</p>
+      <p>Pico is provided as available, without guaranteed uptime, accurate results or recovery of lost work. To the extent permitted by law, the maintainers disclaim warranties and liability. Applicable legal rights are not excluded.</p>
     </Section>
     <Section title="Privacy and third-party services">
-      <p>The <a href="#privacy">Privacy Policy</a> explains local storage and requests to hosting and font providers. External services have their own terms, and third-party software retains its own licences.</p>
+      <p>See the <a href="#privacy">Privacy Policy</a> for data handling. Third-party services and software have their own terms or licences.</p>
     </Section>
     <Section title="Updates and questions">
-      <p>Features and these terms may change as Pico develops. Updates to these terms will appear here.</p>
+      <p>These terms may change; the current version appears here.</p>
     </Section>
   </>;
 }
@@ -122,12 +119,6 @@ export function SiteInfo({ page }: { page: InformationPage }) {
     if (scrollArea.current) scrollArea.current.scrollTop = 0;
     heading.current?.focus({ preventScroll: true });
   }, [page]);
-  const summary = {
-    authors: 'The people behind Pico, and what each of them looks after.',
-    privacy: 'What Pico keeps on your device, what is optional, and how to change your mind.',
-    cookies: 'The storage Pico needs to work, the optional categories, and how to control them.',
-    terms: 'The ground rules for using Pico, your work, and what to expect from the service.',
-  }[page];
   const [sections, setSections] = useState<{ id: string; title: string }[]>([]);
   useEffect(() => {
     const found = [...(scrollArea.current?.querySelectorAll<HTMLElement>('main .site-info-section') ?? [])].map(section => ({ id: section.id, title: section.querySelector('h2')?.textContent ?? '' }));
@@ -142,9 +133,7 @@ export function SiteInfo({ page }: { page: InformationPage }) {
     </header>
     <div className="site-info-hero">
       <div className="site-info-hero-inner">
-        <span className="site-info-eyebrow">{page === 'authors' ? 'About' : 'Legal'}</span>
         <div className="site-info-title"><span className="site-info-mark"><Icon size={24} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
-        <p className="site-info-summary">{summary}</p>
         {page !== 'authors' && <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
       </div>
     </div>
