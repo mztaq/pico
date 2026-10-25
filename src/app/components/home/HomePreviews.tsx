@@ -73,7 +73,8 @@ export function CpuPreview() {
       const { x, y, w, h } = geometry;
       return <g key={box.key} className="home-product-cpu-block">
         <rect x={x} y={y} width={w} height={h} rx="5" />
-        <text className="home-product-cpu-label" x={x + w / 2} y={y + 25} textAnchor="middle">{box.label}</text>
+        <title>{box.label}</title>
+        <text className="home-product-cpu-label" x={x + w / 2} y={y + 25} textAnchor="middle">{box.key}</text>
         <text className="home-product-cpu-value" x={x + w / 2} y={y + h - 18} textAnchor="middle">{box.value(INITIAL_CPU)}</text>
       </g>;
     })}
