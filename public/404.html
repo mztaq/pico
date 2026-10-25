@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
   <title>404 | Pico</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Fredoka:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Archivo+Black&family=Syne:wght@600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Rubik+Mono+One&family=Unbounded:wght@500;700;900&family=Righteous&family=Chakra+Petch:wght@600;700&family=Outfit:wght@600;700;800&family=Press+Start+2P&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
     :root{color-scheme:dark;font-family:"DM Sans",system-ui,sans-serif;--bg:#1e1e2e;--surface:#181825;--text:#cdd6f4;--muted:#9ba0bb;--accent:#cba6f7;--border:#393b4d;--soft:#222438;--button-text:#080a10;--headline:"Space Grotesk",sans-serif;--numeral:"Archivo Black",sans-serif;background:var(--bg);color:var(--text)}
     *{box-sizing:border-box}
     body{margin:0;min-height:100svh;background:var(--bg);overflow-x:hidden}
@@ -71,8 +71,20 @@
     .status{background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--bg)));-webkit-background-clip:text;background-clip:text;color:transparent}
     .shell[data-rare="stamp"] .status{color:var(--accent);background:none}
     .shell::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--text) 7%,transparent) 1px,transparent 0) 0 0/22px 22px}
-    @media(prefers-reduced-motion:no-preference){.content>*{animation:rise .45s cubic-bezier(.2,.7,.2,1) both}.content>:nth-child(2){animation-delay:.06s}.content>:nth-child(3){animation-delay:.12s}.content>:nth-child(n+4){animation-delay:.18s}}
-    @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    /* Keep the error page steady and aligned with the workspace shell. */
+    .shell{padding:0;background:var(--bg)}
+    .brand{height:60px;width:100%;padding:0 max(24px,calc((100% - 1120px)/2));border-bottom:1px solid var(--border);font-size:20px}
+    .main,.shell[data-layout] .main{justify-content:center;align-items:center;min-height:0;padding:48px 24px}
+    .content,.shell[data-layout] .content{width:min(100%,720px);align-items:flex-start;text-align:left;transform:none}
+    .status,.shell[data-rare] .status{align-self:flex-start;order:0;margin:0 0 12px;padding:0;border:0;background:none;color:var(--accent);font:700 clamp(64px,12vw,112px)/1 "JetBrains Mono",monospace;letter-spacing:-.09em;transform:none}
+    h1,.shell[data-layout] h1{order:1;margin:0 0 12px;font:700 clamp(28px,4vw,43px)/1.16 "DM Sans",sans-serif;letter-spacing:-.04em}
+    .sub,.shell[data-layout] .sub{order:2;font-size:16px}
+    .actions,.shell[data-layout] .actions{order:4}
+    .back{border-radius:10px;padding:11px 18px;transition:filter .15s ease}
+    .back:hover{transform:none}
+    .shell::before,.scatter{display:none}
+    .conversation{order:3}
+    @media(max-width:720px){.brand{padding:0 20px}.main{padding:32px 20px}.status,.shell[data-rare] .status{font-size:clamp(60px,16vw,90px)}}
   </style>
 </head>
 <body>

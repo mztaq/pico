@@ -1,12 +1,12 @@
 /* Code workspaces (Pseudocode & Python) — editor, reference and tool dock. */
 
-.pico-app:not(.flow-builder) { background: var(--ds-sunken); }
-.pico-app .ide-shell { background: var(--ds-sunken); }
-.pico-app .workspace-main { --workspace-inset: 12px; background: transparent; }
-.pico-app .workspace-shell .editor-split { padding-top: 12px; }
-.pico-app .ide-shell.dock-right .workspace-main > .editor-split { padding-block: 12px; }
-.pico-app .ide-shell.dock-right .workspace-main > .tool-dock { margin-block: 12px; }
-.pico-app .workspace-main > .tool-dock { margin-bottom: 12px; }
+.pico-app:not(.flow-builder) { background: var(--ds-canvas); }
+.pico-app .ide-shell { background: var(--ds-canvas); }
+.pico-app .workspace-main { --workspace-inset: 16px; background: transparent; }
+.pico-app .workspace-shell .editor-split { padding-top: 16px; }
+.pico-app .ide-shell.dock-right .workspace-main > .editor-split { padding-block: 16px; }
+.pico-app .ide-shell.dock-right .workspace-main > .tool-dock { margin-block: 16px; }
+.pico-app .workspace-main > .tool-dock { margin-bottom: 16px; }
 
 /* Panels share one card language */
 .pico-app .editor-card,
@@ -15,9 +15,9 @@
   border: 1px solid var(--ds-line);
   border-radius: var(--ds-radius-lg);
   background: var(--ds-panel);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+  box-shadow: 0 8px 24px -24px rgba(0, 0, 0, .48);
 }
-.pico-app .editor-card { background: var(--editor-bg, var(--ds-panel)); }
+.pico-app .editor-card { border-color: var(--ds-line-strong); background: var(--editor-bg, var(--ds-panel)); }
 
 /* File tabs */
 .pico-app .file-tabs {

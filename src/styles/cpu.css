@@ -1,6 +1,6 @@
 /* CPU Studio — control strip, diagram stage and explanation panel. */
 
-.cpu-app { font-family: var(--ds-font-ui); background: var(--ds-sunken); }
+.cpu-app { font-family: var(--ds-font-ui); background: var(--ds-canvas); }
 .cpu-app .cpu-topbar {
   min-height: var(--ds-appbar-h);
   height: var(--ds-appbar-h);
@@ -15,7 +15,7 @@
 
 /* Control strip */
 .cpu-app .cpu-controls {
-  gap: 12px;
+  gap: 16px;
   padding: 8px 12px;
   border-color: var(--ds-line);
   background: var(--ds-panel);
@@ -112,7 +112,7 @@
 .cpu-app .cpu-workspace-main {
   grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   gap: 12px;
-  padding: 0 12px 12px;
+  padding: 0 16px 16px;
 }
 .cpu-app .cpu-diagram-scroll {
   padding: 20px 24px;
@@ -120,7 +120,7 @@
   border-radius: var(--ds-radius-lg);
   background:
     radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 10%, transparent) 1px, transparent 0) 0 0 / 20px 20px,
-    var(--ds-sunken);
+    var(--ds-canvas);
 }
 /* Never scale the 1190-unit drawing past ~0.85× so labels stay proportionate. */
 .cpu-app .cpu-diagram {
@@ -132,8 +132,8 @@
 }
 .cpu-app .cpu-shell, .cpu-app .cpu-ram-shell { fill: color-mix(in srgb, var(--ds-panel) 92%, transparent); stroke: var(--ds-line-strong); stroke-width: 1.2; }
 .cpu-app .cpu-main-title, .cpu-app .cpu-ram-title { font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
-.cpu-app .cpu-block rect { fill: var(--ds-panel-raised); stroke: var(--ds-line-strong); stroke-width: 1; }
-.cpu-app .cpu-block.cpu-selected rect, .cpu-app .cpu-block.cpu-active rect { stroke: var(--accent); stroke-width: 1.8; }
+.cpu-app .cpu-block rect { fill: var(--ds-panel-raised); stroke: var(--ds-line-strong); stroke-width: 1; transition: none; }
+.cpu-app .cpu-block.cpu-selected rect, .cpu-app .cpu-block.cpu-active rect { stroke: var(--accent); stroke-width: 1.8; filter: none; }
 .cpu-app .cpu-block-title { font-size: 12.5px; font-weight: 600; }
 .cpu-app .cpu-block-value { font-size: 13px; }
 .cpu-app .cpu-compact-register .cpu-block-title, .cpu-app .cpu-compact-register .cpu-block-value { font-size: 10px; }
@@ -141,9 +141,11 @@
 .cpu-app .cpu-ram-row text { font-size: 12.5px; }
 .cpu-app .cpu-external-bus text { font-size: 12.5px; font-weight: 600; fill: var(--ds-muted); }
 .cpu-app .cpu-external-bus.cpu-bus-active text { fill: var(--ds-text); }
-.cpu-app .cpu-external-bus path { stroke-width: 2; }
+.cpu-app .cpu-external-bus path { stroke-width: 2; transition: none; filter: none; }
 .cpu-app .cpu-external-bus.cpu-bus-active path { stroke-width: 3.2; }
+.cpu-app .cpu-external-bus.cpu-bus-active path, .cpu-app .cpu-external-bus.cpu-selected path { filter: none; }
 .cpu-app .cpu-connectors path { stroke-width: 1.6; opacity: .55; }
+.cpu-app .cpu-diagram :is(.cpu-block, .cpu-external-bus, .cpu-ram-row):focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
 
 /* ── Explanation panel ── */
 .cpu-app .cpu-information { align-self: start; max-height: 100%; padding: 16px; gap: 12px; }
@@ -174,7 +176,5 @@
 /* ── Motion ── */
 @media (prefers-reduced-motion: no-preference) {
   .cpu-app .cpu-diagram :is(.cpu-block, .cpu-ram, .cpu-external-bus, .cpu-connectors) { transition: opacity .16s ease; }
-  .cpu-app .cpu-block rect { transition: stroke .25s ease, fill .25s ease, stroke-width .25s ease; }
-  .cpu-app .cpu-ram-row rect { transition: fill .25s ease, stroke .25s ease; }
-  .cpu-app .cpu-phase { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
+  .cpu-app .cpu-phase { transition: background-color .16s ease, color .16s ease; }
 }

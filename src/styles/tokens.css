@@ -10,27 +10,27 @@
   --ds-text-2xs: 11px;
   --ds-text-xs: 12px;
   --ds-text-sm: 13px;
-  --ds-text-md: 14px;
-  --ds-text-lg: 16px;
-  --ds-text-xl: 20px;
-  --ds-text-2xl: 28px;
-  --ds-text-3xl: clamp(30px, 4.2vw, 44px);
+  --ds-text-md: 15px;
+  --ds-text-lg: 17px;
+  --ds-text-xl: 22px;
+  --ds-text-2xl: 30px;
+  --ds-text-3xl: clamp(34px, 4.2vw, 50px);
 
   /* Spacing (4pt) */
   --ds-1: 4px; --ds-2: 8px; --ds-3: 12px; --ds-4: 16px; --ds-5: 20px; --ds-6: 24px; --ds-8: 32px; --ds-10: 40px; --ds-12: 48px;
 
   /* Radii */
-  --ds-radius-sm: 6px;
-  --ds-radius-md: 8px;
-  --ds-radius-lg: 12px;
-  --ds-radius-xl: 16px;
+  --ds-radius-sm: 7px;
+  --ds-radius-md: 10px;
+  --ds-radius-lg: 14px;
+  --ds-radius-xl: 18px;
   --ds-radius-pill: 999px;
 
   /* Sizes */
-  --ds-appbar-h: 52px;
-  --ds-tabs-h: 40px;
-  --ds-control-h: 32px;
-  --ds-control-sm: 28px;
+  --ds-appbar-h: 60px;
+  --ds-tabs-h: 44px;
+  --ds-control-h: 36px;
+  --ds-control-sm: 30px;
 
   /* Semantic colours (derived from theme) */
   --ds-bg: var(--bg, #1e1e2e);
@@ -38,12 +38,16 @@
   --ds-sunken: color-mix(in srgb, var(--bg, #1e1e2e) 90%, #000);
   --ds-panel: var(--surface, #252536);
   --ds-panel-raised: var(--surface-raised, #2b2b3d);
+  --ds-canvas: color-mix(in srgb, var(--bg, #1e1e2e) 90%, var(--surface, #252536));
+  --ds-rail: color-mix(in srgb, var(--bg, #1e1e2e) 58%, var(--surface, #252536));
+  --ds-control: color-mix(in srgb, var(--surface, #252536) 72%, var(--bg, #1e1e2e));
   --ds-hover: color-mix(in srgb, var(--text, #cdd6f4) 8%, transparent);
   --ds-press: color-mix(in srgb, var(--text, #cdd6f4) 13%, transparent);
   --ds-line: var(--border-soft, #34344a);
   --ds-line-strong: var(--border, #45455c);
   --ds-text: var(--text, #cdd6f4);
   --ds-muted: var(--muted, #a6adc8);
+  --ds-subtle: color-mix(in srgb, var(--text, #cdd6f4) 58%, var(--bg, #1e1e2e));
   --ds-accent: var(--accent, #89b4fa);
   --ds-accent-fill: var(--accent-fill, var(--accent, #89b4fa));
   --ds-accent-soft: var(--accent-soft, rgba(137, 180, 250, .16));
@@ -58,6 +62,7 @@
 
   /* Motion */
   --ds-ease: cubic-bezier(.2, .7, .2, 1);
+  --ds-ease-out: cubic-bezier(.23, 1, .32, 1);
   --ds-fast: 120ms;
   --ds-base: 180ms;
 }

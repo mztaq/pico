@@ -231,7 +231,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
       <marker id="cpu-wire-active-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--accent)"/></marker>
      </defs>
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
-     <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing BRAINROT / Unit</text><title>CPU (Central Processing Unit) is the correct Cambridge IGCSE term.</title>
+     <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing Unit</text>
      {mode==='normal'&&<g className="cpu-connectors">
        <path d="M203 111 C300 96 440 96 548 111"/>
        <path d="M165 279 C150 291 150 291 165 299"/>
@@ -273,19 +273,19 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
       </g>}
      </g>)}
      <g className="cpu-connection-buses" data-cpu-tour="buses">
-      {([{key:'ADDRESS',y:121,direction:1},{key:'DATA',y:343,direction:0},{key:'CONTROL',y:485,direction:0}] as const).map(b=><g key={b.key} tabIndex={0} role="button" aria-label={b.key+' bus'} className={'cpu-external-bus '+(focused?(activeBus===b.key?'cpu-bus-active ':'cpu-dimmed '):'')+(selected===b.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(b.key)} onKeyDown={e=>{if(e.key==='Enter')setSelected(b.key);}}>
+      {([{key:'ADDRESS',y:121,direction:1},{key:'DATA',y:343,direction:0},{key:'CONTROL',y:485,direction:0}] as const).map(b=><g key={b.key} tabIndex={0} role="button" aria-label={b.key+' bus'} className={'cpu-external-bus '+(focused?(activeBus===b.key?'cpu-bus-active ':'cpu-dimmed '):'')+(selected===b.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(b.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(b.key);}}}>
         <path d={'M716 '+(b.direction===0?b.y-15:b.y)+' H924'} markerEnd="url(#cpu-arr)"/>{b.direction===0&&<path d={'M924 '+(b.y+15)+' H716'} markerEnd="url(#cpu-arr)"/>}
         <text x="821" y={b.y-29} textAnchor="middle">{b.key[0]+b.key.slice(1).toLowerCase()} bus</text>
        </g>)}
      </g>
-     <g data-cpu-tour="ram" className={"cpu-ram"+(focused&&!memoryActive?" cpu-dimmed":"")+(focused&&memoryActive?" cpu-active":"")} role="button" aria-label="RAM with sixteen memory addresses" onClick={()=>setSelected('RAM')}>
+     <g data-cpu-tour="ram" className={"cpu-ram"+(focused&&!memoryActive?" cpu-dimmed":"")+(focused&&memoryActive?" cpu-active":"")} role="group" aria-label="RAM with sixteen memory addresses">
       <rect className="cpu-ram-shell" x="929" y="15" width="233" height="532" rx="8"/>
       <text className="cpu-ram-title" x="1045" y="40" textAnchor="middle">Main Memory (RAM)</text>
       <rect className="cpu-ram-header" x="942" y="53" width="207" height="31" rx="3"/>
       <text className="cpu-column-title" x="982" y="73" textAnchor="middle">Address</text><text className="cpu-column-title" x="1092" y="73" textAnchor="middle">Data</text>
       {machine.memory.map((value,index)=>{
        const y=85+index*27;
-       return <g key={index} tabIndex={0} role="button" aria-label={'RAM address '+binary4(index)+' contains '+binary8(value)} onMouseEnter={()=>setSelected('RAM')} className={'cpu-ram-row '+(machine.mar===index&&phase!=='ready'?'cpu-ram-highlight':'')}><title>{'Address '+binary4(index)+' ('+index+'): '+(machine.kind[index]==='instruction'?'instruction':machine.kind[index]==='data'?'stored data':'unused location')+'. Contents '+binary8(value)+(machine.kind[index]==='instruction'?'. Opcode '+binary4(value>>4)+', operand '+binary4(value)+'. Instruction encoding is a teaching simplification (out of specification).':'.')}</title><rect x="942" y={y} width="207" height="27"/><text x="982" y={y+17} textAnchor="middle">{binary4(index)}</text><text x="1093" y={y+17} textAnchor="middle">{binary8(value)}</text></g>;
+       return <g key={index} tabIndex={0} role="button" aria-label={'RAM address '+binary4(index)+' contains '+binary8(value)} onClick={()=>setSelected('RAM')} onFocus={()=>setSelected('RAM')} onMouseEnter={()=>setSelected('RAM')} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected('RAM');}}} className={'cpu-ram-row '+(machine.mar===index&&phase!=='ready'?'cpu-ram-highlight':'')}><title>{'Address '+binary4(index)+' ('+index+'): '+(machine.kind[index]==='instruction'?'instruction':machine.kind[index]==='data'?'stored data':'unused location')+'. Contents '+binary8(value)+(machine.kind[index]==='instruction'?'. Opcode '+binary4(value>>4)+', operand '+binary4(value)+'. Instruction encoding is a teaching simplification (out of specification).':'.')}</title><rect x="942" y={y} width="207" height="27"/><text x="982" y={y+17} textAnchor="middle">{binary4(index)}</text><text x="1093" y={y+17} textAnchor="middle">{binary8(value)}</text></g>;
       })}
      </g>
      {route&&transfer&&<g className="cpu-flow-token cpu-emphasis" key={stepKey}><path className="cpu-flow-path" d={route}/><g><circle r="6"/><animateMotion path={route} dur={Math.max(.15,Math.min(.8,waitForStep(clock)/1000*.78))+'s'} fill="freeze"/></g></g>}

@@ -38,6 +38,7 @@ export function PicoTelemetry() {
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const lastActivity = useRef(Date.now());
+  const cookieDialog = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!choice?.analytics) return;
@@ -209,11 +210,20 @@ export function PicoTelemetry() {
 
   useEffect(() => {
     if (!editing) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = cookieDialog.current;
+    dialog?.querySelector<HTMLElement>('button, a, input, select, textarea, [tabindex="0"]')?.focus();
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && choice) setEditing(false);
+      if (event.key !== 'Tab' || !dialog) return;
+      const controls = [...dialog.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]')];
+      const first = controls[0], last = controls[controls.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
     window.addEventListener('keydown', onEscape);
-    return () => window.removeEventListener('keydown', onEscape);
+    return () => { window.removeEventListener('keydown', onEscape); previousFocus?.focus(); };
   }, [editing, choice]);
 
   // Consent controls belong to the home screen only. Tracking remains active in workspaces.
@@ -257,7 +267,7 @@ export function PicoTelemetry() {
 
     {isHome && editing && <div className="pico-cookie-overlay"
       onMouseDown={event => { if (event.target === event.currentTarget && choice) setEditing(false); }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="pico-cookie-title"
+      <section ref={cookieDialog} role="dialog" aria-modal="true" aria-labelledby="pico-cookie-title"
         aria-describedby="pico-cookie-description" className="pico-cookie-modal">
         <header className="pico-cookie-modal-head">
           <div>

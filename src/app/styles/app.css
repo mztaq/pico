@@ -72,7 +72,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .save-indicator.saved { color: #8bbaa8; }
 .save-indicator.local-only { color: var(--amber); }
 .save-dot { width: 15px; height: 15px; display: grid; place-items: center; border: 1px solid #30343f; border-radius: 50%; color: var(--mint); }
-.save-indicator.saving .save-dot { width: 8px; height: 8px; border: 0; background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+.save-indicator.saving .save-dot { width: 8px; height: 8px; border: 0; background: var(--accent); }
 @keyframes pulse { 50% { opacity: .4; transform: scale(.75); } }
 .topbar-icon, .help-button { height: 31px; border: 1px solid transparent; background: transparent; color: #969baa; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; transition: background .16s ease, color .16s ease, border-color .16s ease; }
 .topbar-icon { width: 33px; }

@@ -16,7 +16,7 @@
 .flow-builder .flow-palette,
 .flow-builder .flow-inspector {
   padding: 16px 14px;
-  background: var(--ds-chrome);
+  background: var(--ds-rail);
   border-color: var(--ds-line);
 }
 .flow-builder .flow-palette h2,
@@ -72,7 +72,7 @@
 }
 
 /* Canvas */
-.flow-builder .flow-main { background: var(--ds-sunken); }
+.flow-builder .flow-main { background: var(--ds-canvas); }
 .flow-builder .flow-canvas-toolbar {
   min-height: 42px;
   padding: 0 8px 0 14px;
@@ -94,7 +94,7 @@
 .flow-builder .flow-viewport {
   background:
     radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 0) 0 0 / 20px 20px,
-    var(--ds-sunken);
+    var(--ds-canvas);
 }
 .flow-builder .flow-node-shape { fill: var(--ds-panel-raised); }
 .flow-builder .flow-node-type { font: 600 var(--ds-text-2xs) var(--ds-font-code); letter-spacing: .07em; }

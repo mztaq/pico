@@ -45,7 +45,7 @@
 
 /* Rails */
 .logic-app .logic-palette,
-.logic-app .logic-inspector { background: var(--ds-chrome) !important; border-color: var(--ds-line) !important; }
+.logic-app .logic-inspector { background: var(--ds-rail) !important; border-color: var(--ds-line) !important; }
 .logic-app .logic-pane-heading {
   height: 42px;
   min-height: 42px;
@@ -86,7 +86,8 @@
 .logic-app .logic-eyebrow { color: var(--accent); font-family: var(--ds-font-code); }
 
 /* Board */
-.logic-app .logic-workarea, .logic-app .logic-board { background: var(--ds-sunken) !important; }
+.logic-app .logic-workarea, .logic-app .logic-board { background: var(--ds-canvas) !important; }
+.logic-app .logic-board g[role='button']:focus-visible .logic-wire { stroke: var(--accent); stroke-width: 5; }
 
 /* Simulation bar & status */
 .logic-app .logic-bottom {
@@ -156,14 +157,11 @@
 .logic-app .logic-slow-speed input { width: 96px; accent-color: var(--accent); }
 .logic-app .logic-slow-speed output { min-width: 38px; color: var(--ds-text); font: 600 var(--ds-text-2xs) var(--ds-font-code); text-align: right; }
 .logic-app .logic-slow-badge { white-space: nowrap; padding: 2px 8px; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: var(--ds-radius-pill); color: var(--accent); font: 600 var(--ds-text-2xs)/1.4 var(--ds-font-code); letter-spacing: .03em; }
-.logic-app .logic-wire-pulse { stroke-width: 5 !important; filter: drop-shadow(0 0 4px var(--accent)); }
-.logic-app .logic-node-pulse { filter: drop-shadow(0 0 6px var(--accent)); }
+.logic-app .logic-wire-pulse { stroke-width: 4 !important; }
+.logic-app .logic-node-pulse { opacity: 1; }
 @media (prefers-reduced-motion: no-preference) {
-  .logic-app .logic-wire-pulse { stroke-dasharray: 10 6; animation: logic-signal-flow .45s linear infinite; }
-  .logic-app .logic-node-pulse { animation: logic-node-glow .5s ease-out; }
+  .logic-app .logic-wire-pulse { stroke-dasharray: 10 6; }
 }
-@keyframes logic-signal-flow { to { stroke-dashoffset: -16; } }
-@keyframes logic-node-glow { from { filter: drop-shadow(0 0 12px var(--accent)); } }
 @media (max-width: 520px) {
   .logic-app .logic-slow-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
@@ -175,12 +173,11 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-dasharray: 3 9 1 7;
-  filter: drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 7px var(--accent));
+  filter: none;
   opacity: .9;
 }
-.logic-app .logic-spark-head { fill: #fff; stroke: none; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px var(--accent)); }
-.logic-app .logic-spark-head.s1 { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px #70dcb2); }
-.logic-app .logic-spark-head.s0 { fill: color-mix(in srgb, #fff 60%, #7896d0); filter: drop-shadow(0 0 6px #7896d0); }
+.logic-app .logic-spark-head { fill: #fff; stroke: var(--accent); stroke-width: 2; }
+.logic-app .logic-spark-head.s0 { fill: color-mix(in srgb, #fff 60%, #7896d0); }
 .logic-app .logic-bit { pointer-events: none; }
 .logic-app .logic-bit rect { fill: var(--ds-panel-raised); stroke: var(--ds-line-strong); stroke-width: 1; }
 .logic-app .logic-bit text { fill: var(--ds-text); font: 700 11px var(--ds-font-code); text-anchor: middle; }
@@ -192,8 +189,6 @@
 .logic-app .logic-bit.sx text { fill: #f5a067; }
 .logic-app .logic-bit.changed rect { stroke-width: 2; }
 @media (prefers-reduced-motion: no-preference) {
-  .logic-app .logic-spark-bolt { animation: logic-arc .12s steps(2) infinite, logic-signal-flow .3s linear infinite; }
-  .logic-app .logic-bit.changed { animation: logic-bit-pop .35s var(--ds-ease); transform-box: fill-box; }
+  .logic-app .logic-bit.changed { animation: logic-bit-pop .2s var(--ds-ease-out); transform-box: fill-box; }
 }
-@keyframes logic-arc { 50% { stroke-dasharray: 1 6 4 10; opacity: .55; } }
-@keyframes logic-bit-pop { 40% { scale: 1.35; } }
+@keyframes logic-bit-pop { 50% { scale: 1.12; } }

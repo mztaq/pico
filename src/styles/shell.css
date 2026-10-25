@@ -12,8 +12,8 @@
   min-height: var(--ds-appbar-h);
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 12px;
+  gap: 8px;
+  padding: 0 16px;
   border-bottom: 1px solid var(--ds-line);
   background: var(--ds-chrome);
   color: var(--ds-text);
@@ -35,17 +35,16 @@
 }
 :is(.pico-app, .logic-app, .cpu-app) .topbar .brand-mark { width: 24px; height: 24px; margin-right: 8px; filter: none; }
 :is(.pico-app, .logic-app, .cpu-app) .topbar .brand-period { color: var(--accent); }
-.pico-appbar-sep { color: color-mix(in srgb, var(--ds-muted) 55%, transparent); font-size: 18px; font-weight: 300; margin: 0 2px; user-select: none; }
+.pico-appbar-sep { color: var(--ds-line-strong); font-size: 20px; font-weight: 300; margin: 0 4px; user-select: none; }
 :is(.pico-app, .logic-app, .cpu-app) .topbar .brand-subtitle,
 .pico-appbar-tool {
   margin: 0;
-  padding: 3px 8px;
-  border: 1px solid var(--ds-line);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-panel);
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--ds-muted);
-  font: 600 var(--ds-text-2xs)/1.3 var(--ds-font-code);
-  letter-spacing: .02em;
+  font: 550 var(--ds-text-sm)/1.3 var(--ds-font-ui);
+  letter-spacing: 0;
   text-transform: none;
   white-space: nowrap;
 }
@@ -71,8 +70,8 @@
 .pico-appbar-group {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding-left: 6px;
+  gap: 4px;
+  padding-left: 10px;
   border-left: 1px solid var(--ds-line);
 }
 .pico-appbar-group:first-child { padding-left: 0; border-left: 0; }
@@ -85,14 +84,14 @@
 .pico-home .toolbar-button {
   height: var(--ds-control-h);
   min-height: var(--ds-control-h);
-  padding: 0 10px;
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid transparent;
+  border: 1px solid var(--ds-line-strong);
   border-radius: var(--ds-radius-md);
-  background: transparent;
+  background: var(--ds-control);
   color: var(--ds-muted);
   font: 500 var(--ds-text-sm)/1 var(--ds-font-ui);
   white-space: nowrap;
@@ -383,7 +382,7 @@
 /* ── Updates ─────────────────────────────────────────────── */
 .update-trigger .update-unread-dot { box-shadow: 0 0 0 2px var(--ds-chrome); }
 .update-toast {
-  top: 16px;
+  top: calc(var(--ds-appbar-h) + 12px);
   bottom: auto;
   right: 18px;
   border: 1px solid var(--ds-line-strong);
@@ -410,7 +409,7 @@
 }
 /* Narrow screens: the consent card owns the bottom edge, so updates sit under the app bar. */
 @media (max-width: 960px) {
-  .update-toast { top: max(12px, env(safe-area-inset-top)); bottom: auto; right: 12px; }
+  .update-toast { top: calc(var(--ds-appbar-h) + 10px); bottom: auto; right: 12px; }
 }
 @media (max-width: 520px) {
   .update-toast { left: 12px; width: auto; }

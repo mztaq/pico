@@ -41,7 +41,7 @@ body .pico-cookie-btn {
   border-radius: var(--ds-radius-md);
   font: 600 var(--ds-text-sm)/1 var(--ds-font-ui);
 }
-body .pico-cookie-btn:active:not(:disabled) { transform: scale(.97); }
+body .pico-cookie-btn:active:not(:disabled) { filter: brightness(.94); }
 body .pico-cookie-outline { border-color: var(--ds-line-strong); color: var(--ds-text); }
 body .pico-cookie-outline:hover:not(:disabled) { border-color: var(--accent); background: var(--ds-accent-soft); }
 body .pico-cookie-neutral { border-color: var(--ds-line-strong); background: var(--ds-panel); color: var(--ds-text); }
@@ -138,7 +138,7 @@ body .pico-cookie-modal-actions {
   body .pico-cookie-banner { animation: ds-rise .18s var(--ds-ease) both; }
   body .pico-cookie-overlay { animation: ds-fade .18s ease both; }
   body .pico-cookie-modal { animation: ds-pop .22s var(--ds-ease) both; }
-  body .pico-cookie-btn { transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease, transform 90ms ease, filter var(--ds-fast) ease; }
+  body .pico-cookie-btn { transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease, filter var(--ds-fast) ease; }
 }
 
 @media (max-width: 800px) {

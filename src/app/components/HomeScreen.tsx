@@ -18,6 +18,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   }, [theme]);
   return <main className="pico-home" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
     <div className="home-nav">
+      <span className="home-nav-label">PICO / WORKSPACES</span>
       <div className="home-updates"><SoundButton /><UpdateCenter /></div>
     </div>
     <div className="home-inner">
@@ -26,7 +27,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         <h1>Choose your workspace</h1>
       </div>
       <div className="compiler-choices">
-        <HomeGroup label="Code" detail="Write, run and debug programs">
+        <HomeGroup number="01" label="Code" detail="Write, run and debug programs">
           <WorkspaceChoice icon={<Terminal size={18} />} tag=".pico" title="Pseudocode Compiler" description="Run and debug Cambridge-style pseudocode." onClick={() => onChoose('pseudocode')}>
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode code={'DECLARE Name : STRING\nINPUT Name\nOUTPUT "Hello ", Name, "!"'} /></pre>
           </WorkspaceChoice>
@@ -34,7 +35,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
           </WorkspaceChoice>
         </HomeGroup>
-        <HomeGroup label="Visual labs" detail="Build and explore interactive models">
+        <HomeGroup number="02" label="Visual labs" detail="Build and explore interactive models">
           <WorkspaceChoice icon={<GitBranch size={18} />} title="Flowchart Builder" description="Build, run and convert flowcharts to pseudocode." onClick={() => onChoose('flowchart')}>
             <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
           <rect x="1" y="22" width="68" height="32" rx="16"/>
@@ -70,9 +71,9 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   </main>;
 }
 
-function HomeGroup({ label, detail, children }: { label: string; detail: string; children: ReactNode }) {
+function HomeGroup({ number, label, detail, children }: { number: string; label: string; detail: string; children: ReactNode }) {
   return <section className="home-group" aria-label={label}>
-    <div className="home-group-head"><span className="home-group-label">{label}</span><span className="home-group-detail">{detail}</span></div>
+    <div className="home-group-head"><span className="home-group-number" aria-hidden="true">{number}</span><h2 className="home-group-label">{label}</h2><span className="home-group-detail">{detail}</span></div>
     <div className="home-group-grid">{children}</div>
   </section>;
 }
