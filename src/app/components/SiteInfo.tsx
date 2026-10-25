@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Code2, FileText, GitBranch, Lightbulb, ShieldCheck, Users } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Code2, Cookie, FileText, GitBranch, Lightbulb, ShieldCheck, Users } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
 import '../styles/site-info.css';
@@ -8,7 +8,7 @@ import '../../styles/info.css';
 const pages = [
   { id: 'authors', title: 'Authors', icon: Users },
   { id: 'privacy', title: 'Privacy Policy', icon: ShieldCheck },
-  { id: 'cookies', title: 'Cookie Policy', icon: ShieldCheck },
+  { id: 'cookies', title: 'Cookie Policy', icon: Cookie },
   { id: 'terms', title: 'Terms and Conditions', icon: FileText },
 ] as const;
 export type InformationPage = typeof pages[number]['id'];
@@ -25,8 +25,9 @@ export function SiteInfoLinks({ current }: { current?: InformationPage }) {
   </nav>;
 }
 
+const slug = (title: string) => 'section-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 function Section({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="site-info-section"><h2>{title}</h2>{children}</section>;
+  return <section className="site-info-section" id={slug(title)}><h2>{title}</h2><div className="site-info-section-body">{children}</div></section>;
 }
 
 function Authors() {
@@ -121,18 +122,44 @@ export function SiteInfo({ page }: { page: InformationPage }) {
     if (scrollArea.current) scrollArea.current.scrollTop = 0;
     heading.current?.focus({ preventScroll: true });
   }, [page]);
-  return <div ref={scrollArea} className="site-info-page" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as React.CSSProperties}>
-    <div className="site-info-shell">
-      <header className="site-info-header">
+  const summary = {
+    authors: 'The people behind Pico, and what each of them looks after.',
+    privacy: 'What Pico keeps on your device, what is optional, and how to change your mind.',
+    cookies: 'The storage Pico needs to work, the optional categories, and how to control them.',
+    terms: 'The ground rules for using Pico, your work, and what to expect from the service.',
+  }[page];
+  const [sections, setSections] = useState<{ id: string; title: string }[]>([]);
+  useEffect(() => {
+    const found = [...(scrollArea.current?.querySelectorAll<HTMLElement>('main .site-info-section') ?? [])].map(section => ({ id: section.id, title: section.querySelector('h2')?.textContent ?? '' }));
+    setSections(found);
+  }, [page]);
+  return <div ref={scrollArea} className="site-info-page" data-page={page} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as React.CSSProperties}>
+    <header className="site-info-header">
+      <div className="site-info-header-inner">
         <a className="site-info-brand" href="#" aria-label="Pico home"><img src="/pico-logo.svg" alt="" />Pico<span className="brand-period">.</span></a>
-        <a className="site-info-back" href="#"><ArrowLeft size={17} aria-hidden="true" />Home</a>
-      </header>
+        <a className="site-info-back" href="#"><ArrowLeft size={16} aria-hidden="true" />Back to workspaces</a>
+      </div>
+    </header>
+    <div className="site-info-hero">
+      <div className="site-info-hero-inner">
+        <span className="site-info-eyebrow">{page === 'authors' ? 'About' : 'Legal'}</span>
+        <div className="site-info-title"><span className="site-info-mark"><Icon size={24} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
+        <p className="site-info-summary">{summary}</p>
+        {page !== 'authors' && <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
+      </div>
+    </div>
+    <div className="site-info-shell">
+      <aside className="site-info-aside">
+        <SiteInfoLinks current={page} />
+        {sections.length > 0 && <nav className="site-info-toc" aria-label="On this page">
+          <span>On this page</span>
+          {sections.map(section => <button key={section.id} type="button" onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{section.title}</button>)}
+        </nav>}
+      </aside>
       <main>
-        <div className="site-info-title"><span className="site-info-mark"><Icon size={28} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
-        <p className="site-info-intro">{page === 'authors' ? 'The people behind Pico.' : <>Last updated <time dateTime="2026-10-24">24 October 2026</time></>}</p>
         {page === 'authors' ? <Authors /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
+        {page !== 'authors' && <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>}
       </main>
-      <SiteInfoLinks current={page} />
     </div>
   </div>;
 }
