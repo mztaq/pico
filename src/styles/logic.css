@@ -148,3 +148,52 @@
   .logic-app .pico-appbar-run button span { display: inline; position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .logic-app .pico-primary-button { width: 34px; padding: 0; }
 }
+
+/* Slow motion */
+.logic-app .logic-slow-toggle.active { border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: var(--ds-accent-soft); color: var(--ds-text); }
+.logic-app .logic-slow-toggle.active svg { color: var(--accent); }
+.logic-app .logic-slow-speed { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-md); color: var(--ds-muted); font: 500 var(--ds-text-xs) var(--ds-font-ui); }
+.logic-app .logic-slow-speed input { width: 96px; accent-color: var(--accent); }
+.logic-app .logic-slow-speed output { min-width: 38px; color: var(--ds-text); font: 600 var(--ds-text-2xs) var(--ds-font-code); text-align: right; }
+.logic-app .logic-slow-badge { white-space: nowrap; padding: 2px 8px; border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: var(--ds-radius-pill); color: var(--accent); font: 600 var(--ds-text-2xs)/1.4 var(--ds-font-code); letter-spacing: .03em; }
+.logic-app .logic-wire-pulse { stroke-width: 5 !important; filter: drop-shadow(0 0 4px var(--accent)); }
+.logic-app .logic-node-pulse { filter: drop-shadow(0 0 6px var(--accent)); }
+@media (prefers-reduced-motion: no-preference) {
+  .logic-app .logic-wire-pulse { stroke-dasharray: 10 6; animation: logic-signal-flow .45s linear infinite; }
+  .logic-app .logic-node-pulse { animation: logic-node-glow .5s ease-out; }
+}
+@keyframes logic-signal-flow { to { stroke-dashoffset: -16; } }
+@keyframes logic-node-glow { from { filter: drop-shadow(0 0 12px var(--accent)); } }
+@media (max-width: 520px) {
+  .logic-app .logic-slow-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+/* Slow motion: electricity travelling along wires, and the bit on every route */
+.logic-app .logic-spark { pointer-events: none; }
+.logic-app .logic-spark-bolt {
+  stroke: color-mix(in srgb, #fff 80%, var(--accent));
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 3 9 1 7;
+  filter: drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 7px var(--accent));
+  opacity: .9;
+}
+.logic-app .logic-spark-head { fill: #fff; stroke: none; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px var(--accent)); }
+.logic-app .logic-spark-head.s1 { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px #70dcb2); }
+.logic-app .logic-spark-head.s0 { fill: color-mix(in srgb, #fff 60%, #7896d0); filter: drop-shadow(0 0 6px #7896d0); }
+.logic-app .logic-bit { pointer-events: none; }
+.logic-app .logic-bit rect { fill: var(--ds-panel-raised); stroke: var(--ds-line-strong); stroke-width: 1; }
+.logic-app .logic-bit text { fill: var(--ds-text); font: 700 11px var(--ds-font-code); text-anchor: middle; }
+.logic-app .logic-bit.s1 rect { stroke: #70dcb2; fill: color-mix(in srgb, #70dcb2 18%, var(--ds-panel-raised)); }
+.logic-app .logic-bit.s1 text { fill: #70dcb2; }
+.logic-app .logic-bit.s0 rect { stroke: #7896d0; }
+.logic-app .logic-bit.s0 text { fill: #9fb6e2; }
+.logic-app .logic-bit.sx rect { stroke: #f5a067; }
+.logic-app .logic-bit.sx text { fill: #f5a067; }
+.logic-app .logic-bit.changed rect { stroke-width: 2; }
+@media (prefers-reduced-motion: no-preference) {
+  .logic-app .logic-spark-bolt { animation: logic-arc .12s steps(2) infinite, logic-signal-flow .3s linear infinite; }
+  .logic-app .logic-bit.changed { animation: logic-bit-pop .35s var(--ds-ease); transform-box: fill-box; }
+}
+@keyframes logic-arc { 50% { stroke-dasharray: 1 6 4 10; opacity: .55; } }
+@keyframes logic-bit-pop { 40% { scale: 1.35; } }
