@@ -141,7 +141,7 @@
   border: 1px solid var(--ds-line-strong);
   border-radius: var(--ds-radius-lg);
   background: var(--ds-panel);
-  transition: border-color var(--ds-base) ease, transform var(--ds-base) var(--ds-ease), box-shadow var(--ds-base) ease;
+  transition: border-color var(--ds-fast) ease;
 }
 .site-info-page .author-card::before {
   content: '';
@@ -150,7 +150,7 @@
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent 75%);
   pointer-events: none;
 }
-.site-info-page .author-card:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--ds-line-strong)); transform: translateY(-2px); box-shadow: var(--ds-shadow-float); }
+.site-info-page .author-card:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--ds-line-strong)); }
 .site-info-page .author-icon {
   position: relative;
   width: 48px; height: 48px; margin-bottom: 18px;

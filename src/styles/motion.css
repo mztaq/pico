@@ -1,9 +1,7 @@
-/* Pico motion system — short, purposeful, and fully disabled for reduced motion. */
+/* Pico motion system — short feedback for occasional surfaces. */
 @keyframes ds-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes ds-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ds-pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
-@keyframes ds-slide-in { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
-@keyframes ds-sheen { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
 @media (prefers-reduced-motion: no-preference) {
   /* Press feedback on every button-like control */
@@ -12,58 +10,21 @@
   }
   :is(.pico-app, .logic-app, .cpu-app) :is(.toolbar-button, .help-button, .topbar-icon, .run-button, .pico-primary-button, .subtle-button, .primary-small, .compiler-switch, .flow-convert-button, .cpu-playback button, .logic-toolbar button, .logic-bottom button):not(:disabled):active { transform: scale(.96); }
 
-  /* Workspace entrance: panels settle in a short stagger */
-  .pico-app .editor-card { animation: ds-rise .32s var(--ds-ease) both; }
-  .pico-app .reference-card { animation: ds-rise .32s var(--ds-ease) .05s both; }
-  .pico-app .tool-dock { animation: ds-rise .32s var(--ds-ease) .1s both; }
-  .flow-builder .flow-palette, .logic-app .logic-palette { animation: ds-slide-in .3s var(--ds-ease) both; }
-  .flow-builder .flow-inspector, .logic-app .logic-inspector { animation: ds-fade .35s ease .08s both; }
-
-  /* Home: cards cascade in, preview lifts on hover */
-  .pico-home .home-hero > * { animation: ds-rise .45s var(--ds-ease) both; }
-  .pico-home .home-hero > :nth-child(2) { animation-delay: .05s; }
-  .pico-home .home-hero > :nth-child(3) { animation-delay: .1s; }
-  .pico-home .compiler-choice { animation: ds-rise .45s var(--ds-ease) both; }
-  .pico-home .home-group:first-child .compiler-choice:nth-child(1) { animation-delay: .12s; }
-  .pico-home .home-group:first-child .compiler-choice:nth-child(2) { animation-delay: .17s; }
-  .pico-home .home-group:last-child .compiler-choice:nth-child(1) { animation-delay: .22s; }
-  .pico-home .home-group:last-child .compiler-choice:nth-child(2) { animation-delay: .27s; }
-  .pico-home .home-group:last-child .compiler-choice:nth-child(3) { animation-delay: .32s; }
-  .pico-home .compiler-choice-stage > * { transition: transform .35s var(--ds-ease); }
-  .pico-home .compiler-choice:hover .compiler-choice-stage > * { transform: scale(1.03); }
-  .pico-home .compiler-choice-icon { transition: background-color var(--ds-base) ease, color var(--ds-base) ease; }
-  .pico-home .compiler-choice:hover .compiler-choice-icon { background: var(--accent); color: var(--ds-on-accent); }
-
   /* Menus, popovers and floating panels */
   .floating-panel.settings-popover, .floating-panel.file-menu, .flow-builder .flow-settings,
-  .logic-app .logic-theme-menu, .logic-app .logic-truth, .logic-app .logic-expression-panel {
+  .logic-app .logic-theme-menu {
     animation: ds-pop .16s var(--ds-ease) both;
     transform-origin: top right;
   }
-
-  /* Tabs: underline grows in */
-  :is(.pico-app, .flow-builder) .dock-tab.active::after,
-  .pico-app .workspace-tabs .project-row.active::after { animation: ds-underline .22s var(--ds-ease) both; }
-  .pico-app .workspace-tabs .project-row { transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease; }
-
-  /* Console output streams in */
-  .pico-app .output-line, .pico-app .console-entry-note, .pico-app .runtime-error-card { animation: ds-slide-in .18s ease-out both; }
-
-  /* Run button shimmers while a program is executing */
-  .pico-app .run-button:disabled {
-    background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, #fff 35%, transparent) 50%, transparent 70%);
-    background-size: 200% 100%;
-    animation: ds-sheen 1.4s linear infinite;
-    opacity: .85;
+  .logic-app .logic-truth, .logic-app .logic-expression-panel {
+    animation: ds-rise .16s var(--ds-ease) both;
+    transform-origin: bottom left;
   }
+
+  .pico-app .workspace-tabs .project-row { transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease; }
 
   /* Switch thumb glides */
   .pico-app .switch span { transition: transform .2s var(--ds-ease), background-color .2s ease; }
   .pico-app .switch.checked { transition: background-color .2s ease; }
 
-  /* Info pages */
-  .site-info-page main > * { animation: ds-rise .4s var(--ds-ease) both; }
-  .site-info-page .author-card:nth-child(2) { animation: ds-rise .4s var(--ds-ease) .06s both; }
-  .site-info-page .author-card:nth-child(3) { animation: ds-rise .4s var(--ds-ease) .12s both; }
 }
-@keyframes ds-underline { from { transform: scaleX(0); } to { transform: scaleX(1); } }

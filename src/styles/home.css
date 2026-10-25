@@ -51,10 +51,14 @@
   color: var(--ds-text);
   text-align: left;
   cursor: pointer;
-  transition: border-color var(--ds-base) var(--ds-ease), transform var(--ds-base) var(--ds-ease), box-shadow var(--ds-base) var(--ds-ease);
+  transition: border-color var(--ds-fast) var(--ds-ease);
 }
-.pico-home .compiler-choice:hover { border-color: color-mix(in srgb, var(--accent) 70%, var(--ds-line-strong)); transform: translateY(-2px); box-shadow: var(--ds-shadow-float); }
+.pico-home .compiler-choice:hover { border-color: color-mix(in srgb, var(--accent) 70%, var(--ds-line-strong)); }
 .pico-home .compiler-choice:active { transform: translateY(0); }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .pico-home .compiler-choice { transition: border-color var(--ds-fast) var(--ds-ease), transform var(--ds-base) var(--ds-ease); }
+  .pico-home .compiler-choice:hover { transform: translateY(-2px); }
+}
 .pico-home .compiler-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .compiler-choice-stage {

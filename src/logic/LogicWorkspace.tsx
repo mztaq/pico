@@ -23,7 +23,7 @@ function download(text:string,name:string,type:string){
   const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 type Selection={type:'node'|'wire';id:string}|null;
-type Interaction={type:'move'|'pan';x:number;y:number;origX:number;origY:number;nodeId?:string;before?:CircuitDocument}|null;
+type Interaction={type:'move'|'pan';pointerId:number;x:number;y:number;origX:number;origY:number;nodeId?:string;before?:CircuitDocument}|null;
 const stateName:Record<Signal,string>={0:'LOW',1:'HIGH',X:'UNKNOWN',Z:'HIGH Z'};
 const signalClass=(signal:Signal)=>signal===0?'s0':signal===1?'s1':signal==='Z'?'sz':'sx';
 const contentEqual=(a:CircuitDocument,b:CircuitDocument)=>JSON.stringify(a)===JSON.stringify(b);
@@ -40,7 +40,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [expressionOpen,setExpressionOpen]=useState(false);
  const clipboard=useRef<CircuitClipboard|null>(null);
  const pasteCount=useRef(0);
- const marqueeRef=useRef<{start:{x:number;y:number};end:{x:number;y:number}}|null>(null);
+ const marqueeRef=useRef<{pointerId:number;start:{x:number;y:number};end:{x:number;y:number}}|null>(null);
  const [marquee,setMarquee]=useState<{start:{x:number;y:number};end:{x:number;y:number}}|null>(null);
  const markExported=useExitWarning(JSON.stringify(doc));
  const docRef=useRef(doc);docRef.current=doc;
@@ -141,19 +141,21 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   setInspectorOpen(true);
   if(event.button!==0)return;
   const b=boardRef.current?.getBoundingClientRect();if(!b)return;
-  setInteraction({type:'move',x:event.clientX,y:event.clientY,origX:node.x,origY:node.y,nodeId:node.id,before:doc});
+  setInteraction({type:'move',pointerId:event.pointerId,x:event.clientX,y:event.clientY,origX:node.x,origY:node.y,nodeId:node.id,before:doc});
+  boardRef.current?.setPointerCapture?.(event.pointerId);
  }
  function pointerMove(event:ReactPointerEvent<SVGSVGElement>){
+  if(!wireDrag.current&&!marqueeRef.current&&!interaction&&!connecting)return;
   const p=canvasPoint(event);
-  setPointer(p);
+  if(connecting)setPointer(p);
   if(wireDrag.current?.pointerId===event.pointerId){
     const drag=wireDrag.current;
     if(Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)>4)drag.dragged=true;
     setWireTarget(inputAtPoint(docRef.current,drag.from,drag.pin,p,Math.max(18,22/zoom)));
     return;
   }
-  if(marqueeRef.current){const next={...marqueeRef.current,end:p};marqueeRef.current=next;setMarquee(next);return;}
-  if(!interaction)return;
+  if(marqueeRef.current?.pointerId===event.pointerId){const next={...marqueeRef.current,end:p};marqueeRef.current=next;setMarquee(next);return;}
+  if(!interaction||interaction.pointerId!==event.pointerId)return;
   if(interaction.type==='pan')setOffset({x:interaction.origX+event.clientX-interaction.x,y:interaction.origY+event.clientY-interaction.y});
   else {
    const original=interaction.before?.nodes.find(n=>n.id===interaction.nodeId);
@@ -170,7 +172,8 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
    if(!drag||drag.pointerId!==event.pointerId)return;
    const target=cancel?null:inputAtPoint(docRef.current,drag.from,drag.pin,canvasPoint(event),Math.max(18,22/zoom));
    wireDrag.current=null;
-   if(drag.dragged&&target?.valid){
+   if(cancel){setConnecting(null);setStatus('Connection cancelled.');}
+   else if(drag.dragged&&target?.valid){
      const wire={id:crypto.randomUUID(),from:drag.from,fromPin:drag.pin,to:target.nodeId,toPin:target.pin};
      change(d=>({...d,wires:[...d.wires,wire]}));
      setStatus('Wire connected.');setConnecting(null);
@@ -179,12 +182,16 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
    setWireTarget(null);setPointer(null);
    if(event.currentTarget.hasPointerCapture?.(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
  }
- function pointerUp(){
-  if(marqueeRef.current){const area=marqueeRef.current;setSelectedNodes(selectionInRectangle(docRef.current,area.start,area.end));setSelection(null);marqueeRef.current=null;setMarquee(null);}
-  if(interaction?.type==='move'&&interaction.before&&!contentEqual(interaction.before,docRef.current)){
+ function pointerUp(event:ReactPointerEvent<SVGSVGElement>,cancel=false){
+  if(marqueeRef.current?.pointerId===event.pointerId){const area=marqueeRef.current;if(!cancel){setSelectedNodes(selectionInRectangle(docRef.current,area.start,area.end));setSelection(null);}marqueeRef.current=null;setMarquee(null);}
+  if(interaction?.pointerId!==event.pointerId){if(event.currentTarget.hasPointerCapture?.(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);return;}
+  if(cancel&&interaction.type==='move'&&interaction.before)setDoc(interaction.before);
+  else if(cancel&&interaction.type==='pan')setOffset({x:interaction.origX,y:interaction.origY});
+  else if(interaction.type==='move'&&interaction.before&&!contentEqual(interaction.before,docRef.current)){
    setHistory(h=>[...h.slice(-79),interaction.before!]);setFuture([]);
   }
   setInteraction(null);
+  if(event.currentTarget.hasPointerCapture?.(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
  }
  function canvasClick(event:ReactPointerEvent<SVGSVGElement>){
   if(event.target!==boardRef.current&&!(event.target as Element).classList.contains('logic-surface'))return;
@@ -205,7 +212,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='c'){e.preventDefault();copy();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='v'){e.preventDefault();paste();}
   if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();remove();}
-  if(e.key==='Escape'){wireDrag.current=null;setWireTarget(null);setPointer(null);setConnecting(null);setPlacement(null);setPaletteOpen(false);setInspectorOpen(false);}
+  if(e.key==='Escape'){if(interaction?.type==='move'&&interaction.before)setDoc(interaction.before);else if(interaction?.type==='pan')setOffset({x:interaction.origX,y:interaction.origY});if(interaction&&boardRef.current?.hasPointerCapture?.(interaction.pointerId))boardRef.current.releasePointerCapture(interaction.pointerId);setInteraction(null);marqueeRef.current=null;setMarquee(null);if(wireDrag.current&&boardRef.current?.hasPointerCapture?.(wireDrag.current.pointerId))boardRef.current.releasePointerCapture(wireDrag.current.pointerId);wireDrag.current=null;setWireTarget(null);setPointer(null);setConnecting(null);setPlacement(null);setPaletteOpen(false);setInspectorOpen(false);}
  }window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);});
  async function importFile(file:File){try{if(file.size>800000)throw Error('This circuit file exceeds the 800 KB limit.');const data=parseDocument(JSON.parse(await file.text()));if(doc.nodes.length&&!window.confirm('Replace the current circuit with this imported project?'))return;edit(data);setSimulation(initialSimulation());setSelection(null);setRunning(false);setStatus('Circuit imported successfully.');}catch(error){setStatus(error instanceof Error?error.message:'Invalid circuit file.');}finally{setImporting(false);}}
  const inspectorContent=<div className="logic-inspector-body">
@@ -232,7 +239,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  <div className="logic-main">
  <aside className={'logic-palette '+(paletteOpen?'mobile-open':'')} aria-label="Component palette"><div className="logic-pane-heading"><b>COMPONENTS</b><button className="logic-mobile-only" aria-label="Close components" onClick={()=>setPaletteOpen(false)}><X size={16}/></button></div><div className="logic-palette-scroll">{GROUPS.map(group=><section key={group}><button className="logic-group" onClick={()=>setGroupOpen(g=>g.includes(group)?g.filter(x=>x!==group):[...g,group])}><span>{group}</span><ChevronDown size={15} className={groupOpen.includes(group)?'':'collapsed'}/></button>{groupOpen.includes(group)&&<div className="logic-component-list">{(Object.keys(SPECS) as ComponentKind[]).filter(k=>SPECS[k].group===group).map(kind=><button key={kind} draggable onDragStart={event=>event.dataTransfer.setData('text/pico-logic',kind)} className={'logic-part '+(placement===kind?'active':'')} onClick={()=>{setPlacement(kind);setStatus('Click on the canvas to place '+SPECS[kind].title+'.');setPaletteOpen(false);}}><span className="logic-part-symbol"><PaletteSymbol kind={kind}/></span><span>{SPECS[kind].title}</span><Plus size={12}/></button>)}</div>}</section>)}</div><div className="logic-palette-tip">Click a component, then click the grid to place it. Connect output pins to input pins.</div></aside>
  <section className="logic-workarea" aria-label="Circuit workspace">
-  <div className="logic-board" role="region" aria-label="Digital circuit canvas"><svg ref={boardRef} aria-label="Circuit canvas" tabIndex={0} onWheel={e=>{if(e.ctrlKey){e.preventDefault();setZoom(z=>validNumber(z+(e.deltaY<0?.08:-.08),.35,2.5));}}} onPointerDown={e=>{if(e.target===boardRef.current||(e.target as Element).classList.contains('logic-surface')){if(tool==='pan'||e.button===1)setInteraction({type:'pan',x:e.clientX,y:e.clientY,origX:offset.x,origY:offset.y});else if(tool==='select'&&!placement&&e.button===0){const point=canvasPoint(e);const area={start:point,end:point};marqueeRef.current=area;setMarquee(area);boardRef.current?.setPointerCapture?.(e.pointerId);}canvasClick(e);}}} onPointerMove={pointerMove} onPointerUp={e=>{finishWire(e);pointerUp();}} onPointerCancel={e=>{finishWire(e,true);pointerUp();}} onPointerLeave={()=>{if(!wireDrag.current)pointerUp();}} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const k=e.dataTransfer.getData('text/pico-logic');if(Object.hasOwn(SPECS,k)){const p=canvasPoint(e);addNode(k as ComponentKind,p.x-61,p.y-39);}}} style={{touchAction:'none'}}>
+  <div className="logic-board" role="region" aria-label="Digital circuit canvas"><svg ref={boardRef} aria-label="Circuit canvas" tabIndex={0} onWheel={e=>{if(e.ctrlKey){e.preventDefault();setZoom(z=>validNumber(z+(e.deltaY<0?.08:-.08),.35,2.5));}}} onPointerDown={e=>{if(e.target===boardRef.current||(e.target as Element).classList.contains('logic-surface')){if(tool==='pan'||e.button===1){setInteraction({type:'pan',pointerId:e.pointerId,x:e.clientX,y:e.clientY,origX:offset.x,origY:offset.y});boardRef.current?.setPointerCapture?.(e.pointerId);}else if(tool==='select'&&!placement&&e.button===0){const point=canvasPoint(e);const area={pointerId:e.pointerId,start:point,end:point};marqueeRef.current=area;setMarquee(area);boardRef.current?.setPointerCapture?.(e.pointerId);}canvasClick(e);}}} onPointerMove={pointerMove} onPointerUp={e=>{finishWire(e);pointerUp(e);}} onPointerCancel={e=>{finishWire(e,true);pointerUp(e,true);}} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const k=e.dataTransfer.getData('text/pico-logic');if(Object.hasOwn(SPECS,k)){const p=canvasPoint(e);addNode(k as ComponentKind,p.x-61,p.y-39);}}} style={{touchAction:'none'}}>
   <defs><pattern id="logic-grid" width={24*zoom} height={24*zoom} x={offset.x} y={offset.y} patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#545566" opacity=".45"/></pattern><marker id="logic-arrow" markerWidth="7" markerHeight="7" refX="4" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6Z" fill="#85879a"/></marker></defs>
   <rect className="logic-surface" width="100%" height="100%" fill={doc.grid?'url(#logic-grid)':'transparent'}/>
   <g transform={`translate(${offset.x} ${offset.y}) scale(${zoom})`}>
@@ -243,7 +250,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
     <CircuitSymbol kind={node.kind} height={height} signal={node.kind==='lamp'?lamp:output} hex={hexValue} label={node.label}/>
 
     {(node.kind==='switch'||node.kind==='button')&&<foreignObject x="34" y={height/2-15} width="57" height="38">
-      <button className="logic-symbol-button" aria-label={node.kind==='button'?'Press and hold button':'Toggle switch'} onPointerDown={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,1);}} onPointerUp={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onPointerCancel={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}}/>
+      <button className="logic-symbol-button" aria-label={node.kind==='button'?'Press and hold button':'Toggle switch'} onPointerDown={e=>{e.stopPropagation();if(node.kind==='button'){e.currentTarget.setPointerCapture?.(e.pointerId);toggleInput(node,1);}}} onPointerUp={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onPointerCancel={e=>{e.stopPropagation();if(node.kind==='button')toggleInput(node,0);}} onLostPointerCapture={()=>{if(node.kind==='button')toggleInput(node,0);}} onKeyDown={e=>{if(node.kind==='button'&&!e.repeat&&(e.key===' '||e.key==='Enter')){e.preventDefault();toggleInput(node,1);}}} onKeyUp={e=>{if(node.kind==='button'&&(e.key===' '||e.key==='Enter')){e.preventDefault();toggleInput(node,0);}}} onBlur={()=>{if(node.kind==='button')toggleInput(node,0);}} onClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}}/>
     </foreignObject>}
   </g>
   {node.kind!=='label'&&node.label&&<text className="logic-component-label" x={node.x+NODE_WIDTH/2} y={node.y+height+17} textAnchor="middle">{node.label}</text>}

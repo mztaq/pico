@@ -146,7 +146,7 @@ export function SiteInfo({ page }: { page: InformationPage }) {
         <SiteInfoLinks current={page} />
         {sections.length > 0 && <nav className="site-info-toc" aria-label="On this page">
           <span>On this page</span>
-          {sections.map(section => <button key={section.id} type="button" onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>{section.title}</button>)}
+          {sections.map(section => <button key={section.id} type="button" onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })}>{section.title}</button>)}
         </nav>}
       </aside>
       <main>
