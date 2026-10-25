@@ -1,0 +1,59 @@
+/* Information pages (Authors, Privacy, Cookies, Terms) — aligned with Home. */
+.site-info-page {
+  background:
+    radial-gradient(1200px 520px at 12% -8%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%),
+    var(--bg);
+  font-family: var(--ds-font-ui);
+}
+.site-info-shell { width: min(100%, 1120px); padding: 0 20px 32px; }
+.site-info-header { height: 60px; padding: 0; border-color: var(--ds-line); }
+.site-info-brand { font-size: 20px; letter-spacing: -.6px; }
+.site-info-brand img { width: 30px; height: 30px; }
+.site-info-back {
+  min-height: var(--ds-control-h);
+  padding: 0 10px;
+  border-radius: var(--ds-radius-md);
+  font-size: var(--ds-text-sm);
+}
+.site-info-back:hover { background: var(--ds-hover); }
+.site-info-page main { padding-top: 48px; }
+.site-info-title { gap: 14px; }
+.site-info-mark { width: 44px; height: 44px; border-radius: var(--ds-radius-md); border-color: transparent; }
+.site-info-title h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 650; letter-spacing: -.03em; }
+.site-info-intro { margin: 12px 0 36px; color: var(--ds-muted); font-size: var(--ds-text-md); }
+
+/* Policy sections: heading rail + readable body column */
+.site-info-section {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  gap: 8px 40px;
+  padding: 28px 0;
+  border-color: var(--ds-line);
+}
+.site-info-section h2 { margin: 0; font-size: var(--ds-text-lg); line-height: 1.5; }
+.site-info-section > p:first-of-type { margin-top: 0; }
+.site-info-section p { grid-column: 2; max-width: 72ch; color: color-mix(in srgb, var(--ds-text) 88%, var(--ds-muted)); font-size: 15px; line-height: 1.75; }
+
+/* Author cards */
+.author-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 40px; }
+.author-card:last-child { grid-column: auto; }
+.author-card { padding: 22px; border-color: var(--ds-line-strong); border-radius: var(--ds-radius-lg); background: var(--ds-panel); }
+.author-icon { width: 40px; height: 40px; margin-bottom: 18px; border-color: transparent; border-radius: var(--ds-radius-md); }
+.author-card h2 { font-size: var(--ds-text-lg); }
+.author-card .author-description { margin: 0 0 20px; color: var(--ds-muted); font-size: var(--ds-text-md); font-weight: 400; }
+.author-roles { border-color: var(--ds-line); }
+.author-roles h3 { color: var(--ds-muted); font: 600 var(--ds-text-2xs)/1 var(--ds-font-code); letter-spacing: .07em; text-transform: uppercase; }
+.author-roles li { padding: 3px 10px; border-color: var(--ds-line-strong); border-radius: var(--ds-radius-pill); background: transparent; font-size: var(--ds-text-xs); }
+
+.site-info-page .site-info-links { justify-content: flex-start; width: 100%; margin-top: 40px; border-color: var(--ds-line); font-size: var(--ds-text-sm); }
+
+@media (max-width: 960px) {
+  .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .site-info-shell { padding: 0 16px 24px; }
+  .site-info-page main { padding-top: 32px; }
+  .author-grid { grid-template-columns: 1fr; }
+  .site-info-section { grid-template-columns: 1fr; padding: 22px 0; }
+  .site-info-section p { grid-column: 1; }
+}

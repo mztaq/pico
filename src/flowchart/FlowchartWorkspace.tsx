@@ -18,6 +18,7 @@ import type { ExecutionFailure, PendingInput } from '../runtime/worker';
 import type { RunResult } from '../runtime/interpreter';
 import { FlowchartTutorial, lessonReady } from './FlowchartTutorial';
 import './flowchart-builder.css';
+import '../styles/flowchart.css';
 const OUTPUT_LIMIT=2000;
 interface Props {snapshot?:ChartStore;onHome:(store:ChartStore)=>void;onPseudocode:(code:string,name:string,store:ChartStore)=>void;}
 export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
@@ -153,18 +154,24 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
   }window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);});
   const style={...cssVariables(theme),'--on-accent':contrastRatio('#fff',theme.accent)>=contrastRatio('#000',theme.accent)?'#fff':'#000','--error-color':theme.appearance==='light'?'#a40000':'#ff7474'} as CSSProperties;
   return <div className="pico-app flow-builder" data-pico-theme={theme.id} data-high-contrast={theme.highContrast?'true':undefined} style={style}>
-    <header className="topbar">
-      <button className="toolbar-button home-button" aria-label="Go to home screen" disabled={tutorialActive} onClick={()=>onHome(saveNow())}><ArrowLeft size={16}/></button>
-      <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="27" height="27"/><span>Pico<span className="brand-period">.</span></span><span className="brand-subtitle">FLOWCHART</span></div>
-      <input className="project-title-input topbar-project-name" aria-label="Flowchart workspace name" value={nameDraft} maxLength={42} disabled={running||tutorialActive} onChange={e=>setNameDraft(e.target.value)} onBlur={rename} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/>
-      <div className="topbar-spacer"/>
-      <div className="topbar-actions"><button className="toolbar-button" disabled={running||tutorialActive||!history?.past.length} aria-label="Undo flowchart edit" onClick={()=>undo()}><Undo2 size={16}/></button><button className="toolbar-button" disabled={running||tutorialActive||!history?.future.length} aria-label="Redo flowchart edit" onClick={()=>undo(true)}><Redo2 size={16}/></button>
-        {running?<button className="toolbar-button stop-button" onClick={()=>jobRef.current?.cancel()}><X size={16}/>Stop</button>:<button className="toolbar-button debug-button" disabled={tutorialActive} onClick={()=>void run(true)}><Code2 size={16}/>Debug</button>}
-        <button className="run-button" disabled={running||(tutorialActive&&tourStep!==7)} onClick={()=>void run()}><Play size={14} fill="currentColor"/>Run</button>
-        <button className="toolbar-button flow-convert-button" disabled={running||(tutorialActive&&tourStep!==8)} onClick={()=>{setPanel('pseudocode');if(!conversion.value)setSelected(conversion.error?.nodeId??null);}}><Code2 size={16}/>Convert to pseudocode</button>
+    <header className="topbar pico-appbar">
+      <div className="pico-appbar-lead">
+        <button className="toolbar-button home-button" aria-label="Go to home screen" disabled={tutorialActive} onClick={()=>onHome(saveNow())}><ArrowLeft size={16}/></button>
+        <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></div>
+        <span className="pico-appbar-sep" aria-hidden="true">/</span>
+        <span className="brand-subtitle pico-appbar-tool">Flowchart</span>
+        <input className="project-title-input topbar-project-name" aria-label="Flowchart workspace name" value={nameDraft} maxLength={42} disabled={running||tutorialActive} onChange={e=>setNameDraft(e.target.value)} onBlur={rename} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/>
       </div>
-      {!tutorialActive&&<UpdateCenter/>}<button className="toolbar-button" aria-label="Flowchart settings" disabled={tutorialActive} onClick={()=>setSettingsOpen(v=>!v)}><Settings2 size={16}/></button>
-      <button className="help-button" disabled={tutorialActive} onClick={startWalkthrough}><CircleHelp size={16}/>Help</button>
+      <div className="topbar-spacer"/>
+      <button className="toolbar-button flow-convert-button" disabled={running||(tutorialActive&&tourStep!==8)} onClick={()=>{setPanel('pseudocode');if(!conversion.value)setSelected(conversion.error?.nodeId??null);}}><Code2 size={16}/><span>Convert to pseudocode</span></button>
+      <div className="topbar-actions">
+        <div className="pico-appbar-group" role="group" aria-label="Edit history"><button className="toolbar-button" disabled={running||tutorialActive||!history?.past.length} aria-label="Undo flowchart edit" onClick={()=>undo()}><Undo2 size={16}/></button><button className="toolbar-button" disabled={running||tutorialActive||!history?.future.length} aria-label="Redo flowchart edit" onClick={()=>undo(true)}><Redo2 size={16}/></button></div>
+        <div className="pico-appbar-group" role="group" aria-label="Workspace tools">{!tutorialActive&&<UpdateCenter/>}<button className="toolbar-button" aria-label="Flowchart settings" disabled={tutorialActive} onClick={()=>setSettingsOpen(v=>!v)}><Settings2 size={16}/></button><button className="help-button" disabled={tutorialActive} onClick={startWalkthrough}><CircleHelp size={16}/><span>Help</span></button></div>
+      </div>
+      <div className="pico-appbar-run">
+        {running?<button className="toolbar-button stop-button" onClick={()=>jobRef.current?.cancel()}><X size={16}/><span>Stop</span></button>:<button className="toolbar-button debug-button" disabled={tutorialActive} onClick={()=>void run(true)}><Code2 size={16}/><span>Debug</span></button>}
+        <button className="run-button" disabled={running||(tutorialActive&&tourStep!==7)} onClick={()=>void run()}><Play size={14} fill="currentColor"/><span>Run</span></button>
+      </div>
     </header>
     <nav inert={tutorialActive} className="workspace-tabs" aria-label="Flowchart workspaces"><div className="project-list">{store.projects.map(p=><div className={`project-row ${p.id===project.id?'active':''}`} key={p.id}><button className="project-select" aria-current={p.id===project.id?'page':undefined} onClick={()=>{resetExecution();setStore(s=>({...s,activeId:p.id}));}}><GitBranch size={14}/><span>{p.name}</span></button></div>)}</div><button className="icon-button new-workspace" aria-label="New flowchart workspace" onClick={()=>createProject()}><Plus size={16}/></button></nav>
     {saveError&&<p className="autosave-error" role="alert">Browser storage is unavailable. Export your flowchart to keep your work.</p>}
