@@ -149,157 +149,123 @@
   line-height: 1.5;
 }
 
-/* The previews are actual miniature interface compositions, not copied card text. */
-.pico-home .home-mini-window {
+/* Actual Pico renderer/model previews, not mock application windows. */
+.pico-home .home-product-code {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 18px;
+  width: min(100%, 400px);
+  max-width: 100%;
+  padding: 0 4px;
+  font: 12.5px/1.8 var(--ds-font-code);
+  text-align: left;
+  overflow: hidden;
+}
+.pico-home .home-product-gutter {
   display: flex;
   flex-direction: column;
-  flex: 0 1 390px;
-  width: min(100%, 390px);
-  height: 150px;
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid var(--ds-line-strong);
-  border-radius: 8px;
-  background: var(--ds-panel);
-  color: var(--ds-text);
-  font-family: var(--ds-font-code);
-  text-align: left;
-}
-.pico-home .home-mini-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  height: 29px;
-  flex: 0 0 29px;
-  padding: 0 11px;
-  border-bottom: 1px solid var(--ds-line);
-  background: var(--ds-panel-raised);
-  font-size: 10px;
-}
-.pico-home .home-mini-file { color: var(--ds-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pico-home .home-mini-detail { color: var(--ds-muted); white-space: nowrap; font-size: 9px; }
-.pico-home .home-mini-editor {
-  display: flex;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 9px 10px;
-  overflow: hidden;
-  font: 11px/1.65 var(--ds-font-code);
-}
-.pico-home .home-mini-lines {
-  flex: 0 0 22px;
+  flex: 0 0 20px;
+  align-items: flex-end;
   color: var(--ds-muted);
   opacity: .65;
   user-select: none;
 }
-.pico-home .home-mini-editor pre {
+.pico-home .home-product-code pre {
+  flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   padding: 0;
   overflow: hidden;
   font: inherit;
   white-space: pre;
+  background: transparent;
+  border: 0;
 }
-.pico-home .home-mini-output,
-.pico-home .home-mini-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 26px;
-  flex: 0 0 26px;
-  padding: 0 11px;
-  border-top: 1px solid var(--ds-line);
-  font: 10px var(--ds-font-code);
-}
-.pico-home .home-mini-output-label { color: var(--ds-muted); font-size: 9px; letter-spacing: .02em; }
-.pico-home .home-mini-output code { color: var(--syntax-string); font: inherit; }
-.pico-home .home-mini-status { justify-content: space-between; color: var(--ds-muted); }
-.pico-home .home-mini-indicator { width: 6px; height: 6px; border-radius: 50%; background: var(--ds-muted); margin-right: -6px; }
-.pico-home .home-mini-canvas {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 8px 12px;
-  overflow: hidden;
-}
-.pico-home .home-mini-canvas svg {
+.pico-home .home-product-flow {
   display: block;
-  width: 100%;
-  max-width: 300px;
-  height: 100%;
-  max-height: 104px;
+  width: min(100%, 360px);
+  height: auto;
   overflow: visible;
-  fill: none;
 }
-.pico-home .home-mini-canvas .home-mini-node {
+.pico-home .home-product-flow-node {
   fill: var(--ds-panel-raised);
   stroke: var(--accent);
-  stroke-width: 1.25;
+  stroke-width: 2;
+  stroke-linejoin: round;
 }
-.pico-home .home-mini-canvas .home-mini-wire {
+.pico-home .home-product-flow-wire {
+  fill: none;
   stroke: var(--ds-muted);
-  stroke-width: 1.3;
+  stroke-width: 2;
 }
-.pico-home .home-mini-canvas .home-mini-input {
+.pico-home .home-product-flow text {
+  fill: var(--ds-text);
+  font: 20px var(--ds-font-code);
+}
+.pico-home .home-product-logic {
+  display: block;
+  width: min(100%, 330px);
+  height: auto;
+  max-height: 154px;
+  overflow: visible;
+}
+.pico-home .home-product-logic .logic-symbol-outline {
+  fill: var(--ds-panel-raised);
+  stroke: var(--ds-text);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+}
+.pico-home .home-product-logic .logic-symbol-letter {
+  fill: var(--ds-text);
+  font: 650 19px var(--ds-font-code);
+}
+.pico-home .home-product-logic .logic-symbol-detail,
+.pico-home .home-product-logic .logic-switch-arm,
+.pico-home .home-product-logic .logic-bulb-filament {
+  fill: none;
+  stroke: var(--ds-text);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+}
+.pico-home .home-product-logic .logic-signal-caption {
+  fill: var(--ds-muted);
+  font: 12px var(--ds-font-code);
+}
+.pico-home .home-product-logic .logic-bulb-outline,
+.pico-home .home-product-logic .logic-bulb-base {
+  fill: var(--ds-panel-raised);
+  stroke: var(--ds-text);
+  stroke-width: 2.6;
+}
+.pico-home .home-product-logic-wires .is-high { stroke: #6fc6a5; }
+.pico-home .home-product-logic-wires .is-low { stroke: #7597d5; }
+.pico-home .home-product-cpu {
+  display: block;
+  width: min(100%, 340px);
+  height: auto;
+  max-height: 165px;
+  overflow: visible;
+}
+.pico-home .home-product-cpu-wires path {
+  fill: none;
+  stroke: var(--ds-muted);
+  stroke-width: 3;
+  opacity: .7;
+}
+.pico-home .home-product-cpu-block rect {
   fill: var(--ds-panel-raised);
   stroke: var(--ds-line-strong);
-  stroke-width: 1.2;
+  stroke-width: 2;
 }
-.pico-home .home-mini-canvas .home-mini-output-node {
-  fill: var(--ds-panel-raised);
-  stroke: var(--accent);
-  stroke-width: 1.4;
-}
-.pico-home .home-mini-canvas text {
+.pico-home .home-product-cpu-label {
   fill: var(--ds-text);
-  stroke: none;
-  text-anchor: middle;
-  font: 10px var(--ds-font-code);
+  font: 650 15px var(--ds-font-ui);
 }
-.pico-home .home-mini-cpu {
-  display: grid;
-  grid-template-columns: minmax(0, .95fr) minmax(0, 1.3fr);
-  gap: 10px;
-  align-items: stretch;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 11px;
+.pico-home .home-product-cpu-value {
+  fill: var(--accent);
+  font: 16px var(--ds-font-code);
 }
-.pico-home .home-mini-cpu-left {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-}
-.pico-home .home-mini-cpu-step {
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
-  padding: 5px 6px;
-  border: 1px solid var(--ds-line);
-  border-radius: 4px;
-  font-size: 9px;
-}
-.pico-home .home-mini-cpu-step span { color: var(--ds-muted); }
-.pico-home .home-mini-cpu-step code { font: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pico-home .home-mini-cpu-right { display: flex; flex-direction: column; justify-content: center; gap: 8px; min-width: 0; }
-.pico-home .home-mini-cpu-phase { color: var(--ds-muted); font-size: 8px; text-align: center; white-space: nowrap; }
-.pico-home .home-mini-cpu-phase span { color: var(--accent); }
-.pico-home .home-mini-cpu-unit {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  padding: 8px;
-  border: 1px solid var(--accent);
-  border-radius: 5px;
-  text-align: center;
-  font-size: 8px;
-}
-.pico-home .home-mini-cpu-unit strong { padding: 5px 0; background: var(--ds-accent-soft); color: var(--accent); font-size: 11px; }
 .pico-home .site-info-links {
   display: flex;
   flex-wrap: wrap;
