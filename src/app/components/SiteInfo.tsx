@@ -3,6 +3,7 @@ import { ArrowLeft, Code2, FileText, GitBranch, Lightbulb, ShieldCheck, Users } 
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
 import '../styles/site-info.css';
+import '../../styles/info.css';
 
 const pages = [
   { id: 'authors', title: 'Authors', icon: Users },
