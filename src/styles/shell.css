@@ -1,0 +1,532 @@
+/*
+ * Pico design system — shared shell.
+ * App bar, buttons, project tabs, popovers, settings, dialogs, toasts and
+ * consent UI used by every workspace. Loaded after the legacy styles.
+ */
+
+/* ── App bar ─────────────────────────────────────────────── */
+:is(.pico-app, .logic-app, .cpu-app) .topbar,
+.pico-appbar {
+  height: var(--ds-appbar-h);
+  flex: 0 0 var(--ds-appbar-h);
+  min-height: var(--ds-appbar-h);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--ds-line);
+  background: var(--ds-chrome);
+  color: var(--ds-text);
+  font-family: var(--ds-font-ui);
+}
+.pico-appbar-lead { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
+:is(.pico-app, .logic-app, .cpu-app) .topbar .brand-lockup,
+.pico-appbar .brand-lockup {
+  min-width: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 2px;
+  color: var(--ds-text);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.4px;
+}
+:is(.pico-app, .logic-app, .cpu-app) .topbar .brand-mark { width: 24px; height: 24px; margin-right: 8px; filter: none; }
+:is(.pico-app, .logic-app, .cpu-app) .topbar .brand-period { color: var(--accent); }
+.pico-appbar-sep { color: color-mix(in srgb, var(--ds-muted) 55%, transparent); font-size: 18px; font-weight: 300; margin: 0 2px; user-select: none; }
+:is(.pico-app, .logic-app, .cpu-app) .topbar .brand-subtitle,
+.pico-appbar-tool {
+  margin: 0;
+  padding: 3px 8px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-panel);
+  color: var(--ds-muted);
+  font: 600 var(--ds-text-2xs)/1.3 var(--ds-font-code);
+  letter-spacing: .02em;
+  text-transform: none;
+  white-space: nowrap;
+}
+:is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-project-name {
+  width: 180px;
+  min-width: 80px;
+  height: var(--ds-control-h);
+  margin-left: 4px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-text);
+  font-size: var(--ds-text-md);
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+:is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-project-name:hover { background: var(--ds-hover); }
+:is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-project-name:focus { border-color: var(--accent); background: var(--surface-input); outline: none; }
+:is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-project-name:disabled { opacity: .7; }
+:is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-spacer { flex: 1; min-width: 8px; }
+:is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-actions { display: flex; align-items: center; gap: 6px; margin: 0; }
+.pico-appbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 6px;
+  border-left: 1px solid var(--ds-line);
+}
+.pico-appbar-group:first-child { padding-left: 0; border-left: 0; }
+.pico-appbar-run { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; padding-left: 10px; border-left: 1px solid var(--ds-line); }
+
+/* ── Buttons ─────────────────────────────────────────────── */
+:is(.pico-app, .logic-app, .cpu-app) .toolbar-button,
+:is(.pico-app, .logic-app, .cpu-app) .help-button,
+:is(.pico-app, .logic-app, .cpu-app) .topbar-icon,
+.pico-home .toolbar-button {
+  height: var(--ds-control-h);
+  min-height: var(--ds-control-h);
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-md);
+  background: transparent;
+  color: var(--ds-muted);
+  font: 500 var(--ds-text-sm)/1 var(--ds-font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--ds-fast) ease, color var(--ds-fast) ease, border-color var(--ds-fast) ease;
+}
+:is(.pico-app, .logic-app, .cpu-app) .topbar-icon { width: var(--ds-control-h); padding: 0; }
+:is(.pico-app, .logic-app, .cpu-app) .toolbar-button:hover:not(:disabled),
+:is(.pico-app, .logic-app, .cpu-app) .help-button:hover:not(:disabled),
+:is(.pico-app, .logic-app, .cpu-app) .topbar-icon:hover,
+:is(.pico-app, .logic-app, .cpu-app) .topbar-icon.active,
+:is(.pico-app, .logic-app, .cpu-app) .file-menu-anchor .help-button.active,
+.pico-home .toolbar-button:hover {
+  border-color: transparent;
+  background: var(--ds-hover);
+  color: var(--ds-text);
+}
+:is(.pico-app, .logic-app, .cpu-app) .toolbar-button:active:not(:disabled), :is(.pico-app, .logic-app, .cpu-app) .help-button:active:not(:disabled) { background: var(--ds-press); }
+:is(.pico-app, .logic-app, .cpu-app) .toolbar-button:disabled, :is(.pico-app, .logic-app, .cpu-app) .help-button:disabled { opacity: .42; cursor: not-allowed; }
+:is(.pico-app, .logic-app, .cpu-app) .toolbar-button svg, :is(.pico-app, .logic-app, .cpu-app) .help-button svg { flex-shrink: 0; }
+:is(.pico-app, .logic-app, .cpu-app) .topbar .home-button { width: var(--ds-control-h); flex: 0 0 var(--ds-control-h); padding: 0; color: var(--ds-muted); }
+
+:is(.pico-app, .logic-app, .cpu-app) .topbar .compiler-switch {
+  height: var(--ds-control-h);
+  padding: 0 12px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-panel);
+  color: var(--ds-text);
+  font-size: var(--ds-text-xs);
+  font-weight: 600;
+}
+:is(.pico-app, .logic-app, .cpu-app) .topbar .compiler-switch:hover { border-color: var(--accent); background: var(--ds-accent-soft); }
+
+:is(.pico-app, .logic-app, .cpu-app) .run-button,
+:is(.logic-app, .cpu-app) .pico-primary-button {
+  height: var(--ds-control-h);
+  min-width: 0;
+  padding: 0 12px 0 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-accent-fill);
+  color: var(--ds-on-accent);
+  font: 650 var(--ds-text-sm)/1 var(--ds-font-ui);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 22%, transparent) inset, 0 1px 2px rgba(0, 0, 0, .25);
+  cursor: pointer;
+  transition: filter var(--ds-fast) ease, transform var(--ds-fast) ease;
+}
+:is(.logic-app, .cpu-app) .pico-primary-button:hover,
+:is(.pico-app, .logic-app, .cpu-app) .run-button:hover:not(:disabled) { filter: brightness(1.08); transform: none; }
+:is(.pico-app, .logic-app, .cpu-app) .run-button:active:not(:disabled) { filter: brightness(.95); }
+:is(.pico-app, .logic-app, .cpu-app) .run-button:disabled { opacity: .55; cursor: not-allowed; filter: saturate(.6); }
+:is(.pico-app, .logic-app, .cpu-app) .run-button kbd {
+  padding: 2px 5px;
+  border: 1px solid color-mix(in srgb, var(--ds-on-accent) 25%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ds-on-accent) 10%, transparent);
+  color: inherit;
+  font: 500 10px/1 var(--ds-font-code);
+  white-space: nowrap;
+  opacity: .8;
+}
+:is(.pico-app, .logic-app, .cpu-app) .debug-button { border-color: var(--ds-line-strong) !important; color: var(--ds-text) !important; }
+:is(.pico-app, .logic-app, .cpu-app) .debug-button svg { color: var(--accent); }
+:is(.pico-app, .logic-app, .cpu-app) .stop-button { border-color: color-mix(in srgb, var(--ds-danger) 55%, transparent) !important; color: var(--ds-danger) !important; }
+:is(.pico-app, .logic-app, .cpu-app) .stop-button:hover { background: color-mix(in srgb, var(--ds-danger) 12%, transparent) !important; }
+
+:is(.pico-app, .logic-app, .cpu-app) .icon-button, :is(.pico-app, .logic-app, .cpu-app) .small-icon-button {
+  border-radius: var(--ds-radius-sm);
+  color: var(--ds-muted);
+  transition: background-color var(--ds-fast) ease, color var(--ds-fast) ease;
+}
+:is(.pico-app, .logic-app, .cpu-app) .icon-button:hover, :is(.pico-app, .logic-app, .cpu-app) .small-icon-button:hover { background: var(--ds-hover); color: var(--ds-text); }
+
+:is(.pico-app, .logic-app, .cpu-app) .primary-small, :is(.pico-app, .logic-app, .cpu-app) .subtle-button,
+.tutorial-offer .primary-small, .tutorial-offer .subtle-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--ds-radius-md);
+  font: 600 var(--ds-text-sm)/1 var(--ds-font-ui);
+  cursor: pointer;
+}
+:is(.pico-app, .logic-app, .cpu-app) .primary-small, .tutorial-offer .primary-small { border: 1px solid transparent; background: var(--ds-accent-fill); color: var(--ds-on-accent); }
+:is(.pico-app, .logic-app, .cpu-app) .subtle-button, .tutorial-offer .subtle-button { border: 1px solid var(--ds-line-strong); background: transparent; color: var(--ds-text); }
+:is(.pico-app, .logic-app, .cpu-app) .subtle-button:hover:not(:disabled), .tutorial-offer .subtle-button:hover { background: var(--ds-hover); }
+:is(.pico-app, .logic-app, .cpu-app) .subtle-button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Project tabs ────────────────────────────────────────── */
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs {
+  flex: 0 0 var(--ds-tabs-h);
+  height: var(--ds-tabs-h);
+  min-height: var(--ds-tabs-h);
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--ds-line);
+  background: var(--ds-chrome);
+}
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-list { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-list::-webkit-scrollbar { display: none; }
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 240px;
+  margin: 6px 0;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-md);
+  background: transparent;
+  transition: background-color var(--ds-fast) ease;
+}
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-row:hover { background: var(--ds-hover); }
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-row.active {
+  border-color: var(--ds-line-strong);
+  background: var(--ds-panel);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+}
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-row.active::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -7px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+}
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-select {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ds-muted);
+  font: 500 var(--ds-text-sm)/1 var(--ds-font-ui);
+  cursor: pointer;
+}
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-row.active .project-select { color: var(--ds-text); }
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-select svg { flex-shrink: 0; opacity: .75; }
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-delete {
+  position: static;
+  width: 22px;
+  height: 22px;
+  margin: 0 6px 0 -4px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-muted);
+  opacity: 1;
+  cursor: pointer;
+}
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-delete:hover { background: var(--ds-hover); color: var(--ds-text); }
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .new-workspace {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: transparent;
+  color: var(--ds-muted);
+  cursor: pointer;
+}
+:is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .new-workspace:hover { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--ds-accent-soft); }
+
+/* ── Floating panels (menus, settings) ───────────────────── */
+.floating-panel.settings-popover,
+.floating-panel.file-menu {
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-float);
+  color: var(--ds-text);
+  font-family: var(--ds-font-ui);
+}
+.floating-panel.settings-popover { width: 340px; padding: 6px 16px 16px; }
+.settings-popover .settings-title {
+  position: sticky;
+  top: -6px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -6px -16px 4px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ds-line);
+  background: var(--ds-panel-raised);
+}
+.settings-popover .settings-title > div { display: flex; align-items: center; gap: 8px; color: var(--ds-text); }
+.settings-popover .settings-title strong { font-size: var(--ds-text-md); font-weight: 650; }
+.settings-popover .setting-row { min-height: 54px; gap: 16px; border-bottom: 1px solid var(--ds-line); }
+.settings-popover .setting-row strong { color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+.settings-popover .setting-row small { margin-top: 3px; color: var(--ds-muted); font-size: var(--ds-text-xs); line-height: 1.4; }
+.settings-popover .font-setting { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 0; color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
+.settings-popover .font-setting > span { display: flex; justify-content: space-between; }
+.settings-popover .font-setting b { color: var(--accent); font: 500 var(--ds-text-xs) var(--ds-font-code); }
+.settings-popover select,
+.flow-builder select,
+.logic-app .logic-inspector-body select {
+  height: 34px;
+  margin-top: 0;
+  padding: 0 10px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: var(--surface-input);
+  color: var(--ds-text);
+  font: 500 var(--ds-text-sm) var(--ds-font-ui);
+}
+.settings-popover input[type='range'] { width: 100%; accent-color: var(--accent); }
+.settings-popover .reset-layout-button {
+  width: 100%;
+  height: 36px;
+  margin-top: 16px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md);
+  background: transparent;
+  color: var(--ds-text);
+  font: 600 var(--ds-text-sm) var(--ds-font-ui);
+  cursor: pointer;
+}
+.settings-popover .reset-layout-button:hover { background: var(--ds-hover); }
+.settings-popover .settings-foot { bottom: -16px; margin: 14px -16px -16px; padding: 10px 16px; border-top: 1px solid var(--ds-line); background: var(--ds-panel-raised); color: var(--ds-muted); font-size: var(--ds-text-xs); }
+
+.floating-panel.file-menu { width: 260px; padding: 6px; }
+.file-menu .file-menu-project { display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--ds-line); color: var(--ds-muted); font-size: var(--ds-text-xs); font-weight: 600; }
+.file-menu .file-menu-project input { width: 100%; min-width: 0; height: 34px; padding: 0 10px; border: 1px solid var(--ds-line-strong); background: var(--surface-input); color: var(--ds-text); font-size: var(--ds-text-sm); border-color: var(--ds-line-strong); border-radius: var(--ds-radius-md); }
+.file-menu button { min-height: 36px; gap: 10px; padding: 0 10px; border-radius: var(--ds-radius-md); color: var(--ds-text); font-size: var(--ds-text-sm); }
+.file-menu button svg { color: var(--ds-muted); }
+.file-menu button:hover { background: var(--ds-hover); }
+
+/* Switch */
+:is(.pico-app, .logic-app, .cpu-app) .switch, .flow-settings .switch {
+  width: 36px;
+  height: 20px;
+  padding: 2px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-pill);
+  background: var(--surface-input);
+}
+:is(.pico-app, .logic-app, .cpu-app) .switch span { width: 14px; height: 14px; background: var(--ds-muted); box-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
+:is(.pico-app, .logic-app, .cpu-app) .switch.checked { border-color: transparent; background: var(--accent); }
+:is(.pico-app, .logic-app, .cpu-app) .switch.checked span { background: var(--ds-on-accent); }
+
+/* Theme picker */
+.theme-picker { margin-top: 14px; }
+.theme-picker .theme-search, .theme-picker input[type='search'] { border-radius: var(--ds-radius-md); }
+.theme-picker .theme-option { border-radius: var(--ds-radius-md); }
+.theme-picker .theme-option.active { box-shadow: inset 0 0 0 1px var(--accent); background: var(--ds-accent-soft); }
+.theme-picker .theme-group-label { color: var(--ds-muted); font: 600 var(--ds-text-2xs)/1 var(--ds-font-code); letter-spacing: .06em; text-transform: uppercase; }
+
+/* ── Errors & notices ────────────────────────────────────── */
+:is(.pico-app, .logic-app, .cpu-app) .project-name-error {
+  top: calc(var(--ds-appbar-h) + 6px);
+  border-color: color-mix(in srgb, var(--ds-danger) 55%, var(--ds-line));
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-float);
+  font-size: var(--ds-text-sm);
+}
+:is(.pico-app, .logic-app, .cpu-app) .autosave-error, .flow-builder .autosave-error {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 300;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--ds-danger) 55%, var(--ds-line));
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-float);
+  font-size: var(--ds-text-sm);
+}
+
+/* ── Updates ─────────────────────────────────────────────── */
+.update-trigger .update-unread-dot { box-shadow: 0 0 0 2px var(--ds-chrome); }
+.update-toast {
+  top: auto;
+  bottom: 20px;
+  right: 20px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-float);
+  font-family: var(--ds-font-ui);
+}
+.update-toast .update-toast-icon { border-radius: var(--ds-radius-md); background: var(--ds-accent-soft); color: var(--accent); }
+.update-toast p { color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.5; text-transform: none; }
+.update-toast .update-toast-heading { color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 650; }
+.update-dialog-backdrop { background: color-mix(in srgb, #000 55%, transparent); backdrop-filter: blur(3px); }
+.update-dialog { border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-xl); background: var(--ds-panel-raised); box-shadow: var(--ds-shadow-dialog); }
+.update-dialog-header, .update-dialog-footer { border-color: var(--ds-line); }
+.update-dialog-mark { border-radius: var(--ds-radius-md); background: var(--ds-accent-soft); color: var(--accent); }
+.update-dialog-footer button {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-accent-fill);
+  color: var(--ds-on-accent);
+  font-weight: 650;
+}
+/* Narrow screens: the consent card owns the bottom edge, so updates sit under the app bar. */
+@media (max-width: 960px) {
+  .update-toast { top: calc(var(--ds-appbar-h) + 10px); bottom: auto; right: 12px; }
+}
+@media (max-width: 520px) {
+  .update-toast { left: 12px; width: auto; }
+}
+
+/* ── Tutorial offer & guided tour ────────────────────────── */
+.tutorial-offer-backdrop { background: color-mix(in srgb, #000 58%, transparent); backdrop-filter: blur(3px); }
+.tutorial-offer {
+  width: min(400px, 100%);
+  padding: 28px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-xl);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-dialog);
+}
+.tutorial-offer h2 { font-size: var(--ds-text-xl); font-weight: 650; letter-spacing: -.01em; }
+.tutorial-offer p { font-size: var(--ds-text-md); }
+.tutorial-offer-actions { margin-top: 24px; }
+.tutorial-card {
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-xl);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-dialog);
+}
+.tutorial-card .tutorial-primary {
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-accent-fill);
+  color: var(--ds-on-accent);
+}
+.tutorial-card .tutorial-secondary, .tutorial-card .tutorial-icon { border-radius: var(--ds-radius-md); }
+
+/* ── Cookie consent ──────────────────────────────────────── */
+body .pico-cookie-banner {
+  left: 20px;
+  right: auto;
+  bottom: 20px;
+  width: min(560px, calc(100vw - 40px));
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-dialog);
+}
+body .pico-cookie-banner p { font-size: var(--ds-text-sm); color: var(--ds-muted); }
+body .pico-cookie-banner .pico-cookie-actions { justify-content: flex-end; gap: 8px; }
+body .pico-cookie-btn { min-height: 36px; padding: 0 14px; border-radius: var(--ds-radius-md); font-size: var(--ds-text-sm); }
+body .pico-cookie-modal { border-radius: var(--ds-radius-xl); box-shadow: var(--ds-shadow-dialog); }
+@media (max-width: 640px) {
+  body .pico-cookie-banner { left: 10px; right: 10px; bottom: 10px; width: auto; padding: 16px; }
+  body .pico-cookie-banner .pico-cookie-actions { justify-content: stretch; }
+  body .pico-cookie-banner .pico-cookie-btn { flex: 1 1 auto; }
+}
+
+/* ── Mobile app bar ──────────────────────────────────────── */
+@media (max-width: 1150px) {
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-actions .toolbar-button > span:not(.update-unread-dot) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-actions .toolbar-button { width: var(--ds-control-h); padding: 0; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .run-button kbd { display: none; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .pico-appbar-tool { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .pico-appbar-sep { display: none; }
+}
+@media (max-width: 1000px) {
+  :is(.pico-app, .logic-app, .cpu-app) .topbar { height: auto; flex-wrap: nowrap; padding-block: 0; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .compiler-switch { order: 0; flex-basis: auto; width: auto; }
+}
+@media (max-width: 860px) {
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .compiler-switch { width: var(--ds-control-h); padding: 0; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .compiler-switch > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .help-button > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .help-button > svg:last-child:not(:first-child) { display: none; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .help-button { width: var(--ds-control-h); padding: 0; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .debug-button > span, :is(.pico-app, .logic-app, .cpu-app) .topbar .stop-button > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .debug-button, :is(.pico-app, .logic-app, .cpu-app) .topbar .stop-button { width: var(--ds-control-h); padding: 0; }
+}
+@media (max-width: 760px) {
+  :is(.pico-app, .logic-app, .cpu-app) .topbar { gap: 2px; padding: 0 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar::-webkit-scrollbar { display: none; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-project-name { display: none; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .brand-lockup > span:not(.brand-period) { font-size: 15px; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-spacer { min-width: 4px; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-actions { order: 0; flex-basis: auto; margin: 0; gap: 2px; }
+  .pico-appbar-group { padding-left: 2px; border-left: 0; gap: 0; }
+  .pico-appbar-run { margin-left: 2px; padding-left: 4px; border-left: 0; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .toolbar-button, :is(.pico-app, .logic-app, .cpu-app) .topbar .help-button, :is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-icon { width: 34px; min-width: 34px; height: 34px; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .run-button { height: 34px; padding: 0 12px; }
+  :is(.pico-app, .logic-app, .cpu-app) .workspace-tabs { padding: 0 6px; }
+  .pico-appbar-lead { flex-shrink: 0; }
+}
+@media (max-width: 860px) {
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .flow-convert-button > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .flow-convert-button { width: var(--ds-control-h); padding: 0; }
+}
+@media (max-width: 520px) {
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .brand-lockup > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .brand-mark { margin-right: 2px; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .toolbar-button, :is(.pico-app, .logic-app, .cpu-app) .topbar .help-button, :is(.pico-app, .logic-app, .cpu-app) .topbar .topbar-icon { width: 31px; min-width: 31px; }
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .run-button { padding: 0 10px; }
+}
+/* Legacy sidebar rules hid project names on small screens; tabs keep them. */
+@media (max-width: 1150px) {
+  :is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-select { width: auto; justify-content: flex-start; padding: 0 10px; }
+  :is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-select span { display: inline; max-width: 160px; }
+  :is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-delete { display: grid; }
+  :is(.pico-app, .logic-app, .cpu-app) .workspace-tabs .project-row.active { background: var(--ds-panel); border-color: var(--ds-line-strong); }
+}
+
+:is(.logic-app, .cpu-app) .pico-primary-button { background: var(--ds-accent-fill) !important; color: var(--ds-on-accent) !important; border: 1px solid transparent; }
+.pico-appbar-alert { padding: 4px 10px; border: 1px solid color-mix(in srgb, var(--ds-danger) 55%, var(--ds-line)); border-radius: var(--ds-radius-pill); color: var(--ds-danger); font-size: var(--ds-text-xs); white-space: nowrap; }
+/* Phones: keep Run on screen. The compiler switch stays reachable from Home. */
+@media (max-width: 520px) {
+  :is(.pico-app, .logic-app, .cpu-app) .topbar .compiler-switch { display: none; }
+}
+@media (max-width: 430px) {
+  .pico-app .topbar .run-button { width: 34px; padding: 0; }
+  .pico-app .topbar .run-button > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
