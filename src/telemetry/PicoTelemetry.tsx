@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './cookie-consent.css';
+import '../styles/consent.css';
+import { BarChart3, Cookie, Lock, SlidersHorizontal, X } from 'lucide-react';
 import { loadSettings } from '../storage/settings';
 import { attributeSeconds, buildUsageBatch, acknowledgeUsageBatch, type UsageBatch } from './usage-batches';
 
@@ -232,10 +234,11 @@ export function PicoTelemetry() {
   return <>
     {isHome && choice && !editing && <button className="pico-cookie-reopen" type="button"
       onClick={() => { setDraft(choice); setEditing(true); }} aria-label="Open cookie settings">
-      Cookie Settings
+      <Cookie size={14} aria-hidden="true" /><span>Cookie Settings</span>
     </button>}
 
     {isHome && !choice && !editing && <section className="pico-cookie-banner" aria-label="Cookie consent">
+      <span className="pico-cookie-banner-icon" aria-hidden="true"><Cookie size={18} /></span>
       <p>
         We use cookies to remember your settings and improve Pico. Choose what works for you. <a href="#cookies">Cookie Policy</a>
       </p>
@@ -262,22 +265,25 @@ export function PicoTelemetry() {
             <h2 id="pico-cookie-title">Cookie Settings</h2>
           </div>
           {choice && <button className="pico-cookie-close" type="button"
-            onClick={() => setEditing(false)} aria-label="Close cookie settings">×</button>}
+            onClick={() => setEditing(false)} aria-label="Close cookie settings"><X size={18} aria-hidden="true" /></button>}
         </header>
         <p id="pico-cookie-description" className="pico-cookie-description">
           Choose how Pico uses optional cookies. You can update your choices at any time.
         </p>
         <div className="pico-cookie-categories">
           <div className="pico-cookie-category">
+            <span className="pico-cookie-icon" aria-hidden="true"><Lock size={16} /></span>
             <div><strong>Strictly Necessary</strong><p>Remember your cookie choices.</p></div>
             <span className="pico-cookie-required">Always active</span>
           </div>
           <label className="pico-cookie-category">
+            <span className="pico-cookie-icon" aria-hidden="true"><BarChart3 size={16} /></span>
             <div><strong>Analytics</strong><p>Measure feature usage to improve Pico.</p></div>
             <input aria-label="Allow analytics cookies" type="checkbox" checked={draft.analytics}
               onChange={event => setDraft(v => ({...v, analytics:event.target.checked}))} />
           </label>
           <label className="pico-cookie-category">
+            <span className="pico-cookie-icon" aria-hidden="true"><SlidersHorizontal size={16} /></span>
             <div><strong>Preferences</strong><p>Save your settings for future visits in this browser.</p></div>
             <input aria-label="Allow preference cookies" type="checkbox" checked={draft.preferences}
               onChange={event => setDraft(v => ({...v, preferences:event.target.checked}))} />
