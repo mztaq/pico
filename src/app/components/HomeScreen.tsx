@@ -9,7 +9,6 @@ import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
 import { SoundButton } from './SoundToggle';
 import { HomeGroup, WorkspaceChoice } from './home/HomeWorkspace';
-import { PicoSignalCore } from './home/PicoSignalCore';
 
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
@@ -25,7 +24,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     <div className="home-inner">
       <div className="home-hero">
         <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
-        <PicoSignalCore />
         <h1>Choose your workspace</h1>
       </div>
       <div className="compiler-choices">
