@@ -383,9 +383,9 @@
 /* ── Updates ─────────────────────────────────────────────── */
 .update-trigger .update-unread-dot { box-shadow: 0 0 0 2px var(--ds-chrome); }
 .update-toast {
-  top: auto;
-  bottom: 20px;
-  right: 20px;
+  top: 16px;
+  bottom: auto;
+  right: 18px;
   border: 1px solid var(--ds-line-strong);
   border-radius: var(--ds-radius-lg);
   background: var(--ds-panel-raised);
@@ -410,7 +410,7 @@
 }
 /* Narrow screens: the consent card owns the bottom edge, so updates sit under the app bar. */
 @media (max-width: 960px) {
-  .update-toast { top: calc(var(--ds-appbar-h) + 10px); bottom: auto; right: 12px; }
+  .update-toast { top: max(12px, env(safe-area-inset-top)); bottom: auto; right: 12px; }
 }
 @media (max-width: 520px) {
   .update-toast { left: 12px; width: auto; }
