@@ -10,7 +10,7 @@ export interface ChangelogEntry {
 
 export const LAST_SEEN_UPDATE_KEY = 'pico.updates.lastSeen.v1';
 const POLL_INTERVAL_MS = 30_000;
-const EXIT_ANIMATION_MS = 240;
+const EXIT_ANIMATION_MS = 180;
 
 export function parseChangelog(contents: string): ChangelogEntry[] {
   return contents.split(/\r?\n/).flatMap((line, lineIndex) => {
@@ -118,6 +118,10 @@ export function UpdateCenter() {
   const dismissToast = () => {
     if (!toast || exiting) return;
     markSeen(toast);
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setToast(null);
+      return;
+    }
     setExiting(true);
     exitTimer.current = window.setTimeout(() => {
       setToast(current => current?.id === toast.id ? null : current);
