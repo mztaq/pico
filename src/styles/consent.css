@@ -1,18 +1,22 @@
-/* Cookie consent — banner card, reopen chip and settings dialog. */
+/* Full-width, fixed-bottom consent bar; keep settings dialog unchanged. */
 body .pico-cookie-banner {
-  left: 20px;
-  right: auto;
-  bottom: 20px;
-  width: min(540px, calc(100vw - 40px));
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
-  align-items: start;
-  gap: 4px 14px;
-  padding: 18px 20px;
-  border: 1px solid var(--ds-line-strong);
-  border-radius: var(--ds-radius-lg);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px clamp(18px, 3vw, 46px);
+  border: 0;
+  border-top: 1px solid var(--ds-line-strong);
+  border-radius: 0;
   background: var(--ds-panel-raised);
-  box-shadow: var(--ds-shadow-dialog);
+  box-shadow: 0 -8px 28px rgba(0,0,0,.18);
   font-family: var(--ds-font-ui);
 }
 .pico-cookie-banner-icon,
@@ -25,9 +29,9 @@ body .pico-cookie-banner {
   background: var(--ds-accent-soft);
   color: var(--accent);
 }
-body .pico-cookie-banner p { margin: 2px 0 0; color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.6; }
-body .pico-cookie-banner .pico-cookie-error { grid-column: 2; }
-body .pico-cookie-banner .pico-cookie-actions { grid-column: 1 / -1; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+body .pico-cookie-banner p { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.5; }
+body .pico-cookie-banner .pico-cookie-error { flex: 0 1 auto; }
+body .pico-cookie-banner .pico-cookie-actions { flex: 0 0 auto; justify-content: flex-end; gap: 8px; margin: 0; }
 
 body .pico-cookie-btn {
   min-height: 36px;
@@ -135,8 +139,16 @@ body .pico-cookie-modal-actions {
   body .pico-cookie-btn { transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease, transform 90ms ease, filter var(--ds-fast) ease; }
 }
 
+@media (max-width: 800px) {
+  body .pico-cookie-banner { flex-wrap: wrap; }
+  body .pico-cookie-banner .pico-cookie-actions { margin-left: auto; }
+}
+
 @media (max-width: 640px) {
-  body .pico-cookie-banner { left: 10px; right: 10px; bottom: 10px; width: auto; padding: 16px; }
+  body .pico-cookie-banner { left: 0; right: 0; bottom: 0; width: 100%; padding: 12px 16px max(12px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px 12px; }
+  body .pico-cookie-banner-icon { width: 28px; height: 28px; }
+  body .pico-cookie-banner .pico-cookie-actions { grid-column: 1 / -1; flex-wrap: wrap; width: 100%; }
+  body .pico-cookie-banner .pico-cookie-error { grid-column: 1 / -1; }
   body .pico-cookie-banner .pico-cookie-actions .pico-cookie-btn { flex: 1 1 auto; }
   body .pico-cookie-modal-head { padding: 18px 18px 0; }
   body .pico-cookie-description { margin-inline: 18px; }
