@@ -1,0 +1,139 @@
+/* Home — workspace launcher */
+.pico-home {
+  position: relative;
+  height: 100dvh;
+  overflow: auto;
+  display: block;
+  padding: 0;
+  background:
+    radial-gradient(1200px 520px at 12% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%),
+    var(--bg);
+  color: var(--ds-text);
+  font-family: var(--ds-font-ui);
+}
+.pico-home .home-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 60px;
+  padding: 0 max(20px, calc((100% - 1120px) / 2));
+  border: 0;
+  background: transparent;
+}
+.pico-home .home-brand { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 44px; font-weight: 750; letter-spacing: -.8px; }
+.pico-home .home-brand img { width: 48px; height: 48px; }
+.pico-home .home-updates { position: absolute; right: max(20px, calc((100% - 1120px) / 2)); top: 0; height: 60px; }
+
+.home-inner { width: min(1120px, 100%); margin: 0 auto; padding: 78px 20px 40px; }
+.home-hero { width: 100%; max-width: none; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
+.pico-home h1 { margin: 0; font-size: clamp(30px, 3vw, 42px); font-weight: 700; line-height: 1.12; letter-spacing: -.04em; }
+
+.pico-home .compiler-choices { width: 100%; display: flex; flex-direction: column; gap: 36px; }
+.home-group-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--ds-line); }
+.pico-home .home-group-label { color: var(--ds-text); font-size: 18px; font-weight: 700; line-height: 1.3; }
+.pico-home .home-group-detail { color: var(--ds-muted); font-size: 12px; font-weight: 400; line-height: 1.4; }
+.home-group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.home-group:nth-child(2) .home-group-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.home-group-games .home-group-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pico-home .home-game-preview .home-game-packet { fill: var(--accent); stroke: none; }
+
+.pico-home .compiler-choice {
+  position: relative;
+  display: flex; flex-direction: column; align-items: stretch;
+  min-width: 0; min-height: 0; gap: 0; padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel);
+  color: var(--ds-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--ds-fast) var(--ds-ease);
+}
+.pico-home .compiler-choice:hover { border-color: color-mix(in srgb, var(--accent) 70%, var(--ds-line-strong)); }
+.pico-home .compiler-choice:active { transform: translateY(0); }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .pico-home .compiler-choice { transition: border-color var(--ds-fast) var(--ds-ease), transform var(--ds-base) var(--ds-ease); }
+  .pico-home .compiler-choice:hover { transform: translateY(-2px); }
+}
+.pico-home .compiler-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.compiler-choice-stage {
+  display: grid; place-items: center;
+  height: 132px; padding: 18px 22px;
+  border-bottom: 1px solid var(--ds-line);
+  background:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 13%, transparent) 1px, transparent 0) 0 0 / 16px 16px,
+    var(--ds-sunken);
+}
+.compiler-choice-stage .compiler-choice-preview { width: 100%; max-width: 340px; }
+.pico-home .compiler-choice-stage pre {
+  justify-self: stretch; margin: 0; padding: 12px 14px; overflow: hidden;
+  border: 1px solid var(--ds-line); border-radius: var(--ds-radius-md);
+  background: var(--editor-bg, var(--bg)); font: 12.5px/1.75 var(--ds-font-code);
+  max-width: none;
+}
+.pico-home .home-chart-preview { height: 76px; fill: var(--ds-panel-raised); stroke: var(--accent); stroke-width: 1.25; overflow: visible; }
+.pico-home .home-chart-preview .home-chart-link { fill: none; stroke: var(--ds-muted); }
+.pico-home .home-chart-preview text { fill: var(--ds-text); stroke: none; text-anchor: middle; font: 13px var(--ds-font-code); }
+.pico-home .home-chart-preview .home-chart-output { fill: var(--syntax-string); font-size: 11px; }
+
+.compiler-choice-copy { display: flex; flex-direction: column; flex: 1; padding: 18px 20px 20px; }
+.pico-home .compiler-choice-title { display: flex; align-items: center; gap: 10px; justify-content: flex-start; }
+.compiler-choice-icon {
+  display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px;
+  border-radius: var(--ds-radius-md); background: var(--ds-accent-soft); color: var(--accent); font-style: normal;
+}
+.pico-home .compiler-choice h2 { margin: 0; font-size: var(--ds-text-lg); font-weight: 650; letter-spacing: -.01em; }
+.compiler-choice-tag { margin-left: auto; padding: 3px 7px; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); color: var(--ds-muted); font: 500 var(--ds-text-2xs)/1 var(--ds-font-code); }
+.pico-home .compiler-choice p { margin: 10px 0 0; color: var(--ds-muted); font-size: var(--ds-text-md); line-height: 1.55; }
+
+.pico-home .site-info-links {
+  display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 4px 18px;
+  width: 100%; margin: 48px 0 0; padding: 20px 0 0;
+  border-top: 1px solid var(--ds-line);
+}
+.pico-home .site-info-links a { color: var(--ds-muted); font-size: var(--ds-text-sm); }
+.pico-home .site-info-links a:hover { color: var(--ds-text); }
+
+/* Keep policy links visible above the consent bar without changing the cards. */
+body:has(.pico-cookie-banner) .pico-home .site-info-links {
+  margin-top: 12px;
+  padding-top: 10px;
+}
+body:has(.pico-cookie-banner) .pico-home .home-inner {
+  padding-bottom: 100px;
+}
+
+
+@media (max-width: 960px) {
+  .home-group:nth-child(2) .home-group-grid, .home-group-games .home-group-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .pico-home .home-updates .update-trigger span:not(.update-unread-dot) { display: none; }
+  .pico-home .home-updates .update-trigger { padding-inline: 8px; }
+}
+@media (max-width: 640px) {
+  .pico-home .home-nav { height: 62px; padding: 0 16px; }
+  .pico-home .home-brand { gap: 8px; font-size: 34px; }
+  .pico-home .home-brand img { width: 38px; height: 38px; }
+  .pico-home .home-updates { right: 12px; height: 62px; }
+  .pico-home h1 { font-size: clamp(27px, 7vw, 36px); }
+  .home-inner { padding: 80px 16px 32px; }
+  .home-hero { gap: 20px; margin-bottom: 24px; }
+  body:has(.pico-cookie-banner) .pico-home .home-inner { padding-bottom: 185px; }
+  .home-group-head { flex-direction: column; gap: 2px; }
+  .home-group-grid, .home-group:nth-child(2) .home-group-grid, .home-group-games .home-group-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .compiler-choice-stage { height: 112px; padding: 14px 16px; }
+  .compiler-choice-copy { padding: 16px; }
+  .pico-home .compiler-choice:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pico-home .compiler-choice { transition: none; }
+  .pico-home .compiler-choice:hover { transform: none; }
+}
