@@ -2,7 +2,10 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './app/App';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
+import { installSoundEffects } from './app/sound';
 import './styles/tokens.css';
+import './styles/motion.css';
+import './styles/overlays.css';
 import './app/styles/accessibility.css';
 
 function SkipToContent() {
@@ -14,6 +17,7 @@ function SkipToContent() {
     target.focus();
   }}>Skip to content</a>;
 }
+installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />

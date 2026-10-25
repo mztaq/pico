@@ -7,6 +7,7 @@ import { cssVariables, getTheme } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
+import { SoundButton } from './SoundToggle';
 
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
@@ -18,7 +19,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   return <main className="pico-home" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
     <div className="home-nav">
       <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
-      <div className="home-updates"><UpdateCenter /></div>
+      <div className="home-updates"><SoundButton /><UpdateCenter /></div>
     </div>
     <div className="home-inner">
       <div className="home-hero">

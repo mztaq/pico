@@ -1,0 +1,147 @@
+/* Cookie consent — banner card, reopen chip and settings dialog. */
+body .pico-cookie-banner {
+  left: 20px;
+  right: auto;
+  bottom: 20px;
+  width: min(540px, calc(100vw - 40px));
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-dialog);
+  font-family: var(--ds-font-ui);
+}
+.pico-cookie-banner-icon,
+.pico-cookie-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-accent-soft);
+  color: var(--accent);
+}
+body .pico-cookie-banner p { margin: 2px 0 0; color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.6; }
+body .pico-cookie-banner .pico-cookie-error { grid-column: 2; }
+body .pico-cookie-banner .pico-cookie-actions { grid-column: 1 / -1; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+body .pico-cookie-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--ds-radius-md);
+  font: 600 var(--ds-text-sm)/1 var(--ds-font-ui);
+}
+body .pico-cookie-btn:active:not(:disabled) { transform: scale(.97); }
+body .pico-cookie-outline { border-color: var(--ds-line-strong); color: var(--ds-text); }
+body .pico-cookie-outline:hover:not(:disabled) { border-color: var(--accent); background: var(--ds-accent-soft); }
+body .pico-cookie-neutral { border-color: var(--ds-line-strong); background: var(--ds-panel); color: var(--ds-text); }
+body .pico-cookie-neutral:hover:not(:disabled) { background: var(--ds-hover); }
+body .pico-cookie-primary { background: var(--ds-accent-fill); color: var(--ds-on-accent); }
+
+body .pico-cookie-reopen {
+  right: 16px;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  height: 34px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-panel-raised);
+  color: var(--ds-muted);
+  font: 600 var(--ds-text-xs)/1 var(--ds-font-ui);
+  box-shadow: var(--ds-shadow-float);
+}
+body .pico-cookie-reopen svg { color: var(--accent); }
+body .pico-cookie-reopen:hover { border-color: var(--accent); color: var(--ds-text); }
+
+/* Settings dialog */
+body .pico-cookie-overlay { background: color-mix(in srgb, #000 58%, transparent); backdrop-filter: blur(4px); }
+body .pico-cookie-modal {
+  width: min(100%, 520px);
+  padding: 0;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-xl);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-dialog);
+  font-family: var(--ds-font-ui);
+}
+body .pico-cookie-modal-head {
+  align-items: center;
+  padding: 22px 24px 0;
+}
+body .pico-cookie-eyebrow { color: var(--accent); font: 600 var(--ds-text-2xs)/1 var(--ds-font-code); letter-spacing: .08em; }
+body .pico-cookie-modal h2 { margin: 8px 0 0; color: var(--ds-text); font-size: var(--ds-text-xl); font-weight: 650; letter-spacing: -.01em; }
+body .pico-cookie-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ds-radius-md);
+  color: var(--ds-muted);
+}
+body .pico-cookie-close:hover { background: var(--ds-hover); color: var(--ds-text); }
+body .pico-cookie-description { margin: 10px 24px 18px; color: var(--ds-muted); font-size: var(--ds-text-sm); }
+
+body .pico-cookie-categories { display: flex; flex-direction: column; gap: 8px; margin: 0 24px; border: 0; }
+body .pico-cookie-category {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel);
+  transition: border-color var(--ds-fast) ease, background-color var(--ds-fast) ease;
+}
+body label.pico-cookie-category:hover { border-color: var(--ds-line-strong); }
+body label.pico-cookie-category:has(input:checked) { border-color: color-mix(in srgb, var(--accent) 55%, var(--ds-line)); background: color-mix(in srgb, var(--accent) 6%, var(--ds-panel)); }
+body .pico-cookie-category strong { margin-bottom: 2px; color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 650; }
+body .pico-cookie-category p { color: var(--ds-muted); font-size: var(--ds-text-xs); }
+body .pico-cookie-required {
+  padding: 4px 10px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-pill);
+  color: var(--ds-muted);
+  font: 600 var(--ds-text-2xs)/1 var(--ds-font-code);
+  letter-spacing: .03em;
+}
+body .pico-cookie-category input[type='checkbox'] { width: 38px; height: 22px; border-color: var(--ds-line-strong); background: var(--surface-input); }
+body .pico-cookie-category input[type='checkbox']:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
+body .pico-cookie-category input[type='checkbox']:checked { border-color: transparent; background: var(--accent); }
+body .pico-cookie-category input[type='checkbox']:checked::after { background: var(--ds-on-accent); }
+body .pico-cookie-category input[type='checkbox']::after { transition: transform .2s var(--ds-ease), background-color .2s ease; }
+
+body .pico-cookie-policy { margin: 16px 24px; font-size: var(--ds-text-sm); }
+body .pico-cookie-modal .pico-cookie-error { margin: 0 24px 12px; }
+body .pico-cookie-modal-actions {
+  gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--ds-line);
+  background: var(--ds-panel);
+  border-radius: 0 0 var(--ds-radius-xl) var(--ds-radius-xl);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body .pico-cookie-banner { animation: ds-rise .35s var(--ds-ease) .4s both; }
+  body .pico-cookie-overlay { animation: ds-fade .18s ease both; }
+  body .pico-cookie-modal { animation: ds-pop .22s var(--ds-ease) both; }
+  body .pico-cookie-btn { transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease, transform 90ms ease, filter var(--ds-fast) ease; }
+}
+
+@media (max-width: 640px) {
+  body .pico-cookie-banner { left: 10px; right: 10px; bottom: 10px; width: auto; padding: 16px; }
+  body .pico-cookie-banner .pico-cookie-actions .pico-cookie-btn { flex: 1 1 auto; }
+  body .pico-cookie-modal-head { padding: 18px 18px 0; }
+  body .pico-cookie-description { margin-inline: 18px; }
+  body .pico-cookie-categories { margin-inline: 18px; }
+  body .pico-cookie-policy { margin-inline: 18px; }
+  body .pico-cookie-modal-actions { padding: 14px 18px; }
+  body .pico-cookie-modal-actions .pico-cookie-btn { flex: 1 1 auto; }
+}

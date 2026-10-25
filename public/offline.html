@@ -1,2 +1,33 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#8179ef"><title>Pico | Offline</title><style>html{font-family:system-ui;color-scheme:dark;background:#1e1e2e;color:#cdd6f4}body{min-height:90vh;display:grid;place-items:center;text-align:center;padding:1.5rem}main{max-width:420px}img{width:60px}p{line-height:1.6;color:#bac2de}a{display:inline-block;background:#cba6f7;color:#11111b;padding:.8rem 1.4rem;border-radius:6px;text-decoration:none;font-weight:700}</style></head><body><main><img src="/pico-logo.svg" alt=""><h1>Pico is offline</h1><p>Reconnect to open workspaces and load Python runtime files. Local projects remain stored in your browser.</p><a href="/">Try again</a></main></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1e1e2e">
+<title>Pico | Offline</title>
+<style>
+:root{color-scheme:dark;--bg:#1e1e2e;--panel:#252536;--line:#3a3b52;--text:#cdd6f4;--muted:#a6adc8;--accent:#cba6f7;--on-accent:#11111b}
+*{box-sizing:border-box}
+html{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 1px 1px,rgba(205,214,244,.08) 1px,transparent 0) 0 0/22px 22px,radial-gradient(800px 360px at 15% 0%,rgba(203,166,247,.12),transparent 70%),var(--bg)}
+main{width:min(420px,100%);padding:32px 28px 28px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:0 24px 64px -12px rgba(0,0,0,.55)}
+.brand{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;letter-spacing:-.5px}
+.brand img{width:28px;height:28px}.brand span{color:var(--accent)}
+.status{display:inline-flex;align-items:center;gap:8px;margin:28px 0 12px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font:600 11px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase}
+.status::before{content:"";width:7px;height:7px;border-radius:50%;background:#f38ba8}
+h1{margin:0 0 10px;font-size:26px;font-weight:650;letter-spacing:-.02em}
+p{margin:0 0 24px;color:var(--muted);line-height:1.6;font-size:15px}
+a{display:inline-flex;align-items:center;justify-content:center;width:100%;height:42px;border-radius:8px;background:var(--accent);color:var(--on-accent);font-weight:650;text-decoration:none}
+a:hover{filter:brightness(1.08)}a:focus-visible{outline:2px solid var(--text);outline-offset:3px}
+</style>
+</head>
+<body>
+<main>
+<div class="brand"><img src="/pico-logo.svg" alt=""><b>Pico<span>.</span></b></div>
+<div class="status">No connection</div>
+<h1>Pico is offline</h1>
+<p>Reconnect to open workspaces and load Python runtime files. Local projects remain stored in your browser.</p>
+<a href="/">Try again</a>
+</main>
+</body>
+</html>
