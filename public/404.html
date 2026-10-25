@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
   <title>404 | Pico</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Fredoka:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Archivo+Black&family=Syne:wght@600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Rubik+Mono+One&family=Unbounded:wght@500;700;900&family=Righteous&family=Chakra+Petch:wght@600;700&family=Outfit:wght@600;700;800&family=Press+Start+2P&display=swap');
     :root{color-scheme:dark;font-family:"DM Sans",system-ui,sans-serif;--bg:#1e1e2e;--surface:#181825;--text:#cdd6f4;--muted:#9ba0bb;--accent:#cba6f7;--border:#393b4d;--soft:#222438;--button-text:#080a10;--headline:"Space Grotesk",sans-serif;--numeral:"Archivo Black",sans-serif;background:var(--bg);color:var(--text)}
     *{box-sizing:border-box}
     body{margin:0;min-height:100svh;background:var(--bg);overflow-x:hidden}
@@ -71,20 +71,22 @@
     .status{background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--bg)));-webkit-background-clip:text;background-clip:text;color:transparent}
     .shell[data-rare="stamp"] .status{color:var(--accent);background:none}
     .shell::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--text) 7%,transparent) 1px,transparent 0) 0 0/22px 22px}
-    /* Keep the error page steady and aligned with the workspace shell. */
-    .shell{padding:0;background:var(--bg)}
-    .brand{height:60px;width:100%;padding:0 max(24px,calc((100% - 1120px)/2));border-bottom:1px solid var(--border);font-size:20px}
-    .main,.shell[data-layout] .main{justify-content:center;align-items:center;min-height:0;padding:48px 24px}
-    .content,.shell[data-layout] .content{width:min(100%,720px);align-items:flex-start;text-align:left;transform:none}
-    .status,.shell[data-rare] .status{align-self:flex-start;order:0;margin:0 0 12px;padding:0;border:0;background:none;color:var(--accent);font:700 clamp(64px,12vw,112px)/1 "JetBrains Mono",monospace;letter-spacing:-.09em;transform:none}
-    h1,.shell[data-layout] h1{order:1;margin:0 0 12px;font:700 clamp(28px,4vw,43px)/1.16 "DM Sans",sans-serif;letter-spacing:-.04em}
-    .sub,.shell[data-layout] .sub{order:2;font-size:16px}
-    .actions,.shell[data-layout] .actions{order:4}
-    .back{border-radius:10px;padding:11px 18px;transition:filter .15s ease}
-    .back:hover{transform:none}
-    .shell::before,.scatter{display:none}
-    .conversation{order:3}
-    @media(max-width:720px){.brand{padding:0 20px}.main{padding:32px 20px}.status,.shell[data-rare] .status{font-size:clamp(60px,16vw,90px)}}
+    @media(prefers-reduced-motion:no-preference){.content>*{animation:rise .45s cubic-bezier(.2,.7,.2,1) both}.content>:nth-child(2){animation-delay:.06s}.content>:nth-child(3){animation-delay:.12s}.content>:nth-child(n+4){animation-delay:.18s}}
+    @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    /* Spatial lettering sits inside the original randomized layout. */
+    .main{perspective:1200px}
+    .status{isolation:isolate;transform-style:preserve-3d}
+    .status-object{position:relative;display:block;width:max-content;max-width:100%;transform-style:preserve-3d;transform:rotateX(var(--pitch,0deg)) rotateY(var(--yaw,0deg));transform-origin:50% 55%;color:var(--accent);-webkit-text-stroke:1px color-mix(in srgb,var(--accent) 80%,var(--text));text-shadow:0 2px color-mix(in srgb,var(--accent) 75%,var(--bg)),0 4px color-mix(in srgb,var(--accent) 65%,var(--bg)),0 6px color-mix(in srgb,var(--accent) 55%,var(--bg)),0 8px color-mix(in srgb,var(--accent) 45%,var(--bg)),0 10px color-mix(in srgb,var(--accent) 35%,var(--bg)),0 12px color-mix(in srgb,var(--accent) 25%,var(--bg)),0 15px 20px #0005;filter:drop-shadow(0 18px 20px #0003)}
+    .status-object::before{content:"404";position:absolute;inset:0;z-index:-1;color:var(--surface);-webkit-text-stroke:1px var(--border);transform:translate3d(13px,17px,-30px)}
+    .status-object::after{content:"404";position:absolute;inset:0;z-index:-1;color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--accent) 45%,var(--border));transform:translate3d(6px,8px,-12px)}
+    .scatter{perspective:900px}
+    .bit{padding:3px 8px;border:1px solid color-mix(in srgb,var(--accent) 36%,var(--border));border-radius:6px;background:var(--surface);box-shadow:0 6px 0 -2px color-mix(in srgb,var(--surface) 75%,var(--bg)),0 13px 18px -13px #0009;transform:rotateX(20deg) rotateY(-14deg) rotateZ(var(--rotate,0deg))}
+    .shell::before{background:radial-gradient(circle at 50% 55%,color-mix(in srgb,var(--accent) 9%,transparent),transparent 55%)}
+    .back{display:inline-flex;align-items:center;text-decoration:none;border-radius:9px;box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 45%,var(--bg)),0 10px 18px -12px #0009}
+    .back:hover{transform:translateY(-1px)}
+    @media(prefers-reduced-motion:no-preference){.status-object{transition:transform .22s cubic-bezier(.2,.7,.2,1)}}
+    @media(max-width:720px){.status-object::before{transform:translate3d(8px,11px,-20px)}.status-object::after{transform:translate3d(4px,6px,-10px)}}
+    @media(prefers-reduced-motion:reduce){.status-object{transform:none!important}.bit{transform:none}}
   </style>
 </head>
 <body>
@@ -93,11 +95,11 @@
     <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt=""><span class="brand-word">Pico<span class="brand-dot">.</span></span></a>
     <div class="main">
       <section class="content" aria-labelledby="joke-title">
-        <div class="status" aria-hidden="true">404</div>
+        <div class="status" aria-hidden="true"><span class="status-object">404</span></div>
         <h1 id="joke-title">Well, that's awkward.</h1>
         <p class="sub" id="joke-description">There's nothing at this address.</p>
         <div class="conversation" id="conversation" hidden aria-label="Pico team conversation"></div>
-        <div class="actions"><button class="back" type="button" id="go-back">← Go back</button></div>
+        <div class="actions"><a class="back" href="/" id="go-back">← Go back</a></div>
       </section>
     </div>
     <div class="secret-toast" id="secret-toast" role="status" aria-live="polite" hidden></div>
@@ -304,10 +306,28 @@
 
     // A single back action returns to the previous browser page;
     // direct visitors without history have the homepage as a safe fallback.
-    document.getElementById('go-back').addEventListener('click', () => {
+    document.getElementById('go-back').addEventListener('click', event => {
+      event.preventDefault();
       if (history.length > 1) history.back();
       else location.assign('/');
     });
+
+    // Pointer response is limited to the existing 404 lettering and stops immediately.
+    if (matchMedia('(prefers-reduced-motion: no-preference) and (pointer: fine)').matches) {
+      const object = document.querySelector('.status-object');
+      const status = document.querySelector('.status');
+      status.addEventListener('pointermove', event => {
+        const bounds = status.getBoundingClientRect();
+        const x = (event.clientX - bounds.left) / bounds.width - .5;
+        const y = (event.clientY - bounds.top) / bounds.height - .5;
+        object.style.setProperty('--yaw', (x * 12).toFixed(2) + 'deg');
+        object.style.setProperty('--pitch', (-y * 8).toFixed(2) + 'deg');
+      });
+      status.addEventListener('pointerleave', () => {
+        object.style.removeProperty('--yaw');
+        object.style.removeProperty('--pitch');
+      });
+    }
   </script>
 </body>
 </html>

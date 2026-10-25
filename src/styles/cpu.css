@@ -133,6 +133,9 @@
 .cpu-app .cpu-shell, .cpu-app .cpu-ram-shell { fill: color-mix(in srgb, var(--ds-panel) 92%, transparent); stroke: var(--ds-line-strong); stroke-width: 1.2; }
 .cpu-app .cpu-main-title, .cpu-app .cpu-ram-title { font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
 .cpu-app .cpu-block rect { fill: var(--ds-panel-raised); stroke: var(--ds-line-strong); stroke-width: 1; transition: none; }
+.cpu-app .cpu-block .cpu-block-depth,
+.cpu-app .cpu-block.cpu-selected .cpu-block-depth,
+.cpu-app .cpu-block.cpu-active .cpu-block-depth { fill: var(--ds-chrome); stroke: var(--ds-line-strong); stroke-width: 1; pointer-events: none; }
 .cpu-app .cpu-block.cpu-selected rect, .cpu-app .cpu-block.cpu-active rect { stroke: var(--accent); stroke-width: 1.8; filter: none; }
 .cpu-app .cpu-block-title { font-size: 12.5px; font-weight: 600; }
 .cpu-app .cpu-block-value { font-size: 13px; }

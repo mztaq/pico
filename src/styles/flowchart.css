@@ -97,6 +97,7 @@
     var(--ds-canvas);
 }
 .flow-builder .flow-node-shape { fill: var(--ds-panel-raised); }
+.flow-builder .flow-node-shape .flow-node-depth { fill: var(--ds-line-strong); stroke: none; pointer-events: none; }
 .flow-builder .flow-node-type { font: 600 var(--ds-text-2xs) var(--ds-font-code); letter-spacing: .07em; }
 
 /* Dock */

@@ -250,7 +250,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
       </path>)}
      </g>}
      {renderedBoxes.map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
-      <title>{HELP[box.key]}</title><rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
+      <title>{HELP[box.key]}</title><rect className="cpu-block-depth" x={box.x} y={box.y+6} width={box.w} height={box.h} rx="4"/><rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
       {box.key==='STATUS'||box.key==='INTERRUPT'?<g className="cpu-compact-register">
        {box.key==='STATUS'?<text className="cpu-block-title" x={box.x+8} y={box.y+21} textAnchor="start">Status Register</text>:<>
         <text className="cpu-block-title" x={box.x+8} y={box.y+12} textAnchor="start">Interrupt</text>
