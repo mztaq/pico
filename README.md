@@ -3,7 +3,7 @@
 
   # Pico.
 
-  **Computer Science, made interactive.**
+  **Built by students, for students.**
 
   Pico is a browser-based learning platform for exploring programming, algorithms, digital logic and computer architecture. No installation or account is required.
 
