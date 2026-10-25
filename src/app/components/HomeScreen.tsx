@@ -18,11 +18,11 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   }, [theme]);
   return <main className="pico-home" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
     <div className="home-nav">
-      <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
       <div className="home-updates"><SoundButton /><UpdateCenter /></div>
     </div>
     <div className="home-inner">
       <div className="home-hero">
+      <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
         <h1>Choose your workspace</h1>
       </div>
       <div className="compiler-choices">
