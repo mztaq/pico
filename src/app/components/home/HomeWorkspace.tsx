@@ -28,7 +28,7 @@ export function WorkspaceChoice({ kind, icon, tag, title, description, onClick, 
     <span className="compiler-choice-copy">
       <span className="compiler-choice-title">
         <span className="compiler-choice-icon" aria-hidden="true">{icon}</span>
-        <span className="compiler-choice-name">{title}</span>
+        <h2 className="compiler-choice-name">{title}</h2>
         {tag && <code className="compiler-choice-tag" aria-hidden="true">{tag}</code>}
         <ArrowUpRight className="compiler-choice-arrow" size={17} strokeWidth={1.8} aria-hidden="true" />
       </span>
