@@ -173,22 +173,8 @@
 
 /* ── Motion ── */
 @media (prefers-reduced-motion: no-preference) {
+  .cpu-app .cpu-diagram :is(.cpu-block, .cpu-ram, .cpu-external-bus, .cpu-connectors) { transition: opacity .16s ease; }
   .cpu-app .cpu-block rect { transition: stroke .25s ease, fill .25s ease, stroke-width .25s ease; }
-  .cpu-app .cpu-block.cpu-active rect { animation: cpu-pulse 1.6s ease-in-out infinite; }
-  .cpu-app .cpu-flow-path { animation: cpu-dash .6s linear infinite; }
   .cpu-app .cpu-ram-row rect { transition: fill .25s ease, stroke .25s ease; }
-  .cpu-app .cpu-ram-row.cpu-ram-highlight rect { animation: cpu-row-flash .6s ease-out; }
-  .cpu-app .cpu-explanation, .cpu-app .cpu-transit, .cpu-app .cpu-component-details { animation: ds-rise .28s var(--ds-ease) both; }
-  .cpu-app .cpu-transit { animation-delay: .06s; }
   .cpu-app .cpu-phase { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
-  .cpu-app .cpu-diagram-scroll { animation: ds-fade .4s ease both; }
-  .cpu-app .cpu-information { animation: ds-rise .35s var(--ds-ease) .08s both; }
-}
-@keyframes cpu-pulse {
-  0%, 100% { stroke-opacity: 1; }
-  50% { stroke-opacity: .45; }
-}
-@keyframes cpu-dash { to { stroke-dashoffset: -14; } }
-@keyframes cpu-row-flash {
-  from { fill: color-mix(in srgb, var(--accent) 45%, transparent); }
 }

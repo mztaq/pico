@@ -49,6 +49,13 @@ describe('local changelog', () => {
     expect(container.querySelector('.update-toast')).toBeNull();
   });
 
+  it('dismisses immediately when reduced motion is requested', async () => {
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }));
+    await mount();
+    await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label="Dismiss update notification"]')!.click(); });
+    expect(container.querySelector('.update-toast')).toBeNull();
+  });
+
   it('opens the full changelog and marks the latest entry as seen', async () => {
     await mount();
     await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label^="View updates"]')!.click(); });

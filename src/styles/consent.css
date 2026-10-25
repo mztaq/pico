@@ -135,7 +135,7 @@ body .pico-cookie-modal-actions {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  body .pico-cookie-banner { animation: ds-rise .35s var(--ds-ease) .4s both; }
+  body .pico-cookie-banner { animation: ds-rise .18s var(--ds-ease) both; }
   body .pico-cookie-overlay { animation: ds-fade .18s ease both; }
   body .pico-cookie-modal { animation: ds-pop .22s var(--ds-ease) both; }
   body .pico-cookie-btn { transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease, transform 90ms ease, filter var(--ds-fast) ease; }

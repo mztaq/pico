@@ -40,3 +40,27 @@ it('shows edited component labels without replacing their logic symbol or signal
   expect(nodes()[1]!.querySelector('.logic-signal-caption')?.textContent).toBe('0');
   await label('');expect(nodes()[1]!.querySelector('.logic-component-label')).toBeNull();
 });
+it('keeps a node drag active across the canvas edge and cancels it cleanly',async()=>{
+  const board=host.querySelector<SVGSVGElement>('svg[aria-label="Circuit canvas"]')!;
+  const capture=vi.fn(),release=vi.fn();
+  board.setPointerCapture=capture;
+  board.hasPointerCapture=()=>true;
+  board.releasePointerCapture=release;
+  const nodeTransform=()=>nodes()[0]!.firstElementChild!.getAttribute('transform');
+  const original=nodeTransform();
+  const pointer=(target:Element,type:string,x:number)=>{
+    const event=new MouseEvent(type,{bubbles:true,button:0,clientX:x,clientY:0});
+    Object.defineProperty(event,'pointerId',{value:7});
+    target.dispatchEvent(event);
+  };
+  await act(async()=>pointer(nodes()[0]!,'pointerdown',0));
+  expect(capture).toHaveBeenCalledWith(7);
+  await act(async()=>pointer(board,'pointermove',48));
+  const first=nodeTransform();
+  await act(async()=>pointer(board,'pointerleave',60));
+  await act(async()=>pointer(board,'pointermove',96));
+  expect(nodeTransform()).not.toBe(first);
+  await act(async()=>pointer(board,'pointercancel',96));
+  expect(nodeTransform()).toBe(original);
+  expect(release).toHaveBeenCalledWith(7);
+});
