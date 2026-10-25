@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowRight, Binary, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
+import { Binary, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme } from '../themes';
@@ -23,21 +23,19 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     </div>
     <div className="home-inner">
       <div className="home-hero">
-        <p className="home-eyebrow">Computer Science, made interactive</p>
         <h1>Choose your workspace</h1>
-        <p className="home-lede">Write and debug code, build flowcharts and circuits, and watch a CPU work — all in your browser, with nothing to install.</p>
       </div>
       <div className="compiler-choices">
-        <HomeGroup label="Code" detail="Editors with a console and step-by-step debugger">
-          <WorkspaceChoice icon={<Terminal size={18} />} tag=".pico" title="Pseudocode Compiler" description="Run .pico programs with typed input and a debugger." onClick={() => onChoose('pseudocode')}>
+        <HomeGroup label="Code">
+          <WorkspaceChoice icon={<Terminal size={18} />} tag=".pico" title="Pseudocode Compiler" description="Run and debug Cambridge-style pseudocode." onClick={() => onChoose('pseudocode')}>
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode code={'DECLARE Name : STRING\nINPUT Name\nOUTPUT "Hello ", Name, "!"'} /></pre>
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Code2 size={18} />} tag=".py" title="Python Compiler" description="Run Python with console input and a debugger." onClick={() => onChoose('python')}>
+          <WorkspaceChoice icon={<Code2 size={18} />} tag=".py" title="Python Compiler" description="Run Python with interactive input and debugging." onClick={() => onChoose('python')}>
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
           </WorkspaceChoice>
         </HomeGroup>
-        <HomeGroup label="Visual labs" detail="Build, simulate and inspect">
-          <WorkspaceChoice icon={<GitBranch size={18} />} title="Flowchart Builder" description="Connect blocks, run your chart, or turn it into pseudocode." onClick={() => onChoose('flowchart')}>
+        <HomeGroup label="Visual labs">
+          <WorkspaceChoice icon={<GitBranch size={18} />} title="Flowchart Builder" description="Build, run and convert flowcharts to pseudocode." onClick={() => onChoose('flowchart')}>
             <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
           <rect x="1" y="22" width="68" height="32" rx="16"/>
           <path className="home-chart-link" d="M 70 38 H 103 M 97 33 L 103 38 L 97 43 M 233 38 H 279 M 273 33 L 279 38 L 273 43"/>
@@ -46,7 +44,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           <text x="35" y="43">Start</text><text className="home-chart-output" x="172" y="43">Output "Hello!"</text><text x="314" y="43">End</text>
         </svg>
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Binary size={18} />} title="Logic Sim" description="Build digital circuits with gates, switches, clocks, and live outputs." onClick={() => onChoose('logic')}>
+          <WorkspaceChoice icon={<Binary size={18} />} title="Logic Sim" description="Build circuits and inspect live signals." onClick={() => onChoose('logic')}>
             <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
           <path className="home-chart-link" d="M49 23 H95 M49 53 H95 M202 38 H261"/>
           <rect x="1" y="11" width="47" height="24" rx="5"/><rect x="1" y="41" width="47" height="24" rx="5"/>
@@ -55,7 +53,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           <text x="24" y="27">1</text><text x="24" y="57">0</text><text x="142" y="42">AND</text><text x="288" y="43">0</text>
         </svg>
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Cpu size={18} />} title="CPU Studio" description="Fetch, decode and execute instructions inside a visual CPU." onClick={() => onChoose('cpu')}>
+          <WorkspaceChoice icon={<Cpu size={18} />} title="CPU Studio" description="Explore fetch, decode and execute." onClick={() => onChoose('cpu')}>
             <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
           <rect x="16" y="7" width="233" height="62" rx="8"/>
           <rect x="29" y="19" width="60" height="39" rx="4"/><rect x="99" y="19" width="139" height="39" rx="4"/>
@@ -72,9 +70,9 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   </main>;
 }
 
-function HomeGroup({ label, detail, children }: { label: string; detail: string; children: ReactNode }) {
+function HomeGroup({ label, children }: { label: string; children: ReactNode }) {
   return <section className="home-group" aria-label={label}>
-    <div className="home-group-head"><span className="home-group-label">{label}</span><span className="home-group-detail">{detail}</span></div>
+    <div className="home-group-head"><span className="home-group-label">{label}</span></div>
     <div className="home-group-grid">{children}</div>
   </section>;
 }
@@ -85,7 +83,6 @@ function WorkspaceChoice({ icon, tag, title, description, onClick, children }: {
     <div className="compiler-choice-copy">
       <div className="compiler-choice-title"><i className="compiler-choice-icon" aria-hidden="true">{icon}</i><h2>{title}</h2>{tag && <code className="compiler-choice-tag" aria-hidden="true">{tag}</code>}</div>
       <p>{description}</p>
-      <em className="compiler-choice-open" aria-hidden="true">Open <ArrowRight size={14} /></em>
     </div>
   </button>;
 }
