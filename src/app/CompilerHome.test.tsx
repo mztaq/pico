@@ -146,7 +146,8 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
 });
 
 it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
- expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
+ expect(container.textContent).not.toContain('Open workspace');
+ expect(container.textContent).not.toContain('PREVIEW');
  expect(container.querySelectorAll('.compiler-choice')).toHaveLength(5);
 });
 it('offers both CPU simulation modes and a guided tutorial',async()=>{
