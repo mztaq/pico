@@ -5,7 +5,7 @@ import { assignable, binaryType, BUILTINS, builtinType, comparable, DATA_TYPES, 
 
 interface Slot { types: Set<DataType>; relations: Set<Relation>; }
 interface Relation { slots: Slot[]; tuples: DataType[][]; }
-interface Binding { slot: Slot; arrayDepth: number; assignments: Expression[]; declaration?: Declaration; }
+interface Binding { slot: Slot; arrayDepth: number; assignments: Expression[]; declaration?: Declaration; used?: boolean; }
 interface Scope {
   symbols: Map<string, Binding>;
   parent?: Scope;
@@ -13,6 +13,8 @@ interface Scope {
   key: string;
   insertionLine: number;
   candidates: Map<string, Binding>;
+  /** Declarations the user wrote (not generated), used to recognise an in-progress rename. */
+  manual: { name: string; binding: Binding }[];
 }
 export interface AutoDeclarationSync { code: string; generatedTypes: Record<string, DataType>; }
 
@@ -41,12 +43,29 @@ export function synchronizeAutoDeclarations(source: string, previouslyGenerated:
   solver.solve();
   const chosen = solver.choose();
   const generatedTypes: Record<string, DataType> = {};
-  const insertions: { line: number; declarations: string[] }[] = [];
+  const edits: { line: number; remove?: boolean; declarations?: string[] }[] = [];
   for (const scope of scopes) {
     const declarations: string[] = [];
+    // A generated declaration whose line the user is retyping shows up as an unused
+    // manual declaration while the old name is still referenced. Do not re-add the old
+    // name in that case, or every keystroke would leave another DECLARE behind.
+    const unusedManual = scope.manual.filter(entry => !entry.binding.used);
+    const renaming = unusedManual.length > 0;
     for (const [name, binding] of scope.candidates) {
-      const type = binding.arrayDepth === 0 ? chosen.get(binding.slot) : undefined;
       const key = `${scope.key}::${name}`;
+      if (binding.declaration && !binding.used) {
+        // The generated variable is no longer referenced (it was renamed or removed): drop it.
+        edits.push({ line: binding.declaration.line - 1, remove: true });
+        continue;
+      }
+      if (!binding.declaration && renaming && previouslyGenerated[key]) {
+        generatedTypes[key] = previouslyGenerated[key]!;
+        continue;
+      }
+      // The user is still typing a reference to a variable they declared themselves
+      // (e.g. "x" on the way to "xy"): wait instead of declaring every prefix.
+      if (!binding.declaration && unusedManual.some(entry => entry.name !== name && entry.name.toUpperCase().startsWith(name.toUpperCase()))) continue;
+      const type = binding.arrayDepth === 0 ? chosen.get(binding.slot) : undefined;
       if (!type) {
         // Retain existing generated declarations on ambiguous/conflicting edits so
         // the normal compiler can explain the error without silently changing intent.
@@ -57,9 +76,14 @@ export function synchronizeAutoDeclarations(source: string, previouslyGenerated:
       else declarations.push(`DECLARE ${name} : ${type}`);
       generatedTypes[key] = type;
     }
-    if (declarations.length) insertions.push({ line: scope.insertionLine, declarations });
+    if (declarations.length) edits.push({ line: scope.insertionLine, declarations });
   }
-  for (const insertion of insertions.sort((a, b) => b.line - a.line)) lines.splice(insertion.line, 0, ...insertion.declarations);
+  // Apply bottom-up so earlier line numbers stay valid; at the same line remove before inserting.
+  edits.sort((a, b) => b.line - a.line || (a.remove ? -1 : 1));
+  for (const edit of edits) {
+    if (edit.remove) lines.splice(edit.line, 1);
+    else lines.splice(edit.line, 0, ...edit.declarations!);
+  }
   return { code: lines.join(source.includes('\r\n') ? '\r\n' : '\n'), generatedTypes };
 }
 
@@ -81,7 +105,7 @@ class Inference {
   }
 
   scope(statements: Statement[], key: string, insertionLine: number, parent?: Scope, root = false): Scope {
-    const scope: Scope = { symbols: new Map(), parent, root: undefined!, key, insertionLine, candidates: new Map() };
+    const scope: Scope = { symbols: new Map(), parent, root: undefined!, key, insertionLine, candidates: new Map(), manual: [] };
     scope.root = !parent || root ? scope : parent.root;
     // Precollect only this lexical block. A nested declaration must not leak into its parent.
     for (const statement of statements) {
@@ -89,6 +113,7 @@ class Inference {
         const managed = scope === scope.root && !statement.array && this.tracked[`${key}::${statement.name}`] === statement.dataType;
         const binding = this.binding(managed ? undefined : statement.dataType, statement.array?.bounds.length ?? 0);
         if (managed) { binding.declaration = statement; scope.candidates.set(statement.name, binding); }
+        else if (!statement.array) scope.manual.push({ name: statement.name, binding });
         scope.symbols.set(statement.name, binding);
       } else if (statement.kind === 'Constant') scope.symbols.set(statement.name, this.binding());
     }
@@ -130,6 +155,7 @@ class Inference {
 
   private target(target: Target, scope: Scope): Slot {
     const binding = this.resolve(scope, target.name);
+    binding.used = true;
     for (const index of target.indexes) this.require(this.expression(index, scope), 'INTEGER');
     if (binding.arrayDepth !== target.indexes.length) {
       // An indexed use alone cannot determine an ARRAY's lower/upper bounds.
@@ -218,7 +244,7 @@ class Inference {
           break;
         }
         case 'ForStatement':
-          this.require(this.resolve(scope, statement.name).slot, 'INTEGER');
+          { const counter = this.resolve(scope, statement.name); counter.used = true; this.require(counter.slot, 'INTEGER'); }
           [statement.start, statement.end, ...(statement.step ? [statement.step] : [])].forEach(expression => this.require(this.expression(expression, scope), 'INTEGER'));
           this.block(statement.body, child(statement.body), returnType);
           break;

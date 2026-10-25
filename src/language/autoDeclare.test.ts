@@ -226,4 +226,19 @@ describe('inference fixed points', () => {
     expect(updated.generatedTypes).toEqual({ 'routine:FIRST::Local': 'REAL', 'routine:SECOND::Local': 'CHAR' });
     expect(() => compile(updated.code)).not.toThrow();
   });
+
+  it('does not leave a declaration behind for every letter while renaming a variable', () => {
+    let state = synchronizeAutoDeclarations('Name ← ""');
+    for (const name of ['', 'a', 'ab', 'abc']) state = synchronizeAutoDeclarations(state.code.replace(/^(?!DECLARE).*$/m, `${name} ← ""`), state.generatedTypes);
+    expect(state.code).toBe('DECLARE abc : STRING\nabc ← ""');
+    expect(state.generatedTypes).toEqual({ 'global::abc': 'STRING' });
+  });
+
+  it('lets the user retype a generated declaration without re-adding the old name', () => {
+    let state = synchronizeAutoDeclarations('Name ← ""');
+    for (const name of ['Nam', 'Na', 'Total']) state = synchronizeAutoDeclarations(state.code.replace(/^DECLARE \w+ : STRING$/m, `DECLARE ${name} : STRING`), state.generatedTypes);
+    expect(state.code).toBe('DECLARE Total : STRING\nName ← ""');
+    for (const name of ['T', 'To', 'Total']) state = synchronizeAutoDeclarations(state.code.replace(/^\w* ← ""$/m, `${name} ← ""`), state.generatedTypes);
+    expect(state.code).toBe('DECLARE Total : STRING\nTotal ← ""');
+  });
 });

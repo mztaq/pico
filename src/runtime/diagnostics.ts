@@ -26,11 +26,18 @@ const docs: Record<string, string> = {
   UPPER: 'Return a string in uppercase letters.', LOWER: 'Return a string in lowercase letters.', UCASE: 'Cambridge uppercase routine.', LCASE: 'Cambridge lowercase routine.', SUBSTRING: 'Return part of a string using one-based start and length. Example: SUBSTRING(\"Cambridge\", 1, 4) gives \"Camb\".', RANDOM: 'Return a random real number from 0 up to 1.', OPENFILE: 'Open a browser-local practice file for reading or writing.', READFILE: 'Read a line without deleting it. Example: READFILE \"notes.txt\", Line.', WRITEFILE: 'Write to a project file opened FOR WRITE. Example: WRITEFILE \"notes.txt\", Text.', CLOSEFILE: 'Close the open practice file.',
 };
 export function documentationFor(keyword: string): string | undefined { return docs[keyword.toUpperCase()]; }
+/** Optimal string alignment distance: like Levenshtein, but a swapped pair (OUPTUT) costs 1. */
 function levenshtein(a: string, b: string): number {
-  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i += 1) { let diagonal = row[0]!; row[0] = i; for (let j = 1; j <= b.length; j += 1) { const old = row[j]!; row[j] = Math.min(row[j]! + 1, row[j - 1]! + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1)); diagonal = old; } }
-  return row[b.length]!;
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)));
+  for (let i = 1; i <= a.length; i += 1) for (let j = 1; j <= b.length; j += 1) {
+    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+    d[i]![j] = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost);
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i]![j] = Math.min(d[i]![j]!, d[i - 2]![j - 2]! + 1);
+  }
+  return d[a.length]![b.length]!;
 }
+/** Short words need a near-exact match, otherwise names like "name" read as CASE. */
+function allowedDistance(length: number): number { return length <= 4 ? 1 : Math.max(1, Math.floor(length * 0.34)); }
 function maskStrings(line: string): string {
   return line.replace(/"(?:\\.|[^"\\])*"|“(?:\\.|[^”\\])*”|'(?:\\.|[^'\\])*'/g, segment => ' '.repeat(segment.length)).split('//')[0] ?? '';
 }
@@ -65,9 +72,11 @@ export function findSuggestions(source: string): Suggestion[] {
     while ((match = words.exec(visible))) {
       const word = match[0]!; const upper = word.toUpperCase();
       if (KEYWORDS.has(upper) || TYPES.has(upper) || ROUTINES.has(upper) || upper === 'RETURN' || names.has(upper)) continue;
+      // A word being assigned to (name ←, name <-, name[i] ←, or the arrow still being typed) is a variable, not a keyword.
+      if (/^\s*(?:\[[^\]]*\]\s*)?(?:←|<-|<\s*$|=\s*$)/.test(visible.slice(match.index + word.length))) continue;
       const candidates = expressionContext && match.index > (visible.search(/\b/) + (statement?.length ?? 0)) ? expressionCandidates : COMPLETIONS;
       const best = candidates.map(candidate => ({ candidate, distance: levenshtein(upper, candidate) })).sort((a, b) => a.distance - b.distance)[0];
-      if (best && best.distance > 0 && best.distance <= Math.max(1, Math.ceil(word.length * 0.3))) result.push({ line: index + 1, column: match.index + 1, endColumn: match.index + word.length + 1, original: word, replacement: best.candidate });
+      if (best && best.distance > 0 && best.distance <= allowedDistance(word.length)) result.push({ line: index + 1, column: match.index + 1, endColumn: match.index + word.length + 1, original: word, replacement: best.candidate });
     }
   });
   return result;
