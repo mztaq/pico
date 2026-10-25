@@ -295,7 +295,6 @@ body:has(.pico-cookie-banner) .pico-home .home-inner { padding-bottom: 110px; }
   .pico-home .home-group:last-child .home-group-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .pico-home .compiler-choice-stage { height: 178px; }
   .pico-home .compiler-choice-copy { padding: 17px; }
-  .pico-home .home-mini-window { max-width: 390px; }
   body:has(.pico-cookie-banner) .pico-home .home-inner { padding-bottom: 185px; }
 }
 @media (prefers-reduced-motion: reduce) {
