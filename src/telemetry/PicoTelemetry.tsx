@@ -240,7 +240,7 @@ export function PicoTelemetry() {
     {isHome && !choice && !editing && <section className="pico-cookie-banner" aria-label="Cookie consent">
       <span className="pico-cookie-banner-icon" aria-hidden="true"><Cookie size={18} /></span>
       <p>
-        We use cookies to remember your settings and improve Pico. Choose what works for you. <a href="#cookies">Cookie Policy</a>
+        Optional analytics and preferences use cookies only with your consent. <a href="#cookies">Cookie Policy</a>
       </p>
       {error && <span className="pico-cookie-error" role="alert">{error}</span>}
       <div className="pico-cookie-actions">
