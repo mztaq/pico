@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
 import {LogicTutorial,LOGIC_TOUR_KEY} from './LogicTutorial';
 import {useExitWarning} from '../app/components/useExitWarning';
+import {playCue} from '../app/sound';
 import {ThemePicker} from '../app/components/ThemePicker';
 import {loadSettings,saveSettings} from '../storage/settings';
 import {cssVariables,getTheme} from '../app/themes';
@@ -8,9 +9,9 @@ import {selectionInRectangle,copyComponents,pasteComponents,deleteSelection,type
 import {booleanExpressions} from './expressions';
 import {CircuitSymbol,PaletteSymbol,inputLeadEnd,outputLeadStart} from './symbols';
 import {connectionPath,inputAtPoint,type InputTarget} from './wiring';
-import {ArrowLeft,ChevronDown,CircleHelp,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Settings2,StepForward,Trash2,Undo2,Upload,X,ZoomIn,ZoomOut} from 'lucide-react';
+import {ArrowLeft,ChevronDown,CircleHelp,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Settings2,StepForward,Trash2,Turtle,Undo2,Upload,X,ZoomIn,ZoomOut} from 'lucide-react';
 import {GROUPS,NODE_WIDTH,SPECS,makeDocument,makeNode,nodeHeight,parseDocument,portPosition,isWireValid,type CircuitDocument,type CircuitNode,type ComponentKind,type Signal} from './model';
-import {advanceSimulation,evaluateCircuit,generateTruthTable,initialSimulation,key,stepSimulation,truthTableCSV,type SimulationState} from './engine';
+import {advanceSimulation,evaluateCircuit,generateTruthTable,initialSimulation,key,propagationFrames,stepSimulation,truthTableCSV,type SimulationState} from './engine';
 
 import './logic.css';
 import '../styles/logic.css';
@@ -27,6 +28,7 @@ const stateName:Record<Signal,string>={0:'LOW',1:'HIGH',X:'UNKNOWN',Z:'HIGH Z'};
 const signalClass=(signal:Signal)=>signal===0?'s0':signal===1?'s1':signal==='Z'?'sz':'sx';
 const contentEqual=(a:CircuitDocument,b:CircuitDocument)=>JSON.stringify(a)===JSON.stringify(b);
 const snap=(n:number,enabled:boolean)=>enabled?Math.round(n/12)*12:n;
+const SLOW_KEY='pico.logic.slowMotion.v1',SLOW_SPEED_KEY='pico.logic.slowMotionSpeed.v1';
 export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [doc,setDoc]=useState<CircuitDocument>(getInitial);
  const [tourStep,setTourStep]=useState<number|null>(()=>{try{return localStorage.getItem(LOGIC_TOUR_KEY)==='done'?null:0;}catch{return 0;}});
@@ -65,13 +67,49 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const importRef=useRef<HTMLInputElement>(null);
  const boardRef=useRef<SVGSVGElement>(null);
  const simResult=useMemo(()=>evaluateCircuit(doc,simulation),[doc,simulation]);
- const signals=simResult.signals;
+ // Slow motion replays each change gate-level by gate-level; the simulation itself is unchanged.
+ const [slowMotion,setSlowMotion]=useState(()=>{try{return localStorage.getItem(SLOW_KEY)==='on';}catch{return false;}});
+ const [slowDelay,setSlowDelay]=useState(()=>{try{const v=Number(localStorage.getItem(SLOW_SPEED_KEY));return Number.isFinite(v)&&v>=120&&v<=2000?v:600;}catch{return 500;}});
+ const [playback,setPlayback]=useState<{frames:Record<string,Signal>[];index:number}|null>(null);
+ const shownSignals=useRef<Record<string,Signal>|null>(null);
+ const displayedSignals=useRef<Record<string,Signal>|null>(null);
+ const animating=Boolean(playback&&playback.index<playback.frames.length-1);
+ const signals=playback?playback.frames[playback.index]!:simResult.signals;
+ const previousFrame=playback&&playback.index>0?playback.frames[playback.index-1]!:shownSignals.current;
+ const changing=useMemo(()=>{const changed=new Set<string>();if(!playback||!previousFrame)return changed;for(const [k,v] of Object.entries(signals))if(previousFrame[k]!==undefined&&previousFrame[k]!==v)changed.add(k);return changed;},[playback,signals,previousFrame]);
+ useEffect(()=>{
+  const from=displayedSignals.current;
+  if(!slowMotion||!from){setPlayback(null);shownSignals.current=simResult.signals;return;}
+  const frames=propagationFrames(doc,from,simResult);
+  if(frames.length<=1){setPlayback(null);shownSignals.current=simResult.signals;return;}
+  setPlayback({frames,index:0});
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[simResult]);
+ // Remember what is on screen after each commit, so the next ripple starts from it.
+ useEffect(()=>{displayedSignals.current=signals;});
+ useEffect(()=>{
+  if(!playback||!changing.size)return;
+  // Each level that carries current crackles; a lamp lighting up gets its own chime.
+  const lit=doc.nodes.some(n=>n.kind==='lamp'&&changing.has(key(n.id,'IN'))&&signals[key(n.id,'IN')]===1);
+  playCue(lit?'lampOn':'zap');
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[playback?.index,playback?.frames]);
+ useEffect(()=>{
+  if(!playback)return;
+  if(playback.index>=playback.frames.length-1){shownSignals.current=playback.frames.at(-1)!;return;}
+  const timer=window.setTimeout(()=>setPlayback(p=>p&&{...p,index:p.index+1}),slowDelay);
+  return()=>window.clearTimeout(timer);
+ },[playback,slowDelay]);
+ function toggleSlowMotion(){setSlowMotion(on=>{const next=!on;try{localStorage.setItem(SLOW_KEY,next?'on':'off');}catch{/* Preference only lasts this session. */}if(!next){setPlayback(null);shownSignals.current=simResult.signals;}setStatus(next?'Slow motion on. Changes now ripple through the circuit one gate level at a time.':'Slow motion off.');return next;});}
+ function changeSlowDelay(ms:number){setSlowDelay(ms);try{localStorage.setItem(SLOW_SPEED_KEY,String(ms));}catch{/* Preference only lasts this session. */}}
  const selectedNode=selection?.type==='node'?doc.nodes.find(n=>n.id===selection.id):undefined;
  const selectedWire=selection?.type==='wire'?doc.wires.find(w=>w.id===selection.id):undefined;
  const expressions=useMemo(()=>{try{return {rows:booleanExpressions(doc),error:''};}catch(error){return {rows:[],error:error instanceof Error?error.message:'Expression unavailable.'};}},[doc]);
  const truth=useMemo(()=>{if(!truthVisible)return null;try{return {data:generateTruthTable(doc),error:''};}catch(error){return {data:null,error:error instanceof Error?error.message:'Truth table unavailable.'};}},[truthVisible,doc]);
  useEffect(()=>{if(!simResult.warning)return;setStatus(simResult.warning);},[simResult.warning]);
- useEffect(()=>{if(!running)return;const timer=window.setInterval(()=>setSimulation(prev=>advanceSimulation(docRef.current,prev,50).state),50);return()=>window.clearInterval(timer);},[running]);
+ useEffect(()=>{if(!running||slowMotion)return;const timer=window.setInterval(()=>setSimulation(prev=>advanceSimulation(docRef.current,prev,50).state),50);return()=>window.clearInterval(timer);},[running,slowMotion]);
+ // In slow motion the clock waits for each ripple to finish before time moves on.
+ useEffect(()=>{if(!running||!slowMotion||animating)return;const timer=window.setTimeout(()=>setSimulation(prev=>advanceSimulation(docRef.current,prev,50).state),50);return()=>window.clearTimeout(timer);},[running,slowMotion,animating,simulation]);
  useEffect(()=>{try{saveSettings(settings);}catch{/* Theme stays active in memory. */}for(const [k,v] of Object.entries(cssVariables(theme)))document.documentElement.style.setProperty(k,v);},[settings,theme]);
  useEffect(()=>{setSaveState('unsaved');const timer=window.setTimeout(()=>{try{localStorage.setItem(STORAGE,JSON.stringify(doc));setSaveState('saved');}catch{setSaveState('error');}},350);return()=>window.clearTimeout(timer);},[doc]);
  function edit(next:CircuitDocument){if(contentEqual(docRef.current,next))return;setHistory(prev=>[...prev.slice(-79),docRef.current]);setFuture([]);setDoc(next);}
@@ -198,8 +236,8 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   <defs><pattern id="logic-grid" width={24*zoom} height={24*zoom} x={offset.x} y={offset.y} patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#545566" opacity=".45"/></pattern><marker id="logic-arrow" markerWidth="7" markerHeight="7" refX="4" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6Z" fill="#85879a"/></marker></defs>
   <rect className="logic-surface" width="100%" height="100%" fill={doc.grid?'url(#logic-grid)':'transparent'}/>
   <g transform={`translate(${offset.x} ${offset.y}) scale(${zoom})`}>
-  {doc.wires.map(w=>{const from=doc.nodes.find(n=>n.id===w.from),to=doc.nodes.find(n=>n.id===w.to);if(!from||!to)return null;const a=portPosition(from,w.fromPin,'out'),b=portPosition(to,w.toPin,'in');const path=connectionPath(a,b);const signal=signals[key(w.from,w.fromPin)]??'Z';return <g key={w.id} role="button" aria-label={`Wire ${w.fromPin} to ${w.toPin}, ${stateName[signal]}`} onPointerDown={e=>{e.stopPropagation();setSelection({type:'wire',id:w.id});setSelectedNodes([]);setInspectorOpen(true);}}><path d={path} fill="none" stroke="transparent" strokeWidth="16"/><path d={path} className={'logic-wire '+signalClass(signal)+(selection?.type==='wire'&&selection.id===w.id?' selected':'')} strokeWidth={selection?.type==='wire'&&selection.id===w.id?5:3} fill="none"/><title>{stateName[signal]} ({String(signal)})</title></g>;})}
-  {doc.nodes.map(node=>{const spec=SPECS[node.kind],height=nodeHeight(node),selected=selection?.type==='node'&&selection.id===node.id||selectedNodes.includes(node.id),output=spec.outputs[0]?signals[key(node.id,spec.outputs[0])]??'Z':'Z',lamp=signals[key(node.id,'IN')]??'Z',hex=spec.inputs.map(pin=>signals[key(node.id,pin)]??'X'),hexValue=hex.some(b=>b!==0&&b!==1)?'X':parseInt(hex.join(''),2).toString(16).toUpperCase();return <g key={node.id} className={'logic-node '+(selected?'selected':'')} onPointerDown={e=>startMove(e,node)} onDoubleClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}} style={{cursor:'move'}}>
+  {doc.wires.map(w=>{const from=doc.nodes.find(n=>n.id===w.from),to=doc.nodes.find(n=>n.id===w.to);if(!from||!to)return null;const a=portPosition(from,w.fromPin,'out'),b=portPosition(to,w.toPin,'in');const path=connectionPath(a,b);const signal=signals[key(w.from,w.fromPin)]??'Z';return <g key={w.id} role="button" aria-label={`Wire ${w.fromPin} to ${w.toPin}, ${stateName[signal]}`} onPointerDown={e=>{e.stopPropagation();setSelection({type:'wire',id:w.id});setSelectedNodes([]);setInspectorOpen(true);}}><path d={path} fill="none" stroke="transparent" strokeWidth="16"/><path d={path} className={'logic-wire '+signalClass(signal)+(selection?.type==='wire'&&selection.id===w.id?' selected':'')+(changing.has(key(w.from,w.fromPin))?' logic-wire-pulse':'')} strokeWidth={selection?.type==='wire'&&selection.id===w.id?5:3} fill="none"/><title>{stateName[signal]} ({String(signal)})</title>{slowMotion&&changing.has(key(w.from,w.fromPin))&&<g className="logic-spark" key={'spark'+(playback?.index??0)} aria-hidden="true"><path d={path} className="logic-spark-bolt" fill="none"/><circle r="5" className={'logic-spark-head '+signalClass(signal)}><animateMotion dur={`${Math.max(200,slowDelay*.9)}ms`} path={path} fill="freeze"/></circle></g>}{slowMotion&&<g className={'logic-bit '+signalClass(signal)+(changing.has(key(w.from,w.fromPin))?' changed':'')} transform={`translate(${(a.x+b.x)/2} ${(a.y+b.y)/2})`} aria-hidden="true"><rect x="-9" y="-9" width="18" height="18" rx="5"/><text y="4">{String(signal)}</text></g>}</g>;})}
+  {doc.nodes.map(node=>{const spec=SPECS[node.kind],height=nodeHeight(node),selected=selection?.type==='node'&&selection.id===node.id||selectedNodes.includes(node.id),output=spec.outputs[0]?signals[key(node.id,spec.outputs[0])]??'Z':'Z',lamp=signals[key(node.id,'IN')]??'Z',hex=spec.inputs.map(pin=>signals[key(node.id,pin)]??'X'),hexValue=hex.some(b=>b!==0&&b!==1)?'X':parseInt(hex.join(''),2).toString(16).toUpperCase();return <g key={node.id} className={'logic-node '+(selected?'selected':'')+(spec.outputs.some(pin=>changing.has(key(node.id,pin)))||spec.inputs.some(pin=>changing.has(key(node.id,pin)))?' logic-node-pulse':'')} onPointerDown={e=>startMove(e,node)} onDoubleClick={e=>{e.stopPropagation();if(node.kind==='switch')toggleInput(node);}} style={{cursor:'move'}}>
   <g transform={`translate(${node.x+NODE_WIDTH/2} ${node.y+height/2}) rotate(${node.rotation}) translate(${-NODE_WIDTH/2} ${-height/2})`}>
     <rect className="logic-node-hitbox" width={NODE_WIDTH} height={height} rx="5"/>
     <CircuitSymbol kind={node.kind} height={height} signal={node.kind==='lamp'?lamp:output} hex={hexValue} label={node.label}/>
@@ -230,7 +268,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   {connecting&&<div className="logic-placement-hint">Connect to an input pin <button onClick={()=>setConnecting(null)}>Cancel <X size={12}/></button></div>}
   </div>
   {expressionOpen&&<div className="logic-expression-panel"><header><strong>Boolean expressions</strong><button onClick={()=>setExpressionOpen(false)} aria-label="Close Boolean expressions"><X size={16}/></button></header>{expressions.error?<p role="alert">{expressions.error}</p>:expressions.rows.length?expressions.rows.map((v,i)=><section key={i}><b>{v.output}</b><label>Cambridge word notation <code>{v.word}</code></label><label>Algebraic symbols <code>{v.algebraic}</code></label><label>Programming notation <code>{v.programming}</code></label>{v.minimalSOP&&<label>Simplified sum of products <code>{v.minimalSOP}</code></label>}{v.minimalPOS&&<label>Equivalent product of sums <code>{v.minimalPOS}</code></label>}<button onClick={()=>navigator.clipboard?.writeText(v.word)}>Copy expression</button></section>):<p>Connect switches and gates to a bulb to see the expression.</p>}</div>}
-  <div className="logic-bottom"><div><span className={'logic-run-dot '+(running?'active':'')}/><span>{running?'RUNNING':'PAUSED'}</span><span>{doc.nodes.length} components · {doc.wires.length} wires</span></div><div className="logic-sim-controls"><button onClick={()=>setRunning(r=>!r)} className="logic-run">{running?<Pause size={15}/>:<Play size={15}/>} {running?'Pause':'Run'}</button><button title="Step next clock transition" onClick={()=>{setRunning(false);setSimulation(s=>stepSimulation(docRef.current,s).state);}}><StepForward size={16}/> Step</button><button onClick={reset}><RotateCw size={14}/> Reset</button><span>{Math.round(simulation.time)} ms</span></div></div>
+  <div className="logic-bottom"><div><span className={'logic-run-dot '+(running?'active':'')}/><span>{running?'RUNNING':'PAUSED'}</span>{slowMotion&&<span className="logic-slow-badge" aria-live="polite">{animating&&playback?`Slow motion · level ${playback.index+1} of ${playback.frames.length}`:'Slow motion'}</span>}<span>{doc.nodes.length} components · {doc.wires.length} wires</span></div><div className="logic-sim-controls"><button onClick={()=>setRunning(r=>!r)} className="logic-run">{running?<Pause size={15}/>:<Play size={15}/>} {running?'Pause':'Run'}</button><button title="Step next clock transition" onClick={()=>{setRunning(false);setSimulation(s=>stepSimulation(docRef.current,s).state);}}><StepForward size={16}/> Step</button><button onClick={reset}><RotateCw size={14}/> Reset</button><button className={'logic-slow-toggle'+(slowMotion?' active':'')} aria-pressed={slowMotion} title="Watch each change travel through the circuit one gate level at a time" onClick={toggleSlowMotion}><Turtle size={15}/> <span>Slow motion</span></button>{slowMotion&&<label className="logic-slow-speed" title="Time per gate level"><span>Speed</span><input type="range" aria-label="Slow motion speed" min={0} max={100} step={1} value={Math.round((2000-slowDelay)/(2000-120)*100)} onChange={e=>changeSlowDelay(Math.round(2000-Number(e.target.value)/100*(2000-120)))}/><output>{(slowDelay/1000).toFixed(slowDelay<1000?2:1)}s</output></label>}<span>{Math.round(simulation.time)} ms</span></div></div>
   <div className="logic-status" role="status">{status}</div>
   {truthVisible&&<div className="logic-truth"><div className="logic-truth-head"><b>Truth table</b><div>{truth?.data&&<button onClick={()=>download(truthTableCSV(truth.data!),filename(doc.title,'-truth.csv'),'text/csv')}>Export CSV</button>}<button aria-label="Close truth table" onClick={()=>setTruthVisible(false)}><X size={16}/></button></div></div>{truth?.error?<p>{truth.error}</p>:truth?.data?<div className="logic-truth-scroll"><table><thead><tr>{truth.data.headers.map((h,i)=><th key={i}>{h}</th>)}</tr></thead><tbody>{truth.data.rows.map((row,i)=><tr key={i}>{row.map((value,j)=><td key={j}>{value}</td>)}</tr>)}</tbody></table></div>:null}</div>}
  </section>
