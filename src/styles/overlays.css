@@ -44,6 +44,4 @@
 @media (prefers-reduced-motion: no-preference) {
   .cpu-tour-card, .logic-tour-card, .flow-tour-card { animation: ds-pop .22s var(--ds-ease) both; }
   .pico-load-content { animation: ds-rise .3s var(--ds-ease) both; }
-  .pico-load-icon { animation: pico-load-breathe 1.6s ease-in-out infinite; }
 }
-@keyframes pico-load-breathe { 50% { transform: scale(1.06); } }

@@ -1,8 +1,5 @@
 /* One-shot feedback only; keep typing, output updates and resizing immediate. */
 @media (prefers-reduced-motion: no-preference) {
-  .reference-explanation, .dock-content {
-    animation: content-enter 150ms ease-out;
-  }
   .input-modal, .history-modal, .tutorial-offer {
     animation: content-enter 180ms ease-out;
   }
