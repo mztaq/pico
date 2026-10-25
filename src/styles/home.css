@@ -15,19 +15,19 @@
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 60px;
+  justify-content: center;
+  height: 70px;
   padding: 0 max(20px, calc((100% - 1120px) / 2));
   border-bottom: 1px solid color-mix(in srgb, var(--ds-line) 70%, transparent);
   background: var(--bg);
 }
-.pico-home .home-brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; letter-spacing: -.6px; }
-.pico-home .home-brand img { width: 30px; height: 30px; }
-.pico-home .home-updates { position: static; }
+.pico-home .home-brand { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 27px; font-weight: 750; letter-spacing: -.8px; }
+.pico-home .home-brand img { width: 37px; height: 37px; }
+.pico-home .home-updates { position: absolute; right: max(20px, calc((100% - 1120px) / 2)); top: 50%; transform: translateY(-50%); }
 
 .home-inner { width: min(1120px, 100%); margin: 0 auto; padding: 48px 20px 40px; }
-.home-hero { max-width: 640px; margin-bottom: 30px; }
-.pico-home h1 { margin: 0; font-size: var(--ds-text-3xl); font-weight: 650; line-height: 1.08; letter-spacing: -.035em; }
+.home-hero { width: 100%; max-width: none; margin-bottom: 36px; text-align: center; }
+.pico-home h1 { margin: 0; font-size: clamp(34px, 4.2vw, 52px); font-weight: 700; line-height: 1.12; letter-spacing: -.04em; }
 
 .pico-home .compiler-choices { width: 100%; display: flex; flex-direction: column; gap: 36px; }
 .home-group-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--ds-line); }
@@ -94,7 +94,11 @@
   .home-group:last-child .home-group-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
-  .pico-home .home-nav { height: 54px; padding: 0 16px; }
+  .pico-home .home-nav { height: 62px; padding: 0 16px; }
+  .pico-home .home-brand { gap: 8px; font-size: 22px; }
+  .pico-home .home-brand img { width: 30px; height: 30px; }
+  .pico-home .home-updates { right: 12px; }
+  .pico-home h1 { font-size: clamp(27px, 7vw, 36px); }
   .home-inner { padding: 32px 16px 32px; }
   .home-hero { margin-bottom: 24px; }
   .home-group-head { flex-direction: column; gap: 2px; }
