@@ -25,21 +25,13 @@
 .pico-home .home-brand img { width: 30px; height: 30px; }
 .pico-home .home-updates { position: static; }
 
-.home-inner { width: min(1120px, 100%); margin: 0 auto; padding: 56px 20px 40px; }
-.home-hero { max-width: 640px; margin-bottom: 40px; }
-.home-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  margin: 0 0 16px; color: var(--accent);
-  font: 600 var(--ds-text-xs)/1 var(--ds-font-code); letter-spacing: .06em; text-transform: uppercase;
-}
-.home-eyebrow::before { content: ''; width: 18px; height: 2px; border-radius: 2px; background: currentColor; }
+.home-inner { width: min(1120px, 100%); margin: 0 auto; padding: 48px 20px 40px; }
+.home-hero { max-width: 640px; margin-bottom: 30px; }
 .pico-home h1 { margin: 0; font-size: var(--ds-text-3xl); font-weight: 650; line-height: 1.08; letter-spacing: -.035em; }
-.home-lede { margin: 16px 0 0; color: var(--ds-muted); font-size: var(--ds-text-lg); line-height: 1.6; }
 
 .pico-home .compiler-choices { width: 100%; display: flex; flex-direction: column; gap: 36px; }
 .home-group-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--ds-line); }
 .home-group-label { font-size: var(--ds-text-md); font-weight: 650; }
-.home-group-detail { color: var(--ds-muted); font-size: var(--ds-text-sm); }
 .home-group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .home-group:last-child .home-group-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
@@ -89,12 +81,6 @@
 .pico-home .compiler-choice h2 { margin: 0; font-size: var(--ds-text-lg); font-weight: 650; letter-spacing: -.01em; }
 .compiler-choice-tag { margin-left: auto; padding: 3px 7px; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); color: var(--ds-muted); font: 500 var(--ds-text-2xs)/1 var(--ds-font-code); }
 .pico-home .compiler-choice p { margin: 10px 0 0; color: var(--ds-muted); font-size: var(--ds-text-md); line-height: 1.55; }
-.compiler-choice-open {
-  display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 16px;
-  color: var(--accent); font-size: var(--ds-text-sm); font-style: normal; font-weight: 600;
-}
-.compiler-choice-open svg { transition: transform var(--ds-base) var(--ds-ease); }
-.compiler-choice:hover .compiler-choice-open svg, .compiler-choice:focus-visible .compiler-choice-open svg { transform: translateX(3px); }
 
 .pico-home .site-info-links {
   display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 4px 18px;
@@ -110,8 +96,7 @@
 @media (max-width: 640px) {
   .pico-home .home-nav { height: 54px; padding: 0 16px; }
   .home-inner { padding: 32px 16px 32px; }
-  .home-hero { margin-bottom: 28px; }
-  .home-lede { font-size: var(--ds-text-md); }
+  .home-hero { margin-bottom: 24px; }
   .home-group-head { flex-direction: column; gap: 2px; }
   .home-group-grid, .home-group:last-child .home-group-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .compiler-choice-stage { height: 112px; padding: 14px 16px; }
@@ -119,6 +104,6 @@
   .pico-home .compiler-choice:hover { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pico-home .compiler-choice, .compiler-choice-open svg { transition: none; }
+  .pico-home .compiler-choice { transition: none; }
   .pico-home .compiler-choice:hover { transform: none; }
 }
