@@ -98,3 +98,27 @@ body { font-family: var(--ds-font-ui); }
 @media (prefers-reduced-motion: reduce) {
   :root { --ds-fast: 0ms; --ds-base: 0ms; }
 }
+
+/* Semantic material and type roles informed by professional design-system research.
+   Aliases intentionally derive from Pico's existing theme-aware tokens. */
+:root {
+  --ds-display-brand: clamp(60px, 7.2vw, 86px);
+  --ds-heading-section: 20px;
+  --ds-heading-card: 17px;
+  --ds-surface-canvas: var(--ds-bg);
+  --ds-surface-base: var(--ds-panel);
+  --ds-surface-raised: var(--ds-panel-raised);
+  --ds-surface-floating: var(--ds-panel-raised);
+  --ds-border-subtle: var(--ds-line);
+  --ds-border-default: var(--ds-line-strong);
+  --ds-state-hover: var(--ds-hover);
+  --ds-state-press: var(--ds-press);
+  --ds-state-selected: var(--ds-accent-soft);
+  --ds-shadow-rest: 0 1px 2px rgba(0, 0, 0, .10);
+  --ds-shadow-raised: 0 8px 24px -12px rgba(0, 0, 0, .32);
+}
+[data-high-contrast='true'],
+[data-pico-theme^='high-contrast'] {
+  --ds-shadow-rest: none;
+  --ds-shadow-raised: none;
+}
