@@ -40,4 +40,14 @@ describe('source diagnostics', () => {
       { line: 2, column: 8, endColumn: 14, original: 'LENGHT', replacement: 'LENGTH' },
     ]);
   });
+
+  it('never treats a variable being assigned or a short unrelated name as a keyword typo', () => {
+    for (const source of ['name <', 'name ← ""', 'name', 'base ← 1', 'cost ← 2', 'Data[1] ← 3']) expect(findSuggestions(source)).toEqual([]);
+  });
+
+  it('still catches real keyword typos, including swapped letters', () => {
+    expect(findSuggestions('OUPTUT "x"').map(s => s.replacement)).toEqual(['OUTPUT']);
+    expect(findSuggestions('WHLIE TRUE').map(s => s.replacement)).toEqual(['WHILE']);
+    expect(findSuggestions('DECALRE x : INTEGER').map(s => s.replacement)).toEqual(['DECLARE']);
+  });
 });
