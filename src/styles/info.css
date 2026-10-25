@@ -2,6 +2,7 @@
 .site-info-page {
   height: 100dvh;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   background: var(--bg);
   color: var(--ds-text);
   font: 15px/1.7 var(--ds-font-ui);
@@ -49,10 +50,11 @@
     radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 8%, transparent) 1px, transparent 0) 0 0 / 22px 22px,
     var(--ds-sunken);
 }
-.site-info-hero-inner { width: min(1120px, 100%); margin: 0 auto; padding: 34px 20px 30px; }
+.site-info-hero-inner { width: min(1120px, 100%); min-height: 150px; box-sizing: border-box; margin: 0 auto; padding: 30px 20px 24px; }
 .site-info-page .site-info-title { display: flex; align-items: center; gap: 14px; margin-top: 0; }
 .site-info-page .site-info-mark { width: 48px; height: 48px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: var(--ds-radius-lg); background: var(--ds-accent-soft); color: var(--accent); }
 .site-info-page .site-info-title h1 { margin: 0; font-size: clamp(30px, 4.4vw, 46px); font-weight: 650; line-height: 1.1; letter-spacing: -.035em; }
+.site-info-author-subtitle { margin: 14px 0 0; color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.55; }
 .site-info-page .site-info-intro {
   display: inline-flex; align-items: center; gap: 6px;
   margin: 14px 0 0; padding: 4px 12px;
@@ -180,7 +182,7 @@
 @media (max-width: 640px) {
   .site-info-header-inner { padding: 0 16px; height: 54px; }
   .site-info-page .site-info-back { padding: 0 10px; }
-  .site-info-hero-inner { padding: 32px 16px 28px; }
+  .site-info-hero-inner { min-height: 136px; padding: 24px 16px 20px; }
   .site-info-summary { font-size: var(--ds-text-md); }
   .site-info-page .site-info-shell { padding: 24px 16px 48px; }
   .site-info-page .site-info-section { grid-template-columns: minmax(0, 1fr); padding: 18px; }
