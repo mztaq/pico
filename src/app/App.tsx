@@ -1,5 +1,5 @@
 import { lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ArrowLeft, ChevronDown, CircleHelp, Code2, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, X } from 'lucide-react';
+import { BookOpen, ArrowLeft, ArrowLeftRight, ChevronDown, CircleHelp, Code2, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
@@ -39,12 +39,12 @@ import './styles/workspace-upgrades.css';
 import './styles/tutorial.css';
 import './styles/file-tabs.css';
 import './styles/resizable-workspace.css';
-import './styles/branding-adjustments.css';
 import './styles/readability.css';
 import './styles/high-contrast.css';
 import './styles/motion.css';
-import './styles/top-toolbar.css';
 import './styles/compiler-workspace.css';
+import '../styles/shell.css';
+import '../styles/compiler.css';
 
 const panelTabs: { key: PanelKey; title: string }[] = [
   { key: 'console', title: 'Console' }, { key: 'debugger', title: 'Debugger' },
@@ -391,21 +391,27 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   }
 
   return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
-    <header className="topbar" inert={tutorialOpen || tutorialOfferOpen}>
-      <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
-      <div className="brand-lockup"><BrandMark /><span>Pico</span><span className="brand-period">.</span><span className="brand-subtitle">{isPython ? pythonVersion || "PYTHON" : "PSEUDOCODE"}</span></div>
-      <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />
-      <div className="topbar-spacer" />
-      <button className="toolbar-button compiler-switch" onClick={() => leaveWorkspace(isPython ? "pseudocode" : "python")}>{isPython ? "Go to Pseudocode Compiler" : "Go to Python Compiler"}</button>
-      <div className="topbar-actions">
-        {running ? <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button> : <button className="toolbar-button debug-button" aria-label="Debug program" onClick={() => runProgram(true)}><Code2 size={16} /><span>Debug</span></button>}
-        <button data-tour="run" className="run-button" disabled={running} onClick={() => runProgram()}><Play size={14} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
-        <button className="toolbar-button editor-history-button" aria-label="Undo last edit" onClick={() => editorRef.current?.undo()} title="Undo"><Undo2 size={16} /><span>Undo</span></button>
-        <button className="toolbar-button editor-history-button" aria-label="Redo last edit" onClick={() => editorRef.current?.redo()} title="Redo"><Redo2 size={16} /><span>Redo</span></button>
-        <button className="toolbar-button reference-toggle" aria-label="Toggle quick reference" onClick={toggleReference} title="Quick reference"><BookOpen size={16} /><span>Reference</span></button>
-        <UpdateCenter />
+    <header className="topbar pico-appbar" inert={tutorialOpen || tutorialOfferOpen}>
+      <div className="pico-appbar-lead">
+        <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
+        <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26" /><span>Pico</span><span className="brand-period">.</span></div>
+        <span className="pico-appbar-sep" aria-hidden="true">/</span>
+        <span className="brand-subtitle pico-appbar-tool">{isPython ? pythonVersion || "Python" : "Pseudocode"}</span>
+        <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />
       </div>
-      <div className="settings-anchor" ref={settingsAnchorRef}>
+      <div className="topbar-spacer" />
+      <button className="toolbar-button compiler-switch" onClick={() => leaveWorkspace(isPython ? "pseudocode" : "python")}><ArrowLeftRight size={15} aria-hidden="true" /><span>{isPython ? "Go to Pseudocode Compiler" : "Go to Python Compiler"}</span></button>
+      <div className="topbar-actions">
+        <div className="pico-appbar-group" role="group" aria-label="Edit history">
+          <button className="toolbar-button editor-history-button" aria-label="Undo last edit" onClick={() => editorRef.current?.undo()} title="Undo"><Undo2 size={16} /><span>Undo</span></button>
+          <button className="toolbar-button editor-history-button" aria-label="Redo last edit" onClick={() => editorRef.current?.redo()} title="Redo"><Redo2 size={16} /><span>Redo</span></button>
+        </div>
+        <div className="pico-appbar-group" role="group" aria-label="Workspace tools">
+          <button className="toolbar-button reference-toggle" aria-label="Toggle quick reference" onClick={toggleReference} title="Quick reference"><BookOpen size={16} /><span>Reference</span></button>
+          <UpdateCenter />
+        </div>
+      </div>
+      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} /></label><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> {isPython ? "Import .py / .pico" : "Import .pico"}</button>{isPython && <button onClick={exportPythonSource}><Download size={14} /> Export .py</button>}<button onClick={() => { exportProject(activeProject); markExported(); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept={isPython ? ".py,.pico,application/json" : ".pico,application/json"} hidden onChange={handleImport} /></div><div className="settings-anchor" ref={settingsAnchorRef}>
         <button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" data-tour="settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>
         <FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover">
           <div className="settings-title"><div><Settings2 size={15} /><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setSettingsOpen(false)}><X size={14} /></button></div>
@@ -422,7 +428,11 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           <div className="settings-foot">Drag tool tabs to reorder</div>
         </FloatingPanel>
       </div>
-      <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} /></label><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> {isPython ? "Import .py / .pico" : "Import .pico"}</button>{isPython && <button onClick={exportPythonSource}><Download size={14} /> Export .py</button>}<button onClick={() => { exportProject(activeProject); markExported(); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept={isPython ? ".py,.pico,application/json" : ".pico,application/json"} hidden onChange={handleImport} /></div><button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+      <button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+      <div className="pico-appbar-run">
+        {running ? <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button> : <button className="toolbar-button debug-button" aria-label="Debug program" onClick={() => runProgram(true)}><Code2 size={16} /><span>Debug</span></button>}
+        <button data-tour="run" className="run-button" disabled={running} onClick={() => runProgram()}><Play size={14} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
+      </div>
       {projectNameError && <p id="project-name-error" className="project-name-error" role="alert">{projectNameError}</p>}
     </header>
 
@@ -476,7 +486,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) { return <button className={`switch ${checked ? 'checked' : ''}`} role="switch" aria-label={label} aria-checked={checked} onClick={onChange}><span /></button>; }
 function SettingRow({ title, detail, checked, onChange }: { title: string; detail: string; checked: boolean; onChange: (value: boolean) => void }) { return <div className="setting-row"><div><strong>{title}</strong><small>{detail}</small></div><Toggle label={title} checked={checked} onChange={() => onChange(!checked)} /></div>; }
-function BrandMark() { return <svg className="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="8" fill="#8179ef"/><path d="M9 7.5h7.6a4.4 4.4 0 0 1 0 8.8H12v4.2H9V7.5Zm3 2.8v3.2h4.3a1.6 1.6 0 0 0 0-3.2H12Z" fill="#11121a"/><circle cx="19.5" cy="20.5" r="1.5" fill="#c9c4ff"/></svg>; }
 
 const defaultPanelOrder: PanelKey[] = ['console','debugger'];
 function PracticeFiles({files,onChange}:{files:Record<string,string[]>;onChange:(files:Record<string,string[]>)=>void}) {

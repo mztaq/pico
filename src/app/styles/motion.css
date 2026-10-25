@@ -10,15 +10,6 @@
   .tutorial-card {
     animation: surface-enter 160ms ease-out;
   }
-  .toolbar-button > svg, .help-button > svg, .reference-close > svg {
-    transition: transform 140ms ease-out;
-  }
-  .toolbar-button:hover > svg, .help-button:hover > svg {
-    transform: translateY(-1px);
-  }
-  .reference-close:hover > svg {
-    transform: rotate(8deg);
-  }
 }
 
 @keyframes content-enter {

@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './app/App';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
+import './styles/tokens.css';
 import './app/styles/accessibility.css';
 
 function SkipToContent() {
