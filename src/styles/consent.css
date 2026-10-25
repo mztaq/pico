@@ -159,3 +159,12 @@ body .pico-cookie-modal-actions {
   body .pico-cookie-modal-actions { padding: 14px 18px; }
   body .pico-cookie-modal-actions .pico-cookie-btn { flex: 1 1 auto; }
 }
+
+/* Keep the fixed consent bar, but align its contents with the product grid. */
+@media (min-width: 900px) {
+  body .pico-cookie-banner { padding-inline: max(24px, calc((100vw - 1120px) / 2)); gap: 14px; }
+  body .pico-cookie-banner p { max-width: 620px; }
+}
+@media (max-width: 899px) {
+  body .pico-cookie-banner { padding-inline: 16px; }
+}
