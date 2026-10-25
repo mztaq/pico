@@ -513,7 +513,7 @@
 .sound-setting strong { color: var(--ds-text); font-size: var(--ds-text-sm); font-weight: 600; }
 .sound-setting small { margin-top: 2px; color: var(--ds-muted); font-size: var(--ds-text-xs); line-height: 1.4; }
 .sound-setting-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--ds-radius-sm); background: var(--ds-accent-soft); color: var(--accent); }
-.sound-setting .switch { width: 36px; height: 20px; padding: 2px; display: inline-flex; align-items: center; flex: 0 0 auto; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-pill); background: var(--surface-input); cursor: pointer; }
+.sound-setting .switch { width: 36px; height: 20px; padding: 2px; display: inline-flex; align-items: center; justify-content: flex-start; flex: 0 0 auto; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-pill); background: var(--surface-input); cursor: pointer; }
 .sound-setting .switch span { width: 14px; height: 14px; border-radius: 50%; background: var(--ds-muted); transition: transform .2s var(--ds-ease), background-color .2s ease; }
 .sound-setting .switch.checked { border-color: transparent; background: var(--accent); }
 .sound-setting .switch.checked span { transform: translateX(16px); background: var(--ds-on-accent); }
