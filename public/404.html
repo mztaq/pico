@@ -64,6 +64,15 @@
     .conversation-line{font-size:clamp(14px,1.45vw,17px);line-height:1.5;color:var(--text)}
     .conversation-line strong{font-family:"Space Mono",monospace;font-size:.88em;color:var(--accent)}
     @media(max-width:720px){.shell[data-rare="large"] .status{font-size:clamp(100px,22vw,156px)}.shell[data-rare="stamp"] .status{font-size:clamp(78px,18vw,118px);transform:none}}
+    /* Aligned with the Pico app shell */
+    .brand{padding-bottom:18px;width:100%;border-bottom:1px solid var(--border)}
+    .back{border-radius:8px;padding:12px 20px;box-shadow:0 1px 2px #0003}
+    .back:active{transform:scale(.97)}
+    .status{background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--bg)));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .shell[data-rare="stamp"] .status{color:var(--accent);background:none}
+    .shell::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--text) 7%,transparent) 1px,transparent 0) 0 0/22px 22px}
+    @media(prefers-reduced-motion:no-preference){.content>*{animation:rise .45s cubic-bezier(.2,.7,.2,1) both}.content>:nth-child(2){animation-delay:.06s}.content>:nth-child(3){animation-delay:.12s}.content>:nth-child(n+4){animation-delay:.18s}}
+    @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   </style>
 </head>
 <body>

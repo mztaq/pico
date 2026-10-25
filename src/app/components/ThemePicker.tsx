@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Check, Search } from 'lucide-react';
 import { accentFill, THEMES, type PicoTheme } from '../themes';
+import { SoundSetting } from './SoundToggle';
 
 interface ThemePickerProps { value: string; onChange: (id: string) => void; }
 
@@ -18,6 +19,7 @@ export function ThemePicker({ value, onChange }: ThemePickerProps) {
   }, [query]);
 
   return <div className="theme-picker">
+    <SoundSetting />
     <div className="theme-picker-head">
       <span>Editor theme</span>
       <small>{THEMES.length} themes · syntax colours included</small>

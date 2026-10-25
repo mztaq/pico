@@ -1,0 +1,49 @@
+/* Guided tours (Flowchart, Logic, CPU) and workspace loader — one dialog language. */
+.cpu-tour-card, .logic-tour-card, .flow-tour-card {
+  border: 1px solid var(--ds-line-strong) !important;
+  border-radius: var(--ds-radius-xl) !important;
+  background: var(--ds-panel-raised) !important;
+  box-shadow: var(--ds-shadow-dialog) !important;
+  font-family: var(--ds-font-ui);
+}
+.cpu-tour-card h2, .logic-tour-card h2, .flow-tour-card h2 { font-size: var(--ds-text-xl); font-weight: 650; letter-spacing: -.01em; }
+.cpu-tour-card p, .logic-tour-card p, .flow-tour-card > p { font-size: var(--ds-text-md); line-height: 1.6; color: var(--ds-muted); }
+.cpu-tour-meta, .logic-tour-top { font: 600 var(--ds-text-2xs)/1 var(--ds-font-code); letter-spacing: .07em; color: var(--ds-muted); }
+.cpu-tour-meta button, .logic-tour-top button { border-radius: var(--ds-radius-sm); }
+.cpu-tour-meta button:hover, .logic-tour-top button:hover { background: var(--ds-hover); }
+.cpu-tour-nav button, .logic-tour-navigation button, .flow-tour-actions button {
+  min-height: 34px;
+  border-radius: var(--ds-radius-md) !important;
+  font: 600 var(--ds-text-sm)/1 var(--ds-font-ui) !important;
+}
+.cpu-tour-nav .cpu-tour-primary, .logic-tour-navigation .logic-tour-primary, .flow-tour-actions .run-button {
+  border-color: transparent !important;
+  background: var(--ds-accent-fill) !important;
+  color: var(--ds-on-accent) !important;
+}
+.cpu-tour-focus, .logic-tour-focus { border-radius: var(--ds-radius-lg); }
+
+/* Workspace loader */
+.pico-load-stage {
+  background:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text, #cdd6f4) 9%, transparent) 1px, transparent 0) 0 0 / 22px 22px,
+    var(--bg, #1e1e2e);
+  font-family: var(--ds-font-ui);
+}
+.pico-load-content {
+  width: min(280px, 90vw);
+  padding: 28px 24px 24px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-xl);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-dialog);
+}
+.pico-load-bar { width: 100%; height: 3px; background: var(--ds-line); }
+.pico-load-description { font-size: var(--ds-text-sm); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .cpu-tour-card, .logic-tour-card, .flow-tour-card { animation: ds-pop .22s var(--ds-ease) both; }
+  .pico-load-content { animation: ds-rise .3s var(--ds-ease) both; }
+  .pico-load-icon { animation: pico-load-breathe 1.6s ease-in-out infinite; }
+}
+@keyframes pico-load-breathe { 50% { transform: scale(1.06); } }
