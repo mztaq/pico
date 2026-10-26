@@ -10,6 +10,10 @@ html:has(.binary-app), body:has(.binary-app), #root:has(.binary-app) { min-width
 .binary-header .brand-period { color: var(--accent); }
 .binary-header .binary-icon-button { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid transparent; border-radius: var(--ds-radius-md); background: transparent; color: var(--ds-muted); }
 .binary-header .binary-icon-button:hover { background: var(--ds-hover); color: var(--ds-text); }
+.binary-header-actions { display: flex; align-items: center; gap: 8px; }
+.binary-tutorial-button { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 6px 10px; border: 1px solid var(--ds-line-strong); border-radius: 7px; background: transparent; color: var(--ds-text); font-size: 12px !important; font-weight: 600; }
+.binary-tutorial-button:hover { background: var(--ds-hover); }
+
 .binary-content { width: min(1120px, 100%); margin: 0 auto; padding: 34px 22px 64px; display: grid; gap: 18px; }
 .binary-intro { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 6px 2px 16px; }
 .binary-intro h1 { margin: 0 0 7px; font-size: clamp(28px, 4vw, 42px); line-height: 1.12; letter-spacing: -.045em; }
