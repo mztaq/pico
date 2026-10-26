@@ -111,18 +111,63 @@ jobs:
             echo "Full changelog: https://github.com/mztaq/pico/blob/main/logs.txt"
           } > release-notes.md
 
-      - name: Publish GitHub Release with installers
+      - name: Collect installer packages only
+        shell: bash
+        run: |
+          mkdir -p installers
+          find release-assets -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' \) -print0 |
+            while IFS= read -r -d '' file; do
+              name=$(basename "$file")
+              if [[ -e "installers/$name" ]]; then
+                echo "Duplicate installer filename: $name" >&2
+                exit 1
+              fi
+              cp "$file" "installers/$name"
+            done
+          if ! find installers -type f -print -quit | grep -q .; then
+            echo "No installer packages found" >&2
+            exit 1
+          fi
+          ls -lh installers
+
+      - name: Create GitHub prerelease with changelog
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mapfile -d '' -t assets < <(find release-assets -type f -print0)
-          if (( ${#assets[@]} == 0 )); then
-            echo "No installers were downloaded" >&2
-            exit 1
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --notes-file release-notes.md --prerelease
+          else
+            # Create the release independently: failed asset uploads must not
+            # delete the release or hide its changelog.
+            gh release create "$RELEASE_TAG" \
+              --title "Pico desktop $RELEASE_TAG" \
+              --notes-file release-notes.md \
+              --target "$GITHUB_SHA" \
+              --prerelease
           fi
-          gh release create "$RELEASE_TAG" "${assets[@]}" \
-            --title "Pico desktop $RELEASE_TAG" \
-            --notes-file release-notes.md \
-            --target "$GITHUB_SHA" \
-            --prerelease
+
+      - name: Upload installer packages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s nullglob
+          assets=(installers/*)
+          if (( ${#assets[@]} == 0 )); then exit 1; fi
+          # Upload individually, with retries, to identify failures clearly.
+          for file in "${assets[@]}"; do
+            uploaded=false
+            for attempt in 1 2 3; do
+              if gh release upload "$RELEASE_TAG" "$file" --clobber; then
+                uploaded=true
+                break
+              fi
+              echo "Upload failed for $file (attempt $attempt/3)" >&2
+              sleep 5
+            done
+            if [[ "$uploaded" != true ]]; then
+              echo "::error::Could not upload $file; the release and changelog still exist." >&2
+              exit 1
+            fi
+          done
