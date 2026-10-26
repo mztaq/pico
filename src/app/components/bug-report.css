@@ -95,3 +95,18 @@
 
 .bug-report-success { margin: 0; padding: 10px 12px; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-md); color: var(--ds-text); font-size: var(--ds-text-sm); }
 .bug-report-file-row:has(input:disabled) { opacity: .55; }
+
+.bug-report-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 1500; display: flex; align-items: center; gap: 11px;
+  width: max-content; max-width: min(460px, calc(100vw - 32px));
+  padding: 13px 15px; border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md); background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-dialog); color: var(--ds-text);
+  font: 500 var(--ds-text-sm)/1.5 var(--ds-font-ui);
+}
+.bug-report-toast--success > svg { color: #57bd8c; flex-shrink: 0; }
+.bug-report-toast--error > svg { color: var(--ds-danger); flex-shrink: 0; }
+.bug-report-toast > span { flex: 1; }
+.bug-report-toast button { display: grid; place-items: center; border: 0; background: transparent; color: var(--ds-muted); cursor: pointer; }
+@media (max-width: 540px) { .bug-report-toast { bottom: 16px; } }
