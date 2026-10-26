@@ -134,7 +134,7 @@
 .pico-palette-drag-preview {
   position: fixed;
   z-index: 2000;
-  transform: translate(14px, 14px);
+  transform: translate(-50%, -50%);
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
@@ -156,3 +156,25 @@
   -webkit-touch-callout: none;
 }
 .flow-palette-block { touch-action: none; }
+
+/* Render the actual block outline, not a generic drag label. */
+.flow-drag-preview {
+  width: 90px;
+  height: 42px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.flow-drag-preview .flow-symbol {
+  display: block;
+  width: 90px;
+  height: 42px;
+  flex: none;
+  stroke: var(--flow-color, var(--accent));
+  fill: color-mix(in srgb, var(--flow-color, var(--accent)) 10%, var(--surface));
+}
+
+
