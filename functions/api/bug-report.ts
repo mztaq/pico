@@ -58,7 +58,7 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
       body: JSON.stringify({
         from: 'Pico Bug Reports <onboarding@resend.dev>',
         to: [ctx.env.BUG_REPORT_TO],
-        subject: '[Pico] ' + kind + ' — ' + workspace,
+        subject: '[Pico #' + crypto.randomUUID().slice(0, 12).toUpperCase() + '] ' + kind + ' — ' + workspace,
         text: message,
         html: reportEmailHtml(kind, workspace, description.trim(), replyTo),
         ...(replyTo ? {reply_to: replyTo} : {})
