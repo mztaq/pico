@@ -1,4 +1,5 @@
 .binary-app { width: 100%; height: 100dvh; overflow-x: hidden; overflow-y: auto; background: var(--bg); color: var(--ds-text); font: 14px/1.5 var(--ds-font-ui); }
+html:has(.binary-app), body:has(.binary-app), #root:has(.binary-app) { min-width: 0; }
 .binary-app * { box-sizing: border-box; }
 .binary-app button, .binary-app input, .binary-app select { font: inherit; }
 .binary-app button { cursor: pointer; }
