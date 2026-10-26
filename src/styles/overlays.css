@@ -23,6 +23,9 @@
 }
 .cpu-tour-focus, .logic-tour-focus { border-radius: var(--ds-radius-lg); }
 
+@keyframes logic-tour-pop { from { opacity: 0; transform: translate(-50%, calc(-50% - 4px)) scale(.98); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@media (prefers-reduced-motion: no-preference) { .logic-tour-card { animation: logic-tour-pop .22s var(--ds-ease) both; } }
+
 /* Workspace loader */
 .pico-load-stage {
   background:
@@ -42,6 +45,6 @@
 .pico-load-description { font-size: var(--ds-text-sm); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .cpu-tour-card, .logic-tour-card, .flow-tour-card { animation: ds-pop .22s var(--ds-ease) both; }
+  .cpu-tour-card, .flow-tour-card { animation: ds-pop .22s var(--ds-ease) both; }
   .pico-load-content { animation: ds-rise .3s var(--ds-ease) both; }
 }
