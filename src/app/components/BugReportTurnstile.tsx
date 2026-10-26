@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 
 type TurnstileAPI = {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string;
@@ -11,6 +11,9 @@ export function BugReportTurnstile({onTokenChange}: {onTokenChange: (token: stri
   const element = useRef<HTMLDivElement>(null);
   const widget = useRef<string | null>(null);
   const [status, setStatus] = useState('Loading verification…');
+  const onTokenRef = useRef(onTokenChange);
+  onTokenRef.current = onTokenChange;
+  const setToken = useCallback((value: string | null) => onTokenRef.current(value), []);
   useEffect(() => {
     let active = true;
     let retry: number | undefined;
@@ -25,10 +28,10 @@ export function BugReportTurnstile({onTokenChange}: {onTokenChange: (token: stri
       widget.current = window.turnstile.render(element.current, {
         sitekey: siteKey,
         theme: 'auto',
-        callback: (token: string) => { if (active) { onTokenChange(token); setStatus(''); } },
-        'expired-callback': () => { onTokenChange(null); setStatus('Verification expired. Please verify again.'); },
-        'error-callback': () => { onTokenChange(null); setStatus('Verification failed. Please retry.'); },
-        'timeout-callback': () => { onTokenChange(null); setStatus('Verification timed out. Please retry.'); }
+        callback: (token: string) => { if (active) { setToken(token); setStatus(''); } },
+        'expired-callback': () => { setToken(null); setStatus('Verification expired. Please verify again.'); },
+        'error-callback': () => { setToken(null); setStatus('Verification failed. Please retry.'); },
+        'timeout-callback': () => { setToken(null); setStatus('Verification timed out. Please retry.'); }
       });
       setStatus('');
     };
@@ -53,9 +56,9 @@ export function BugReportTurnstile({onTokenChange}: {onTokenChange: (token: stri
       active = false;
       window.clearTimeout(retry);
       if (widget.current) window.turnstile?.remove(widget.current);
-      onTokenChange(null);
+      setToken(null);
     };
-  }, [onTokenChange]);
+  }, [setToken]);
   return <div className="bug-report-turnstile">
     <div ref={element} />
     {status && <p role="status" className="bug-report-hint">{status}</p>}
