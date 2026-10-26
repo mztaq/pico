@@ -81,3 +81,31 @@ it('suppresses native selection and context menus without losing canvas pointer 
   expect(pointerDown.defaultPrevented).toBe(true);
   expect(capture).toHaveBeenCalledWith(5);
 });
+
+it('drops a palette component using pointer events without the WebView native Copy drag',async()=>{
+  const board=host.querySelector<SVGSVGElement>('svg[aria-label="Circuit canvas"]')!;
+  vi.spyOn(board,'getBoundingClientRect').mockReturnValue({
+    left:200,top:100,right:1000,bottom:800,width:800,height:700,x:200,y:100,toJSON:()=>({})
+  } as DOMRect);
+  const palette=host.querySelector<HTMLButtonElement>('.logic-part')!;
+  expect(palette.draggable).toBe(false);
+  const pointer=(target:EventTarget,type:string,x:number,y:number)=>{
+    const event=new MouseEvent(type,{bubbles:true,cancelable:true,button:0,clientX:x,clientY:y});
+    Object.defineProperty(event,'pointerId',{value:8});
+    target.dispatchEvent(event);
+    return event;
+  };
+  await act(async()=>{
+    const down=pointer(palette,'pointerdown',40,200);
+    expect(down.defaultPrevented).toBe(true);
+    pointer(window,'pointermove',400,350);
+  });
+  expect(host.querySelector('.pico-palette-drag-preview')).not.toBeNull();
+  await act(async()=>{
+    pointer(window,'pointerup',400,350);
+    palette.click(); // Suppress the click following a completed drag.
+  });
+  expect(nodes()).toHaveLength(3);
+  expect(host.querySelector('.pico-palette-drag-preview')).toBeNull();
+  expect(host.querySelector('.logic-placement-hint')).toBeNull();
+});

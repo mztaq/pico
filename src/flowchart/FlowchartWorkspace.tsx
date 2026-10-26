@@ -18,6 +18,7 @@ import { startExecution, type ExecutionJob } from '../runtime/runner';
 import type { ExecutionFailure, PendingInput } from '../runtime/worker';
 import type { RunResult } from '../runtime/interpreter';
 import { FlowchartTutorial, lessonReady } from './FlowchartTutorial';
+import { usePalettePointerDrag } from '../app/components/usePalettePointerDrag';
 import './flowchart-builder.css';
 import '../styles/flowchart.css';
 const OUTPUT_LIMIT=2000;
@@ -80,6 +81,17 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     const node=createNode(kind,tutorialActive?360:currentNode?currentNode.x+256:360,tutorialActive?(kind==='start'?44:kind==='end'?440:240):currentNode?currentNode.y+144:160+project.nodes.length*40);
     update({...project,nodes:[...project.nodes,node]});setSelected(node.id);
   }
+  const paletteDrag=usePalettePointerDrag<NodeKind>((kind,clientX,clientY)=>{
+    if(running||project.nodes.length>=250)return;
+    const viewport=layoutRef.current?.querySelector<HTMLElement>('.flow-viewport');
+    const plane=layoutRef.current?.querySelector<HTMLElement>('.flow-plane');
+    if(!viewport||!plane)return;
+    const area=viewport.getBoundingClientRect();
+    if(clientX<area.left||clientX>area.right||clientY<area.top||clientY>area.bottom)return;
+    const bounds=plane.getBoundingClientRect();
+    const node=createNode(kind,Math.min(10000,(clientX-bounds.left)/zoom-NODE_WIDTH/2),Math.min(10000,(clientY-bounds.top)/zoom-NODE_HEIGHT/2));
+    update({...project,nodes:[...project.nodes,node]});setSelected(node.id);
+  });
   function patchNode(patch:Partial<NonNullable<typeof currentNode>>) {if(!currentNode)return;update({...project,nodes:project.nodes.map(n=>n.id===selected?{...n,...patch}:n)});}
   function deleteSelected() {if(running||!selected)return;update(removeNode(project,selected));setSelected(null);setConnection(null);}
   function rename() {if(tutorialActive)return;const name=normalizeProjectName(nameDraft);if(!name){setMessage('Enter a workspace name.');setNameDraft(project.name);return;}if(chartNameExists(name,store.projects,project.id)){setMessage('A flowchart with that name already exists.');setNameDraft(project.name);return;}if(name!==project.name)update({...project,name});}
@@ -184,11 +196,12 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     {saveError&&<p className="autosave-error" role="alert">Browser storage is unavailable. Export your flowchart to keep your work.</p>}
     {message&&<p className="flow-message" role="status">{message}<button aria-label="Dismiss message" onClick={()=>setMessage('')}><X size={14}/></button></p>}
     <div className="flow-workspace" ref={layoutRef}>
-      <aside className="flow-palette" aria-label="Flowchart blocks"><h2>Blocks</h2><p>Drag a block onto the canvas, or click to add it.</p><div className="flow-block-list">{BLOCKS.map(b=><button key={b.kind} className={`flow-palette-block flow-kind-${b.kind}`} disabled={running||(tutorialActive&&((tourStep===1?'start':tourStep===2?'output':tourStep===4?'end':null)!==b.kind||project.nodes.some(n=>n.kind===b.kind)))} draggable={!running&&(!tutorialActive||((tourStep===1?'start':tourStep===2?'output':tourStep===4?'end':null)===b.kind&&!project.nodes.some(n=>n.kind===b.kind)))} onDragStart={e=>{e.dataTransfer.setData('application/pico-flow-block',b.kind);e.dataTransfer.effectAllowed='copy';}} onClick={()=>add(b.kind)} title={b.hint}><BlockSymbol kind={b.kind}/><span><strong>{b.label}</strong><small>{b.hint}</small></span></button>)}</div>
+      <aside className="flow-palette" aria-label="Flowchart blocks"><h2>Blocks</h2><p>Drag a block onto the canvas, or click to add it.</p><div className="flow-block-list">{BLOCKS.map(b=><button key={b.kind} className={`flow-palette-block flow-kind-${b.kind}`} disabled={running||(tutorialActive&&((tourStep===1?'start':tourStep===2?'output':tourStep===4?'end':null)!==b.kind||project.nodes.some(n=>n.kind===b.kind)))} onPointerDown={e=>paletteDrag.start(e,b.kind,b.label)} onDragStart={e=>e.preventDefault()} onClick={()=>paletteDrag.click(()=>add(b.kind))} title={b.hint}><BlockSymbol kind={b.kind}/><span><strong>{b.label}</strong><small>{b.hint}</small></span></button>)}</div>
 
         <div className="flow-file-actions" inert={tutorialActive}><button onClick={()=>{download(serializeChart(project),`${project.name}.picochart`,'application/json');markExported();}}><Download size={14}/>Export flowchart</button><button onClick={()=>importRef.current?.click()}><Upload size={14}/>Import flowchart</button><button onClick={removeProject}><Trash2 size={14}/>Delete workspace</button></div>
         <input ref={importRef} type="file" accept=".picochart,application/json" hidden onChange={e=>{const file=e.currentTarget.files?.[0];e.currentTarget.value='';if(file)void importFile(file);}}/>
       </aside>
+      {paletteDrag.preview&&<div className="pico-palette-drag-preview" aria-hidden="true" style={{left:paletteDrag.preview.x,top:paletteDrag.preview.y}}>{paletteDrag.preview.label}</div>}
       <main className="flow-main"><div className="flow-canvas-toolbar"><span>{connection?`Choose a destination for ${connection.port==='next'?'Next':connection.port==='yes'?'Yes':'No'}`:'Drag a connection port onto another block. Drag the background to pan.'}</span><div>{connection&&<button aria-label="Cancel connection" onClick={()=>setConnection(null)}><X size={15}/></button>}<button aria-label="Zoom out" disabled={zoom<=0.35} onClick={()=>setZoom(v=>Math.max(0.35,v-0.1))}><ZoomOut size={16}/></button><output>{Math.round(zoom*100)}%</output><button aria-label="Zoom in" disabled={zoom>=1.5} onClick={()=>setZoom(v=>Math.min(1.5,v+0.1))}><ZoomIn size={16}/></button><button aria-label="Fit flowchart" onClick={fit}><Maximize2 size={16}/></button><button className="flow-auto-layout" aria-label="Auto-layout flowchart" title="Auto-layout flowchart" disabled={running||tutorialActive||project.nodes.length<2} onClick={autoLayout}><Network size={15}/></button></div></div>
         <ChartCanvas project={project} selected={selected} activeNode={activeNode} errorNode={errorNode??(!tutorialActive?conversion.error?.nodeId:undefined)} connection={connection} zoom={zoom} disabled={running} onSelect={select} onChange={update} onConnect={connect} onTarget={target} onLink={link} onCancelConnection={()=>setConnection(null)}/>
         <ResizeHandle axis="y" label="Resize flowchart console" onResize={delta=>{const available=layoutRef.current?.clientHeight??700;setDockHeight(v=>Math.min(available*0.65,Math.max(160,v-delta)));}}/>
