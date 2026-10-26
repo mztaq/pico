@@ -127,3 +127,6 @@
 .flow-node.has-error .flow-node-shape { stroke: #ff7474 !important; stroke-width: 3; fill: color-mix(in srgb, #ff7474 15%, var(--surface-raised)); }
 .flow-node-text .highlighted-code { font: inherit; white-space: normal; }
 
+
+.flow-canvas-toolbar .flow-auto-layout { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-width: 28px; padding: 0 8px; border: 1px solid var(--border); font-size: 11px; white-space: nowrap; }
+@media (max-width: 520px) { .flow-canvas-toolbar .flow-auto-layout { width: 28px; padding: 0; }.flow-canvas-toolbar .flow-auto-layout span { display: none; } }
