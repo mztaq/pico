@@ -54,7 +54,7 @@ export function usePalettePointerDrag<T extends string>(onDrop: (kind: T, x: num
   }, []);
 
   const start = (event: ReactPointerEvent<HTMLButtonElement>, kind: T, label: string) => {
-    if (event.button !== 0 || !event.isPrimary) return;
+    if (event.button !== 0 || event.isPrimary === false) return;
     event.preventDefault();
     active.current = { kind, label, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
     event.currentTarget.setPointerCapture?.(event.pointerId);
