@@ -11,26 +11,30 @@ website. The desktop app does not contain a second copy of the compilers.
   refresh**. No new installer is needed. Existing open sessions are not
   forcibly refreshed, to avoid losing unsaved work.
 - **Desktop wrapper changes:** The GitHub Actions **Desktop installers**
-  workflow rebuilds Windows, macOS and Linux installers whenever `src-tauri`,
-  the icon, or its workflow changes on `main`. Successful `main` builds
-  automatically publish a **GitHub prerelease** with installers and the latest
-  entries from `logs.txt`. The workflow can also be started manually; manual
-  runs upload installer artifacts but do not publish a release.
-  Native installer updates are **not yet installed automatically**. Signing
-  and Tauri's updater would be needed for that.
+  workflow builds Windows, macOS and Linux installers when `src-tauri`, the
+  icon, or its workflow changes on `main`, or when started manually. Builds
+  are available as temporary Actions artifacts. **No new GitHub releases are
+  created automatically.** Native changes are not installed automatically;
+  updated installers would still need to be distributed and installed.
 
-## Releases and changelog
+## Releases and source archives
 
-Desktop releases are published automatically at
-[GitHub Releases](https://github.com/mztaq/pico/releases) when native desktop
-files change on `main`. The tag format is `desktop-v0.1.0-build.N`
-(where `N` is the workflow run number), so releases do not overwrite one
-another. Releases are marked **prerelease** because the installers are unsigned.
+The existing stable [Pico for Desktop release](https://github.com/mztaq/pico/releases/tag/desktop-v0.1.0-build.10)
+is kept as the single public installer download. Its existing Windows, macOS
+and Linux installer assets stay unchanged.
 
-Each release includes the latest ten entries from `logs.txt` as a convenient
-summary; these are recent Pico changes, **not a per-release diff**. Keep
-`logs.txt` updated for accurate notes. The website's in-app changelog still
-reads `public/logs.txt` as before.
+The **Update desktop release source archives** workflow runs after every push
+to `main` (or manually on `main`) and force-moves the existing
+`desktop-v0.1.0-build.10` tag to the latest `main` commit. GitHub generates
+**Source code (zip)** and **Source code (tar.gz)** from that tag, so their
+contents follow `main` without creating a new release or uploading files.
+GitHub/CDN caching may delay archive updates. This deliberately makes the
+published release tag mutable; do not use it for reproducible builds or
+commit-specific source references.
+
+Website-only updates still reach desktop users through Cloudflare without
+reinstalling the desktop app. Keep `logs.txt` and `public/logs.txt` in sync
+for the site's changelog.
 
 The Windows webview disables native file-drop interception so that HTML5
 dragging from the Flowchart and Logic Sim component palettes works. Normal
