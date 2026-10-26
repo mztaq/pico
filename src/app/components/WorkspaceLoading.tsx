@@ -4,6 +4,7 @@ const labels = {
   'CPU Studio': 'CPU Studio',
   'Logic Sim': 'Logic Sim',
   'Flowchart Builder': 'Flowchart Builder',
+  'Binary Lab': 'Binary Lab',
 } as const;
 
 /** Clean, indeterminate animation: no simulated or misleading progress percentage. */
