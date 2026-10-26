@@ -49,6 +49,10 @@ it('opens on a themed home screen with all workspace choices',()=>{
 it('opens Binary Lab from its home section and updates every number view',async()=>{
   const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Binary Lab');
   await click(choice!);
+  expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Binary Lab');
+  await click(container.querySelector<HTMLElement>('.binary-tour-actions button')!);
+  expect(container.querySelector('.binary-tour')).toBeNull();
+  expect(localStorage.getItem('pico.binary.tutorial.v1')).toBe('done');
   expect(document.title).toBe('Pico | Binary Lab');
   expect(container.querySelector<HTMLInputElement>('[aria-label="Unsigned decimal value"]')?.value).toBe('42');
   await click(container.querySelector<HTMLElement>('[aria-label="Toggle bit 7, value 128"]')!);
@@ -57,6 +61,12 @@ it('opens Binary Lab from its home section and updates every number view',async(
   expect(container.querySelector('output[aria-label="Two’s complement signed value"]')?.textContent).toBe('-86');
   await click(container.querySelector<HTMLElement>('[aria-label="Back to Pico"]')!);
   expect(container.querySelector('.pico-home')).not.toBeNull();
+  await click([...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Binary Lab')!);
+  expect(container.querySelector('.binary-tour')).toBeNull();
+  await click(container.querySelector<HTMLElement>('[aria-label="Open Binary Lab tutorial"]')!);
+  expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Binary Lab');
+  await click(container.querySelector<HTMLElement>('.binary-tour-next')!);
+  expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Toggle bits');
 });
 it('shows the Logic Sim workspace without a personal footer',async()=>{
   const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
