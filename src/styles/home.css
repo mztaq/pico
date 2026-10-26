@@ -5,9 +5,7 @@
   overflow: auto;
   display: block;
   padding: 0;
-  background:
-    radial-gradient(1200px 520px at 12% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%),
-    var(--bg);
+  background: var(--bg);
   color: var(--ds-text);
   font-family: var(--ds-font-ui);
 }
