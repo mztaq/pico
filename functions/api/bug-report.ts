@@ -91,7 +91,7 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
   } catch {
     return fail(503, 'Verification temporarily unavailable');
   }
-  let attachment: {filename: string; content: string} | undefined;
+  let attachment: {filename: string; content: string; content_type: string} | undefined;
   if (screenshot) {
     const bytes = new Uint8Array(await screenshot.arrayBuffer());
     const actualType = imageType(bytes);
@@ -102,14 +102,15 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
     for (let i = 0; i < bytes.length; i += 8192) {
       binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
     }
-    attachment = {filename: 'pico-screenshot.' + ext, content: btoa(binary)};
+    attachment = {filename: 'pico-screenshot.' + ext, content: btoa(binary), content_type: actualType};
   }
   const replyTo = typeof email === 'string' && email ? email : undefined;
   const message = [
     'New Pico report', '',
     'Type: ' + kind, 'Workspace: ' + workspace,
     'Reply email: ' + (replyTo ?? '(not provided)'), '',
-    'Description:', description.trim()
+    'Description:', description.trim(), '',
+    'Screenshot: ' + (attachment ? attachment.filename + ' (attached)' : '(none)')
   ].join('\n');
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -120,13 +121,20 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
         to: [ctx.env.BUG_REPORT_TO],
         subject: '[Pico #' + crypto.randomUUID().slice(0, 12).toUpperCase() + '] ' + kind + ' — ' + workspace,
         text: message,
-        html: reportEmailHtml(kind, workspace, description.trim(), replyTo),
+        html: reportEmailHtml(kind, workspace, description.trim(), replyTo) +
+          (attachment ? '<p>Screenshot: ' + attachment.filename + ' (attached)</p>' : '<p>Screenshot: none</p>'),
         ...(attachment ? {attachments: [attachment]} : {}),
         ...(replyTo ? {reply_to: replyTo} : {})
       })
     });
     if (!response.ok) return fail(502, 'Could not deliver the report. Please try again later');
-    return json({ok: true});
+    const receipt = await response.json() as {id?: string};
+    console.info('Pico bug report sent', {
+      emailId: receipt.id ?? '(missing)',
+      screenshotAttached: !!attachment,
+      screenshotBytes: screenshot?.size ?? 0,
+    });
+    return json({ok: true, screenshotAttached: !!attachment});
   } catch {
     return fail(502, 'Could not deliver the report. Please try again later');
   }
