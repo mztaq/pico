@@ -25,7 +25,7 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
   if (typeof turnstileToken !== 'string' || !/^[A-Za-z0-9._-]{1,2048}$/.test(turnstileToken)) return fail(400, 'Verification required');
   if (!emailPattern.test(ctx.env.BUG_REPORT_TO)) return fail(503, 'Report recipient is misconfigured');
   try {
-    const limited = await rateLimit(ctx, 'bug-report', 3);
+    const limited = await rateLimit(ctx, 'bug-report', 5);
     if (limited) return limited;
   } catch {
     return fail(503, 'Report service temporarily unavailable');
