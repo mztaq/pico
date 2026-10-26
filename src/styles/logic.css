@@ -172,13 +172,14 @@
 .logic-app .logic-spark { pointer-events: none; }
 .logic-app .logic-spark-bolt {
   stroke: color-mix(in srgb, #fff 80%, var(--accent));
-  stroke-width: 2;
+  stroke-width: 3.5;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 7px var(--accent));
-  opacity: .9;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 12px var(--accent)) drop-shadow(0 0 22px var(--accent));
+  opacity: 1;
 }
-.logic-app .logic-spark-head { fill: #fff; stroke: none; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px var(--accent)); }
-.logic-app .logic-spark-head.s1 { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px #70dcb2); }
+.logic-app .logic-spark-head { fill: #fff; stroke: none; filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 16px var(--accent)) drop-shadow(0 0 28px var(--accent)); }
+.logic-app .logic-spark-head.s1 { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 16px #70dcb2) drop-shadow(0 0 28px #70dcb2); }
 .logic-app .logic-spark-head.s0 { fill: color-mix(in srgb, #fff 60%, #7896d0); filter: drop-shadow(0 0 6px #7896d0); }
 .logic-app .logic-bit { pointer-events: none; }
 .logic-app .logic-bit rect { fill: var(--ds-panel-raised); stroke: var(--ds-line-strong); stroke-width: 1; }

@@ -97,8 +97,14 @@ export function playCue(cue: Cue): void {
     case 'notify': tone(ctx, 1046, t, 0.12, 0.04, 'sine'); tone(ctx, 1318, t + 0.1, 0.18, 0.035, 'sine'); break;
     case 'zoomIn': tone(ctx, 900, t, 0.05, 0.03, 'sine', 1300); break;
     case 'zoomOut': tone(ctx, 1300, t, 0.05, 0.03, 'sine', 900); break;
-    case 'zap': crackle(ctx, t, 0.16, 0.22, 2400 + Math.random() * 1600); tone(ctx, 95, t, 0.12, 0.035, 'sawtooth', 70); break;
-    case 'lampOn': tone(ctx, 1568, t, 0.06, 0.04, 'sine'); tone(ctx, 2093, t + 0.05, 0.14, 0.035, 'sine'); crackle(ctx, t, 0.08, 0.12, 4000); break;
+    case 'zap':
+      // Layer a bright electrical snap over two noisy arcs and a short low-voltage thump.
+      crackle(ctx, t, 0.2, 0.42, 3000 + Math.random() * 1800);
+      crackle(ctx, t + 0.045, 0.1, 0.24, 1700 + Math.random() * 900);
+      tone(ctx, 1450 + Math.random() * 500, t, 0.12, 0.075, 'sawtooth', 180);
+      tone(ctx, 110, t, 0.18, 0.075, 'sawtooth', 58);
+      break;
+    case 'lampOn': tone(ctx, 1568, t, 0.06, 0.04, 'sine'); tone(ctx, 2093, t + 0.05, 0.14, 0.035, 'sine'); crackle(ctx, t, 0.12, 0.3, 3800); tone(ctx, 170, t, 0.11, 0.045, 'triangle', 90); break;
     case 'place': tone(ctx, 180, t, 0.06, 0.08, 'sine', 90); tone(ctx, 1200, t, 0.02, 0.02, 'triangle'); break;
   }
 }
@@ -155,3 +161,4 @@ export function installSoundEffects(): void {
     }
   }).observe(document.body, { childList: true, subtree: true });
 }
+
