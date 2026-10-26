@@ -5,6 +5,8 @@ import {reportEmailHtml} from '../_lib/bug-report-email';
 const TYPES = ['Bug / Something broken', 'Visual or layout issue', 'Feature request', 'Other feedback'];
 const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio'];
 const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
+const MAX_TOTAL_SCREENSHOT_BYTES = 10 * 1024 * 1024;
+const MAX_SCREENSHOTS = 5;
 const imageType = (bytes: Uint8Array): 'image/png' | 'image/jpeg' | 'image/webp' | null => {
   if (bytes.length >= 8 && [137,80,78,71,13,10,26,10].every((v,i) => bytes[i] === v)) return 'image/png';
   if (bytes.length >= 3 && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) return 'image/jpeg';
@@ -25,11 +27,11 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
   if (!multipart && !/^application\/json(?:\s*;|$)/i.test(contentType)) return fail(415, 'Expected JSON or multipart form');
   let data: Record<string, unknown> | null = null;
   let tooLarge = false;
-  let screenshot: File | null = null;
+  const screenshots: File[] = [];
   if (multipart) {
-    const limit = MAX_SCREENSHOT_BYTES + 16 * 1024;
+    const limit = MAX_TOTAL_SCREENSHOT_BYTES + 16 * 1024;
     const declared = Number(ctx.request.headers.get('content-length') ?? 0);
-    if (declared > limit) return fail(413, 'Upload exceeds 5 MB');
+    if (declared > limit) return fail(413, 'Upload exceeds 10 MB');
     if (!ctx.request.body) return fail(400, 'Invalid report');
     const reader = ctx.request.body.getReader();
     const chunks: Uint8Array[] = [];
@@ -50,7 +52,7 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
       const parsed = await new Request(ctx.request.url, {method:'POST', headers:{'content-type':contentType}, body:bytes}).formData();
       const fields: Record<string, unknown> = {};
       for (const [key, value] of parsed) {
-        if (key === 'screenshot') { if (screenshot || !(value instanceof File)) return fail(400, 'Invalid screenshot'); screenshot = value; }
+        if (key === 'screenshots' || key === 'screenshot') { if (!(value instanceof File) || screenshots.length >= MAX_SCREENSHOTS) return fail(400, 'Invalid screenshots'); screenshots.push(value); }
         else if (typeof value !== 'string' || !['kind','workspace','description','email','turnstileToken'].includes(key) || key in fields) return fail(400, 'Invalid report fields');
         else fields[key] = value;
       }
@@ -69,8 +71,9 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
     return fail(400, 'Check the report fields');
   }
   if (typeof turnstileToken !== 'string' || !/^[A-Za-z0-9._-]{1,2048}$/.test(turnstileToken)) return fail(400, 'Verification required');
-  if (screenshot && (screenshot.size < 16 || screenshot.size > MAX_SCREENSHOT_BYTES ||
-      !['image/png','image/jpeg','image/webp'].includes(screenshot.type))) return fail(400, 'Invalid screenshot or storage unavailable');
+  if (screenshots.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_SCREENSHOT_BYTES ||
+      screenshots.some(file => file.size < 16 || file.size > MAX_SCREENSHOT_BYTES ||
+      !['image/png','image/jpeg','image/webp'].includes(file.type))) return fail(400, 'Invalid screenshots');
   if (!emailPattern.test(ctx.env.BUG_REPORT_TO)) return fail(503, 'Report recipient is misconfigured');
   try {
     const limited = await rateLimit(ctx, 'bug-report', 5);
@@ -91,18 +94,17 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
   } catch {
     return fail(503, 'Verification temporarily unavailable');
   }
-  let attachment: {filename: string; content: string; content_type: string} | undefined;
-  if (screenshot) {
+  const attachments: {filename: string; content: string; content_type: string}[] = [];
+  for (const [index, screenshot] of screenshots.entries()) {
     const bytes = new Uint8Array(await screenshot.arrayBuffer());
     const actualType = imageType(bytes);
     if (!actualType || actualType !== screenshot.type) return fail(400, 'Invalid image contents');
     const ext = actualType === 'image/png' ? 'png' : actualType === 'image/jpeg' ? 'jpg' : 'webp';
-    // Base64 encode in bounded chunks to avoid stack overflows on 5 MB images.
     let binary = '';
     for (let i = 0; i < bytes.length; i += 8192) {
       binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
     }
-    attachment = {filename: 'pico-screenshot.' + ext, content: btoa(binary), content_type: actualType};
+    attachments.push({filename: 'pico-screenshot-' + (index + 1) + '.' + ext, content: btoa(binary), content_type: actualType});
   }
   const replyTo = typeof email === 'string' && email ? email : undefined;
   const message = [
@@ -110,7 +112,7 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
     'Type: ' + kind, 'Workspace: ' + workspace,
     'Reply email: ' + (replyTo ?? '(not provided)'), '',
     'Description:', description.trim(), '',
-    'Screenshot: ' + (attachment ? attachment.filename + ' (attached)' : '(none)')
+    'Screenshots: ' + (attachments.length ? attachments.map(a => a.filename).join(', ') + ' (attached)' : '(none)')
   ].join('\n');
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -122,8 +124,8 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
         subject: '[Pico #' + crypto.randomUUID().slice(0, 12).toUpperCase() + '] ' + kind + ' — ' + workspace,
         text: message,
         html: reportEmailHtml(kind, workspace, description.trim(), replyTo) +
-          (attachment ? '<p>Screenshot: ' + attachment.filename + ' (attached)</p>' : '<p>Screenshot: none</p>'),
-        ...(attachment ? {attachments: [attachment]} : {}),
+          (attachments.length ? '<p>Screenshots: ' + attachments.map(a => a.filename).join(', ') + ' (attached)</p>' : '<p>Screenshots: none</p>'),
+        ...(attachments.length ? {attachments} : {}),
         ...(replyTo ? {reply_to: replyTo} : {})
       })
     });
@@ -131,10 +133,11 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
     const receipt = await response.json() as {id?: string};
     console.info('Pico bug report sent', {
       emailId: receipt.id ?? '(missing)',
-      screenshotAttached: !!attachment,
-      screenshotBytes: screenshot?.size ?? 0,
+      screenshotAttached: attachments.length > 0,
+      screenshotsAttached: attachments.length,
+      screenshotBytes: screenshots.reduce((sum, file) => sum + file.size, 0),
     });
-    return json({ok: true, screenshotAttached: !!attachment});
+    return json({ok: true, screenshotAttached: attachments.length > 0, screenshotsAttached: attachments.length});
   } catch {
     return fail(502, 'Could not deliver the report. Please try again later');
   }
