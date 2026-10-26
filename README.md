@@ -18,4 +18,4 @@
 - **Logic Sim** — Build digital circuits, simulate gates and inspect truth tables.
 - **CPU Studio** — Explore the fetch–decode–execute cycle with animated CPU components and registers.
 
-Pico includes customizable themes, guided tutorials and browser-based project saving.
+Pico includes customizable themes, guided tutorials and browser-based project saving. 
