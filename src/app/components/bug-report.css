@@ -1,0 +1,94 @@
+/* Bug report form — UI only until the email and R2 endpoints are configured. */
+/* The button sits next to the policy nav, so style it like a policy link. */
+.pico-home .home-footer-links .bug-report-trigger {
+  appearance: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  flex-shrink: 0; min-height: 40px; margin: 0; padding: 0;
+  border: 0; border-radius: 5px; box-shadow: none;
+  background: transparent; color: var(--ds-muted);
+  font: 400 var(--ds-text-sm)/1.5 var(--ds-font-ui);
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.pico-home .home-footer-links .bug-report-trigger:hover {
+  background: transparent; color: var(--ds-text);
+}
+.pico-home .home-footer-links .bug-report-trigger:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 5px;
+}
+
+.bug-report-backdrop {
+  position: fixed; inset: 0; z-index: 1400; display: grid; place-items: center;
+  padding: 16px; background: rgba(0, 0, 0, .72); backdrop-filter: blur(6px);
+  color: var(--ds-text); font-family: var(--ds-font-ui);
+}
+.bug-report-dialog {
+  width: min(540px, 100%); max-height: min(92dvh, 780px); overflow-y: auto;
+  border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-xl);
+  background: var(--ds-panel-raised); box-shadow: var(--ds-shadow-dialog);
+}
+.bug-report-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 22px; border-bottom: 1px solid var(--ds-line);
+}
+.bug-report-mark {
+  width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: var(--ds-radius-md); background: var(--ds-accent-soft); color: var(--accent);
+}
+.bug-report-header h2 { margin: 0; font-size: var(--ds-text-lg); font-weight: 700; }
+.bug-report-header p { margin: 5px 0 0; color: var(--ds-muted); font-size: var(--ds-text-xs); }
+.bug-report-close {
+  width: 30px; height: 30px; margin-left: auto; display: grid; place-items: center;
+  border: 0; border-radius: var(--ds-radius-sm); background: transparent;
+  color: var(--ds-muted); cursor: pointer;
+}
+.bug-report-close:hover { background: var(--ds-hover); color: var(--ds-text); }
+.bug-report-form { display: flex; flex-direction: column; gap: 16px; padding: 20px 22px 22px; }
+.bug-report-field { display: flex; flex-direction: column; gap: 7px; }
+.bug-report-field label { font-size: var(--ds-text-sm); font-weight: 650; }
+.bug-report-field label span { color: var(--ds-muted); font-weight: 400; }
+.bug-report-field select,
+.bug-report-field input[type='email'],
+.bug-report-field textarea {
+  width: 100%; min-width: 0; border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-md); background: var(--surface-input, var(--ds-panel));
+  color: var(--ds-text); font: 400 var(--ds-text-md)/1.5 var(--ds-font-ui);
+}
+.bug-report-field select, .bug-report-field input[type='email'] { min-height: 38px; padding: 8px 10px; }
+.bug-report-field textarea { resize: vertical; min-height: 100px; padding: 10px 12px; }
+.bug-report-field textarea::placeholder, .bug-report-field input::placeholder { color: var(--ds-muted); }
+.bug-report-file-row {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  padding: 12px; border: 1px dashed var(--ds-line-strong);
+  border-radius: var(--ds-radius-md); color: var(--ds-muted);
+}
+.bug-report-file-row input { width: 100%; min-width: 0; color: var(--ds-text); font: 400 var(--ds-text-xs) var(--ds-font-ui); }
+.bug-report-file-row input::file-selector-button {
+  margin-right: 10px; padding: 7px 10px; border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-sm); background: var(--ds-panel);
+  color: var(--ds-text); cursor: pointer; font: inherit;
+}
+.bug-report-hint { margin: 0; color: var(--ds-muted); font-size: var(--ds-text-xs); }
+.bug-report-attachment {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: var(--ds-radius-sm);
+  background: var(--ds-accent-soft); color: var(--ds-text); font-size: var(--ds-text-xs);
+  overflow-wrap: anywhere;
+}
+.bug-report-attachment button { flex-shrink: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.bug-report-error { margin: 0; color: var(--ds-danger); font-size: var(--ds-text-xs); }
+.bug-report-footer { display: flex; flex-direction: column; gap: 12px; padding-top: 16px; border-top: 1px solid var(--ds-line); }
+.bug-report-footer p { margin: 0; color: var(--ds-muted); font-size: var(--ds-text-xs); line-height: 1.5; }
+.bug-report-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.bug-report-actions button {
+  min-height: 36px; padding: 0 14px; border-radius: var(--ds-radius-md);
+  font: 600 var(--ds-text-sm) var(--ds-font-ui); cursor: pointer;
+}
+.bug-report-cancel { border: 1px solid var(--ds-line-strong); background: transparent; color: var(--ds-text); }
+.bug-report-cancel:hover { background: var(--ds-hover); }
+.bug-report-submit { border: 1px solid transparent; background: var(--ds-accent-fill); color: var(--ds-on-accent); }
+.bug-report-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (max-width: 540px) {
+  .bug-report-header { padding: 16px; }
+  .bug-report-form { padding: 16px; }
+}
