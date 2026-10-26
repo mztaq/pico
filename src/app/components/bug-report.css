@@ -92,3 +92,6 @@
   .bug-report-header { padding: 16px; }
   .bug-report-form { padding: 16px; }
 }
+
+.bug-report-success { margin: 0; padding: 10px 12px; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-md); color: var(--ds-text); font-size: var(--ds-text-sm); }
+.bug-report-file-row:has(input:disabled) { opacity: .55; }
