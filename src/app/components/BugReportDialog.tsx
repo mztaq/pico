@@ -146,7 +146,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
         </div>
         <BugReportTurnstile onTokenChange={setTurnstileToken} />
         <footer className="bug-report-footer">
-          <p>Reports are delivered by email. Screenshots are stored privately.</p>
+          <p>Reports and optional screenshots are delivered by email.</p>
           <div className="bug-report-actions">
             <button type="button" className="bug-report-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="bug-report-submit" disabled={sending || !turnstileToken}>{sending ? "Sending…" : "Send report"}</button>
