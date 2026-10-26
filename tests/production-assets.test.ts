@@ -11,7 +11,7 @@ it('includes installable Pico manifest and offline fallback', () => {
   expect(read('public/offline.html')).toContain('Pico is offline');
 });
 
-it('never caches API calls, user projects or the Python interpreter in the service worker', () => {
+it('disables offline caching and requires live connectivity', () => {
   const source = read('public/sw.js');
   expect(source).toContain("request.method !== 'GET'");
   expect(source).toContain("url.pathname.startsWith('/api/')");
