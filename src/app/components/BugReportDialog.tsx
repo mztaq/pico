@@ -80,9 +80,13 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
     if (description.trim().length < 10) return;
     setSending(true);
     try {
+      const fields = {kind, workspace, description: description.trim(), email: email.trim(), turnstileToken};
+      const payload = new FormData();
+      Object.entries(fields).forEach(([key, value]) => payload.set(key, value));
+      if (screenshot) payload.set('screenshot', screenshot, screenshot.name);
       const response = await fetch('/api/bug-report', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({kind, workspace, description: description.trim(), email: email.trim(), turnstileToken})
+        method: 'POST',
+        ...(screenshot ? {body: payload} : {headers: {'Content-Type': 'application/json'}, body: JSON.stringify(fields)})
       });
       const result: {ok?: boolean; error?: string} = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
@@ -134,15 +138,15 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
           <label htmlFor="bug-report-screenshot">Screenshot <span>(optional)</span></label>
           <div className="bug-report-file-row">
             <ImagePlus size={18} aria-hidden="true" />
-            <input disabled title="Screenshot uploads will be available soon" id="bug-report-screenshot" type="file" accept="image/png,image/jpeg,image/webp" onChange={onFileChange} aria-describedby="bug-report-file-hint" />
+            <input id="bug-report-screenshot" type="file" accept="image/png,image/jpeg,image/webp" onChange={onFileChange} aria-describedby="bug-report-file-hint" />
           </div>
-          <p id="bug-report-file-hint" className="bug-report-hint">Screenshot uploads are coming soon. Reports currently send text only.</p>
+          <p id="bug-report-file-hint" className="bug-report-hint">PNG, JPG, or WebP. Maximum 5 MB.</p>
           {screenshot && <div className="bug-report-attachment"><span>{screenshot.name} ({(screenshot.size / 1024 / 1024).toFixed(2)} MB)</span><button type="button" onClick={() => setScreenshot(null)} aria-label="Remove screenshot"><X size={14} /></button></div>}
           {fileError && <p className="bug-report-error" role="alert">{fileError}</p>}
         </div>
         <BugReportTurnstile onTokenChange={setTurnstileToken} />
         <footer className="bug-report-footer">
-          <p>Reports are delivered by email. Screenshot uploads will be added later.</p>
+          <p>Reports and optional screenshots are delivered by email.</p>
           <div className="bug-report-actions">
             <button type="button" className="bug-report-cancel" onClick={onClose}>Cancel</button>
             <button type="submit" className="bug-report-submit" disabled={sending || !turnstileToken}>{sending ? "Sending…" : "Send report"}</button>
