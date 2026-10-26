@@ -38,7 +38,7 @@ it('shows the flowchart workspace without a personal footer',()=>{
   expect(container.querySelector('.flow-builder')).not.toBeNull();
   expect(container.querySelector('footer')).toBeNull();
 });
-it('opens a themed canvas and replays the guided walkthrough from Help',async()=>{expect(container.querySelector('.flow-builder')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');expect(container.querySelectorAll('.flow-palette-block[draggable="true"]')).toHaveLength(7);expect(container.querySelectorAll('.flow-node')).toHaveLength(5);await click(button('Help'));expect(container.querySelector('#flow-tour-title')?.textContent).toBe('Learn the flowchart workspace');expect(container.querySelector<HTMLButtonElement>('[aria-label="Go to home screen"]')?.disabled).toBe(true);expect(container.querySelectorAll('.flow-node')).toHaveLength(0);});
+it('opens a themed canvas and replays the guided walkthrough from Help',async()=>{expect(container.querySelector('.flow-builder')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');expect(container.querySelectorAll('.flow-palette-block[draggable]')).toHaveLength(0);expect(container.querySelectorAll('.flow-node')).toHaveLength(5);await click(button('Help'));expect(container.querySelector('#flow-tour-title')?.textContent).toBe('Learn the flowchart workspace');expect(container.querySelector<HTMLButtonElement>('[aria-label="Go to home screen"]')?.disabled).toBe(true);expect(container.querySelectorAll('.flow-node')).toHaveLength(0);});
 it('adds, edits, connects, deletes, undoes and redoes blocks',async()=>{await click(container.querySelector<HTMLElement>('.flow-palette-block.flow-kind-process')!);expect(container.querySelectorAll('.flow-node')).toHaveLength(6);await change(container.querySelector('[aria-label="Block expression"]')!,'Total ← 2 * 5');expect(container.querySelector('.flow-node.is-selected')?.textContent).toContain('Total ← 2 * 5');await click(button('Delete block'));expect(container.querySelectorAll('.flow-node')).toHaveLength(5);await click(container.querySelector('[aria-label="Undo flowchart edit"]')!);expect(container.querySelectorAll('.flow-node')).toHaveLength(6);await click(container.querySelector('[aria-label="Redo flowchart edit"]')!);expect(container.querySelectorAll('.flow-node')).toHaveLength(5);
   await click(container.querySelector('[data-node-id="prompt"] .port-next')!);await click(container.querySelector('[data-node-id="hello"]')!);expect(container.querySelectorAll('.flow-edge')).toHaveLength(4);expect(container.querySelector('.flow-validation')?.textContent).toContain('Connect this block');
 });
@@ -109,4 +109,30 @@ it('highlights invalid block syntax in red and uses the editor syntax classes',a
   await click(container.querySelector('[data-node-id="hello"]')!);await change(container.querySelector('[aria-label="Block expression"]')!,'"Hello ", Name, 5');
   expect(container.querySelector('.flow-node.is-selected .syntax-keyword')).not.toBeNull();expect(container.querySelector('.flow-node.is-selected .syntax-string')).not.toBeNull();expect(container.querySelector('.flow-node.is-selected .syntax-number')).not.toBeNull();
   await change(container.querySelector('[aria-label="Block expression"]')!,'"unfinished');expect(container.querySelector('[data-node-id="hello"]')?.classList.contains('has-error')).toBe(true);
+});
+
+it('drags a palette block onto the canvas using pointer events without native HTML drag',async()=>{
+  const viewport=container.querySelector<HTMLElement>('.flow-viewport')!;
+  const plane=container.querySelector<HTMLElement>('.flow-plane')!;
+  const bounds={left:200,top:80,right:1000,bottom:700,width:800,height:620,x:200,y:80,toJSON:()=>({})} as DOMRect;
+  vi.spyOn(viewport,'getBoundingClientRect').mockReturnValue(bounds);
+  vi.spyOn(plane,'getBoundingClientRect').mockReturnValue(bounds);
+  const palette=container.querySelector<HTMLButtonElement>('.flow-palette-block.flow-kind-process')!;
+  expect(palette.draggable).toBe(false);
+  const pointer=(target:EventTarget,type:string,x:number,y:number)=>{
+    const event=new MouseEvent(type,{bubbles:true,cancelable:true,button:0,clientX:x,clientY:y});
+    Object.defineProperty(event,'pointerId',{value:7});
+    target.dispatchEvent(event);
+    return event;
+  };
+  await act(async()=>{
+    const down=pointer(palette,'pointerdown',20,40);
+    expect(down.defaultPrevented).toBe(true);
+    pointer(window,'pointermove',350,240);
+    expect(document.querySelector('.pico-palette-drag-preview')?.textContent).toBe('Process');
+    pointer(window,'pointerup',350,240);
+    palette.click(); // Native click after a drag must not add a second block.
+  });
+  expect(container.querySelectorAll('.flow-node')).toHaveLength(6);
+  expect(container.querySelector('.pico-palette-drag-preview')).toBeNull();
 });
