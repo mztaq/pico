@@ -101,6 +101,8 @@ it('drops a palette component using pointer events without the WebView native Co
     pointer(window,'pointermove',400,350);
   });
   expect(host.querySelector('.pico-palette-drag-preview')).not.toBeNull();
+  expect(host.querySelector('.logic-drag-preview .logic-palette-symbol')).not.toBeNull();
+  expect(host.querySelector('.logic-drag-preview span')).toBeNull();
   await act(async()=>{
     pointer(window,'pointerup',400,350);
     palette.click(); // Suppress the click following a completed drag.

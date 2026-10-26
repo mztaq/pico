@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 type ActiveDrag<T> = { kind: T; label: string; pointerId: number; startX: number; startY: number; moved: boolean };
-type DragPreview = { label: string; x: number; y: number };
+type DragPreview<T> = { kind: T; label: string; x: number; y: number };
 
 /**
  * Drag palette items with pointer events instead of HTML5 draggable/dataTransfer.
@@ -14,7 +14,7 @@ export function usePalettePointerDrag<T extends string>(onDrop: (kind: T, x: num
   callback.current = onDrop;
   const suppressClick = useRef(false);
   const clearClickTimer = useRef<number | undefined>(undefined);
-  const [preview, setPreview] = useState<DragPreview | null>(null);
+  const [preview, setPreview] = useState<DragPreview<T> | null>(null);
 
   useEffect(() => {
     const move = (event: PointerEvent) => {
@@ -22,7 +22,7 @@ export function usePalettePointerDrag<T extends string>(onDrop: (kind: T, x: num
       if (!drag || drag.pointerId !== event.pointerId) return;
       if (!drag.moved && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5) return;
       drag.moved = true;
-      setPreview({ label: drag.label, x: event.clientX, y: event.clientY });
+      setPreview({ kind: drag.kind, label: drag.label, x: event.clientX, y: event.clientY });
     };
     const finish = (event: PointerEvent) => {
       const drag = active.current;
