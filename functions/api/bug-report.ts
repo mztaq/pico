@@ -1,4 +1,4 @@
-import {body, checkOrigin, fail, json, type Context} from '../_lib/core';
+import {readJsonBody, checkOrigin, fail, json, type Context} from '../_lib/core';
 import {rateLimit} from '../_lib/rate-limit';
 import {reportEmailHtml} from '../_lib/bug-report-email';
 
@@ -13,7 +13,8 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
   if (!ctx.env.DB) return fail(503, 'Database unavailable');
   if (!ctx.env.TURNSTILE_SECRET_KEY || !ctx.env.TURNSTILE_SITE_KEY) return fail(503, 'Verification is not configured');
   if (!ctx.request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return fail(415, 'Expected JSON');
-  const data = await body(ctx.request);
+  const {data, tooLarge} = await readJsonBody(ctx.request);
+  if (tooLarge) return fail(413, 'Report exceeds 4 KB limit');
   if (!data) return fail(400, 'Invalid report');
   const {kind, workspace, description, email, turnstileToken} = data;
   if (typeof kind !== 'string' || !TYPES.includes(kind) ||
