@@ -94,17 +94,13 @@ export function OnlineOnlyGate({ children }: { children: ReactNode }) {
       {status === 'offline' && createPortal(
         <div className="pico-connection-screen" role="presentation">
           <main className="pico-connection-card" role="dialog" aria-modal="true" aria-labelledby="pico-offline-title" aria-describedby="pico-offline-description">
-            <div className="pico-connection-brand">
-              Pico<span>.</span>
-            </div>
-            <div className="pico-connection-icon"><WifiOff size={26} aria-hidden="true" /></div>
+            <div className="pico-connection-icon"><WifiOff size={22} aria-hidden="true" /></div>
             <h1 id="pico-offline-title">You're offline</h1>
-            <p id="pico-offline-description">Pico requires an internet connection to work. Please reconnect to continue.</p>
+            <p id="pico-offline-description">Connect to the internet to use Pico.</p>
             <button type="button" onClick={() => { void retry(); }} disabled={retrying}>
               <RefreshCw size={16} aria-hidden="true" />
               {retrying ? 'Checking…' : 'Try again'}
             </button>
-            <div className="pico-connection-footnote">Pico will reconnect automatically when the connection returns.</div>
           </main>
         </div>,
         document.body,
