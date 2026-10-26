@@ -77,7 +77,7 @@ jobs:
 
   publish-desktop:
     name: Publish desktop prerelease
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: build-desktop
     runs-on: ubuntu-latest
     permissions:
