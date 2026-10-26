@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent } from 'react';
 import { Bug, ImagePlus, X } from 'lucide-react';
 import './bug-report.css';
+import {BugReportTurnstile} from './BugReportTurnstile';
 
 const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 const SCREENSHOT_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -15,6 +16,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
   const [sending, setSending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -74,13 +76,13 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
 
   const submitReport = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (sending) return;
+    if (sending || !turnstileToken) return;
     if (description.trim().length < 10) return;
     setSending(true);
     try {
       const response = await fetch('/api/bug-report', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({kind, workspace, description: description.trim(), email: email.trim()})
+        body: JSON.stringify({kind, workspace, description: description.trim(), email: email.trim(), turnstileToken})
       });
       const result: {ok?: boolean; error?: string} = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
@@ -136,11 +138,12 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
           {screenshot && <div className="bug-report-attachment"><span>{screenshot.name} ({(screenshot.size / 1024 / 1024).toFixed(2)} MB)</span><button type="button" onClick={() => setScreenshot(null)} aria-label="Remove screenshot"><X size={14} /></button></div>}
           {fileError && <p className="bug-report-error" role="alert">{fileError}</p>}
         </div>
+        <BugReportTurnstile onTokenChange={setTurnstileToken} />
         <footer className="bug-report-footer">
           <p>Reports are delivered by email. Screenshot uploads will be added later.</p>
           <div className="bug-report-actions">
             <button type="button" className="bug-report-cancel" onClick={onClose}>Cancel</button>
-            <button type="submit" className="bug-report-submit" disabled={sending}>{sending ? "Sending…" : "Send report"}</button>
+            <button type="submit" className="bug-report-submit" disabled={sending || !turnstileToken}>{sending ? "Sending…" : "Send report"}</button>
           </div>
         </footer>
       </form>
