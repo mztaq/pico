@@ -48,17 +48,51 @@ export function checkOrigin(request: Request): Response | null {
   if (!origin || origin !== new URL(request.url).origin) return fail(403, 'Invalid origin');
   return null;
 }
-export async function body(request: Request): Promise<Record<string, unknown> | null> {
-  if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return null;
-  const length = Number(request.headers.get('content-length') ?? 0);
-  if (length > 4096) return null;
+export type JsonBodyResult = {data: Record<string, unknown> | null; tooLarge: boolean};
+
+/**
+ * Read at most maxBytes of JSON. Never use request.text() here: a missing or
+ * dishonest Content-Length must not cause unbounded body buffering.
+ */
+export async function readJsonBody(request: Request, maxBytes = 4096): Promise<JsonBodyResult> {
+  const invalid = {data: null, tooLarge: false};
+  const tooLarge = {data: null, tooLarge: true};
+  if (!/^application\/json(?:\s*;|$)/i.test(request.headers.get('content-type') ?? '')) return invalid;
+  const declared = request.headers.get('content-length');
+  if (declared !== null) {
+    if (!/^\d+$/.test(declared)) return invalid;
+    if (Number(declared) > maxBytes) return tooLarge;
+  }
+  if (!request.body) return invalid;
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
   try {
-    const text = await request.text();
-    if (text.length > 4096) return null;
-    const parsed: unknown = JSON.parse(text);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-    return parsed as Record<string, unknown>;
-  } catch { return null; }
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) {
+        void reader.cancel().catch(() => {});
+        return tooLarge;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    const parsed: unknown = JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(bytes));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return invalid;
+    return {data: parsed as Record<string, unknown>, tooLarge: false};
+  } catch {
+    return invalid;
+  } finally {
+    reader.releaseLock();
+  }
+}
+export async function body(request: Request): Promise<Record<string, unknown> | null> {
+  return (await readJsonBody(request)).data;
 }
 export async function session(ctx: Context) {
   const token = cookie(ctx.request);
