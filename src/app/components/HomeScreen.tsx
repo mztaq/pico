@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Binary, Bug, CheckCircle2, CircleAlert, Code2, Cpu, GitBranch, Terminal, X } from 'lucide-react';
+import { Binary, Bug, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme } from '../themes';
@@ -9,6 +9,7 @@ import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
 import { SoundButton } from './SoundToggle';
 import { BugReportDialog } from './BugReportDialog';
+import { BugReportNotice } from './BugReportNotice';
 
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
@@ -81,11 +82,8 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       </div>
     </div>
     {reportOpen && <BugReportDialog onClose={() => setReportOpen(false)} onResult={(type, message) => { setReportOpen(false); setReportNotice({type, message}); }} />}
-    {reportNotice && <div className={'bug-report-toast bug-report-toast--' + reportNotice.type} role={reportNotice.type === 'error' ? 'alert' : 'status'}>
-      {reportNotice.type === 'success' ? <CheckCircle2 size={19} aria-hidden="true" /> : <CircleAlert size={19} aria-hidden="true" />}
-      <span>{reportNotice.message}</span>
-      <button type="button" aria-label="Dismiss notification" onClick={() => setReportNotice(null)}><X size={16} /></button>
-    </div>}
+    {reportNotice && <BugReportNotice type={reportNotice.type} message={reportNotice.message} onClose={() => setReportNotice(null)} />}
+
   </main>;
 }
 
