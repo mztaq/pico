@@ -1,5 +1,5 @@
 import { lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ArrowLeft, ArrowLeftRight, ChevronDown, CircleHelp, Code2, AlignLeft, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, X } from 'lucide-react';
+import { BookOpen, ArrowLeft, ArrowLeftRight, ChevronDown, CircleHelp, Code2, AlignLeft, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, Workflow, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
@@ -25,6 +25,8 @@ import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
 import { WorkspaceTransition } from './components/WorkspaceTransition';
 import {useExitWarning} from './components/useExitWarning';
 import { PythonReference } from './components/PythonReference';
+import {circuitFromExpression} from '../logic/fromExpression';
+import type {CircuitDocument} from '../logic/model';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
 // Split visual workspaces into separate chunks instead of downloading every simulator up front.
 const FlowchartWorkspace = lazy(() => import('../flowchart/FlowchartWorkspace').then(m => ({ default: m.FlowchartWorkspace })));
@@ -69,13 +71,14 @@ export default function App() {
   useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'authors' ? 'Authors' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : 'Pico | Home'; }, [language, informationPage]);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
+  const [logicHandoff,setLogicHandoff]=useState<{document:CircuitDocument;source:CompilerLanguage}|null>(null);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
     if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu' && language !== 'binary') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
   if (informationPage) return <SiteInfo page={informationPage} />;
   if (!language) return <HomeScreen onChoose={setLanguage} />;
-  if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
+  if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => {setLogicHandoff(null);setLanguage(null);}} previewDocument={logicHandoff?.document} onBackToCode={logicHandoff?()=>{setLanguage(logicHandoff.source);setLogicHandoff(null);}:undefined} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><WorkspaceTransition workspace="CPU Studio"><CpuStudio onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'binary') return <WorkspaceLoadBoundary key="binary" workspace="Binary Lab"><WorkspaceTransition workspace="Binary Lab"><BinaryLab onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'flowchart') return <WorkspaceLoadBoundary key="flowchart" workspace="Flowchart Builder"><WorkspaceTransition workspace="Flowchart Builder"><FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
@@ -87,9 +90,9 @@ export default function App() {
     snapshots.current.pseudocode = { projects: [...projects, project], activeId: project.id };
     setLanguage('pseudocode');
   }} /></WorkspaceTransition></WorkspaceLoadBoundary>;
-  return <Workspace key={language} language={language} snapshot={snapshots.current[language]} onChoose={(next, snapshot) => navigate(next, snapshot)} onHome={snapshot => navigate(null, snapshot)} />;
+  return <Workspace key={language} language={language} snapshot={snapshots.current[language]} onChoose={(next, snapshot) => navigate(next, snapshot)} onHome={snapshot => navigate(null, snapshot)} onLogic={(document,snapshot)=>{snapshots.current[language]=snapshot;setLogicHandoff({document,source:language});setLanguage('logic');}} />;
 }
-export function Workspace({ language, snapshot, onChoose, onHome }: { language: CompilerLanguage; snapshot?: WorkspaceSnapshot; onChoose: (language: CompilerLanguage, snapshot: WorkspaceSnapshot) => void; onHome: (snapshot: WorkspaceSnapshot) => void }) {
+export function Workspace({ language, snapshot, onChoose, onHome, onLogic }: { language: CompilerLanguage; snapshot?: WorkspaceSnapshot; onChoose: (language: CompilerLanguage, snapshot: WorkspaceSnapshot) => void; onHome: (snapshot: WorkspaceSnapshot) => void; onLogic?: (document:CircuitDocument,snapshot:WorkspaceSnapshot)=>void }) {
   const isPython = language === 'python';
   const [initial] = useState(() => { if (snapshot) return snapshot; const projects = loadProjects(language); return { projects, activeId: loadActiveId(projects, language) }; });
   const [projects, setProjects] = useState<PicoProject[]>(initial.projects);
@@ -98,6 +101,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const [activePanel, setActivePanel] = useState<PanelKey>('console');
   const [saveError, setSaveError] = useState(false);
   const [runStatus, setRunStatus] = useState('');
+  const [circuitError,setCircuitError]=useState('');
   const [pythonVersion, setPythonVersion] = useState('');
   const [outputTruncated, setOutputTruncated] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -391,6 +395,15 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     const link = document.createElement('a'); link.href = url; link.download = activeFile.name; link.click(); URL.revokeObjectURL(url);
     setFileMenuOpen(false);
   }
+  function sendSelectionToLogic(){
+    try{
+      const document=circuitFromExpression(editorRef.current?.getSelectedText()??'');
+      setCircuitError('');
+      jobRef.current?.cancel();
+      try{saveProjects(projects,activeId,language);saveSettings(settings);}catch{/* The in-memory snapshot preserves the code. */}
+      onLogic?.(document,{projects,activeId});
+    }catch(error){setCircuitError(error instanceof Error?error.message:'Could not create a circuit from this selection.');}
+  }
 
   return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <header className="topbar pico-appbar" inert={tutorialOpen || tutorialOfferOpen}>
@@ -404,7 +417,8 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       <div className="topbar-spacer" />
       <button className="toolbar-button compiler-switch" onClick={() => leaveWorkspace(isPython ? "pseudocode" : "python")}><ArrowLeftRight size={15} aria-hidden="true" /><span>{isPython ? "Go to Pseudocode Compiler" : "Go to Python Compiler"}</span></button>
       <div className="topbar-actions">
-        <div className="pico-appbar-group" role="group" aria-label="Code formatting"><button className="toolbar-button editor-format-button" title={`Format ${isPython ? 'Python' : 'pseudocode'} code`} aria-label={`Format ${isPython ? 'Python' : 'pseudocode'} code`} disabled={running} onClick={() => editorRef.current?.formatCode()}><AlignLeft size={16}/><span>Format</span></button></div>
+        <div className="pico-appbar-group" role="group" aria-label="Code tools"><button className="toolbar-button editor-format-button" title={`Format ${isPython ? 'Python' : 'pseudocode'} code`} aria-label={`Format ${isPython ? 'Python' : 'pseudocode'} code`} disabled={running} onClick={() => editorRef.current?.formatCode()}><AlignLeft size={16}/><span>Format</span></button><button className="toolbar-button code-to-circuit-button" onClick={sendSelectionToLogic} title="Select a Boolean expression like A AND B to see its gates" aria-label="Show gates for selected Boolean expression"><Workflow size={16}/><span>Show gates</span></button></div>
+        {circuitError&&<div className="code-to-circuit-error" role="alert">{circuitError}<button aria-label="Dismiss circuit error" onClick={()=>setCircuitError('')}><X size={13}/></button></div>}
         <div className="pico-appbar-group" role="group" aria-label="Edit history">
           <button className="toolbar-button editor-history-button" aria-label="Undo last edit" onClick={() => editorRef.current?.undo()} title="Undo"><Undo2 size={16} /><span>Undo</span></button>
           <button className="toolbar-button editor-history-button" aria-label="Redo last edit" onClick={() => editorRef.current?.redo()} title="Redo"><Redo2 size={16} /><span>Redo</span></button>

@@ -16,7 +16,7 @@ import type { CompilerLanguage } from '../../storage/projects';
 import { formatPython, formatPseudocode } from '../../language/formatter';
 
 export interface EditorPreferences { autocomplete: boolean; hoverDocs: boolean; fontSize: number; }
-export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; goToLine: (line: number) => void; undo: () => void; redo: () => void; formatCode: () => void; }
+export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; goToLine: (line: number) => void; undo: () => void; redo: () => void; formatCode: () => void; getSelectedText: () => string; }
 interface CodeEditorProps {
   language?: CompilerLanguage;
   value: string;
@@ -300,6 +300,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
     undo: () => { if (view.current) undo(view.current); },
     redo: () => { if (view.current) redo(view.current); },
     formatCode: () => { if (view.current) formatEditor(view.current, languageRef.current); },
+    getSelectedText: () => { const editor=view.current;if(!editor)return '';const {from,to}=editor.state.selection.main;return editor.state.sliceDoc(from,to); },
   }), []);
 
   useEffect(() => {

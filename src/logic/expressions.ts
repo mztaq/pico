@@ -102,7 +102,7 @@ export function booleanExpressions(doc:CircuitDocument):ExpressionView[]{
    for(const pin of SPECS[output.kind].inputs){
     const connections=doc.wires.filter(w=>w.to===output.id&&w.toPin===pin);
     if(!connections.length)continue;
-    if(connections.length!==1){views.push({output:output.label||SPECS[output.kind].title,word:'Multiple drivers',algebraic:'',programming:'',variables:[]});continue;}
+    if(connections.length!==1)throw Error(`${output.label||SPECS[output.kind].title} has ${connections.length} wires on ${pin}. Add a logic gate to combine them; two wires on one input do not mean AND.`);
     const e=visit(connections[0]!.from,connections[0]!.fromPin,new Set());
     const outputName=(output.label||SPECS[output.kind].title)+(output.kind==='hex'?' '+pin:'');
     const related=switches.filter(n=>{function find(e:Expr):boolean{return e.type==='var'?e.id===n.id:e.type==='const'?false:e.args.some(find);}return find(e);});
