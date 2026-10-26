@@ -23,6 +23,7 @@ const click=async(element:HTMLElement)=>{
   if(chosen==='Logic Sim') await vi.waitFor(()=>expect(container.querySelector('.logic-app')).not.toBeNull());
   if(chosen==='CPU Studio') await vi.waitFor(()=>expect(container.querySelector('.cpu-app')).not.toBeNull());
   if(chosen==='Flowchart Builder') await vi.waitFor(()=>expect(container.querySelector('.flow-builder')).not.toBeNull());
+  if(chosen==='Binary Lab') await vi.waitFor(()=>expect(container.querySelector('.binary-app')).not.toBeNull());
 };
 const choose=async(language:string)=>{await click(container.querySelector(`.compiler-choice h2`)?.textContent===language?container.querySelector<HTMLElement>('.compiler-choice')!:container.querySelectorAll<HTMLElement>('.compiler-choice')[1]!);};
 async function type(element:HTMLInputElement|HTMLTextAreaElement,value:string){await act(async()=>{Object.getOwnPropertyDescriptor(element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event('input',{bubbles:true}));});}
@@ -38,12 +39,34 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio']);
+  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Binary Lab']);
   expect(container.querySelector('footer')).toBeNull();
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="#authors"]')?.textContent).toBe('Authors');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="#privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="#terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
+});
+it('opens Binary Lab from its home section and updates every number view',async()=>{
+  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Binary Lab');
+  await click(choice!);
+  expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Binary Lab');
+  await click(container.querySelector<HTMLElement>('.binary-tour-actions button')!);
+  expect(container.querySelector('.binary-tour')).toBeNull();
+  expect(localStorage.getItem('pico.binary.tutorial.v1')).toBe('done');
+  expect(document.title).toBe('Pico | Binary Lab');
+  expect(container.querySelector<HTMLInputElement>('[aria-label="Unsigned decimal value"]')?.value).toBe('42');
+  await click(container.querySelector<HTMLElement>('[aria-label="Toggle bit 7, value 128"]')!);
+  expect(container.querySelector<HTMLInputElement>('[aria-label="Unsigned decimal value"]')?.value).toBe('170');
+  expect(container.querySelector<HTMLInputElement>('[aria-label="Hexadecimal value"]')?.value).toBe('AA');
+  expect(container.querySelector('output[aria-label="Two’s complement signed value"]')?.textContent).toBe('-86');
+  await click(container.querySelector<HTMLElement>('[aria-label="Back to Pico"]')!);
+  expect(container.querySelector('.pico-home')).not.toBeNull();
+  await click([...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Binary Lab')!);
+  expect(container.querySelector('.binary-tour')).toBeNull();
+  await click(container.querySelector<HTMLElement>('[aria-label="Open Binary Lab tutorial"]')!);
+  expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Binary Lab');
+  await click(container.querySelector<HTMLElement>('.binary-tour-next')!);
+  expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Toggle bits');
 });
 it('shows the Logic Sim workspace without a personal footer',async()=>{
   const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
@@ -137,7 +160,7 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
 
 it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
  expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
- expect(container.querySelectorAll('.compiler-choice')).toHaveLength(5);
+ expect(container.querySelectorAll('.compiler-choice')).toHaveLength(6);
 });
 it('offers both CPU simulation modes and a guided tutorial',async()=>{
  const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');
