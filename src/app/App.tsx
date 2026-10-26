@@ -1,5 +1,5 @@
 import { lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ArrowLeft, ArrowLeftRight, ChevronDown, CircleHelp, Code2, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, X } from 'lucide-react';
+import { BookOpen, ArrowLeft, ArrowLeftRight, ChevronDown, CircleHelp, Code2, AlignLeft, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
@@ -402,6 +402,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       <div className="topbar-spacer" />
       <button className="toolbar-button compiler-switch" onClick={() => leaveWorkspace(isPython ? "pseudocode" : "python")}><ArrowLeftRight size={15} aria-hidden="true" /><span>{isPython ? "Go to Pseudocode Compiler" : "Go to Python Compiler"}</span></button>
       <div className="topbar-actions">
+        <div className="pico-appbar-group" role="group" aria-label="Code formatting"><button className="toolbar-button editor-format-button" title={`Format ${isPython ? 'Python' : 'pseudocode'} code`} aria-label={`Format ${isPython ? 'Python' : 'pseudocode'} code`} disabled={running} onClick={() => editorRef.current?.formatCode()}><AlignLeft size={16}/><span>Format</span></button></div>
         <div className="pico-appbar-group" role="group" aria-label="Edit history">
           <button className="toolbar-button editor-history-button" aria-label="Undo last edit" onClick={() => editorRef.current?.undo()} title="Undo"><Undo2 size={16} /><span>Undo</span></button>
           <button className="toolbar-button editor-history-button" aria-label="Redo last edit" onClick={() => editorRef.current?.redo()} title="Redo"><Redo2 size={16} /><span>Redo</span></button>

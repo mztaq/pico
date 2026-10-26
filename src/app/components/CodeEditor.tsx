@@ -13,9 +13,10 @@ import '../styles/editor-folding.css';
 import { pseudoLanguage } from './pseudocodeSyntax';
 import { python } from '@codemirror/lang-python';
 import type { CompilerLanguage } from '../../storage/projects';
+import { formatPython, formatPseudocode } from '../../language/formatter';
 
 export interface EditorPreferences { autocomplete: boolean; hoverDocs: boolean; fontSize: number; }
-export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; goToLine: (line: number) => void; undo: () => void; redo: () => void; }
+export interface EditorHandle { applySuggestion: (suggestion: Suggestion) => void; focus: () => void; goToLine: (line: number) => void; undo: () => void; redo: () => void; formatCode: () => void; }
 interface CodeEditorProps {
   language?: CompilerLanguage;
   value: string;
@@ -223,6 +224,27 @@ function cambridgeFold(state: EditorState, lineStart: number) {
   return null;
 }
 
+function formatEditor(view: EditorView, language: CompilerLanguage): boolean {
+  const source = view.state.doc.toString();
+  const formatted = language === 'python' ? formatPython(source) : formatPseudocode(source);
+  if (formatted === source) { view.focus(); return true; }
+  const lines = formatted.split('\n');
+  const position = (offset: number) => {
+    const line = view.state.doc.lineAt(offset);
+    const index = Math.min(line.number - 1, lines.length - 1);
+    const start = lines.slice(0, index).reduce((sum, value) => sum + value.length + 1, 0);
+    return start + Math.min(offset - line.from, lines[index]!.length);
+  };
+  const selection = view.state.selection.main;
+  view.dispatch({
+    changes: { from: 0, to: view.state.doc.length, insert: formatted },
+    selection: { anchor: position(selection.anchor), head: position(selection.head) },
+    userEvent: 'input.format',
+  });
+  view.focus();
+  return true;
+}
+
 function goToLine(view: EditorView): boolean {
   const current = view.state.doc.lineAt(view.state.selection.main.head).number;
   const requested = window.prompt('Go to line', String(current));
@@ -255,7 +277,9 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
   const palette = useRef(new Compartment());
   const marks = useRef(new Compartment());
   const onChangeRef = useRef(onChange);
+  const languageRef = useRef(language);
   onChangeRef.current = onChange;
+  languageRef.current = language;
 
   useImperativeHandle(ref, () => ({
     applySuggestion: suggestion => {
@@ -275,6 +299,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
     },
     undo: () => { if (view.current) undo(view.current); },
     redo: () => { if (view.current) redo(view.current); },
+    formatCode: () => { if (view.current) formatEditor(view.current, languageRef.current); },
   }), []);
 
   useEffect(() => {
@@ -287,7 +312,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
         lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
         ...(language === 'python' ? [python()] : [pseudoLanguage, foldService.of(cambridgeFold)]), indentationGuides,
-        keymap.of([{ key: 'Enter', run: language === 'python' ? view => acceptCompletion(view) || false : insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+        keymap.of([{ key: 'Mod-Shift-f', run: view => formatEditor(view, language) }, { key: 'Enter', run: language === 'python' ? view => acceptCompletion(view) || false : insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         palette.current.of(themeExtensions(theme)),
         prefs.current.of(createPreferences(preferences, language)),
         marks.current.of(EditorView.decorations.of(v => buildDecorations(v, currentLine, errorLine))),
