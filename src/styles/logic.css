@@ -170,6 +170,7 @@
 
 /* Slow motion: a jagged electrical arc and its signal bit travel on the wire path. */
 .logic-app .logic-spark { pointer-events: none; }
+.logic-app .logic-spark-wire { stroke: #fff; stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 13px var(--accent)) drop-shadow(0 0 24px var(--accent)); opacity: .92; }
 .logic-app .logic-spark-bolt {
   stroke: color-mix(in srgb, #fff 80%, var(--accent));
   stroke-width: 3.5;
@@ -192,9 +193,11 @@
 .logic-app .logic-bit.sx text { fill: #f5a067; }
 .logic-app .logic-bit.changed rect { stroke-width: 2; }
 @media (prefers-reduced-motion: no-preference) {
+  .logic-app .logic-spark-wire { animation: logic-wire-arc .12s steps(2) infinite; }
   .logic-app .logic-spark-bolt { animation: logic-arc .12s steps(2) infinite; }
   .logic-app .logic-bit.changed { animation: logic-bit-pop .35s var(--ds-ease); transform-box: fill-box; }
 }
+@keyframes logic-wire-arc { 50% { opacity: .58; } }
 @keyframes logic-arc { 50% { opacity: .55; filter: drop-shadow(0 0 1px var(--accent)); } }
 @keyframes logic-bit-pop { 40% { scale: 1.35; } }
 
