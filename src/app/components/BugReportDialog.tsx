@@ -153,7 +153,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
             <ImagePlus size={18} aria-hidden="true" />
             <input id="bug-report-screenshot" type="file" multiple accept="image/png,image/jpeg,image/webp" onChange={onFileChange} aria-describedby="bug-report-file-hint" />
           </div>
-          <p id="bug-report-file-hint" className="bug-report-hint">PNG, JPG, or WebP. Up to 5 images, 5 MB each, 10 MB total.</p>
+          <p id="bug-report-file-hint" className="bug-report-hint">PNG, JPG, or WebP.</p>
           {screenshots.map((file, index) => <div className="bug-report-attachment" key={file.name + '-' + file.size + '-' + file.lastModified + '-' + index}><span>{file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</span><button type="button" onClick={() => { setScreenshots(current => current.filter((_, i) => i !== index)); setFileError(''); }} aria-label={'Remove ' + file.name}><X size={14} /></button></div>)}
           {fileError && <p className="bug-report-error" role="alert">{fileError}</p>}
         </div>
