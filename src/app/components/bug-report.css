@@ -96,17 +96,25 @@
 .bug-report-success { margin: 0; padding: 10px 12px; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-md); color: var(--ds-text); font-size: var(--ds-text-sm); }
 .bug-report-file-row:has(input:disabled) { opacity: .55; }
 
-.bug-report-toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  z-index: 1500; display: flex; align-items: center; gap: 11px;
-  width: max-content; max-width: min(460px, calc(100vw - 32px));
-  padding: 13px 15px; border: 1px solid var(--ds-line-strong);
-  border-radius: var(--ds-radius-md); background: var(--ds-panel-raised);
-  box-shadow: var(--ds-shadow-dialog); color: var(--ds-text);
-  font: 500 var(--ds-text-sm)/1.5 var(--ds-font-ui);
+.bug-report-notice-backdrop {
+  position: fixed; inset: 0; z-index: 1600; display: grid; place-items: center;
+  padding: 20px; background: rgba(0, 0, 0, .76); backdrop-filter: blur(5px);
 }
-.bug-report-toast--success > svg { color: #57bd8c; flex-shrink: 0; }
-.bug-report-toast--error > svg { color: var(--ds-danger); flex-shrink: 0; }
-.bug-report-toast > span { flex: 1; }
-.bug-report-toast button { display: grid; place-items: center; border: 0; background: transparent; color: var(--ds-muted); cursor: pointer; }
-@media (max-width: 540px) { .bug-report-toast { bottom: 16px; } }
+.bug-report-notice {
+  width: min(390px, 100%); padding: 30px 26px 24px; text-align: center;
+  border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-xl);
+  background: var(--ds-panel-raised); box-shadow: var(--ds-shadow-dialog);
+  color: var(--ds-text); font-family: var(--ds-font-ui);
+}
+.bug-report-notice-icon { display: grid; place-items: center; margin: 0 auto 16px; width: 56px; height: 56px; border-radius: 16px; background: var(--ds-accent-soft); color: #57bd8c; }
+.bug-report-notice--error .bug-report-notice-icon { color: var(--ds-danger); }
+.bug-report-notice h2 { margin: 0 0 8px; font-size: var(--ds-text-lg); }
+.bug-report-notice p { margin: 0; color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.6; overflow-wrap: anywhere; }
+.bug-report-notice-close {
+  display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+  margin-top: 23px; min-height: 38px; padding: 0 22px;
+  border: 0; border-radius: var(--ds-radius-md);
+  background: var(--ds-accent-fill); color: var(--ds-on-accent);
+  font: 600 var(--ds-text-sm) var(--ds-font-ui); cursor: pointer;
+}
+.bug-report-notice-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
