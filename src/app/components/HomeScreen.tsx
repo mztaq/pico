@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Binary, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
+import { Binary, Bug, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme } from '../themes';
@@ -8,9 +8,11 @@ import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
 import { SoundButton } from './SoundToggle';
+import { BugReportDialog } from './BugReportDialog';
 
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
+  const [reportOpen, setReportOpen] = useState(false);
   const theme = getTheme(settings.theme);
   useEffect(() => {
     for (const [property, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(property, value);
@@ -65,8 +67,14 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           </WorkspaceChoice>
         </HomeGroup>
       </div>
-      <SiteInfoLinks />
+      <div className="home-footer-links">
+        <SiteInfoLinks />
+        <button type="button" className="bug-report-trigger" onClick={() => setReportOpen(true)}>
+          <Bug size={17} aria-hidden="true" /><span>Report a Bug</span>
+        </button>
+      </div>
     </div>
+    {reportOpen && <BugReportDialog onClose={() => setReportOpen(false)} />}
   </main>;
 }
 
