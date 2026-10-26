@@ -28,7 +28,7 @@ jobs:
         include:
           - name: Windows
             runner: windows-latest
-            bundles: msi,nsis
+            bundles: msi nsis
           - name: macOS-Apple-Silicon
             runner: macos-latest
             bundles: dmg
@@ -37,7 +37,7 @@ jobs:
             bundles: dmg
           - name: Linux
             runner: ubuntu-22.04
-            bundles: deb,appimage
+            bundles: deb appimage
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
