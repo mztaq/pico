@@ -1,5 +1,6 @@
 import {body, checkOrigin, fail, json, type Context} from '../_lib/core';
 import {rateLimit} from '../_lib/rate-limit';
+import {reportEmailHtml} from '../_lib/bug-report-email';
 
 const TYPES = ['Bug / Something broken', 'Visual or layout issue', 'Feature request', 'Other feedback'];
 const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio'];
@@ -43,6 +44,7 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
         to: [ctx.env.BUG_REPORT_TO],
         subject: '[Pico] ' + kind + ' — ' + workspace,
         text: message,
+        html: reportEmailHtml(kind, workspace, description.trim(), replyTo),
         ...(replyTo ? {reply_to: replyTo} : {})
       })
     });
