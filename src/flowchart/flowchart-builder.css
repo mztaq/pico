@@ -128,5 +128,5 @@
 .flow-node-text .highlighted-code { font: inherit; white-space: normal; }
 
 
-.flow-canvas-toolbar .flow-auto-layout { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-width: 28px; padding: 0 8px; border: 1px solid var(--border); font-size: 11px; white-space: nowrap; }
-@media (max-width: 520px) { .flow-canvas-toolbar .flow-auto-layout { width: 28px; padding: 0; }.flow-canvas-toolbar .flow-auto-layout span { display: none; } }
+.flow-canvas-toolbar .flow-auto-layout { display: grid; place-items: center; flex: 0 0 28px; width: 28px; margin-left: 0; padding: 0; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-raised); color: var(--text); }
+
