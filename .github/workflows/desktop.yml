@@ -1,7 +1,7 @@
 name: Desktop installers
 
 # Web changes deploy through Cloudflare and appear in the desktop apps on the
-# next load. Rebuild the native shell only when its own files change.
+# next load. Rebuild and prerelease the native shell only when its own files change.
 on:
   workflow_dispatch:
   pull_request:
@@ -74,3 +74,55 @@ jobs:
           path: src-tauri/target/release/bundle/**
           if-no-files-found: error
           retention-days: 14
+
+  publish-desktop:
+    name: Publish desktop prerelease
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-desktop
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download desktop installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pico-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Prepare version and changelog
+        shell: bash
+        run: |
+          version=$(python3 -c 'import json; print(json.load(open("src-tauri/tauri.conf.json"))["version"])')
+          echo "RELEASE_TAG=desktop-v${version}-build.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          {
+            echo "Pico desktop ${version} — build ${GITHUB_RUN_NUMBER}"
+            echo
+            echo "Unsigned preview installers for Windows, macOS and Linux."
+            echo "Website updates arrive automatically when Pico is relaunched or refreshed."
+            echo "Native app updates still require a new installer until a signed updater is configured."
+            echo
+            echo "### Recent Pico changelog entries"
+            echo
+            tail -n 10 logs.txt | sed 's/^/- /'
+            echo
+            echo "Full changelog: https://github.com/mztaq/pico/blob/main/logs.txt"
+          } > release-notes.md
+
+      - name: Publish GitHub Release with installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mapfile -d '' -t assets < <(find release-assets -type f -print0)
+          if (( ${#assets[@]} == 0 )); then
+            echo "No installers were downloaded" >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" "${assets[@]}" \
+            --title "Pico desktop $RELEASE_TAG" \
+            --notes-file release-notes.md \
+            --target "$GITHUB_SHA" \
+            --prerelease
