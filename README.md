@@ -19,3 +19,10 @@
 - **CPU Studio** — Explore the fetch–decode–execute cycle with animated CPU components and registers.
 
 Pico includes customizable themes, guided tutorials and browser-based project saving. 
+
+## Desktop apps
+
+Pico is also available as an **online-only desktop app** for Windows, macOS and Linux.
+Desktop packages are built by the [Desktop installers GitHub Actions workflow](https://github.com/mztaq/pico/actions/workflows/desktop.yml).
+Website changes are picked up on the next desktop launch/refresh, without reinstalling.
+See [desktop build and update notes](docs/desktop.md) for installer formats and signing limitations.
