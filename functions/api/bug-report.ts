@@ -11,22 +11,37 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
   if (originError) return originError;
   if (!ctx.env.RESEND_API_KEY || !ctx.env.BUG_REPORT_TO) return fail(503, 'Bug reporting is not configured');
   if (!ctx.env.DB) return fail(503, 'Database unavailable');
+  if (!ctx.env.TURNSTILE_SECRET_KEY || !ctx.env.TURNSTILE_SITE_KEY) return fail(503, 'Verification is not configured');
   if (!ctx.request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) return fail(415, 'Expected JSON');
   const data = await body(ctx.request);
   if (!data) return fail(400, 'Invalid report');
-  const {kind, workspace, description, email} = data;
+  const {kind, workspace, description, email, turnstileToken} = data;
   if (typeof kind !== 'string' || !TYPES.includes(kind) ||
       typeof workspace !== 'string' || !WORKSPACES.includes(workspace) ||
       typeof description !== 'string' || description.trim().length < 10 || description.length > 3000 ||
       (email !== undefined && (typeof email !== 'string' || email.length > 254 || (email.length > 0 && !emailPattern.test(email))))) {
     return fail(400, 'Check the report fields');
   }
+  if (typeof turnstileToken !== 'string' || !/^[A-Za-z0-9._-]{1,2048}$/.test(turnstileToken)) return fail(400, 'Verification required');
   if (!emailPattern.test(ctx.env.BUG_REPORT_TO)) return fail(503, 'Report recipient is misconfigured');
   try {
     const limited = await rateLimit(ctx, 'bug-report', 3);
     if (limited) return limited;
   } catch {
     return fail(503, 'Report service temporarily unavailable');
+  }
+  try {
+    const form = new FormData();
+    form.set('secret', ctx.env.TURNSTILE_SECRET_KEY);
+    form.set('response', turnstileToken);
+    const ip = ctx.request.headers.get('CF-Connecting-IP');
+    if (ip) form.set('remoteip', ip);
+    const verified = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {method: 'POST', body: form, signal: AbortSignal.timeout(7000)});
+    if (!verified.ok) return fail(503, 'Verification temporarily unavailable');
+    const result: {success?: boolean; hostname?: string} = await verified.json();
+    if (!result.success || result.hostname !== new URL(ctx.request.url).hostname) return fail(403, 'Verification failed. Please try again');
+  } catch {
+    return fail(503, 'Verification temporarily unavailable');
   }
   const replyTo = typeof email === 'string' && email ? email : undefined;
   const message = [
