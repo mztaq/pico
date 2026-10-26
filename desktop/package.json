@@ -1,0 +1,81 @@
+{
+  "name": "pico-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pico online-only desktop app",
+  "main": "main.cjs",
+  "author": "Pico contributors",
+  "license": "UNLICENSED",
+  "scripts": {
+    "icons": "node scripts/icon.mjs",
+    "start": "electron .",
+    "dist": "npm run icons && electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.0",
+    "sharp": "^0.34.0"
+  },
+  "build": {
+    "appId": "dev.pico.desktop",
+    "productName": "Pico",
+    "asar": true,
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.cjs",
+      "offline.html",
+      "assets/icon.png",
+      "package.json"
+    ],
+    "icon": "assets/icon.png",
+    "artifactName": "Pico-${version}-${os}-${arch}.${ext}",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.education",
+      "hardenedRuntime": false
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Education",
+      "synopsis": "Pico programming and CS learning platform"
+    }
+  }
+}
