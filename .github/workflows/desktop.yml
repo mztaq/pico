@@ -1,0 +1,76 @@
+name: Desktop installers
+
+# Web changes deploy through Cloudflare and appear in the desktop apps on the
+# next load. Rebuild the native shell only when its own files change.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src-tauri/**'
+      - 'public/pico-logo.svg'
+      - '.github/workflows/desktop.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src-tauri/**'
+      - 'public/pico-logo.svg'
+      - '.github/workflows/desktop.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-desktop:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            runner: windows-latest
+            bundles: msi nsis
+          - name: macOS-Apple-Silicon
+            runner: macos-latest
+            bundles: dmg
+          - name: macOS-Intel
+            runner: macos-15-intel
+            bundles: dmg
+          - name: Linux
+            runner: ubuntu-22.04
+            bundles: deb appimage
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux WebKit dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Tauri CLI
+        run: npm install --global @tauri-apps/cli@^2
+
+      - name: Generate Pico desktop icons
+        run: tauri icon public/pico-logo.svg --output src-tauri/icons
+
+      - name: Build desktop installers
+        run: tauri build --bundles ${{ matrix.bundles }}
+        env:
+          # Development builds are not Apple-notarized.
+          APPLE_SIGNING_IDENTITY: "-"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pico-${{ matrix.name }}-${{ github.sha }}
+          path: src-tauri/target/release/bundle/**
+          if-no-files-found: error
+          retention-days: 14
