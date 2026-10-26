@@ -170,18 +170,19 @@
 
 /* Slow motion: a jagged electrical arc and its signal bit travel on the wire path. */
 .logic-app .logic-spark { pointer-events: none; }
-.logic-app .logic-spark-wire { stroke: #fff; stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 13px var(--accent)) drop-shadow(0 0 24px var(--accent)); opacity: .92; }
 .logic-app .logic-spark-bolt {
   stroke: color-mix(in srgb, #fff 80%, var(--accent));
-  stroke-width: 3.5;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 12px var(--accent)) drop-shadow(0 0 22px var(--accent));
-  opacity: 1;
+  filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 7px var(--accent));
+  opacity: .96;
 }
-.logic-app .logic-spark-head { fill: #fff; stroke: none; filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 16px var(--accent)) drop-shadow(0 0 28px var(--accent)); }
-.logic-app .logic-spark-head.s1 { filter: drop-shadow(0 0 7px #fff) drop-shadow(0 0 16px #70dcb2) drop-shadow(0 0 28px #70dcb2); }
-.logic-app .logic-spark-head.s0 { fill: color-mix(in srgb, #fff 60%, #7896d0); filter: drop-shadow(0 0 6px #7896d0); }
+.logic-app .logic-spark-head { fill: #fff; stroke: none; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 9px var(--accent)); }
+.logic-app .logic-spark-head.s1 { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 9px #70dcb2); }
+.logic-app .logic-spark-head.s0 { fill: color-mix(in srgb, #fff 60%, #7896d0); filter: drop-shadow(0 0 5px #7896d0); }
+.logic-app .logic-spark-bolt.s1 { stroke: #c9fff0; }
+.logic-app .logic-spark-bolt.s0 { stroke: #ccd9ff; }
 .logic-app .logic-bit { pointer-events: none; }
 .logic-app .logic-bit rect { fill: var(--ds-panel-raised); stroke: var(--ds-line-strong); stroke-width: 1; }
 .logic-app .logic-bit text { fill: var(--ds-text); font: 700 11px var(--ds-font-code); text-anchor: middle; }
@@ -193,11 +194,9 @@
 .logic-app .logic-bit.sx text { fill: #f5a067; }
 .logic-app .logic-bit.changed rect { stroke-width: 2; }
 @media (prefers-reduced-motion: no-preference) {
-  .logic-app .logic-spark-wire { animation: logic-wire-arc .12s steps(2) infinite; }
   .logic-app .logic-spark-bolt { animation: logic-arc .12s steps(2) infinite; }
   .logic-app .logic-bit.changed { animation: logic-bit-pop .35s var(--ds-ease); transform-box: fill-box; }
 }
-@keyframes logic-wire-arc { 50% { opacity: .58; } }
 @keyframes logic-arc { 50% { opacity: .55; filter: drop-shadow(0 0 1px var(--accent)); } }
 @keyframes logic-bit-pop { 40% { scale: 1.35; } }
 
