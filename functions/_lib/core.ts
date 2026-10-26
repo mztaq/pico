@@ -1,6 +1,5 @@
 export interface Env {
   DB: D1Database;
-  BUG_REPORT_SCREENSHOTS?: {put(key: string, value: Uint8Array, options?: {httpMetadata?: {contentType: string}}): Promise<unknown>; delete(key: string): Promise<void>};
   RATE_LIMIT_SECRET: string;
   RESEND_API_KEY?: string;
   BUG_REPORT_TO?: string;
