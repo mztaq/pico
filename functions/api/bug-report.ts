@@ -69,7 +69,7 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
     return fail(400, 'Check the report fields');
   }
   if (typeof turnstileToken !== 'string' || !/^[A-Za-z0-9._-]{1,2048}$/.test(turnstileToken)) return fail(400, 'Verification required');
-  if (screenshot && (!ctx.env.BUG_REPORT_SCREENSHOTS || screenshot.size < 16 || screenshot.size > MAX_SCREENSHOT_BYTES ||
+  if (screenshot && (screenshot.size < 16 || screenshot.size > MAX_SCREENSHOT_BYTES ||
       !['image/png','image/jpeg','image/webp'].includes(screenshot.type))) return fail(400, 'Invalid screenshot or storage unavailable');
   if (!emailPattern.test(ctx.env.BUG_REPORT_TO)) return fail(503, 'Report recipient is misconfigured');
   try {
@@ -91,24 +91,25 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
   } catch {
     return fail(503, 'Verification temporarily unavailable');
   }
-  let screenshotKey: string | undefined;
+  let attachment: {filename: string; content: string} | undefined;
   if (screenshot) {
-    try {
-      const bytes = new Uint8Array(await screenshot.arrayBuffer());
-      const actualType = imageType(bytes);
-      if (!actualType || actualType !== screenshot.type) return fail(400, 'Invalid image contents');
-      const ext = actualType === 'image/png' ? 'png' : actualType === 'image/jpeg' ? 'jpg' : 'webp';
-      screenshotKey = 'reports/' + crypto.randomUUID() + '.' + ext;
-      await ctx.env.BUG_REPORT_SCREENSHOTS!.put(screenshotKey, bytes, {httpMetadata: {contentType: actualType}});
-    } catch { return fail(503, 'Screenshot storage unavailable'); }
+    const bytes = new Uint8Array(await screenshot.arrayBuffer());
+    const actualType = imageType(bytes);
+    if (!actualType || actualType !== screenshot.type) return fail(400, 'Invalid image contents');
+    const ext = actualType === 'image/png' ? 'png' : actualType === 'image/jpeg' ? 'jpg' : 'webp';
+    // Base64 encode in bounded chunks to avoid stack overflows on 5 MB images.
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    }
+    attachment = {filename: 'pico-screenshot.' + ext, content: btoa(binary)};
   }
   const replyTo = typeof email === 'string' && email ? email : undefined;
   const message = [
     'New Pico report', '',
     'Type: ' + kind, 'Workspace: ' + workspace,
     'Reply email: ' + (replyTo ?? '(not provided)'), '',
-    'Description:', description.trim(), '',
-    'Private R2 screenshot key: ' + (screenshotKey ?? '(none)')
+    'Description:', description.trim()
   ].join('\n');
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -119,11 +120,12 @@ export const onRequestPost = async (ctx: Context): Promise<Response> => {
         to: [ctx.env.BUG_REPORT_TO],
         subject: '[Pico #' + crypto.randomUUID().slice(0, 12).toUpperCase() + '] ' + kind + ' — ' + workspace,
         text: message,
-        html: reportEmailHtml(kind, workspace, description.trim(), replyTo) + (screenshotKey ? '<p>Private R2 screenshot key: ' + screenshotKey + '</p>' : ''),
+        html: reportEmailHtml(kind, workspace, description.trim(), replyTo),
+        ...(attachment ? {attachments: [attachment]} : {}),
         ...(replyTo ? {reply_to: replyTo} : {})
       })
     });
-    if (!response.ok) { if (screenshotKey) await ctx.env.BUG_REPORT_SCREENSHOTS!.delete(screenshotKey).catch(() => {}); return fail(502, 'Could not deliver the report. Please try again later'); }
+    if (!response.ok) return fail(502, 'Could not deliver the report. Please try again later');
     return json({ok: true});
   } catch {
     return fail(502, 'Could not deliver the report. Please try again later');
