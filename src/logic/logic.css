@@ -48,3 +48,16 @@
 .logic-app .logic-terminal.sz {stroke:var(--text);stroke-width:2.6;opacity:.82;stroke-dasharray:none}
 .logic-app .logic-wire.sx {stroke:var(--muted);stroke-dasharray:4 4}
 .logic-app .logic-port-label {display:none}
+
+/* Keep the desktop webview from treating a held circuit part as selectable text.
+   Native selection/copy callouts interrupt pointer capture and freeze drags. */
+.logic-board, .logic-board svg, .logic-board svg *,
+.logic-part, .logic-part * {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.logic-board svg, .logic-board .logic-node, .logic-board .logic-port {
+  touch-action: none;
+}
+.logic-board svg text { pointer-events: none; }

@@ -64,3 +64,20 @@ it('keeps a node drag active across the canvas edge and cancels it cleanly',asyn
   expect(nodeTransform()).toBe(original);
   expect(release).toHaveBeenCalledWith(7);
 });
+
+it('suppresses native selection and context menus without losing canvas pointer capture',async()=>{
+  const board=host.querySelector<SVGSVGElement>('svg[aria-label="Circuit canvas"]')!;
+  const capture=vi.fn();
+  board.setPointerCapture=capture;
+  const contextMenu=new MouseEvent('contextmenu',{bubbles:true,cancelable:true});
+  await act(async()=>board.dispatchEvent(contextMenu));
+  expect(contextMenu.defaultPrevented).toBe(true);
+  const nativeDrag=new Event('dragstart',{bubbles:true,cancelable:true});
+  await act(async()=>board.dispatchEvent(nativeDrag));
+  expect(nativeDrag.defaultPrevented).toBe(true);
+  const pointerDown=new MouseEvent('pointerdown',{bubbles:true,cancelable:true,button:0,clientX:10,clientY:10});
+  Object.defineProperty(pointerDown,'pointerId',{value:5});
+  await act(async()=>nodes()[0]!.dispatchEvent(pointerDown));
+  expect(pointerDown.defaultPrevented).toBe(true);
+  expect(capture).toHaveBeenCalledWith(5);
+});
