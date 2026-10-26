@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { ArrowLeft, ArrowRight, Code2, Copy, Download, GitBranch, CircleHelp, Play, Plus, Redo2, Settings2, Trash2, Undo2, Upload, X, ZoomIn, ZoomOut, Maximize2, Network } from 'lucide-react';
 import { compileFlowchart, ChartError, type ChartCompilation } from './compiler';
 import { autoLayoutChart } from './layout';
-import { autoLayoutChart } from './layout';
 import { BLOCKS, DATA_TYPES, NODE_HEIGHT, NODE_WIDTH, connectNodes, createNode, newChart, blockName, nodeLabel, ports, removeNode, type FlowchartProject, type NodeKind, type Port } from './model';
 import { chartNameExists, importChart, loadCharts, saveCharts, serializeChart, uniqueChartName, type ChartStore } from './storage';
 import { ChartCanvas, BlockSymbol } from './Canvas';
@@ -130,12 +129,6 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     if(arranged.nodes.every((node,index)=>node.x===project.nodes[index]?.x&&node.y===project.nodes[index]?.y))return;
     update(arranged);setMessage('Flowchart arranged.');requestAnimationFrame(()=>fit());
   }
-  function autoLayout() {
-    if(running||tutorialActive||project.nodes.length<2)return;
-    const arranged=autoLayoutChart(project);
-    if(arranged.nodes.every((node,index)=>node.x===project.nodes[index]?.x&&node.y===project.nodes[index]?.y))return;
-    update(arranged);setMessage('Flowchart arranged.');requestAnimationFrame(()=>fit());
-  }
   function enterLesson(step:number) {
     resetExecution();setConnection(null);setSelected(null);setPanel('console');
     setLesson(practiceLesson.current);if(step===3)setSelected(practiceLesson.current.nodes.find(n=>n.kind==='output')?.id??null);
@@ -196,7 +189,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
         <div className="flow-file-actions" inert={tutorialActive}><button onClick={()=>{download(serializeChart(project),`${project.name}.picochart`,'application/json');markExported();}}><Download size={14}/>Export flowchart</button><button onClick={()=>importRef.current?.click()}><Upload size={14}/>Import flowchart</button><button onClick={removeProject}><Trash2 size={14}/>Delete workspace</button></div>
         <input ref={importRef} type="file" accept=".picochart,application/json" hidden onChange={e=>{const file=e.currentTarget.files?.[0];e.currentTarget.value='';if(file)void importFile(file);}}/>
       </aside>
-      <main className="flow-main"><div className="flow-canvas-toolbar"><span>{connection?`Choose a destination for ${connection.port==='next'?'Next':connection.port==='yes'?'Yes':'No'}`:'Drag a connection port onto another block. Drag the background to pan.'}</span><div>{connection&&<button aria-label="Cancel connection" onClick={()=>setConnection(null)}><X size={15}/></button>}<button aria-label="Zoom out" disabled={zoom<=0.35} onClick={()=>setZoom(v=>Math.max(0.35,v-0.1))}><ZoomOut size={16}/></button><output>{Math.round(zoom*100)}%</output><button aria-label="Zoom in" disabled={zoom>=1.5} onClick={()=>setZoom(v=>Math.min(1.5,v+0.1))}><ZoomIn size={16}/></button><button className="flow-auto-layout" aria-label="Auto-layout flowchart" title="Auto-layout flowchart" disabled={running||tutorialActive||project.nodes.length<2} onClick={autoLayout}><Network size={15}/><span>Auto-layout</span></button><button className="flow-auto-layout" aria-label="Auto-layout flowchart" title="Auto-layout flowchart" disabled={running||tutorialActive||project.nodes.length<2} onClick={autoLayout}><Network size={15}/><span>Auto-layout</span></button><button aria-label="Fit flowchart" onClick={fit}><Maximize2 size={16}/></button></div></div>
+      <main className="flow-main"><div className="flow-canvas-toolbar"><span>{connection?`Choose a destination for ${connection.port==='next'?'Next':connection.port==='yes'?'Yes':'No'}`:'Drag a connection port onto another block. Drag the background to pan.'}</span><div>{connection&&<button aria-label="Cancel connection" onClick={()=>setConnection(null)}><X size={15}/></button>}<button aria-label="Zoom out" disabled={zoom<=0.35} onClick={()=>setZoom(v=>Math.max(0.35,v-0.1))}><ZoomOut size={16}/></button><output>{Math.round(zoom*100)}%</output><button aria-label="Zoom in" disabled={zoom>=1.5} onClick={()=>setZoom(v=>Math.min(1.5,v+0.1))}><ZoomIn size={16}/></button><button className="flow-auto-layout" aria-label="Auto-layout flowchart" title="Auto-layout flowchart" disabled={running||tutorialActive||project.nodes.length<2} onClick={autoLayout}><Network size={15}/><span>Auto-layout</span></button><button aria-label="Fit flowchart" onClick={fit}><Maximize2 size={16}/></button></div></div>
         <ChartCanvas project={project} selected={selected} activeNode={activeNode} errorNode={errorNode??(!tutorialActive?conversion.error?.nodeId:undefined)} connection={connection} zoom={zoom} disabled={running} onSelect={select} onChange={update} onConnect={connect} onTarget={target} onLink={link} onCancelConnection={()=>setConnection(null)}/>
         <ResizeHandle axis="y" label="Resize flowchart console" onResize={delta=>{const available=layoutRef.current?.clientHeight??700;setDockHeight(v=>Math.min(available*0.65,Math.max(160,v-delta)));}}/>
         <section className="flow-dock" style={{height:tutorialActive?160:dockHeight}} aria-label="Flowchart tools"><div className="dock-tabs" role="tablist" aria-label="Flowchart tool panels">{(['console','debugger','pseudocode'] as const).map(tab=><button className={`dock-tab ${panel===tab?'active':''}`} role="tab" aria-selected={panel===tab} key={tab} onClick={()=>setPanel(tab)}>{tab==='console'?'Console':tab==='debugger'?'Debugger':'Pseudocode'}</button>)}</div><div className="flow-dock-content" role="tabpanel">
@@ -221,3 +214,4 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
 
   </div>;
 }
+
