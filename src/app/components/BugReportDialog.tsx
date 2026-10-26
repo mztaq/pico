@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent } from 'react';
 import { Bug, ImagePlus, X } from 'lucide-react';
 import './bug-report.css';
+import {BugReportTurnstile} from './BugReportTurnstile';
 
 const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 const SCREENSHOT_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio'];
 
-export function BugReportDialog({ onClose }: { onClose: () => void }) {
+export function BugReportDialog({ onClose, onResult }: { onClose: () => void; onResult: (type: 'success' | 'error', message: string) => void }) {
   const dialogRef = useRef<HTMLElement>(null);
-  const [workspace, setWorkspace] = useState('Home / Other');
-  const [kind, setKind] = useState('Bug / Something broken');
+  const [workspace, setWorkspace] = useState('');
+  const [kind, setKind] = useState('');
   const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
+  const [sending, setSending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -71,6 +74,24 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
     attachScreenshot(image);
   };
 
+  const submitReport = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (sending || !turnstileToken || !kind || !workspace) return;
+    if (description.trim().length < 10) return;
+    setSending(true);
+    try {
+      const response = await fetch('/api/bug-report', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({kind, workspace, description: description.trim(), email: email.trim(), turnstileToken})
+      });
+      const result: {ok?: boolean; error?: string} = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
+      onResult('success', 'Thanks for helping improve Pico!');
+    } catch (error) {
+      onResult('error', error instanceof Error ? error.message : 'Could not send report. Please try again.');
+    } finally { setSending(false); }
+  };
+
   return <div className="bug-report-backdrop" role="presentation" onMouseDown={event => {
     if (event.target === event.currentTarget) onClose();
   }}>
@@ -83,10 +104,11 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
         </div>
         <button type="button" className="bug-report-close" aria-label="Close report form" onClick={onClose}><X size={18} /></button>
       </header>
-      <form className="bug-report-form" onSubmit={event => event.preventDefault()}>
+      <form className="bug-report-form" onSubmit={submitReport}>
         <div className="bug-report-field">
           <label htmlFor="bug-report-kind">Report type</label>
-          <select id="bug-report-kind" value={kind} onChange={event => setKind(event.target.value)}>
+          <select required id="bug-report-kind" value={kind} onChange={event => setKind(event.target.value)}>
+            <option value="" disabled>Choose a report type</option>
             <option>Bug / Something broken</option>
             <option>Visual or layout issue</option>
             <option>Feature request</option>
@@ -95,13 +117,14 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div className="bug-report-field">
           <label htmlFor="bug-report-workspace">Workspace</label>
-          <select id="bug-report-workspace" value={workspace} onChange={event => setWorkspace(event.target.value)}>
+          <select required id="bug-report-workspace" value={workspace} onChange={event => setWorkspace(event.target.value)}>
+            <option value="" disabled>Choose a workspace</option>
             {WORKSPACES.map(name => <option key={name}>{name}</option>)}
           </select>
         </div>
         <div className="bug-report-field">
           <label htmlFor="bug-report-description">What happened?</label>
-          <textarea id="bug-report-description" value={description} onChange={event => setDescription(event.target.value)} rows={4} maxLength={3000} placeholder="What were you doing? What happened, and what did you expect?" />
+          <textarea required minLength={10} id="bug-report-description" value={description} onChange={event => setDescription(event.target.value)} rows={4} maxLength={3000} placeholder="What were you doing? What happened, and what did you expect?" />
         </div>
         <div className="bug-report-field">
           <label htmlFor="bug-report-email">Your email <span>(optional)</span></label>
@@ -111,17 +134,18 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
           <label htmlFor="bug-report-screenshot">Screenshot <span>(optional)</span></label>
           <div className="bug-report-file-row">
             <ImagePlus size={18} aria-hidden="true" />
-            <input id="bug-report-screenshot" type="file" accept="image/png,image/jpeg,image/webp" onChange={onFileChange} aria-describedby="bug-report-file-hint" />
+            <input disabled title="Screenshot uploads will be available soon" id="bug-report-screenshot" type="file" accept="image/png,image/jpeg,image/webp" onChange={onFileChange} aria-describedby="bug-report-file-hint" />
           </div>
-          <p id="bug-report-file-hint" className="bug-report-hint">PNG, JPG, or WebP · Up to 5 MB · You can also paste a screenshot.</p>
+          <p id="bug-report-file-hint" className="bug-report-hint">Screenshot uploads are coming soon. Reports currently send text only.</p>
           {screenshot && <div className="bug-report-attachment"><span>{screenshot.name} ({(screenshot.size / 1024 / 1024).toFixed(2)} MB)</span><button type="button" onClick={() => setScreenshot(null)} aria-label="Remove screenshot"><X size={14} /></button></div>}
           {fileError && <p className="bug-report-error" role="alert">{fileError}</p>}
         </div>
+        <BugReportTurnstile onTokenChange={setTurnstileToken} />
         <footer className="bug-report-footer">
-          <p>Email delivery and screenshot storage are not connected yet. This is a preview of the report form.</p>
+          <p>Reports are delivered by email. Screenshot uploads will be added later.</p>
           <div className="bug-report-actions">
             <button type="button" className="bug-report-cancel" onClick={onClose}>Cancel</button>
-            <button type="submit" className="bug-report-submit" disabled title="Email delivery is not configured yet">Send report</button>
+            <button type="submit" className="bug-report-submit" disabled={sending || !turnstileToken}>{sending ? "Sending…" : "Send report"}</button>
           </div>
         </footer>
       </form>

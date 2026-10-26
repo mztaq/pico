@@ -92,3 +92,35 @@
   .bug-report-header { padding: 16px; }
   .bug-report-form { padding: 16px; }
 }
+
+.bug-report-success { margin: 0; padding: 10px 12px; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-md); color: var(--ds-text); font-size: var(--ds-text-sm); }
+.bug-report-file-row:has(input:disabled) { opacity: .55; }
+
+.bug-report-notice-backdrop {
+  position: fixed; inset: 0; z-index: 1600; display: grid; place-items: center;
+  padding: 20px; background: rgba(0, 0, 0, .76); backdrop-filter: blur(5px);
+}
+.bug-report-notice {
+  width: min(390px, 100%); padding: 30px 26px 24px; text-align: center;
+  border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-xl);
+  background: var(--ds-panel-raised); box-shadow: var(--ds-shadow-dialog);
+  color: var(--ds-text); font-family: var(--ds-font-ui);
+}
+.bug-report-notice-icon { display: grid; place-items: center; margin: 0 auto 16px; width: 56px; height: 56px; border-radius: 16px; background: var(--ds-accent-soft); color: #57bd8c; }
+.bug-report-notice--error .bug-report-notice-icon { color: var(--ds-danger); }
+.bug-report-notice h2 { margin: 0 0 8px; font-size: var(--ds-text-lg); }
+.bug-report-notice p { margin: 0; color: var(--ds-muted); font-size: var(--ds-text-sm); line-height: 1.6; overflow-wrap: anywhere; }
+.bug-report-notice-close {
+  display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+  margin-top: 23px; min-height: 38px; padding: 0 22px;
+  border: 0; border-radius: var(--ds-radius-md);
+  background: var(--ds-accent-fill); color: var(--ds-on-accent);
+  font: 600 var(--ds-text-sm) var(--ds-font-ui); cursor: pointer;
+}
+.bug-report-notice-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.bug-report-notice .bug-report-notice-timer { margin: 16px 0 8px; font-size: var(--ds-text-xs); color: var(--ds-muted); }
+.bug-report-notice-progress { height: 3px; border-radius: 3px; overflow: hidden; background: var(--ds-line-strong); }
+.bug-report-notice-progress > div { height: 100%; width: 100%; background: var(--ds-accent-fill); transform-origin: left; animation: bug-report-countdown 6s linear forwards; }
+@keyframes bug-report-countdown { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .bug-report-notice-progress > div { animation: none; } }
