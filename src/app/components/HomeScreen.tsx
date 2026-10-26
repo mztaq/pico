@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
+import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Sparkles, Terminal } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme } from '../themes';
@@ -33,6 +33,11 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       <div className="home-hero">
       <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
         <h1>Choose your workspace</h1>
+        <div className="home-milestone" aria-label="Celebrating 2,000 visits to Pico">
+          <span className="home-milestone-icon" aria-hidden="true"><Sparkles size={19}/></span>
+          <span><strong>2,000 visits!</strong><small>Thanks for exploring and building with Pico.</small></span>
+          <span className="home-milestone-stars" aria-hidden="true">✦ ✧ ✦</span>
+        </div>
       </div>
       <div className="compiler-choices">
         <HomeGroup label="Code" detail="Write, run and debug programs">

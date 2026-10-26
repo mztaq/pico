@@ -30,6 +30,13 @@
 .home-inner { width: min(1120px, 100%); margin: 0 auto; padding: 78px 20px 40px; }
 .home-hero { width: 100%; max-width: none; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
 .pico-home h1 { margin: 0; font-size: clamp(29px, 2.8vw, 38px); font-weight: 700; line-height: 1.12; letter-spacing: -.04em; }
+.home-milestone { display: flex; align-items: center; gap: 12px; max-width: 100%; padding: 10px 16px; border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--ds-line)); border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--ds-panel)); color: var(--ds-text); box-shadow: 0 8px 32px color-mix(in srgb, var(--accent) 9%, transparent); text-align: left; }
+.home-milestone-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--accent); color: var(--on-accent, #fff); }
+.home-milestone strong, .home-milestone small { display: block; }
+.home-milestone strong { font-size: 14px; line-height: 1.2; }
+.home-milestone small { margin-top: 2px; color: var(--ds-muted); font-size: 11px; line-height: 1.3; }
+.home-milestone-stars { color: var(--accent); font-size: 17px; white-space: nowrap; }
+@media (max-width: 480px) { .home-milestone { border-radius: 16px; padding: 9px 12px; } .home-milestone-stars { display: none; } }
 
 .pico-home .compiler-choices { width: 100%; display: flex; flex-direction: column; gap: 36px; }
 .home-group-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--ds-line); }
