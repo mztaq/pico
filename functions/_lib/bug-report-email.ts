@@ -16,7 +16,7 @@ export function reportEmailHtml(kind: string, workspace: string, description: st
 <tr><td align="center" style="padding:28px 16px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #e9e8ee;border-radius:12px;">
 <tr><td style="padding:25px 28px 21px;border-bottom:1px solid #eeedf2;">
-  <div style="font-size:14px;font-weight:800;letter-spacing:-.3px;color:#252337;">Pico<span style="color:#8066ca;">.</span>
+  <div style="font-size:14px;font-weight:800;letter-spacing:-.3px;color:#252337;"><img src="https://picompiler.pages.dev/pico-logo-email.png" width="28" height="28" alt="" style="display:inline-block;width:28px;height:28px;vertical-align:middle;border:0;margin-right:9px;border-radius:7px;">Pico<span style="color:#8066ca;">.</span>
     <span style="font-size:11px;font-weight:600;letter-spacing:.5px;color:#9995a8;margin-left:9px;">BUG REPORT</span>
   </div>
   <h1 style="margin:17px 0 0;font-size:22px;line-height:1.3;font-weight:700;color:#232333;">New report received</h1>
