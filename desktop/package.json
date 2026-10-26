@@ -12,9 +12,9 @@
     "dist": "npm run icons && electron-builder --publish never"
   },
   "devDependencies": {
-    "electron": "^39.0.0",
-    "electron-builder": "^26.0.0",
-    "sharp": "^0.34.0"
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0",
+    "sharp": "0.34.4"
   },
   "build": {
     "appId": "dev.pico.desktop",
@@ -56,8 +56,7 @@
           ]
         }
       ],
-      "category": "public.app-category.education",
-      "hardenedRuntime": false
+      "category": "public.app-category.education"
     },
     "linux": {
       "target": [
