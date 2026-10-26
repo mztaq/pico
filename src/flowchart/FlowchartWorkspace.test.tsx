@@ -130,8 +130,9 @@ it('drags a palette block onto the canvas using pointer events without native HT
     expect(down.defaultPrevented).toBe(true);
     pointer(window,'pointermove',350,240);
   });
-  expect(document.querySelector('.pico-palette-drag-preview')?.textContent).toBe('Process');
+  expect(document.querySelector('.pico-palette-drag-preview')).not.toBeNull();
   expect(document.querySelector('.flow-drag-preview .flow-symbol')).not.toBeNull();
+  expect(document.querySelector('.flow-drag-preview span')).toBeNull();
   await act(async()=>{
     pointer(window,'pointerup',350,240);
     palette.click(); // Native click after a drag must not add a second block.
