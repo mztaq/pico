@@ -88,9 +88,10 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
         method: 'POST',
         ...(screenshot ? {body: payload} : {headers: {'Content-Type': 'application/json'}, body: JSON.stringify(fields)})
       });
-      const result: {ok?: boolean; error?: string} = await response.json();
+      const result: {ok?: boolean; error?: string; screenshotAttached?: boolean} = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
-      onResult('success', 'Thanks for helping improve Pico!');
+      if (screenshot && result.screenshotAttached !== true) throw new Error('Report sent, but screenshot was not attached. Please contact the Pico team.');
+      onResult('success', screenshot ? 'Report and screenshot sent successfully!' : 'Thanks for helping improve Pico!');
     } catch (error) {
       onResult('error', error instanceof Error ? error.message : 'Could not send report. Please try again.');
     } finally { setSending(false); }
