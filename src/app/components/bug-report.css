@@ -118,3 +118,9 @@
   font: 600 var(--ds-text-sm) var(--ds-font-ui); cursor: pointer;
 }
 .bug-report-notice-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.bug-report-notice .bug-report-notice-timer { margin: 16px 0 8px; font-size: var(--ds-text-xs); color: var(--ds-muted); }
+.bug-report-notice-progress { height: 3px; border-radius: 3px; overflow: hidden; background: var(--ds-line-strong); }
+.bug-report-notice-progress > div { height: 100%; width: 100%; background: var(--ds-accent-fill); transform-origin: left; animation: bug-report-countdown 6s linear forwards; }
+@keyframes bug-report-countdown { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .bug-report-notice-progress > div { animation: none; } }
