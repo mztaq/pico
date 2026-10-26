@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Binary, Bug, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
+import { Binary, Bug, CheckCircle2, CircleAlert, Code2, Cpu, GitBranch, Terminal, X } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme } from '../themes';
@@ -13,11 +13,17 @@ import { BugReportDialog } from './BugReportDialog';
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
   const [settings] = useState(loadSettings);
   const [reportOpen, setReportOpen] = useState(false);
+  const [reportNotice, setReportNotice] = useState<{type: 'success' | 'error'; message: string} | null>(null);
   const theme = getTheme(settings.theme);
   useEffect(() => {
     for (const [property, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(property, value);
     document.documentElement.style.colorScheme = theme.appearance;
   }, [theme]);
+  useEffect(() => {
+    if (!reportNotice) return;
+    const timeout = window.setTimeout(() => setReportNotice(null), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [reportNotice]);
   return <main className="pico-home" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
     <div className="home-nav">
       <div className="home-updates"><SoundButton /><UpdateCenter /></div>
@@ -74,7 +80,12 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </button>
       </div>
     </div>
-    {reportOpen && <BugReportDialog onClose={() => setReportOpen(false)} />}
+    {reportOpen && <BugReportDialog onClose={() => setReportOpen(false)} onResult={(type, message) => { setReportOpen(false); setReportNotice({type, message}); }} />}
+    {reportNotice && <div className={'bug-report-toast bug-report-toast--' + reportNotice.type} role={reportNotice.type === 'error' ? 'alert' : 'status'}>
+      {reportNotice.type === 'success' ? <CheckCircle2 size={19} aria-hidden="true" /> : <CircleAlert size={19} aria-hidden="true" />}
+      <span>{reportNotice.message}</span>
+      <button type="button" aria-label="Dismiss notification" onClick={() => setReportNotice(null)}><X size={16} /></button>
+    </div>}
   </main>;
 }
 
