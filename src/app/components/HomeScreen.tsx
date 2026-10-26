@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Binary, Bug, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
+import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme } from '../themes';
@@ -11,7 +11,7 @@ import { SoundButton } from './SoundToggle';
 import { BugReportDialog } from './BugReportDialog';
 import { BugReportNotice } from './BugReportNotice';
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary') => void }) {
   const [settings] = useState(loadSettings);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportNotice, setReportNotice] = useState<{type: 'success' | 'error'; message: string} | null>(null);
@@ -43,7 +43,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
           </WorkspaceChoice>
         </HomeGroup>
-        <HomeGroup label="Visual labs" detail="Build and explore interactive models">
+        <HomeGroup label="Visual labs" detail="Build and explore interactive models" kind="visual">
           <WorkspaceChoice icon={<GitBranch size={18} />} title="Flowchart Builder" description="Build, run and convert flowcharts to pseudocode." onClick={() => onChoose('flowchart')}>
             <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
           <rect x="1" y="22" width="68" height="32" rx="16"/>
@@ -73,6 +73,14 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </svg>
           </WorkspaceChoice>
         </HomeGroup>
+        <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">
+          <WorkspaceChoice icon={<Calculator size={18} />} title="Binary Lab" description="Explore bits, hexadecimal, logical shifts, overflow and two’s complement." onClick={() => onChoose('binary')}>
+            <div className="compiler-choice-preview home-binary-preview" aria-hidden="true">
+              <div className="home-binary-byte">{'00101010'.split('').map((bit, index) => <span className={bit === '1' ? 'on' : ''} key={index}>{bit}</span>)}</div>
+              <div className="home-binary-equation"><code>0010 1010</code><span>=</span><strong>42</strong><span>=</span><code>0x2A</code></div>
+            </div>
+          </WorkspaceChoice>
+        </HomeGroup>
       </div>
       <div className="home-footer-links">
         <SiteInfoLinks />
@@ -87,8 +95,8 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   </main>;
 }
 
-function HomeGroup({ label, detail, children }: { label: string; detail: string; children: ReactNode }) {
-  return <section className="home-group" aria-label={label}>
+function HomeGroup({ label, detail, children, kind }: { label: string; detail: string; children: ReactNode; kind?: 'visual' | 'data' }) {
+  return <section className={`home-group${kind ? ` home-group--${kind}` : ''}`} aria-label={label}>
     <div className="home-group-head"><span className="home-group-label">{label}</span><span className="home-group-detail">{detail}</span></div>
     <div className="home-group-grid">{children}</div>
   </section>;
