@@ -6,7 +6,7 @@ const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 const SCREENSHOT_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio'];
 
-export function BugReportDialog({ onClose }: { onClose: () => void }) {
+export function BugReportDialog({ onClose, onResult }: { onClose: () => void; onResult: (type: 'success' | 'error', message: string) => void }) {
   const dialogRef = useRef<HTMLElement>(null);
   const [workspace, setWorkspace] = useState('Home / Other');
   const [kind, setKind] = useState('Bug / Something broken');
@@ -15,8 +15,6 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [fileError, setFileError] = useState('');
   const [sending, setSending] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [sent, setSent] = useState(false);
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -76,9 +74,8 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
 
   const submitReport = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (sending || sent) return;
-    setSubmitError('');
-    if (description.trim().length < 10) { setSubmitError('Please describe the issue in at least 10 characters.'); return; }
+    if (sending) return;
+    if (description.trim().length < 10) return;
     setSending(true);
     try {
       const response = await fetch('/api/bug-report', {
@@ -87,9 +84,9 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
       });
       const result: {ok?: boolean; error?: string} = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
-      setSent(true);
+      onResult('success', 'Report sent. Thanks for helping improve Pico!');
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Could not send report');
+      onResult('error', error instanceof Error ? error.message : 'Could not send report. Please try again.');
     } finally { setSending(false); }
   };
 
@@ -106,7 +103,6 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
         <button type="button" className="bug-report-close" aria-label="Close report form" onClick={onClose}><X size={18} /></button>
       </header>
       <form className="bug-report-form" onSubmit={submitReport}>
-        {sent && <p role="status" className="bug-report-success">Report sent. Thanks for helping improve Pico!</p>}
         <div className="bug-report-field">
           <label htmlFor="bug-report-kind">Report type</label>
           <select id="bug-report-kind" value={kind} onChange={event => setKind(event.target.value)}>
@@ -142,10 +138,9 @@ export function BugReportDialog({ onClose }: { onClose: () => void }) {
         </div>
         <footer className="bug-report-footer">
           <p>Reports are delivered by email. Screenshot uploads will be added later.</p>
-          {submitError && <p role="alert" className="bug-report-error">{submitError}</p>}
           <div className="bug-report-actions">
             <button type="button" className="bug-report-cancel" onClick={onClose}>Cancel</button>
-            <button type="submit" className="bug-report-submit" disabled={sending || sent}>{sent ? "Sent" : sending ? "Sending…" : "Send report"}</button>
+            <button type="submit" className="bug-report-submit" disabled={sending}>{sending ? "Sending…" : "Send report"}</button>
           </div>
         </footer>
       </form>
