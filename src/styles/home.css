@@ -135,3 +135,8 @@ body:has(.pico-cookie-banner) .pico-home .home-inner {
   .pico-home .compiler-choice { transition: none; }
   .pico-home .compiler-choice:hover { transform: none; }
 }
+
+/* Footer report action shares the policy-link row. */
+.pico-home .home-footer-links { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 18px; width: 100%; margin: 48px 0 0; padding: 20px 0 0; border-top: 1px solid var(--ds-line); }
+.pico-home .home-footer-links .site-info-links { width: auto; margin: 0; padding: 0; border: 0; gap: 4px 18px; }
+body:has(.pico-cookie-banner) .pico-home .home-footer-links { margin-top: 12px; padding-top: 10px; }
