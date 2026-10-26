@@ -150,7 +150,7 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
 
 it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
  expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
- expect(container.querySelectorAll('.compiler-choice')).toHaveLength(5);
+ expect(container.querySelectorAll('.compiler-choice')).toHaveLength(6);
 });
 it('offers both CPU simulation modes and a guided tutorial',async()=>{
  const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');
