@@ -7,6 +7,14 @@
 .logic-expression-error { display: grid; gap: 8px; padding: 12px 14px; }
 .logic-expression-error p { margin: 0; line-height: 1.45; }
 .logic-expression-error button { justify-self: start; }
+.logic-expression-builder { display: grid; gap: 7px; margin: 12px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.logic-expression-builder>label { margin: 0; color: var(--text); font-weight: 700; }
+.logic-expression-builder>div { display: flex; gap: 7px; }
+.logic-expression-builder input { min-width: 0; flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; background: var(--bg); color: var(--text); font-family: var(--font-code,monospace); }
+.logic-expression-builder button { flex: none; border: 1px solid #756ba2; border-radius: 6px; padding: 8px 10px; background: #302a48; color: #f3edff; cursor: pointer; }
+.logic-expression-builder small { color: var(--muted); line-height: 1.4; }
+.logic-expression-builder p { margin: 0; color: #ff9898; }
+@media(max-width:520px) { .logic-expression-builder>div { flex-direction: column; } }
 @media (max-width: 760px) {
 }
 
