@@ -25,7 +25,7 @@ export function BinaryTutorial({ step, onStep, onClose }: { step: number; onStep
 
   useLayoutEffect(() => {
     const element = current.selector ? document.querySelector<HTMLElement>(current.selector) : null;
-    element?.scrollIntoView({ block: 'center', behavior: 'auto' });
+    element?.scrollIntoView?.({ block: 'center', behavior: 'auto' });
     let frame = 0;
     const measure = () => {
       const r = element?.getBoundingClientRect();
