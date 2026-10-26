@@ -1,11 +1,20 @@
 /* Bug report form — UI only until the email and R2 endpoints are configured. */
-.pico-home .site-info-links .bug-report-trigger {
+/* The button sits next to the policy nav, so style it like a policy link. */
+.pico-home .home-footer-links .bug-report-trigger {
+  appearance: none;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 40px; padding: 0; border: 0; border-radius: 5px;
+  flex-shrink: 0; min-height: 40px; margin: 0; padding: 0;
+  border: 0; border-radius: 5px; box-shadow: none;
   background: transparent; color: var(--ds-muted);
-  font: inherit; font-size: var(--ds-text-sm); cursor: pointer;
+  font: 400 var(--ds-text-sm)/1.5 var(--ds-font-ui);
+  text-decoration: none; white-space: nowrap; cursor: pointer;
 }
-.pico-home .site-info-links .bug-report-trigger:hover { color: var(--ds-text); }
+.pico-home .home-footer-links .bug-report-trigger:hover {
+  background: transparent; color: var(--ds-text);
+}
+.pico-home .home-footer-links .bug-report-trigger:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 5px;
+}
 
 .bug-report-backdrop {
   position: fixed; inset: 0; z-index: 1400; display: grid; place-items: center;
