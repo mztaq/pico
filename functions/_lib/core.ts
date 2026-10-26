@@ -3,6 +3,8 @@ export interface Env {
   RATE_LIMIT_SECRET: string;
   RESEND_API_KEY?: string;
   BUG_REPORT_TO?: string;
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
 export interface Context {
   request: Request;
