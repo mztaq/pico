@@ -32,6 +32,17 @@ self.addEventListener('fetch', event => {
     return;
   }
   if (url.pathname.startsWith('/assets/') || url.pathname === '/pico-logo.svg' || url.pathname === '/manifest.webmanifest') {
-    event.respondWith(fetch(request).catch(async () => (await caches.match(request)) || Response.error()));
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request);
+        if (response.ok && response.type === 'basic') {
+          const cache = await caches.open(CACHE);
+          await cache.put(request, response.clone());
+        }
+        return response;
+      } catch {
+        return (await caches.match(request)) || Response.error();
+      }
+    })());
   }
 });
