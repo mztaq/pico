@@ -9,8 +9,8 @@ const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'F
 
 export function BugReportDialog({ onClose, onResult }: { onClose: () => void; onResult: (type: 'success' | 'error', message: string) => void }) {
   const dialogRef = useRef<HTMLElement>(null);
-  const [workspace, setWorkspace] = useState('Home / Other');
-  const [kind, setKind] = useState('Bug / Something broken');
+  const [workspace, setWorkspace] = useState('');
+  const [kind, setKind] = useState('');
   const [description, setDescription] = useState('');
   const [email, setEmail] = useState('');
   const [screenshot, setScreenshot] = useState<File | null>(null);
@@ -76,7 +76,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
 
   const submitReport = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (sending || !turnstileToken) return;
+    if (sending || !turnstileToken || !kind || !workspace) return;
     if (description.trim().length < 10) return;
     setSending(true);
     try {
@@ -107,7 +107,8 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
       <form className="bug-report-form" onSubmit={submitReport}>
         <div className="bug-report-field">
           <label htmlFor="bug-report-kind">Report type</label>
-          <select id="bug-report-kind" value={kind} onChange={event => setKind(event.target.value)}>
+          <select required id="bug-report-kind" value={kind} onChange={event => setKind(event.target.value)}>
+            <option value="" disabled>Choose a report type</option>
             <option>Bug / Something broken</option>
             <option>Visual or layout issue</option>
             <option>Feature request</option>
@@ -116,7 +117,8 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
         </div>
         <div className="bug-report-field">
           <label htmlFor="bug-report-workspace">Workspace</label>
-          <select id="bug-report-workspace" value={workspace} onChange={event => setWorkspace(event.target.value)}>
+          <select required id="bug-report-workspace" value={workspace} onChange={event => setWorkspace(event.target.value)}>
+            <option value="" disabled>Choose a workspace</option>
             {WORKSPACES.map(name => <option key={name}>{name}</option>)}
           </select>
         </div>
