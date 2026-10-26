@@ -168,13 +168,22 @@
   .logic-app .logic-slow-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
-/* Slow motion: a jagged electrical arc and its signal bit travel on the wire path. */
+/* Slow motion: keep the travelling spark locked to the wire path. */
 .logic-app .logic-spark { pointer-events: none; }
+.logic-app .logic-spark-glow {
+  stroke: #fff;
+  stroke-width: 8;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px var(--accent));
+  opacity: .32;
+}
+.logic-app .logic-spark-glow.s1 { stroke: #9affe0; filter: drop-shadow(0 0 6px #70dcb2); }
+.logic-app .logic-spark-glow.s0 { stroke: #d3e0ff; filter: drop-shadow(0 0 6px #7896d0); }
 .logic-app .logic-spark-bolt {
   stroke: color-mix(in srgb, #fff 80%, var(--accent));
-  stroke-width: 2.5;
+  stroke-width: 4;
   stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-dasharray: .14 .86;
   filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 7px var(--accent));
   opacity: .96;
 }
