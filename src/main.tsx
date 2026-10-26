@@ -26,12 +26,14 @@ createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 
-// Retire the previous offline-first service worker and cached shell.
-if ('serviceWorker' in navigator) {
-  void navigator.serviceWorker.getRegistrations().then(registrations =>
-    Promise.all(registrations.filter(reg => new URL(reg.scope).origin === location.origin).map(reg => reg.unregister()))
-  ).catch(() => {});
-}
-if ('caches' in window) {
-  void caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('pico-shell-')).map(key => caches.delete(key)))).catch(() => {});
+// Cache the homepage shell for offline preview, not the functional workspaces.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js').then(async registration => {
+      const assets = Array.from(document.querySelectorAll<HTMLScriptElement | HTMLLinkElement>('script[src],link[rel="stylesheet"][href],link[rel="modulepreload"][href]'))
+        .map(element => element instanceof HTMLScriptElement ? element.src : element.href)
+        .map(url => new URL(url).pathname);
+      (registration.active || (await navigator.serviceWorker.ready).active)?.postMessage({ type: 'CACHE_PICO_HOME', assets });
+    }).catch(() => {});
+  }, { once: true });
 }
