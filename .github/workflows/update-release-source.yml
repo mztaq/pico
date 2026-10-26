@@ -1,0 +1,54 @@
+name: Update desktop release source archives
+
+# Keep the existing desktop release's auto-generated Source code (zip) and
+# Source code (tar.gz) pointed at the latest main commit. GitHub generates
+# those archives from the tag; they are not uploadable release assets.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pico-desktop-release-source
+  cancel-in-progress: true
+
+jobs:
+  update-source-tag:
+    name: Point existing desktop release at latest main
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move existing release tag (never create a release)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: desktop-v0.1.0-build.10
+        run: |
+          set -euo pipefail
+          # Fail instead of silently creating a second release.
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+
+          # Resolve main at execution time so a delayed run cannot roll the
+          # source archives back to an older workflow-triggering commit.
+          latest_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          current_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')
+
+          if [[ "$current_sha" == "$latest_sha" ]]; then
+            echo "Source archives already point to latest main: $latest_sha"
+            exit 0
+          fi
+
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$RELEASE_TAG" \
+            -f sha="$latest_sha" -F force=true >/dev/null
+
+          updated_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')
+          if [[ "$updated_sha" != "$latest_sha" ]]; then
+            echo "::error::Release tag was not updated to latest main" >&2
+            exit 1
+          fi
+          echo "Updated $RELEASE_TAG from $current_sha to $updated_sha"
+          echo "GitHub regenerates the release's ZIP and tar.gz source archives from this tag."
+          echo "Desktop installers attached to the release were not changed."
