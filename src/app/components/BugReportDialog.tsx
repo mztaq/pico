@@ -84,7 +84,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
       });
       const result: {ok?: boolean; error?: string} = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
-      onResult('success', 'Report sent. Thanks for helping improve Pico!');
+      onResult('success', 'Thanks for helping improve Pico!');
     } catch (error) {
       onResult('error', error instanceof Error ? error.message : 'Could not send report. Please try again.');
     } finally { setSending(false); }
