@@ -1,0 +1,60 @@
+.pico-connection-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 24px;
+  background: radial-gradient(800px 360px at 15% 0%, rgba(203, 166, 247, .12), transparent 70%), #1e1e2e;
+  color: #cdd6f4;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.pico-connection-card {
+  width: min(440px, 100%);
+  padding: 32px;
+  border: 1px solid #3a3b52;
+  border-radius: 16px;
+  background: #252536;
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, .55);
+}
+.pico-connection-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 19px;
+  font-weight: 750;
+}
+.pico-connection-brand img { width: 28px; height: 28px; }
+.pico-connection-brand span { color: #cba6f7; margin-left: -9px; }
+.pico-connection-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin: 28px 0 18px;
+  border: 1px solid #54435e;
+  border-radius: 14px;
+  background: #372b46;
+  color: #f38ba8;
+}
+.pico-connection-card h1 { margin: 0 0 10px; font-size: 27px; letter-spacing: -.02em; }
+.pico-connection-card p { margin: 0 0 24px; color: #a6adc8; line-height: 1.6; font-size: 15px; }
+.pico-connection-card button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #cba6f7;
+  color: #11111b;
+  font: 650 14px inherit;
+  cursor: pointer;
+}
+.pico-connection-card button:hover { filter: brightness(1.08); }
+.pico-connection-card button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.pico-connection-footnote { margin-top: 20px; color: #a6adc8; font-size: 12px; line-height: 1.5; }
+@media (max-width: 480px) { .pico-connection-card { padding: 24px; } }
