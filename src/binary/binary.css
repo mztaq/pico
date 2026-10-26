@@ -41,6 +41,8 @@
 .binary-value-field input, .binary-value-field output { width: 100%; height: 50px; padding: 7px 10px; border: 1px solid var(--ds-line-strong); border-radius: 7px; outline: none; background: var(--ds-panel); color: var(--ds-text); font: 700 27px var(--ds-font-code); }
 .binary-value-field input[aria-invalid="true"] { border-color: var(--ds-danger); }
 .binary-value-field output { display: flex; align-items: center; border-color: transparent; background: transparent; }
+.binary-signed-action { align-self: flex-start; min-height: 32px; margin-top: auto; padding: 5px 9px; border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--ds-line)); border-radius: 7px; background: var(--ds-accent-soft); color: var(--ds-text); font-size: 12px !important; font-weight: 650; }
+.binary-signed-action:hover { background: color-mix(in srgb, var(--accent) 24%, var(--ds-panel)); }
 .binary-prefixed-input { display: flex; align-items: center; gap: 5px; }
 .binary-prefixed-input b { color: var(--ds-muted); font: 600 15px var(--ds-font-code); }
 .binary-nibbles { display: flex; align-items: center; flex-wrap: wrap; gap: 11px; margin-top: 17px; color: var(--ds-muted); font-size: 12px; }
