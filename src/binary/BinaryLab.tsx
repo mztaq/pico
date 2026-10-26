@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowLeftCircle, ArrowRightCircle, Plus, RotateCcw, Settings
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
-import { addBytes, binary8, groupedBinary, hex2, negateByte, parseByteDecimal, parseByteHex, shiftByte, signed8, toggleBit } from './operations';
+import { addBytes, groupedBinary, hex2, negateByte, parseByteDecimal, parseByteHex, shiftByte, signed8, toggleBit } from './operations';
 import './binary.css';
 
 const STORAGE = 'pico.binary-lab.byte.v1';
