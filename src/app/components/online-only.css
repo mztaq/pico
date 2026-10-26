@@ -1,0 +1,43 @@
+/* Darken the existing Pico screen instead of replacing it. */
+.pico-connection-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 20px;
+  background: rgba(4, 5, 11, .58);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  color: #cdd6f4;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.pico-connection-card {
+  width: min(360px, 100%);
+  padding: 26px;
+  border: 1px solid #3a3b52;
+  border-radius: 12px;
+  background: #242433;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+}
+.pico-connection-icon { color: #a6adc8; margin-bottom: 12px; }
+.pico-connection-card h1 { margin: 0 0 8px; font-size: 23px; font-weight: 650; letter-spacing: -.02em; }
+.pico-connection-card p { margin: 0 0 20px; color: #a6adc8; line-height: 1.5; font-size: 14px; }
+.pico-connection-card button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #50516a;
+  border-radius: 7px;
+  background: #333347;
+  color: #cdd6f4;
+  font: 600 13px system-ui, -apple-system, "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+.pico-connection-card button:hover:not(:disabled) { background: #3d3d53; }
+.pico-connection-card button:disabled { opacity: .6; cursor: wait; }
+.pico-connection-card button:focus-visible { outline: 2px solid #cba6f7; outline-offset: 3px; }
