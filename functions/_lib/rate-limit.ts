@@ -6,7 +6,7 @@ import {fail, now, type Context} from './core';
  */
 export async function rateLimit(
   ctx: Context,
-  action: 'cookies' | 'usage' | 'preferences',
+  action: 'cookies' | 'usage' | 'preferences' | 'bug-report',
   maxRequests: number,
 ): Promise<Response | null> {
   const secret = ctx.env.RATE_LIMIT_SECRET;
