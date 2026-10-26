@@ -1,7 +1,8 @@
 name: Desktop installers
 
 # Web changes deploy through Cloudflare and appear in the desktop apps on the
-# next load. Rebuild and prerelease the native shell only when its own files change.
+# next load. Build native installers when needed, but never publish a new release.
+# Workflow artifacts remain available for manual native update testing.
 on:
   workflow_dispatch:
   pull_request:
@@ -74,100 +75,3 @@ jobs:
           path: src-tauri/target/release/bundle/**
           if-no-files-found: error
           retention-days: 14
-
-  publish-desktop:
-    name: Publish desktop prerelease
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    needs: build-desktop
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download desktop installers
-        uses: actions/download-artifact@v4
-        with:
-          pattern: pico-*
-          path: release-assets
-          merge-multiple: true
-
-      - name: Prepare version and changelog
-        shell: bash
-        run: |
-          version=$(python3 -c 'import json; print(json.load(open("src-tauri/tauri.conf.json"))["version"])')
-          echo "RELEASE_TAG=desktop-v${version}-build.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
-          {
-            echo "Pico desktop ${version} — build ${GITHUB_RUN_NUMBER}"
-            echo
-            echo "Unsigned preview installers for Windows, macOS and Linux."
-            echo "Website updates arrive automatically when Pico is relaunched or refreshed."
-            echo "Native app updates still require a new installer until a signed updater is configured."
-            echo
-            echo "### Recent Pico changelog entries"
-            echo
-            tail -n 10 logs.txt | sed 's/^/- /'
-            echo
-            echo "Full changelog: https://github.com/mztaq/pico/blob/main/logs.txt"
-          } > release-notes.md
-
-      - name: Collect installer packages only
-        shell: bash
-        run: |
-          mkdir -p installers
-          find release-assets -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' \) -print0 |
-            while IFS= read -r -d '' file; do
-              name=$(basename "$file")
-              if [[ -e "installers/$name" ]]; then
-                echo "Duplicate installer filename: $name" >&2
-                exit 1
-              fi
-              cp "$file" "installers/$name"
-            done
-          if ! find installers -type f -print -quit | grep -q .; then
-            echo "No installer packages found" >&2
-            exit 1
-          fi
-          ls -lh installers
-
-      - name: Create GitHub prerelease with changelog
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release edit "$RELEASE_TAG" --notes-file release-notes.md
-          else
-            # Create the release independently: failed asset uploads must not
-            # delete the release or hide its changelog.
-            gh release create "$RELEASE_TAG" \
-              --title "Pico desktop $RELEASE_TAG" \
-              --notes-file release-notes.md \
-              --target "$GITHUB_SHA" \
-             
-          fi
-
-      - name: Upload installer packages
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          shopt -s nullglob
-          assets=(installers/*)
-          if (( ${#assets[@]} == 0 )); then exit 1; fi
-          # Upload individually, with retries, to identify failures clearly.
-          for file in "${assets[@]}"; do
-            uploaded=false
-            for attempt in 1 2 3; do
-              if gh release upload "$RELEASE_TAG" "$file" --clobber; then
-                uploaded=true
-                break
-              fi
-              echo "Upload failed for $file (attempt $attempt/3)" >&2
-              sleep 5
-            done
-            if [[ "$uploaded" != true ]]; then
-              echo "::error::Could not upload $file; the release and changelog still exist." >&2
-              exit 1
-            fi
-          done
