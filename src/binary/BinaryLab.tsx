@@ -1,9 +1,10 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { ArrowLeft, ArrowLeftCircle, ArrowRightCircle, Plus, RotateCcw, Settings2, X } from 'lucide-react';
+import { ArrowLeft, ArrowLeftCircle, ArrowRightCircle, BookOpen, Plus, RotateCcw, Settings2, X } from 'lucide-react';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { addBytes, groupedBinary, hex2, negateByte, parseByteDecimal, parseByteHex, shiftByte, signed8, toggleBit } from './operations';
+import { BinaryTutorial, BINARY_TUTORIAL_KEY } from './BinaryTutorial';
 import './binary.css';
 
 const STORAGE = 'pico.binary-lab.byte.v1';
@@ -29,6 +30,14 @@ export function BinaryLab({ onHome }: { onHome: () => void }) {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [themeId, setThemeId] = useState(() => loadSettings().theme);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [tourStep, setTourStep] = useState<number | null>(() => {
+    try { return localStorage.getItem(BINARY_TUTORIAL_KEY) === 'done' ? null : 0; }
+    catch { return 0; }
+  });
+  function closeTutorial() {
+    setTourStep(null);
+    try { localStorage.setItem(BINARY_TUTORIAL_KEY, 'done'); } catch { /* Tutorial still closes. */ }
+  }
   const theme = getTheme(themeId);
   const operand = parseByteDecimal(operandDraft);
   const flipped = value ^ 0xff;
@@ -116,7 +125,7 @@ export function BinaryLab({ onHome }: { onHome: () => void }) {
         <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="24" height="24" /><span>Pico<span className="brand-period">.</span></span></div>
         <span className="pico-appbar-sep" aria-hidden="true">/</span><strong className="pico-appbar-tool">Binary Lab</strong>
       </div>
-      <button className="binary-icon-button" aria-label="Binary Lab theme" title="Choose theme" onClick={() => setThemeOpen(true)}><Settings2 size={17} /></button>
+      <div className="binary-header-actions"><button className="binary-tutorial-button" aria-label="Open Binary Lab tutorial" onClick={() => setTourStep(0)}><BookOpen size={16} /> Tutorial</button><button className="binary-icon-button" aria-label="Binary Lab theme" title="Choose theme" onClick={() => setThemeOpen(true)}><Settings2 size={17} /></button></div>
     </header>
 
     <div className="binary-content">
@@ -160,6 +169,7 @@ export function BinaryLab({ onHome }: { onHome: () => void }) {
       </section>}
     </div>
 
+    {tourStep !== null && <BinaryTutorial step={tourStep} onStep={setTourStep} onClose={closeTutorial} />}
     {themeOpen && <div className="binary-theme-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setThemeOpen(false); }}><div className="binary-theme-dialog" role="dialog" aria-modal="true" aria-label="Choose Binary Lab theme"><div className="binary-theme-head"><strong>Theme</strong><button aria-label="Close themes" onClick={() => setThemeOpen(false)}><X size={17} /></button></div><ThemePicker value={themeId} onChange={setThemeId} /></div></div>}
   </main>;
 }
