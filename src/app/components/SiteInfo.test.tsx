@@ -30,22 +30,19 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it('opens the Authors link and supports direct links to all information pages', async () => {
+it('removes the Authors link and ignores old author deep links', async () => {
   await act(async () => root.render(<App />));
-  expect(host.querySelector('a[href="#authors"]')?.textContent).toBe('Authors');
+  expect(host.querySelector('a[href="#authors"]')).toBeNull();
   await navigate('#authors');
-  expect(document.title).toBe('Pico | Authors');
-  const cards = [...host.querySelectorAll('.author-card')];
-  expect(cards.map(card => card.querySelector('h2')?.textContent)).toEqual(['Muhammad Mustaqim 11BR', 'Amar Ayache 11BB', 'Mohamed Hamza 11BR']);
-  expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual(['Implements features and manages deployment and releases.', 'Built Pico’s foundation and guides its development.', 'Develops concepts and supports marketing and promotion.']);
-  expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([['Head of Deployment', 'Media Manager'], ['Head of Development', 'Media Manager'], ['Concept Developer', 'Media Manager']]);
-  expect(host.querySelectorAll('.author-icon svg')).toHaveLength(3);
-  expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Authors');
-  expect(document.activeElement).toBe(host.querySelector('h1'));
-  expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
-  await navigate('');
+  expect(host.querySelector('.author-card')).toBeNull();
+  expect(host.querySelector('.site-info-page')).toBeNull();
   expect(host.querySelector('.compiler-choices')).not.toBeNull();
   expect(document.title).toBe('Pico | Home');
+  await navigate('#privacy');
+  expect(host.querySelector('h1')?.textContent).toBe('Privacy Policy');
+  expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
+  expect(host.querySelectorAll('.site-info-links a')).toHaveLength(3);
+  expect(host.querySelector('a[href="#authors"]')).toBeNull();
 });
 
 it.each([
