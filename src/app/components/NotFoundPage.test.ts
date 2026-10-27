@@ -11,7 +11,8 @@ it('keeps the 404 page focused on Pico, without team conversations', () => {
   const match = html.match(/const messages = (\[[\s\S]*?\]);\s*\/\/ Avoid showing the same joke/);
   expect(match).not.toBeNull();
   const messages = JSON.parse(match![1]) as [string, string][];
-  expect(messages.length).toBeGreaterThan(20);
+  expect(messages).toHaveLength(300);
+  expect(new Set(messages.map(([headline, detail]) => `${headline}\u0000${detail}`)).size).toBe(300);
   expect(messages.every(([headline, detail]) => headline.startsWith('Pico') && detail.length > 0)).toBe(true);
   expect(html).toContain('Pico logic simulator confirms');
 });
