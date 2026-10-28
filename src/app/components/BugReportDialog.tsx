@@ -102,7 +102,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
       });
       const result: {ok?: boolean; error?: string; screenshotAttached?: boolean; screenshotsAttached?: number} = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
-      if (screenshots.length && result.screenshotsAttached !== screenshots.length) throw new Error('Report sent, but some screenshots may not have been attached. Please contact the Pico team.');
+      if (screenshots.length && result.screenshotsAttached !== screenshots.length) throw new Error('Report sent, but some screenshots may not have been attached. Please try again.');
       onResult('success', screenshots.length ? `Report and ${screenshots.length} screenshot${screenshots.length === 1 ? '' : 's'} sent successfully!` : 'Thanks for helping improve Pico!');
     } catch (error) {
       onResult('error', error instanceof Error ? error.message : 'Could not send report. Please try again.');
@@ -117,7 +117,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
         <span className="bug-report-mark" aria-hidden="true"><Bug size={19} /></span>
         <div>
           <h2 id="bug-report-title">Report an issue</h2>
-          <p id="bug-report-intro">Tell us what went wrong in Pico.</p>
+          <p id="bug-report-intro">Describe what went wrong in Pico.</p>
         </div>
         <button type="button" className="bug-report-close" aria-label="Close report form" onClick={onClose}><X size={18} /></button>
       </header>
