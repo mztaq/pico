@@ -64,6 +64,8 @@ it('shows three matching concept developer cards and prominent co-founders',asyn
 it('changes the theme from home and saves it for workspaces',async()=>{
   const toggle=container.querySelector<HTMLButtonElement>('[aria-label="Change theme"]')!;
   expect(toggle).not.toBeNull();
+  expect(toggle.closest('.home-theme-anchor')?.parentElement?.classList.contains('home-nav')).toBe(true);
+  expect(container.querySelector('.home-updates .home-theme-anchor')).toBeNull();
   expect(toggle.getAttribute('aria-expanded')).toBe('false');
   await click(toggle);
   expect(toggle.getAttribute('aria-expanded')).toBe('true');
