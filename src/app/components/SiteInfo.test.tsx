@@ -36,7 +36,7 @@ it('shows the Pico Team page with the two founders first and Hamza as Concept De
   await navigate('#team');
   expect(document.title).toBe('Pico | Pico Team');
   const cards = [...host.querySelectorAll('.author-card')];
-  expect(cards.map(card => card.querySelector('h2')?.textContent)).toEqual([
+  expect(cards.map(card => card.querySelector('h3')?.textContent)).toEqual([
     'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza',
   ]);
   expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
@@ -50,12 +50,13 @@ it('shows the Pico Team page with the two founders first and Hamza as Concept De
     ['Concept Developer'],
   ]);
   expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false]);
-  expect(cards.map(card => card.querySelector('.author-founder-label')?.textContent ?? null)).toEqual(['Co-founder', 'Co-founder', 'Concept developer']);
+  expect([...host.querySelectorAll('.team-group-title')].map(heading => heading.textContent)).toEqual(['Co-founders', 'Concept Developer']);
+  expect(host.querySelectorAll('.author-founder-label')).toHaveLength(0);
   expect(host.querySelectorAll('.author-index')).toHaveLength(0);
   expect(cards.every(card => card.querySelector('.author-roles')?.compareDocumentPosition(card.querySelector('.author-description')!) === Node.DOCUMENT_POSITION_PRECEDING)).toBe(true);
   expect(host.textContent).not.toMatch(/11BR|11BB/);
   expect(host.querySelectorAll('.author-icon')).toHaveLength(0);
-  expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Authors');
+  expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Pico Team');
   expect(document.activeElement).toBe(host.querySelector('h1'));
   expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
   expect(host.querySelectorAll('.site-info-links a')).toHaveLength(4);
