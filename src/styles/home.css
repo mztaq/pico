@@ -33,9 +33,8 @@ body:has(.pico-home)::after {
   opacity: .85;
 }
 /* High-contrast themes keep a much lighter version of the background animation. */
-.pico-home[data-high-contrast='true'] { background: var(--bg); }
-body:has(.pico-home[data-high-contrast='true'])::before { opacity: .22; }
-body:has(.pico-home[data-high-contrast='true'])::after { opacity: .14; }
+body:has(.pico-home[data-high-contrast='true'])::before { opacity: .5; }
+body:has(.pico-home[data-high-contrast='true'])::after { opacity: .36; }
 /* One continuous clockwise path with a matching start and end, so there is no reversal or jump. */
 @keyframes pico-home-ambient-orbit {
   0%, 100% { transform: translate3d(-7%, 0, 0) scale(1.06); }
