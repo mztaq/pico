@@ -216,6 +216,8 @@
   font-weight: 760;
   letter-spacing: -.045em;
 }
+/* Keep the smaller concept headings compact after the shared heading styles. */
+.site-info-page .author-card:not(.author-card--founder) h3 { margin-bottom: 10px; }
 .site-info-page .author-description {
   max-width: 48ch;
   margin: 0;
@@ -274,6 +276,13 @@
   }
   .site-info-page .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-info-page .author-grid > .author-card { grid-column: span 1; }
+}
+/* Match the existing stacked navigation breakpoint on narrow screens. */
+@media (max-width: 960px) {
+  .site-info-page[data-page='team'] .site-info-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
 }
 @media (max-width: 720px) {
   .site-info-page .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
