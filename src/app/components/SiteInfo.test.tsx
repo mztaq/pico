@@ -44,14 +44,14 @@ it('shows the Authors page with the two leads first and Hamza as Concept Develop
     'Mustaqim and I build Pico together. We work on features side by side, review the changes, and merge pull requests when everything is ready.',
     'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
   ]);
-  expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
-    ['Head of Deployment', 'Media Manager'],
-    ['Head of Development', 'Media Manager'],
-    ['Concept Developer'],
+  expect(cards.map(card => card.querySelector('.author-roles')?.textContent)).toEqual([
+    'Head of Deployment · Media Manager',
+    'Head of Development · Media Manager',
+    'Concept Developer',
   ]);
   expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false]);
   expect(cards.map(card => card.querySelector('.author-founder-label')?.textContent ?? null)).toEqual(['Co-founder', 'Co-founder', 'Concept developer']);
-  expect(cards.map(card => card.querySelector('.author-index')?.textContent)).toEqual(['01', '02', '03']);
+  expect(host.querySelectorAll('.author-index')).toHaveLength(0);
   expect(cards.every(card => card.querySelector('.author-roles')?.compareDocumentPosition(card.querySelector('.author-description')!) === Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
   expect(host.textContent).not.toMatch(/11BR|11BB/);
   expect(host.querySelectorAll('.author-icon')).toHaveLength(0);
