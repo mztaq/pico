@@ -30,25 +30,25 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it('shows the Pico Team page with the two founders first and Hamza as Concept Developer', async () => {
+it('shows both co-founders and concept developers with their roles', async () => {
   await act(async () => root.render(<App />));
   expect(host.querySelector('a[href="#team"]')?.textContent).toBe('Pico Team');
   await navigate('#team');
   expect(document.title).toBe('Pico | Pico Team');
   const cards = [...host.querySelectorAll('.author-card')];
   expect(cards.map(card => card.querySelector('h3')?.textContent)).toEqual([
-    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Coming soon...', 'Coming soon...', 
+    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Mithunan Yogeswaran', 'Coming soon...', 
   ]);
   expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
     'I manage Pico’s deployments and help build new features with Amar’s approval. We also consider suggestions from our concept developers.',
     'Mustaqim and I build Pico side by side, review changes, and merge pull requests. We also consider suggestions from our concept developers.',
     'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
-    'A spot for the next person bringing fresh ideas to Pico.',
+    'I bring creative ideas to Pico and suggest ways to improve its features and user experience. I share Hamza’s goal of helping Pico reach more people worldwide.',
     'Another spot for a future Pico concept developer.',
   ]);
   expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
-    ['Head of Deployment', 'Media Manager'],
-    ['Head of Development', 'Media Manager'],
+    ['Head of Deployment', 'Backend Developer', 'Media Manager'],
+    ['Head of Development', 'Frontend Developer', 'Media Manager'],
     ['Concept Developer'],
     ['Concept Developer'],
     ['Concept Developer'],
