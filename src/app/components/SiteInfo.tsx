@@ -36,13 +36,13 @@ function PicoTeam() {
       name: 'Muhammad Mustaqim',
       description: 'I manage Pico’s deployments and help build new features with Amar’s approval. We also consider suggestions from our concept developers.',
       founder: true,
-      roles: ['Head of Deployment', 'Backend Developer', 'Media Manager'],
+      roles: ['Head of Deployment', 'Backend Dev', 'Media Manager'],
     },
     {
       name: 'Amar Ayache',
       description: 'Mustaqim and I build Pico side by side, review changes, and merge pull requests. We also consider suggestions from our concept developers.',
       founder: true,
-      roles: ['Head of Development', 'Frontend Developer', 'Media Manager'],
+      roles: ['Head of Development', 'Frontend Dev', 'Media Manager'],
     },
     {
       name: 'Mohamed Hamza',
