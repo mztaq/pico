@@ -170,6 +170,19 @@
   background: var(--ds-panel);
   box-shadow: none;
 }
+/* Give the three narrower concept cards more usable text space without changing the founders. */
+.site-info-page .author-card:not(.author-card--founder) {
+  padding: 28px 20px;
+}
+.site-info-page .author-card:not(.author-card--founder) h3 {
+  font-size: 24px;
+  line-height: 1.25;
+  margin-bottom: 14px;
+}
+.site-info-page .author-card:not(.author-card--founder) .author-description {
+  font-size: 14.5px;
+  line-height: 1.65;
+}
 .site-info-page .author-card--founder {
   /* Only the co-founders get the larger, more prominent cards. */
   min-height: 300px;
