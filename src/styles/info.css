@@ -145,13 +145,9 @@
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 14px;
 }
-/* Founders take the full half-width columns; concept cards are narrower, three across. */
+/* Founders span half the row; concept developers span a third each, with consistent gaps. */
 .site-info-page .author-grid > .author-card--founder { grid-column: span 3; }
-.site-info-page .author-grid > .author-card:not(.author-card--founder) {
-  grid-column: span 2;
-  width: calc(100% - 16px);
-  justify-self: center;
-}
+.site-info-page .author-grid > .author-card:not(.author-card--founder) { grid-column: span 2; }
 .site-info-page .team-group-title {
   grid-column: 1 / -1;
   margin: 2px 0 0;
@@ -251,7 +247,6 @@
 @media (max-width: 720px) {
   .site-info-page .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-info-page .author-grid > .author-card { grid-column: span 1; }
-  .site-info-page .author-grid > .author-card:not(.author-card--founder) { width: 100%; }
 }
 @media (max-width: 640px) {
   .site-info-page .author-grid { grid-template-columns: minmax(0, 1fr); }
