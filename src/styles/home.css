@@ -28,7 +28,11 @@
 .pico-home .home-updates { position: absolute; right: max(20px, calc((100% - 1120px) / 2)); top: 0; height: 60px; }
 
 /* Home theme control: the same themes as the editor, in a compact popover. */
-.pico-home .home-theme-anchor { position: relative; }
+.pico-home .home-theme-anchor {
+  position: absolute;
+  top: 14px;
+  left: max(20px, calc((100% - 1120px) / 2));
+}
 .pico-home .home-theme-trigger {
   display: inline-flex;
   align-items: center;
@@ -54,7 +58,7 @@
 .pico-home .home-theme-menu {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  left: 0;
   z-index: 30;
   width: min(340px, calc(100vw - 32px));
   padding: 12px 14px 16px;
@@ -172,6 +176,7 @@ body:has(.pico-cookie-banner) .pico-home .home-inner {
   .pico-home .home-brand { gap: 8px; font-size: 37px; }
   .pico-home .home-brand img { width: 40px; height: 40px; }
   .pico-home .home-updates { right: 12px; height: 62px; }
+  .pico-home .home-theme-anchor { top: 15px; left: 16px; }
   .pico-home .home-theme-trigger span { display: none; }
   .pico-home .home-theme-trigger { width: 34px; padding: 0; }
   .pico-home h1 { font-size: clamp(26px, 6.5vw, 33px); }
