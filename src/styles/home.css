@@ -12,6 +12,16 @@
   color: var(--ds-text);
   font-family: var(--ds-font-ui);
 }
+/* Fine monochrome dithering prevents visible color steps without a dotted pattern. */
+.pico-home::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: url('/ambient-dither.svg') repeat;
+  opacity: .035;
+}
 /* The ambient layers belong to the viewport, outside the scrolling home container. */
 body:has(.pico-home) { background: var(--bg); }
 body:has(.pico-home)::before,
@@ -60,7 +70,8 @@ body:has(.pico-home[data-high-contrast='true'])::after { opacity: .36; }
 @media (forced-colors: active) {
   .pico-home { background: var(--bg); }
   body:has(.pico-home)::before,
-  body:has(.pico-home)::after { display: none; }
+  body:has(.pico-home)::after,
+  .pico-home::before { display: none; }
 }
 /* Reserve the cookie bar's measured height so the home scroll area never sits behind it. */
 body:has(.pico-cookie-banner) .pico-home {
