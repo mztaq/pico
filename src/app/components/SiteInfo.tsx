@@ -52,11 +52,14 @@ function Authors() {
     },
   ];
   return <div className="author-grid">
-    {authors.map(({ name, description, roles, founder }) => <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={name}>
-      <span className="author-founder-label">{founder ? 'Co-founder' : 'Concept developer'}</span>
+    {authors.map(({ name, description, roles, founder }, index) => <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={name}>
+      <div className="author-card-heading">
+        <span className="author-founder-label">{founder ? 'Co-founder' : 'Concept developer'}</span>
+        <span className="author-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+      </div>
       <h2>{name}</h2>
+      <div className="author-roles"><ul aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul></div>
       <p className="author-description">{description}</p>
-      <div className="author-roles"><h3>Roles</h3><ul aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul></div>
     </section>)}
   </div>;
 }
