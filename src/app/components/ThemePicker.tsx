@@ -3,10 +3,10 @@ import { Check, Search } from 'lucide-react';
 import { accentFill, THEMES, type PicoTheme } from '../themes';
 import { SoundSetting } from './SoundToggle';
 
-interface ThemePickerProps { value: string; onChange: (id: string) => void; }
+interface ThemePickerProps { value: string; onChange: (id: string) => void; showSound?: boolean; }
 
 /** A searchable gallery of every editor theme, each shown with its own token colours. */
-export function ThemePicker({ value, onChange }: ThemePickerProps) {
+export function ThemePicker({ value, onChange, showSound = true }: ThemePickerProps) {
   const [query, setQuery] = useState('');
   const groups = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -19,7 +19,7 @@ export function ThemePicker({ value, onChange }: ThemePickerProps) {
   }, [query]);
 
   return <div className="theme-picker">
-    <SoundSetting />
+    {showSound && <SoundSetting />}
     <div className="theme-picker-head">
       <span>Editor theme</span>
       <small>{THEMES.length} themes · syntax colours included</small>
