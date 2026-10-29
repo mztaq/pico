@@ -50,15 +50,15 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   }, [reportNotice]);
   return <main className="pico-home" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
     <div className="home-nav">
-      <div className="home-updates">
-        <div className="home-theme-anchor" ref={themeMenuRef}>
-          <button type="button" className="home-theme-trigger" aria-label="Change theme" aria-expanded={themeOpen} aria-controls="home-theme-menu" onClick={() => setThemeOpen(open => !open)}>
+      <div className="home-theme-anchor" ref={themeMenuRef}>
+        <button type="button" className="home-theme-trigger" aria-label="Change theme" aria-expanded={themeOpen} aria-controls="home-theme-menu" onClick={() => setThemeOpen(open => !open)}>
             <Palette size={16} aria-hidden="true" /><span>Theme</span>
           </button>
           {themeOpen && <div id="home-theme-menu" className="home-theme-menu" aria-label="Choose a theme">
             <ThemePicker value={settings.theme} onChange={changeTheme} showSound={false} />
-          </div>}
-        </div>
+        </div>}
+      </div>
+      <div className="home-updates">
         <SoundButton /><UpdateCenter />
       </div>
     </div>
