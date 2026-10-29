@@ -43,7 +43,7 @@ it('shows both co-founders and concept developers with their roles', async () =>
     'I manage Pico’s deployments and help build new features with Amar’s approval. We also consider suggestions from our concept developers.',
     'Mustaqim and I build Pico side by side, review changes, and merge pull requests. We also consider suggestions from our concept developers.',
     'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
-    'I explore fresh possibilities for Pico and suggest creative ways to improve its features and user experience. My goal is to help it grow into a product used worldwide.',
+    'I work with Hamza to explore new possibilities for Pico and suggest creative improvements to its features and user experience. I want to help Pico grow worldwide.',
     'Another spot for a future Pico concept developer.',
   ]);
   expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
