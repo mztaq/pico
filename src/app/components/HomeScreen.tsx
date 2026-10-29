@@ -1,18 +1,21 @@
 import '../../styles/home.css';
-import { useEffect, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Terminal } from 'lucide-react';
-import { loadSettings } from '../../storage/settings';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Palette, Terminal } from 'lucide-react';
+import { loadSettings, saveSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
-import { cssVariables, getTheme } from '../themes';
+import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
 import { SoundButton } from './SoundToggle';
+import { ThemePicker } from './ThemePicker';
 import { BugReportDialog } from './BugReportDialog';
 import { BugReportNotice } from './BugReportNotice';
 
 export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary') => void }) {
-  const [settings] = useState(loadSettings);
+  const [settings, setSettings] = useState(loadSettings);
+  const [themeOpen, setThemeOpen] = useState(false);
+  const themeMenuRef = useRef<HTMLDivElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportNotice, setReportNotice] = useState<{type: 'success' | 'error'; message: string} | null>(null);
   const theme = getTheme(settings.theme);
@@ -21,13 +24,43 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     document.documentElement.style.colorScheme = theme.appearance;
   }, [theme]);
   useEffect(() => {
+    if (!themeOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!themeMenuRef.current?.contains(event.target as Node)) setThemeOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setThemeOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [themeOpen]);
+  const changeTheme = (id: string) => {
+    const next = { ...settings, theme: normalizeThemeId(id) };
+    setSettings(next);
+    try { saveSettings(next); } catch { /* Keep the selected theme active if storage is unavailable. */ }
+  };
+  useEffect(() => {
     if (!reportNotice) return;
     const timeout = window.setTimeout(() => setReportNotice(null), 6000);
     return () => window.clearTimeout(timeout);
   }, [reportNotice]);
   return <main className="pico-home" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
     <div className="home-nav">
-      <div className="home-updates"><SoundButton /><UpdateCenter /></div>
+      <div className="home-updates">
+        <div className="home-theme-anchor" ref={themeMenuRef}>
+          <button type="button" className="home-theme-trigger" aria-label="Change theme" aria-expanded={themeOpen} aria-controls="home-theme-menu" onClick={() => setThemeOpen(open => !open)}>
+            <Palette size={16} aria-hidden="true" /><span>Theme</span>
+          </button>
+          {themeOpen && <div id="home-theme-menu" className="home-theme-menu" aria-label="Choose a theme">
+            <ThemePicker value={settings.theme} onChange={changeTheme} showSound={false} />
+          </div>}
+        </div>
+        <SoundButton /><UpdateCenter />
+      </div>
     </div>
     <div className="home-inner">
       <div className="home-hero">
