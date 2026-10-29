@@ -46,7 +46,7 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="#terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
-it('shows two matching concept developer cards and prominent co-founders',async()=>{
+it('shows three matching concept developer cards and prominent co-founders',async()=>{
   await act(async()=>{
     window.location.hash='#team';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -54,8 +54,8 @@ it('shows two matching concept developer cards and prominent co-founders',async(
   expect(container.querySelector('.team-group-title')?.textContent).toBe('Co-founders');
   expect(container.querySelector('.team-group-title--concept')?.textContent).toBe('Concept Developers');
   expect([...container.querySelectorAll('.author-card--founder h3')].map(node=>node.textContent)).toEqual(['Muhammad Mustaqim','Amar Ayache']);
-  expect([...container.querySelectorAll('.author-card:not(.author-card--founder) h3')].map(node=>node.textContent)).toEqual(['Mohamed Hamza','Coming soon...']);
-  expect(container.querySelectorAll('.author-card')).toHaveLength(4);
+  expect([...container.querySelectorAll('.author-card:not(.author-card--founder) h3')].map(node=>node.textContent)).toEqual(['Mohamed Hamza','Coming soon...','Coming soon...']);
+  expect(container.querySelectorAll('.author-card')).toHaveLength(5);
   await act(async()=>{
     window.location.hash='';
     window.dispatchEvent(new HashChangeEvent('hashchange'));
