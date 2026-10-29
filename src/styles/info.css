@@ -128,7 +128,7 @@
 }
 .site-info-contact a { color: var(--accent); font-weight: 600; }
 
-/* Authors: simple, borderless profiles with the founders leading. */
+/* Authors: quiet, borderless profiles; subtle depth only for the founders. */
 .site-info-page[data-page='authors'] .site-info-hero { background: var(--ds-sunken); }
 .site-info-page[data-page='authors'] .site-info-mark {
   background: var(--ds-panel);
@@ -157,7 +157,8 @@
 }
 .site-info-page .author-card--founder {
   padding: 32px;
-  background: var(--ds-panel);
+  background: color-mix(in srgb, var(--ds-panel) 94%, var(--accent) 6%);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, .18);
 }
 .site-info-page .author-founder-label {
   display: block;
@@ -168,6 +169,10 @@
   line-height: 1.4;
   letter-spacing: .1em;
   text-transform: uppercase;
+}
+.site-info-page .author-card--founder .author-founder-label {
+  color: color-mix(in srgb, var(--accent) 38%, var(--ds-text));
+  font-weight: 700;
 }
 .site-info-page .author-card h2 {
   margin: 0 0 10px;
@@ -181,8 +186,8 @@
   letter-spacing: -.035em;
 }
 .site-info-page .author-card--founder h2 {
-  font-size: clamp(27px, 2.7vw, 33px);
-  font-weight: 720;
+  font-size: clamp(29px, 2.8vw, 35px);
+  font-weight: 730;
   letter-spacing: -.05em;
 }
 .site-info-page .author-roles {
