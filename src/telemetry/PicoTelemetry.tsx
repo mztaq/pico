@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './cookie-consent.css';
 import '../styles/consent.css';
 import { BarChart3, Cookie, Lock, SlidersHorizontal, X } from 'lucide-react';
@@ -38,6 +38,24 @@ export function PicoTelemetry() {
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const lastActivity = useRef(Date.now());
+  const bannerRef = useRef<HTMLElement>(null);
+  const bannerVisible = isHome && !choice && !editing;
+
+  // A fixed consent bar must reduce the usable home viewport by its real height.
+  useLayoutEffect(() => {
+    if (!bannerVisible || !bannerRef.current) return;
+    const banner = bannerRef.current;
+    const measure = () => document.documentElement.style.setProperty('--pico-cookie-banner-height', `${Math.ceil(banner.getBoundingClientRect().height)}px`);
+    measure();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(banner);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+      document.documentElement.style.removeProperty('--pico-cookie-banner-height');
+    };
+  }, [bannerVisible, error]);
 
   useEffect(() => {
     if (!choice?.analytics) return;
@@ -237,7 +255,7 @@ export function PicoTelemetry() {
       <Cookie size={14} aria-hidden="true" /><span>Cookie Settings</span>
     </button>}
 
-    {isHome && !choice && !editing && <section className="pico-cookie-banner" aria-label="Cookie consent">
+    {isHome && !choice && !editing && <section className="pico-cookie-banner" ref={bannerRef} aria-label="Cookie consent">
       <span className="pico-cookie-banner-icon" aria-hidden="true"><Cookie size={18} /></span>
       <p>
         Optional analytics and preferences use cookies only with your consent. <a href="#cookies">Cookie Policy</a>
