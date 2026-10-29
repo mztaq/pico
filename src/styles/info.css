@@ -130,7 +130,6 @@
 .site-info-contact a { color: var(--accent); font-weight: 600; }
 
 /* Pico Team: matching concept cards and accented co-founder cards, no vignette. */
-.site-info-page[data-page='team'] .site-info-hero { background: var(--ds-sunken); }
 .site-info-page[data-page='team'] .site-info-mark {
   background: var(--ds-panel);
   border-color: var(--ds-line);
