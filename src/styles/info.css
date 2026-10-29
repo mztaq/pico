@@ -186,9 +186,10 @@
   letter-spacing: -.035em;
 }
 .site-info-page .author-card--founder h2 {
-  font-size: clamp(29px, 2.8vw, 35px);
+  font-size: clamp(20px, 2.2vw, 29px);
   font-weight: 730;
   letter-spacing: -.05em;
+  white-space: nowrap;
 }
 .site-info-page .author-roles {
   display: flex;
