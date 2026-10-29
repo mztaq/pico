@@ -34,19 +34,19 @@ function Authors() {
   const authors = [
     {
       name: 'Muhammad Mustaqim',
-      description: 'Implements Pico features and manages deployment and releases.',
+      description: 'I oversee Pico’s deployment and implement new features with Amar’s approval.',
       roles: ['Head of Deployment', 'Media Manager'],
       icon: GitBranch,
     },
     {
       name: 'Amar Ayache',
-      description: 'Built Pico’s foundation and leads its ongoing development.',
+      description: 'I develop features alongside Mustaqim, and together we review and merge pull requests.',
       roles: ['Head of Development', 'Media Manager'],
       icon: Code2,
     },
     {
       name: 'Mohamed Hamza',
-      description: 'Develops ideas and concepts that shape Pico’s direction.',
+      description: 'I propose concepts for Pico to implement and recommend strategies to strengthen the platform’s growth and success worldwide.',
       roles: ['Concept Developer'],
       icon: Lightbulb,
     },
