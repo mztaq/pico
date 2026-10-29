@@ -40,8 +40,8 @@ it('shows the Pico Team page with the two founders first and Hamza as Concept De
     'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Coming soon...', 'Coming soon...', 
   ]);
   expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
-    'I look after Pico’s deployments and help build new features, but I always get Amar’s approval before moving forward with them.',
-    'Mustaqim and I build Pico together. We work on features side by side, review the changes, and merge pull requests when everything is ready.',
+    'I manage Pico’s deployments and help build new features with Amar’s approval. We also consider suggestions from our concept developers.',
+    'Mustaqim and I build Pico side by side, review changes, and merge pull requests. We also consider suggestions from our concept developers.',
     'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
     'A spot for the next person bringing fresh ideas to Pico.',
     'Another spot for a future Pico concept developer.',
