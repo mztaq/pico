@@ -179,7 +179,7 @@
   background: color-mix(in srgb, var(--ds-panel) 95%, var(--accent) 5%);
 }
 .site-info-page .author-card:not(.author-card--founder) h3 {
-  font-size: 24px;
+  font-size: 23px;
   line-height: 1.2;
   margin-bottom: 10px;
 }
@@ -204,14 +204,14 @@
   border: 0;
   box-shadow: none;
   color: var(--ds-text);
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 23px;
+  font-weight: 680;
   line-height: 1.2;
   letter-spacing: -.035em;
 }
 .site-info-page .author-card--founder h3 {
   font-size: clamp(25px, 2.4vw, 32px);
-  font-weight: 700;
+  font-weight: 760;
   letter-spacing: -.045em;
 }
 /* Keep the smaller concept headings compact after the shared heading styles. */
