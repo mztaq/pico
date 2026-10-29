@@ -50,9 +50,9 @@ it('shows the Authors page with the two leads first and Hamza as Concept Develop
     ['Concept Developer'],
   ]);
   expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false]);
-  expect(cards.map(card => card.querySelector('.author-founder-label')?.textContent ?? null)).toEqual(['Co-founder', 'Co-founder', null]);
+  expect(cards.map(card => card.querySelector('.author-founder-label')?.textContent ?? null)).toEqual(['Co-founder', 'Co-founder', 'Concept developer']);
   expect(host.textContent).not.toMatch(/11BR|11BB/);
-  expect(host.querySelectorAll('.author-icon svg')).toHaveLength(3);
+  expect(host.querySelectorAll('.author-icon')).toHaveLength(0);
   expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Authors');
   expect(document.activeElement).toBe(host.querySelector('h1'));
   expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
