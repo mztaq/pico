@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, ArrowUpRight, Code2, Cookie, FileText, GitBranch, Lightbulb, ShieldCheck, Users } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Cookie, FileText, ShieldCheck, Users } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
 import '../styles/site-info.css';
@@ -37,27 +37,23 @@ function Authors() {
       description: 'I look after Pico’s deployments and help build new features, but I always get Amar’s approval before moving forward with them.',
       founder: true,
       roles: ['Head of Deployment', 'Media Manager'],
-      icon: GitBranch,
     },
     {
       name: 'Amar Ayache',
       description: 'Mustaqim and I build Pico together. We work on features side by side, review the changes, and merge pull requests when everything is ready.',
       founder: true,
       roles: ['Head of Development', 'Media Manager'],
-      icon: Code2,
     },
     {
       name: 'Mohamed Hamza',
       description: 'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
       founder: false,
       roles: ['Concept Developer'],
-      icon: Lightbulb,
     },
   ];
   return <div className="author-grid">
-    {authors.map(({ name, description, roles, founder, icon: Icon }) => <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={name}>
-      <span className="author-icon"><Icon size={24} aria-hidden="true" /></span>
-      {founder && <span className="author-founder-label">Co-founder</span>}
+    {authors.map(({ name, description, roles, founder }) => <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={name}>
+      <span className="author-founder-label">{founder ? 'Co-founder' : 'Concept developer'}</span>
       <h2>{name}</h2>
       <p className="author-description">{description}</p>
       <div className="author-roles"><h3>Roles</h3><ul aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul></div>
