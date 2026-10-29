@@ -1,13 +1,53 @@
 /* Home — workspace launcher */
 .pico-home {
   position: relative;
+  z-index: 1;
   height: 100dvh;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  isolation: isolate;
   display: block;
   padding: 0;
   background: var(--bg);
   color: var(--ds-text);
   font-family: var(--ds-font-ui);
+}
+/* Thin vector curves with a restrained highlight that moves along each stroke. */
+.pico-home-curves {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  color: var(--accent);
+  fill: none;
+  stroke: currentColor;
+  opacity: .26;
+}
+.pico-home-curves path { stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.pico-home[data-high-contrast='true'] .pico-home-curves { opacity: .18; }
+.pico-home-curve-flow {
+  stroke-width: 3.8;
+  stroke-dasharray: 150 850;
+  stroke-dashoffset: 0;
+  opacity: .24;
+}
+@keyframes pico-home-curve-trace {
+  to { stroke-dashoffset: -1000; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pico-home { scroll-behavior: smooth; }
+  .pico-home-curves {
+    animation: pico-ambient-curves-orbit 22s linear infinite;
+    will-change: transform;
+  }
+  .pico-home-curve-flow { animation: pico-home-curve-trace 29s linear infinite; }
+  .pico-home-curve-flow--right { animation-duration: 34s; animation-delay: -10s; }
+}
+@media (forced-colors: active) {
+  .pico-home-curves { display: none; }
 }
 /* Reserve the cookie bar's measured height so the home scroll area never sits behind it. */
 body:has(.pico-cookie-banner) .pico-home {
@@ -76,7 +116,7 @@ body:has(.pico-cookie-banner) .pico-home {
 .pico-home .home-theme-menu .theme-list { max-height: min(300px, 55vh); }
 
 
-.home-inner { width: min(1120px, 100%); margin: 0 auto; padding: 78px 20px 40px; }
+.home-inner { position: relative; z-index: 1; width: min(1120px, 100%); margin: 0 auto; padding: 78px 20px 40px; }
 .home-hero { width: 100%; max-width: none; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
 .pico-home h1 { margin: 0; font-size: clamp(29px, 2.8vw, 38px); font-weight: 700; line-height: 1.12; letter-spacing: -.04em; }
 

@@ -28,3 +28,15 @@
   .pico-app .switch.checked { transition: background-color .2s ease; }
 
 }
+
+/* One solid-color vector layer, shared by every workspace and the home screen. */
+@keyframes pico-ambient-curves-orbit {
+  0%, 100% { transform: translate3d(-3%, 0, 0) scale(1.05); }
+  12.5% { transform: translate3d(-2.12%, -1.41%, 0) scale(1.05); }
+  25% { transform: translate3d(0, -2%, 0) scale(1.05); }
+  37.5% { transform: translate3d(2.12%, -1.41%, 0) scale(1.05); }
+  50% { transform: translate3d(3%, 0, 0) scale(1.05); }
+  62.5% { transform: translate3d(2.12%, 1.41%, 0) scale(1.05); }
+  75% { transform: translate3d(0, 2%, 0) scale(1.05); }
+  87.5% { transform: translate3d(-2.12%, 1.41%, 0) scale(1.05); }
+}
