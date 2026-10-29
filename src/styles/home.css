@@ -2,12 +2,50 @@
 .pico-home {
   position: relative;
   height: 100dvh;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  isolation: isolate;
   display: block;
   padding: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(900px 360px at 8% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
+    var(--bg);
   color: var(--ds-text);
   font-family: var(--ds-font-ui);
+}
+/* Ambient homepage gradient: same accent language as Pico Team and Privacy, without dots. */
+.pico-home::before {
+  content: '';
+  position: absolute;
+  top: -150px;
+  left: -15%;
+  z-index: 0;
+  width: 130%;
+  height: min(900px, 130dvh);
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 50% at 22% 40%, color-mix(in srgb, var(--accent) 17%, transparent), transparent 70%),
+    radial-gradient(ellipse 44% 54% at 78% 58%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 74%);
+  opacity: .9;
+  transform: translate3d(-4%, -2%, 0) scale(1.02);
+}
+.pico-home[data-high-contrast='true'] { background: var(--bg); }
+.pico-home[data-high-contrast='true']::before { display: none; }
+@keyframes pico-home-ambient-drift {
+  0% { transform: translate3d(-6%, -3%, 0) scale(1.02); }
+  50% { transform: translate3d(5%, 3%, 0) scale(1.09); }
+  100% { transform: translate3d(-2%, 5%, 0) scale(1.04); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pico-home { scroll-behavior: smooth; }
+  .pico-home::before {
+    animation: pico-home-ambient-drift 19s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+}
+@media (forced-colors: active) {
+  .pico-home { background: var(--bg); }
+  .pico-home::before { display: none; }
 }
 /* Reserve the cookie bar's measured height so the home scroll area never sits behind it. */
 body:has(.pico-cookie-banner) .pico-home {
@@ -76,7 +114,7 @@ body:has(.pico-cookie-banner) .pico-home {
 .pico-home .home-theme-menu .theme-list { max-height: min(300px, 55vh); }
 
 
-.home-inner { width: min(1120px, 100%); margin: 0 auto; padding: 78px 20px 40px; }
+.home-inner { position: relative; z-index: 1; width: min(1120px, 100%); margin: 0 auto; padding: 78px 20px 40px; }
 .home-hero { width: 100%; max-width: none; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
 .pico-home h1 { margin: 0; font-size: clamp(29px, 2.8vw, 38px); font-weight: 700; line-height: 1.12; letter-spacing: -.04em; }
 
