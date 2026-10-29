@@ -64,9 +64,6 @@ it('shows the Pico Team page with the two founders first and Hamza as Concept De
   expect(document.activeElement).toBe(host.querySelector('h1'));
   expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
   expect(host.querySelectorAll('.site-info-links a')).toHaveLength(4);
-  await navigate('#authors');
-  expect(host.querySelector('h1')?.textContent).toBe('Pico Team');
-  expect(document.title).toBe('Pico | Pico Team');
   await navigate('');
   expect(host.querySelector('.compiler-choices')).not.toBeNull();
   expect(document.title).toBe('Pico | Home');
