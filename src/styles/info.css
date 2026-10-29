@@ -155,10 +155,11 @@
   padding: 0;
   border: 0;
   color: var(--ds-text);
-  font-size: 16px;
-  font-weight: 650;
+  font-family: 'Space Grotesk', var(--ds-font-ui);
+  font-size: 18px;
+  font-weight: 700;
   line-height: 1.4;
-  letter-spacing: -.015em;
+  letter-spacing: -.025em;
 }
 .site-info-page .team-group-title--concept { margin-top: 12px; }
 .site-info-page .author-card {
@@ -179,7 +180,7 @@
   background: color-mix(in srgb, var(--ds-panel) 95%, var(--accent) 5%);
 }
 .site-info-page .author-card:not(.author-card--founder) h3 {
-  font-size: 23px;
+  font-size: 24px;
   line-height: 1.2;
   margin-bottom: 10px;
 }
@@ -204,14 +205,15 @@
   border: 0;
   box-shadow: none;
   color: var(--ds-text);
-  font-size: 23px;
-  font-weight: 680;
+  font-family: 'Space Grotesk', var(--ds-font-ui);
+  font-size: 24px;
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: -.035em;
 }
 .site-info-page .author-card--founder h3 {
   font-size: clamp(25px, 2.4vw, 32px);
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: -.045em;
 }
 /* Keep the smaller concept headings compact after the shared heading styles. */
