@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" fill="none">
+  <!-- Broad, independent vector ribbons leave the page content undisturbed. -->
+  <g stroke="#fff" stroke-linecap="round">
+    <path d="M -230 125 C 95 126 326 330 217 544 C 100 765 123 912 522 1128" stroke-width="2.8" opacity=".62"/>
+    <path d="M -265 179 C 65 172 278 355 174 577 C 76 802 164 960 559 1151" stroke-width="1.7" opacity=".43"/>
+    <path d="M -286 235 C 47 221 232 387 133 617 C 45 835 207 998 590 1180" stroke-width="1.1" opacity=".30"/>
+    <path d="M 1120 -202 C 1456 -43 1300 235 1573 448 C 1820 641 1811 876 1564 1178" stroke-width="2.8" opacity=".67"/>
+    <path d="M 1185 -238 C 1540 -24 1363 262 1647 485 C 1878 679 1872 937 1645 1193" stroke-width="1.8" opacity=".47"/>
+    <path d="M 1255 -265 C 1626 16 1432 308 1723 521 C 1925 710 1933 972 1720 1230" stroke-width="1.1" opacity=".32"/>
+  </g>
+</svg>
