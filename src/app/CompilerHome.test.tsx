@@ -41,10 +41,44 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
   expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Binary Lab']);
   expect(container.querySelector('footer')).toBeNull();
-  expect(container.querySelector('nav[aria-label="Pico information"] a[href="#authors"]')).toBeNull();
+  expect(container.querySelector('nav[aria-label="Pico information"] a[href="#team"]')?.textContent).toBe('Pico Team');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="#privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="#terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
+});
+it('shows three matching concept developer cards and prominent co-founders',async()=>{
+  await act(async()=>{
+    window.location.hash='#team';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  });
+  expect(container.querySelector('.team-group-title')?.textContent).toBe('Co-founders');
+  expect(container.querySelector('.team-group-title--concept')?.textContent).toBe('Concept Developers');
+  expect([...container.querySelectorAll('.author-card--founder h3')].map(node=>node.textContent)).toEqual(['Muhammad Mustaqim','Amar Ayache']);
+  expect([...container.querySelectorAll('.author-card:not(.author-card--founder) h3')].map(node=>node.textContent)).toEqual(['Mohamed Hamza','Coming soon...','Coming soon...']);
+  expect(container.querySelectorAll('.author-card')).toHaveLength(5);
+  await act(async()=>{
+    window.location.hash='';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  });
+});
+it('changes the theme from home and saves it for workspaces',async()=>{
+  const toggle=container.querySelector<HTMLButtonElement>('[aria-label="Change theme"]')!;
+  expect(toggle).not.toBeNull();
+  expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  await click(toggle);
+  expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  const nord=[...container.querySelectorAll<HTMLButtonElement>('.home-theme-menu [role="option"]')].find(option=>option.textContent?.includes('Nord'))!;
+  expect(nord).not.toBeNull();
+  await click(nord);
+  expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('nord');
+  expect(JSON.parse(localStorage.getItem('pico.settings.v6') ?? '{}').theme).toBe('nord');
+  expect(container.querySelector('.home-theme-menu [aria-selected="true"]')?.textContent).toContain('Nord');
+  await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  expect(container.querySelector('.home-theme-menu')).toBeNull();
+  const pseudocode=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Pseudocode Compiler')!;
+  await click(pseudocode);
+  expect(container.querySelector('.pico-app')?.getAttribute('data-pico-theme')).toBe('nord');
 });
 it('opens Binary Lab from its home section and updates every number view',async()=>{
   const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Binary Lab');

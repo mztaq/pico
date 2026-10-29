@@ -27,6 +27,48 @@
 .pico-home .home-brand img { width: 52px; height: 52px; }
 .pico-home .home-updates { position: absolute; right: max(20px, calc((100% - 1120px) / 2)); top: 0; height: 60px; }
 
+/* Home theme control: the same themes as the editor, in a compact popover. */
+.pico-home .home-theme-anchor { position: relative; }
+.pico-home .home-theme-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-md);
+  background: transparent;
+  color: var(--ds-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pico-home .home-theme-trigger:hover,
+.pico-home .home-theme-trigger[aria-expanded='true'] {
+  border-color: var(--ds-line-strong);
+  background: var(--ds-hover);
+  color: var(--ds-text);
+}
+.pico-home .home-theme-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pico-home .home-theme-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: min(340px, calc(100vw - 32px));
+  padding: 12px 14px 16px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel-raised);
+  box-shadow: var(--ds-shadow-float);
+  color: var(--ds-text);
+}
+.pico-home .home-theme-menu .theme-picker { margin: 0; padding: 0; border: 0; }
+.pico-home .home-theme-menu .theme-picker-head span { font-size: var(--ds-text-sm); }
+.pico-home .home-theme-menu .theme-list { max-height: min(300px, 55vh); }
+
+
 .home-inner { width: min(1120px, 100%); margin: 0 auto; padding: 78px 20px 40px; }
 .home-hero { width: 100%; max-width: none; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; }
 .pico-home h1 { margin: 0; font-size: clamp(29px, 2.8vw, 38px); font-weight: 700; line-height: 1.12; letter-spacing: -.04em; }
@@ -130,6 +172,8 @@ body:has(.pico-cookie-banner) .pico-home .home-inner {
   .pico-home .home-brand { gap: 8px; font-size: 37px; }
   .pico-home .home-brand img { width: 40px; height: 40px; }
   .pico-home .home-updates { right: 12px; height: 62px; }
+  .pico-home .home-theme-trigger span { display: none; }
+  .pico-home .home-theme-trigger { width: 34px; padding: 0; }
   .pico-home h1 { font-size: clamp(26px, 6.5vw, 33px); }
   .home-inner { padding: 80px 16px 32px; }
   .home-hero { gap: 20px; margin-bottom: 24px; }

@@ -30,19 +30,43 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it('removes the Authors link and ignores old author deep links', async () => {
+it('shows the Pico Team page with the two founders first and Hamza as Concept Developer', async () => {
   await act(async () => root.render(<App />));
-  expect(host.querySelector('a[href="#authors"]')).toBeNull();
-  await navigate('#authors');
-  expect(host.querySelector('.author-card')).toBeNull();
-  expect(host.querySelector('.site-info-page')).toBeNull();
+  expect(host.querySelector('a[href="#team"]')?.textContent).toBe('Pico Team');
+  await navigate('#team');
+  expect(document.title).toBe('Pico | Pico Team');
+  const cards = [...host.querySelectorAll('.author-card')];
+  expect(cards.map(card => card.querySelector('h3')?.textContent)).toEqual([
+    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Coming soon...', 'Coming soon...', 
+  ]);
+  expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
+    'I look after Pico’s deployments and help build new features, but I always get Amar’s approval before moving forward with them.',
+    'Mustaqim and I build Pico together. We work on features side by side, review the changes, and merge pull requests when everything is ready.',
+    'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
+    'A spot for the next person bringing fresh ideas to Pico.',
+    'Another spot for a future Pico concept developer.',
+  ]);
+  expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
+    ['Head of Deployment', 'Media Manager'],
+    ['Head of Development', 'Media Manager'],
+    ['Concept Developer'],
+    ['Concept Developer'],
+    ['Concept Developer'],
+  ]);
+  expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false, false, false]);
+  expect([...host.querySelectorAll('.team-group-title')].map(heading => heading.textContent)).toEqual(['Co-founders', 'Concept Developers']);
+  expect(host.querySelectorAll('.author-founder-label')).toHaveLength(0);
+  expect(host.querySelectorAll('.author-index')).toHaveLength(0);
+  expect(cards.every(card => card.querySelector('.author-roles')?.compareDocumentPosition(card.querySelector('.author-description')!) === Node.DOCUMENT_POSITION_PRECEDING)).toBe(true);
+  expect(host.textContent).not.toMatch(/11BR|11BB/);
+  expect(host.querySelectorAll('.author-icon')).toHaveLength(0);
+  expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Pico Team');
+  expect(document.activeElement).toBe(host.querySelector('h1'));
+  expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
+  expect(host.querySelectorAll('.site-info-links a')).toHaveLength(4);
+  await navigate('');
   expect(host.querySelector('.compiler-choices')).not.toBeNull();
   expect(document.title).toBe('Pico | Home');
-  await navigate('#privacy');
-  expect(host.querySelector('h1')?.textContent).toBe('Privacy Policy');
-  expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
-  expect(host.querySelectorAll('.site-info-links a')).toHaveLength(3);
-  expect(host.querySelector('a[href="#authors"]')).toBeNull();
 });
 
 it.each([
