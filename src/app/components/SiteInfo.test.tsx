@@ -30,25 +30,25 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it('shows the Pico Team page with the two founders first and Hamza as Concept Developer', async () => {
+it('shows both co-founders and concept developers with their roles', async () => {
   await act(async () => root.render(<App />));
   expect(host.querySelector('a[href="#team"]')?.textContent).toBe('Pico Team');
   await navigate('#team');
   expect(document.title).toBe('Pico | Pico Team');
   const cards = [...host.querySelectorAll('.author-card')];
   expect(cards.map(card => card.querySelector('h3')?.textContent)).toEqual([
-    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Coming soon...', 'Coming soon...', 
+    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Mithunan Yogeswaran', 'Coming soon...', 
   ]);
   expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
-    'I look after Pico’s deployments and help build new features, but I always get Amar’s approval before moving forward with them.',
-    'Mustaqim and I build Pico together. We work on features side by side, review the changes, and merge pull requests when everything is ready.',
+    'I manage Pico’s deployments and help build new features with Amar’s approval. We also consider suggestions from our concept developers.',
+    'Mustaqim and I build Pico side by side, review changes, and merge pull requests. We also consider suggestions from our concept developers.',
     'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
-    'A spot for the next person bringing fresh ideas to Pico.',
+    'I work with Hamza to explore new possibilities for Pico and suggest creative improvements to its features and user experience. I want to help Pico grow worldwide.',
     'Another spot for a future Pico concept developer.',
   ]);
   expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
-    ['Head of Deployment', 'Media Manager'],
-    ['Head of Development', 'Media Manager'],
+    ['Head of Deployment', 'Backend Dev', 'Media Manager'],
+    ['Head of Development', 'Frontend Dev', 'Media Manager'],
     ['Concept Developer'],
     ['Concept Developer'],
     ['Concept Developer'],
