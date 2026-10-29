@@ -49,8 +49,8 @@ it('shows both co-founders and concept developers with their roles', async () =>
   expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
     ['Head of Deployment', 'Backend Dev', 'Media Manager'],
     ['Head of Development', 'Frontend Dev', 'Media Manager'],
-    ['Concept Developer'],
-    ['Concept Developer'],
+    ['Concept Developer', 'Outreach'],
+    ['Concept Developer', 'Feature Ideation'],
     ['Concept Developer'],
   ]);
   expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false, false, false]);
