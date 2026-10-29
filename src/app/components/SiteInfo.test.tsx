@@ -40,9 +40,9 @@ it('shows the Authors page with the two leads first and Hamza as Concept Develop
     'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza',
   ]);
   expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
-    'Implements Pico features and manages deployment and releases.',
-    'Built Pico’s foundation and leads its ongoing development.',
-    'Develops ideas and concepts that shape Pico’s direction.',
+    'I oversee Pico’s deployment and implement new features with Amar’s approval.',
+    'I develop features alongside Mustaqim, and together we review and merge pull requests.',
+    'I propose concepts for Pico to implement and recommend strategies to strengthen the platform’s growth and success worldwide.',
   ]);
   expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
     ['Head of Deployment', 'Media Manager'],
