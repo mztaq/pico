@@ -128,18 +128,19 @@
 }
 .site-info-contact a { color: var(--accent); font-weight: 600; }
 
-/* Authors: flat, gradient-free cards with the two leads side by side. */
+/* Authors: restrained editorial hierarchy, no gradients or glowing outlines. */
 .site-info-page[data-page='authors'] .site-info-hero {
   background: var(--ds-sunken);
 }
 .site-info-page[data-page='authors'] .site-info-mark {
   background: var(--ds-panel);
-  border-color: var(--ds-line-strong);
+  border-color: var(--ds-line);
 }
 .site-info-page .site-info-author-subtitle {
-  margin: 14px 0 0;
+  margin: 12px 0 0;
   color: var(--ds-muted);
   font-size: var(--ds-text-sm);
+  font-weight: 400;
 }
 .site-info-page .author-grid {
   display: grid;
@@ -150,99 +151,101 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 24px;
-  border: 1px solid var(--ds-line-strong);
+  padding: 26px 28px;
+  border: 1px solid var(--ds-line);
   border-radius: var(--ds-radius-lg);
   background: var(--ds-panel);
+  box-shadow: none;
+}
+.site-info-page .author-card--founder {
+  padding: 32px 30px 28px;
+  border-color: var(--ds-line-strong);
+  border-top: 2px solid color-mix(in srgb, var(--ds-text) 45%, var(--ds-line));
 }
 .site-info-page .author-card:last-child { grid-column: 1 / -1; }
-/* Founders are the focal point: larger typography, solid borders, no gradients. */
-.site-info-page .author-card--founder {
-  min-height: 320px;
-  padding: 30px;
-  border: 2px solid var(--ds-text);
-  background: var(--ds-panel);
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--text) 10%, transparent);
-}
-.site-info-page .author-card--founder .author-icon {
-  width: 58px;
-  height: 58px;
-  margin-bottom: 18px;
-  background: var(--ds-sunken);
-  border: 1px solid var(--ds-line-strong);
-  color: var(--ds-text);
-}
 .site-info-page .author-founder-label {
-  display: inline-flex;
-  align-self: flex-start;
-  margin: 0 0 10px;
-  padding: 3px 10px;
-  border: 1px solid var(--ds-line-strong);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-sunken);
-  color: var(--ds-text);
-  font-size: var(--ds-text-xs);
-  font-weight: 700;
-  letter-spacing: .045em;
+  display: block;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ds-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  line-height: 1.4;
   text-transform: uppercase;
 }
-.site-info-page .author-card--founder h2 {
-  font-size: clamp(24px, 2.5vw, 30px);
-  font-weight: 750;
-  letter-spacing: -.035em;
+.site-info-page .author-card h2 {
+  margin: 0 0 12px;
+  color: var(--ds-text);
+  font-size: 21px;
+  font-weight: 650;
   line-height: 1.2;
+  letter-spacing: -.025em;
+}
+.site-info-page .author-card--founder h2 {
+  font-size: clamp(26px, 2.8vw, 32px);
+  font-weight: 700;
+  letter-spacing: -.04em;
+}
+.site-info-page .author-description,
+.site-info-page .author-card--founder .author-description {
+  margin: 0 0 26px;
+  max-width: 49ch;
+  color: var(--ds-muted);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.75;
 }
 .site-info-page .author-card--founder .author-description {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--ds-text);
-}
-
-.site-info-page .author-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 18px;
-  background: var(--ds-panel-raised);
-  border-color: var(--ds-line-strong);
-}
-.site-info-page .author-card h2 {
-  margin: 0 0 8px;
-  font-size: var(--ds-text-lg);
-  font-weight: 650;
-}
-.site-info-page .author-description {
-  margin: 0 0 20px;
-  color: var(--ds-muted);
-  font-size: var(--ds-text-sm);
-  line-height: 1.6;
+  color: color-mix(in srgb, var(--ds-text) 76%, var(--ds-muted));
+  font-size: 14.5px;
 }
 .site-info-page .author-roles {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 18px;
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: 16px;
   border-top: 1px solid var(--ds-line);
 }
 .site-info-page .author-roles h3 {
-  margin: 0 0 10px;
+  margin: 0;
   color: var(--ds-muted);
-  font-size: var(--ds-text-xs);
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 .site-info-page .author-roles ul {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .site-info-page .author-roles li {
-  padding: 4px 10px;
-  border: 1px solid var(--ds-line-strong);
-  border-radius: var(--ds-radius-pill);
-  background: var(--ds-panel-raised);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
   color: var(--ds-text);
-  font-size: var(--ds-text-xs);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
 }
+.site-info-page .author-roles li + li::before {
+  content: '·';
+  display: inline-block;
+  margin: 0 9px;
+  color: var(--ds-muted);
+}
+.site-info-page .author-card:last-child .author-description { max-width: 74ch; }
 
 /* High contrast */
 .site-info-page[data-high-contrast='true'] .site-info-hero { background: var(--bg); }
@@ -258,7 +261,7 @@
 @media (max-width: 640px) {
   .site-info-page .author-grid { grid-template-columns: minmax(0, 1fr); }
   .site-info-page .author-card:last-child { grid-column: auto; }
-  .site-info-page .author-card--founder { min-height: 0; padding: 24px; }
+  .site-info-page .author-card--founder { padding: 26px 24px; }
   .site-info-header-inner { padding: 0 16px; height: 54px; }
   .site-info-page .site-info-back { padding: 0 10px; }
   .site-info-hero-inner { min-height: 136px; padding: 24px 16px 20px; }
