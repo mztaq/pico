@@ -197,7 +197,13 @@
   gap: 7px;
   margin: 22px 0 0;
   padding: 0;
+  border: 0;
   list-style: none;
+}
+/* Anchor both founders' role badges to the same baseline, regardless of bio length. */
+.site-info-page .author-card--founder .author-roles {
+  margin-top: auto;
+  padding-top: 24px;
 }
 .site-info-page .author-roles li {
   display: inline-flex;
