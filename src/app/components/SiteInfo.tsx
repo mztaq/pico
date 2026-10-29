@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, ArrowUpRight, Cookie, FileText, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Code2, Cookie, FileText, GitBranch, Lightbulb, ShieldCheck, Users } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
 import '../styles/site-info.css';
 import '../../styles/info.css';
 
 const pages = [
+  { id: 'authors', title: 'Authors', icon: Users },
   { id: 'privacy', title: 'Privacy Policy', icon: ShieldCheck },
   { id: 'cookies', title: 'Cookie Policy', icon: Cookie },
   { id: 'terms', title: 'Terms and Conditions', icon: FileText },
@@ -27,6 +28,37 @@ export function SiteInfoLinks({ current }: { current?: InformationPage }) {
 const slug = (title: string) => 'section-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return <section className="site-info-section" id={slug(title)}><h2>{title}</h2><div className="site-info-section-body">{children}</div></section>;
+}
+
+function Authors() {
+  const authors = [
+    {
+      name: 'Muhammad Mustaqim',
+      description: 'Implements Pico features and manages deployment and releases.',
+      roles: ['Head of Deployment', 'Media Manager'],
+      icon: GitBranch,
+    },
+    {
+      name: 'Amar Ayache',
+      description: 'Built Pico’s foundation and leads its ongoing development.',
+      roles: ['Head of Development', 'Media Manager'],
+      icon: Code2,
+    },
+    {
+      name: 'Mohamed Hamza',
+      description: 'Develops ideas and concepts that shape Pico’s direction.',
+      roles: ['Concept Developer'],
+      icon: Lightbulb,
+    },
+  ];
+  return <div className="author-grid">
+    {authors.map(({ name, description, roles, icon: Icon }) => <section className="author-card" key={name}>
+      <span className="author-icon"><Icon size={24} aria-hidden="true" /></span>
+      <h2>{name}</h2>
+      <p className="author-description">{description}</p>
+      <div className="author-roles"><h3>Roles</h3><ul aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul></div>
+    </section>)}
+  </div>;
 }
 
 function Privacy() {
@@ -118,7 +150,7 @@ export function SiteInfo({ page }: { page: InformationPage }) {
     <div className="site-info-hero">
       <div className="site-info-hero-inner">
         <div className="site-info-title"><span className="site-info-mark"><Icon size={24} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
-        <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>
+        {page === 'authors' ? <p className="site-info-author-subtitle">The people behind Pico.</p> : <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
       </div>
     </div>
     <div className="site-info-shell">
@@ -130,8 +162,8 @@ export function SiteInfo({ page }: { page: InformationPage }) {
         </nav>}
       </aside>
       <main>
-        {page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
-        <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>
+        {page === 'authors' ? <Authors /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
+        {page !== 'authors' && <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>}
       </main>
     </div>
   </div>;
