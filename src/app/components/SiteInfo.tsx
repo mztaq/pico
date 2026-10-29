@@ -6,7 +6,7 @@ import '../styles/site-info.css';
 import '../../styles/info.css';
 
 const pages = [
-  { id: 'authors', title: 'Authors', icon: Users },
+  { id: 'team', title: 'Pico Team', icon: Users },
   { id: 'privacy', title: 'Privacy Policy', icon: ShieldCheck },
   { id: 'cookies', title: 'Cookie Policy', icon: Cookie },
   { id: 'terms', title: 'Terms and Conditions', icon: FileText },
@@ -14,6 +14,7 @@ const pages = [
 export type InformationPage = typeof pages[number]['id'];
 
 export function informationPageFromHash(hash: string): InformationPage | null {
+  if (hash === '#authors') return 'team'; // Keep old links working.
   return pages.find(page => hash === `#${page.id}`)?.id ?? null;
 }
 
@@ -30,7 +31,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return <section className="site-info-section" id={slug(title)}><h2>{title}</h2><div className="site-info-section-body">{children}</div></section>;
 }
 
-function Authors() {
+function PicoTeam() {
   const authors = [
     {
       name: 'Muhammad Mustaqim',
@@ -55,8 +56,8 @@ function Authors() {
     {authors.map(({ name, description, roles, founder }) => <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={name}>
       <span className="author-founder-label">{founder ? 'Co-founder' : 'Concept developer'}</span>
       <h2>{name}</h2>
-      <p className="author-roles" aria-label={`Roles for ${name}`}>{roles.join(' · ')}</p>
       <p className="author-description">{description}</p>
+      <ul className="author-roles" aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul>
     </section>)}
   </div>;
 }
@@ -150,7 +151,7 @@ export function SiteInfo({ page }: { page: InformationPage }) {
     <div className="site-info-hero">
       <div className="site-info-hero-inner">
         <div className="site-info-title"><span className="site-info-mark"><Icon size={24} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
-        {page === 'authors' ? <p className="site-info-author-subtitle">The people behind Pico.</p> : <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
+        {page === 'team' ? <p className="site-info-author-subtitle">The people behind Pico.</p> : <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
       </div>
     </div>
     <div className="site-info-shell">
@@ -162,8 +163,8 @@ export function SiteInfo({ page }: { page: InformationPage }) {
         </nav>}
       </aside>
       <main>
-        {page === 'authors' ? <Authors /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
-        {page !== 'authors' && <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>}
+        {page === 'team' ? <PicoTeam /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
+        {page !== 'team' && <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>}
       </main>
     </div>
   </div>;
