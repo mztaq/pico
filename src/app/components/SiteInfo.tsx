@@ -14,7 +14,6 @@ const pages = [
 export type InformationPage = typeof pages[number]['id'];
 
 export function informationPageFromHash(hash: string): InformationPage | null {
-  if (hash === '#authors') return 'team'; // Keep old links working.
   return pages.find(page => hash === `#${page.id}`)?.id ?? null;
 }
 
