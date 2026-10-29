@@ -40,29 +40,3 @@
   75% { transform: translate3d(0, 2%, 0) scale(1.05); }
   87.5% { transform: translate3d(-2.12%, 1.41%, 0) scale(1.05); }
 }
-
-:is(.pico-app, .logic-app, .cpu-app, .binary-app)::before {
-  content: '';
-  position: fixed;
-  inset: -6vh -6vw;
-  z-index: 1;
-  pointer-events: none;
-  background-color: var(--accent);
-  -webkit-mask: url('/ambient-curves.svg') center / cover no-repeat;
-  mask: url('/ambient-curves.svg') center / cover no-repeat;
-  opacity: .13;
-}
-
-:is(.pico-app, .logic-app, .cpu-app, .binary-app)[data-pico-theme^='high-contrast-']::before {
-  opacity: .09;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  :is(.pico-app, .logic-app, .cpu-app, .binary-app)::before {
-    animation: pico-ambient-curves-orbit 32s linear infinite;
-    will-change: transform;
-  }
-}
-@media (forced-colors: active) {
-  :is(.pico-app, .logic-app, .cpu-app, .binary-app)::before { display: none; }
-}
