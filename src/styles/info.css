@@ -171,8 +171,9 @@
   box-shadow: none;
 }
 .site-info-page .author-card--founder {
-  /* Let content set the height; founder emphasis comes from width and color. */
-  padding: 28px 30px;
+  /* Only the co-founders get the larger, more prominent cards. */
+  min-height: 300px;
+  padding: 36px 34px;
   border-color: color-mix(in srgb, var(--accent) 36%, var(--ds-line-strong));
   border-top: 3px solid var(--accent);
   background: color-mix(in srgb, var(--ds-panel-raised) 92%, var(--accent) 8%);
