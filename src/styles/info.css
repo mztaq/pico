@@ -128,9 +128,9 @@
 }
 .site-info-contact a { color: var(--accent); font-weight: 600; }
 
-/* Authors: quiet, borderless profiles; subtle depth only for the founders. */
-.site-info-page[data-page='authors'] .site-info-hero { background: var(--ds-sunken); }
-.site-info-page[data-page='authors'] .site-info-mark {
+/* Pico Team: quiet, borderless profiles; subtle depth only for the founders. */
+.site-info-page[data-page='team'] .site-info-hero { background: var(--ds-sunken); }
+.site-info-page[data-page='team'] .site-info-mark {
   background: var(--ds-panel);
   border-color: var(--ds-line);
 }
@@ -191,17 +191,25 @@
   letter-spacing: -.05em;
 }
 .site-info-page .author-roles {
-  display: block;
-  margin: 0 0 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 22px 0 0;
   padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
+  list-style: none;
+}
+.site-info-page .author-roles li {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid var(--ds-line);
+  border-radius: 6px;
+  background: var(--ds-sunken);
   color: var(--ds-text);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 .site-info-page .author-description {
   max-width: 48ch;
