@@ -156,6 +156,48 @@
   background: var(--ds-panel);
 }
 .site-info-page .author-card:last-child { grid-column: 1 / -1; }
+/* Founders are the focal point: larger typography, solid borders, no gradients. */
+.site-info-page .author-card--founder {
+  min-height: 320px;
+  padding: 30px;
+  border: 2px solid var(--ds-text);
+  background: var(--ds-panel);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--text) 10%, transparent);
+}
+.site-info-page .author-card--founder .author-icon {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 18px;
+  background: var(--ds-sunken);
+  border: 1px solid var(--ds-line-strong);
+  color: var(--ds-text);
+}
+.site-info-page .author-founder-label {
+  display: inline-flex;
+  align-self: flex-start;
+  margin: 0 0 10px;
+  padding: 3px 10px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-sunken);
+  color: var(--ds-text);
+  font-size: var(--ds-text-xs);
+  font-weight: 700;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.site-info-page .author-card--founder h2 {
+  font-size: clamp(24px, 2.5vw, 30px);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+}
+.site-info-page .author-card--founder .author-description {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ds-text);
+}
+
 .site-info-page .author-icon {
   width: 48px;
   height: 48px;
@@ -216,6 +258,7 @@
 @media (max-width: 640px) {
   .site-info-page .author-grid { grid-template-columns: minmax(0, 1fr); }
   .site-info-page .author-card:last-child { grid-column: auto; }
+  .site-info-page .author-card--founder { min-height: 0; padding: 24px; }
   .site-info-header-inner { padding: 0 16px; height: 54px; }
   .site-info-page .site-info-back { padding: 0 10px; }
   .site-info-hero-inner { min-height: 136px; padding: 24px 16px 20px; }
