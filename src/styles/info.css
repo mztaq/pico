@@ -142,11 +142,12 @@
 }
 .site-info-page .author-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 14px;
 }
-/* Both concept developer cards occupy one column each, like the co-founders. */
-.site-info-page .author-grid > .author-card { grid-column: auto; }
+/* Two wide co-founder cards and three equal concept developer cards share one width. */
+.site-info-page .author-grid > .author-card--founder { grid-column: span 3; }
+.site-info-page .author-grid > .author-card:not(.author-card--founder) { grid-column: span 2; }
 .site-info-page .team-group-title {
   grid-column: 1 / -1;
   margin: 2px 0 0;
@@ -170,7 +171,8 @@
   box-shadow: none;
 }
 .site-info-page .author-card--founder {
-  padding: 30px 32px 32px;
+  min-height: 286px;
+  padding: 36px 34px 34px;
   border-color: color-mix(in srgb, var(--accent) 36%, var(--ds-line-strong));
   border-top: 3px solid var(--accent);
   background: color-mix(in srgb, var(--ds-panel-raised) 92%, var(--accent) 8%);
@@ -187,7 +189,7 @@
   letter-spacing: -.035em;
 }
 .site-info-page .author-card--founder h3 {
-  font-size: clamp(24px, 2.3vw, 31px);
+  font-size: clamp(25px, 2.4vw, 32px);
   font-weight: 760;
   letter-spacing: -.045em;
 }
@@ -241,8 +243,13 @@
   .site-info-aside .site-info-links { flex-direction: row; flex-wrap: wrap; }
   .site-info-toc { display: none; }
 }
+@media (max-width: 720px) {
+  .site-info-page .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-info-page .author-grid > .author-card { grid-column: span 1; }
+}
 @media (max-width: 640px) {
   .site-info-page .author-grid { grid-template-columns: minmax(0, 1fr); }
+  .site-info-page .author-grid > .author-card { grid-column: span 1; }
   .site-info-page .author-card--founder { padding: 28px 24px; }
   .site-info-header-inner { padding: 0 16px; height: 54px; }
   .site-info-page .site-info-back { padding: 0 10px; }
