@@ -48,13 +48,13 @@ function PicoTeam() {
       name: 'Mohamed Hamza',
       description: 'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
       founder: false,
-      roles: ['Concept Developer'],
+      roles: ['Concept Developer', 'Product Ideation'],
     },
     {
       name: 'Mithunan Yogeswaran',
       description: 'I work with Hamza to explore new possibilities for Pico and suggest creative improvements to its features and user experience. I want to help Pico grow worldwide.',
       founder: false,
-      roles: ['Concept Developer'],
+      roles: ['Concept Developer', 'Feature Ideation'],
     },
     {
       name: 'Coming soon...',
