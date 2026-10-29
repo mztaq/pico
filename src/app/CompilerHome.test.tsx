@@ -29,6 +29,7 @@ const choose=async(language:string)=>{await click(container.querySelector(`.comp
 async function type(element:HTMLInputElement|HTMLTextAreaElement,value:string){await act(async()=>{Object.getOwnPropertyDescriptor(element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event('input',{bubbles:true}));});}
 beforeEach(async()=>{
   localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.python.visitCount.v1','3');jobs.length=0;
+  window.history.replaceState(null, '', window.location.pathname);
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);
   container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));
 });
@@ -54,7 +55,7 @@ it('shows three matching concept developer cards and prominent co-founders',asyn
   expect(container.querySelector('.team-group-title')?.textContent).toBe('Co-founders');
   expect(container.querySelector('.team-group-title--concept')?.textContent).toBe('Concept Developers');
   expect([...container.querySelectorAll('.author-card--founder h3')].map(node=>node.textContent)).toEqual(['Muhammad Mustaqim','Amar Ayache']);
-  expect([...container.querySelectorAll('.author-card:not(.author-card--founder) h3')].map(node=>node.textContent)).toEqual(['Mohamed Hamza','Coming soon...','Coming soon...']);
+  expect([...container.querySelectorAll('.author-card:not(.author-card--founder) h3')].map(node=>node.textContent)).toEqual(['Mohamed Hamza','Mithunan Yogeswaran','Coming soon...']);
   expect(container.querySelectorAll('.author-card')).toHaveLength(5);
   await act(async()=>{
     window.location.hash='';
