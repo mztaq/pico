@@ -38,18 +38,26 @@ body:has(.pico-home[data-high-contrast='true'])::before { opacity: .55; }
 /* A closed clockwise path retains motion without bouncing or visible jumps. */
 @keyframes pico-home-ambient-orbit {
   0%, 100% { transform: translate3d(-7%, 0, 0) scale(1.06); }
-  12.5% { transform: translate3d(-5%, -3%, 0) scale(1.06); }
-  25% { transform: translate3d(0, -4%, 0) scale(1.06); }
-  37.5% { transform: translate3d(5%, -3%, 0) scale(1.06); }
-  50% { transform: translate3d(7%, 0, 0) scale(1.06); }
-  62.5% { transform: translate3d(5%, 3%, 0) scale(1.06); }
-  75% { transform: translate3d(0, 4%, 0) scale(1.06); }
-  87.5% { transform: translate3d(-5%, 3%, 0) scale(1.06); }
+  6.25% { transform: translate3d(-6.47%, -1.53%, 0) scale(1.06); }
+  12.5% { transform: translate3d(-4.95%, -2.83%, 0) scale(1.06); }
+  18.75% { transform: translate3d(-2.68%, -3.7%, 0) scale(1.06); }
+  25% { transform: translate3d(0%, -4%, 0) scale(1.06); }
+  31.25% { transform: translate3d(2.68%, -3.7%, 0) scale(1.06); }
+  37.5% { transform: translate3d(4.95%, -2.83%, 0) scale(1.06); }
+  43.75% { transform: translate3d(6.47%, -1.53%, 0) scale(1.06); }
+  50% { transform: translate3d(7%, 0%, 0) scale(1.06); }
+  56.25% { transform: translate3d(6.47%, 1.53%, 0) scale(1.06); }
+  62.5% { transform: translate3d(4.95%, 2.83%, 0) scale(1.06); }
+  68.75% { transform: translate3d(2.68%, 3.7%, 0) scale(1.06); }
+  75% { transform: translate3d(0%, 4%, 0) scale(1.06); }
+  81.25% { transform: translate3d(-2.68%, 3.7%, 0) scale(1.06); }
+  87.5% { transform: translate3d(-4.95%, 2.83%, 0) scale(1.06); }
+  93.75% { transform: translate3d(-6.47%, 1.53%, 0) scale(1.06); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .pico-home { scroll-behavior: smooth; }
   body:has(.pico-home)::before {
-    animation: pico-home-ambient-orbit 7s linear infinite;
+    animation: pico-home-ambient-orbit 14s linear infinite;
     will-change: transform;
   }
 }
