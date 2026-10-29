@@ -51,6 +51,12 @@ function PicoTeam() {
       founder: false,
       roles: ['Concept Developer'],
     },
+    {
+      name: 'Coming soon...',
+      description: 'A spot for the next person bringing fresh ideas to Pico.',
+      founder: false,
+      roles: ['Concept Developer'],
+    },
   ];
   const renderCard = ({ name, description, roles, founder }: typeof authors[number]) =>
     <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={name}>
@@ -61,7 +67,7 @@ function PicoTeam() {
   return <div className="author-grid">
     <h2 className="team-group-title">Co-founders</h2>
     {authors.filter(author => author.founder).map(renderCard)}
-    <h2 className="team-group-title team-group-title--concept">Concept Developer</h2>
+    <h2 className="team-group-title team-group-title--concept">Concept Developers</h2>
     {authors.filter(author => !author.founder).map(renderCard)}
   </div>;
 }
