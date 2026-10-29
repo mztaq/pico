@@ -30,19 +30,34 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it('removes the Authors link and ignores old author deep links', async () => {
+it('shows the Authors page with the two leads first and Hamza as Concept Developer', async () => {
   await act(async () => root.render(<App />));
-  expect(host.querySelector('a[href="#authors"]')).toBeNull();
+  expect(host.querySelector('a[href="#authors"]')?.textContent).toBe('Authors');
   await navigate('#authors');
-  expect(host.querySelector('.author-card')).toBeNull();
-  expect(host.querySelector('.site-info-page')).toBeNull();
+  expect(document.title).toBe('Pico | Authors');
+  const cards = [...host.querySelectorAll('.author-card')];
+  expect(cards.map(card => card.querySelector('h2')?.textContent)).toEqual([
+    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza',
+  ]);
+  expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
+    'Implements Pico features and manages deployment and releases.',
+    'Built Pico’s foundation and leads its ongoing development.',
+    'Develops ideas and concepts that shape Pico’s direction.',
+  ]);
+  expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
+    ['Head of Deployment', 'Media Manager'],
+    ['Head of Development', 'Media Manager'],
+    ['Concept Developer'],
+  ]);
+  expect(host.textContent).not.toMatch(/11BR|11BB/);
+  expect(host.querySelectorAll('.author-icon svg')).toHaveLength(3);
+  expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Authors');
+  expect(document.activeElement).toBe(host.querySelector('h1'));
+  expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
+  expect(host.querySelectorAll('.site-info-links a')).toHaveLength(4);
+  await navigate('');
   expect(host.querySelector('.compiler-choices')).not.toBeNull();
   expect(document.title).toBe('Pico | Home');
-  await navigate('#privacy');
-  expect(host.querySelector('h1')?.textContent).toBe('Privacy Policy');
-  expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
-  expect(host.querySelectorAll('.site-info-links a')).toHaveLength(3);
-  expect(host.querySelector('a[href="#authors"]')).toBeNull();
 });
 
 it.each([
