@@ -171,9 +171,12 @@
   background: var(--ds-panel);
   box-shadow: none;
 }
-/* Concept developer cards should be wider than tall, not cramped squares. */
+/* Subtle founder-inspired accents for concept developers, without competing with the founders. */
 .site-info-page .author-card:not(.author-card--founder) {
   padding: 20px 22px;
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--ds-line-strong));
+  border-top: 2px solid color-mix(in srgb, var(--accent) 50%, var(--ds-line-strong));
+  background: color-mix(in srgb, var(--ds-panel) 95%, var(--accent) 5%);
 }
 .site-info-page .author-card:not(.author-card--founder) h3 {
   font-size: 23px;
@@ -246,6 +249,9 @@
   font-size: 11px;
   font-weight: 500;
   line-height: 1.4;
+}
+.site-info-page .author-card:not(.author-card--founder) .author-roles li {
+  border-color: color-mix(in srgb, var(--accent) 16%, var(--ds-line-strong));
 }
 .site-info-page .author-card--founder .author-roles li {
   border-color: color-mix(in srgb, var(--accent) 28%, var(--ds-line-strong));
