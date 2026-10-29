@@ -8,62 +8,31 @@
   isolation: isolate;
   display: block;
   padding: 0;
-  background: transparent;
+  background: var(--bg);
   color: var(--ds-text);
   font-family: var(--ds-font-ui);
 }
-/* Fine monochrome dithering prevents visible color steps without a dotted pattern. */
+/* Solid-color vector ribbons provide quiet movement without gradients or blur. */
 .pico-home::before {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -6vh -6vw;
   z-index: 0;
   pointer-events: none;
-  background: url('/ambient-dither.svg') repeat;
-  opacity: .035;
+  background-color: var(--accent);
+  -webkit-mask: url('/ambient-curves.svg') center / cover no-repeat;
+  mask: url('/ambient-curves.svg') center / cover no-repeat;
+  opacity: .26;
 }
-/* One broad viewport-level glow avoids visible intersections between moving layers. */
-body:has(.pico-home) { background: var(--bg); }
-body:has(.pico-home)::before {
-  content: '';
-  position: fixed;
-  inset: -28vh -25vw;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse 78% 78% at 42% 42%, color-mix(in srgb, var(--accent) 23%, transparent) 0%, color-mix(in srgb, var(--accent) 15%, transparent) 36%, color-mix(in srgb, var(--accent) 7%, transparent) 65%, color-mix(in srgb, var(--accent) 1%, transparent) 90%, transparent 100%);
-  filter: blur(clamp(140px, 16vw, 300px));
-  opacity: .95;
-}
-body:has(.pico-home[data-high-contrast='true'])::before { opacity: .55; }
-/* A closed clockwise path retains motion without bouncing or visible jumps. */
-@keyframes pico-home-ambient-orbit {
-  0%, 100% { transform: translate3d(-7%, 0, 0) scale(1.06); }
-  6.25% { transform: translate3d(-6.47%, -1.53%, 0) scale(1.06); }
-  12.5% { transform: translate3d(-4.95%, -2.83%, 0) scale(1.06); }
-  18.75% { transform: translate3d(-2.68%, -3.7%, 0) scale(1.06); }
-  25% { transform: translate3d(0%, -4%, 0) scale(1.06); }
-  31.25% { transform: translate3d(2.68%, -3.7%, 0) scale(1.06); }
-  37.5% { transform: translate3d(4.95%, -2.83%, 0) scale(1.06); }
-  43.75% { transform: translate3d(6.47%, -1.53%, 0) scale(1.06); }
-  50% { transform: translate3d(7%, 0%, 0) scale(1.06); }
-  56.25% { transform: translate3d(6.47%, 1.53%, 0) scale(1.06); }
-  62.5% { transform: translate3d(4.95%, 2.83%, 0) scale(1.06); }
-  68.75% { transform: translate3d(2.68%, 3.7%, 0) scale(1.06); }
-  75% { transform: translate3d(0%, 4%, 0) scale(1.06); }
-  81.25% { transform: translate3d(-2.68%, 3.7%, 0) scale(1.06); }
-  87.5% { transform: translate3d(-4.95%, 2.83%, 0) scale(1.06); }
-  93.75% { transform: translate3d(-6.47%, 1.53%, 0) scale(1.06); }
-}
+.pico-home[data-high-contrast='true']::before { opacity: .18; }
 @media (prefers-reduced-motion: no-preference) {
   .pico-home { scroll-behavior: smooth; }
-  body:has(.pico-home)::before {
-    animation: pico-home-ambient-orbit 14s linear infinite;
+  .pico-home::before {
+    animation: pico-ambient-curves-orbit 22s linear infinite;
     will-change: transform;
   }
 }
 @media (forced-colors: active) {
-  .pico-home { background: var(--bg); }
-  body:has(.pico-home)::before,
   .pico-home::before { display: none; }
 }
 /* Reserve the cookie bar's measured height so the home scroll area never sits behind it. */
