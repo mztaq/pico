@@ -51,11 +51,11 @@ body:has(.pico-home[data-high-contrast='true'])::after { opacity: .14; }
 @media (prefers-reduced-motion: no-preference) {
   .pico-home { scroll-behavior: smooth; }
   body:has(.pico-home)::before {
-    animation: pico-home-ambient-orbit 5.4s linear infinite;
+    animation: pico-home-ambient-orbit 7s linear infinite;
     will-change: transform;
   }
   body:has(.pico-home)::after {
-    animation: pico-home-ambient-orbit 7.2s linear infinite -2.7s;
+    animation: pico-home-ambient-orbit 9s linear infinite -3.4s;
     will-change: transform;
   }
 }
