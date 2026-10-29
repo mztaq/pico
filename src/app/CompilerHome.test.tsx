@@ -46,6 +46,25 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="#terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
+it('changes the theme from home and saves it for workspaces',async()=>{
+  const toggle=container.querySelector<HTMLButtonElement>('[aria-label="Change theme"]')!;
+  expect(toggle).not.toBeNull();
+  expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  await click(toggle);
+  expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  const nord=[...container.querySelectorAll<HTMLButtonElement>('.home-theme-menu [role="option"]')].find(option=>option.textContent?.includes('Nord'))!;
+  expect(nord).not.toBeNull();
+  await click(nord);
+  expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('nord');
+  expect(JSON.parse(localStorage.getItem('pico.settings.v6') ?? '{}').theme).toBe('nord');
+  expect(container.querySelector('.home-theme-menu [aria-selected="true"]')?.textContent).toContain('Nord');
+  await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  expect(container.querySelector('.home-theme-menu')).toBeNull();
+  const pseudocode=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Pseudocode Compiler')!;
+  await click(pseudocode);
+  expect(container.querySelector('.pico-app')?.getAttribute('data-pico-theme')).toBe('nord');
+});
 it('opens Binary Lab from its home section and updates every number view',async()=>{
   const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Binary Lab');
   await click(choice!);
