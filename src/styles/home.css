@@ -32,14 +32,13 @@
 .pico-home[data-high-contrast='true'] { background: var(--bg); }
 .pico-home[data-high-contrast='true']::before { display: none; }
 @keyframes pico-home-ambient-drift {
-  0% { transform: translate3d(-6%, -3%, 0) scale(1.02); }
-  50% { transform: translate3d(5%, 3%, 0) scale(1.09); }
-  100% { transform: translate3d(-2%, 5%, 0) scale(1.04); }
+  0% { transform: translate3d(-7%, -4%, 0) scale(1.03); }
+  100% { transform: translate3d(7%, 4%, 0) scale(1.10); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .pico-home { scroll-behavior: smooth; }
   .pico-home::before {
-    animation: pico-home-ambient-drift 19s ease-in-out infinite alternate;
+    animation: pico-home-ambient-drift 10s ease-in-out infinite alternate;
     will-change: transform;
   }
 }
