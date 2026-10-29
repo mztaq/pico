@@ -1,5 +1,6 @@
-/* Information pages (Privacy, Cookies, Terms). */
+/* Information pages (Pico Team, Privacy, Cookies, Terms). */
 .site-info-page {
+  --site-info-content-width: 1200px;
   height: 100dvh;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -20,7 +21,7 @@
   backdrop-filter: blur(8px);
 }
 .site-info-header-inner {
-  width: min(1120px, 100%);
+  width: min(var(--site-info-content-width), 100%);
   height: 60px;
   margin: 0 auto;
   padding: 0 20px;
@@ -50,7 +51,7 @@
     radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 8%, transparent) 1px, transparent 0) 0 0 / 22px 22px,
     var(--ds-sunken);
 }
-.site-info-hero-inner { width: min(1120px, 100%); min-height: 150px; box-sizing: border-box; margin: 0 auto; padding: 30px 20px 24px; }
+.site-info-hero-inner { width: min(var(--site-info-content-width), 100%); min-height: 150px; box-sizing: border-box; margin: 0 auto; padding: 30px 20px 24px; }
 .site-info-page .site-info-title { display: flex; align-items: center; gap: 14px; margin-top: 0; }
 .site-info-page .site-info-mark { width: 48px; height: 48px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: var(--ds-radius-lg); background: var(--ds-accent-soft); color: var(--accent); }
 .site-info-page .site-info-title h1 { margin: 0; font-size: clamp(30px, 4.4vw, 46px); font-weight: 650; line-height: 1.1; letter-spacing: -.035em; }
@@ -65,12 +66,12 @@
 
 /* Two-column body: sticky side navigation + content */
 .site-info-page .site-info-shell {
-  width: min(1120px, 100%);
+  width: min(var(--site-info-content-width), 100%);
   margin: 0 auto;
   padding: 36px 20px 64px;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 48px;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 28px;
   align-items: start;
 }
 .site-info-page main { min-width: 0; padding: 0; }
@@ -128,6 +129,137 @@
 }
 .site-info-contact a { color: var(--accent); font-weight: 600; }
 
+/* Pico Team: matching concept cards and accented co-founder cards, no vignette. */
+.site-info-page[data-page='team'] .site-info-hero { background: var(--ds-sunken); }
+.site-info-page[data-page='team'] .site-info-mark {
+  background: var(--ds-panel);
+  border-color: var(--ds-line);
+}
+.site-info-page .site-info-author-subtitle {
+  margin: 12px 0 0;
+  color: var(--ds-muted);
+  font-size: var(--ds-text-sm);
+  font-weight: 400;
+}
+.site-info-page .author-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+}
+/* Founders span half the row; concept developers span a third each, with consistent gaps. */
+.site-info-page .author-grid > .author-card--founder { grid-column: span 3; }
+.site-info-page .author-grid > .author-card:not(.author-card--founder) { grid-column: span 2; }
+.site-info-page .team-group-title {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  color: var(--ds-text);
+  font-family: 'Outfit', var(--ds-font-ui), sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -.025em;
+}
+.site-info-page .team-group-title--concept { margin-top: 12px; }
+.site-info-page .author-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 28px 30px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel);
+  box-shadow: none;
+}
+/* Subtle founder-inspired accents for concept developers, without competing with the founders. */
+.site-info-page .author-card:not(.author-card--founder) {
+  padding: 20px 22px;
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--ds-line-strong));
+  border-top: 2px solid color-mix(in srgb, var(--accent) 50%, var(--ds-line-strong));
+  background: color-mix(in srgb, var(--ds-panel) 95%, var(--accent) 5%);
+}
+.site-info-page .author-card:not(.author-card--founder) h3 {
+  font-size: 23px;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+.site-info-page .author-card:not(.author-card--founder) .author-description {
+  font-size: 14px;
+  line-height: 1.55;
+}
+.site-info-page .author-card:not(.author-card--founder) .author-roles {
+  padding-top: 14px;
+}
+.site-info-page .author-card--founder {
+  /* Only the co-founders get the larger, more prominent cards. */
+  min-height: 300px;
+  padding: 36px 34px;
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--ds-line-strong));
+  border-top: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--ds-panel-raised) 92%, var(--accent) 8%);
+}
+.site-info-page .author-card h3 {
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  color: var(--ds-text);
+  font-family: 'Outfit', var(--ds-font-ui), sans-serif;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.035em;
+}
+.site-info-page .author-card--founder h3 {
+  font-size: clamp(25px, 2.4vw, 32px);
+  font-weight: 700;
+  letter-spacing: -.045em;
+}
+/* Keep the smaller concept headings compact after the shared heading styles. */
+.site-info-page .author-card:not(.author-card--founder) h3 { margin-bottom: 10px; }
+.site-info-page .author-description {
+  max-width: 48ch;
+  margin: 0;
+  color: color-mix(in srgb, var(--ds-text) 82%, var(--ds-muted));
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+.site-info-page .author-card--founder .author-description {
+  color: var(--ds-text);
+  font-size: 14.5px;
+}
+.site-info-page .author-roles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 7px;
+  margin: auto 0 0;
+  padding: 24px 0 0;
+  border: 0;
+  list-style: none;
+}
+.site-info-page .author-roles li {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: 6px;
+  background: var(--ds-sunken);
+  color: var(--ds-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.site-info-page .author-card:not(.author-card--founder) .author-roles li {
+  border-color: color-mix(in srgb, var(--accent) 16%, var(--ds-line-strong));
+}
+.site-info-page .author-card--founder .author-roles li {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--ds-line-strong));
+  background: var(--ds-accent-soft);
+}
+
 /* High contrast */
 .site-info-page[data-high-contrast='true'] .site-info-hero { background: var(--bg); }
 .site-info-page[data-high-contrast='true'] :is(.site-info-summary, .site-info-section-body p, .site-info-toc button, .site-info-aside .site-info-links a) { color: var(--text); }
@@ -139,7 +271,30 @@
   .site-info-aside .site-info-links { flex-direction: row; flex-wrap: wrap; }
   .site-info-toc { display: none; }
 }
+/* When three landscape cards no longer fit, use two columns instead of squeezing them. */
+@media (max-width: 1080px) {
+  .site-info-page[data-page='team'] .site-info-shell {
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 24px;
+  }
+  .site-info-page .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-info-page .author-grid > .author-card { grid-column: span 1; }
+}
+/* Match the existing stacked navigation breakpoint on narrow screens. */
+@media (max-width: 960px) {
+  .site-info-page[data-page='team'] .site-info-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+@media (max-width: 720px) {
+  .site-info-page .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-info-page .author-grid > .author-card { grid-column: span 1; }
+}
 @media (max-width: 640px) {
+  .site-info-page .author-grid { grid-template-columns: minmax(0, 1fr); }
+  .site-info-page .author-grid > .author-card { grid-column: span 1; }
+  .site-info-page .author-card--founder { padding: 28px 24px; }
   .site-info-header-inner { padding: 0 16px; height: 54px; }
   .site-info-page .site-info-back { padding: 0 10px; }
   .site-info-hero-inner { min-height: 136px; padding: 24px 16px 20px; }

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, ArrowUpRight, Cookie, FileText, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Cookie, FileText, ShieldCheck, Users } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
 import '../styles/site-info.css';
 import '../../styles/info.css';
 
 const pages = [
+  { id: 'team', title: 'Pico Team', icon: Users },
   { id: 'privacy', title: 'Privacy Policy', icon: ShieldCheck },
   { id: 'cookies', title: 'Cookie Policy', icon: Cookie },
   { id: 'terms', title: 'Terms and Conditions', icon: FileText },
@@ -27,6 +28,53 @@ export function SiteInfoLinks({ current }: { current?: InformationPage }) {
 const slug = (title: string) => 'section-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return <section className="site-info-section" id={slug(title)}><h2>{title}</h2><div className="site-info-section-body">{children}</div></section>;
+}
+
+function PicoTeam() {
+  const authors = [
+    {
+      name: 'Muhammad Mustaqim',
+      description: 'I look after Pico’s deployments and help build new features, but I always get Amar’s approval before moving forward with them.',
+      founder: true,
+      roles: ['Head of Deployment', 'Media Manager'],
+    },
+    {
+      name: 'Amar Ayache',
+      description: 'Mustaqim and I build Pico together. We work on features side by side, review the changes, and merge pull requests when everything is ready.',
+      founder: true,
+      roles: ['Head of Development', 'Media Manager'],
+    },
+    {
+      name: 'Mohamed Hamza',
+      description: 'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
+      founder: false,
+      roles: ['Concept Developer'],
+    },
+    {
+      name: 'Coming soon...',
+      description: 'A spot for the next person bringing fresh ideas to Pico.',
+      founder: false,
+      roles: ['Concept Developer'],
+    },
+    {
+      name: 'Coming soon...',
+      description: 'Another spot for a future Pico concept developer.',
+      founder: false,
+      roles: ['Concept Developer'],
+    },
+  ];
+  const renderCard = ({ name, description, roles, founder }: typeof authors[number], index: number) =>
+    <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={`${founder ? "founder" : "concept"}-${index}`}>
+      <h3>{name}</h3>
+      <p className="author-description">{description}</p>
+      <ul className="author-roles" aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul>
+    </section>;
+  return <div className="author-grid">
+    <h2 className="team-group-title">Co-founders</h2>
+    {authors.filter(author => author.founder).map(renderCard)}
+    <h2 className="team-group-title team-group-title--concept">Concept Developers</h2>
+    {authors.filter(author => !author.founder).map(renderCard)}
+  </div>;
 }
 
 function Privacy() {
@@ -118,7 +166,7 @@ export function SiteInfo({ page }: { page: InformationPage }) {
     <div className="site-info-hero">
       <div className="site-info-hero-inner">
         <div className="site-info-title"><span className="site-info-mark"><Icon size={24} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
-        <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>
+        {page === 'team' ? <p className="site-info-author-subtitle">The people behind Pico.</p> : <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
       </div>
     </div>
     <div className="site-info-shell">
@@ -130,8 +178,8 @@ export function SiteInfo({ page }: { page: InformationPage }) {
         </nav>}
       </aside>
       <main>
-        {page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
-        <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>
+        {page === 'team' ? <PicoTeam /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
+        {page !== 'team' && <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>}
       </main>
     </div>
   </div>;
