@@ -57,9 +57,15 @@ function PicoTeam() {
       founder: false,
       roles: ['Concept Developer'],
     },
+    {
+      name: 'Coming soon...',
+      description: 'Another spot for a future Pico concept developer.',
+      founder: false,
+      roles: ['Concept Developer'],
+    },
   ];
-  const renderCard = ({ name, description, roles, founder }: typeof authors[number]) =>
-    <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={name}>
+  const renderCard = ({ name, description, roles, founder }: typeof authors[number], index: number) =>
+    <section className={`author-card${founder ? ' author-card--founder' : ''}`} key={`${founder ? "founder" : "concept"}-${index}`}>
       <h3>{name}</h3>
       <p className="author-description">{description}</p>
       <ul className="author-roles" aria-label={`Roles for ${name}`}>{roles.map(role => <li key={role}>{role}</li>)}</ul>
