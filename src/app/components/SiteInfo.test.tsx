@@ -37,20 +37,24 @@ it('shows the Pico Team page with the two founders first and Hamza as Concept De
   expect(document.title).toBe('Pico | Pico Team');
   const cards = [...host.querySelectorAll('.author-card')];
   expect(cards.map(card => card.querySelector('h3')?.textContent)).toEqual([
-    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza',
+    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Coming soon...', 'Coming soon...', 
   ]);
   expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
     'I look after Pico’s deployments and help build new features, but I always get Amar’s approval before moving forward with them.',
     'Mustaqim and I build Pico together. We work on features side by side, review the changes, and merge pull requests when everything is ready.',
     'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
+    'A spot for the next person bringing fresh ideas to Pico.',
+    'Another spot for a future Pico concept developer.',
   ]);
   expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
     ['Head of Deployment', 'Media Manager'],
     ['Head of Development', 'Media Manager'],
     ['Concept Developer'],
+    ['Concept Developer'],
+    ['Concept Developer'],
   ]);
-  expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false]);
-  expect([...host.querySelectorAll('.team-group-title')].map(heading => heading.textContent)).toEqual(['Co-founders', 'Concept Developer']);
+  expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false, false, false]);
+  expect([...host.querySelectorAll('.team-group-title')].map(heading => heading.textContent)).toEqual(['Co-founders', 'Concept Developers']);
   expect(host.querySelectorAll('.author-founder-label')).toHaveLength(0);
   expect(host.querySelectorAll('.author-index')).toHaveLength(0);
   expect(cards.every(card => card.querySelector('.author-roles')?.compareDocumentPosition(card.querySelector('.author-description')!) === Node.DOCUMENT_POSITION_PRECEDING)).toBe(true);
