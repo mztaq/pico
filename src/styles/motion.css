@@ -29,47 +29,37 @@
 
 }
 
-/*
- * Workspaces receive a quieter version of the home ambient glow.
- * One fixed, blurred layer avoids overlapping edges and stays put while
- * the Binary Lab scrolls. Solid editor and diagram surfaces remain intact.
- */
+/* One solid-color vector layer, shared by every workspace and the home screen. */
+@keyframes pico-ambient-curves-orbit {
+  0%, 100% { transform: translate3d(-3%, 0, 0) scale(1.05); }
+  12.5% { transform: translate3d(-2.12%, -1.41%, 0) scale(1.05); }
+  25% { transform: translate3d(0, -2%, 0) scale(1.05); }
+  37.5% { transform: translate3d(2.12%, -1.41%, 0) scale(1.05); }
+  50% { transform: translate3d(3%, 0, 0) scale(1.05); }
+  62.5% { transform: translate3d(2.12%, 1.41%, 0) scale(1.05); }
+  75% { transform: translate3d(0, 2%, 0) scale(1.05); }
+  87.5% { transform: translate3d(-2.12%, 1.41%, 0) scale(1.05); }
+}
+
 :is(.pico-app, .logic-app, .cpu-app, .binary-app)::before {
   content: '';
   position: fixed;
-  inset: -28vh -25vw;
+  inset: -6vh -6vw;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse 78% 78% at 42% 42%,
-    color-mix(in srgb, var(--accent) 14%, transparent) 0%,
-    color-mix(in srgb, var(--accent) 8%, transparent) 38%,
-    color-mix(in srgb, var(--accent) 3%, transparent) 70%,
-    transparent 100%
-  );
-  filter: blur(clamp(160px, 16vw, 280px));
-  opacity: .45;
+  background-color: var(--accent);
+  -webkit-mask: url('/ambient-curves.svg') center / cover no-repeat;
+  mask: url('/ambient-curves.svg') center / cover no-repeat;
+  opacity: .13;
 }
 
 :is(.pico-app, .logic-app, .cpu-app, .binary-app)[data-pico-theme^='high-contrast-']::before {
-  opacity: .34;
-}
-
-/* A gentle, continuous orbit, without the abrupt reversal of alternate motion. */
-@keyframes pico-workspace-ambient-orbit {
-  0%, 100% { transform: translate3d(-5%, 0, 0) scale(1.06); }
-  12.5% { transform: translate3d(-3.54%, -1.77%, 0) scale(1.06); }
-  25% { transform: translate3d(0, -2.5%, 0) scale(1.06); }
-  37.5% { transform: translate3d(3.54%, -1.77%, 0) scale(1.06); }
-  50% { transform: translate3d(5%, 0, 0) scale(1.06); }
-  62.5% { transform: translate3d(3.54%, 1.77%, 0) scale(1.06); }
-  75% { transform: translate3d(0, 2.5%, 0) scale(1.06); }
-  87.5% { transform: translate3d(-3.54%, 1.77%, 0) scale(1.06); }
+  opacity: .09;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   :is(.pico-app, .logic-app, .cpu-app, .binary-app)::before {
-    animation: pico-workspace-ambient-orbit 24s linear infinite;
+    animation: pico-ambient-curves-orbit 32s linear infinite;
     will-change: transform;
   }
 }
