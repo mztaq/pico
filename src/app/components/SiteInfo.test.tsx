@@ -47,8 +47,8 @@ it('shows both co-founders and concept developers with their roles', async () =>
     'Another spot for a future Pico concept developer.',
   ]);
   expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
-    ['Head of Deployment', 'Backend Developer', 'Media Manager'],
-    ['Head of Development', 'Frontend Developer', 'Media Manager'],
+    ['Head of Deployment', 'Backend Dev', 'Media Manager'],
+    ['Head of Development', 'Frontend Dev', 'Media Manager'],
     ['Concept Developer'],
     ['Concept Developer'],
     ['Concept Developer'],
