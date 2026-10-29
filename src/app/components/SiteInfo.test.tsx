@@ -40,15 +40,17 @@ it('shows the Authors page with the two leads first and Hamza as Concept Develop
     'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza',
   ]);
   expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
-    'I oversee Pico’s deployment and implement new features with Amar’s approval.',
-    'I develop features alongside Mustaqim, and together we review and merge pull requests.',
-    'I propose concepts for Pico to implement and recommend strategies to strengthen the platform’s growth and success worldwide.',
+    'I look after Pico’s deployments and help build new features, but I always get Amar’s approval before moving forward with them.',
+    'Mustaqim and I build Pico together. We work on features side by side, review the changes, and merge pull requests when everything is ready.',
+    'I bring new ideas for Pico and share practical ways to make it better, reach more people, and grow into a product used around the world.',
   ]);
   expect(cards.map(card => [...card.querySelectorAll('.author-roles li')].map(role => role.textContent))).toEqual([
     ['Head of Deployment', 'Media Manager'],
     ['Head of Development', 'Media Manager'],
     ['Concept Developer'],
   ]);
+  expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false]);
+  expect(cards.map(card => card.querySelector('.author-founder-label')?.textContent ?? null)).toEqual(['Co-founder', 'Co-founder', null]);
   expect(host.textContent).not.toMatch(/11BR|11BB/);
   expect(host.querySelectorAll('.author-icon svg')).toHaveLength(3);
   expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Authors');
