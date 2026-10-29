@@ -236,6 +236,9 @@
   grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
   column-gap: 36px;
   align-items: start;
+  /* Lift the concept developer card off the page without competing with the founders. */
+  background: var(--ds-panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
 }
 .site-info-page .author-card:last-child .author-founder-label {
   grid-column: 1 / -1;
