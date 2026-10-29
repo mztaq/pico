@@ -140,6 +140,12 @@
   font-size: var(--ds-text-sm);
   font-weight: 400;
 }
+/* Give the three-card row enough horizontal room to read as landscape cards. */
+.site-info-page[data-page='team'] .site-info-shell {
+  width: min(1320px, 100%);
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 28px;
+}
 .site-info-page .author-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -170,18 +176,21 @@
   background: var(--ds-panel);
   box-shadow: none;
 }
-/* Give the three narrower concept cards more usable text space without changing the founders. */
+/* Concept developer cards should be wider than tall, not cramped squares. */
 .site-info-page .author-card:not(.author-card--founder) {
-  padding: 28px 20px;
+  padding: 20px 22px;
 }
 .site-info-page .author-card:not(.author-card--founder) h3 {
-  font-size: 24px;
-  line-height: 1.25;
-  margin-bottom: 14px;
+  font-size: 23px;
+  line-height: 1.2;
+  margin-bottom: 10px;
 }
 .site-info-page .author-card:not(.author-card--founder) .author-description {
-  font-size: 14.5px;
-  line-height: 1.65;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.site-info-page .author-card:not(.author-card--founder) .author-roles {
+  padding-top: 14px;
 }
 .site-info-page .author-card--founder {
   /* Only the co-founders get the larger, more prominent cards. */
@@ -256,6 +265,15 @@
   .site-info-aside { position: static; }
   .site-info-aside .site-info-links { flex-direction: row; flex-wrap: wrap; }
   .site-info-toc { display: none; }
+}
+/* When three landscape cards no longer fit, use two columns instead of squeezing them. */
+@media (max-width: 1080px) {
+  .site-info-page[data-page='team'] .site-info-shell {
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 24px;
+  }
+  .site-info-page .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-info-page .author-grid > .author-card { grid-column: span 1; }
 }
 @media (max-width: 720px) {
   .site-info-page .author-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
