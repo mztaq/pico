@@ -159,8 +159,8 @@
 }
 .site-info-page .author-card--founder {
   padding: 32px 30px 28px;
-  border-color: var(--ds-line-strong);
-  border-top: 2px solid color-mix(in srgb, var(--ds-text) 45%, var(--ds-line));
+  border-color: var(--ds-line);
+  background: var(--ds-panel);
 }
 .site-info-page .author-card:last-child { grid-column: 1 / -1; }
 .site-info-page .author-founder-label {
