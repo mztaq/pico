@@ -160,21 +160,21 @@
   background: color-mix(in srgb, var(--ds-panel) 94%, var(--accent) 6%);
   box-shadow: 0 16px 42px rgba(0, 0, 0, .18);
 }
-.site-info-page .author-founder-label {
-  display: block;
-  margin: 0 0 26px;
-  color: var(--ds-muted);
-  font-size: 11px;
-  font-weight: 600;
+.site-info-page .team-group-title {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  color: var(--ds-text);
+  font-size: 16px;
+  font-weight: 650;
   line-height: 1.4;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  letter-spacing: -.015em;
 }
-.site-info-page .author-card--founder .author-founder-label {
-  color: color-mix(in srgb, var(--accent) 38%, var(--ds-text));
-  font-weight: 700;
+.site-info-page .team-group-title--concept {
+  margin-top: 12px;
 }
-.site-info-page .author-card h2 {
+.site-info-page .author-card h3 {
   margin: 0 0 10px;
   padding: 0;
   border: 0;
@@ -185,7 +185,7 @@
   line-height: 1.2;
   letter-spacing: -.035em;
 }
-.site-info-page .author-card--founder h2 {
+.site-info-page .author-card--founder h3 {
   font-size: clamp(20px, 2.2vw, 29px);
   font-weight: 730;
   letter-spacing: -.05em;
@@ -240,20 +240,16 @@
   background: var(--ds-panel);
   box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
 }
-.site-info-page .author-card:last-child .author-founder-label {
-  grid-column: 1 / -1;
-  margin-bottom: 14px;
-}
-.site-info-page .author-card:last-child h2 { grid-column: 1; grid-row: 2; }
+.site-info-page .author-card:last-child h3 { grid-column: 1; grid-row: 1; }
 .site-info-page .author-card:last-child .author-description {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   max-width: 65ch;
   padding-top: 2px;
 }
 .site-info-page .author-card:last-child .author-roles {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 2;
   margin-top: 14px;
 }
 
