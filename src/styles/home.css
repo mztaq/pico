@@ -19,19 +19,19 @@
   align-items: center;
   justify-content: flex-end;
   height: 60px;
-  padding: 0 max(20px, calc((100% - 1120px) / 2));
+  padding: 0 max(20px, calc(50% - 540px));
   border: 0;
   background: transparent;
 }
 .pico-home .home-brand { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 49px; font-weight: 750; letter-spacing: -.8px; }
 .pico-home .home-brand img { width: 52px; height: 52px; }
-.pico-home .home-updates { position: absolute; right: max(20px, calc((100% - 1120px) / 2)); top: 0; height: 60px; }
+.pico-home .home-updates { position: absolute; right: max(20px, calc(50% - 540px)); top: 0; height: 60px; }
 
 /* Home theme control: the same themes as the editor, in a compact popover. */
 .pico-home .home-theme-anchor {
   position: absolute;
   top: 14px;
-  left: max(20px, calc((100% - 1120px) / 2));
+  left: max(20px, calc(50% - 540px));
 }
 .pico-home .home-theme-trigger {
   display: inline-flex;
@@ -40,7 +40,7 @@
   gap: 7px;
   height: 32px;
   padding: 0 10px;
-  border: 1px solid var(--ds-line);
+  border: 0;
   border-radius: var(--ds-radius-md);
   background: transparent;
   color: var(--ds-muted);
@@ -50,7 +50,6 @@
 }
 .pico-home .home-theme-trigger:hover,
 .pico-home .home-theme-trigger[aria-expanded='true'] {
-  border-color: var(--ds-line-strong);
   background: var(--ds-hover);
   color: var(--ds-text);
 }
@@ -175,7 +174,7 @@ body:has(.pico-cookie-banner) .pico-home .home-inner {
   .pico-home .home-nav { height: 62px; padding: 0 16px; }
   .pico-home .home-brand { gap: 8px; font-size: 37px; }
   .pico-home .home-brand img { width: 40px; height: 40px; }
-  .pico-home .home-updates { right: 12px; height: 62px; }
+  .pico-home .home-updates { right: 16px; height: 62px; }
   .pico-home .home-theme-anchor { top: 15px; left: 16px; }
   .pico-home .home-theme-trigger span { display: none; }
   .pico-home .home-theme-trigger { width: 34px; padding: 0; }
