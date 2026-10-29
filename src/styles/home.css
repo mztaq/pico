@@ -14,7 +14,7 @@
 /* Ambient homepage gradient: same accent language as Pico Team and Privacy, without dots. */
 .pico-home::before {
   content: '';
-  position: absolute;
+  position: fixed;
   top: -190px;
   left: -22.5%;
   z-index: 0;
