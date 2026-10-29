@@ -51,6 +51,8 @@ it('shows the Authors page with the two leads first and Hamza as Concept Develop
   ]);
   expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false]);
   expect(cards.map(card => card.querySelector('.author-founder-label')?.textContent ?? null)).toEqual(['Co-founder', 'Co-founder', 'Concept developer']);
+  expect(cards.map(card => card.querySelector('.author-index')?.textContent)).toEqual(['01', '02', '03']);
+  expect(cards.every(card => card.querySelector('.author-roles')?.compareDocumentPosition(card.querySelector('.author-description')!) === Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
   expect(host.textContent).not.toMatch(/11BR|11BB/);
   expect(host.querySelectorAll('.author-icon')).toHaveLength(0);
   expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Authors');
