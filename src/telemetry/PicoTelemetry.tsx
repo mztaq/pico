@@ -228,11 +228,11 @@ export function PicoTelemetry() {
   useEffect(() => {
     if (!editing) return;
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && choice) setEditing(false);
+      if (event.key === 'Escape' && !busy) setEditing(false);
     };
     window.addEventListener('keydown', onEscape);
     return () => window.removeEventListener('keydown', onEscape);
-  }, [editing, choice]);
+  }, [editing, busy]);
 
   // Consent controls belong to the home screen only. Tracking remains active in workspaces.
   useEffect(() => {
@@ -274,7 +274,7 @@ export function PicoTelemetry() {
     </section>}
 
     {isHome && editing && <div className="pico-cookie-overlay"
-      onMouseDown={event => { if (event.target === event.currentTarget && choice) setEditing(false); }}>
+      onMouseDown={event => { if (event.target === event.currentTarget && !busy) setEditing(false); }}>
       <section role="dialog" aria-modal="true" aria-labelledby="pico-cookie-title"
         aria-describedby="pico-cookie-description" className="pico-cookie-modal">
         <header className="pico-cookie-modal-head">
@@ -282,8 +282,8 @@ export function PicoTelemetry() {
             <span className="pico-cookie-eyebrow">PRIVACY PREFERENCES</span>
             <h2 id="pico-cookie-title">Cookie Settings</h2>
           </div>
-          {choice && <button className="pico-cookie-close" type="button"
-            onClick={() => setEditing(false)} aria-label="Close cookie settings"><X size={18} aria-hidden="true" /></button>}
+          <button className="pico-cookie-close" type="button" disabled={busy}
+            onClick={() => setEditing(false)} aria-label="Close cookie settings"><X size={18} aria-hidden="true" /></button>
         </header>
         <p id="pico-cookie-description" className="pico-cookie-description">
           Choose how Pico uses optional cookies. You can update your choices at any time.
