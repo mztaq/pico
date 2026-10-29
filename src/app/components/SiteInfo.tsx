@@ -52,7 +52,7 @@ function PicoTeam() {
     },
     {
       name: 'Mithunan Yogeswaran',
-      description: 'I explore fresh possibilities for Pico and suggest creative ways to improve its features and user experience. My goal is to help it grow into a product used worldwide.',
+      description: 'I work with Hamza to explore new possibilities for Pico and suggest creative improvements to its features and user experience. I want to help Pico grow worldwide.',
       founder: false,
       roles: ['Concept Developer'],
     },
