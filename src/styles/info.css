@@ -128,7 +128,7 @@
 }
 .site-info-contact a { color: var(--accent); font-weight: 600; }
 
-/* Pico Team: clean, solid cards without vignette-style shadows. */
+/* Pico Team: matching concept cards and accented co-founder cards, no vignette. */
 .site-info-page[data-page='team'] .site-info-hero { background: var(--ds-sunken); }
 .site-info-page[data-page='team'] .site-info-mark {
   background: var(--ds-panel);
@@ -145,21 +145,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
-.site-info-page .author-card {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 26px 28px;
-  border: 0;
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-sunken);
-  box-shadow: none;
-}
-.site-info-page .author-card--founder {
-  padding: 32px;
-  background: color-mix(in srgb, var(--ds-panel) 94%, var(--accent) 6%);
-  box-shadow: none;
-}
 .site-info-page .team-group-title {
   grid-column: 1 / -1;
   margin: 2px 0 0;
@@ -171,46 +156,66 @@
   line-height: 1.4;
   letter-spacing: -.015em;
 }
-.site-info-page .team-group-title--concept {
-  margin-top: 12px;
+.site-info-page .team-group-title--concept { margin-top: 12px; }
+.site-info-page .author-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 28px 30px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-panel);
+  box-shadow: none;
+}
+.site-info-page .author-card--founder {
+  padding: 30px 32px 32px;
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--ds-line-strong));
+  border-top: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--ds-panel-raised) 92%, var(--accent) 8%);
 }
 .site-info-page .author-card h3 {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   padding: 0;
   border: 0;
   box-shadow: none;
   color: var(--ds-text);
-  font-size: 22px;
-  font-weight: 650;
+  font-size: 23px;
+  font-weight: 680;
   line-height: 1.2;
   letter-spacing: -.035em;
 }
 .site-info-page .author-card--founder h3 {
-  font-size: clamp(20px, 2.2vw, 29px);
-  font-weight: 730;
-  letter-spacing: -.05em;
-  white-space: nowrap;
+  font-size: clamp(24px, 2.3vw, 31px);
+  font-weight: 760;
+  letter-spacing: -.045em;
+}
+.site-info-page .author-description {
+  max-width: 48ch;
+  margin: 0;
+  color: color-mix(in srgb, var(--ds-text) 82%, var(--ds-muted));
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+.site-info-page .author-card--founder .author-description {
+  color: var(--ds-text);
+  font-size: 14.5px;
 }
 .site-info-page .author-roles {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 7px;
-  margin: 22px 0 0;
-  padding: 0;
+  margin: auto 0 0;
+  padding: 24px 0 0;
   border: 0;
   list-style: none;
-}
-/* Anchor both founders' role badges to the same baseline, regardless of bio length. */
-.site-info-page .author-card--founder .author-roles {
-  margin-top: auto;
-  padding-top: 24px;
 }
 .site-info-page .author-roles li {
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
-  border: 1px solid var(--ds-line);
+  border: 1px solid var(--ds-line-strong);
   border-radius: 6px;
   background: var(--ds-sunken);
   color: var(--ds-text);
@@ -218,39 +223,9 @@
   font-weight: 500;
   line-height: 1.4;
 }
-.site-info-page .author-description {
-  max-width: 48ch;
-  margin: 0;
-  color: var(--ds-muted);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.7;
-}
-.site-info-page .author-card--founder .author-description {
-  color: color-mix(in srgb, var(--ds-text) 72%, var(--ds-muted));
-  font-size: 14.5px;
-}
-.site-info-page .author-card:last-child {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
-  column-gap: 36px;
-  align-items: start;
-  /* Contrast comes from the solid surface, not a surrounding shadow. */
-  background: var(--ds-panel);
-  box-shadow: none;
-}
-.site-info-page .author-card:last-child h3 { grid-column: 1; grid-row: 1; }
-.site-info-page .author-card:last-child .author-description {
-  grid-column: 2;
-  grid-row: 1;
-  max-width: 65ch;
-  padding-top: 2px;
-}
-.site-info-page .author-card:last-child .author-roles {
-  grid-column: 2;
-  grid-row: 2;
-  margin-top: 14px;
+.site-info-page .author-card--founder .author-roles li {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--ds-line-strong));
+  background: var(--ds-accent-soft);
 }
 
 /* High contrast */
@@ -266,10 +241,7 @@
 }
 @media (max-width: 640px) {
   .site-info-page .author-grid { grid-template-columns: minmax(0, 1fr); }
-  .site-info-page .author-card:last-child { grid-column: auto; }
   .site-info-page .author-card--founder { padding: 28px 24px; }
-  .site-info-page .author-card:last-child { display: flex; gap: 0; }
-  .site-info-page .author-card:last-child .author-roles { margin: 18px 0 0; }
   .site-info-header-inner { padding: 0 16px; height: 54px; }
   .site-info-page .site-info-back { padding: 0 10px; }
   .site-info-hero-inner { min-height: 136px; padding: 24px 16px 20px; }
