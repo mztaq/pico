@@ -33,25 +33,29 @@ body:has(.pico-home)::after {
   filter: blur(86px);
   opacity: .85;
 }
+/* High-contrast themes keep a much lighter version of the background animation. */
 .pico-home[data-high-contrast='true'] { background: var(--bg); }
-body:has(.pico-home[data-high-contrast='true'])::before,
-body:has(.pico-home[data-high-contrast='true'])::after { display: none; }
-@keyframes pico-home-ambient-drift {
-  from { transform: translate3d(-8%, -4%, 0) scale(1.04); }
-  to { transform: translate3d(8%, 3%, 0) scale(1.10); }
-}
-@keyframes pico-home-ambient-counter-drift {
-  from { transform: translate3d(7%, 4%, 0) scale(1.08); }
-  to { transform: translate3d(-7%, -3%, 0) scale(1.02); }
+body:has(.pico-home[data-high-contrast='true'])::before { opacity: .22; }
+body:has(.pico-home[data-high-contrast='true'])::after { opacity: .14; }
+/* One continuous clockwise path with a matching start and end, so there is no reversal or jump. */
+@keyframes pico-home-ambient-orbit {
+  0%, 100% { transform: translate3d(-7%, 0, 0) scale(1.06); }
+  12.5% { transform: translate3d(-5%, -3%, 0) scale(1.06); }
+  25% { transform: translate3d(0, -4%, 0) scale(1.06); }
+  37.5% { transform: translate3d(5%, -3%, 0) scale(1.06); }
+  50% { transform: translate3d(7%, 0, 0) scale(1.06); }
+  62.5% { transform: translate3d(5%, 3%, 0) scale(1.06); }
+  75% { transform: translate3d(0, 4%, 0) scale(1.06); }
+  87.5% { transform: translate3d(-5%, 3%, 0) scale(1.06); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .pico-home { scroll-behavior: smooth; }
   body:has(.pico-home)::before {
-    animation: pico-home-ambient-drift 4.5s ease-in-out infinite alternate;
+    animation: pico-home-ambient-orbit 5.4s linear infinite;
     will-change: transform;
   }
   body:has(.pico-home)::after {
-    animation: pico-home-ambient-counter-drift 6s ease-in-out infinite alternate;
+    animation: pico-home-ambient-orbit 7.2s linear infinite -2.7s;
     will-change: transform;
   }
 }
