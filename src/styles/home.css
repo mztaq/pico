@@ -22,30 +22,20 @@
   background: url('/ambient-dither.svg') repeat;
   opacity: .035;
 }
-/* The ambient layers belong to the viewport, outside the scrolling home container. */
+/* One broad viewport-level glow avoids visible intersections between moving layers. */
 body:has(.pico-home) { background: var(--bg); }
-body:has(.pico-home)::before,
-body:has(.pico-home)::after {
+body:has(.pico-home)::before {
   content: '';
   position: fixed;
-  inset: -22vh -20vw;
+  inset: -28vh -25vw;
   z-index: 0;
   pointer-events: none;
-}
-body:has(.pico-home)::before {
-  background: radial-gradient(ellipse 57% 62% at 28% 36%, color-mix(in srgb, var(--accent) 24%, transparent) 0%, color-mix(in srgb, var(--accent) 13%, transparent) 40%, color-mix(in srgb, var(--accent) 5%, transparent) 68%, color-mix(in srgb, var(--accent) 2%, transparent) 82%, color-mix(in srgb, var(--accent) 0.7%, transparent) 92%, transparent 100%);
-  filter: blur(clamp(130px, 13vw, 250px));
+  background: radial-gradient(ellipse 78% 78% at 42% 42%, color-mix(in srgb, var(--accent) 23%, transparent) 0%, color-mix(in srgb, var(--accent) 15%, transparent) 36%, color-mix(in srgb, var(--accent) 7%, transparent) 65%, color-mix(in srgb, var(--accent) 1%, transparent) 90%, transparent 100%);
+  filter: blur(clamp(140px, 16vw, 300px));
   opacity: .95;
 }
-body:has(.pico-home)::after {
-  background: radial-gradient(ellipse 52% 60% at 76% 56%, color-mix(in srgb, var(--accent) 17%, transparent) 0%, color-mix(in srgb, var(--accent) 9%, transparent) 42%, color-mix(in srgb, var(--accent) 3.5%, transparent) 68%, color-mix(in srgb, var(--accent) 1%, transparent) 85%, transparent 100%);
-  filter: blur(clamp(150px, 17vw, 310px));
-  opacity: .85;
-}
-/* High-contrast themes keep a much lighter version of the background animation. */
-body:has(.pico-home[data-high-contrast='true'])::before { opacity: .5; }
-body:has(.pico-home[data-high-contrast='true'])::after { opacity: .36; }
-/* One continuous clockwise path with a matching start and end, so there is no reversal or jump. */
+body:has(.pico-home[data-high-contrast='true'])::before { opacity: .55; }
+/* A closed clockwise path retains motion without bouncing or visible jumps. */
 @keyframes pico-home-ambient-orbit {
   0%, 100% { transform: translate3d(-7%, 0, 0) scale(1.06); }
   12.5% { transform: translate3d(-5%, -3%, 0) scale(1.06); }
@@ -62,15 +52,10 @@ body:has(.pico-home[data-high-contrast='true'])::after { opacity: .36; }
     animation: pico-home-ambient-orbit 7s linear infinite;
     will-change: transform;
   }
-  body:has(.pico-home)::after {
-    animation: pico-home-ambient-orbit 9s linear infinite -3.4s;
-    will-change: transform;
-  }
 }
 @media (forced-colors: active) {
   .pico-home { background: var(--bg); }
   body:has(.pico-home)::before,
-  body:has(.pico-home)::after,
   .pico-home::before { display: none; }
 }
 /* Reserve the cookie bar's measured height so the home scroll area never sits behind it. */
