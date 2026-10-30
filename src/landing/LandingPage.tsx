@@ -59,20 +59,40 @@ function Navigation() {
 }
 const installerGroups=[
   {platform:'Windows',icon:Monitor,files:[
-    {name:'Pico_x64-setup.exe',format:'EXE installer'},
-    {name:'Pico_x64_en-US.msi',format:'MSI installer'},
+    {name:'Pico_x64-setup.exe',format:'EXE installer',sizeBytes:1878445},
+    {name:'Pico_x64_en-US.msi',format:'MSI installer',sizeBytes:2850816},
   ]},
   {platform:'macOS',icon:Laptop,files:[
-    {name:'Pico_aarch64.dmg',format:'Apple Silicon DMG'},
-    {name:'Pico_x64.dmg',format:'Intel DMG'},
+    {name:'Pico_aarch64.dmg',format:'Apple Silicon DMG',sizeBytes:2745913},
+    {name:'Pico_x64.dmg',format:'Intel DMG',sizeBytes:2929669},
   ]},
   {platform:'Linux',icon:Terminal,files:[
-    {name:'Pico_amd64.deb',format:'DEB package'},
-    {name:'Pico_amd64.AppImage',format:'AppImage'},
+    {name:'Pico_amd64.deb',format:'DEB package',sizeBytes:2881950},
+    {name:'Pico_amd64.AppImage',format:'AppImage',sizeBytes:81304056},
   ]},
 ] as const;
 
+const formatDownloadSize=(bytes:number)=>`${(bytes/1_000_000).toFixed(2)} MB`;
 function DownloadsSection(){
+  const [currentSizes,setCurrentSizes]=useState<Record<string,number>>({});
+  useEffect(()=>{
+    // Update release sizes when assets are replaced, with known release sizes as fallback.
+    const controller=new AbortController();
+    fetch('https://api.github.com/repos/mztaq/pico/releases/latest',{signal:controller.signal})
+      .then(response=>response.ok?response.json():null)
+      .then((release:{assets?:Array<{name?:string;size?:number}>}|null)=>{
+        if(controller.signal.aborted||!Array.isArray(release?.assets))return;
+        const sizes:Record<string,number>={};
+        for(const asset of release.assets){
+          if(typeof asset.name==='string'&&typeof asset.size==='number'&&Number.isFinite(asset.size)&&asset.size>0){
+            sizes[asset.name]=asset.size;
+          }
+        }
+        if(Object.keys(sizes).length)setCurrentSizes(sizes);
+      })
+      .catch(()=>{/* Keep verified release size fallback if metadata is unavailable. */});
+    return()=>controller.abort();
+  },[]);
   return <section id="downloads" className="lp-downloads" aria-labelledby="lp-downloads-title">
     <div className="lp-downloads-heading">
       <h2 id="lp-downloads-title">Download Pico</h2>
@@ -82,8 +102,8 @@ function DownloadsSection(){
         <div className="lp-download-group" key={platform}>
           <div className="lp-download-group-header"><Icon size={19} aria-hidden="true"/><h3>{platform}</h3></div>
           <div className="lp-download-options">
-            {files.map(file=><a className="lp-download-option" key={file.name} href={'/downloads/'+file.name} aria-label={'Download Pico '+file.format+' for '+platform}>
-              <span className="lp-download-copy"><strong>{file.format}</strong></span>
+            {files.map(file=><a className="lp-download-option" key={file.name} href={'/downloads/'+file.name} aria-label={'Download '+file.name+' for '+platform}>
+              <span className="lp-download-copy"><strong>{file.name}</strong><small>{formatDownloadSize(currentSizes[file.name]??file.sizeBytes)}</small></span>
               <Download className="lp-download-arrow" size={17} aria-hidden="true"/>
             </a>)}
           </div>
