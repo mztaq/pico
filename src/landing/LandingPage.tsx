@@ -105,7 +105,7 @@ export default function LandingPage() {
   return <div className="lp" data-landing-theme={mocha.id} style={landingStyle}><LandingCurves/><Navigation/><main id="home">
     <section className="lp-hero lp-container">
       <div className="lp-hero-copy">
-        <h1>Pico.</h1>
+        <h1>By the<br/><span className="lp-hero-highlight">Pico Team.</span></h1>
         <p>Built by Students, for Students</p>
         <div className="lp-hero-actions">
           <a className="lp-button lp-button-primary" href={APP}>Use Pico in browser <ArrowUpRight size={17}/></a>
