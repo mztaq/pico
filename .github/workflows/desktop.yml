@@ -153,7 +153,9 @@ jobs:
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
           gh release upload "$TAG" release-staging/* --clobber --repo "$GITHUB_REPOSITORY"
           for obsolete in Pico_x64_en-US.msi Pico_aarch64.dmg Pico_x64.dmg Pico_amd64.deb; do
-            gh release delete-asset "$TAG" "$obsolete" --yes --repo "$GITHUB_REPOSITORY"
+            if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fxq "$obsolete"; then
+              gh release delete-asset "$TAG" "$obsolete" --yes --repo "$GITHUB_REPOSITORY"
+            fi
           done
           actual=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | sort)
           expected=$(printf '%s\n' Pico_x64-setup.exe Pico_universal.dmg Pico_amd64.AppImage | sort)
