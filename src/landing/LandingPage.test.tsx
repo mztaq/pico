@@ -55,8 +55,10 @@ describe('Pico landing page', () => {
     expect(container.querySelector('#lp-features-title')?.textContent).toContain('Pico includes tools for coding');
     expect(container.querySelector('#about')).toBeNull();
     expect(container.querySelector('.lp-feature-card')).toBeNull();
-    expect([...container.querySelectorAll('main > section')].map(section=>section.id))
-      .toEqual(['','features','downloads']);
+    const layout=container.querySelector('main > .lp-tools-downloads');
+    expect(layout).not.toBeNull();
+    expect([...layout!.children].map(section=>section.id)).toEqual(['features','downloads']);
+    expect([...container.querySelectorAll('main > section')]).toHaveLength(2);
   });
   it('reuses the app home-screen curves without extra download text', async () => {
     await render();
@@ -68,6 +70,13 @@ describe('Pico landing page', () => {
     expect(container.textContent).not.toContain('The desktop app requires an internet connection.');
     expect(container.querySelector('.lp-download-note')).toBeNull();
     expect(container.querySelector('a[href="#about"]')).toBeNull();
+  });
+  it('keeps navigation and footer text intact without duplicate content', async () => {
+    await render();
+    expect(container.querySelector('.lp-header')).not.toBeNull();
+    expect(container.querySelector('.lp-nav-start')?.textContent).toContain('Open app');
+    expect(container.querySelector('footer small')?.textContent)
+      .toBe('© 2026 Pico Development Team. All rights reserved.');
   });
   it('lists all six platform-specific installers', async () => {
     await render();
