@@ -1,20 +1,26 @@
 name: Desktop installers
 
-# Web changes deploy through Cloudflare and appear in the desktop apps on the
-# next load. Build native installers when needed, but never publish a new release.
-# Workflow artifacts remain available for manual native update testing.
+# Build one installer for each operating system. Existing public release is
+# never replaced automatically by a pull request, merge, or web-only change.
 on:
   workflow_dispatch:
+    inputs:
+      publish_existing_release:
+        type: boolean
+        description: 'After verifying CI, replace installers in existing desktop-v0.1.0-build.10 release only'
+        default: false
   pull_request:
     paths:
       - 'src-tauri/**'
       - 'public/pico-logo.svg'
+      - 'scripts/stage-desktop-artifact.mjs'
       - '.github/workflows/desktop.yml'
   push:
     branches: [main]
     paths:
       - 'src-tauri/**'
       - 'public/pico-logo.svg'
+      - 'scripts/stage-desktop-artifact.mjs'
       - '.github/workflows/desktop.yml'
 
 permissions:
@@ -29,49 +35,114 @@ jobs:
         include:
           - name: Windows
             runner: windows-latest
-            bundles: msi nsis
-          - name: macOS-Apple-Silicon
+            platform: windows
+            bundles: nsis
+            target_flags: ''
+          - name: macOS
             runner: macos-latest
+            platform: macos
             bundles: dmg
-          - name: macOS-Intel
-            runner: macos-15-intel
-            bundles: dmg
+            target_flags: '--target universal-apple-darwin'
           - name: Linux
             runner: ubuntu-22.04
-            bundles: deb appimage
+            platform: linux
+            bundles: appimage
+            target_flags: ''
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Install Linux WebKit dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
-
       - uses: dtolnay/rust-toolchain@stable
+      - name: Enable universal Apple Silicon and Intel build
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Install Tauri CLI
         run: npm install --global @tauri-apps/cli@^2
-
-      - name: Generate Pico desktop icons
+      - name: Generate desktop icons
         run: tauri icon public/pico-logo.svg --output src-tauri/icons
-
-      - name: Build desktop installers
-        run: tauri build --bundles ${{ matrix.bundles }}
+      - name: Build one desktop installer
+        run: tauri build --bundles ${{ matrix.bundles }} ${{ matrix.target_flags }}
         env:
-          # Development builds are not Apple-notarized.
-          APPLE_SIGNING_IDENTITY: "-"
-
+          APPLE_SIGNING_IDENTITY: '-'
+      - name: Stage one platform installer
+        run: node scripts/stage-desktop-artifact.mjs ${{ matrix.platform }}
       - uses: actions/upload-artifact@v4
         with:
-          name: pico-${{ matrix.name }}-${{ github.sha }}
-          path: src-tauri/target/release/bundle/**
+          name: pico-${{ matrix.platform }}-${{ github.sha }}
+          path: release-staging/*
           if-no-files-found: error
           retention-days: 14
+
+  # Manual main-branch action only. NEVER create a second release or publish
+  # a PR's binaries. Keep an artifact backup of the currently published files.
+  publish-existing-release:
+    name: Update the existing single Pico release
+    needs: build-desktop
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_existing_release == true && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: pico-existing-desktop-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pico-*
+          path: release-staging
+          merge-multiple: true
+      - name: Verify three built assets
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          expected={'Pico_x64-setup.exe','Pico_universal.dmg','Pico_amd64.AppImage'}
+          files={p.name for p in Path('release-staging').iterdir() if p.is_file()}
+          assert files==expected, f'Expected exactly 3 OS installers, got {files}'
+          for p in Path('release-staging').iterdir():
+              assert p.stat().st_size > 0, f'Empty installer: {p}'
+              print(p.name, p.stat().st_size)
+          PY
+      - name: Back up old assets from existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: desktop-v0.1.0-build.10
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+          mkdir -p previous-release-assets
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir previous-release-assets --pattern 'Pico_*'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: previous-pico-release-assets
+          path: previous-release-assets/*
+          if-no-files-found: error
+          retention-days: 30
+      - name: Replace only the existing release's installer assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: desktop-v0.1.0-build.10
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only the existing release is modified, never created or deleted.
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+          gh release upload "$TAG" release-staging/* --clobber --repo "$GITHUB_REPOSITORY"
+          for obsolete in Pico_x64_en-US.msi Pico_aarch64.dmg Pico_x64.dmg Pico_amd64.deb; do
+            gh release delete-asset "$TAG" "$obsolete" --yes --repo "$GITHUB_REPOSITORY"
+          done
+          actual=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | sort)
+          expected=$(printf '%s\n' Pico_x64-setup.exe Pico_universal.dmg Pico_amd64.AppImage | sort)
+          test "$actual" = "$expected"
+          echo "Existing $TAG contains exactly one Windows, one universal macOS, and one Linux installer."
