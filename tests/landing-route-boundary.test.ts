@@ -21,10 +21,10 @@ describe('Landing route migration leaves backend services available', () => {
     expect(handler).toContain('BUG_REPORT_TO');
     expect(handler).toContain('ctx.env.DB');
   });
-  it('keeps the landing CPU slider adjustable at a 3.7 GHz default without changing app CPU controls', () => {
+  it('keeps the landing CPU slider adjustable at a 4.7 GHz default without changing app CPU controls', () => {
     const cpu=read('src/cpu/CpuStudio.tsx');
     const css=read('src/landing/landing.css');
-    expect(cpu).toContain('landingPreview?3.7:2');
+    expect(cpu).toContain('landingPreview?4.7:2');
     expect(cpu).toContain('max="9.2"');
     expect(cpu).toContain('step=".1"');
     expect(cpu).toContain('{clock.toFixed(1)} GHz');
