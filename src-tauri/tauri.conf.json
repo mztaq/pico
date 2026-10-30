@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "dev.picompiler.pico",
   "build": {
-    "frontendDist": "https://picompiler.pages.dev"
+    "frontendDist": "https://picompiler.pages.dev/app"
   },
   "app": {
     "windows": [
