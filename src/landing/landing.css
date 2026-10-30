@@ -181,13 +181,14 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 .lp-download-group-header h3{margin:0;color:var(--lp-text);font-size:15px;font-weight:700}
 .lp-download-options{display:grid;gap:9px;min-width:0}
 .lp-download-option{
-  display:flex;align-items:center;gap:12px;min-width:0;min-height:48px;
+  display:flex;align-items:center;gap:12px;min-width:0;min-height:64px;
   padding:12px 14px;background:var(--lp-panel);border:1px solid var(--lp-border);
   border-radius:8px;transition:border-color .18s ease,background-color .18s ease;
 }
 .lp-download-option:hover,.lp-download-option:focus-visible{background:var(--lp-panel-raised);border-color:var(--lp-accent)}
 .lp-download-copy{display:flex;flex-direction:column;flex:1;min-width:0}
-.lp-download-copy strong{color:var(--lp-text);font-size:13px;font-weight:600}
+.lp-download-copy strong{color:var(--lp-text);font-size:13px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.lp-download-copy small{color:var(--lp-muted);font-size:11px;line-height:1.5;margin-top:3px;font-variant-numeric:tabular-nums}
 .lp-download-arrow{flex-shrink:0;width:17px;height:17px;color:var(--lp-accent)}
 
 /* Minimal footer. No duplicate branding, links or decorative layout. */
