@@ -131,7 +131,21 @@ export const ADVANCED_WIRES = [
 export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landingPreview?:boolean}){
  const [mode,setMode]=useState<CpuMode>('normal');
  const [machine,setMachine]=useState<Machine>(()=>boot(DEFAULT_IMAGE));
- const [playing,setPlaying]=useState(()=>landingPreview && !(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches));
+ const [playing,setPlaying]=useState(false);
+ const previewRef=useRef<HTMLDivElement>(null);
+ const manualPlayback=useRef(false);
+ useEffect(()=>{
+  if(!landingPreview)return;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  const root=previewRef.current;
+  if(!root)return;
+  if(!('IntersectionObserver' in window)){setPlaying(true);return;}
+  const observer=new IntersectionObserver(([entry])=>{
+   if(!manualPlayback.current)setPlaying(Boolean(entry?.isIntersecting));
+  },{threshold:.06});
+  observer.observe(root);
+  return()=>observer.disconnect();
+ },[landingPreview]);
  const historyRef=useRef<{machine:Machine;interrupt:ReturnType<typeof initialInterrupt>}[]>([]);
  const [historyLength,setHistoryLength]=useState(0);
  const [interrupt,setInterrupt]=useState(initialInterrupt);
@@ -200,7 +214,7 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
  const memoryActive=activeUnits.has('RAM');
  const renderedBoxes=BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=>mode==='normal'&&NORMAL_LAYOUT[box.key]?{...box,...NORMAL_LAYOUT[box.key]}:box);
- return <div className={landingPreview?"cpu-app cpu-embedded":"cpu-app"} style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
+ return <div ref={previewRef} className={landingPreview?"cpu-app cpu-embedded":"cpu-app"} style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
   <header className="cpu-topbar topbar pico-appbar">
    <div className="pico-appbar-lead cpu-brand"><button className="toolbar-button home-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></div><span className="pico-appbar-sep" aria-hidden="true">/</span><strong className="brand-subtitle pico-appbar-tool">CPU Studio</strong></div>
    <div className="topbar-spacer"/>
@@ -214,7 +228,7 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
    <div className="cpu-playback" data-cpu-tour="controls">
     <button aria-label="Step backward one CPU micro-operation" onClick={back} disabled={playing||historyLength===0}><StepBack size={16}/> Back</button>
     <button aria-label="Step forward one CPU micro-operation" onClick={advance} disabled={playing||modeDone}><StepForward size={16}/> Step</button>
-    <button className="cpu-play" onClick={()=>setPlaying(v=>!v)} disabled={Boolean(machine.error)}>{playing?<><Pause size={16}/> Pause</>:<><Play size={16}/> Run</>}</button>
+    <button className="cpu-play" onClick={()=>{manualPlayback.current=true;setPlaying(v=>!v);}} disabled={Boolean(machine.error)}>{playing?<><Pause size={16}/> Pause</>:<><Play size={16}/> Run</>}</button>
     <button onClick={()=>reset()}><RotateCcw size={16}/> Reset</button>
     {mode==='advanced'&&<button aria-label="Request CPU interrupt" disabled={machine.halted||interrupt.pending||interrupt.stage>0} onClick={()=>{const pending=requestInterrupt(interruptRef.current);interruptRef.current=pending;setInterrupt(pending);}}>Trigger interrupt</button>}
    </div>
