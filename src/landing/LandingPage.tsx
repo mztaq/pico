@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal, FileDown } from 'lucide-react';
 import './landing.css';
 
@@ -20,15 +20,8 @@ function Navigation() {
     <a href={APP} className="lp-nav-mobile-cta">Open app <ArrowUpRight size={16}/></a>
   </nav><div className="lp-nav-actions"><a href={APP} className="lp-nav-start">Open app <ArrowUpRight size={15}/></a><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header>;
 }
-function Reveal({children,className=''}:{children:React.ReactNode;className?:string}) {
-  const ref=useRef<HTMLDivElement>(null);
-  useEffect(()=>{
-    if(!('IntersectionObserver' in window)){ref.current?.classList.add('lp-visible');return;}
-    const obs=new IntersectionObserver(entries=>{for(const e of entries){if(e.isIntersecting){e.target.classList.add('lp-visible');obs.unobserve(e.target)}}},{threshold:.09,rootMargin:'0px 0px -35px 0px'});
-    if(ref.current)obs.observe(ref.current);
-    return()=>obs.disconnect();
-  },[]);
-  return <div className={'lp-reveal '+className} ref={ref}>{children}</div>;
+function Reveal({children,className=''}:{children:ReactNode;className?:string}) {
+  return <div className={className}>{children}</div>;
 }
 const installerGroups=[
   {platform:'Windows',icon:Monitor,files:[
