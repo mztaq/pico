@@ -86,12 +86,14 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 
 /* Hero has a single message and one authentic, running product example. */
 .lp-hero{
+  /* Keep the simulator secondary to the message, not the dominant hero element. */
+  max-width:1200px;
   display:grid;
-  grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr);
+  grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);
   align-items:center;
-  gap:38px;
-  padding-block:100px 104px;
-  min-height:590px;
+  gap:48px;
+  padding-block:86px 90px;
+  min-height:540px;
 }
 .lp-hero-copy{min-width:0}
 .lp h1{margin:0 0 24px;font-size:clamp(37px,3.9vw,57px);line-height:1.13;letter-spacing:-2.8px;font-weight:700}
@@ -140,7 +142,8 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 .lp .cpu-embedded .cpu-counter{margin:0;padding:0;border:0;background:transparent;color:#9ba0bb;font-size:10px}
 .lp .cpu-embedded .cpu-workspace-main{display:block;padding:10px;min-height:0}
 .lp .cpu-embedded .cpu-diagram-scroll{display:flex;justify-content:flex-start;align-items:center;width:100%;padding:0;background:transparent;border:0;overflow-x:auto;scrollbar-width:thin}
-.lp .cpu-embedded .cpu-diagram{display:block;max-width:1190px;min-width:720px;width:100%;height:auto;max-height:none;aspect-ratio:1190/558;text-rendering:geometricPrecision;shape-rendering:geometricPrecision}
+.lp .cpu-embedded .cpu-diagram{display:block;max-width:1190px;min-width:0;width:100%;height:auto;max-height:none;aspect-ratio:1190/558;text-rendering:geometricPrecision;shape-rendering:geometricPrecision}
+.lp .cpu-embedded .cpu-diagram.cpu-has-focus .cpu-dimmed{opacity:.38}
 .lp .cpu-embedded .cpu-block-title{font-size:15px}
 .lp .cpu-embedded .cpu-block-value{font-size:15px}
 .lp .cpu-embedded .cpu-ram-row text{font-size:15px}
@@ -196,12 +199,12 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 .lp-footer small{display:block;color:#9ba0bb;font-size:14px;line-height:1.6;letter-spacing:.1px}
 
 /* Stack at tablet widths. The mobile menu stays attached to the sticky header. */
-@media(max-width:1050px){
+@media(max-width:1150px){
   .lp-container{width:calc(100% - 56px)}
   .lp-hero{grid-template-columns:1fr;gap:38px;min-height:0;padding:72px 0 85px}
   .lp-hero-copy{max-width:720px}
   .lp h1{font-size:clamp(48px,6vw,67px)}
-  .lp-hero-cpu{max-width:790px;width:100%}
+  .lp-hero-cpu{max-width:700px;width:100%}
   .lp-tools-downloads{gap:78px;padding-block:72px 84px}
   .lp-downloads{padding-top:68px}
 }
