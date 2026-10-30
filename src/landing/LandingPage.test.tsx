@@ -12,6 +12,7 @@ let container: HTMLDivElement;
 let root: Root;
 beforeEach(() => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  vi.stubGlobal('fetch',vi.fn().mockRejectedValue(new Error('Release metadata unavailable')));
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -19,6 +20,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   container.remove();
+  vi.unstubAllGlobals();
 });
 async function render() { await act(async () => root.render(<LandingPage />)); }
 describe('Pico landing page', () => {
@@ -119,9 +121,27 @@ describe('Pico landing page', () => {
       'Pico_aarch64.dmg','Pico_x64.dmg',
       'Pico_amd64.deb','Pico_amd64.AppImage',
     ];
-    for(const file of expected){
-      expect(container.querySelector('a[href="/downloads/'+file+'"]')).not.toBeNull();
+    const sizes=['1.88 MB','2.85 MB','2.75 MB','2.93 MB','2.88 MB','81.30 MB'];
+    for(const [index,file] of expected.entries()){
+      const link=container.querySelector('a[href="/downloads/'+file+'"]');
+      expect(link).not.toBeNull();
+      expect(link?.querySelector('strong')?.textContent).toBe(file);
+      expect(link?.querySelector('small')?.textContent).toBe(sizes[index]);
     }
+    expect(container.textContent).not.toContain('EXE installer');
+    expect(container.textContent).not.toContain('MSI installer');
+  });
+  it('updates displayed sizes from the latest release without changing download links',async()=>{
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue({
+      ok:true,
+      json:async()=>({assets:[{name:'Pico_x64-setup.exe',size:2000000}]}),
+    }));
+    await render();
+    await act(async()=>{await Promise.resolve();await Promise.resolve();});
+    const exe=container.querySelector('a[href="/downloads/Pico_x64-setup.exe"]');
+    expect(exe?.querySelector('strong')?.textContent).toBe('Pico_x64-setup.exe');
+    expect(exe?.querySelector('small')?.textContent).toBe('2.00 MB');
+    expect(container.querySelector('a[href="/downloads/Pico_x64_en-US.msi"] small')?.textContent).toBe('2.85 MB');
   });
   it('shows real CPU Studio, without mock product or decorative feature previews', async () => {
     await render();
