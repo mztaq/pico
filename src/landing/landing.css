@@ -30,11 +30,11 @@ html,body{background:#08070d}
 .lp-menu,.lp-nav-mobile-cta{display:none!important}
 
 /* Main heading. No fade-in or decorative orbit effects. */
-.lp-hero{display:flex;align-items:center;min-height:460px;padding:100px 0 105px}
-.lp-hero-copy{width:100%;max-width:850px}
-.lp h1{font-size:clamp(48px,6.3vw,80px);line-height:1.09;letter-spacing:-3.9px;font-weight:700;margin:0 0 25px}
+.lp-hero{display:grid;grid-template-columns:minmax(0,.90fr) minmax(0,1.10fr);gap:52px;align-items:center;min-height:550px;padding:85px 0 95px}
+.lp-hero-copy{width:100%;min-width:0;max-width:600px}
+.lp h1{font-size:clamp(42px,4.4vw,64px);line-height:1.11;letter-spacing:-2.8px;font-weight:700;margin:0 0 25px}
 .lp h1 span{color:#b57cf1}
-.lp-hero-copy>p{font-size:16px;line-height:1.85;color:var(--lp-muted);max-width:620px;margin:0 0 30px}
+.lp-hero-copy>p{font-size:15px;line-height:1.85;color:var(--lp-muted);max-width:490px;margin:0 0 30px}
 .lp-hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .lp-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:47px;padding:0 19px;border-radius:7px;font-weight:700;font-size:12px;transition:background-color .16s ease,border-color .16s ease}
 .lp-button-primary{background:#9850df;color:#fff!important}
@@ -45,7 +45,7 @@ html,body{background:#08070d}
 /* Useful, text-first features. */
 .lp h2{font-size:clamp(33px,4.3vw,52px);font-weight:700;line-height:1.15;letter-spacing:-2px;margin:0}
 .lp-features{padding:85px 0 100px;border-top:1px solid #282030}
-.lp-section-heading,.lp-downloads-heading,.lp-cpu-heading{display:flex;align-items:end;justify-content:space-between;gap:28px;margin-bottom:35px}
+.lp-section-heading,.lp-downloads-heading{display:flex;align-items:end;justify-content:space-between;gap:28px;margin-bottom:35px}
 .lp-section-heading>p,.lp-downloads-heading>p{max-width:440px;margin:0 0 4px;color:var(--lp-muted);font-size:13px;line-height:1.75}
 .lp-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--lp-line);border-radius:10px;overflow:hidden}
 .lp-feature-card{padding:28px 27px 30px;min-height:155px;border-right:1px solid var(--lp-line);border-bottom:1px solid var(--lp-line);background:#0c0a12}
@@ -54,41 +54,25 @@ html,body{background:#08070d}
 .lp-feature-card h3{font-size:17px;letter-spacing:-.4px;font-weight:700;margin:0 0 12px}
 .lp-feature-card p{font-size:12px;color:#a39aad;line-height:1.85;margin:0;max-width:350px}
 
-/* The actual CPU Studio UI and simulation, not a decorative imitation. */
-.lp-cpu-section{padding:80px 0 92px;background:#0c0913;border-top:1px solid #282030;border-bottom:1px solid #282030}
-.lp-cpu-heading{margin-bottom:24px}
-.lp-text-link{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#c89afd!important}
-.lp-cpu-live{width:100%;min-width:0;border:1px solid #473453;border-radius:11px;overflow:hidden;background:#0d0915}
-.lp-cpu-loading{padding:90px 20px;text-align:center;color:var(--lp-muted)}
-.lp .cpu-embedded{
-  height:auto;min-height:0;overflow:visible;
-  background:#0e0b15;color:#f5f3fa;
-  display:flex;flex-direction:column;
-}
-.lp .cpu-embedded .cpu-topbar{display:none}
-.lp .cpu-embedded .cpu-controls{
-  padding:13px 18px;gap:12px;
-  background:#16101f;border-bottom:1px solid #392b49;
-  justify-content:flex-start
-}
-.lp .cpu-embedded .cpu-controls :is(button,label){color:var(--ds-text)}
-.lp .cpu-embedded .cpu-controls .cpu-play{color:var(--ds-on-accent)}
-.lp .cpu-embedded .cpu-heading{display:none}
+/* Real CPU Studio in the right half of the hero. No mockup or 3D animation. */
+.lp-hero-cpu{min-width:0;border:1px solid #3a2c49;border-radius:10px;overflow:hidden;background:#0e0b15}
+.lp-hero-cpu-bar{display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:43px;padding:0 15px;color:#eee4fb;background:#171020;border-bottom:1px solid #352942}
+.lp-hero-cpu-bar>span{font-size:13px;font-weight:700}
+.lp-hero-cpu-bar>a{display:inline-flex;align-items:center;gap:6px;color:#c9a2ef;font-size:11px;font-weight:600}
+.lp-hero-cpu-bar>a:hover{color:#ead4ff}
+.lp-cpu-live{min-width:0;overflow:hidden;background:#0e0b15}
+.lp-cpu-loading{padding:100px 16px;text-align:center;color:var(--lp-muted);font-size:12px}
+.lp .cpu-embedded{height:auto;min-height:0;overflow:visible;background:#0e0b15;color:#f5f3fa;display:flex;flex-direction:column}
+.lp .cpu-embedded .cpu-topbar,.lp .cpu-embedded .cpu-heading,.lp .cpu-embedded .cpu-information{display:none}
 .lp .cpu-embedded .cpu-content{height:auto;min-height:0;overflow:visible}
-.lp .cpu-embedded .cpu-workspace-main{
-  display:block;padding:18px;min-height:0
-}
-.lp .cpu-embedded .cpu-diagram-scroll{
-  width:100%;padding:0;display:flex;align-items:center;justify-content:center;
-  border:0;background:transparent;overflow-x:auto
-}
-.lp .cpu-embedded .cpu-diagram{
-  display:block;width:100%;min-width:0;height:auto;max-height:none;
-  aspect-ratio:1190/558;max-width:1190px
-}
-.lp .cpu-embedded .cpu-information{display:none}
-.lp .cpu-embedded .cpu-speed{flex-wrap:wrap}
-.lp .cpu-embedded .cpu-counter{margin-left:auto}
+.lp .cpu-embedded .cpu-controls{padding:9px 12px;gap:8px;align-items:center;justify-content:space-between;background:#15101e;border-bottom:1px solid #382b48}
+.lp .cpu-embedded .cpu-mode-switch,.lp .cpu-embedded .cpu-playback>button:not(.cpu-play),.lp .cpu-embedded .cpu-speed{display:none}
+.lp .cpu-embedded .cpu-playback{padding:0;border:0}
+.lp .cpu-embedded .cpu-playback .cpu-play{font-size:11px;padding:7px 11px;min-height:29px;color:var(--ds-on-accent)}
+.lp .cpu-embedded .cpu-counter{margin:0;color:#bbb0cb;border:0;background:none;padding:0;font-size:10px}
+.lp .cpu-embedded .cpu-workspace-main{display:block;padding:11px;min-height:0}
+.lp .cpu-embedded .cpu-diagram-scroll{display:flex;align-items:center;justify-content:center;width:100%;padding:0;border:0;background:transparent;overflow-x:auto}
+.lp .cpu-embedded .cpu-diagram{display:block;width:100%;min-width:0;height:auto;max-height:none;aspect-ratio:1190/558;max-width:1190px}
 .lp .cpu-embedded .cpu-flow-token circle{filter:none}
 
 /* Actual desktop files: links are backed by Pages downloads, including the AppImage. */
@@ -124,8 +108,10 @@ html,body{background:#08070d}
 @media(max-width:1000px){
   .lp-container{width:calc(100% - 56px)}
   .lp-download-groups{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .lp-hero{min-height:400px;padding:80px 0}
-  .lp .cpu-embedded .cpu-counter{width:100%;margin:0}
+  .lp-hero{grid-template-columns:1fr;min-height:0;padding:75px 0;gap:38px}
+  .lp-hero-copy{max-width:750px}
+  .lp h1{font-size:clamp(45px,6vw,67px)}
+  .lp-hero-cpu{width:100%}
 }
 @media(max-width:700px){
   .lp-container{width:calc(100% - 38px)}
@@ -136,24 +122,21 @@ html,body{background:#08070d}
   .lp-nav-start{display:none}
   .lp-nav-mobile-cta{display:flex!important;align-items:center;gap:9px}
   .lp-menu{display:grid!important;place-items:center;background:#1b1425;border:1px solid #513663;color:#eee2fa;border-radius:6px;width:39px;height:36px}
-  .lp-hero{padding:70px 0 80px;min-height:auto}
+  .lp-hero{padding:65px 0 70px;gap:30px}
   .lp h1{font-size:clamp(43px,10vw,63px);line-height:1.12;letter-spacing:-2.5px}
   .lp-hero-copy>p{font-size:14px}
   .lp-features,.lp-downloads,.lp-about{padding:60px 0 68px}
-  .lp-cpu-section{padding:65px 0 75px}
-  .lp-section-heading,.lp-downloads-heading,.lp-cpu-heading{display:block;margin-bottom:25px}
+  .lp-section-heading,.lp-downloads-heading{display:block;margin-bottom:25px}
   .lp-section-heading>p,.lp-downloads-heading>p{margin-top:12px}
-  .lp-cpu-heading>a{margin-top:14px}
   .lp-feature-grid{grid-template-columns:1fr}
   .lp-feature-card{min-height:0;padding:22px 19px;border-right:0!important;border-bottom:1px solid var(--lp-line)!important}
   .lp-feature-card:last-child{border-bottom:0!important}
   .lp-download-groups{grid-template-columns:1fr}
   .lp-about-layout{grid-template-columns:1fr;gap:20px}
   .lp .cpu-embedded .cpu-workspace-main{padding:8px}
-  .lp .cpu-embedded .cpu-diagram-scroll{justify-content:flex-start}
-  .lp .cpu-embedded .cpu-diagram{min-width:700px;width:700px}
-  .lp .cpu-embedded .cpu-controls{padding:12px;gap:10px}
-  .lp .cpu-embedded .cpu-playback{padding:0;border:0;flex-wrap:wrap}
+  .lp .cpu-embedded .cpu-diagram-scroll{justify-content:flex-start;touch-action:pan-x}
+  .lp .cpu-embedded .cpu-diagram{min-width:630px;width:630px}
+  .lp .cpu-embedded .cpu-controls{padding:9px 12px;gap:10px}
   .lp-footer-top{display:block;padding-bottom:30px}
   .lp-footer-top nav{justify-content:flex-start;margin-top:23px;gap:14px 20px}
 }
