@@ -6,7 +6,7 @@ const read = (path: string) => readFileSync(new URL('../' + path, import.meta.ur
 it('includes installable Pico manifest and offline fallback', () => {
   const manifest = JSON.parse(read('public/manifest.webmanifest')) as {name:string;start_url:string;icons:{src:string}[]};
   expect(manifest.name).toContain('Pico');
-  expect(manifest.start_url).toBe('/');
+  expect(manifest.start_url).toBe('/app');
   expect(manifest.icons.some(icon => icon.src === '/pico-logo.svg')).toBe(true);
   expect(read('public/offline.html')).toContain('Pico is offline');
 });
