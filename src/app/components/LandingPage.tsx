@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, Binary, ChevronRight, Cpu, Download, ExternalLink, GitBranch, Laptop, Monitor, Terminal, Workflow } from 'lucide-react';
+import { ArrowDown, ArrowRight, Binary, ChevronRight, Cpu, Download, ExternalLink, Laptop, Monitor, Terminal, Workflow } from 'lucide-react';
 import { useEffect } from 'react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
