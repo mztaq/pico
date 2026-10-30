@@ -33,8 +33,19 @@ describe('Pico landing page', () => {
     await render();
     const links=[...container.querySelectorAll('a')];
     expect(links.find(a=>a.textContent?.includes('Use Pico in browser'))?.getAttribute('href')).toBe('/app');
-    expect(links.find(a=>a.textContent?.includes('Desktop downloads'))?.getAttribute('href')).toBe('#downloads');
-    expect(links.find(a=>a.textContent?.includes('Pico Team'))?.getAttribute('href')).toBe('/app#team');
+    expect(links.find(a=>a.textContent?.includes('Download for desktop'))?.getAttribute('href')).toBe('#downloads');
+    expect(links.find(a=>a.textContent?.includes('Meet the team'))?.getAttribute('href')).toBe('/app#team');
+  });
+  it('orders tools as three deliberate pairs without placeholder copy', async () => {
+    await render();
+    const groups=[...container.querySelectorAll('.lp-feature-group')];
+    expect(groups).toHaveLength(3);
+    expect(groups.map(group=>group.querySelector('h3')?.textContent)).toEqual(['Programming','Visual tools','Computer systems']);
+    expect(groups.map(group=>group.querySelectorAll('.lp-feature-item').length)).toEqual([2,2,2]);
+    expect(container.textContent).not.toContain('Six workspaces for programming, algorithms and computer architecture.');
+    expect(container.querySelector('.lp-feature-card')).toBeNull();
+    expect([...container.querySelectorAll('main > section')].map(section=>section.id))
+      .toEqual(['','features','downloads','about']);
   });
   it('lists all six platform-specific installers', async () => {
     await render();
