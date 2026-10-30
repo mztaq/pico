@@ -76,6 +76,17 @@ export default function LandingPage() {
           <a className="lp-button lp-button-secondary" href={DOWNLOADS}>Desktop downloads <Download size={17}/></a>
         </div>
       </div>
+      <div className="lp-hero-cpu" id="cpu-studio">
+        <div className="lp-hero-cpu-bar">
+          <span>CPU Studio</span>
+          <a href={APP}>Open full studio <ArrowUpRight size={14}/></a>
+        </div>
+        <div className="lp-cpu-live" aria-label="Live Pico CPU Studio simulation">
+          <Suspense fallback={<div className="lp-cpu-loading" role="status">Loading CPU Studio…</div>}>
+            <LiveCpuStudio landingPreview onHome={() => window.location.assign(APP)} />
+          </Suspense>
+        </div>
+      </div>
     </section>
     <section id="features" className="lp-features lp-container">
       <Reveal className="lp-section-heading">
@@ -88,19 +99,6 @@ export default function LandingPage() {
         <Reveal className="lp-feature-card"><h3>Logic Sim</h3><p>Connect logic gates and wires, then inspect live signals in circuits.</p></Reveal>
         <Reveal className="lp-feature-card"><h3>CPU Studio</h3><p>Follow the fetch–decode–execute cycle through working processor registers and memory.</p></Reveal>
         <Reveal className="lp-feature-card"><h3>Binary Lab</h3><p>Explore binary, hexadecimal, logical shifts, overflow and two's complement.</p></Reveal>
-      </div>
-    </section>
-    <section id="cpu-studio" className="lp-cpu-section">
-      <div className="lp-container">
-        <Reveal className="lp-cpu-heading">
-          <h2>CPU Studio</h2>
-          <a href={APP} className="lp-text-link">Open Pico <ArrowUpRight size={16}/></a>
-        </Reveal>
-        <div className="lp-cpu-live" aria-label="Interactive, running Pico CPU Studio">
-          <Suspense fallback={<div className="lp-cpu-loading" role="status">Loading CPU Studio…</div>}>
-            <LiveCpuStudio landingPreview onHome={() => window.location.assign(APP)} />
-          </Suspense>
-        </div>
       </div>
     </section>
     <DownloadsSection/>
