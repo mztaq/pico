@@ -29,12 +29,20 @@ describe('Pico landing page', () => {
     expect(container.textContent).not.toContain('Curiosity looks');
     expect(container.textContent).not.toContain('Learn by building');
   });
-  it('links to the browser app, team and download section', async () => {
+  it('links to the browser app and download section', async () => {
     await render();
     const links=[...container.querySelectorAll('a')];
     expect(links.find(a=>a.textContent?.includes('Use Pico in browser'))?.getAttribute('href')).toBe('/app');
     expect(links.find(a=>a.textContent?.includes('Download for desktop'))?.getAttribute('href')).toBe('#downloads');
-    expect(links.find(a=>a.textContent?.trim()==='Team')?.getAttribute('href')).toBe('/app#team');
+  });
+  it('uses only one small copyright line in the footer', async () => {
+    await render();
+    const footer=container.querySelector('footer.lp-footer');
+    expect(footer?.querySelector('small')?.textContent)
+      .toBe('© 2026 Pico Development Team. All rights reserved.');
+    expect(footer?.querySelectorAll('a')).toHaveLength(0);
+    expect(footer?.querySelector('img')).toBeNull();
+    expect(footer?.querySelector('nav')).toBeNull();
   });
   it('orders tools as three deliberate pairs without placeholder copy', async () => {
     await render();
