@@ -160,7 +160,7 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  });
  const [stepKey,setStepKey]=useState(0);
  const machineRef=useRef(machine);machineRef.current=machine;
- const theme=getTheme(landingPreview?'dracula':themeId);
+ const theme=getTheme(landingPreview?'catppuccin-mocha':themeId);
  const active=machine.frame.active;
  const transfer=machine.frame.transfer;
  const modeDone=machine.halted;
