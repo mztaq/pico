@@ -41,22 +41,49 @@ describe('Pico landing page', () => {
     expect(links.find(a=>a.textContent?.includes('Use Pico in browser'))?.getAttribute('href')).toBe('/app');
     expect(links.find(a=>a.textContent?.includes('Download for desktop'))?.getAttribute('href')).toBe('#downloads');
   });
-  it('compacts the navigation while scrolling down and restores it on upward scroll', async () => {
+  it('keeps navbar layout stable and ignores small scroll reversals', async () => {
     Object.defineProperty(window, 'scrollY', { configurable:true, writable:true, value:0 });
     await render();
     const navbar=container.querySelector('header.lp-header');
+    const slot=container.querySelector('.lp-header-slot');
+    expect(navbar?.parentElement).toBe(slot);
+    expect(slot?.children).toHaveLength(1);
     expect(navbar?.classList.contains('lp-header-compact')).toBe(false);
     await act(async () => {
       window.scrollY=200;
       window.dispatchEvent(new Event('scroll'));
     });
     expect(navbar?.classList.contains('lp-header-compact')).toBe(true);
+    // Small wheel or trackpad movements must not make the navbar bounce.
+    for(const y of [196,200,193,198,189,192]){
+      await act(async () => {
+        window.scrollY=y;
+        window.dispatchEvent(new Event('scroll'));
+      });
+      expect(navbar?.classList.contains('lp-header-compact')).toBe(true);
+    }
     await act(async () => {
       window.scrollY=150;
       window.dispatchEvent(new Event('scroll'));
     });
     expect(navbar?.classList.contains('lp-header-compact')).toBe(false);
-    window.scrollY=0;
+    for(const y of [153,149,155,151]){
+      await act(async () => {
+        window.scrollY=y;
+        window.dispatchEvent(new Event('scroll'));
+      });
+      expect(navbar?.classList.contains('lp-header-compact')).toBe(false);
+    }
+    await act(async () => {
+      window.scrollY=240;
+      window.dispatchEvent(new Event('scroll'));
+    });
+    expect(navbar?.classList.contains('lp-header-compact')).toBe(true);
+    await act(async () => {
+      window.scrollY=0;
+      window.dispatchEvent(new Event('scroll'));
+    });
+    expect(navbar?.classList.contains('lp-header-compact')).toBe(false);
   });
   it('enables smooth anchor navigation only while landing is mounted', async () => {
     await render();
