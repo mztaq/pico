@@ -55,7 +55,7 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 
 /* Navigation */
 .lp-header{
-  position:sticky;top:0;z-index:50;
+  position:sticky;top:0;z-index:50;width:100%;margin-inline:auto;border-radius:0;
   border-bottom:1px solid var(--lp-line);
   background:rgba(30,30,46,.94);
   -webkit-backdrop-filter:blur(12px);
@@ -74,9 +74,9 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 /* On downward scroll the header contracts. Scrolling upward restores its full size. */
 .lp-nav{transition:height .23s cubic-bezier(.2,.8,.2,1),gap .23s ease}
 .lp-brand,.lp-brand img,.lp-links,.lp-links>a,.lp-nav-start{transition:font-size .23s ease,width .23s ease,height .23s ease,gap .23s ease,padding .23s ease,background-color .2s ease}
-.lp-header{transition:background-color .23s ease,box-shadow .23s ease}
-.lp-header-compact{background:rgba(24,24,37,.96);box-shadow:0 6px 25px rgba(0,0,0,.13)}
-.lp-header-compact .lp-nav{height:56px}
+.lp-header{transition:width .36s cubic-bezier(.22,1,.36,1),top .36s cubic-bezier(.22,1,.36,1),border-radius .36s cubic-bezier(.22,1,.36,1),background-color .36s ease,box-shadow .36s ease}
+.lp-header-compact{width:min(980px,calc(100% - 42px));top:10px;border:1px solid var(--lp-border);border-radius:14px;background:rgba(24,24,37,.96);box-shadow:0 12px 32px rgba(0,0,0,.23)}
+.lp-header-compact .lp-nav{height:56px;width:calc(100% - 42px)}
 .lp-header-compact .lp-brand{font-size:19px}
 .lp-header-compact .lp-brand img{width:27px;height:27px}
 .lp-header-compact .lp-links{gap:27px}
@@ -127,8 +127,8 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 .lp .cpu-embedded .cpu-speed input{width:clamp(65px,8vw,118px);min-width:55px;accent-color:var(--lp-accent);cursor:pointer}
 .lp .cpu-embedded .cpu-counter{margin:0;padding:0;border:0;background:transparent;color:#9ba0bb;font-size:10px}
 .lp .cpu-embedded .cpu-workspace-main{display:block;padding:10px;min-height:0}
-.lp .cpu-embedded .cpu-diagram-scroll{display:flex;justify-content:center;align-items:center;width:100%;padding:0;background:transparent;border:0;overflow-x:auto}
-.lp .cpu-embedded .cpu-diagram{display:block;max-width:1190px;min-width:0;width:100%;height:auto;max-height:none;aspect-ratio:1190/558;text-rendering:geometricPrecision;shape-rendering:geometricPrecision}
+.lp .cpu-embedded .cpu-diagram-scroll{display:flex;justify-content:flex-start;align-items:center;width:100%;padding:0;background:transparent;border:0;overflow-x:auto;scrollbar-width:thin}
+.lp .cpu-embedded .cpu-diagram{display:block;max-width:1190px;min-width:720px;width:100%;height:auto;max-height:none;aspect-ratio:1190/558;text-rendering:geometricPrecision;shape-rendering:geometricPrecision}
 .lp .cpu-embedded .cpu-block-title{font-size:15px}
 .lp .cpu-embedded .cpu-block-value{font-size:15px}
 .lp .cpu-embedded .cpu-ram-row text{font-size:15px}
@@ -190,9 +190,10 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 @media(max-width:700px){
   .lp-container{width:calc(100% - 38px)}
   .lp-nav{height:66px}
-  .lp-header-compact .lp-nav{height:56px}
-  .lp-header-compact .lp-links{top:56px}
-  .lp-links{display:none;position:absolute;top:66px;left:0;right:0;background:#181825;border-bottom:1px solid var(--lp-line);padding:12px 20px 20px;z-index:30;flex-direction:column;gap:0}
+  .lp-header-compact{width:calc(100% - 24px);top:8px;border-radius:12px}
+  .lp-header-compact .lp-nav{height:56px;width:calc(100% - 28px)}
+  .lp-header-compact .lp-links{top:100%}
+  .lp-links{display:none;position:absolute;top:100%;left:0;right:0;background:#181825;border-bottom:1px solid var(--lp-line);padding:12px 20px 20px;z-index:30;flex-direction:column;gap:0}
   .lp-links.is-open{display:flex;align-items:stretch}
   .lp-links>a{padding:11px 7px;font-size:15px}
   .lp-nav-start{display:none}
@@ -205,7 +206,7 @@ html.pico-landing-scroll{scroll-padding-top:94px}
   .lp-button{font-size:11px;padding:0 13px}
   .lp .cpu-embedded .cpu-workspace-main{padding:8px}
   .lp .cpu-embedded .cpu-diagram-scroll{justify-content:flex-start;touch-action:pan-x}
-  .lp .cpu-embedded .cpu-diagram{width:620px;min-width:620px}
+  .lp .cpu-embedded .cpu-diagram{width:720px;min-width:720px}
   .lp .cpu-embedded .cpu-controls{padding:9px 11px;flex-wrap:wrap}
   .lp .cpu-embedded .cpu-speed{justify-content:flex-start;flex:1 1 auto}
   .lp .cpu-embedded .cpu-counter{display:none}
