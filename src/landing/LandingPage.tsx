@@ -25,7 +25,7 @@ const DOWNLOADS = '#downloads';
 const LiveCpuStudio = lazy(() => import('../cpu/CpuStudio').then(module => ({ default: module.CpuStudio })));
 
 function Brand() {
-  return <a className="lp-brand" href="#home" aria-label="Pico home"><img src="/pico-logo.svg" alt="" width="33" height="33"/></a>;
+  return <a className="lp-brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt="" width="33" height="33"/><span>Pico<span className="lp-brand-dot">.</span></span></a>;
 }
 function Navigation() {
   const [open,setOpen]=useState(false);
