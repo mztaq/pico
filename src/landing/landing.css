@@ -188,7 +188,7 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 .lp-download-option:hover,.lp-download-option:focus-visible{background:var(--lp-panel-raised);border-color:var(--lp-accent)}
 .lp-download-copy{display:flex;flex-direction:column;flex:1;min-width:0}
 .lp-download-copy strong{color:var(--lp-text);font-size:13px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
-.lp-download-copy small{color:var(--lp-muted);font-size:11px;line-height:1.5;margin-top:3px;font-variant-numeric:tabular-nums}
+.lp-download-copy small{color:var(--lp-muted);font-size:13px;font-weight:500;line-height:1.5;margin-top:3px;font-variant-numeric:tabular-nums}
 .lp-download-arrow{flex-shrink:0;width:17px;height:17px;color:var(--lp-accent)}
 
 /* Minimal footer. No duplicate branding, links or decorative layout. */
