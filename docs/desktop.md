@@ -18,17 +18,27 @@ contain a second copy of the compilers.
   workspace. Regular browsers still receive the landing page. This avoids a
   forced reinstall on launch URL migration.
 - **Desktop wrapper changes:** The GitHub Actions **Desktop installers**
-  workflow builds Windows, macOS and Linux installers when `src-tauri`, the
-  icon, or its workflow changes on `main`, or when started manually. Builds
-  are available as temporary Actions artifacts. **No new GitHub releases are
-  created automatically.** Native changes are not installed automatically;
-  updated installers would still need to be distributed and installed.
+  workflow builds Windows, macOS and Linux packages on relevant code changes
+  or manual dispatch. Every build stages exactly one installer per OS:
+  Windows NSIS EXE, universal macOS DMG and Linux AppImage. A universal DMG
+  supports both Apple Silicon and Intel. Builds are uploaded as temporary
+  Actions artifacts and do not automatically change GitHub Releases.
+- **Publishing:** Only a manual `workflow_dispatch` on `main`, with
+  `publish_existing_release` enabled and every platform build successful,
+  replaces assets on the **existing** `desktop-v0.1.0-build.10` release.
+  That job backs up its previous assets, uploads the new three installers,
+  deletes the superseded MSI, per-architecture DMGs and DEB, and verifies
+  exactly three assets. It never creates a second release. Run this only
+  after test/build checks are green.
 
 ## Releases and source archives
 
 The existing stable [Pico for Desktop release](https://github.com/mztaq/pico/releases/tag/desktop-v0.1.0-build.10)
-is kept as the single public installer download. Its existing Windows, macOS
-and Linux installer assets stay unchanged.
+remains the single public release. Until verified replacements are manually
+published, its existing six assets stay available, and the landing download
+cards continue showing the working legacy links. Once the universal DMG is
+published with the two other installers, the cards automatically switch
+to one installer per OS.
 
 The **Update desktop release source archives** workflow runs after every push
 to `main` (or manually on `main`) and force-moves the existing
@@ -49,9 +59,13 @@ dragging within those canvases uses pointer events.
 
 ## Installer outputs
 
-- Windows: `.msi` and NSIS `-setup.exe`
-- macOS: `.dmg` (Apple Silicon and Intel)
-- Linux: `.deb` and `.AppImage`
+- Windows: `Pico_x64-setup.exe` (NSIS)
+- macOS: `Pico_universal.dmg` (one file for Apple Silicon and Intel)
+- Linux: `Pico_amd64.AppImage` (x86-64 Linux)
+
+The older `.msi`, separate architecture-specific `.dmg` and `.deb`
+installers remain available only until the replacement files are verified
+and published to the existing release.
 
 The macOS and Windows builds are not signed/notarized for public distribution.
 They may show security warnings. Signing/notarization should be configured
@@ -64,7 +78,9 @@ Install Rust, the Tauri 2 prerequisites for your OS, Node.js and the Tauri CLI:
 ```sh
 npm install --global @tauri-apps/cli@^2
 tauri icon public/pico-logo.svg --output src-tauri/icons
-tauri build
+tauri build --bundles nsis    # Windows
+# tauri build --bundles dmg --target universal-apple-darwin   # macOS
+# tauri build --bundles appimage   # Linux
 ```
 
 The `src-tauri/icons` directory is generated from Pico's SVG and ignored by
