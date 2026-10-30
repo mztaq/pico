@@ -43,7 +43,7 @@ jobs:
           manifest = json.loads(Path('public/download-assets/manifest.json').read_text())
           import re
           deploy_log = Path(__import__('os').environ['RUNNER_TEMP'], 'pico-deployment.log').read_text()
-          match = re.search(r'https://[a-z0-9]+\\.picompiler\\.pages\\.dev', deploy_log)
+          match = re.search(r'https://[a-z0-9]+\.picompiler\.pages\.dev', deploy_log)
           assert match, 'Wrangler deploy URL missing from output'
           preview_url = match.group(0)
           print('Testing immutable deployment:', preview_url, flush=True)
