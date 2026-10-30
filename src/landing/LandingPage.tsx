@@ -1,7 +1,24 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal } from 'lucide-react';
 import { LandingCurves } from './LandingCurves';
+import { getTheme } from '../app/themes';
 import './landing.css';
+
+const mocha=getTheme('catppuccin-mocha');
+/** Use Pico's own theme seed and derived surface colors. No second landing palette. */
+const landingStyle={
+  '--lp-bg':mocha.bg,
+  '--lp-panel':mocha.surface,
+  '--lp-panel-raised':mocha.ui.surfaceRaised,
+  '--lp-panel-hover':mocha.ui.surfaceHover,
+  '--lp-text':mocha.text,
+  '--lp-muted':mocha.muted,
+  '--lp-accent':mocha.accent,
+  '--lp-accent-strong':mocha.ui.accentStrong,
+  '--lp-accent-soft':mocha.ui.accentSoft,
+  '--lp-line':mocha.ui.borderSoft,
+  '--lp-border':mocha.ui.border,
+} as CSSProperties;
 
 const APP = '/app';
 const DOWNLOADS = '#downloads';
@@ -65,7 +82,7 @@ export default function LandingPage() {
       document.documentElement.classList.remove('pico-landing-scroll');
     };
   }, []);
-  return <div className="lp"><LandingCurves/><Navigation/><main id="home">
+  return <div className="lp" data-landing-theme={mocha.id} style={landingStyle}><LandingCurves/><Navigation/><main id="home">
     <section className="lp-hero lp-container">
       <div className="lp-hero-copy">
         <h1>Built by Students,<br/><span>for Students.</span></h1>
