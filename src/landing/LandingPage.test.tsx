@@ -40,6 +40,12 @@ describe('Pico landing page', () => {
     const links=[...container.querySelectorAll('a')];
     expect(links.find(a=>a.textContent?.includes('Use Pico in browser'))?.getAttribute('href')).toBe('/app');
     expect(links.find(a=>a.textContent?.includes('Download for desktop'))?.getAttribute('href')).toBe('#downloads');
+    expect(container.querySelectorAll('.lp-hero-actions a[href="/app"]')).toHaveLength(1);
+    expect(container.querySelector('header.lp-header a[href="/app"]')).toBeNull();
+    expect(container.querySelector('.lp-nav-start')).toBeNull();
+    expect(container.querySelector('.lp-nav-mobile-cta')).toBeNull();
+    expect(container.querySelectorAll('.lp-hero .lp-hero-copy')).toHaveLength(1);
+    expect(container.querySelectorAll('.lp-hero .lp-hero-cpu')).toHaveLength(1);
   });
   it('keeps navbar layout stable and ignores small scroll reversals', async () => {
     Object.defineProperty(window, 'scrollY', { configurable:true, writable:true, value:0 });
