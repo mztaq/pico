@@ -89,7 +89,7 @@ export default function LandingPage() {
     </section>
     <section className="lp-tools-downloads lp-container" aria-label="Pico tools and desktop downloads">
       <section id="features" className="lp-features" aria-labelledby="lp-features-title">
-      <div className="lp-section-heading"><h2 id="lp-features-title">Pico includes tools for coding, flowcharts, logic circuits, CPU simulation and binary.</h2></div>
+      <div className="lp-section-heading"><h2 id="lp-features-title">Pico's tools</h2></div>
       <div className="lp-feature-groups">
         <div className="lp-feature-group">
           <div className="lp-feature-category"><h3>Programming</h3></div>
