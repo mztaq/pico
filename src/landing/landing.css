@@ -1,145 +1,169 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
-/* Keep the root flush with every edge. The browser's default body margin
-   previously exposed a light-colored frame around the landing page. */
-html,body,#root{margin:0;min-height:100%;width:100%}
-html,body{background:#08070d}
+/* Isolated landing palette. No body margin, vignette, or decorative motion. */
+html,body,#root{width:100%;min-height:100%;margin:0}
+html,body{background:#09080d}
 .lp{
-  --lp-bg:#08070d;--lp-panel:#110e19;--lp-text:#f5f3fa;
-  --lp-muted:#aaa3b8;--lp-purple:#a855f7;--lp-line:#33283f;
-  color:var(--lp-text);background:var(--lp-bg);font:400 15px/1.6 'DM Sans',system-ui,sans-serif;
-  min-height:100vh;width:100%;overflow-x:clip;
+  --lp-bg:#09080d;
+  --lp-text:#f5f3fa;
+  --lp-muted:#a9a2b2;
+  --lp-accent:#ba82ef;
+  --lp-line:rgba(183,158,210,.16);
+  width:100%;
+  min-height:100vh;
+  background:var(--lp-bg);
+  color:var(--lp-text);
+  font:400 15px/1.6 'DM Sans',system-ui,sans-serif;
+  overflow-x:clip;
 }
-.lp *, .lp *::before,.lp *::after{box-sizing:border-box}
+.lp *,.lp *::before,.lp *::after{box-sizing:border-box}
 .lp a{color:inherit;text-decoration:none}
 .lp button{font:inherit}
-.lp-container{width:min(1200px,calc(100% - 80px));margin:0 auto}
-.lp :focus-visible{outline:2px solid #bd8df5;outline-offset:3px}
+.lp :focus-visible{outline:2px solid #c394f5;outline-offset:3px}
+.lp-container{width:min(1200px,calc(100% - 80px));margin-inline:auto}
 
 /* Navigation */
-.lp-header{min-height:76px;border-bottom:1px solid #272131;background:#08070d}
-.lp-nav{height:76px;display:flex;justify-content:space-between;align-items:center;gap:32px}
-.lp-brand{display:inline-flex;align-items:center;gap:10px;color:#f5f3fa!important;font-size:22px;font-weight:800;letter-spacing:-.8px;white-space:nowrap}
-.lp-brand img{border-radius:10px}
+.lp-header{border-bottom:1px solid var(--lp-line);background:var(--lp-bg);position:relative;z-index:10}
+.lp-nav{height:74px;display:flex;align-items:center;gap:30px}
+.lp-brand{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;color:#f5f3fa!important;font-size:21px;letter-spacing:-.8px;font-weight:800}
+.lp-brand img{border-radius:9px}
 .lp-brand-dot{color:#f5f3fa}
 .lp-links{display:flex;align-items:center;gap:32px;margin-left:auto}
-.lp-links>a{color:#b6afbf;font-size:13px}
-.lp-links>a:hover,.lp-footer nav>a:hover{color:#e3c9ff}
-.lp-nav-start{display:inline-flex;align-items:center;gap:10px;border:1px solid #573a70;border-radius:7px;padding:10px 16px;font-size:12px;font-weight:700}
-.lp-nav-start:hover{background:#1d1527}
+.lp-links>a{font-size:13px;color:#b4acbb}
+.lp-links>a:hover,.lp-footer nav>a:hover{color:#fff}
+.lp-nav-start{display:flex;align-items:center;gap:9px;border:1px solid #513c61;padding:9px 15px;border-radius:7px;font-size:12px;font-weight:700}
+.lp-nav-start:hover{background:#17111f}
 .lp-menu,.lp-nav-mobile-cta{display:none!important}
 
-/* Main heading. No fade-in or decorative orbit effects. */
-.lp-hero{display:grid;grid-template-columns:minmax(0,.90fr) minmax(0,1.10fr);gap:52px;align-items:center;min-height:550px;padding:85px 0 95px}
-.lp-hero-copy{width:100%;min-width:0;max-width:600px}
-.lp h1{font-size:clamp(42px,4.4vw,64px);line-height:1.11;letter-spacing:-2.8px;font-weight:700;margin:0 0 25px}
-.lp h1 span{color:#b57cf1}
-.lp-hero-copy>p{font-size:15px;line-height:1.85;color:var(--lp-muted);max-width:490px;margin:0 0 30px}
-.lp-hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.lp-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:47px;padding:0 19px;border-radius:7px;font-weight:700;font-size:12px;transition:background-color .16s ease,border-color .16s ease}
-.lp-button-primary{background:#9850df;color:#fff!important}
-.lp-button-primary:hover{background:#ae68ed}
-.lp-button-secondary{border:1px solid #604578;background:#15101d;color:#eee0ff!important}
-.lp-button-secondary:hover{background:#21172c;border-color:#b484e9}
+/* Hero has a single message and one authentic, running product example. */
+.lp-hero{
+  display:grid;
+  grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);
+  align-items:center;
+  gap:48px;
+  padding-block:100px 104px;
+  min-height:590px;
+}
+.lp-hero-copy{min-width:0}
+.lp h1{margin:0 0 24px;font-size:clamp(37px,3.9vw,57px);line-height:1.13;letter-spacing:-2.8px;font-weight:700}
+.lp h1 span{color:#b783e7}
+.lp-hero-copy>p{max-width:440px;margin:0 0 31px;color:var(--lp-muted);font-size:15px;line-height:1.8}
+.lp-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:11px}
+.lp-button{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:45px;padding:0 16px;border-radius:7px;font-size:12px;font-weight:700;transition:background-color 130ms ease,border-color 130ms ease}
+.lp-button-primary{background:#a35ce1;color:#fff!important}
+.lp-button-primary:hover{background:#b474eb}
+.lp-button-secondary{background:transparent;border:1px solid #6a497e;color:#e9d8f7!important}
+.lp-button-secondary:hover{border-color:#ad7ad8;background:#17111e}
 
-/* Useful, text-first features. */
-.lp h2{font-size:clamp(33px,4.3vw,52px);font-weight:700;line-height:1.15;letter-spacing:-2px;margin:0}
-.lp-features{padding:85px 0 100px;border-top:1px solid #282030}
-.lp-section-heading,.lp-downloads-heading{display:flex;align-items:end;justify-content:space-between;gap:28px;margin-bottom:35px}
-.lp-section-heading>p,.lp-downloads-heading>p{max-width:440px;margin:0 0 4px;color:var(--lp-muted);font-size:13px;line-height:1.75}
-.lp-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--lp-line);border-radius:10px;overflow:hidden}
-.lp-feature-card{padding:28px 27px 30px;min-height:155px;border-right:1px solid var(--lp-line);border-bottom:1px solid var(--lp-line);background:#0c0a12}
-.lp-feature-card:nth-child(3n){border-right:0}
-.lp-feature-card:nth-last-child(-n+2){border-bottom:0}
-.lp-feature-card h3{font-size:17px;letter-spacing:-.4px;font-weight:700;margin:0 0 12px}
-.lp-feature-card p{font-size:12px;color:#a39aad;line-height:1.85;margin:0;max-width:350px}
-
-/* Real CPU Studio in the right half of the hero. No mockup or 3D animation. */
-.lp-hero-cpu{min-width:0;border:1px solid #3a2c49;border-radius:10px;overflow:hidden;background:#0e0b15}
-.lp-hero-cpu-bar{display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:43px;padding:0 15px;color:#eee4fb;background:#171020;border-bottom:1px solid #352942}
-.lp-hero-cpu-bar>span{font-size:13px;font-weight:700}
-.lp-hero-cpu-bar>a{display:inline-flex;align-items:center;gap:6px;color:#c9a2ef;font-size:11px;font-weight:600}
-.lp-hero-cpu-bar>a:hover{color:#ead4ff}
-.lp-cpu-live{min-width:0;overflow:hidden;background:#0e0b15}
-.lp-cpu-loading{padding:100px 16px;text-align:center;color:var(--lp-muted);font-size:12px}
-.lp .cpu-embedded{height:auto;min-height:0;overflow:visible;background:#0e0b15;color:#f5f3fa;display:flex;flex-direction:column}
+/* Real CPU Studio. Retains simulator state, registers, RAM and play/pause. */
+.lp-hero-cpu{min-width:0;overflow:hidden;background:#100d16;border:1px solid #44344f;border-radius:9px}
+.lp-hero-cpu-bar{min-height:43px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #33283f;background:#14101c}
+.lp-hero-cpu-bar>span{font-weight:700;font-size:12px}
+.lp-hero-cpu-bar>a{display:inline-flex;align-items:center;gap:6px;color:#c8a0ea;font-size:11px;font-weight:600}
+.lp-hero-cpu-bar>a:hover{color:#fff}
+.lp-cpu-live{min-width:0;overflow:hidden}
+.lp-cpu-loading{min-height:270px;display:grid;place-items:center;color:var(--lp-muted);font-size:12px}
+.lp .cpu-embedded{height:auto;min-height:0;display:flex;flex-direction:column;overflow:visible;background:#100d16}
 .lp .cpu-embedded .cpu-topbar,.lp .cpu-embedded .cpu-heading,.lp .cpu-embedded .cpu-information{display:none}
-.lp .cpu-embedded .cpu-content{height:auto;min-height:0;overflow:visible}
-.lp .cpu-embedded .cpu-controls{padding:9px 12px;gap:8px;align-items:center;justify-content:space-between;background:#15101e;border-bottom:1px solid #382b48}
+.lp .cpu-embedded .cpu-content{height:auto;overflow:visible;min-height:0}
+.lp .cpu-embedded .cpu-controls{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 13px;background:#16101f;border-bottom:1px solid #3b2d49}
 .lp .cpu-embedded .cpu-mode-switch,.lp .cpu-embedded .cpu-playback>button:not(.cpu-play),.lp .cpu-embedded .cpu-speed{display:none}
 .lp .cpu-embedded .cpu-playback{padding:0;border:0}
-.lp .cpu-embedded .cpu-playback .cpu-play{font-size:11px;padding:7px 11px;min-height:29px;color:var(--ds-on-accent)}
-.lp .cpu-embedded .cpu-counter{margin:0;color:#bbb0cb;border:0;background:none;padding:0;font-size:10px}
-.lp .cpu-embedded .cpu-workspace-main{display:block;padding:11px;min-height:0}
-.lp .cpu-embedded .cpu-diagram-scroll{display:flex;align-items:center;justify-content:center;width:100%;padding:0;border:0;background:transparent;overflow-x:auto}
-.lp .cpu-embedded .cpu-diagram{display:block;width:100%;min-width:0;height:auto;max-height:none;aspect-ratio:1190/558;max-width:1190px}
+.lp .cpu-embedded .cpu-playback .cpu-play{min-height:29px;padding:5px 13px;color:var(--ds-on-accent);font-size:11px}
+.lp .cpu-embedded .cpu-counter{margin:0;padding:0;border:0;background:transparent;color:#bbb0cb;font-size:10px}
+.lp .cpu-embedded .cpu-workspace-main{display:block;padding:10px;min-height:0}
+.lp .cpu-embedded .cpu-diagram-scroll{display:flex;justify-content:center;align-items:center;width:100%;padding:0;background:transparent;border:0;overflow-x:auto}
+.lp .cpu-embedded .cpu-diagram{display:block;max-width:1190px;min-width:0;width:100%;height:auto;max-height:none;aspect-ratio:1190/558}
 .lp .cpu-embedded .cpu-flow-token circle{filter:none}
 
-/* Actual desktop files: links are backed by Pages downloads, including the AppImage. */
-.lp-downloads{padding:90px 0 108px}
-.lp-download-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.lp-download-group{border:1px solid var(--lp-line);background:#100d17;border-radius:10px;min-width:0;overflow:hidden}
-.lp-download-group-header{padding:20px 19px 17px;display:flex;align-items:center;gap:11px;color:#c298eb;border-bottom:1px solid var(--lp-line)}
-.lp-download-group-header h3{font-size:16px;line-height:1.25;color:#f4eefb;margin:0}
-.lp-download-options{display:grid;gap:0}
-.lp-download-option{display:flex;align-items:center;gap:11px;min-width:0;padding:17px 14px;border-bottom:1px solid var(--lp-line);transition:background-color .15s ease}
-.lp-download-option:last-child{border-bottom:0}
-.lp-download-option:hover{background:#21172d}
-.lp-download-fileicon{width:34px;height:34px;flex:none;display:grid;place-items:center;border:1px solid #503762;border-radius:7px;color:#c694ee}
-.lp-download-copy{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-.lp-download-copy strong{font-size:13px;color:#f2ebf8}
-.lp-download-copy>span{font-size:11px;color:#b2a9bd}
-.lp-download-copy small{font-size:10px;color:#7f758d;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
-.lp-download-right{flex:none;display:flex;flex-direction:column;gap:9px;align-items:end;color:#b882ee}
-.lp-download-right>span{font-size:10px;color:#a299b0}
-.lp-download-option:focus-visible{outline-offset:-3px}
+/* Six real tools, grouped by use rather than a grid of generic promo cards. */
+.lp h2{margin:0;font-size:clamp(33px,3.9vw,48px);line-height:1.2;letter-spacing:-1.9px;font-weight:700}
+.lp-features{padding-block:80px 105px;border-top:1px solid var(--lp-line)}
+.lp-section-heading{margin-bottom:40px}
+.lp-feature-groups{border-top:1px solid var(--lp-line)}
+.lp-feature-group{display:grid;grid-template-columns:minmax(150px,.33fr) minmax(0,.67fr);gap:30px;align-items:start;border-bottom:1px solid var(--lp-line);padding:30px 0 35px}
+.lp-feature-category h3{margin:0;color:#c0b5cb;font-size:13px;font-weight:600;letter-spacing:0}
+.lp-feature-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px;row-gap:20px}
+.lp-feature-item h4{margin:0 0 7px;color:#f3eff9;font-size:17px;font-weight:700;letter-spacing:-.35px}
+.lp-feature-item p{margin:0;max-width:320px;color:#a69cae;font-size:13px;line-height:1.75}
 
-/* About and footer */
-.lp-about{padding:85px 0 95px;border-top:1px solid #282030}
-.lp-about-layout{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,1fr);gap:40px;align-items:start;margin:0}
-.lp-about-layout p{font-size:14px;line-height:1.85;color:#a8a0b3;max-width:600px;margin:0 0 17px}
-.lp-footer{padding:48px 0 22px;border-top:1px solid #282030;background:#08070d}
-.lp-footer-top{display:flex;justify-content:space-between;align-items:start;gap:28px;padding-bottom:52px}
-.lp-footer-top nav{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:13px 25px}
-.lp-footer-top nav a{font-size:12px;color:#aaa1b4}
-.lp-footer-bottom{border-top:1px solid #282030;padding-top:18px;color:#777080;font-size:11px}
+/* Downloads grouped by actual OS and installer type, never fake links. */
+.lp-downloads{padding:92px 0 94px;background:#0e0b13;border-block:1px solid var(--lp-line)}
+.lp-downloads-heading{margin-bottom:38px}
+.lp-download-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid var(--lp-line)}
+.lp-download-group{min-width:0;padding:22px 22px 14px}
+.lp-download-group:not(:last-child){border-right:1px solid var(--lp-line)}
+.lp-download-group-header{display:flex;align-items:center;gap:11px;color:#bb89e4;padding-bottom:17px}
+.lp-download-group-header h3{color:#f2eafa;margin:0;font-size:17px;font-weight:700}
+.lp-download-options{display:grid}
+.lp-download-option{display:flex;align-items:center;gap:8px;min-width:0;padding:17px 5px;border-top:1px solid var(--lp-line);transition:background-color 140ms ease}
+.lp-download-option:hover{background:rgba(176,114,230,.065)}
+.lp-download-copy{display:flex;flex-direction:column;min-width:0;gap:2px;flex:1}
+.lp-download-copy strong{color:#f2eaf7;font-size:13px;font-weight:700}
+.lp-download-copy>span{color:#b0a6bb;font-size:11px}
+.lp-download-copy small{color:#7e738b;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lp-download-arrow{flex-shrink:0;color:#b78ad9}
+.lp-download-note{color:#898094;font-size:12px;margin:18px 0 0}
 
-/* Visible immediately, with no reveal or stagger animation. */
-@media(max-width:1000px){
+/* About does not repeat the full product feature list. */
+.lp-about{padding-block:80px 100px;display:grid;grid-template-columns:minmax(175px,.33fr) minmax(0,.67fr);gap:30px;align-items:start}
+.lp-about-info{padding-top:6px}
+.lp-about-info p{margin:0 0 18px;color:#afa6b6;font-size:15px;line-height:1.75;max-width:520px}
+.lp-text-link{display:inline-flex;align-items:center;gap:8px;color:#c495ed!important;font-size:13px;font-weight:700}
+.lp-text-link:hover{color:#e1baff!important}
+
+/* Quiet footer. */
+.lp-footer{border-top:1px solid var(--lp-line);padding:42px 0 24px}
+.lp-footer-top{display:flex;justify-content:space-between;align-items:flex-start;gap:25px;padding-bottom:48px}
+.lp-footer-top nav{display:flex;flex-wrap:wrap;gap:14px 24px;justify-content:flex-end;max-width:610px}
+.lp-footer-top nav a{font-size:12px;color:#a9a1b1}
+.lp-footer-bottom{border-top:1px solid var(--lp-line);padding-top:18px;font-size:11px;color:#807889}
+
+/* Responsive first, avoid miniature desktop content on narrow devices. */
+@media(max-width:1050px){
   .lp-container{width:calc(100% - 56px)}
-  .lp-download-groups{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .lp-hero{grid-template-columns:1fr;min-height:0;padding:75px 0;gap:38px}
-  .lp-hero-copy{max-width:750px}
-  .lp h1{font-size:clamp(45px,6vw,67px)}
-  .lp-hero-cpu{width:100%}
+  .lp-hero{grid-template-columns:1fr;gap:38px;min-height:0;padding:72px 0 85px}
+  .lp-hero-copy{max-width:720px}
+  .lp h1{font-size:clamp(48px,6vw,67px)}
+  .lp-hero-cpu{max-width:790px;width:100%}
+}
+@media(max-width:800px){
+  .lp-download-groups{grid-template-columns:1fr}
+  .lp-download-group{padding:18px 20px 9px}
+  .lp-download-group:not(:last-child){border-right:0;border-bottom:1px solid var(--lp-line)}
+  .lp-feature-group{grid-template-columns:minmax(140px,.32fr) minmax(0,.68fr)}
 }
 @media(max-width:700px){
   .lp-container{width:calc(100% - 38px)}
-  .lp-header,.lp-nav{height:66px;min-height:66px}
-  .lp-links{display:none;position:absolute;left:0;right:0;top:66px;padding:10px 19px 20px;background:#130e1c;border-bottom:1px solid #372744;z-index:50;flex-direction:column;gap:0}
+  .lp-nav{height:66px}
+  .lp-links{display:none;position:absolute;top:66px;left:0;right:0;background:#110d17;border-bottom:1px solid var(--lp-line);padding:12px 20px 20px;z-index:30;flex-direction:column;gap:0}
   .lp-links.is-open{display:flex;align-items:stretch}
-  .lp-links>a{padding:11px 8px}
+  .lp-links>a{padding:11px 7px}
   .lp-nav-start{display:none}
-  .lp-nav-mobile-cta{display:flex!important;align-items:center;gap:9px}
-  .lp-menu{display:grid!important;place-items:center;background:#1b1425;border:1px solid #513663;color:#eee2fa;border-radius:6px;width:39px;height:36px}
-  .lp-hero{padding:65px 0 70px;gap:30px}
-  .lp h1{font-size:clamp(43px,10vw,63px);line-height:1.12;letter-spacing:-2.5px}
+  .lp-nav-mobile-cta{display:flex!important;align-items:center;gap:7px;color:#d6acfa!important}
+  .lp-menu{display:grid!important;place-items:center;width:38px;height:37px;border:1px solid #554064;border-radius:6px;background:#17101e;color:#f0e7fb}
+  .lp-hero{padding:64px 0 76px;gap:32px}
+  .lp h1{font-size:clamp(41px,10.8vw,58px);letter-spacing:-2.3px}
   .lp-hero-copy>p{font-size:14px}
-  .lp-features,.lp-downloads,.lp-about{padding:60px 0 68px}
-  .lp-section-heading,.lp-downloads-heading{display:block;margin-bottom:25px}
-  .lp-section-heading>p,.lp-downloads-heading>p{margin-top:12px}
-  .lp-feature-grid{grid-template-columns:1fr}
-  .lp-feature-card{min-height:0;padding:22px 19px;border-right:0!important;border-bottom:1px solid var(--lp-line)!important}
-  .lp-feature-card:last-child{border-bottom:0!important}
-  .lp-download-groups{grid-template-columns:1fr}
-  .lp-about-layout{grid-template-columns:1fr;gap:20px}
+  .lp-hero-actions{gap:9px}
+  .lp-button{font-size:11px;padding:0 13px}
   .lp .cpu-embedded .cpu-workspace-main{padding:8px}
   .lp .cpu-embedded .cpu-diagram-scroll{justify-content:flex-start;touch-action:pan-x}
-  .lp .cpu-embedded .cpu-diagram{min-width:630px;width:630px}
-  .lp .cpu-embedded .cpu-controls{padding:9px 12px;gap:10px}
-  .lp-footer-top{display:block;padding-bottom:30px}
-  .lp-footer-top nav{justify-content:flex-start;margin-top:23px;gap:14px 20px}
+  .lp .cpu-embedded .cpu-diagram{width:620px;min-width:620px}
+  .lp .cpu-embedded .cpu-controls{padding:9px 11px}
+  .lp-features,.lp-downloads{padding:66px 0 72px}
+  .lp-feature-group{display:block;padding:24px 0 27px}
+  .lp-feature-category{margin-bottom:20px}
+  .lp-feature-items{gap:24px}
+  .lp-feature-item h4{font-size:15px}
+  .lp-about{grid-template-columns:1fr;gap:16px;padding:67px 0 75px}
+  .lp-footer-top{display:block;padding-bottom:32px}
+  .lp-footer-top nav{justify-content:flex-start;margin-top:25px}
+}
+@media(max-width:420px){
+  .lp-feature-items{grid-template-columns:1fr;gap:20px}
+  .lp-hero-cpu-bar{padding:0 10px}
 }
 @media(prefers-reduced-motion:reduce){
-  .lp *, .lp *::before,.lp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .lp *,.lp *::before,.lp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
