@@ -88,6 +88,14 @@ const installerGroups=[
   ]},
 ] as const;
 
+// Show only one installer per OS after the universal macOS asset has actually
+// been published. Until then, leave working legacy download links intact.
+const singleInstallerGroups=[
+  {platform:'Windows',icon:Monitor,files:[{name:'Pico_x64-setup.exe',format:'EXE installer',sizeBytes:1878445}]},
+  {platform:'macOS',icon:Laptop,files:[{name:'Pico_universal.dmg',format:'Universal DMG',sizeBytes:0}]},
+  {platform:'Linux',icon:Terminal,files:[{name:'Pico_amd64.AppImage',format:'AppImage',sizeBytes:81304056}]},
+] as const;
+
 const formatDownloadSize=(bytes:number)=>`${(bytes/1_000_000).toFixed(2)} MB`;
 /** Preview deployments do not publish the production Pages installer chunks.
  * Link their download cards to GitHub's latest published release assets instead. */
@@ -99,6 +107,7 @@ export function installerDownloadHref(filename:string,hostname:string):string{
 }
 function DownloadsSection(){
   const [currentSizes,setCurrentSizes]=useState<Record<string,number>>({});
+  const [singleInstallerRelease,setSingleInstallerRelease]=useState(false);
   useEffect(()=>{
     // Update release sizes when assets are replaced, with known release sizes as fallback.
     const controller=new AbortController();
@@ -114,6 +123,9 @@ function DownloadsSection(){
           }
         }
         if(Object.keys(sizes).length)setCurrentSizes(sizes);
+        if(['Pico_x64-setup.exe','Pico_universal.dmg','Pico_amd64.AppImage'].every(name=>sizes[name]>0)){
+          setSingleInstallerRelease(true);
+        }
       })
       .catch(()=>{/* Keep verified release size fallback if metadata is unavailable. */});
     return()=>controller.abort();
@@ -123,12 +135,12 @@ function DownloadsSection(){
       <h2 id="lp-downloads-title">Download Pico</h2>
     </div>
     <div className="lp-download-groups">
-      {installerGroups.map(({platform,icon:Icon,files})=>
+      {(singleInstallerRelease?singleInstallerGroups:installerGroups).map(({platform,icon:Icon,files})=>
         <div className="lp-download-group" key={platform}>
           <div className="lp-download-group-header"><Icon size={19} aria-hidden="true"/><h3>{platform}</h3></div>
           <div className="lp-download-options">
             {files.map(file=><a className="lp-download-option" key={file.name} href={installerDownloadHref(file.name,window.location.hostname)} aria-label={'Download '+file.name+' for '+platform}>
-              <span className="lp-download-copy"><strong>{file.name}</strong><small>{formatDownloadSize(currentSizes[file.name]??file.sizeBytes)}</small></span>
+              <span className="lp-download-copy"><strong>{file.name}</strong><small>{(currentSizes[file.name]??file.sizeBytes)>0?formatDownloadSize(currentSizes[file.name]??file.sizeBytes):'Size unavailable'}</small></span>
               <Download className="lp-download-arrow" size={17} aria-hidden="true"/>
             </a>)}
           </div>
