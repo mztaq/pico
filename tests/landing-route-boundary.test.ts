@@ -31,9 +31,18 @@ describe('Landing route migration leaves backend services available', () => {
     expect(css).toContain('.lp .cpu-embedded .cpu-speed{display:flex');
     expect(css).toContain('.lp-header-compact .lp-nav');
   });
+  it('keeps previously released desktop apps at / on the workspace, not the landing page', () => {
+    const entry = read('src/main.tsx');
+    const route = read('src/app/entry-route.ts');
+    const native = JSON.parse(read('src-tauri/tauri.conf.json')) as {build:{frontendDist:string}};
+    expect(native.build.frontendDist).toBe('https://picompiler.pages.dev/app');
+    expect(entry).toContain('isPicoDesktopWebview(window)');
+    expect(route).toContain("pathname === '/' && inTauriWebview");
+    expect(route).toContain("'__TAURI_INTERNALS__'");
+  });
   it('keeps studio telemetry within the app route', () => {
     const entry = read('src/main.tsx');
     expect(entry).toContain('<PicoTelemetry />');
-    expect(entry).toContain("window.location.pathname === '/app'");
+    expect(entry).toContain('shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window))');
   });
 });
