@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal } from 'lucide-react';
+import { LandingCurves } from './LandingCurves';
 import './landing.css';
 
 const APP = '/app';
@@ -16,44 +17,41 @@ function Navigation() {
     <a href="#home" onClick={()=>setOpen(false)}>Home</a>
     <a href="#features" onClick={()=>setOpen(false)}>Tools</a>
     <a href="#downloads" onClick={()=>setOpen(false)}>Downloads</a>
-    <a href="#about" onClick={()=>setOpen(false)}>About</a>
     <a href={APP} className="lp-nav-mobile-cta">Open app <ArrowUpRight size={16}/></a>
   </nav><div className="lp-nav-actions"><a href={APP} className="lp-nav-start">Open app <ArrowUpRight size={15}/></a><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header>;
 }
 const installerGroups=[
   {platform:'Windows',icon:Monitor,files:[
-    {name:'Pico_x64-setup.exe',format:'EXE installer',detail:'Windows · x64'},
-    {name:'Pico_x64_en-US.msi',format:'MSI installer',detail:'Windows · x64'},
+    {name:'Pico_x64-setup.exe',format:'EXE installer'},
+    {name:'Pico_x64_en-US.msi',format:'MSI installer'},
   ]},
   {platform:'macOS',icon:Laptop,files:[
-    {name:'Pico_aarch64.dmg',format:'Apple Silicon DMG',detail:'M-series Macs · arm64'},
-    {name:'Pico_x64.dmg',format:'Intel DMG',detail:'Intel Macs · x64'},
+    {name:'Pico_aarch64.dmg',format:'Apple Silicon DMG'},
+    {name:'Pico_x64.dmg',format:'Intel DMG'},
   ]},
   {platform:'Linux',icon:Terminal,files:[
-    {name:'Pico_amd64.deb',format:'DEB package',detail:'Debian / Ubuntu · x64'},
-    {name:'Pico_amd64.AppImage',format:'AppImage',detail:'Linux · x64'},
+    {name:'Pico_amd64.deb',format:'DEB package'},
+    {name:'Pico_amd64.AppImage',format:'AppImage'},
   ]},
 ] as const;
 
 function DownloadsSection(){
   return <section id="downloads" className="lp-downloads"><div className="lp-container">
     <div className="lp-downloads-heading">
-      <div><h2>Download Pico</h2></div>
-
+      <h2>Download Pico</h2>
     </div>
     <div className="lp-download-groups">
       {installerGroups.map(({platform,icon:Icon,files})=>
         <div className="lp-download-group" key={platform}>
           <div className="lp-download-group-header"><Icon size={19} aria-hidden="true"/><h3>{platform}</h3></div>
           <div className="lp-download-options">
-            {files.map(file=><a className="lp-download-option" key={file.name} href={'/downloads/'+file.name} aria-label={'Download Pico '+file.format+' for '+file.detail}>
-              <span className="lp-download-copy"><strong>{file.format}</strong><span>{file.detail}</span><small>{file.name}</small></span>
+            {files.map(file=><a className="lp-download-option" key={file.name} href={'/downloads/'+file.name} aria-label={'Download Pico '+file.format+' for '+platform}>
+              <span className="lp-download-copy"><strong>{file.format}</strong></span>
               <Download className="lp-download-arrow" size={17} aria-hidden="true"/>
             </a>)}
           </div>
         </div>)}
     </div>
-    <p className="lp-download-note">The desktop app requires an internet connection.</p>
   </div></section>;
 }
 
@@ -63,7 +61,7 @@ export default function LandingPage() {
     document.documentElement.style.colorScheme='dark';
     return () => { document.documentElement.style.colorScheme=''; };
   }, []);
-  return <div className="lp"><Navigation/><main id="home">
+  return <div className="lp"><LandingCurves/><Navigation/><main id="home">
     <section className="lp-hero lp-container">
       <div className="lp-hero-copy">
         <h1>Built by Students,<br/><span>for Students.</span></h1>
@@ -86,7 +84,7 @@ export default function LandingPage() {
       </div>
     </section>
     <section id="features" className="lp-features lp-container" aria-labelledby="lp-features-title">
-      <div className="lp-section-heading"><h2 id="lp-features-title">Inside Pico</h2></div>
+      <div className="lp-section-heading"><h2 id="lp-features-title">Pico includes tools for coding, flowcharts, logic circuits, CPU simulation and binary.</h2></div>
       <div className="lp-feature-groups">
         <div className="lp-feature-group">
           <div className="lp-feature-category"><h3>Programming</h3></div>
@@ -112,17 +110,10 @@ export default function LandingPage() {
       </div>
     </section>
     <DownloadsSection/>
-    <section id="about" className="lp-about lp-container">
-      <h2>About</h2>
-      <div className="lp-about-info">
-        <p>Developed by students to make computer science easier to practise.</p>
-        <a href="/app#team" className="lp-text-link">Meet the team <ArrowUpRight size={16}/></a>
-      </div>
-    </section>
   </main>
   <footer className="lp-footer"><div className="lp-container">
     <div className="lp-footer-top"><div><Brand/></div>
-      <nav aria-label="Footer navigation"><a href="#features">Tools</a><a href="#cpu-studio">CPU Studio</a><a href="#downloads">Downloads</a><a href="#about">About</a><a href={APP}>Browser app</a><a href="/app#privacy">Privacy</a><a href="/app#terms">Terms</a></nav>
+      <nav aria-label="Footer navigation"><a href="#features">Tools</a><a href="#cpu-studio">CPU Studio</a><a href="#downloads">Downloads</a><a href="/app#team">Team</a><a href={APP}>Browser app</a><a href="/app#privacy">Privacy</a><a href="/app#terms">Terms</a></nav>
     </div>
     <div className="lp-footer-bottom"><span>© {new Date().getFullYear()} Pico</span></div>
   </div></footer></div>;
