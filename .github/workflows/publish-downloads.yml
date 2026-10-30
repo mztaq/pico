@@ -1,0 +1,39 @@
+name: Publish Pico installers to Cloudflare Pages
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Retrieve existing Pico desktop release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir release-binaries
+          gh release download desktop-v0.1.0-build.10 --repo "$GITHUB_REPOSITORY" --dir release-binaries --pattern 'Pico_*'
+      - name: Split and verify release files
+        run: node scripts/stage-desktop-downloads.mjs release-binaries public/download-assets
+      - name: Generate favicon.ico from Pico SVG
+        run: |
+          npx --yes @tauri-apps/cli@2 icon public/pico-logo.svg --output /tmp/pico-icons
+          cp /tmp/pico-icons/icon.ico public/favicon.ico
+      - name: Build and check
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+          pnpm test
+          pnpm build
+      - name: Publish Pages site with installers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          npx --yes wrangler@4 pages deploy dist --project-name picompiler --branch main
