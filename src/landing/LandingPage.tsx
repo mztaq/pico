@@ -29,8 +29,28 @@ function Brand() {
 }
 function Navigation() {
   const [open,setOpen]=useState(false);
-  useEffect(()=>{if(!open)return;const onKey=(event:KeyboardEvent)=>{if(event.key==='Escape')setOpen(false)};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[open]);
-  return <header className="lp-header"><div className="lp-container lp-nav"><Brand/><nav className={open?'lp-links is-open':'lp-links'} aria-label="Main navigation">
+  const [compact,setCompact]=useState(false);
+  useEffect(()=>{
+    if(!open)return;
+    const onKey=(event:KeyboardEvent)=>{if(event.key==='Escape')setOpen(false)};
+    window.addEventListener('keydown',onKey);
+    return()=>window.removeEventListener('keydown',onKey);
+  },[open]);
+  useEffect(()=>{
+    let previousY=window.scrollY;
+    if(!open)setCompact(previousY>120);
+    else setCompact(false);
+    const onScroll=()=>{
+      const y=window.scrollY;
+      if(open||y<=32){setCompact(false);previousY=y;return;}
+      const delta=y-previousY;
+      if(delta>=8){setCompact(true);previousY=y;}
+      else if(delta<=-8){setCompact(false);previousY=y;}
+    };
+    window.addEventListener('scroll',onScroll,{passive:true});
+    return()=>window.removeEventListener('scroll',onScroll);
+  },[open]);
+  return <header className={compact?'lp-header lp-header-compact':'lp-header'}><div className="lp-container lp-nav"><Brand/><nav className={open?'lp-links is-open':'lp-links'} aria-label="Main navigation">
     <a href="#home" onClick={()=>setOpen(false)}>Home</a>
     <a href="#features" onClick={()=>setOpen(false)}>Tools</a>
     <a href="#downloads" onClick={()=>setOpen(false)}>Downloads</a>
