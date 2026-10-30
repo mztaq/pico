@@ -113,10 +113,6 @@ export default function LandingPage() {
         </div>
       </div>
       <div className="lp-hero-cpu" id="cpu-studio">
-        <div className="lp-hero-cpu-bar">
-          <span>CPU Studio</span>
-          <a href="/app?tool=cpu">Open CPU Studio <ArrowUpRight size={14}/></a>
-        </div>
         <div className="lp-cpu-live" aria-label="Live Pico CPU Studio simulation">
           <Suspense fallback={<div className="lp-cpu-loading" role="status">Loading CPU Studio…</div>}>
             <LiveCpuStudio landingPreview onHome={() => window.location.assign(APP)} />
