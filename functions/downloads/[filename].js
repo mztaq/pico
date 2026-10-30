@@ -1,47 +1,108 @@
-export async function onRequest({request,env,params}){
- if(request.method!=='GET'&&request.method!=='HEAD')return new Response('Method not allowed',{status:405});
- const filename=params.filename;
- if(!/^Pico_(?:x64-setup\.exe|x64_en-US\.msi|aarch64\.dmg|x64\.dmg|amd64\.deb|amd64\.AppImage)$/.test(filename))return new Response('Not found',{status:404});
- const manifestResponse=await env.ASSETS.fetch(new URL('/download-assets/manifest.json',request.url));
- if(!manifestResponse.ok)return new Response('Downloads not deployed',{status:503});
- const manifest=await manifestResponse.json();
- const file=manifest.files[filename];
- if(!file||!Number.isSafeInteger(file.size)||file.size<=0)return new Response('Installer unavailable',{status:503});
- const {size,sha256,parts}=file,chunk=manifest.chunk;
- if(!Number.isSafeInteger(chunk)||chunk<=0)return new Response('Invalid manifest',{status:503});
- const headers=new Headers({'Content-Type':'application/octet-stream','Content-Disposition':`attachment; filename="${filename}"`,'Accept-Ranges':'bytes','Cache-Control':'public, max-age=3600','ETag':'"'+sha256+'"'});
- let start=0,end=size-1,status=200;
- const range=request.headers.get('Range');
- if(range){
-  const m=/^bytes=(\d*)-(\d*)$/.exec(range);
-  if(!m||(!m[1]&&!m[2]))return new Response('Range not satisfiable',{status:416,headers:{'Content-Range':'bytes */'+size}});
-  if(m[1]){start=Number(m[1]);if(m[2])end=Number(m[2]);}
-  else {const suffix=Number(m[2]);start=Math.max(0,size-suffix);}
-  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>=size||start>end)return new Response('Range not satisfiable',{status:416,headers:{'Content-Range':'bytes */'+size}});
-  end=Math.min(size-1,end);
-  status=206;headers.set('Content-Range',`bytes ${start}-${end}/${size}`);
- }
- headers.set('Content-Length',String(end-start+1));
- if(request.method==='HEAD')return new Response(null,{status,headers});
- const first=Math.floor(start/chunk),last=Math.floor(end/chunk);
- if(last>=parts)return new Response('Invalid manifest',{status:503});
- const stream=new ReadableStream({
-  async start(controller){
-   try{
-    for(let i=first;i<=last;i++){
-     const path='/download-assets/'+filename+'.part'+String(i).padStart(3,'0');
-     const response=await env.ASSETS.fetch(new URL(path,request.url));
-     if(!response.ok)throw Error('Missing part '+i);
-     const bytes=new Uint8Array(await response.arrayBuffer());
-     const from=i===first?start-i*chunk:0;
-     const to=i===last?end-i*chunk+1:bytes.byteLength;
-     const portion=bytes.subarray(from,to);
-     if(portion.byteLength!==to-from)throw Error('Invalid part length '+i);
-     controller.enqueue(portion);
-    }
-    controller.close();
-   }catch(error){controller.error(error);}
+/**
+ * Stream a Pages-hosted desktop installer assembled from 16 MiB static assets.
+ * Names are allowlisted; only the exact release manifest controls the parts.
+ */
+const ALLOWED = new Set([
+  'Pico_x64-setup.exe',
+  'Pico_x64_en-US.msi',
+  'Pico_aarch64.dmg',
+  'Pico_x64.dmg',
+  'Pico_amd64.deb',
+  'Pico_amd64.AppImage',
+]);
+
+const notAvailable = () => new Response('Downloads are not available yet', { status: 503 });
+
+export async function onRequest({ request, env, params }) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   }
- });
- return new Response(stream,{status,headers});
+  const filename = params.filename;
+  if (typeof filename !== 'string' || !ALLOWED.has(filename)) {
+    return new Response('File not found', { status: 404 });
+  }
+
+  const manifestResponse = await env.ASSETS.fetch(new URL('/download-assets/manifest.json', request.url));
+  if (!manifestResponse.ok) return notAvailable();
+  let manifest;
+  try { manifest = await manifestResponse.json(); } catch { return notAvailable(); }
+  const file = manifest?.files?.[filename];
+  const size = file?.size;
+  const chunk = manifest?.chunk;
+  const parts = file?.parts;
+  const hash = file?.sha256;
+  if (
+    !Number.isSafeInteger(size) || size <= 0 ||
+    !Number.isSafeInteger(chunk) || chunk <= 0 || chunk > 25 * 1024 * 1024 ||
+    !Number.isSafeInteger(parts) || parts !== Math.ceil(size / chunk) ||
+    typeof hash !== 'string' || !/^[0-9a-f]{64}$/.test(hash)
+  ) return notAvailable();
+
+  let start = 0;
+  let end = size - 1;
+  let status = 200;
+  const range = request.headers.get('Range');
+  if (range !== null) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (!match || (!match[1] && !match[2])) {
+      return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
+    }
+    if (match[1]) {
+      start = Number(match[1]);
+      if (match[2]) end = Number(match[2]);
+    } else {
+      const suffix = Number(match[2]);
+      start = Math.max(0, size - suffix);
+    }
+    if (
+      !Number.isSafeInteger(start) || !Number.isSafeInteger(end) ||
+      start >= size || start > end || start < 0
+    ) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
+    end = Math.min(size - 1, end);
+    status = 206;
+  }
+  const headers = new Headers({
+    'Content-Type': 'application/octet-stream',
+    'Content-Disposition': `attachment; filename="${filename}"`,
+    'Content-Length': String(end - start + 1),
+    'Accept-Ranges': 'bytes',
+    'ETag': `"${hash}"`,
+    'Cache-Control': 'public, max-age=3600',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  if (status === 206) headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
+  if (request.method === 'HEAD') return new Response(null, { status, headers });
+  if (request.headers.get('If-None-Match') === `"${hash}"` && !range) {
+    return new Response(null, { status: 304, headers: { ETag: `"${hash}"` } });
+  }
+
+  // Stream one chunk at a time with backpressure. Do not buffer the entire
+  // 77 MiB AppImage inside a 128 MiB Cloudflare Worker.
+  let index = Math.floor(start / chunk);
+  const lastIndex = Math.floor(end / chunk);
+  const stream = new ReadableStream({
+    async pull(controller) {
+      if (index > lastIndex) { controller.close(); return; }
+      try {
+        const url = new URL(
+          '/download-assets/' + filename + '.part' + String(index).padStart(3, '0'),
+          request.url,
+        );
+        const response = await env.ASSETS.fetch(url);
+        if (!response.ok) throw new Error('Missing release chunk');
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        const expectedLength = Math.min(chunk, size - index * chunk);
+        if (bytes.length !== expectedLength) throw new Error('Release chunk has wrong size');
+
+        const from = index === Math.floor(start / chunk) ? start - index * chunk : 0;
+        const to = index === lastIndex ? end - index * chunk + 1 : bytes.length;
+        controller.enqueue(bytes.subarray(from, to));
+        index++;
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  }, { highWaterMark: 1 });
+
+  return new Response(stream, { status, headers });
 }
