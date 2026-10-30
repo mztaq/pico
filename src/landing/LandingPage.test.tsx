@@ -58,7 +58,7 @@ describe('Pico landing page', () => {
     expect(groups.map(group=>group.querySelectorAll('.lp-feature-item').length)).toEqual([2,2,2]);
     expect(container.textContent).not.toContain('Six workspaces for programming, algorithms and computer architecture.');
     expect(container.textContent).not.toContain('Inside Pico');
-    expect(container.querySelector('#lp-features-title')?.textContent).toContain('Pico includes tools for coding');
+    expect(container.querySelector('#lp-features-title')?.textContent).toBe("Pico's tools");
     expect(container.querySelector('#about')).toBeNull();
     expect(container.querySelector('.lp-feature-card')).toBeNull();
     const layout=container.querySelector('main > .lp-tools-downloads');
