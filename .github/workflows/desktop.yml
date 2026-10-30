@@ -83,11 +83,24 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  validate-web:
+    name: Verify tests and production build before any release replacement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build
+
   # Manual main-branch action only. NEVER create a second release or publish
   # a PR's binaries. Keep an artifact backup of the currently published files.
   publish-existing-release:
     name: Update the existing single Pico release
-    needs: build-desktop
+    needs: [validate-web, build-desktop]
     if: github.event_name == 'workflow_dispatch' && inputs.publish_existing_release == true && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
