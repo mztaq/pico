@@ -94,16 +94,12 @@ export function LandingPage() {
       <section className="landing-hero" aria-labelledby="landing-title">
         <div className="landing-hero-main">
           <div className="landing-hero-text">
-            <h1 id="landing-title">Computer science,<br/><span>made practical.</span></h1>
+            <h1 id="landing-title">Built by students,<br/><span>for students</span></h1>
             <p>Write pseudocode and Python. Build flowcharts. Connect logic gates. Step through a CPU. Pico puts all six tools in one place.</p>
             <div className="landing-hero-actions">
               <a className="landing-action-primary" href="/app/">Use Pico in Browser <ArrowRight size={19}/></a>
               <a className="landing-action-text" href="#download">Download the desktop app <Download size={17}/></a>
             </div>
-          </div>
-          <div className="landing-hero-symbol" aria-hidden="true">
-            <span>π</span>
-            <div className="landing-symbol-footer"><span>PICO</span><span>01 - 06</span></div>
           </div>
         </div>
         <div className="landing-hero-bottom">
@@ -193,7 +189,7 @@ export function LandingPage() {
         <a href="/#terms">Terms</a>
         <a href="https://github.com/mztaq/pico" target="_blank" rel="noopener noreferrer">GitHub <ExternalLink size={13}/></a>
       </nav>
-      <span className="landing-footer-note">For learning computer science.</span>
+      <span className="landing-footer-note">Built by students, for students</span>
     </footer>
   </div>;
 }
