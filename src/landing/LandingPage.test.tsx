@@ -35,6 +35,12 @@ describe('Pico landing page', () => {
     expect(links.find(a=>a.textContent?.includes('Use Pico in browser'))?.getAttribute('href')).toBe('/app');
     expect(links.find(a=>a.textContent?.includes('Download for desktop'))?.getAttribute('href')).toBe('#downloads');
   });
+  it('enables smooth anchor navigation only while landing is mounted', async () => {
+    await render();
+    expect(document.documentElement.classList.contains('pico-landing-scroll')).toBe(true);
+    expect(container.querySelector('a[href="#features"]')).not.toBeNull();
+    expect(container.querySelector('a[href="#downloads"]')).not.toBeNull();
+  });
   it('uses only one small copyright line in the footer', async () => {
     await render();
     const footer=container.querySelector('footer.lp-footer');
