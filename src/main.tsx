@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './app/App';
+import { LandingPage } from './app/components/LandingPage';
+import { isPicoDesktop, shouldOpenWorkspace } from './app/entryRoute';
 import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
@@ -18,11 +20,27 @@ function SkipToContent() {
     target.focus();
   }}>Skip to content</a>;
 }
+function PicoEntry() {
+  const [, setLocationKey] = useState(() => location.pathname + location.hash);
+  useEffect(() => {
+    const onNavigate = () => setLocationKey(location.pathname + location.hash);
+    window.addEventListener('popstate', onNavigate);
+    window.addEventListener('hashchange', onNavigate);
+    return () => {
+      window.removeEventListener('popstate', onNavigate);
+      window.removeEventListener('hashchange', onNavigate);
+    };
+  }, []);
+  return shouldOpenWorkspace(location.pathname, location.hash, isPicoDesktop())
+    ? <OnlineOnlyGate><App /><PicoTelemetry /></OnlineOnlyGate>
+    : <LandingPage />;
+}
+
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    <OnlineOnlyGate><App /><PicoTelemetry /></OnlineOnlyGate>
+    <PicoEntry />
   </React.StrictMode>,
 );
 
@@ -30,8 +48,6 @@ createRoot(document.getElementById('root')!).render(
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register('/sw.js').then(async registration => {
-      // Include resources fetched before the service worker took control on
-      // first visit, so the homepage can render on a later offline reload.
       const assets = [...new Set([
         ...Array.from(document.querySelectorAll<HTMLScriptElement | HTMLLinkElement>('script[src],link[rel="stylesheet"][href],link[rel="modulepreload"][href]'))
           .map(element => element instanceof HTMLScriptElement ? element.src : element.href),
