@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import LandingPage from './LandingPage';
+import LandingPage, { installerDownloadHref } from './LandingPage';
 
 vi.mock('../cpu/CpuStudio', () => ({
   CpuStudio: ({landingPreview}:{landingPreview?:boolean}) => <div data-testid="live-cpu">{landingPreview?'Actual CPU Studio':'CPU Studio'}</div>,
@@ -143,9 +143,24 @@ describe('Pico landing page', () => {
   it('keeps navigation and footer text intact without duplicate content', async () => {
     await render();
     expect(container.querySelector('.lp-header')).not.toBeNull();
-    expect(container.querySelector('.lp-nav-start')?.textContent).toContain('Open app');
+    expect(container.querySelector('.lp-nav-start')).toBeNull();
     expect(container.querySelector('footer small')?.textContent)
       .toBe('© 2026 Pico Development Team. All rights reserved.');
+  });
+  it('uses GitHub release assets for branch-preview downloads without changing production routes', () => {
+    const names=[
+      'Pico_x64-setup.exe','Pico_x64_en-US.msi',
+      'Pico_aarch64.dmg','Pico_x64.dmg',
+      'Pico_amd64.deb','Pico_amd64.AppImage',
+    ];
+    for(const name of names){
+      expect(installerDownloadHref(name,'feat-premium-landing-app-rou.picompiler.pages.dev'))
+        .toBe('https://github.com/mztaq/pico/releases/latest/download/'+name);
+      expect(installerDownloadHref(name,'preview-123.picompiler.pages.dev'))
+        .toBe('https://github.com/mztaq/pico/releases/latest/download/'+name);
+      expect(installerDownloadHref(name,'picompiler.pages.dev')).toBe('/downloads/'+name);
+      expect(installerDownloadHref(name,'localhost')).toBe('/downloads/'+name);
+    }
   });
   it('lists all six platform-specific installers', async () => {
     await render();
