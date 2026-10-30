@@ -5,12 +5,10 @@
  * Older installers still request /, and Tauri injects this marker into its
  * webview independently of the optional window.__TAURI__ API.
  */
-export function isPicoDesktopWebview(host: {
-  isTauri?: unknown;
-  __TAURI_INTERNALS__?: unknown;
-}): boolean {
-  return host.isTauri === true ||
-    (typeof host.__TAURI_INTERNALS__ === 'object' && host.__TAURI_INTERNALS__ !== null);
+export function isPicoDesktopWebview(host: object): boolean {
+  const native = host as {isTauri?: unknown; __TAURI_INTERNALS__?: unknown};
+  return native.isTauri === true ||
+    (typeof native.__TAURI_INTERNALS__ === 'object' && native.__TAURI_INTERNALS__ !== null);
 }
 
 /** The website's / stays the landing page; an old Tauri webview keeps Pico. */
