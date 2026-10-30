@@ -123,7 +123,8 @@ describe('Pico landing page', () => {
     await render();
     expect(container.querySelector('.lp-hero .lp-hero-cpu [data-testid="live-cpu"]')).not.toBeNull();
     expect(container.querySelector('.lp-cpu-section')).toBeNull();
-    expect(container.querySelector('.lp-hero-cpu-bar a')?.getAttribute('href')).toBe('/app?tool=cpu');
+    expect(container.querySelector('.lp-hero-cpu-bar')).toBeNull();
+    expect(container.querySelector('.lp-cpu-live')).not.toBeNull();
     expect(container.querySelector('.lp-product-window')).toBeNull();
     expect(container.querySelector('.lp-visual-code')).toBeNull();
     expect(container.querySelector('.lp-processor-svg')).toBeNull();
