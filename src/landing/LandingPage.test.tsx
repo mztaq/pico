@@ -79,6 +79,12 @@ describe('Pico landing page', () => {
     expect(container.querySelector('.lp')?.getAttribute('data-landing-theme')).toBe('catppuccin-mocha');
     expect(container.querySelector('#about')).toBeNull();
     expect(container.querySelector('.lp-feature-card')).toBeNull();
+    const links=[...container.querySelectorAll<HTMLAnchorElement>('.lp-feature-item')];
+    expect(links.map(link=>link.getAttribute('href'))).toEqual([
+      '/app?tool=pseudocode','/app?tool=python','/app?tool=flowchart',
+      '/app?tool=logic','/app?tool=cpu','/app?tool=binary',
+    ]);
+    expect(links.every(link=>link.getAttribute('aria-label')?.startsWith('Open '))).toBe(true);
     const layout=container.querySelector('main > .lp-tools-downloads');
     expect(layout).not.toBeNull();
     expect([...layout!.children].map(section=>section.id)).toEqual(['features','downloads']);
@@ -117,6 +123,7 @@ describe('Pico landing page', () => {
     await render();
     expect(container.querySelector('.lp-hero .lp-hero-cpu [data-testid="live-cpu"]')).not.toBeNull();
     expect(container.querySelector('.lp-cpu-section')).toBeNull();
+    expect(container.querySelector('.lp-hero-cpu-bar a')?.getAttribute('href')).toBe('/app?tool=cpu');
     expect(container.querySelector('.lp-product-window')).toBeNull();
     expect(container.querySelector('.lp-visual-code')).toBeNull();
     expect(container.querySelector('.lp-processor-svg')).toBeNull();
