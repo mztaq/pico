@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
-import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal } from 'lucide-react';
+import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal, ArrowRight } from 'lucide-react';
 import { LandingCurves } from './LandingCurves';
 import { getTheme } from '../app/themes';
 import './landing.css';
@@ -115,7 +115,7 @@ export default function LandingPage() {
       <div className="lp-hero-cpu" id="cpu-studio">
         <div className="lp-hero-cpu-bar">
           <span>CPU Studio</span>
-          <a href={APP}>Open CPU Studio <ArrowUpRight size={14}/></a>
+          <a href="/app?tool=cpu">Open CPU Studio <ArrowUpRight size={14}/></a>
         </div>
         <div className="lp-cpu-live" aria-label="Live Pico CPU Studio simulation">
           <Suspense fallback={<div className="lp-cpu-loading" role="status">Loading CPU Studio…</div>}>
@@ -126,30 +126,30 @@ export default function LandingPage() {
     </section>
     <section className="lp-tools-downloads lp-container" aria-label="Pico tools and desktop downloads">
       <section id="features" className="lp-features" aria-labelledby="lp-features-title">
-      <div className="lp-section-heading"><h2 id="lp-features-title">Pico's tools</h2></div>
-      <div className="lp-feature-groups">
-        <div className="lp-feature-group">
-          <div className="lp-feature-category"><h3>Programming</h3></div>
-          <div className="lp-feature-items">
-            <div className="lp-feature-item"><h4>Pseudocode</h4><p>Write and run Cambridge-style pseudocode.</p></div>
-            <div className="lp-feature-item"><h4>Python</h4><p>Execute Python with interactive input.</p></div>
+        <div className="lp-section-heading"><h2 id="lp-features-title">Pico's tools</h2></div>
+        <div className="lp-feature-groups">
+          <div className="lp-feature-group">
+            <div className="lp-feature-category"><h3>Programming</h3></div>
+            <div className="lp-feature-items">
+              <a className="lp-feature-item" href="/app?tool=pseudocode" aria-label="Open Pseudocode in Pico"><span className="lp-feature-item-head"><h4>Pseudocode</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Write and run pseudocode.</p></a>
+              <a className="lp-feature-item" href="/app?tool=python" aria-label="Open Python in Pico"><span className="lp-feature-item-head"><h4>Python</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Execute Python code.</p></a>
+            </div>
+          </div>
+          <div className="lp-feature-group">
+            <div className="lp-feature-category"><h3>Visual tools</h3></div>
+            <div className="lp-feature-items">
+              <a className="lp-feature-item" href="/app?tool=flowchart" aria-label="Open Flowchart Builder in Pico"><span className="lp-feature-item-head"><h4>Flowchart Builder</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Build and run flowcharts.</p></a>
+              <a className="lp-feature-item" href="/app?tool=logic" aria-label="Open Logic Sim in Pico"><span className="lp-feature-item-head"><h4>Logic Sim</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Test logic circuits.</p></a>
+            </div>
+          </div>
+          <div className="lp-feature-group">
+            <div className="lp-feature-category"><h3>Computer systems</h3></div>
+            <div className="lp-feature-items">
+              <a className="lp-feature-item" href="/app?tool=cpu" aria-label="Open CPU Studio in Pico"><span className="lp-feature-item-head"><h4>CPU Studio</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Explore CPU execution.</p></a>
+              <a className="lp-feature-item" href="/app?tool=binary" aria-label="Open Binary Lab in Pico"><span className="lp-feature-item-head"><h4>Binary Lab</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Convert binary and hexadecimal.</p></a>
+            </div>
           </div>
         </div>
-        <div className="lp-feature-group">
-          <div className="lp-feature-category"><h3>Visual tools</h3></div>
-          <div className="lp-feature-items">
-            <div className="lp-feature-item"><h4>Flowchart Builder</h4><p>Build, run and convert flowcharts to pseudocode.</p></div>
-            <div className="lp-feature-item"><h4>Logic Sim</h4><p>Connect logic gates and test their outputs.</p></div>
-          </div>
-        </div>
-        <div className="lp-feature-group">
-          <div className="lp-feature-category"><h3>Computer systems</h3></div>
-          <div className="lp-feature-items">
-            <div className="lp-feature-item"><h4>CPU Studio</h4><p>Step through the fetch–decode–execute cycle.</p></div>
-            <div className="lp-feature-item"><h4>Binary Lab</h4><p>Explore binary, hexadecimal and bit operations.</p></div>
-          </div>
-        </div>
-      </div>
       </section>
       <DownloadsSection/>
     </section>
