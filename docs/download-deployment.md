@@ -18,14 +18,14 @@ The Cloudflare Pages Function at `/downloads/[filename]` reconstructs downloads,
 ## Required first-time setup
 
 1. GitHub repository Actions secrets: `CLOUDFLARE_API_TOKEN` (Cloudflare Pages Edit permission) and `CLOUDFLARE_ACCOUNT_ID`.
-2. Merge the download changes after tests. Run the `Publish Pico installers to Cloudflare Pages` workflow manually.
-3. Ensure the resulting deployment includes Pages Functions. Check its `/download-assets/manifest.json` URL.
-4. Verify `curl -I` and range GET requests and compare full downloaded SHA-256 with the manifest.
-5. Update Pico website and desktop auto-update URLs before making the GitHub source private.
+2. In Cloudflare Workers & Pages > picompiler > Settings > Builds > Branch control, disable automatic production branch deployments and save. Leave Preview branch deployments enabled for PR checks.\n3. Merge the download changes after tests. The workflow will run for every push to `main`; you can also run it manually using Actions > Publish Pico installers to Cloudflare Pages > Run workflow.
+4. Ensure the resulting deployment includes Pages Functions. Check its `/download-assets/manifest.json` URL.
+5. Verify `curl -I` and range GET requests and compare full downloaded SHA-256 with the manifest.
+6. Update Pico website and desktop auto-update URLs before making the GitHub source private.
 
 ## Important
 
-Cloudflare Pages Git integration may overwrite a manual Wrangler deployment during the next Git push. **Do not make the repo private until an automated release and deployment path is verified for subsequent pushes.**
+**Automatic Cloudflare production builds must be disabled before merge.** Otherwise their unbundled Git build could race against GitHub Actions and replace the release assets. After merge the GitHub Actions workflow deploys installers on every push to main. Do not make the repository private until binary integrity checks pass.
 
 The function reconstructs 77+ MiB AppImage responses. Cloudflare Pages Functions CPU/memory/response-duration limits might affect large downloads. Confirm with a real end-to-end test.
 
