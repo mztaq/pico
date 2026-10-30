@@ -71,8 +71,7 @@ function Navigation() {
     <a href="#home" onClick={()=>setOpen(false)}>Home</a>
     <a href="#features" onClick={()=>setOpen(false)}>Tools</a>
     <a href="#downloads" onClick={()=>setOpen(false)}>Downloads</a>
-    <a href={APP} className="lp-nav-mobile-cta">Open app <ArrowUpRight size={16}/></a>
-  </nav><div className="lp-nav-actions"><a href={APP} className="lp-nav-start">Open app <ArrowUpRight size={15}/></a><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header></div>;
+  </nav><div className="lp-nav-actions"><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header></div>;
 }
 const installerGroups=[
   {platform:'Windows',icon:Monitor,files:[
