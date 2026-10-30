@@ -16,5 +16,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "vite.config.ts", "functions/downloads.ts", "functions/api/releases.ts", "functions/api/downloads/[id].ts"]
+  "include": ["src", "vite.config.ts", "functions/downloads.ts"]
 }

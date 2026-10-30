@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowUpRight, Check, ChevronDown, Download, FileArchive, Pac
 import { PlatformIcon } from './PlatformIcon';
 import { loadSettings } from '../../storage/settings';
 import { contrastRatio, cssVariables, getTheme } from '../themes';
-import { downloadableAssets, fileFormat, formatSize, type Release, type ReleaseAsset, type ReleasePage } from '../../releases/types';
+import { downloadableAssets, fileFormat, formatSize, releaseFromManifest, type HostedDownloadManifest, type Release, type ReleaseAsset, type ReleasePage } from '../../releases/types';
 import '../../styles/downloads.css';
 
 const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -55,7 +55,7 @@ function AssetGroups({ release, onDownload }: { release: Release; onDownload: (n
         <div className="download-file-meta"><span>{fileFormat(asset.name)}</span>{assetArchitecture(asset.name) && <span>{assetArchitecture(asset.name)}</span>}<span>{formatSize(asset.size)}</span></div>
         <span className="download-filename">{asset.name}</span>
         {asset.label && <p className="download-file-label">{asset.label}</p>}
-        <a className="download-action" href={`/api/downloads/${asset.id}`} onClick={() => onDownload(asset.name)} aria-label={`Download ${asset.name}`}><Download size={16} aria-hidden="true" />Download<span className="download-action-format">{fileFormat(asset.name)}</span></a>
+        <a className="download-action" href={`/downloads/${encodeURIComponent(asset.name)}`} onClick={() => onDownload(asset.name)} aria-label={`Download ${asset.name}`}><Download size={16} aria-hidden="true" />Download<span className="download-action-format">{fileFormat(asset.name)}</span></a>
       </li>)}</ul>
     </section>;
   })}</div>;
@@ -84,19 +84,23 @@ export default function DownloadsPage() {
     return () => window.clearInterval(timer);
   }, [retryAt]);
 
-  async function load(page: number, signal: AbortSignal) {
+  async function load(signal: AbortSignal) {
     setLoading(true); setError('');
     try {
-      const response = await fetch(`/api/releases?page=${page}`, { signal, headers: { Accept: 'application/json' } });
+      let response = await fetch('/download-assets/manifest.json', { signal, headers: { Accept: 'application/json' } });
+      if (!response.ok && window.location.hostname !== 'picompiler.pages.dev') {
+        response = await fetch('https://picompiler.pages.dev/download-assets/manifest.json', { signal, headers: { Accept: 'application/json' } });
+      }
       if (!response.ok) {
         const seconds = Number(response.headers.get('Retry-After'));
         if (Number.isFinite(seconds) && seconds > 0) setRetryAt(Date.now() + seconds * 1000);
         throw new Error('Releases are temporarily unavailable. Please try again shortly.');
       }
-      const result = await response.json() as ReleasePage;
-      if (!Array.isArray(result.releases) || !('latest' in result)) throw new Error('Release information could not be loaded. Please try again.');
+      const manifest = await response.json() as HostedDownloadManifest;
+      const release = releaseFromManifest(manifest);
+      const result: ReleasePage = { latest: release, releases: [release], nextPage: null, stale: false };
       if (signal.aborted) return;
-      setData(previous => ({ ...result, releases: page === 1 ? result.releases : [...new Map([...(previous?.releases ?? []), ...result.releases].map(release => [release.id, release])).values()] }));
+      setData(result);
       setRetryAt(0); setRetrySeconds(0);
     } catch (cause) {
       if (!signal.aborted) setError(cause instanceof Error ? cause.message : 'Release information could not be loaded.');
@@ -104,14 +108,9 @@ export default function DownloadsPage() {
   }
   useEffect(() => {
     const controller = new AbortController(); pending.current = controller;
-    void load(1, controller.signal);
+    void load(controller.signal);
     return () => pending.current?.abort();
   }, [retry]);
-  const loadMore = () => {
-    if (!data?.nextPage || loading) return;
-    const controller = new AbortController(); pending.current = controller;
-    void load(data.nextPage, controller.signal);
-  };
   const onDownload = (name: string) => setNotice(`Requesting ${name}. Your browser will show the download when it starts.`);
   const previous = data?.releases.filter(release => release.id !== data.latest?.id) ?? [];
   const latest = data?.latest;
@@ -125,7 +124,7 @@ export default function DownloadsPage() {
       <main id="downloads-main">
         <div className="downloads-intro"><span className="downloads-eyebrow">YOUR WORKSPACE, ON YOUR DESKTOP</span><h1>Download Pico<span>.</span></h1><p>Choose your installer and make yourself at home.<br />The latest release, all in one place.</p></div>
         {loading && !data && <div className="downloads-loading" role="status"><RefreshCw size={22} aria-hidden="true" /><p>Finding the latest Pico release…</p><div className="downloads-skeleton" aria-hidden="true" /></div>}
-        {error && <div className="downloads-feedback" role="alert"><h2>We couldn’t load {data ? 'more releases' : 'the releases'}</h2><p>{error}</p><button className="downloads-secondary" disabled={loading || retrySeconds > 0} onClick={() => data ? loadMore() : setRetry(value => value + 1)}><RefreshCw size={16} aria-hidden="true" />{retrySeconds > 0 ? `Try again in ${retrySeconds}s` : 'Try again'}</button></div>}
+        {error && <div className="downloads-feedback" role="alert"><h2>We couldn’t load the release</h2><p>{error}</p><button className="downloads-secondary" disabled={loading || retrySeconds > 0} onClick={() => setRetry(value => value + 1)}><RefreshCw size={16} aria-hidden="true" />{retrySeconds > 0 ? `Try again in ${retrySeconds}s` : 'Try again'}</button></div>}
         {data?.stale && <p className="downloads-feedback" role="status">Showing the last available release information. Updates are temporarily unavailable.</p>}
         {latest && <section className="latest-release" aria-labelledby="latest-release-title">
           <div className="release-heading"><div><span className="release-badge"><Check size={13} aria-hidden="true" />Latest stable</span><h2 id="latest-release-title">{latest.name || latest.tag_name}</h2><div className="release-meta"><code>{latest.tag_name}</code><span aria-hidden="true">·</span><ReleaseDate value={latest.published_at} /></div></div><Package className="release-heading-icon" size={40} strokeWidth={1.25} aria-hidden="true" /></div>
@@ -137,7 +136,6 @@ export default function DownloadsPage() {
         <p className="download-notice" role="status" aria-live="polite">{notice}</p>
         {data && <section className="release-history" aria-labelledby="release-history-title"><div className="release-history-heading"><div><span className="downloads-eyebrow">RELEASE ARCHIVE</span><h2 id="release-history-title">{latest ? 'Previous releases' : 'Available releases'}</h2></div><span>{previous.length} loaded</span></div>
           {previous.length === 0 ? <p className="downloads-empty-history">{data.nextPage ? 'More releases are available below.' : 'No previous releases to show yet. Future releases will appear here automatically.'}</p> : previous.map(release => <details className="release-history-item" key={release.id}><summary><ChevronDown size={18} aria-hidden="true" /><span className="release-history-name"><strong>{release.name || release.tag_name}</strong><code>{release.tag_name}</code></span><span className={`release-badge${release.prerelease ? ' release-badge-preview' : ''}`}>{release.prerelease ? 'Prerelease' : 'Stable'}</span><ReleaseDate value={release.published_at} /></summary><div className="release-history-body">{release.prerelease && <p className="downloads-preview-note">Preview release — may include unfinished features.</p>}<AssetGroups release={release} onDownload={onDownload} /><h3>Release notes</h3><ReleaseNotes body={release.body} /></div></details>)}
-          {data.nextPage && <button className="downloads-secondary downloads-load-more" disabled={loading || retrySeconds > 0} onClick={loadMore}>{loading ? 'Loading releases…' : 'Load older releases'}</button>}
         </section>}
         <aside className="downloads-browser-note"><div><h2>Prefer to stay in your browser?</h2><p>Your Pico workspaces are always a click away.</p></div><a className="downloads-secondary" href="/">Open Pico<ArrowUpRight size={16} aria-hidden="true" /></a></aside>
       </main>
