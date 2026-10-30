@@ -59,7 +59,11 @@ export default function LandingPage() {
   useEffect(() => {
     document.title='Pico | Built by Students, for Students';
     document.documentElement.style.colorScheme='dark';
-    return () => { document.documentElement.style.colorScheme=''; };
+    document.documentElement.classList.add('pico-landing-scroll');
+    return () => {
+      document.documentElement.style.colorScheme='';
+      document.documentElement.classList.remove('pico-landing-scroll');
+    };
   }, []);
   return <div className="lp"><LandingCurves/><Navigation/><main id="home">
     <section className="lp-hero lp-container">
