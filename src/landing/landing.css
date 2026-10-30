@@ -96,7 +96,8 @@ html.pico-landing-scroll{scroll-padding-top:94px}
   min-height:540px;
 }
 .lp-hero-copy{min-width:0}
-.lp h1{margin:0 0 18px;font-size:clamp(76px,7vw,108px);line-height:1.05;letter-spacing:-4.8px;font-weight:800}
+.lp h1{margin:0 0 18px;font-size:clamp(54px,5vw,76px);line-height:1.09;letter-spacing:-3px;font-weight:800}
+.lp h1 .lp-hero-highlight{color:var(--lp-accent)}
 .lp-hero-copy>p{max-width:440px;margin:0 0 33px;color:var(--lp-muted);font-size:17px;line-height:1.6;font-weight:500}
 .lp-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:11px}
 .lp-button{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:45px;padding:0 16px;border-radius:7px;font-size:12px;font-weight:700;transition:background-color 130ms ease,border-color 130ms ease}
@@ -198,7 +199,7 @@ html.pico-landing-scroll{scroll-padding-top:94px}
   .lp-container{width:calc(100% - 56px)}
   .lp-hero{grid-template-columns:1fr;gap:38px;min-height:0;padding:72px 0 85px}
   .lp-hero-copy{max-width:720px}
-  .lp h1{font-size:clamp(76px,10vw,106px)}
+  .lp h1{font-size:clamp(54px,8.5vw,80px)}
   .lp-hero-cpu{max-width:700px;width:100%}
   .lp-tools-downloads{gap:78px;padding-block:72px 84px}
   .lp-downloads{padding-top:68px}
@@ -222,7 +223,7 @@ html.pico-landing-scroll{scroll-padding-top:94px}
   .lp-nav-mobile-cta{display:flex!important;align-items:center;gap:7px;color:#cba6f7!important}
   .lp-menu{display:grid!important;place-items:center;width:38px;height:37px;border:1px solid #454761;border-radius:6px;background:#242435;color:#cdd6f4}
   .lp-hero{padding:64px 0 76px;gap:32px}
-  .lp h1{font-size:clamp(66px,16vw,92px);letter-spacing:-3.8px}
+  .lp h1{font-size:clamp(43px,10.5vw,66px);letter-spacing:-2.2px}
   .lp-hero-copy>p{font-size:15px}
   .lp-hero-actions{gap:9px}
   .lp-button{font-size:11px;padding:0 13px}
