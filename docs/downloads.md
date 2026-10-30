@@ -18,7 +18,7 @@ Run `pnpm check`, `pnpm test`, and `pnpm build`. There is no lint command in thi
 
 ## Cloudflare Pages
 
-Keep the existing root-directory deployment, `pnpm build` build command and `dist` output directory. Pages compiles the root `functions/` directory; the existing `public/_routes.json` already includes `/api/*` and must retain the other APIs. `/downloads` uses Pages' existing SPA fallback. No hosting migration or environment variable is required.
+Keep the existing root-directory deployment, `pnpm build` build command and `dist` output directory. Pages compiles the root `functions/` directory; the existing `public/_routes.json` already includes `/api/*` and must retain the other APIs. `public/_redirects` rewrites only `/downloads` to the React entry point, preserving Pico's custom 404 page for genuinely unknown URLs. No hosting migration or environment variable is required.
 
 For CLI deployments, run `wrangler pages deploy dist` from the repository root so Functions are included. A static-only upload of `dist`, or `pnpm preview` alone, does **not** run Functions. To check the production runtime locally, use `wrangler pages dev dist` from the root after building.
 
