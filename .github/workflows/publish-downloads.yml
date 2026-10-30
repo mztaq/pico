@@ -35,3 +35,28 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           npx --yes wrangler@4 pages deploy dist --project-name picompiler --branch main
+      - name: Verify public installers and reconstructed SHA-256
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, time, urllib.request
+          from pathlib import Path
+          manifest = json.loads(Path('public/download-assets/manifest.json').read_text())
+          for name, details in manifest['files'].items():
+              url = 'https://picompiler.pages.dev/downloads/' + name
+              last_error = None
+              for attempt in range(8):
+                  try:
+                      digest = hashlib.sha256()
+                      with urllib.request.urlopen(url, timeout=180) as response:
+                          assert response.status == 200, (name, response.status)
+                          while block := response.read(1 << 20):
+                              digest.update(block)
+                      assert digest.hexdigest() == details['sha256'], name + ': checksum mismatch'
+                      print('Verified', name, details['size'], digest.hexdigest())
+                      break
+                  except Exception as exc:
+                      last_error = exc
+                      if attempt == 7:
+                          raise
+                      time.sleep(8)
+          PY
