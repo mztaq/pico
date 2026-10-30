@@ -112,9 +112,6 @@ export default function LandingPage() {
     <DownloadsSection/>
   </main>
   <footer className="lp-footer"><div className="lp-container">
-    <div className="lp-footer-top"><div><Brand/></div>
-      <nav aria-label="Footer navigation"><a href="#features">Tools</a><a href="#cpu-studio">CPU Studio</a><a href="#downloads">Downloads</a><a href="/app#team">Team</a><a href={APP}>Browser app</a><a href="/app#privacy">Privacy</a><a href="/app#terms">Terms</a></nav>
-    </div>
-    <div className="lp-footer-bottom"><span>© {new Date().getFullYear()} Pico</span></div>
+    <small>© 2026 Pico Development Team. All rights reserved.</small>
   </div></footer></div>;
 }
