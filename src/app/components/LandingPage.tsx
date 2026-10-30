@@ -1,7 +1,7 @@
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Download, ExternalLink } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { cssVariables, getTheme } from '../themes';
-import { HomeScreen } from './HomeScreen';
+import { PicoWorld } from './PicoWorld';
 import './landing.css';
 
 const release = 'https://github.com/mztaq/pico/releases/download/desktop-v0.1.0-build.10/';
@@ -24,62 +24,9 @@ const tools = [
  * A single scroll listener adjusts CSS transforms. No animation runs when
  * reduced motion is preferred and the actual tool routes are untouched.
  */
-function useShowcaseMotion(scrollRef: React.RefObject<HTMLDivElement | null>, sectionRef: React.RefObject<HTMLElement | null>, screenRef: React.RefObject<HTMLDivElement | null>) {
-  useEffect(() => {
-    const scroller = scrollRef.current;
-    const section = sectionRef.current;
-    const screen = screenRef.current;
-    if (!scroller || !section || !screen) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let queued = 0;
-
-    const update = () => {
-      queued = 0;
-      const previewWidth = screen.clientWidth;
-      // A fixed-size authentic app UI scales into its display, without
-      // changing HomeScreen's own layout or adding an iframe.
-      screen.style.setProperty('--pico-ui-scale', String(previewWidth / 1440));
-      if (reduce.matches || window.innerWidth < 640) {
-        section.style.setProperty('--showcase-rx', '0deg');
-        section.style.setProperty('--showcase-ry', '0deg');
-        section.style.setProperty('--showcase-lift', '0px');
-        section.style.setProperty('--showcase-scale', '1');
-        return;
-      }
-      const area = scroller.getBoundingClientRect();
-      const box = section.getBoundingClientRect();
-      const top = box.top - area.top;
-      const total = Math.max(1, scroller.clientHeight * 0.65 + box.height * 0.52);
-      const progress = Math.max(0, Math.min(1, (scroller.clientHeight * 0.68 - top) / total));
-      section.style.setProperty('--showcase-rx', `${(19 * (1 - progress)).toFixed(2)}deg`);
-      section.style.setProperty('--showcase-ry', `${(-12 * (1 - progress)).toFixed(2)}deg`);
-      section.style.setProperty('--showcase-lift', `${(65 * (1 - progress)).toFixed(1)}px`);
-      section.style.setProperty('--showcase-scale', String((0.87 + 0.13 * progress).toFixed(3)));
-    };
-    const queue = () => { if (!queued) queued = window.requestAnimationFrame(update); };
-    scroller.addEventListener('scroll', queue, { passive: true });
-    window.addEventListener('resize', queue, { passive: true });
-    reduce.addEventListener('change', queue);
-    const observer = new ResizeObserver(queue);
-    observer.observe(screen);
-    observer.observe(section);
-    update();
-    return () => {
-      scroller.removeEventListener('scroll', queue);
-      window.removeEventListener('resize', queue);
-      reduce.removeEventListener('change', queue);
-      observer.disconnect();
-      if (queued) window.cancelAnimationFrame(queued);
-    };
-  }, [scrollRef, sectionRef, screenRef]);
-}
-
 export function LandingPage() {
   const theme = getTheme('catppuccin-mocha');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLElement>(null);
-  const screenRef = useRef<HTMLDivElement>(null);
-  useShowcaseMotion(scrollRef, stageRef, screenRef);
 
   useEffect(() => {
     for (const [key, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(key, value);
@@ -108,33 +55,10 @@ export function LandingPage() {
             <a className="landing-secondary" href="#download">Download Pico <Download size={17} aria-hidden="true" /></a>
           </div>
         </div>
-        <a className="landing-scroll-label" href="#showcase">See Pico in action <ArrowDownRight size={17} aria-hidden="true"/></a>
+        <a className="landing-scroll-label" href="#explore">See Pico in action <ArrowDownRight size={17} aria-hidden="true"/></a>
       </section>
 
-      <section className="landing-showcase" id="showcase" aria-label="Preview of Pico's actual workspace selection" ref={stageRef}>
-        <div className="landing-showcase-sticky">
-          <div className="landing-showcase-bar">
-            <span>Pico workspace selection</span>
-            <span>Real interface, not a mockup</span>
-          </div>
-          <div className="landing-scene">
-            <div className="landing-scene-depth landing-scene-depth-back" aria-hidden="true"/>
-            <div className="landing-scene-depth landing-scene-depth-middle" aria-hidden="true"/>
-            <div className="landing-preview-panel">
-              <div className="landing-preview-toolbar"><span>Pico.</span><span>Choose your workspace</span><span>● &nbsp; Browser preview</span></div>
-              <div className="landing-preview-screen" ref={screenRef} aria-hidden="true" inert>
-                <div className="landing-preview-viewport">
-                  <HomeScreen onChoose={() => {}} />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="landing-showcase-foot">
-            <span>Actual Pico workspace selector</span>
-            <a href="/app/">Open the full application <ArrowUpRight size={16} aria-hidden="true"/></a>
-          </div>
-        </div>
-      </section>
+      <PicoWorld scroller={scrollRef}/>
 
       <section className="landing-workspaces" id="workspaces" aria-labelledby="landing-workspaces-title">
         <div className="landing-section-heading">
