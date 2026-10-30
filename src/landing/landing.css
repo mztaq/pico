@@ -110,10 +110,6 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 
 /* Real CPU Studio. Retains simulator state, registers, RAM and play/pause. */
 .lp-hero-cpu{min-width:0;overflow:hidden;background:#181825;border:1px solid #454761;border-radius:9px}
-.lp-hero-cpu-bar{min-height:43px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #303143;background:#181825}
-.lp-hero-cpu-bar>span{font-weight:700;font-size:12px}
-.lp-hero-cpu-bar>a{display:inline-flex;align-items:center;gap:6px;color:#cba6f7;font-size:11px;font-weight:600}
-.lp-hero-cpu-bar>a:hover{color:#fff}
 .lp-cpu-live{min-width:0;overflow:hidden}
 .lp-cpu-loading{min-height:270px;display:grid;place-items:center;color:var(--lp-muted);font-size:12px}
 .lp .cpu-embedded{height:auto;min-height:0;display:flex;flex-direction:column;overflow:visible;background:#181825}
@@ -246,7 +242,6 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 }
 @media(max-width:420px){
   .lp-feature-items{grid-template-columns:1fr;gap:0}
-  .lp-hero-cpu-bar{padding:0 10px}
   .lp-download-group{gap:12px}
   .lp-download-options{padding-left:0}
 }
