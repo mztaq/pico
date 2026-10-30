@@ -1,4 +1,7 @@
 /* Home — workspace launcher */
+.pico-home .home-downloads-link { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; min-height: 40px; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-md); color: var(--ds-text); text-decoration: none; font-size: 13px; }
+.pico-home .home-downloads-link:hover { background: var(--ds-hover); }
+.pico-home .home-downloads-link:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 3px; }
 .pico-home {
   position: relative;
   z-index: 1;

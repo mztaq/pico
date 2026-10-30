@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { createReadStream } from 'node:fs';
 import { copyFile, mkdir } from 'node:fs/promises';
 import { PYODIDE_VERSION, PYODIDE_INDEX_URL } from './src/runtime/python/config.ts';
+import { releasesDev } from './scripts/releases-dev.ts';
 
 const headers = { 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Embedder-Policy': 'require-corp' };
 // Serve the pinned npm runtime through the same origin in development and production.
@@ -47,7 +48,7 @@ function pythonRuntime(): Plugin {
   };
 }
 export default defineConfig({
-  plugins: [react(), pythonRuntime()],
+  plugins: [react(), pythonRuntime(), releasesDev()],
   build: { emptyOutDir: true },
   server: { host: '0.0.0.0', port: 3000, strictPort: true, allowedHosts: true, headers },
   preview: { host: '0.0.0.0', port: 3000, strictPort: true, allowedHosts: true, headers },

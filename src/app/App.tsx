@@ -31,6 +31,7 @@ const FlowchartWorkspace = lazy(() => import('../flowchart/FlowchartWorkspace').
 const LogicWorkspace = lazy(() => import('../logic/LogicWorkspace').then(m => ({ default: m.LogicWorkspace })));
 const CpuStudio = lazy(() => import('../cpu/CpuStudio').then(m => ({ default: m.CpuStudio })));
 const BinaryLab = lazy(() => import('../binary/BinaryLab').then(m => ({ default: m.BinaryLab })));
+const DownloadsPage = lazy(() => import('./components/DownloadsPage'));
 import type { ChartStore } from '../flowchart/storage';
 import { MAX_CONSOLE_LINES } from '../runtime/python/config';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
@@ -55,6 +56,7 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 export default function App() {
+  const isDownloads = /^\/downloads\/?$/.test(window.location.pathname);
   const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | null>(null);
   const [informationPage, setInformationPage] = useState(() => informationPageFromHash(window.location.hash));
   useEffect(() => {
@@ -69,10 +71,12 @@ export default function App() {
   useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : 'Pico | Home'; }, [language, informationPage]);
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
+  useEffect(() => { if (isDownloads) document.title = 'Pico | Downloads'; }, [isDownloads]);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
     if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu' && language !== 'binary') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
+  if (isDownloads) return <WorkspaceLoadBoundary workspace="Downloads"><DownloadsPage /></WorkspaceLoadBoundary>;
   if (informationPage) return <SiteInfo page={informationPage} />;
   if (!language) return <HomeScreen onChoose={setLanguage} />;
   if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
