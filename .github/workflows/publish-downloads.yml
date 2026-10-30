@@ -34,13 +34,25 @@ jobs:
         run: |
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
-          npx --yes wrangler@4 pages deploy dist --project-name picompiler --branch main
+          npx --yes wrangler@4 pages deploy dist --project-name picompiler --branch main | tee "$RUNNER_TEMP/pico-deployment.log"
       - name: Verify public installers and reconstructed SHA-256
         run: |
           python3 - <<'PY'
           import hashlib, json, time, urllib.request
           from pathlib import Path
           manifest = json.loads(Path('public/download-assets/manifest.json').read_text())
+          import re
+          deploy_log = Path(__import__('os').environ['RUNNER_TEMP'], 'pico-deployment.log').read_text()
+          match = re.search(r'https://[a-z0-9]+\\.picompiler\\.pages\\.dev', deploy_log)
+          assert match, 'Wrangler deploy URL missing from output'
+          preview_url = match.group(0)
+          print('Testing immutable deployment:', preview_url, flush=True)
+          for base in [preview_url, 'https://picompiler.pages.dev']:
+              for path in ['/download-assets/manifest.json', '/downloads/Pico_x64-setup.exe']:
+                  req = urllib.request.Request(base + path, method='HEAD', headers={'User-Agent': 'PicoDownloadVerifier/1.0'})
+                  try:
+                      with urllib.request.urlopen(req, timeout=20) as response: print(base, path, response.status, response.headers.get('Content-Type'), flush=True)
+                  except Exception as exc: print(base, path, exc, flush=True)
           for name, details in manifest['files'].items():
               url = 'https://picompiler.pages.dev/downloads/' + name
               last_error = None
