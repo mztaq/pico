@@ -19,9 +19,9 @@ html,body{background:#08070d}
 /* Navigation */
 .lp-header{min-height:76px;border-bottom:1px solid #272131;background:#08070d}
 .lp-nav{height:76px;display:flex;justify-content:space-between;align-items:center;gap:32px}
-.lp-brand{display:inline-flex;align-items:center;gap:10px;color:#c58bff!important;font-size:22px;font-weight:800;letter-spacing:-.8px;white-space:nowrap}
+.lp-brand{display:inline-flex;align-items:center;gap:10px;color:#f5f3fa!important;font-size:22px;font-weight:800;letter-spacing:-.8px;white-space:nowrap}
 .lp-brand img{border-radius:10px}
-.lp-brand-dot{color:#d5b5ff}
+.lp-brand-dot{color:#f5f3fa}
 .lp-links{display:flex;align-items:center;gap:32px;margin-left:auto}
 .lp-links>a{color:#b6afbf;font-size:13px}
 .lp-links>a:hover,.lp-footer nav>a:hover{color:#e3c9ff}
