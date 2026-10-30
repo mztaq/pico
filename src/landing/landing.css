@@ -3,6 +3,13 @@
 /* Isolated landing palette. No body margin, vignette, or decorative motion. */
 html,body,#root{width:100%;min-height:100%;margin:0}
 html,body{background:#09080d}
+html.pico-landing-scroll{scroll-padding-top:94px}
+@media(prefers-reduced-motion:no-preference){
+  html.pico-landing-scroll{scroll-behavior:smooth}
+}
+@media(prefers-reduced-motion:reduce){
+  html.pico-landing-scroll{scroll-behavior:auto}
+}
 .lp{
   --lp-bg:#09080d;
   --lp-text:#f5f3fa;
@@ -81,6 +88,8 @@ html,body{background:#09080d}
 .lp-button-primary:hover{background:#b474eb}
 .lp-button-secondary{background:transparent;border:1px solid #6a497e;color:#e9d8f7!important}
 .lp-button-secondary:hover{border-color:#ad7ad8;background:#17111e}
+
+.lp-hero-cpu{scroll-margin-top:94px}
 
 /* Real CPU Studio. Retains simulator state, registers, RAM and play/pause. */
 .lp-hero-cpu{min-width:0;overflow:hidden;background:#100d16;border:1px solid #44344f;border-radius:9px}
