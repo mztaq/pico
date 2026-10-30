@@ -19,10 +19,6 @@ jobs:
           gh release download desktop-v0.1.0-build.10 --repo "$GITHUB_REPOSITORY" --dir release-binaries --pattern 'Pico_*'
       - name: Split and verify release files
         run: node scripts/stage-desktop-downloads.mjs release-binaries public/download-assets
-      - name: Generate favicon.ico from Pico SVG
-        run: |
-          npx --yes @tauri-apps/cli@2 icon public/pico-logo.svg --output /tmp/pico-icons
-          cp /tmp/pico-icons/icon.ico public/favicon.ico
       - name: Build and check
         run: |
           npm install --global pnpm@11.25.0
