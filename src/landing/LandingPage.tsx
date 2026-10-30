@@ -38,24 +38,41 @@ function Navigation() {
   },[open]);
   useEffect(()=>{
     let previousY=window.scrollY;
-    if(!open)setCompact(previousY>120);
-    else setCompact(false);
+    let lastDirection=0;
+    let directionDistance=0;
+    setCompact(!open&&previousY>120);
     const onScroll=()=>{
       const y=window.scrollY;
-      if(open||y<=32){setCompact(false);previousY=y;return;}
       const delta=y-previousY;
-      if(delta>=8){setCompact(true);previousY=y;}
-      else if(delta<=-8){setCompact(false);previousY=y;}
+      previousY=y;
+      if(open||y<=32){
+        lastDirection=0;
+        directionDistance=0;
+        setCompact(false);
+        return;
+      }
+      if(Math.abs(delta)<1)return;
+      const direction=Math.sign(delta);
+      if(direction!==lastDirection){
+        lastDirection=direction;
+        directionDistance=0;
+      }
+      directionDistance+=Math.abs(delta);
+      // Small trackpad reversals should not repeatedly expand and collapse the pill.
+      if(directionDistance<24)return;
+      if(direction>0&&y>120)setCompact(true);
+      if(direction<0)setCompact(false);
+      directionDistance=0;
     };
     window.addEventListener('scroll',onScroll,{passive:true});
     return()=>window.removeEventListener('scroll',onScroll);
   },[open]);
-  return <header className={compact?'lp-header lp-header-compact':'lp-header'}><div className="lp-container lp-nav"><Brand/><nav className={open?'lp-links is-open':'lp-links'} aria-label="Main navigation">
+  return <div className="lp-header-slot"><header className={compact?'lp-header lp-header-compact':'lp-header'}><div className="lp-container lp-nav"><Brand/><nav className={open?'lp-links is-open':'lp-links'} aria-label="Main navigation">
     <a href="#home" onClick={()=>setOpen(false)}>Home</a>
     <a href="#features" onClick={()=>setOpen(false)}>Tools</a>
     <a href="#downloads" onClick={()=>setOpen(false)}>Downloads</a>
     <a href={APP} className="lp-nav-mobile-cta">Open app <ArrowUpRight size={16}/></a>
-  </nav><div className="lp-nav-actions"><a href={APP} className="lp-nav-start">Open app <ArrowUpRight size={15}/></a><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header>;
+  </nav><div className="lp-nav-actions"><a href={APP} className="lp-nav-start">Open app <ArrowUpRight size={15}/></a><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header></div>;
 }
 const installerGroups=[
   {platform:'Windows',icon:Monitor,files:[
