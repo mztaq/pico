@@ -151,7 +151,7 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  const [interrupt,setInterrupt]=useState(initialInterrupt);
  const interruptRef=useRef(interrupt);interruptRef.current=interrupt;
  const [selected,setSelected]=useState<string>('PC');
- const [clock,setClock]=useState(()=>landingPreview?3.7:2);
+ const [clock,setClock]=useState(()=>landingPreview?4.7:2);
  const [themeId,setThemeId]=useState(()=>loadSettings().theme);
  const [themeOpen,setThemeOpen]=useState(false);
  const [tourStep,setTourStep]=useState<number|null>(()=>{
