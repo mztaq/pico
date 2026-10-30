@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, Download, GitBranch, Palette, Terminal } from 'lucide-react';
+import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Palette, Terminal } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
@@ -76,7 +76,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </div>}
       </div>
       <div className="home-updates">
-        <a className="home-downloads-link" href="/downloads"><Download size={15} aria-hidden="true" />Downloads</a>
         <SoundButton /><UpdateCenter />
       </div>
     </div>
