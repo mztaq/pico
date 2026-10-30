@@ -19,11 +19,6 @@ const tools = [
   { title: 'Understand', names: 'CPU Studio / Binary Lab', detail: 'Step through instructions and represent data.' },
 ] as const;
 
-/**
- * The real Pico HomeScreen is displayed below, not a fabricated mockup.
- * A single scroll listener adjusts CSS transforms. No animation runs when
- * reduced motion is preferred and the actual tool routes are untouched.
- */
 export function LandingPage() {
   const theme = getTheme('catppuccin-mocha');
   const scrollRef = useRef<HTMLDivElement>(null);
