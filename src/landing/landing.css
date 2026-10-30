@@ -11,6 +11,8 @@ html,body{background:#09080d}
   --lp-line:rgba(183,158,210,.16);
   width:100%;
   min-height:100vh;
+  position:relative;
+  isolation:isolate;
   background:var(--lp-bg);
   color:var(--lp-text);
   font:400 15px/1.6 'DM Sans',system-ui,sans-serif;
@@ -21,6 +23,25 @@ html,body{background:#09080d}
 .lp button{font:inherit}
 .lp :focus-visible{outline:2px solid #c394f5;outline-offset:3px}
 .lp-container{width:min(1200px,calc(100% - 80px));margin-inline:auto}
+/* Same five SVG curves, stroke treatment and slow motion as Pico's app home.
+   Fixed behind content and decorative only. */
+.lp-ambient-curves{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  width:100%;height:100%;overflow:visible;
+  color:#ba82ef;fill:none;stroke:currentColor;opacity:.22;
+}
+.lp-ambient-curves path{stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.lp-ambient-curve-flow{stroke-width:3.8;stroke-dasharray:150 850;opacity:.24}
+.lp-header,.lp main,.lp-footer{position:relative;z-index:1}
+@keyframes lp-ambient-curve-trace{to{stroke-dashoffset:-1000}}
+@media(prefers-reduced-motion:no-preference){
+  .lp-ambient-curves{animation:pico-ambient-curves-orbit 22s linear infinite}
+  .lp-ambient-curve-flow{animation:lp-ambient-curve-trace 29s linear infinite}
+  .lp-ambient-curve-flow--right{animation-duration:34s;animation-delay:-10s}
+}
+@media(prefers-reduced-motion:reduce){.lp-ambient-curves,.lp-ambient-curve-flow{animation:none!important}}
+@media(forced-colors:active){.lp-ambient-curves{display:none}}
+
 
 /* Navigation */
 .lp-header{border-bottom:1px solid var(--lp-line);background:var(--lp-bg);position:relative;z-index:10}
@@ -80,6 +101,7 @@ html,body{background:#09080d}
 .lp h2{margin:0;font-size:clamp(33px,3.9vw,48px);line-height:1.2;letter-spacing:-1.9px;font-weight:700}
 .lp-features{padding-block:80px 105px;border-top:1px solid var(--lp-line)}
 .lp-section-heading{margin-bottom:40px}
+.lp-section-heading h2{font-size:clamp(22px,2.65vw,33px);line-height:1.38;letter-spacing:-1.1px;font-weight:600;max-width:890px}
 .lp-feature-groups{border-top:1px solid var(--lp-line)}
 .lp-feature-group{display:grid;grid-template-columns:minmax(150px,.33fr) minmax(0,.67fr);gap:30px;align-items:start;border-bottom:1px solid var(--lp-line);padding:30px 0 35px}
 .lp-feature-category h3{margin:0;color:#c0b5cb;font-size:13px;font-weight:600;letter-spacing:0}
@@ -87,8 +109,8 @@ html,body{background:#09080d}
 .lp-feature-item h4{margin:0 0 7px;color:#f3eff9;font-size:17px;font-weight:700;letter-spacing:-.35px}
 .lp-feature-item p{margin:0;max-width:320px;color:#a69cae;font-size:13px;line-height:1.75}
 
-/* Downloads grouped by actual OS and installer type, never fake links. */
-.lp-downloads{padding:92px 0 94px;background:#0e0b13;border-block:1px solid var(--lp-line)}
+/* Downloads grouped by actual OS and installer type. */
+.lp-downloads{padding:92px 0 94px;background:rgba(14,11,19,.94);border-block:1px solid var(--lp-line)}
 .lp-downloads-heading{margin-bottom:38px}
 .lp-download-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid var(--lp-line)}
 .lp-download-group{min-width:0;padding:22px 22px 14px}
@@ -100,18 +122,7 @@ html,body{background:#09080d}
 .lp-download-option:hover{background:rgba(176,114,230,.065)}
 .lp-download-copy{display:flex;flex-direction:column;min-width:0;gap:2px;flex:1}
 .lp-download-copy strong{color:#f2eaf7;font-size:13px;font-weight:700}
-.lp-download-copy>span{color:#b0a6bb;font-size:11px}
-.lp-download-copy small{color:#7e738b;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lp-download-arrow{flex-shrink:0;color:#b78ad9}
-.lp-download-note{color:#898094;font-size:12px;margin:18px 0 0}
-
-/* About does not repeat the full product feature list. */
-.lp-about{padding-block:80px 100px;display:grid;grid-template-columns:minmax(175px,.33fr) minmax(0,.67fr);gap:30px;align-items:start}
-.lp-about-info{padding-top:6px}
-.lp-about-info p{margin:0 0 18px;color:#afa6b6;font-size:15px;line-height:1.75;max-width:520px}
-.lp-text-link{display:inline-flex;align-items:center;gap:8px;color:#c495ed!important;font-size:13px;font-weight:700}
-.lp-text-link:hover{color:#e1baff!important}
-
 /* Quiet footer. */
 .lp-footer{border-top:1px solid var(--lp-line);padding:42px 0 24px}
 .lp-footer-top{display:flex;justify-content:space-between;align-items:flex-start;gap:25px;padding-bottom:48px}
@@ -156,7 +167,6 @@ html,body{background:#09080d}
   .lp-feature-category{margin-bottom:20px}
   .lp-feature-items{gap:24px}
   .lp-feature-item h4{font-size:15px}
-  .lp-about{grid-template-columns:1fr;gap:16px;padding:67px 0 75px}
   .lp-footer-top{display:block;padding-bottom:32px}
   .lp-footer-top nav{justify-content:flex-start;margin-top:25px}
 }
