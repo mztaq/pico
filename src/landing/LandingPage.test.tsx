@@ -191,6 +191,29 @@ describe('Pico landing page', () => {
     expect(exe?.querySelector('small')?.textContent).toBe('2.00 MB');
     expect(container.querySelector('a[href="/downloads/Pico_x64_en-US.msi"] small')?.textContent).toBe('2.85 MB');
   });
+  it('shows exactly one installer per OS once the universal macOS DMG is published', async () => {
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue({
+      ok:true,
+      json:async()=>({assets:[
+        {name:'Pico_x64-setup.exe',size:1880000},
+        {name:'Pico_universal.dmg',size:4100000},
+        {name:'Pico_amd64.AppImage',size:81300000},
+      ]}),
+    }));
+    await render();
+    await act(async()=>{await Promise.resolve();await Promise.resolve();});
+    const links=[...container.querySelectorAll<HTMLAnchorElement>('.lp-download-option')];
+    expect(links).toHaveLength(3);
+    expect(links.map(link=>link.getAttribute('href'))).toEqual([
+      '/downloads/Pico_x64-setup.exe',
+      '/downloads/Pico_universal.dmg',
+      '/downloads/Pico_amd64.AppImage',
+    ]);
+    expect(links.map(link=>link.querySelector('small')?.textContent)).toEqual([
+      '1.88 MB','4.10 MB','81.30 MB',
+    ]);
+    expect(container.querySelector('a[href="/downloads/Pico_x64.dmg"]')).toBeNull();
+  });
   it('shows real CPU Studio, without mock product or decorative feature previews', async () => {
     await render();
     expect(container.querySelector('.lp-hero .lp-hero-cpu [data-testid="live-cpu"]')).not.toBeNull();
