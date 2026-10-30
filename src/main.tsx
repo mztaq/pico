@@ -6,6 +6,7 @@ const LandingPage = lazy(() => import('./landing/LandingPage'));
 import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
+import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
 import './styles/tokens.css';
 import './styles/motion.css';
 import './styles/overlays.css';
@@ -20,7 +21,9 @@ function SkipToContent() {
     target.focus();
   }}>Skip to content</a>;
 }
-const inApp = window.location.pathname === '/app' || window.location.pathname.startsWith('/app/');
+// Previously released Tauri wrappers still load /. Render the full workspace
+// there only inside their native webviews, without changing the browser URL.
+const inApp = shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window));
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
