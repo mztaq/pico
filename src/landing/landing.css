@@ -32,7 +32,7 @@ html,body{background:#09080d}
 }
 .lp-ambient-curves path{stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .lp-ambient-curve-flow{stroke-width:3.8;stroke-dasharray:150 850;opacity:.24}
-.lp-header,.lp main,.lp-footer{position:relative;z-index:1}
+.lp main,.lp-footer{position:relative;z-index:1}
 @keyframes lp-ambient-curve-trace{to{stroke-dashoffset:-1000}}
 @media(prefers-reduced-motion:no-preference){
   .lp-ambient-curves{animation:pico-ambient-curves-orbit 22s linear infinite}
@@ -44,15 +44,21 @@ html,body{background:#09080d}
 
 
 /* Navigation */
-.lp-header{border-bottom:1px solid var(--lp-line);background:var(--lp-bg);position:relative;z-index:10}
+.lp-header{
+  position:sticky;top:0;z-index:50;
+  border-bottom:1px solid var(--lp-line);
+  background:rgba(9,8,13,.96);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+}
 .lp-nav{height:74px;display:flex;align-items:center;gap:30px}
 .lp-brand{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;color:#f5f3fa!important;font-size:21px;letter-spacing:-.8px;font-weight:800}
 .lp-brand img{border-radius:9px}
 .lp-brand-dot{color:#f5f3fa}
 .lp-links{display:flex;align-items:center;gap:32px;margin-left:auto}
-.lp-links>a{font-size:13px;color:#b4acbb}
+.lp-links>a{font-size:14px;color:#b4acbb}
 .lp-links>a:hover,.lp-footer nav>a:hover{color:#fff}
-.lp-nav-start{display:flex;align-items:center;gap:9px;border:1px solid #513c61;padding:9px 15px;border-radius:7px;font-size:12px;font-weight:700}
+.lp-nav-start{display:flex;align-items:center;gap:9px;border:1px solid #513c61;padding:9px 15px;border-radius:7px;font-size:13px;font-weight:700}
 .lp-nav-start:hover{background:#17111f}
 .lp-menu,.lp-nav-mobile-cta{display:none!important}
 
@@ -97,56 +103,63 @@ html,body{background:#09080d}
 .lp .cpu-embedded .cpu-diagram{display:block;max-width:1190px;min-width:0;width:100%;height:auto;max-height:none;aspect-ratio:1190/558}
 .lp .cpu-embedded .cpu-flow-token circle{filter:none}
 
-/* Six real tools, grouped by use rather than a grid of generic promo cards. */
-.lp h2{margin:0;font-size:clamp(33px,3.9vw,48px);line-height:1.2;letter-spacing:-1.9px;font-weight:700}
-.lp-features{padding-block:80px 105px;border-top:1px solid var(--lp-line)}
-.lp-section-heading{margin-bottom:40px}
-.lp-section-heading h2{font-size:clamp(22px,2.65vw,33px);line-height:1.38;letter-spacing:-1.1px;font-weight:600;max-width:890px}
+/* Compact side-by-side sections share one aligned grid rather than two tall blocks. */
+.lp h2{margin:0;font-size:clamp(25px,2.3vw,32px);line-height:1.35;letter-spacing:-.9px;font-weight:650}
+.lp-tools-downloads{
+  display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr);
+  gap:56px;align-items:start;padding-block:88px 100px;
+  border-top:1px solid var(--lp-line);
+  scroll-margin-top:92px;
+}
+.lp-features,.lp-downloads{min-width:0;scroll-margin-top:100px}
+.lp-section-heading,.lp-downloads-heading{margin-bottom:31px;min-height:87px;display:flex;align-items:start}
+.lp-section-heading h2{font-size:clamp(23px,2.15vw,30px);line-height:1.42;letter-spacing:-.8px;font-weight:600;max-width:640px}
+.lp-downloads-heading h2{font-size:clamp(25px,2.3vw,32px)}
 .lp-feature-groups{border-top:1px solid var(--lp-line)}
-.lp-feature-group{display:grid;grid-template-columns:minmax(150px,.33fr) minmax(0,.67fr);gap:30px;align-items:start;border-bottom:1px solid var(--lp-line);padding:30px 0 35px}
-.lp-feature-category h3{margin:0;color:#c0b5cb;font-size:13px;font-weight:600;letter-spacing:0}
-.lp-feature-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px;row-gap:20px}
-.lp-feature-item h4{margin:0 0 7px;color:#f3eff9;font-size:17px;font-weight:700;letter-spacing:-.35px}
-.lp-feature-item p{margin:0;max-width:320px;color:#a69cae;font-size:13px;line-height:1.75}
-
-/* Downloads grouped by actual OS and installer type. */
-.lp-downloads{padding:92px 0 94px;background:rgba(14,11,19,.94);border-block:1px solid var(--lp-line)}
-.lp-downloads-heading{margin-bottom:38px}
-.lp-download-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid var(--lp-line)}
-.lp-download-group{min-width:0;padding:22px 22px 14px}
-.lp-download-group:not(:last-child){border-right:1px solid var(--lp-line)}
-.lp-download-group-header{display:flex;align-items:center;gap:11px;color:#bb89e4;padding-bottom:17px}
-.lp-download-group-header h3{color:#f2eafa;margin:0;font-size:17px;font-weight:700}
-.lp-download-options{display:grid}
-.lp-download-option{display:flex;align-items:center;gap:8px;min-width:0;padding:17px 5px;border-top:1px solid var(--lp-line);transition:background-color 140ms ease}
+.lp-feature-group{
+  display:grid;grid-template-columns:minmax(110px,.29fr) minmax(0,.71fr);
+  gap:18px;align-items:start;border-bottom:1px solid var(--lp-line);
+  padding:22px 0 24px;
+}
+.lp-feature-category h3{margin:0;color:#c0b5cb;font-size:13px;font-weight:600}
+.lp-feature-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.lp-feature-item h4{margin:0 0 6px;color:#f3eff9;font-size:15px;font-weight:700;letter-spacing:-.3px}
+.lp-feature-item p{margin:0;color:#a69cae;font-size:12px;line-height:1.7}
+/* One vertical download list, grouped by operating system. */
+.lp-download-groups{border-top:1px solid var(--lp-line)}
+.lp-download-group{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:start;gap:10px;padding:16px 0;border-bottom:1px solid var(--lp-line)}
+.lp-download-group-header{display:flex;align-items:center;gap:8px;color:#bb89e4;padding-top:7px}
+.lp-download-group-header svg{width:16px;height:16px;flex-shrink:0}
+.lp-download-group-header h3{margin:0;color:#f2eafa;font-size:13px;font-weight:700}
+.lp-download-options{display:grid;min-width:0}
+.lp-download-option{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 5px;transition:background-color 140ms ease}
 .lp-download-option:hover{background:rgba(176,114,230,.065)}
-.lp-download-copy{display:flex;flex-direction:column;min-width:0;gap:2px;flex:1}
-.lp-download-copy strong{color:#f2eaf7;font-size:13px;font-weight:700}
-.lp-download-arrow{flex-shrink:0;color:#b78ad9}
+.lp-download-copy{display:flex;flex-direction:column;flex:1;min-width:0}
+.lp-download-copy strong{color:#f2eaf7;font-size:12px;font-weight:600}
+.lp-download-arrow{flex-shrink:0;width:15px;height:15px;color:#b78ad9}
+
 /* Minimal footer. No duplicate branding, links or decorative layout. */
 .lp-footer{border-top:1px solid var(--lp-line);padding:22px 0 24px;text-align:center}
-.lp-footer small{display:block;color:#8f8799;font-size:11px;line-height:1.6;letter-spacing:.1px}
+.lp-footer small{display:block;color:#a9a1b1;font-size:13px;line-height:1.6;letter-spacing:.1px}
 
-/* Responsive first, avoid miniature desktop content on narrow devices. */
+/* Stack at tablet widths. The mobile menu stays attached to the sticky header. */
 @media(max-width:1050px){
   .lp-container{width:calc(100% - 56px)}
   .lp-hero{grid-template-columns:1fr;gap:38px;min-height:0;padding:72px 0 85px}
   .lp-hero-copy{max-width:720px}
   .lp h1{font-size:clamp(48px,6vw,67px)}
   .lp-hero-cpu{max-width:790px;width:100%}
-}
-@media(max-width:800px){
-  .lp-download-groups{grid-template-columns:1fr}
-  .lp-download-group{padding:18px 20px 9px}
-  .lp-download-group:not(:last-child){border-right:0;border-bottom:1px solid var(--lp-line)}
-  .lp-feature-group{grid-template-columns:minmax(140px,.32fr) minmax(0,.68fr)}
+  .lp-tools-downloads{grid-template-columns:1fr;gap:55px;padding-block:72px 84px}
+  .lp-section-heading,.lp-downloads-heading{min-height:0}
+  .lp-feature-group{grid-template-columns:minmax(120px,.28fr) minmax(0,.72fr)}
+  .lp-download-group{grid-template-columns:120px minmax(0,1fr)}
 }
 @media(max-width:700px){
   .lp-container{width:calc(100% - 38px)}
   .lp-nav{height:66px}
   .lp-links{display:none;position:absolute;top:66px;left:0;right:0;background:#110d17;border-bottom:1px solid var(--lp-line);padding:12px 20px 20px;z-index:30;flex-direction:column;gap:0}
   .lp-links.is-open{display:flex;align-items:stretch}
-  .lp-links>a{padding:11px 7px}
+  .lp-links>a{padding:11px 7px;font-size:15px}
   .lp-nav-start{display:none}
   .lp-nav-mobile-cta{display:flex!important;align-items:center;gap:7px;color:#d6acfa!important}
   .lp-menu{display:grid!important;place-items:center;width:38px;height:37px;border:1px solid #554064;border-radius:6px;background:#17101e;color:#f0e7fb}
@@ -159,15 +172,19 @@ html,body{background:#09080d}
   .lp .cpu-embedded .cpu-diagram-scroll{justify-content:flex-start;touch-action:pan-x}
   .lp .cpu-embedded .cpu-diagram{width:620px;min-width:620px}
   .lp .cpu-embedded .cpu-controls{padding:9px 11px}
-  .lp-features,.lp-downloads{padding:66px 0 72px}
-  .lp-feature-group{display:block;padding:24px 0 27px}
-  .lp-feature-category{margin-bottom:20px}
-  .lp-feature-items{gap:24px}
+  .lp-tools-downloads{padding-block:62px 72px;gap:55px}
+  .lp-feature-group{display:block;padding:21px 0 23px}
+  .lp-feature-category{margin-bottom:16px}
+  .lp-feature-items{gap:20px}
   .lp-feature-item h4{font-size:15px}
+  .lp-download-group{grid-template-columns:100px minmax(0,1fr)}
 }
 @media(max-width:420px){
-  .lp-feature-items{grid-template-columns:1fr;gap:20px}
+  .lp-feature-items{grid-template-columns:1fr;gap:17px}
   .lp-hero-cpu-bar{padding:0 10px}
+  .lp-download-group{grid-template-columns:1fr;gap:5px}
+  .lp-download-group-header{padding:0}
+  .lp-download-options{padding-left:24px}
 }
 @media(prefers-reduced-motion:reduce){
   .lp *,.lp *::before,.lp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
