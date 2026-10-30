@@ -232,7 +232,7 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
     <button onClick={()=>reset()}><RotateCcw size={16}/> Reset</button>
     {mode==='advanced'&&<button aria-label="Request CPU interrupt" disabled={machine.halted||interrupt.pending||interrupt.stage>0} onClick={()=>{const pending=requestInterrupt(interruptRef.current);interruptRef.current=pending;setInterrupt(pending);}}>Trigger interrupt</button>}
    </div>
-   <label className="cpu-speed" data-cpu-tour="speed"><Gauge size={17}/><span>{landingPreview?'Simulated speed':'Playback speed'} <strong>{landingPreview?clock.toFixed(0):clock.toFixed(1)} GHz</strong></span><input aria-label="Illustrative CPU clock speed GHz" type="range" min="0.5" max={landingPreview?"37":"9.2"} step={landingPreview?"0.5":".1"} value={clock} onChange={e=>setClock(Number(e.target.value))}/></label>
+   <label className="cpu-speed" data-cpu-tour="speed"><Gauge size={17}/><span>{landingPreview?'Simulated speed':'Playback speed'} <strong>{landingPreview?(Number.isInteger(clock)?clock.toFixed(0):clock.toFixed(1)):clock.toFixed(1)} GHz</strong></span><input aria-label="Illustrative CPU clock speed GHz" type="range" min="0.5" max={landingPreview?"37":"9.2"} step={landingPreview?"0.5":".1"} value={clock} onChange={e=>setClock(Number(e.target.value))}/></label>
    <span className="cpu-counter">Step {machine.cycles} · {machine.instructions} instruction(s)</span>
   </div>
   <main className="cpu-content">
