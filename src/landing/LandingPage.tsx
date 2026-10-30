@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal, FileDown } from 'lucide-react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal } from 'lucide-react';
 import './landing.css';
 
 const APP = '/app';
@@ -20,39 +20,35 @@ function Navigation() {
     <a href={APP} className="lp-nav-mobile-cta">Open app <ArrowUpRight size={16}/></a>
   </nav><div className="lp-nav-actions"><a href={APP} className="lp-nav-start">Open app <ArrowUpRight size={15}/></a><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header>;
 }
-function Reveal({children,className=''}:{children:ReactNode;className?:string}) {
-  return <div className={className}>{children}</div>;
-}
 const installerGroups=[
   {platform:'Windows',icon:Monitor,files:[
-    {name:'Pico_x64-setup.exe',format:'EXE installer',detail:'Windows · x64',size:'1.79 MiB'},
-    {name:'Pico_x64_en-US.msi',format:'MSI installer',detail:'Windows · x64',size:'2.72 MiB'},
+    {name:'Pico_x64-setup.exe',format:'EXE installer',detail:'Windows · x64'},
+    {name:'Pico_x64_en-US.msi',format:'MSI installer',detail:'Windows · x64'},
   ]},
   {platform:'macOS',icon:Laptop,files:[
-    {name:'Pico_aarch64.dmg',format:'Apple Silicon DMG',detail:'M-series Macs · arm64',size:'2.62 MiB'},
-    {name:'Pico_x64.dmg',format:'Intel DMG',detail:'Intel Macs · x64',size:'2.79 MiB'},
+    {name:'Pico_aarch64.dmg',format:'Apple Silicon DMG',detail:'M-series Macs · arm64'},
+    {name:'Pico_x64.dmg',format:'Intel DMG',detail:'Intel Macs · x64'},
   ]},
   {platform:'Linux',icon:Terminal,files:[
-    {name:'Pico_amd64.deb',format:'DEB package',detail:'Debian / Ubuntu · x64',size:'2.75 MiB'},
-    {name:'Pico_amd64.AppImage',format:'AppImage',detail:'Linux · x64',size:'77.54 MiB'},
+    {name:'Pico_amd64.deb',format:'DEB package',detail:'Debian / Ubuntu · x64'},
+    {name:'Pico_amd64.AppImage',format:'AppImage',detail:'Linux · x64'},
   ]},
 ] as const;
 
 function DownloadsSection(){
   return <section id="downloads" className="lp-downloads"><div className="lp-container">
-    <Reveal className="lp-downloads-heading">
+    <div className="lp-downloads-heading">
       <div><h2>Download Pico</h2></div>
 
-    </Reveal>
+    </div>
     <div className="lp-download-groups">
       {installerGroups.map(({platform,icon:Icon,files})=>
-        <Reveal className="lp-download-group" key={platform}>
+        <div className="lp-download-group" key={platform}>
           <div className="lp-download-group-header"><Icon size={19} aria-hidden="true"/><h3>{platform}</h3></div>
           <div className="lp-download-options">
             {files.map(file=><a className="lp-download-option" key={file.name} href={'/downloads/'+file.name} aria-label={'Download Pico '+file.format+' for '+file.detail}>
-              <span className="lp-download-fileicon"><FileDown size={18} aria-hidden="true"/></span>
               <span className="lp-download-copy"><strong>{file.format}</strong><span>{file.detail}</span><small>{file.name}</small></span>
-              <span className="lp-download-right"><span>{file.size}</span><Download size={17} aria-hidden="true"/></span>
+              <Download className="lp-download-arrow" size={17} aria-hidden="true"/>
             </a>)}
           </div>
         </Reveal>)}
@@ -71,7 +67,7 @@ export default function LandingPage() {
     <section className="lp-hero lp-container">
       <div className="lp-hero-copy">
         <h1>Built by Students,<br/><span>for Students.</span></h1>
-        <p>Run code. Build flowcharts and logic circuits. See how a CPU works.</p>
+        <p>Write and run code, build flowcharts and logic circuits, and explore CPU execution.</p>
         <div className="lp-hero-actions">
           <a className="lp-button lp-button-primary" href={APP}>Use Pico in browser <ArrowUpRight size={17}/></a>
           <a className="lp-button lp-button-secondary" href={DOWNLOADS}>Download for desktop <Download size={17}/></a>
