@@ -81,9 +81,10 @@ function DownloadsSection(){
     fetch('https://api.github.com/repos/mztaq/pico/releases/latest',{signal:controller.signal})
       .then(response=>response.ok?response.json():null)
       .then((release:{assets?:Array<{name?:string;size?:number}>}|null)=>{
-        if(controller.signal.aborted||!Array.isArray(release?.assets))return;
+        const assets=release?.assets;
+        if(controller.signal.aborted||!Array.isArray(assets))return;
         const sizes:Record<string,number>={};
-        for(const asset of release.assets){
+        for(const asset of assets){
           if(typeof asset.name==='string'&&typeof asset.size==='number'&&Number.isFinite(asset.size)&&asset.size>0){
             sizes[asset.name]=asset.size;
           }
