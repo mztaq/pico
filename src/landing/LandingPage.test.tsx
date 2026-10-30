@@ -34,7 +34,7 @@ describe('Pico landing page', () => {
     const links=[...container.querySelectorAll('a')];
     expect(links.find(a=>a.textContent?.includes('Use Pico in browser'))?.getAttribute('href')).toBe('/app');
     expect(links.find(a=>a.textContent?.includes('Download for desktop'))?.getAttribute('href')).toBe('#downloads');
-    expect(links.find(a=>a.textContent?.includes('Meet the team'))?.getAttribute('href')).toBe('/app#team');
+    expect(links.find(a=>a.textContent?.trim()==='Team')?.getAttribute('href')).toBe('/app#team');
   });
   it('orders tools as three deliberate pairs without placeholder copy', async () => {
     await render();
@@ -43,9 +43,23 @@ describe('Pico landing page', () => {
     expect(groups.map(group=>group.querySelector('h3')?.textContent)).toEqual(['Programming','Visual tools','Computer systems']);
     expect(groups.map(group=>group.querySelectorAll('.lp-feature-item').length)).toEqual([2,2,2]);
     expect(container.textContent).not.toContain('Six workspaces for programming, algorithms and computer architecture.');
+    expect(container.textContent).not.toContain('Inside Pico');
+    expect(container.querySelector('#lp-features-title')?.textContent).toContain('Pico includes tools for coding');
+    expect(container.querySelector('#about')).toBeNull();
     expect(container.querySelector('.lp-feature-card')).toBeNull();
     expect([...container.querySelectorAll('main > section')].map(section=>section.id))
-      .toEqual(['','features','downloads','about']);
+      .toEqual(['','features','downloads']);
+  });
+  it('reuses the app home-screen curves without extra download text', async () => {
+    await render();
+    const paths=container.querySelectorAll('.lp-ambient-curves path');
+    expect(paths).toHaveLength(7);
+    expect(paths[0]?.getAttribute('d')).toContain('M -170 -160 C 40 26');
+    expect(paths[2]?.getAttribute('d')).toContain('M 1260 -185 C 1080 30');
+    expect(container.querySelectorAll('.lp-ambient-curve-flow')).toHaveLength(2);
+    expect(container.textContent).not.toContain('The desktop app requires an internet connection.');
+    expect(container.querySelector('.lp-download-note')).toBeNull();
+    expect(container.querySelector('a[href="#about"]')).toBeNull();
   });
   it('lists all six platform-specific installers', async () => {
     await render();
