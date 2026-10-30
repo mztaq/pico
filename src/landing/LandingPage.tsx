@@ -89,6 +89,14 @@ const installerGroups=[
 ] as const;
 
 const formatDownloadSize=(bytes:number)=>`${(bytes/1_000_000).toFixed(2)} MB`;
+/** Preview deployments do not publish the production Pages installer chunks.
+ * Link their download cards to GitHub's latest published release assets instead. */
+export function installerDownloadHref(filename:string,hostname:string):string{
+  const preview=hostname!== 'picompiler.pages.dev' && hostname.endsWith('.picompiler.pages.dev');
+  return preview
+    ? 'https://github.com/mztaq/pico/releases/latest/download/'+encodeURIComponent(filename)
+    : '/downloads/'+filename;
+}
 function DownloadsSection(){
   const [currentSizes,setCurrentSizes]=useState<Record<string,number>>({});
   useEffect(()=>{
@@ -119,7 +127,7 @@ function DownloadsSection(){
         <div className="lp-download-group" key={platform}>
           <div className="lp-download-group-header"><Icon size={19} aria-hidden="true"/><h3>{platform}</h3></div>
           <div className="lp-download-options">
-            {files.map(file=><a className="lp-download-option" key={file.name} href={'/downloads/'+file.name} aria-label={'Download '+file.name+' for '+platform}>
+            {files.map(file=><a className="lp-download-option" key={file.name} href={installerDownloadHref(file.name,window.location.hostname)} aria-label={'Download '+file.name+' for '+platform}>
               <span className="lp-download-copy"><strong>{file.name}</strong><small>{formatDownloadSize(currentSizes[file.name]??file.sizeBytes)}</small></span>
               <Download className="lp-download-arrow" size={17} aria-hidden="true"/>
             </a>)}
