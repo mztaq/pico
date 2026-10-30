@@ -95,10 +95,10 @@ html.pico-landing-scroll{scroll-padding-top:94px}
   padding-block:86px 90px;
   min-height:540px;
 }
-.lp-hero-copy{min-width:0;display:flex;flex-direction:column;justify-content:space-between;padding-block:12px}
-.lp h1{margin:0 0 18px;font-size:clamp(54px,5vw,76px);line-height:1.09;letter-spacing:-3px;font-weight:800}
+.lp-hero-copy{min-width:0;display:flex;flex-direction:column;justify-content:center;padding-block:12px}
+.lp h1{margin:0 0 14px;font-size:clamp(54px,5vw,76px);line-height:1.09;letter-spacing:-3px;font-weight:800}
 .lp h1 .lp-hero-highlight{color:var(--lp-accent)}
-.lp-hero-copy>p{max-width:440px;margin:0 0 22px;color:var(--lp-muted);font-size:17px;line-height:1.6;font-weight:500}
+.lp-hero-copy>p{max-width:440px;margin:0 0 26px;color:var(--lp-muted);font-size:17px;line-height:1.6;font-weight:500}
 .lp-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:11px}
 .lp-button{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:45px;padding:0 16px;border-radius:7px;font-size:12px;font-weight:700;transition:background-color 130ms ease,border-color 130ms ease}
 .lp-button-primary{background:var(--lp-accent);color:var(--lp-bg)!important}
