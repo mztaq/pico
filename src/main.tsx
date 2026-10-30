@@ -1,6 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { lazy, Suspense } from 'react';
 import App from './app/App';
+const LandingPage = lazy(() => import('./landing/LandingPage'));
+const inApp = location.pathname === '/app' || location.pathname.startsWith('/app/');
 import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
@@ -22,7 +25,7 @@ installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    <OnlineOnlyGate><App /><PicoTelemetry /></OnlineOnlyGate>
+    inApp ? <OnlineOnlyGate><App /><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={<div style={{minHeight:'100vh',background:'#08070d'}}/>}><LandingPage /></Suspense>
   </React.StrictMode>,
 );
 
