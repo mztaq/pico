@@ -25,6 +25,9 @@ describe('Pico landing page', () => {
   it('uses the real Pico logo and one student-focused headline', async () => {
     await render();
     expect(container.querySelector('.lp-brand img')?.getAttribute('src')).toBe('/pico-logo.svg');
+    expect(container.querySelector('.lp-brand')?.getAttribute('href')).toBe('#home');
+    expect(container.querySelector('.lp-brand')?.getAttribute('aria-label')).toBe('Pico home');
+    expect(container.querySelector('.lp-brand')?.textContent).toBe('');
     expect(container.querySelector('h1')?.textContent).toBe('Pico.');
     expect(container.querySelector('.lp-hero-copy > p')?.textContent).toBe('Built by Students, for Students');
     expect(container.textContent).not.toContain('Write and run code, build flowcharts');
