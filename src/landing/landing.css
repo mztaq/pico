@@ -117,11 +117,23 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 .lp .cpu-embedded{height:auto;min-height:0;display:flex;flex-direction:column;overflow:visible;background:#181825}
 .lp .cpu-embedded .cpu-topbar,.lp .cpu-embedded .cpu-heading,.lp .cpu-embedded .cpu-information{display:none}
 .lp .cpu-embedded .cpu-content{height:auto;overflow:visible;min-height:0}
-.lp .cpu-embedded .cpu-controls{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 13px;background:#242435;border-bottom:1px solid #303143}
+.lp .cpu-embedded .cpu-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;min-height:58px;background:#242435;border-bottom:1px solid #303143}
 .lp .cpu-embedded .cpu-mode-switch,.lp .cpu-embedded .cpu-playback>button:not(.cpu-play){display:none}
 .lp .cpu-embedded .cpu-playback{padding:0;border:0}
-.lp .cpu-embedded .cpu-playback .cpu-play{min-height:29px;padding:5px 13px;color:var(--ds-on-accent);font-size:11px}
-.lp .cpu-embedded .cpu-speed{display:flex;gap:7px;align-items:center;flex:1;justify-content:center;color:var(--lp-muted);font-size:11px;min-width:0}
+/* The embedded simulator uses the same mocha accent as the landing page.
+   Keep Run/Pause at a fixed size so the controls never jump when the label changes. */
+.lp .cpu-embedded .cpu-controls .cpu-playback button.cpu-play{
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  width:90px;height:34px;min-height:34px;margin:0;padding:0 10px;gap:7px;
+  border:1px solid var(--lp-accent)!important;border-radius:7px;
+  background:var(--lp-accent)!important;color:var(--lp-bg)!important;
+  font:700 12px/1 'DM Sans',system-ui,sans-serif;
+  box-shadow:none;vertical-align:middle;
+}
+.lp .cpu-embedded .cpu-controls .cpu-playback button.cpu-play svg{display:block;flex:0 0 15px;width:15px;height:15px;stroke:currentColor}
+.lp .cpu-embedded .cpu-controls .cpu-playback button.cpu-play:hover{background:#d8bdfb!important;border-color:#d8bdfb!important}
+.lp .cpu-embedded .cpu-controls .cpu-playback button.cpu-play:focus-visible{outline:2px solid var(--lp-text);outline-offset:3px}
+.lp .cpu-embedded .cpu-speed{display:flex;gap:7px;align-items:center;flex:1;justify-content:center;color:var(--lp-muted);font-size:11px;min-width:0;min-height:34px}
 .lp .cpu-embedded .cpu-speed span{white-space:nowrap}
 .lp .cpu-embedded .cpu-speed strong{color:var(--lp-text);font-size:12px}
 .lp .cpu-embedded .cpu-speed input{width:clamp(65px,8vw,118px);min-width:55px;accent-color:var(--lp-accent);cursor:pointer}
@@ -136,40 +148,48 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 .lp .cpu-embedded .cpu-main-title,.lp .cpu-embedded .cpu-ram-title{font-size:21px}
 .lp .cpu-embedded .cpu-flow-token circle{filter:none}
 
-/* Compact side-by-side sections share one aligned grid rather than two tall blocks. */
+/* Tools and downloads have distinct hierarchy rather than a shared table. */
 .lp h2{margin:0;font-size:clamp(25px,2.3vw,32px);line-height:1.35;letter-spacing:-.9px;font-weight:650}
 .lp-tools-downloads{
-  display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr);
-  gap:56px;align-items:start;padding-block:88px 100px;
-  border-top:1px solid var(--lp-line);
-  scroll-margin-top:92px;
+  display:flex;flex-direction:column;gap:90px;align-items:stretch;
+  padding-block:84px 104px;border-top:1px solid var(--lp-line);
 }
-.lp-features,.lp-downloads{min-width:0;scroll-margin-top:100px}
-.lp-section-heading,.lp-downloads-heading{margin-bottom:31px;min-height:87px;display:flex;align-items:start}
-.lp-section-heading h2{font-size:clamp(23px,2.15vw,30px);line-height:1.42;letter-spacing:-.8px;font-weight:600;max-width:640px}
-.lp-downloads-heading h2{font-size:clamp(25px,2.3vw,32px)}
-.lp-feature-groups{border-top:1px solid var(--lp-line)}
+.lp-features,.lp-downloads{min-width:0;scroll-margin-top:110px}
+.lp-section-heading,.lp-downloads-heading{margin-bottom:26px;min-height:0}
+.lp-section-heading h2,.lp-downloads-heading h2{font-size:clamp(26px,2.4vw,33px);font-weight:650;max-width:700px}
+.lp-feature-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
 .lp-feature-group{
-  display:grid;grid-template-columns:minmax(110px,.29fr) minmax(0,.71fr);
-  gap:18px;align-items:start;border-bottom:1px solid var(--lp-line);
-  padding:22px 0 24px;
+  display:flex;flex-direction:column;min-width:0;gap:14px;
+  padding:22px 23px 10px;border:1px solid var(--lp-border);
+  border-radius:11px;background:var(--lp-panel);
 }
-.lp-feature-category h3{margin:0;color:#9ba0bb;font-size:13px;font-weight:600}
-.lp-feature-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.lp-feature-item h4{margin:0 0 6px;color:#cdd6f4;font-size:15px;font-weight:700;letter-spacing:-.3px}
-.lp-feature-item p{margin:0;color:#9ba0bb;font-size:12px;line-height:1.7}
-/* One vertical download list, grouped by operating system. */
-.lp-download-groups{border-top:1px solid var(--lp-line)}
-.lp-download-group{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:start;gap:10px;padding:16px 0;border-bottom:1px solid var(--lp-line)}
-.lp-download-group-header{display:flex;align-items:center;gap:8px;color:#cba6f7;padding-top:7px}
-.lp-download-group-header svg{width:16px;height:16px;flex-shrink:0}
-.lp-download-group-header h3{margin:0;color:#cdd6f4;font-size:13px;font-weight:700}
-.lp-download-options{display:grid;min-width:0}
-.lp-download-option{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 5px;transition:background-color 140ms ease}
-.lp-download-option:hover{background:rgba(203,166,247,.08)}
+.lp-feature-category h3{margin:0;color:var(--lp-muted);font-size:13px;font-weight:650}
+.lp-feature-items{display:grid;grid-template-columns:1fr;min-width:0}
+.lp-feature-item{display:block;min-width:0;padding:15px 2px 16px;border-top:1px solid var(--lp-line);border-radius:2px}
+.lp-feature-item-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.lp-feature-item-head svg{flex:none;color:var(--lp-muted);transition:color .18s ease,transform .18s ease}
+.lp-feature-item:hover h4,.lp-feature-item:focus-visible h4{color:var(--lp-accent)}
+.lp-feature-item:hover .lp-feature-item-head svg,.lp-feature-item:focus-visible .lp-feature-item-head svg{color:var(--lp-accent);transform:translateX(3px)}
+.lp-feature-item h4{margin:0;color:var(--lp-text);font-size:16px;font-weight:700;letter-spacing:-.25px;transition:color .18s ease}
+.lp-feature-item p{margin:5px 0 0;color:var(--lp-muted);font-size:12px;line-height:1.55}
+
+/* Separate downloads below the tools, with one clear column per platform. */
+.lp-downloads{padding-top:78px;border-top:1px solid var(--lp-border)}
+.lp-download-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.lp-download-group{display:flex;flex-direction:column;min-width:0;gap:15px}
+.lp-download-group-header{display:flex;align-items:center;gap:9px;color:var(--lp-accent)}
+.lp-download-group-header svg{width:19px;height:19px;flex-shrink:0}
+.lp-download-group-header h3{margin:0;color:var(--lp-text);font-size:15px;font-weight:700}
+.lp-download-options{display:grid;gap:9px;min-width:0}
+.lp-download-option{
+  display:flex;align-items:center;gap:12px;min-width:0;min-height:48px;
+  padding:12px 14px;background:var(--lp-panel);border:1px solid var(--lp-border);
+  border-radius:8px;transition:border-color .18s ease,background-color .18s ease;
+}
+.lp-download-option:hover,.lp-download-option:focus-visible{background:var(--lp-panel-raised);border-color:var(--lp-accent)}
 .lp-download-copy{display:flex;flex-direction:column;flex:1;min-width:0}
-.lp-download-copy strong{color:#cdd6f4;font-size:12px;font-weight:600}
-.lp-download-arrow{flex-shrink:0;width:15px;height:15px;color:#cba6f7}
+.lp-download-copy strong{color:var(--lp-text);font-size:13px;font-weight:600}
+.lp-download-arrow{flex-shrink:0;width:17px;height:17px;color:var(--lp-accent)}
 
 /* Minimal footer. No duplicate branding, links or decorative layout. */
 .lp-footer{border-top:1px solid var(--lp-line);padding:22px 0 24px;text-align:center}
@@ -182,10 +202,14 @@ html.pico-landing-scroll{scroll-padding-top:94px}
   .lp-hero-copy{max-width:720px}
   .lp h1{font-size:clamp(48px,6vw,67px)}
   .lp-hero-cpu{max-width:790px;width:100%}
-  .lp-tools-downloads{grid-template-columns:1fr;gap:55px;padding-block:72px 84px}
-  .lp-section-heading,.lp-downloads-heading{min-height:0}
-  .lp-feature-group{grid-template-columns:minmax(120px,.28fr) minmax(0,.72fr)}
-  .lp-download-group{grid-template-columns:120px minmax(0,1fr)}
+  .lp-tools-downloads{gap:78px;padding-block:72px 84px}
+  .lp-downloads{padding-top:68px}
+}
+@media(max-width:850px){
+  .lp-feature-groups{grid-template-columns:1fr;gap:14px}
+  .lp-download-groups{grid-template-columns:1fr;gap:28px}
+  .lp-feature-group{padding:21px 23px 10px}
+  .lp-download-group{gap:12px}
 }
 @media(max-width:700px){
   .lp-container{width:calc(100% - 38px)}
@@ -210,19 +234,18 @@ html.pico-landing-scroll{scroll-padding-top:94px}
   .lp .cpu-embedded .cpu-controls{padding:9px 11px;flex-wrap:wrap}
   .lp .cpu-embedded .cpu-speed{justify-content:flex-start;flex:1 1 auto}
   .lp .cpu-embedded .cpu-counter{display:none}
-  .lp-tools-downloads{padding-block:62px 72px;gap:55px}
-  .lp-feature-group{display:block;padding:21px 0 23px}
-  .lp-feature-category{margin-bottom:16px}
-  .lp-feature-items{gap:20px}
-  .lp-feature-item h4{font-size:15px}
-  .lp-download-group{grid-template-columns:100px minmax(0,1fr)}
+  .lp-tools-downloads{padding-block:64px 78px;gap:68px}
+  .lp-downloads{padding-top:60px}
+  .lp-feature-group{padding:20px 19px 8px}
+  .lp-feature-items{gap:0}
+  .lp-feature-item h4{font-size:16px}
+  .lp-download-group{gap:12px}
 }
 @media(max-width:420px){
-  .lp-feature-items{grid-template-columns:1fr;gap:17px}
+  .lp-feature-items{grid-template-columns:1fr;gap:0}
   .lp-hero-cpu-bar{padding:0 10px}
-  .lp-download-group{grid-template-columns:1fr;gap:5px}
-  .lp-download-group-header{padding:0}
-  .lp-download-options{padding-left:24px}
+  .lp-download-group{gap:12px}
+  .lp-download-options{padding-left:0}
 }
 @media(prefers-reduced-motion:reduce){
   .lp *,.lp *::before,.lp *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
