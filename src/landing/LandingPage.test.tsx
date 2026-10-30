@@ -35,6 +35,23 @@ describe('Pico landing page', () => {
     expect(links.find(a=>a.textContent?.includes('Use Pico in browser'))?.getAttribute('href')).toBe('/app');
     expect(links.find(a=>a.textContent?.includes('Download for desktop'))?.getAttribute('href')).toBe('#downloads');
   });
+  it('compacts the navigation while scrolling down and restores it on upward scroll', async () => {
+    Object.defineProperty(window, 'scrollY', { configurable:true, writable:true, value:0 });
+    await render();
+    const navbar=container.querySelector('header.lp-header');
+    expect(navbar?.classList.contains('lp-header-compact')).toBe(false);
+    await act(async () => {
+      window.scrollY=200;
+      window.dispatchEvent(new Event('scroll'));
+    });
+    expect(navbar?.classList.contains('lp-header-compact')).toBe(true);
+    await act(async () => {
+      window.scrollY=150;
+      window.dispatchEvent(new Event('scroll'));
+    });
+    expect(navbar?.classList.contains('lp-header-compact')).toBe(false);
+    window.scrollY=0;
+  });
   it('enables smooth anchor navigation only while landing is mounted', async () => {
     await render();
     expect(document.documentElement.classList.contains('pico-landing-scroll')).toBe(true);
@@ -59,6 +76,7 @@ describe('Pico landing page', () => {
     expect(container.textContent).not.toContain('Six workspaces for programming, algorithms and computer architecture.');
     expect(container.textContent).not.toContain('Inside Pico');
     expect(container.querySelector('#lp-features-title')?.textContent).toBe("Pico's tools");
+    expect(container.querySelector('.lp')?.getAttribute('data-landing-theme')).toBe('catppuccin-mocha');
     expect(container.querySelector('#about')).toBeNull();
     expect(container.querySelector('.lp-feature-card')).toBeNull();
     const layout=container.querySelector('main > .lp-tools-downloads');
