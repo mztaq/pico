@@ -53,9 +53,11 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 @media(forced-colors:active){.lp-ambient-curves{display:none}}
 
 
-/* Navigation */
+/* The sticky slot keeps layout height constant while the inner nav animates.
+   Shrinking the sticky element itself would shift scrollY and reverse its direction. */
+.lp-header-slot{position:sticky;top:0;z-index:50;height:74px}
 .lp-header{
-  position:sticky;top:0;z-index:50;width:100%;margin-inline:auto;border-radius:0;
+  position:absolute;top:0;left:0;right:0;width:100%;margin-inline:auto;border-radius:0;
   border-bottom:1px solid var(--lp-line);
   background:rgba(30,30,46,.94);
   -webkit-backdrop-filter:blur(12px);
@@ -213,6 +215,7 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 }
 @media(max-width:700px){
   .lp-container{width:calc(100% - 38px)}
+  .lp-header-slot{height:66px}
   .lp-nav{height:66px}
   .lp-header-compact{width:calc(100% - 24px);top:8px;border-radius:12px}
   .lp-header-compact .lp-nav{height:56px;width:calc(100% - 28px)}
