@@ -36,9 +36,9 @@ const installerGroups=[
 ] as const;
 
 function DownloadsSection(){
-  return <section id="downloads" className="lp-downloads"><div className="lp-container">
+  return <section id="downloads" className="lp-downloads" aria-labelledby="lp-downloads-title">
     <div className="lp-downloads-heading">
-      <h2>Download Pico</h2>
+      <h2 id="lp-downloads-title">Download Pico</h2>
     </div>
     <div className="lp-download-groups">
       {installerGroups.map(({platform,icon:Icon,files})=>
@@ -52,7 +52,7 @@ function DownloadsSection(){
           </div>
         </div>)}
     </div>
-  </div></section>;
+  </section>;
 }
 
 export default function LandingPage() {
@@ -83,7 +83,8 @@ export default function LandingPage() {
         </div>
       </div>
     </section>
-    <section id="features" className="lp-features lp-container" aria-labelledby="lp-features-title">
+    <section className="lp-tools-downloads lp-container" aria-label="Pico tools and desktop downloads">
+      <section id="features" className="lp-features" aria-labelledby="lp-features-title">
       <div className="lp-section-heading"><h2 id="lp-features-title">Pico includes tools for coding, flowcharts, logic circuits, CPU simulation and binary.</h2></div>
       <div className="lp-feature-groups">
         <div className="lp-feature-group">
@@ -108,8 +109,9 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
+      </section>
+      <DownloadsSection/>
     </section>
-    <DownloadsSection/>
   </main>
   <footer className="lp-footer"><div className="lp-container">
     <small>© 2026 Pico Development Team. All rights reserved.</small>
