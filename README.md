@@ -24,6 +24,6 @@ Pico includes customizable themes, guided tutorials and browser-based project sa
 
 Pico is also available as an **online-only desktop app** for Windows, macOS and Linux.
 Desktop packages are built by the [Desktop installers GitHub Actions workflow](https://github.com/mztaq/pico/actions/workflows/desktop.yml).
-Website changes are picked up on the next desktop launch/refresh, without reinstalling. New desktop builds target the browser app at `/app`; older installers that target `/` need migration or replacement before the landing page is deployed.
+Website changes are picked up on the next desktop launch/refresh, without reinstalling. New desktop builds target `/app`. Previously released Tauri 2 installers still target `/`; Pico detects their native webview and shows the workspace there, while ordinary browsers see the landing page. This compatibility path avoids forcing existing users to reinstall. Native installer builds must still pass CI before distributing updated binaries.
 See [desktop build and update notes](docs/desktop.md) for installer formats and signing limitations.
  
