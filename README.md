@@ -7,7 +7,7 @@
 
   Pico is a browser-based learning platform for exploring programming, algorithms, digital logic and computer architecture. No installation or account is required.
 
-  **[Open Pico](https://picompiler.pages.dev)**
+  **[Visit Pico](https://picompiler.pages.dev)** · **[Open the browser app](https://picompiler.pages.dev/app)**
 </div>
 
 ## Features
@@ -24,6 +24,6 @@ Pico includes customizable themes, guided tutorials and browser-based project sa
 
 Pico is also available as an **online-only desktop app** for Windows, macOS and Linux.
 Desktop packages are built by the [Desktop installers GitHub Actions workflow](https://github.com/mztaq/pico/actions/workflows/desktop.yml).
-Website changes are picked up on the next desktop launch/refresh, without reinstalling.
+Website changes are picked up on the next desktop launch/refresh, without reinstalling. New desktop builds target the browser app at `/app`; older installers that target `/` need migration or replacement before the landing page is deployed.
 See [desktop build and update notes](docs/desktop.md) for installer formats and signing limitations.
  
