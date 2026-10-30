@@ -49,7 +49,8 @@ describe('Pico landing page', () => {
   });
   it('shows real CPU Studio, without mock product or decorative feature previews', async () => {
     await render();
-    expect(container.querySelector('[data-testid="live-cpu"]')).not.toBeNull();
+    expect(container.querySelector('.lp-hero .lp-hero-cpu [data-testid="live-cpu"]')).not.toBeNull();
+    expect(container.querySelector('.lp-cpu-section')).toBeNull();
     expect(container.querySelector('.lp-product-window')).toBeNull();
     expect(container.querySelector('.lp-visual-code')).toBeNull();
     expect(container.querySelector('.lp-processor-svg')).toBeNull();
