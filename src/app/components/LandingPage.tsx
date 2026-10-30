@@ -1,4 +1,4 @@
-import { ArrowRight, Code2, Cpu, Download, GitBranch, Laptop, Monitor, Network, Terminal } from 'lucide-react';
+import { ArrowRight, Code2, Cpu, Download, GitBranch, Laptop, Monitor, Terminal } from 'lucide-react';
 import { useEffect } from 'react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
