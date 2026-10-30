@@ -14,4 +14,12 @@ for(const name of names){
  files[name]={size:bytes.length,sha256:hash,parts:n,version:'desktop-v0.1.0-build.10'};
  process.stdout.write(name+' '+n+' parts '+hash+'\n');
 }
-await writeFile(join(out,'manifest.json'),JSON.stringify({chunk,files},null,2)+'\n');
+const release={
+ version:'desktop-v0.1.0-build.10',
+ title:'Pico for Desktop',
+ publishedAt:'2026-10-26T18:14:46Z',
+ prerelease:false,
+ summary:'Pico is available for Windows, macOS, and Linux.',
+ notes:'Choose the installer for your operating system. Pico loads the live website, so normal feature updates appear when you reopen or refresh the app. Installers are currently unsigned, so your operating system may display a security warning.',
+};
+await writeFile(join(out,'manifest.json'),JSON.stringify({chunk,release,files},null,2)+'\n');
