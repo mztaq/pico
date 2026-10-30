@@ -51,7 +51,7 @@ function DownloadsSection(){
               <Download className="lp-download-arrow" size={17} aria-hidden="true"/>
             </a>)}
           </div>
-        </Reveal>)}
+        </div>)}
     </div>
     <p className="lp-download-note">The desktop app requires an internet connection.</p>
   </div></section>;
