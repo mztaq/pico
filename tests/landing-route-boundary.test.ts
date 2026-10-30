@@ -38,7 +38,7 @@ describe('Landing route migration leaves backend services available', () => {
     expect(native.build.frontendDist).toBe('https://picompiler.pages.dev/app');
     expect(entry).toContain('isPicoDesktopWebview(window)');
     expect(route).toContain("pathname === '/' && inTauriWebview");
-    expect(route).toContain("'__TAURI_INTERNALS__'");
+    expect(route).toContain('__TAURI_INTERNALS__');
   });
   it('keeps studio telemetry within the app route', () => {
     const entry = read('src/main.tsx');
