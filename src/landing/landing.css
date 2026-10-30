@@ -123,12 +123,9 @@ html,body{background:#09080d}
 .lp-download-copy{display:flex;flex-direction:column;min-width:0;gap:2px;flex:1}
 .lp-download-copy strong{color:#f2eaf7;font-size:13px;font-weight:700}
 .lp-download-arrow{flex-shrink:0;color:#b78ad9}
-/* Quiet footer. */
-.lp-footer{border-top:1px solid var(--lp-line);padding:42px 0 24px}
-.lp-footer-top{display:flex;justify-content:space-between;align-items:flex-start;gap:25px;padding-bottom:48px}
-.lp-footer-top nav{display:flex;flex-wrap:wrap;gap:14px 24px;justify-content:flex-end;max-width:610px}
-.lp-footer-top nav a{font-size:12px;color:#a9a1b1}
-.lp-footer-bottom{border-top:1px solid var(--lp-line);padding-top:18px;font-size:11px;color:#807889}
+/* Minimal footer. No duplicate branding, links or decorative layout. */
+.lp-footer{border-top:1px solid var(--lp-line);padding:22px 0 24px;text-align:center}
+.lp-footer small{display:block;color:#8f8799;font-size:11px;line-height:1.6;letter-spacing:.1px}
 
 /* Responsive first, avoid miniature desktop content on narrow devices. */
 @media(max-width:1050px){
@@ -167,8 +164,6 @@ html,body{background:#09080d}
   .lp-feature-category{margin-bottom:20px}
   .lp-feature-items{gap:24px}
   .lp-feature-item h4{font-size:15px}
-  .lp-footer-top{display:block;padding-bottom:32px}
-  .lp-footer-top nav{justify-content:flex-start;margin-top:25px}
 }
 @media(max-width:420px){
   .lp-feature-items{grid-template-columns:1fr;gap:20px}
