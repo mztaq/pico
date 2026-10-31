@@ -4,10 +4,15 @@
  * when muted, when storage is blocked, or when the browser has no Web Audio.
  */
 const KEY = 'pico.sound.v1';
-type Cue = 'tap' | 'toggleOn' | 'toggleOff' | 'run' | 'stop' | 'success' | 'error' | 'open' | 'close' | 'step' | 'stepBack' | 'tab' | 'add' | 'remove' | 'undo' | 'redo' | 'theme' | 'file' | 'notify' | 'zoomIn' | 'zoomOut' | 'place' | 'zap' | 'lampOn';
+type Cue = 'tap' | 'toggleOn' | 'toggleOff' | 'run' | 'stop' | 'success' | 'error' | 'open' | 'close' | 'step' | 'stepBack' | 'tab' | 'add' | 'remove' | 'undo' | 'redo' | 'theme' | 'file' | 'notify' | 'zoomIn' | 'zoomOut' | 'place' | 'zap' | 'lampOn' | 'type';
 
 let context: AudioContext | null = null;
 let installed = false;
+const UI_CUE_GAIN = 1.7;
+const NOISE_CUE_GAIN = 1.25;
+const MIN_TYPING_INTERVAL_MS = 24;
+let lastTypingAt = -Infinity;
+let lastPhysicalTypingAt = -Infinity;
 const listeners = new Set<(enabled: boolean) => void>();
 
 export function soundEnabled(): boolean {
@@ -50,7 +55,7 @@ function crackle(ctx: AudioContext, start: number, duration: number, volume: num
   filter.type = 'bandpass';
   filter.frequency.value = frequency;
   filter.Q.value = 1.4;
-  gain.gain.setValueAtTime(volume, start);
+  gain.gain.setValueAtTime(Math.min(volume * NOISE_CUE_GAIN, 0.55), start);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
   source.connect(filter).connect(gain).connect(ctx.destination);
   source.start(start);
@@ -63,7 +68,7 @@ function tone(ctx: AudioContext, frequency: number, start: number, duration: num
   oscillator.frequency.setValueAtTime(frequency, start);
   if (endFrequency) oscillator.frequency.exponentialRampToValueAtTime(endFrequency, start + duration);
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.008);
+  gain.gain.exponentialRampToValueAtTime(Math.min(volume * UI_CUE_GAIN, 0.20), start + 0.008);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
   oscillator.connect(gain).connect(ctx.destination);
   oscillator.start(start);
@@ -77,6 +82,11 @@ export function playCue(cue: Cue): void {
   const t = ctx.currentTime + 0.005;
   switch (cue) {
     case 'tap': tone(ctx, 1250, t, 0.035, 0.035, 'triangle'); break;
+    case 'type':
+      // Original short electronic keyboard snap; vary frequencies per keystroke.
+      crackle(ctx, t, 0.024, 0.095, 1900 + Math.random() * 700);
+      tone(ctx, 210 + Math.random() * 65, t, 0.028, 0.023, 'triangle');
+      break;
     case 'toggleOn': tone(ctx, 880, t, 0.05, 0.05, 'triangle'); tone(ctx, 1320, t + 0.045, 0.06, 0.04, 'triangle'); break;
     case 'toggleOff': tone(ctx, 1100, t, 0.05, 0.045, 'triangle'); tone(ctx, 740, t + 0.045, 0.06, 0.04, 'triangle'); break;
     case 'open': tone(ctx, 620, t, 0.07, 0.04, 'sine', 900); break;
@@ -135,6 +145,24 @@ function cueFor(target: Element): Cue | null {
   return 'tap';
 }
 
+/** Keep typing feedback within the Python/pseudocode editors and their input prompt. */
+export function isCompilerTypingKey(event: KeyboardEvent): boolean {
+  if (event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return false;
+  if (!(event.target instanceof Element)) return false;
+  if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return false;
+  return event.key.length === 1 || ['Enter', 'Backspace', 'Delete', 'Tab'].includes(event.key);
+}
+
+function playTypingCue(physical: boolean): void {
+  if (!soundEnabled()) return;
+  const now = performance.now();
+  if (now - lastTypingAt < MIN_TYPING_INTERVAL_MS) return;
+  if (!physical && now - lastPhysicalTypingAt < 90) return;
+  lastTypingAt = now;
+  if (physical) lastPhysicalTypingAt = now;
+  playCue('type');
+}
+
 /** Installs one document-level listener for interface cues and watches for new errors. */
 export function installSoundEffects(): void {
   if (installed || typeof document === 'undefined') return;
@@ -145,10 +173,19 @@ export function installSoundEffects(): void {
     if (cue) playCue(cue);
   }, { capture: true, passive: true });
   document.addEventListener('keydown', event => {
+    if (isCompilerTypingKey(event)) playTypingCue(true);
     if ((event.key !== 'Enter' && event.key !== ' ') || !(event.target instanceof Element)) return;
     if (event.target.matches('input, textarea, [contenteditable="true"], .cm-content')) return;
     const cue = cueFor(event.target);
     if (cue) playCue(cue);
+  }, { capture: true });
+  // On-screen keyboards trigger beforeinput without keyboard keydown events.
+  // Do not duplicate the click after a physical keypress or for pasted code.
+  document.addEventListener('beforeinput', event => {
+    if (!(event.target instanceof Element)) return;
+    if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return;
+    if (event.isComposing || !['insertText', 'insertLineBreak', 'insertParagraph', 'deleteContentBackward', 'deleteContentForward'].includes(event.inputType)) return;
+    playTypingCue(false);
   }, { capture: true });
   if (typeof MutationObserver === 'undefined') return;
   new MutationObserver(records => {
