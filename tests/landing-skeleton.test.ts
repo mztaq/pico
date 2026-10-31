@@ -13,12 +13,11 @@ describe('Skeleton loading matches production landing navigation',()=>{
     for (const [path, expectedSkeleton] of [['/', true], ['/app', false], ['/app/cpu', false], ['/other', false]] as const) {
       const document = new JSDOM(html, { url: `https://picompiler.pages.dev${path}`, runScripts: 'dangerously' }).window.document;
       const skeleton = document.querySelector<HTMLElement>('.pico-loading')!;
-      const appLoader = document.querySelector<HTMLElement>('.pico-initial-app-loader')!;
       expect(document.documentElement.classList.contains('pico-app-route')).toBe(!expectedSkeleton);
       expect(document.defaultView!.getComputedStyle(skeleton).display === 'none').toBe(!expectedSkeleton);
-      expect(document.defaultView!.getComputedStyle(appLoader).display === 'none').toBe(expectedSkeleton);
+      expect(document.querySelector('.pico-initial-app-loader')).toBeNull();
     }
-    expect(entry).toContain('fallback={<AppLoadingScreen />}');
+    expect(entry).toContain('<Suspense fallback={null}><App />');
   });
 
   it('shows placeholders for only the three existing production navigation links',()=>{
