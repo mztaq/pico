@@ -71,7 +71,7 @@ it('opens Pico Team above the preserved home and keeps founder/concept content',
   expect(dialog.querySelectorAll('.site-info-links a')).toHaveLength(4);
   expect(document.activeElement).toBe(dialog.querySelector('h1'));
 
-  await act(async () => dialog.querySelector<HTMLButtonElement('.site-info-dialog-close')?.click());
+  await act(async () => dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')?.click());
   expect(host.querySelector('.site-info-backdrop')).toBeNull();
   expect(host.querySelector('.compiler-choices')).not.toBeNull();
   expect(window.location.hash).toBe('');
