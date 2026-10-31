@@ -190,6 +190,9 @@ export function playCue(cue: Cue): void {
 }
 
 function cueFor(target: Element): Cue | null {
+  // Autocorrect suggestions are passive guidance, not audible notifications.
+  // Choosing or dismissing a suggestion must not add an extra UI click.
+  if (target.closest('.suggestion-ribbon')) return null;
   const control = target.closest<HTMLElement>('button, [role="button"], [role="tab"], [role="switch"], [role="option"], summary, a[href], label:has(input[type="radio"]), label:has(input[type="checkbox"])');
   if (!control || control.matches(':disabled, [aria-disabled="true"]')) return null;
   const label = `${control.getAttribute('aria-label') ?? ''} ${control.getAttribute('title') ?? ''} ${control.textContent ?? ''}`.toLowerCase();
@@ -281,13 +284,30 @@ export function installSoundEffects(): void {
   }, { capture: true });
   if (typeof MutationObserver === 'undefined') return;
   new MutationObserver(records => {
-    for (const record of records) for (const node of record.addedNodes) {
-      if (!(node instanceof Element)) continue;
-      if (node.matches('.runtime-error-card, .console-entry-error') || node.querySelector('.runtime-error-card')) { playCue('error'); return; }
-      if (node.matches('.cpu-phase-halted, .tutorial-complete')) { playCue('success'); return; }
-      if (node.matches('.update-toast')) { playCue('notify'); return; }
-      if (node.matches('.console-input-form') || node.querySelector('.console-input-form')) { playCue('notify'); return; }
+    for (const record of records) {
+      // A syntax diagnostic may already be visible when Run is pressed.
+      // Announce its transition to a real execution error once.
+      if (record.type === 'attributes') {
+        if (record.target instanceof Element && record.target.matches('.runtime-error-card[data-sound-error="true"]')) {
+          playCue('error');
+          return;
+        }
+        continue;
+      }
+      for (const node of record.addedNodes) {
+        if (!(node instanceof Element)) continue;
+        // Live syntax diagnostics, including those beside "Did you mean?",
+        // are silent. Only errors caused by execution receive an error cue.
+        if (node.matches('.console-entry-error, .runtime-error-card[data-sound-error="true"]') ||
+            node.querySelector('.console-entry-error, .runtime-error-card[data-sound-error="true"]')) {
+          playCue('error');
+          return;
+        }
+        if (node.matches('.cpu-phase-halted, .tutorial-complete')) { playCue('success'); return; }
+        if (node.matches('.update-toast')) { playCue('notify'); return; }
+        if (node.matches('.console-input-form') || node.querySelector('.console-input-form')) { playCue('notify'); return; }
+      }
     }
-  }).observe(document.body, { childList: true, subtree: true });
+  }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-sound-error'] });
 }
 
