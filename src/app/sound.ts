@@ -217,7 +217,10 @@ function cueFor(target: Element): Cue | null {
 
 /** Keep typing feedback within the Python/pseudocode editors and their input prompt. */
 export function isCompilerTypingKey(event: KeyboardEvent): boolean {
-  if (event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return false;
+  if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return false;
+  // Enter and Backspace should sound on every OS key-repeat while held.
+  // Other keys remain silent after their initial keydown.
+  if (event.repeat && event.key !== 'Enter' && event.key !== 'Backspace') return false;
   if (!(event.target instanceof Element)) return false;
   if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return false;
   return event.key.length === 1 || ['Enter', 'Backspace', 'Delete', 'Tab'].includes(event.key);
