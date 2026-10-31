@@ -76,44 +76,54 @@ function tone(ctx: AudioContext, frequency: number, start: number, duration: num
 }
 
 /**
- * A small original, sample-like sound built in memory from transients and
- * short resonances. eDEX-UI uses dedicated sound recordings (stdin/granted);
- * Pico instead generates its own percussive keyboard character.
+ * Pico's tiny, friendly digital key tones. Rounded attacks, quick soft decays
+ * and a hint of glassy overtones replace the earlier noisy mechanical switch.
  *
- * Cached buffers avoid constructing oscillators or allocating audio data on
- * every keypress. No third-party audio samples are distributed.
+ * The three original waveforms are generated in-memory and cached per context.
+ * No eDEX-UI recordings or third-party samples are used.
  */
 type KeyKind = 'normal' | 'enter' | 'erase';
 const keyBuffers = new WeakMap<AudioContext, Map<string, AudioBuffer>>();
 let keyVariation = 0;
 
 function buildKeyBuffer(ctx: AudioContext, kind: KeyKind, variation: number): AudioBuffer {
-  const duration = kind === 'enter' ? 0.071 : kind === 'erase' ? 0.042 : 0.054;
+  const duration = kind === 'enter' ? 0.118 : kind === 'erase' ? 0.062 : 0.079;
   const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
   const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   const tau = Math.PI * 2;
-  // Seeded per-variation noise sounds consistently like a small switch,
-  // not fresh randomized static on every key.
-  let seed = 0x61c88647 ^ ((variation + 1) * 0x45d9f3b) ^ (kind === 'enter' ? 0x7234 : kind === 'erase' ? 0x951e : 0);
-  let filteredNoise = 0;
-  const bodyFrequency = (kind === 'enter' ? 170 : kind === 'erase' ? 240 : 205) + variation * 11;
+  // Subtle pitch changes prevent a repetitive computer beep without harsh noise.
+  const variationHz = [-14, 0, 11, -6][variation] ?? 0;
+  const frequency = (kind === 'enter' ? 635 : kind === 'erase' ? 550 : 725) + variationHz;
+
+  // A 4ms round onset and a short decay prevent both a click at sample start
+  // and a hard cut at the end. No distorted/sawtooth or random-noise layer.
+  const envelope = (time: number, since: number, decay: number) => {
+    if (time < since) return 0;
+    const t = time - since;
+    return Math.sin(Math.min(1, t / 0.0045) * Math.PI / 2) * Math.exp(-t * decay);
+  };
+
   for (let i = 0; i < length; i += 1) {
-    const time = i / ctx.sampleRate;
-    seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
-    const noise = (seed >>> 0) / 0xffffffff * 2 - 1;
-    filteredNoise += (noise - filteredNoise) * 0.27;
-    // Bright switch actuation at the start, a low plastic key body, and
-    // a small Pico digital overtone without the old electronic beep.
-    const snap = (noise - filteredNoise) * 0.56 * Math.exp(-time * 205);
-    const knock = filteredNoise * 0.70 * Math.exp(-time * 115);
-    const body = Math.sin(tau * bodyFrequency * time) * 0.23 * Math.exp(-time * 125);
-    const glint = Math.sin(tau * (1380 + variation * 65) * time) * 0.052 * Math.exp(-time * 245);
-    const enterAccent = kind === 'enter' && time >= 0.027
-      ? Math.sin(tau * 740 * (time - 0.027)) * 0.095 * Math.exp(-(time - 0.027) * 115)
+    const t = i / ctx.sampleRate;
+    const tail = Math.min(1, Math.max(0, (duration - t) / 0.012));
+    const baseEnvelope = envelope(t, 0, kind === 'enter' ? 52 : 65);
+    // A tiny downward pitch bend gives normal keys a soft, rounded 'bloop'.
+    const bend = kind === 'erase' ? 30 * Math.exp(-t * 85) : 55 * Math.exp(-t * 90);
+    const pitch = frequency + bend;
+    const base = Math.sin(tau * pitch * t) * 0.68 * baseEnvelope;
+    const sparkle = Math.sin(tau * pitch * 1.68 * t + 0.4) * 0.12
+      * envelope(t, 0, 105);
+    // Backspace gently falls; Enter answers with a small higher note.
+    const eraseTail = kind === 'erase'
+      ? Math.sin(tau * 430 * t) * 0.11 * envelope(t, 0.012, 85)
       : 0;
-    const onset = Math.min(1, time * 3500);
-    data[i] = Math.max(-0.95, Math.min(0.95, (snap + knock + body + glint + enterAccent) * onset));
+    const enterResponse = kind === 'enter'
+      ? (Math.sin(tau * (880 + variationHz) * (t - 0.041)) * 0.40
+        + Math.sin(tau * 1320 * (t - 0.041)) * 0.055)
+        * envelope(t, 0.041, 65)
+      : 0;
+    data[i] = Math.max(-0.9, Math.min(0.9, (base + sparkle + eraseTail + enterResponse) * tail));
   }
   return buffer;
 }
@@ -134,7 +144,8 @@ function playKeyboardClick(ctx: AudioContext, start: number, kind: KeyKind): voi
   const source = ctx.createBufferSource();
   const gain = ctx.createGain();
   source.buffer = buffer;
-  gain.gain.setValueAtTime(kind === 'enter' ? 0.58 : 0.53, start);
+  // Lower than the other UI cues so fast typing stays gentle and unobtrusive.
+  gain.gain.setValueAtTime(kind === 'enter' ? 0.24 : kind === 'erase' ? 0.19 : 0.21, start);
   source.connect(gain).connect(ctx.destination);
   source.start(start);
 }
