@@ -84,7 +84,7 @@ export function startPythonExecution(request: PythonRequest, callbacks: Executio
     if (reply.type === 'status') { callbacks.onStatus?.(reply.message); return; }
     if (reply.type === 'line') {
       callbacks.onLine?.(reply.line);
-      if (lineAck) setTimeout(() => { if (!settled) { const ack = new Int32Array(lineAck); Atomics.store(ack, 0, 1); Atomics.notify(ack, 0); } }, 65);
+      if (lineAck) setTimeout(() => { if (!settled) { const ack = new Int32Array(lineAck); Atomics.store(ack, 0, 1); Atomics.notify(ack, 0); } }, 180);
       return;
     }
     pendingId = reply.request.id;
