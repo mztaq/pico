@@ -25,7 +25,7 @@ describe('Pico workspace-selector home skeleton',()=>{
   it('uses a real lazy import fallback on /app without delaying the loaded UI',()=>{
     const entry=read('src/main.tsx');
     expect(entry).toContain("const initialHomeScreen = inApp &&");
-    expect(entry).toContain("!new URLSearchParams(window.location.search).has('tool')");
+    expect(entry).toContain('!workspaceFromLocation(window.location.pathname, window.location.search)');
     expect(entry).toContain('initialHomeScreen ? <HomeLoading /> : null');
     expect(entry).toContain('<AppBootReady /></Suspense>');
     expect(entry).toContain("document.querySelector('.pico-initial-home-loading')?.remove();");
@@ -42,6 +42,8 @@ describe('Pico workspace-selector home skeleton',()=>{
       {path:'/app?tool=flowchart',show:false},
       {path:'/app?tool=binary',show:false},
       {path:'/app?tool=pseudocode',show:false},
+      {path:'/app/pseudocode',show:false},
+      {path:'/app/flowchart',show:false},
       {path:'/app#privacy',show:false},
     ];
     for(const {path,show} of cases){
