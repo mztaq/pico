@@ -11,6 +11,7 @@ export interface ChangelogEntry {
 export const LAST_SEEN_UPDATE_KEY = 'pico.updates.lastSeen.v1';
 const POLL_INTERVAL_MS = 30_000;
 const EXIT_ANIMATION_MS = 180;
+const TOAST_AUTO_DISMISS_MS = 7000;
 
 export function parseChangelog(contents: string): ChangelogEntry[] {
   return contents.split(/\r?\n/).flatMap((line, lineIndex) => {
@@ -90,6 +91,12 @@ export function UpdateCenter() {
       if (exitTimer.current !== null) window.clearTimeout(exitTimer.current);
     };
   }, [refresh]);
+
+  useEffect(() => {
+    if (!toast || exiting || dialogOpen) return;
+    const timeout = window.setTimeout(() => dismissToast(), TOAST_AUTO_DISMISS_MS);
+    return () => window.clearTimeout(timeout);
+  }, [toast, exiting, dialogOpen]);
 
   useEffect(() => {
     if (!dialogOpen) return;
