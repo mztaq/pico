@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { workspaceFromSearch } from './workspace-deeplink';
+import { workspaceFromLocation, workspaceFromPath, workspaceFromSearch, workspaceUrl } from './workspace-deeplink';
 
-describe('Landing workspace links', () => {
-  it.each(['pseudocode','python','flowchart','logic','cpu','binary'] as const)('opens %s directly', tool => {
-    expect(workspaceFromSearch('?tool=' + tool)).toBe(tool);
+describe('Workspace routes', () => {
+  it.each(['pseudocode','python','flowchart','logic','cpu','binary'] as const)('opens %s through a pathname', tool => {
+    expect(workspaceFromPath('/app/' + tool)).toBe(tool);
+    expect(workspaceFromLocation('/app/' + tool, '')).toBe(tool);
+    expect(workspaceUrl(tool)).toBe('/app/' + tool);
   });
-  it('leaves normal and invalid app routes on the home screen', () => {
-    for (const search of ['', '?tool=', '?tool=admin', '?tool=../api', '?other=cpu']) {
-      expect(workspaceFromSearch(search)).toBeNull();
-    }
-  });
-  it('uses the first tool parameter, not a later conflicting one', () => {
+  it('keeps legacy query bookmarks working', () => {
     expect(workspaceFromSearch('?tool=python&tool=cpu')).toBe('python');
+    expect(workspaceFromLocation('/app', '?tool=python')).toBe('python');
+  });
+  it('rejects unknown or nested workspace paths', () => {
+    for (const path of ['/app/invalid','/app/python/other','/app/../api']) expect(workspaceFromPath(path)).toBeNull();
+    expect(workspaceFromLocation('/app', '')).toBeNull();
+    expect(workspaceUrl(null)).toBe('/app');
   });
 });
