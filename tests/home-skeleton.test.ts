@@ -27,7 +27,9 @@ describe('Pico workspace-selector home skeleton',()=>{
     expect(entry).toContain("const initialHomeScreen = inApp &&");
     expect(entry).toContain("!new URLSearchParams(window.location.search).has('tool')");
     expect(entry).toContain('initialHomeScreen ? <HomeLoading /> : null');
-    expect(entry).toContain('<App /></Suspense>');
+    expect(entry).toContain('<AppBootReady /></Suspense>');
+    expect(entry).toContain("document.querySelector('.pico-initial-home-loading')?.remove();");
+    expect(entry).toContain('useLayoutEffect(() => {');
     expect(read('src/app/components/workspace-loading.css')).toContain('prefers-reduced-motion:reduce');
   });
 
@@ -47,7 +49,9 @@ describe('Pico workspace-selector home skeleton',()=>{
       expect(document.documentElement.classList.contains('pico-initial-home-route')).toBe(show);
       const home=document.querySelector('.pico-initial-home-loading');
       expect(home).not.toBeNull();
-      expect(home?.parentElement?.id).toBe('root');
+      expect(home?.parentElement?.tagName).toBe('BODY');
+      expect(home?.previousElementSibling?.id).toBe('root');
+      expect(document.defaultView!.getComputedStyle(home!).position).toBe('fixed');
       expect(document.defaultView!.getComputedStyle(home!).display==='block').toBe(show);
       const landing=document.querySelector('.pico-loading')!;
       expect(document.defaultView!.getComputedStyle(landing).display==='none').toBe(path!=='/');
