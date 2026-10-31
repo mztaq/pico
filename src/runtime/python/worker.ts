@@ -55,6 +55,7 @@ export function installPythonWorker(scope: PythonWorkerScope, load: () => Promis
         stdout: line => postOutput('output', line),
         stderr: line => postOutput('stderr', line),
         flush: flushOutput,
+        onLine: line => scope.postMessage({ type: 'line', line }),
         readInput: (_prompt, line) => {
           flushOutput();
           if (!request.inputBuffer) throw new Error('Python input needs an updated browser and the site’s isolation headers. Reload this page.');
