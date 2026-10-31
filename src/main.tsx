@@ -8,6 +8,7 @@ import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
 import { workspaceFromLocation } from './app/workspace-deeplink';
+import { informationPageFromPath } from './app/components/SiteInfo';
 import { HomeLoading, WorkspaceLoading, type VisualWorkspace } from './app/components/WorkspaceLoading';
 import './styles/tokens.css';
 import './styles/motion.css';
@@ -52,6 +53,7 @@ function directVisualWorkspace(pathname: string, search: string): VisualWorkspac
 const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.pathname, window.location.search) : null;
 const initialHomeScreen = inApp &&
   !workspaceFromLocation(window.location.pathname, window.location.search) &&
+  !informationPageFromPath(window.location.pathname) &&
   !window.location.hash;
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
