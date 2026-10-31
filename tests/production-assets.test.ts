@@ -27,6 +27,8 @@ it('publishes static security headers and search metadata', () => {
   expect(headers).toContain("Content-Security-Policy: frame-ancestors 'none'");
   expect(index).toContain('rel="manifest"');
   expect(index).toContain('property="og:title"');
+  expect(index.match(/name="mobile-web-app-capable" content="yes"/g)).toHaveLength(1);
+  expect(index.match(/name="apple-mobile-web-app-capable" content="yes"/g)).toHaveLength(1);
   expect(read('public/robots.txt')).toContain('Sitemap:');
   expect(read('public/sitemap.xml')).toContain('https://picompiler.pages.dev/');
 });
