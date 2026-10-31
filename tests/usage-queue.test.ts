@@ -17,6 +17,14 @@ describe('Pico per-workspace usage queue',()=>{
     if(batch) acknowledgeUsageBatch(totals,batch);
     expect(totals.size).toBe(0);
   });
+  it('keeps all six workspace totals, including Binary Lab, in a 60-second batch',()=>{
+    const names=['logic','python','pseudocode','flowchart','cpu','binary'];
+    const totals=new Map(names.map(name=>[name,10]));
+    const batch=buildUsageBatch(totals,id);
+    expect(batch?.entries).toEqual(names.map(workspace=>({workspace,seconds:10})));
+    if(batch) acknowledgeUsageBatch(totals,batch);
+    expect(totals.size).toBe(0);
+  });
   it('caps a batch to 60 seconds and preserves pending time',()=>{
     const totals=new Map([['python',40],['flowchart',35]]);
     const batch=buildUsageBatch(totals,id);
