@@ -7,10 +7,10 @@ import App from '../App';
 let host: HTMLDivElement;
 let root: Root;
 
-async function navigate(hash: string) {
+async function navigate(path: string) {
   await act(async () => {
-    window.history.pushState(null, '', hash || window.location.pathname);
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    window.history.pushState(null, '', path || '/app');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   });
 }
 
@@ -37,10 +37,10 @@ afterEach(async () => {
 
 it('opens Pico Team above the preserved home and keeps founder/concept content', async () => {
   await renderApp();
-  const opener = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#team"]')!;
+  const opener = host.querySelector<HTMLAnchorElement>('.pico-home a[href="/app/team"]')!;
   expect(opener.textContent).toBe('Pico Team');
   opener.focus();
-  await navigate('#team');
+  await navigate('/app/team');
   expect(document.title).toBe('Pico | Pico Team');
   expect(host.querySelector('.compiler-choices')).not.toBeNull();
   expect(host.querySelector('.site-info-home-underlay[inert][aria-hidden="true"]')).not.toBeNull();
@@ -76,15 +76,15 @@ it('opens Pico Team above the preserved home and keeps founder/concept content',
   await act(async () => dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')?.click());
   expect(host.querySelector('.site-info-backdrop')).toBeNull();
   expect(host.querySelector('.compiler-choices')).not.toBeNull();
-  expect(window.location.hash).toBe('');
+  expect(window.location.pathname).toBe('/app');
   expect(document.title).toBe('Pico | Home');
   expect(document.activeElement).toBe(opener);
 });
 
 it.each([
-  ['#privacy', 'Privacy Policy', 'Service and storage'],
-  ['#terms', 'Terms and Conditions', 'Your work'],
-  ['#cookies', 'Cookie Policy', 'Essential storage'],
+  ['/app/privacy', 'Privacy Policy', 'Service and storage'],
+  ['/app/terms', 'Terms and Conditions', 'Your work'],
+  ['/app/cookies', 'Cookie Policy', 'Essential storage'],
 ] as const)('opens %s as a dimmed dialog on initial entry without losing saved work', async (hash, title, section) => {
   const savedProjects = JSON.stringify([{ id: 'untouched', code: 'OUTPUT 42' }]);
   localStorage.setItem('pico.projects.v1', savedProjects);
@@ -102,7 +102,7 @@ it.each([
 
 it('displays only the requested policy, scroll area, focus and saved theme', async () => {
   localStorage.setItem('pico.settings.v6', JSON.stringify({ theme: 'high-contrast-light' }));
-  window.history.replaceState(null, '', '#terms');
+  window.history.replaceState(null, '', '/app/terms');
   await renderApp();
   const page = host.querySelector<HTMLElement>('.site-info-page')!;
   expect(page.getAttribute('data-pico-theme')).toBe('high-contrast-light');
@@ -120,9 +120,9 @@ it('displays only the requested policy, scroll area, focus and saved theme', asy
 
 it('closes via Escape and backdrop, but not when clicking the dialog', async () => {
   await renderApp();
-  const opener = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#privacy"]')!;
+  const opener = host.querySelector<HTMLAnchorElement>('.pico-home a[href="/app/privacy"]')!;
   opener.focus();
-  await navigate('#privacy');
+  await navigate('/app/privacy');
   const dialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
   await act(async () => dialog.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
   expect(host.querySelector('.site-info-dialog')).not.toBeNull();
@@ -132,7 +132,7 @@ it('closes via Escape and backdrop, but not when clicking the dialog', async () 
   expect(host.querySelector('.site-info-dialog')).toBeNull();
   expect(document.activeElement).toBe(opener);
 
-  await navigate('#cookies');
+  await navigate('/app/cookies');
   const newBackdrop = host.querySelector<HTMLElement>('.site-info-backdrop')!;
   await act(async () => newBackdrop.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
   expect(host.querySelector('.site-info-dialog')).toBeNull();
@@ -140,9 +140,9 @@ it('closes via Escape and backdrop, but not when clicking the dialog', async () 
 
 it('shows one policy at a time and requires closing it before opening another from home', async () => {
   await renderApp();
-  const privacyLink = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#privacy"]')!;
+  const privacyLink = host.querySelector<HTMLAnchorElement>('.pico-home a[href="/app/privacy"]')!;
   privacyLink.focus();
-  await navigate('#privacy');
+  await navigate('/app/privacy');
   const firstDialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
   expect(firstDialog.querySelector('h1')?.textContent).toBe('Privacy Policy');
   expect(firstDialog.querySelectorAll('.site-info-aside, .site-info-links, .site-info-toc')).toHaveLength(0);
@@ -157,9 +157,9 @@ it('shows one policy at a time and requires closing it before opening another fr
   expect(host.querySelector('.site-info-dialog')).toBeNull();
   expect(document.activeElement).toBe(privacyLink);
 
-  const cookieLink = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#cookies"]')!;
+  const cookieLink = host.querySelector<HTMLAnchorElement>('.pico-home a[href="/app/cookies"]')!;
   cookieLink.focus();
-  await navigate('#cookies');
+  await navigate('/app/cookies');
   const cookieDialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
   expect(cookieDialog.querySelector('h1')?.textContent).toBe('Cookie Policy');
   expect(host.querySelectorAll('.site-info-backdrop')).toHaveLength(1);
