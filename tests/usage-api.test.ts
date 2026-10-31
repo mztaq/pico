@@ -31,8 +31,17 @@ describe('Pico usage validation', () => {
     expect(migration).toContain('CREATE TABLE pico_usage_reordered (');
     expect(migration).toContain('binary_lab_seconds INTEGER NOT NULL DEFAULT 0');
     expect(migration).toContain('FOREIGN KEY (visitor_id) REFERENCES pico_visitors(visitor_id) ON DELETE CASCADE');
-    expect(migration.indexOf('cpu_studio_seconds INTEGER')).toBeLessThan(migration.indexOf('binary_lab_seconds INTEGER'));
-    expect(migration.indexOf('binary_lab_seconds INTEGER')).toBeLessThan(migration.indexOf('last_updated INTEGER'));
+    const columnDeclarations = migration.slice(
+      migration.indexOf('CREATE TABLE pico_usage_reordered ('),
+      migration.indexOf('FOREIGN KEY (visitor_id)')
+    );
+    const columns = [...columnDeclarations.matchAll(/^\s{2}([a-z_]+) (?:TEXT|INTEGER)\b/gm)].map(match => match[1]);
+    expect(columns).toEqual([
+      'visitor_id', 'last_updated', 'logic_sim_seconds', 'python_seconds',
+      'pseudocode_seconds', 'flowchart_seconds', 'cpu_studio_seconds', 'binary_lab_seconds'
+    ]);
+    expect(migration).toContain('  visitor_id,\n  last_updated,\n  logic_sim_seconds,');
+    expect(migration).toContain('SELECT\n  visitor_id,\n  last_updated,\n  logic_sim_seconds,');
     expect(migration).toContain('INSERT INTO pico_usage_reordered (');
     expect(migration).toContain('FROM pico_usage;');
     expect(migration).toContain('DROP TABLE pico_usage;');
