@@ -29,6 +29,7 @@ export type WorkerReply = ExecutionReply[]
   | { type: 'output'; lines: string[] }
   | { type: 'stderr'; lines: string[] }
   | { type: 'status'; message: string }
+  | { type: 'line'; line: number }
   | { type: 'input'; request: PendingInput }
   | { type: 'complete'; replies: ExecutionReply[] };
 
@@ -71,6 +72,7 @@ export function createInteractiveSession(request: WorkerRequest, post: (reply: W
     try {
       let step = value === undefined ? execution.next() : execution.next(value);
       while (!step.done) {
+        if (step.value.type === 'line') { flush(); post(step.value); step = execution.next(); continue; }
         if (step.value.type === 'input') {
           flush();
           pendingId = ++nextId;
