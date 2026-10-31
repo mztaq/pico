@@ -259,7 +259,7 @@ export function PicoTelemetry() {
     {isHome && !choice && !editing && <section className="pico-cookie-banner" ref={bannerRef} aria-label="Cookie consent">
       <span className="pico-cookie-banner-icon" aria-hidden="true"><Cookie size={18} /></span>
       <p>
-        Optional analytics and preferences use cookies only with your consent. <a href="#cookies">Cookie Policy</a>
+        Optional analytics and preferences use cookies only with your consent. <a href="/app/cookies">Cookie Policy</a>
       </p>
       {error && <span className="pico-cookie-error" role="alert">{error}</span>}
       <div className="pico-cookie-actions">
@@ -308,7 +308,7 @@ export function PicoTelemetry() {
               onChange={event => setDraft(v => ({...v, preferences:event.target.checked}))} />
           </label>
         </div>
-        <a className="pico-cookie-policy" href="#cookies" onClick={() => setEditing(false)}>Cookie Policy →</a>
+        <a className="pico-cookie-policy" href="/app/cookies" onClick={() => setEditing(false)}>Cookie Policy →</a>
         {error && <p className="pico-cookie-error" role="alert">{error}</p>}
         <div className="pico-cookie-modal-actions">
           <button className="pico-cookie-btn pico-cookie-outline" type="button" disabled={busy}
