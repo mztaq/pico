@@ -63,7 +63,7 @@ describe('workspace execution integration',()=>{
     expect(consoleInput().getAttribute('aria-label')).toBe('Value for Name');
     await typeValue(consoleInput(),'Ada');await submitInput();
     expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Enter your name','Ada','Hello Ada!']);
-    await click(button('Debug'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     await typeValue(consoleInput(),'Ada');await submitInput();
     expect(container.querySelector('.debugger-panel')).not.toBeNull();
     const steps=BrowserWorker.pending.at(-1)!.request!;expect(steps.runs[0]!.options.files).toEqual({});
@@ -132,7 +132,7 @@ describe('workspace execution integration',()=>{
   });
   it('shows stopped debug runs in the Console instead of an empty debugger',async()=>{
     await typeValue(codeEditor(),'DECLARE Name : STRING\nINPUT Name');
-    await click(button('Debug'));
+    await click(button('Run⌘ ↵'));
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     await click(button('Stop'));
     expect(container.querySelector('.console-input-form')).toBeNull();
@@ -219,7 +219,7 @@ describe('workspace execution integration',()=>{
   });
   it('accepts an empty string and builds the debugger trace after interactive input',async()=>{
     await typeValue(codeEditor(),'DECLARE Name : STRING\nINPUT Name\nOUTPUT LENGTH(Name)');
-    await click(button('Debug'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     expect(container.querySelector('.console-input-form')).not.toBeNull();
     await submitInput();
     expect(container.querySelector('.debugger-panel')).not.toBeNull();
