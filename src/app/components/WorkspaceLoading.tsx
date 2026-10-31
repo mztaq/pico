@@ -6,7 +6,7 @@ function Placeholder({ className = '' }: { className?: string }) {
   return <div className={`pico-load-shimmer ${className}`} />;
 }
 
-function LoadingTopbar({ workspace }: { workspace: VisualWorkspace }) {
+function LoadingTopbar() {
   return <div className="pico-load-topbar">
     <div className="pico-load-brand" aria-hidden="true">
       <Placeholder className="pico-load-mark" />
@@ -145,7 +145,7 @@ export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) 
   return <div className="pico-load-stage" data-loading-workspace={workspace} role="status" aria-live="polite" aria-label={`Opening ${workspace}`}>
     <span className="pico-load-screenreader">Opening {workspace}…</span>
     <div className="pico-load-layout" aria-hidden="true">
-      <LoadingTopbar workspace={workspace} />
+      <LoadingTopbar />
       {workspace === 'Flowchart Builder' ? <FlowchartSkeleton /> :
        workspace === 'Logic Sim' ? <LogicSkeleton /> :
        workspace === 'CPU Studio' ? <CpuSkeleton /> :
