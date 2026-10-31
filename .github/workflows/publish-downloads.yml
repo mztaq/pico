@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
 permissions:
-  contents: read
+  contents: write
+  actions: read
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -13,6 +14,70 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Inspect existing release before updating its three installers
+        id: release_state
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: desktop-v0.1.0-build.10
+        run: |
+          set -euo pipefail
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+          actual=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | sort)
+          expected_new=$(printf '%s\n' Pico_x64-setup.exe Pico_universal.dmg Pico_amd64.AppImage | sort)
+          expected_old=$(printf '%s\n' Pico_x64-setup.exe Pico_x64_en-US.msi Pico_aarch64.dmg Pico_x64.dmg Pico_amd64.deb Pico_amd64.AppImage | sort)
+          if [[ "$actual" == "$expected_new" ]]; then
+            echo "migrate=false" >> "$GITHUB_OUTPUT"
+            echo "Already three assets in the original release."
+            exit 0
+          fi
+          if [[ "$actual" != "$expected_old" ]]; then
+            echo "::error::Unexpected release asset list. Refusing to modify the release." >&2
+            printf 'Actual assets:\n%s\n' "$actual"
+            exit 1
+          fi
+          echo "migrate=true" >> "$GITHUB_OUTPUT"
+          mkdir -p previous-release-assets replacement-artifacts release-staging
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir previous-release-assets --pattern 'Pico_*'
+          # Use only the already successful OS builds from PR #94, not unverified binaries.
+          gh run download 41126752856 --repo "$GITHUB_REPOSITORY" --pattern 'pico-*' --dir replacement-artifacts
+          find replacement-artifacts -type f -name 'Pico_*' -print0 |
+            while IFS= read -r -d '' file; do cp "$file" release-staging/; done
+          python3 - <<'PY'
+          from pathlib import Path
+          expected={'Pico_x64-setup.exe','Pico_universal.dmg','Pico_amd64.AppImage'}
+          found={p.name for p in Path('release-staging').iterdir() if p.is_file()}
+          assert found==expected, f'Unexpected built installers: {found}'
+          for name in expected:
+            path=Path('release-staging')/name
+            assert path.stat().st_size > 100_000, f'Invalid binary length: {name}'
+            print('Prepared verified-build asset',name,path.stat().st_size)
+          PY
+      - name: Back up all old installers before modifying the sole existing release
+        if: steps.release_state.outputs.migrate == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-six-original-pico-installers
+          path: previous-release-assets/*
+          if-no-files-found: error
+          retention-days: 30
+      - name: Replace original release assets with exactly three installers
+        if: steps.release_state.outputs.migrate == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: desktop-v0.1.0-build.10
+        run: |
+          set -euo pipefail
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+          gh release upload "$RELEASE_TAG" release-staging/* --clobber --repo "$GITHUB_REPOSITORY"
+          for obsolete in Pico_x64_en-US.msi Pico_aarch64.dmg Pico_x64.dmg Pico_amd64.deb; do
+            gh release delete-asset "$RELEASE_TAG" "$obsolete" --yes --repo "$GITHUB_REPOSITORY"
+          done
+          actual=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | sort)
+          expected=$(printf '%s\n' Pico_x64-setup.exe Pico_universal.dmg Pico_amd64.AppImage | sort)
+          test "$actual" = "$expected"
+          echo "Updated the same release. No new release was created."
       - name: Retrieve existing Pico desktop release
         env:
           GH_TOKEN: ${{ github.token }}
