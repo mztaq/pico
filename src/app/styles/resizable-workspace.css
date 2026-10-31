@@ -75,3 +75,10 @@
 @media (prefers-reduced-motion: reduce) {
   .panel-resize-handle::before, .resize-handle-grip { transition: none; }
 }
+
+/* The console is an on-demand panel, not a permanent empty dock. */
+.ide-shell.dock-collapsed .workspace-main { grid-template-rows: minmax(0,1fr); }
+.ide-shell.dock-collapsed .workspace-main > .dock-resize-handle,
+.ide-shell.dock-collapsed .workspace-main > .tool-dock { display: none; }
+.ide-shell.dock-right.dock-collapsed .workspace-main { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr); }
+.ide-shell.dock-right.dock-collapsed .workspace-main > .editor-split { grid-column: 1; grid-row: 1; padding-inline-end: var(--workspace-inset); }
