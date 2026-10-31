@@ -28,7 +28,7 @@ class FakeAudioContext {
 function sendKey(target: Element, key: string, props: KeyboardEventInit = {}): boolean {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...props });
   let accepted = false;
-  target.addEventListener('keydown', e => { accepted = isCompilerTypingKey(e); }, { once: true });
+  target.addEventListener('keydown', e => { accepted = isCompilerTypingKey(e as KeyboardEvent); }, { once: true });
   target.dispatchEvent(event);
   return accepted;
 }
