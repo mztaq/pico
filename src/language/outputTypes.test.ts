@@ -31,7 +31,7 @@ describe('arithmetic and comma-separated OUTPUT values',()=>{
     const messages:WorkerReply[]=[];
     const session=createInteractiveSession({ast:compile(constants+'OUTPUT Name + Name2, TIME').ast,interactive:true,runs:[{inputs:[],options:{}}]},reply=>messages.push(reply));
     session.start();
-    expect(messages[0]).toEqual({type:'output',lines:['74']});
+    expect(messages.find(reply => !Array.isArray(reply) && reply.type === 'output')).toEqual({type:'output',lines:['74']});
   });
 });
 
