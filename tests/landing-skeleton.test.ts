@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { JSDOM } from 'jsdom';
 
 const read = (path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
@@ -7,6 +8,17 @@ describe('Skeleton loading matches production landing navigation',()=>{
   const html=read('index.html');
   const entry=read('src/main.tsx');
   const landing=read('src/landing/LandingPage.tsx');
+
+  it('shows the skeleton only on the home route before React loads',()=>{
+    for (const [path, expectedSkeleton] of [['/', true], ['/app', false], ['/app/cpu', false], ['/other', false]] as const) {
+      const document = new JSDOM(html, { url: `https://picompiler.pages.dev${path}`, runScripts: 'dangerously' }).window.document;
+      const skeleton = document.querySelector<HTMLElement>('.pico-loading')!;
+      expect(document.documentElement.classList.contains('pico-app-route')).toBe(!expectedSkeleton);
+      expect(document.defaultView!.getComputedStyle(skeleton).display === 'none').toBe(!expectedSkeleton);
+      expect(document.querySelector('.pico-initial-app-loader')).toBeNull();
+    }
+    expect(entry).toContain('<Suspense fallback={null}><App />');
+  });
 
   it('shows placeholders for only the three existing production navigation links',()=>{
     for(const destination of ['#home','#features','#downloads']){

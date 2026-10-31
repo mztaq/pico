@@ -28,11 +28,12 @@ function SkipToContent() {
 // Previously released Tauri wrappers still load /. Render the full workspace
 // there only inside their native webviews, without changing the browser URL.
 const inApp = shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window));
+const isHomePage = (window.location.pathname === '/' || window.location.pathname === '/index.html') && !inApp;
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <OnlineOnlyGate><Suspense fallback={<LoadingScreen />}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={<LoadingScreen />}><LandingPage /></Suspense>}
+    {inApp ? <OnlineOnlyGate><Suspense fallback={null}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 
