@@ -250,6 +250,14 @@ export function PicoTelemetry() {
     if (!isHome) setEditing(false);
   }, [isHome]);
 
+  const openPolicy = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    setEditing(false);
+    window.history.pushState(window.history.state, '', '/app/cookies');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
   return <>
     {isHome && choice && !editing && <button className="pico-cookie-reopen" type="button"
       onClick={() => { setDraft(choice); setEditing(true); }} aria-label="Open cookie settings">
@@ -259,7 +267,7 @@ export function PicoTelemetry() {
     {isHome && !choice && !editing && <section className="pico-cookie-banner" ref={bannerRef} aria-label="Cookie consent">
       <span className="pico-cookie-banner-icon" aria-hidden="true"><Cookie size={18} /></span>
       <p>
-        Optional analytics and preferences use cookies only with your consent. <a href="/app/cookies">Cookie Policy</a>
+        Optional analytics and preferences use cookies only with your consent. <a href="/app/cookies" onClick={openPolicy}>Cookie Policy</a>
       </p>
       {error && <span className="pico-cookie-error" role="alert">{error}</span>}
       <div className="pico-cookie-actions">
@@ -308,7 +316,7 @@ export function PicoTelemetry() {
               onChange={event => setDraft(v => ({...v, preferences:event.target.checked}))} />
           </label>
         </div>
-        <a className="pico-cookie-policy" href="/app/cookies" onClick={() => setEditing(false)}>Cookie Policy →</a>
+        <a className="pico-cookie-policy" href="/app/cookies" onClick={openPolicy}>Cookie Policy →</a>
         {error && <p className="pico-cookie-error" role="alert">{error}</p>}
         <div className="pico-cookie-modal-actions">
           <button className="pico-cookie-btn pico-cookie-outline" type="button" disabled={busy}
