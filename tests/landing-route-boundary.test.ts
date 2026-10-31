@@ -7,7 +7,7 @@ describe('Landing route migration leaves backend services available', () => {
   it('keeps Cloudflare Pages API, downloads and the new studio route enabled', () => {
     const routes = JSON.parse(read('public/_routes.json')) as { version: number; include: string[]; exclude: string[] };
     expect(routes.version).toBe(1);
-    expect(routes.include).toEqual(expect.arrayContaining(['/api/*', '/downloads/*', '/app']));
+    expect(routes.include).toEqual(expect.arrayContaining(['/api/*', '/downloads/*', '/app', '/app/*']));
     expect(routes.exclude).toEqual([]);
   });
   it('keeps D1-powered cookie and preferences endpoints in place', () => {
