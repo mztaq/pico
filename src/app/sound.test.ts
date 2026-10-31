@@ -137,6 +137,57 @@ describe('compiler typing sounds', () => {
     expect(count()).toBe(3);
   });
 
+  it('keeps Backspace and Delete silent while a code file is empty, including auto-repeat and mobile', () => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="code-editor" data-pico-code-empty="true"><div class="cm-content" contenteditable="true"><span class="cm-placeholder">Start typing your code.</span></div></div><form class="console-input-form"><input /></form>';
+    document.body.append(host);
+    const editor = host.querySelector('.cm-content')!;
+    const codeHost = host.querySelector<HTMLElement>('.code-editor')!;
+    const consoleInput = host.querySelector('input')!;
+    const count = () => bursts.mock.calls.length;
+
+    expect(sendKey(editor, 'Backspace')).toBe(false);
+    clock += 45;
+    expect(sendKey(editor, 'Backspace', { repeat: true })).toBe(false);
+    expect(sendKey(editor, 'Delete')).toBe(false);
+    clock += 100;
+    sendInput(editor, 'deleteContentBackward');
+    sendInput(editor, 'deleteContentForward');
+    expect(count()).toBe(0);
+
+    // Enter/typing still work on a blank code file.
+    clock += 45;
+    expect(sendKey(editor, 'Enter')).toBe(true);
+    expect(count()).toBe(1);
+    clock += 45;
+    expect(sendKey(editor, 'a')).toBe(true);
+    expect(count()).toBe(2);
+
+    // Once the CodeMirror document contains code, deletion sounds return.
+    codeHost.dataset.picoCodeEmpty = 'false';
+    clock += 45;
+    expect(sendKey(editor, 'Backspace')).toBe(true);
+    clock += 45;
+    expect(sendKey(editor, 'Backspace', { repeat: true })).toBe(true);
+    clock += 45;
+    expect(sendKey(editor, 'Delete')).toBe(true);
+    expect(count()).toBe(5);
+
+    // Clearing the last character switches the cue back off immediately.
+    codeHost.dataset.picoCodeEmpty = 'true';
+    clock += 45;
+    expect(sendKey(editor, 'Backspace', { repeat: true })).toBe(false);
+    expect(sendKey(editor, 'Delete')).toBe(false);
+    clock += 120;
+    sendInput(editor, 'deleteContentBackward');
+    expect(count()).toBe(5);
+
+    // Console input is separate from the editor code file.
+    clock += 45;
+    expect(sendKey(consoleInput, 'Backspace')).toBe(true);
+    expect(count()).toBe(6);
+  });
+
   it('repeats Enter and Backspace sounds on held keys without doubling beforeinput', () => {
     const host = document.createElement('div');
     host.innerHTML = '<div class="code-editor"><div class="cm-content" contenteditable="true"></div></div><form class="console-input-form"><input /></form>';
