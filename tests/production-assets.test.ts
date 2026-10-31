@@ -38,6 +38,7 @@ it('shares a compact social card with the Pico student slogan and all six tools'
   const preview=read('public/social-preview.svg');
   const publisher=read('.github/workflows/publish-downloads.yml');
   expect(index).toContain('property="og:title" content="Pico."');
+  expect(index).not.toContain('property="og:site_name"');
   expect(index).toContain('property="og:description" content="Built by students, for students."');
   expect(index).toContain('name="twitter:card" content="summary_large_image"');
   expect(index).toContain('property="og:image" content="https://picompiler.pages.dev/social-preview.png"');
