@@ -152,11 +152,6 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
   }, [theme]);
 
   useEffect(() => {
-    if (scrollArea.current) scrollArea.current.scrollTop = 0;
-    heading.current?.focus({ preventScroll: true });
-  }, [page]);
-
-  useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -172,7 +167,7 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
       const first = controls[0];
       const last = controls.at(-1);
       if (!first || !last) return;
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) {
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current || document.activeElement === heading.current)) {
         event.preventDefault();
         last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -186,6 +181,11 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
       if (previouslyFocused?.isConnected) previouslyFocused.focus({ preventScroll: true });
     };
   }, [onClose]);
+
+  useEffect(() => {
+    if (scrollArea.current) scrollArea.current.scrollTop = 0;
+    heading.current?.focus({ preventScroll: true });
+  }, [page]);
 
   const [sections, setSections] = useState<{ id: string; title: string }[]>([]);
   useEffect(() => {
