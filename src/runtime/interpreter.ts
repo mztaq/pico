@@ -33,7 +33,7 @@ export interface InputRequest {
   line: number;
   error?: string;
 }
-export type ExecutionEvent = ({ type: 'input' } & InputRequest) | { type: 'output'; text: string };
+export type ExecutionEvent = ({ type: 'input' } & InputRequest) | { type: 'output'; text: string } | { type: 'line'; line: number };
 export type Execution<T> = Generator<ExecutionEvent, T, string>;
 
 export interface ExecutionOptions {
@@ -231,6 +231,7 @@ class Interpreter {
   }
   private *execute(s: Statement): Execution<void> {
     this.tick(s, s.kind.replace(/([A-Z])/g, ' $1').trim());
+    yield { type: 'line', line: s.line };
     switch (s.kind) {
       case 'Declaration': {
         if (this.scope.bindings.has(s.name))
