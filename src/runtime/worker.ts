@@ -22,6 +22,7 @@ export interface WorkerRequest {
   runs: { inputs: string[]; options: ExecutionOptions }[];
   interactive?: boolean;
   outputAck?: SharedArrayBuffer;
+  lineAck?: SharedArrayBuffer;
 }
 export interface PendingInput extends InputRequest { id: number; }
 export interface InputMessage { type: 'input'; id: number; value: string; }
@@ -72,7 +73,14 @@ export function createInteractiveSession(request: WorkerRequest, post: (reply: W
     try {
       let step = value === undefined ? execution.next() : execution.next(value);
       while (!step.done) {
-        if (step.value.type === 'line') { flush(); post(step.value); step = execution.next(); continue; }
+        if (step.value.type === 'line') {
+          flush();
+          const ack = request.lineAck ? new Int32Array(request.lineAck) : undefined;
+          if (ack) Atomics.store(ack, 0, 0);
+          post(step.value);
+          if (ack) while (Atomics.load(ack, 0) === 0) Atomics.wait(ack, 0, 0);
+          step = execution.next(); continue;
+        }
         if (step.value.type === 'input') {
           flush();
           pendingId = ++nextId;
