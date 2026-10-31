@@ -36,7 +36,7 @@ describe('Visual workspace loading skeletons',()=>{
 
   it('shows the eight binary bit placeholders and three value fields',()=>{
     const html=renderToStaticMarkup(createElement(WorkspaceLoading,{workspace:'Binary Lab'}));
-    expect((html.match(/class="pico-load-bit-column"/g)??[]).toHaveLength(8);
+    expect((html.match(/class="pico-load-bit-column"/g)??[])).toHaveLength(8);
     expect((html.match(/class="pico-load-value-card"/g)??[])).toHaveLength(3);
   });
 
