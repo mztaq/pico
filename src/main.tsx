@@ -12,6 +12,10 @@ import './styles/motion.css';
 import './styles/overlays.css';
 import './app/styles/accessibility.css';
 
+function LoadingScreen() {
+  return <div className="pico-loading" role="status"><img src="/pico-logo.svg" alt=""/><span>Loading Pico…</span><span className="pico-loading-spinner" aria-hidden="true"/></div>;
+}
+
 function SkipToContent() {
   return <a className="pico-skip-link" href="#root" onClick={event => {
     const target = document.querySelector<HTMLElement>('main, [role="main"]');
@@ -28,7 +32,7 @@ installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <OnlineOnlyGate><Suspense fallback={null}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={<div style={{minHeight:'100vh',background:'#08070d'}}/>}><LandingPage /></Suspense>}
+    {inApp ? <OnlineOnlyGate><Suspense fallback={<LoadingScreen />}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={<LoadingScreen />}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 

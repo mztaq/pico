@@ -28,9 +28,12 @@
     <meta name="twitter:image" content="https://picompiler.pages.dev/social-preview.png" />
     <meta name="twitter:image:alt" content="Pico. Built by students, for students. Six computer science tools." />
     <title>Pico | Built by Students, for Students</title>
+    <style>
+      .pico-loading{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#15131e;color:#cdd6f4;font:600 14px system-ui,sans-serif}.pico-loading img{width:60px;height:60px}.pico-loading-spinner{width:28px;height:28px;border:3px solid #403449;border-top-color:#cba6f7;border-radius:50%;animation:pico-spin .8s linear infinite}@keyframes pico-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.pico-loading-spinner{animation:none}}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="pico-loading" role="status"><img src="/pico-logo.svg" alt=""><span>Loading Pico…</span><span class="pico-loading-spinner" aria-hidden="true"></span></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
