@@ -7,6 +7,7 @@ import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
+import { WorkspaceLoading, type VisualWorkspace } from './app/components/WorkspaceLoading';
 import './styles/tokens.css';
 import './styles/motion.css';
 import './styles/overlays.css';
@@ -29,11 +30,22 @@ function SkipToContent() {
 // there only inside their native webviews, without changing the browser URL.
 const inApp = shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window));
 const isHomePage = (window.location.pathname === '/' || window.location.pathname === '/index.html') && !inApp;
+// The /app?tool=... deep link also needs a matching skeleton before App's chunk arrives.
+function directVisualWorkspace(search: string): VisualWorkspace | null {
+  switch (new URLSearchParams(search).get('tool')) {
+    case 'flowchart': return 'Flowchart Builder';
+    case 'logic': return 'Logic Sim';
+    case 'cpu': return 'CPU Studio';
+    case 'binary': return 'Binary Lab';
+    default: return null;
+  }
+}
+const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.search) : null;
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <OnlineOnlyGate><Suspense fallback={null}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
+    {inApp ? <OnlineOnlyGate><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : null}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 
