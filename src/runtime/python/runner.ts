@@ -81,6 +81,7 @@ export function startPythonExecution(request: PythonRequest, callbacks: Executio
     if (reply.type === 'output') { callbacks.onOutput?.(reply.lines); acknowledge(); return; }
     if (reply.type === 'stderr') { callbacks.onStderr?.(reply.lines); acknowledge(); return; }
     if (reply.type === 'status') { callbacks.onStatus?.(reply.message); return; }
+    if (reply.type === 'line') { callbacks.onLine?.(reply.line); return; }
     pendingId = reply.request.id;
     callbacks.onInput?.(reply.request);
   };
