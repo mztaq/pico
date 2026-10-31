@@ -53,37 +53,40 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 2. In Cloudflare Pages → picompiler → Settings → Preview → Variables and secrets, add a secret variable named `RATE_LIMIT_SECRET`. Generate a unique random value at least 32 characters long. Do not commit the secret to GitHub or paste it into chat.
 3. Redeploy the feature-branch preview.
 4. Verify `GET /api/cookies` still returns `database: connected`. Click Accept All and verify POST returns 200.
-5. Verify `POST /api/usage` sends a batch ID and one to five workspace entries. Replaying the **same** batch ID must return `applied:false` and leave totals unchanged.
+5. Verify `POST /api/usage` sends a batch ID and one to six workspace entries. Replaying the **same** batch ID must return `applied:false` and leave totals unchanged.
 6. Check that excessively repeated requests return HTTP 429. The current per-minute ceilings are cookies 12, preferences 20 and usage 24 requests per IP address. Shared school networks may hit these sooner.
 
 ## Binary Lab usage counter migration (required before releasing)
 
-Binary Lab is an additional analytics workspace. Its opt-in active-time total belongs in `pico_usage.binary_lab_seconds`, alongside the original five counters.
+The sixth workspace uses `pico_usage.binary_lab_seconds` for opt-in active time. Its **physical position must be immediately before `last_updated`**, matching the existing production schema supplied from the D1 Console.
 
-The new application code includes the sixth field in **every** usage update. To prevent previously working analytics requests from failing with a missing-column SQL error, **apply `migrations/0003_binary_lab_usage.sql` to the correct D1 database before merging/deploying this PR**. Cloudflare Pages CI does not apply D1 migrations automatically.
+Cloudflare D1/SQLite appends columns with `ALTER TABLE ADD COLUMN`. Migration `migrations/0003_binary_lab_usage.sql` therefore creates `pico_usage_reordered` with the intended order, copies **every existing visitor ID, five usage totals, and timestamp**, initializes Binary Lab time to zero, then replaces the original table. It preserves the primary key and `ON DELETE CASCADE` foreign key to `pico_visitors`.
 
-1. Identify the separate Preview and Production D1 database bindings named `DB` in Cloudflare Pages. Take a database backup before changing Production.
-2. In each appropriate D1 Console, verify that `pico_usage` exists and inspect its columns:
+**Do not deploy or merge the API until the migration has been applied successfully.** The API includes the sixth counter in all usage writes, so a missing column will break tracking for every workspace.
+
+1. Confirm the matching Cloudflare Pages D1 database binding `DB`, and back up the live database. Test the migration on a separate Preview D1 database first.
+2. Inspect the existing schema and check for custom indexes, triggers, dependent tables, or restrictive visitor-workspace CHECK constraints. Stop and adapt the migration if additional table dependencies are present:
    ```sql
    PRAGMA table_info(pico_usage);
+   SELECT type, name, sql FROM sqlite_master
+     WHERE tbl_name='pico_usage' AND type IN ('index','trigger') AND sql IS NOT NULL;
+   SELECT type, name, sql FROM sqlite_master
+     WHERE type='table' AND sql LIKE '%REFERENCES pico_usage%';
    SELECT sql FROM sqlite_master WHERE type='table' AND name='pico_visitors';
    ```
-   If `pico_visitors.last_workspace` or `most_used_workspace` has a CHECK constraint listing only the original five workspaces, update that constraint safely in a separate reviewed migration before deploying this API.
-3. Apply the one-time SQL statement from `migrations/0003_binary_lab_usage.sql`:
-   ```sql
-   ALTER TABLE pico_usage
-     ADD COLUMN binary_lab_seconds INTEGER NOT NULL DEFAULT 0
-     CHECK (binary_lab_seconds >= 0);
-   ```
-   **Do not re-run the ALTER TABLE** once the column is present. This adds the counter without deleting previous usage totals.
-4. Verify the column and initial values:
+3. Use the migration file with the **transactional Cloudflare D1 migrations runner** on the intended database. Configure Wrangler to target the correct database and verify whether older migrations were already manually applied, to avoid replaying them. Cloudflare's `wrangler d1 migrations apply` backs up the database and rolls back failed migrations. Avoid pasting individual `DROP TABLE` steps into the dashboard.
+4. Verify the new field order and data integrity:
    ```sql
    PRAGMA table_info(pico_usage);
-   SELECT binary_lab_seconds FROM pico_usage LIMIT 5;
+   PRAGMA foreign_key_check;
+   SELECT visitor_id, logic_sim_seconds, python_seconds, pseudocode_seconds,
+          flowchart_seconds, cpu_studio_seconds, binary_lab_seconds, last_updated
+     FROM pico_usage LIMIT 5;
    ```
-5. After migration, merge/deploy the updated API, accept Analytics on a test browser, spend time in Binary Lab, and verify `binary_lab_seconds` increments. Also test the five existing workspaces, Preferences sync, and an idempotent repeated batch.
+   The expected order is `visitor_id`, `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, `binary_lab_seconds`, `last_updated`. Check original totals and row counts against the backup. New binary totals should be zero.
+5. Migrate Production only after Preview verification, then merge/deploy the API, accept Analytics on a test browser and spend time in Binary Lab. Verify that only `binary_lab_seconds` increments, and the other five workspace counters, Preferences API, and idempotent batch retries still work.
 
-If using Wrangler instead of the D1 Console, ensure you target the correct existing D1 database by name and specify `--remote` with the migration SQL file. Do not run a remote database migration on the wrong environment. Applying this migration in GitHub source control alone does not modify the live D1 database.
+This is a **one-time** table rebuild. If the sixth column already exists, do not re-run this migration. Applying the SQL file in GitHub does not alter the live database.
 
 ## Scheduled retention cleanup
 
