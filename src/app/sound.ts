@@ -4,7 +4,7 @@
  * when muted, when storage is blocked, or when the browser has no Web Audio.
  */
 const KEY = 'pico.sound.v1';
-type Cue = 'tap' | 'toggleOn' | 'toggleOff' | 'run' | 'stop' | 'success' | 'error' | 'open' | 'close' | 'step' | 'stepBack' | 'tab' | 'add' | 'remove' | 'undo' | 'redo' | 'theme' | 'file' | 'notify' | 'zoomIn' | 'zoomOut' | 'place' | 'zap' | 'lampOn' | 'type';
+type Cue = 'tap' | 'toggleOn' | 'toggleOff' | 'run' | 'stop' | 'success' | 'error' | 'open' | 'close' | 'step' | 'stepBack' | 'tab' | 'add' | 'remove' | 'undo' | 'redo' | 'theme' | 'file' | 'notify' | 'zoomIn' | 'zoomOut' | 'place' | 'zap' | 'lampOn' | 'type' | 'typeEnter' | 'typeErase';
 
 let context: AudioContext | null = null;
 let installed = false;
@@ -75,6 +75,70 @@ function tone(ctx: AudioContext, frequency: number, start: number, duration: num
   oscillator.stop(start + duration + 0.02);
 }
 
+/**
+ * A small original, sample-like sound built in memory from transients and
+ * short resonances. eDEX-UI uses dedicated sound recordings (stdin/granted);
+ * Pico instead generates its own percussive keyboard character.
+ *
+ * Cached buffers avoid constructing oscillators or allocating audio data on
+ * every keypress. No third-party audio samples are distributed.
+ */
+type KeyKind = 'normal' | 'enter' | 'erase';
+const keyBuffers = new WeakMap<AudioContext, Map<string, AudioBuffer>>();
+let keyVariation = 0;
+
+function buildKeyBuffer(ctx: AudioContext, kind: KeyKind, variation: number): AudioBuffer {
+  const duration = kind === 'enter' ? 0.071 : kind === 'erase' ? 0.042 : 0.054;
+  const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  const tau = Math.PI * 2;
+  // Seeded per-variation noise sounds consistently like a small switch,
+  // not fresh randomized static on every key.
+  let seed = 0x61c88647 ^ ((variation + 1) * 0x45d9f3b) ^ (kind === 'enter' ? 0x7234 : kind === 'erase' ? 0x951e : 0);
+  let filteredNoise = 0;
+  const bodyFrequency = (kind === 'enter' ? 170 : kind === 'erase' ? 240 : 205) + variation * 11;
+  for (let i = 0; i < length; i += 1) {
+    const time = i / ctx.sampleRate;
+    seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
+    const noise = (seed >>> 0) / 0xffffffff * 2 - 1;
+    filteredNoise += (noise - filteredNoise) * 0.27;
+    // Bright switch actuation at the start, a low plastic key body, and
+    // a small Pico digital overtone without the old electronic beep.
+    const snap = (noise - filteredNoise) * 0.56 * Math.exp(-time * 205);
+    const knock = filteredNoise * 0.70 * Math.exp(-time * 115);
+    const body = Math.sin(tau * bodyFrequency * time) * 0.23 * Math.exp(-time * 125);
+    const glint = Math.sin(tau * (1380 + variation * 65) * time) * 0.052 * Math.exp(-time * 245);
+    const enterAccent = kind === 'enter' && time >= 0.027
+      ? Math.sin(tau * 740 * (time - 0.027)) * 0.095 * Math.exp(-(time - 0.027) * 115)
+      : 0;
+    const onset = Math.min(1, time * 3500);
+    data[i] = Math.max(-0.95, Math.min(0.95, (snap + knock + body + glint + enterAccent) * onset));
+  }
+  return buffer;
+}
+
+function playKeyboardClick(ctx: AudioContext, start: number, kind: KeyKind): void {
+  let cached = keyBuffers.get(ctx);
+  if (!cached) {
+    cached = new Map();
+    keyBuffers.set(ctx, cached);
+  }
+  const variant = keyVariation++ % 4;
+  const id = kind + ':' + variant;
+  let buffer = cached.get(id);
+  if (!buffer) {
+    buffer = buildKeyBuffer(ctx, kind, variant);
+    cached.set(id, buffer);
+  }
+  const source = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  source.buffer = buffer;
+  gain.gain.setValueAtTime(kind === 'enter' ? 0.58 : 0.53, start);
+  source.connect(gain).connect(ctx.destination);
+  source.start(start);
+}
+
 export function playCue(cue: Cue): void {
   if (!soundEnabled()) return;
   const ctx = audio();
@@ -82,11 +146,9 @@ export function playCue(cue: Cue): void {
   const t = ctx.currentTime + 0.005;
   switch (cue) {
     case 'tap': tone(ctx, 1250, t, 0.035, 0.035, 'triangle'); break;
-    case 'type':
-      // Original short electronic keyboard snap; vary frequencies per keystroke.
-      crackle(ctx, t, 0.024, 0.095, 1900 + Math.random() * 700);
-      tone(ctx, 210 + Math.random() * 65, t, 0.028, 0.023, 'triangle');
-      break;
+    case 'type': playKeyboardClick(ctx, t, 'normal'); break;
+    case 'typeEnter': playKeyboardClick(ctx, t, 'enter'); break;
+    case 'typeErase': playKeyboardClick(ctx, t, 'erase'); break;
     case 'toggleOn': tone(ctx, 880, t, 0.05, 0.05, 'triangle'); tone(ctx, 1320, t + 0.045, 0.06, 0.04, 'triangle'); break;
     case 'toggleOff': tone(ctx, 1100, t, 0.05, 0.045, 'triangle'); tone(ctx, 740, t + 0.045, 0.06, 0.04, 'triangle'); break;
     case 'open': tone(ctx, 620, t, 0.07, 0.04, 'sine', 900); break;
@@ -153,14 +215,15 @@ export function isCompilerTypingKey(event: KeyboardEvent): boolean {
   return event.key.length === 1 || ['Enter', 'Backspace', 'Delete', 'Tab'].includes(event.key);
 }
 
-function playTypingCue(physical: boolean): void {
+function playTypingCue(physical: boolean, cue: 'type' | 'typeEnter' | 'typeErase'): void {
   if (!soundEnabled()) return;
   const now = performance.now();
-  if (now - lastTypingAt < MIN_TYPING_INTERVAL_MS) return;
-  if (!physical && now - lastPhysicalTypingAt < 90) return;
-  lastTypingAt = now;
+  // Track ALL physical keys, even throttled ones, so beforeinput never doubles them.
   if (physical) lastPhysicalTypingAt = now;
-  playCue('type');
+  if (!physical && now - lastPhysicalTypingAt < 90) return;
+  if (now - lastTypingAt < MIN_TYPING_INTERVAL_MS) return;
+  lastTypingAt = now;
+  playCue(cue);
 }
 
 /** Installs one document-level listener for interface cues and watches for new errors. */
@@ -173,7 +236,9 @@ export function installSoundEffects(): void {
     if (cue) playCue(cue);
   }, { capture: true, passive: true });
   document.addEventListener('keydown', event => {
-    if (isCompilerTypingKey(event)) playTypingCue(true);
+    if (isCompilerTypingKey(event)) playTypingCue(true,
+      event.key === 'Enter' ? 'typeEnter' : event.key === 'Backspace' || event.key === 'Delete' ? 'typeErase' : 'type'
+    );
     if ((event.key !== 'Enter' && event.key !== ' ') || !(event.target instanceof Element)) return;
     if (event.target.matches('input, textarea, [contenteditable="true"], .cm-content')) return;
     const cue = cueFor(event.target);
@@ -185,7 +250,10 @@ export function installSoundEffects(): void {
     if (!(event.target instanceof Element)) return;
     if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return;
     if (event.isComposing || !['insertText', 'insertLineBreak', 'insertParagraph', 'deleteContentBackward', 'deleteContentForward'].includes(event.inputType)) return;
-    playTypingCue(false);
+    playTypingCue(false,
+      event.inputType === 'insertLineBreak' || event.inputType === 'insertParagraph' ? 'typeEnter'
+      : event.inputType.startsWith('delete') ? 'typeErase' : 'type'
+    );
   }, { capture: true });
   if (typeof MutationObserver === 'undefined') return;
   new MutationObserver(records => {
