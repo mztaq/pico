@@ -127,6 +127,8 @@ describe('compiler typing sounds', () => {
     sendKey(editor, 'q');
     sendInput(editor, 'insertText');
     expect(count()).toBe(3);
+  });
+
   it('gives ordinary keys, deletion and Enter distinct short Pico switch samples', () => {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = '<div class="code-editor"><div class="cm-content" contenteditable="true"></div></div>';
@@ -146,6 +148,5 @@ describe('compiler typing sounds', () => {
     expect(startedSampleLengths.every(length => length > 1700 && length < 4000)).toBe(true);
     expect(waveforms.every(samples => samples.some(value => Math.abs(value) > 0.025))).toBe(true);
     expect(waveforms.every(samples => samples.every(value => Number.isFinite(value) && Math.abs(value) <= 0.95))).toBe(true);
-  });
   });
 });
