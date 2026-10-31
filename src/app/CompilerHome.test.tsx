@@ -191,7 +191,7 @@ it('shows Python failures as Error, ends pending input, and cancels runs when le
   expect(container.textContent).not.toContain('stale output');
 });
 it('shows a Python tutorial with matching syntax and no rendering loop',async()=>{
-  await choose('Python Compiler');await click(button('Help'));await click(button('Next'));
+  await choose('Python Compiler');await click(button('Tutorial'));await click(button('Next'));
   expect(container.querySelector('#tutorial-description')?.textContent).toContain('Python');expect(container.querySelector('.tutorial-example')?.textContent).toContain('input(');
   expect(container.querySelector('.tutorial-example')?.textContent).not.toContain('DECLARE');
   for(let i=0;i<6;i++)await click(button('Next')??button('Finish tour'));
