@@ -99,8 +99,10 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 .lp h1{margin:0 0 14px;font-size:clamp(54px,5vw,76px);line-height:1.09;letter-spacing:-3px;font-weight:800}
 .lp h1 .lp-hero-highlight{color:var(--lp-accent)}
 .lp-hero-copy>p{max-width:440px;margin:0 0 26px;color:var(--lp-muted);font-size:17px;line-height:1.6;font-weight:500}
-.lp-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:11px}
-.lp-button{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:45px;padding:0 16px;border-radius:7px;font-size:12px;font-weight:700;transition:background-color 130ms ease,border-color 130ms ease}
+.lp-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.lp-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:49px;padding:0 18px;border-radius:7px;font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap;transition:background-color 130ms ease,border-color 130ms ease}
+.lp-button>span{display:block;line-height:1.2}
+.lp-button>svg{display:block;width:18px;height:18px;flex:0 0 18px}
 .lp-button-primary{background:var(--lp-accent);color:var(--lp-bg)!important}
 .lp-button-primary:hover{background:#d8bdfb}
 .lp-button-secondary{background:transparent;border:1px solid #454761;color:#cdd6f4!important}
@@ -228,7 +230,7 @@ html.pico-landing-scroll{scroll-padding-top:94px}
   .lp h1{font-size:clamp(43px,10.5vw,66px);letter-spacing:-2.2px}
   .lp-hero-copy>p{font-size:15px}
   .lp-hero-actions{gap:9px}
-  .lp-button{font-size:11px;padding:0 13px}
+  .lp-button{font-size:12px;padding:0 14px;min-height:47px}
   .lp .cpu-embedded .cpu-workspace-main{padding:8px}
   .lp .cpu-embedded .cpu-diagram-scroll{justify-content:flex-start;touch-action:pan-x}
   .lp .cpu-embedded .cpu-diagram{width:720px;min-width:720px}
