@@ -153,3 +153,57 @@ export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) 
     </div>
   </div>;
 }
+
+function HomeCardSkeleton() {
+  return <div className="pico-load-home-card">
+    <div className="pico-load-home-card-stage">
+      <Placeholder className="pico-load-home-stage-detail" />
+      <Placeholder className="pico-load-home-stage-detail pico-load-home-stage-short" />
+    </div>
+    <div className="pico-load-home-card-info">
+      <div className="pico-load-home-card-heading">
+        <Placeholder className="pico-load-home-card-icon" />
+        <Placeholder className="pico-load-home-card-title" />
+      </div>
+      <Placeholder className="pico-load-home-card-description" />
+      <Placeholder className="pico-load-home-card-description pico-load-home-description-short" />
+    </div>
+  </div>;
+}
+
+function HomeSectionSkeleton({ kind, count }: { kind: 'code' | 'visual' | 'data'; count: number }) {
+  return <section className={`pico-load-home-section pico-load-home-section--${kind}`}>
+    <div className="pico-load-home-section-heading">
+      <Placeholder className="pico-load-home-section-title" />
+      <Placeholder className="pico-load-home-section-detail" />
+    </div>
+    <div className="pico-load-home-grid">
+      {Array.from({ length: count }, (_, index) => <HomeCardSkeleton key={index} />)}
+    </div>
+  </section>;
+}
+
+/** Matches the /app workspace selector while its lazy App module is being fetched. */
+export function HomeLoading() {
+  return <div className="pico-load-stage pico-load-home-stage" data-loading-workspace="Home" role="status" aria-live="polite" aria-label="Opening Pico home">
+    <span className="pico-load-screenreader">Opening Pico home…</span>
+    <div className="pico-load-home-layout" aria-hidden="true">
+      <div className="pico-load-home-nav">
+        <Placeholder className="pico-load-home-nav-theme" />
+        <div className="pico-load-home-nav-actions"><Placeholder className="pico-load-home-nav-action" /><Placeholder className="pico-load-home-nav-action" /></div>
+      </div>
+      <div className="pico-load-home-inner">
+        <div className="pico-load-home-hero">
+          <div className="pico-load-home-brand"><Placeholder className="pico-load-home-logo" /><Placeholder className="pico-load-home-wordmark" /></div>
+          <Placeholder className="pico-load-home-heading" />
+        </div>
+        <div className="pico-load-home-groups">
+          <HomeSectionSkeleton kind="code" count={2} />
+          <HomeSectionSkeleton kind="visual" count={3} />
+          <HomeSectionSkeleton kind="data" count={1} />
+        </div>
+        <div className="pico-load-home-footer"><Placeholder className="pico-load-home-footer-item" /><Placeholder className="pico-load-home-footer-item" /><Placeholder className="pico-load-home-footer-item" /></div>
+      </div>
+    </div>
+  </div>;
+}

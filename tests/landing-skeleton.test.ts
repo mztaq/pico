@@ -17,7 +17,7 @@ describe('Skeleton loading matches production landing navigation',()=>{
       expect(document.defaultView!.getComputedStyle(skeleton).display === 'none').toBe(!expectedSkeleton);
       expect(document.querySelector('.pico-initial-app-loader')).toBeNull();
     }
-    expect(entry).toContain('fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : null}');
+    expect(entry).toContain('fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}');
     expect(entry).toContain('const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.search) : null;');
   });
 

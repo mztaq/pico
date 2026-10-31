@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { lazy, Suspense } from 'react';
 const App = lazy(() => import('./app/App'));
@@ -7,7 +7,7 @@ import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
-import { WorkspaceLoading, type VisualWorkspace } from './app/components/WorkspaceLoading';
+import { HomeLoading, WorkspaceLoading, type VisualWorkspace } from './app/components/WorkspaceLoading';
 import './styles/tokens.css';
 import './styles/motion.css';
 import './styles/overlays.css';
@@ -15,6 +15,14 @@ import './app/styles/accessibility.css';
 
 function LoadingScreen() {
   return <div className="pico-loading" role="status"><span className="pico-loading-label">Loading Pico…</span><div aria-hidden="true"><div className="pico-skeleton-nav"><div className="pico-skeleton pico-skeleton-logo"/><div className="pico-skeleton-links"><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#home"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#features"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#downloads"/></div></div><div className="pico-skeleton-hero"><div className="pico-skeleton-copy"><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-line"/><div className="pico-skeleton-actions"><div className="pico-skeleton pico-skeleton-button" data-placeholder-for="/app"/><div className="pico-skeleton pico-skeleton-button" data-placeholder-for="#downloads"/></div></div><div className="pico-skeleton pico-skeleton-preview"/></div><div className="pico-skeleton-cards"><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/></div></div></div>;
+}
+
+/** The HTML home placeholder stays above Suspense until the real App commits. */
+function AppBootReady() {
+  useLayoutEffect(() => {
+    document.querySelector('.pico-initial-home-loading')?.remove();
+  }, []);
+  return <App />;
 }
 
 function SkipToContent() {
@@ -41,11 +49,14 @@ function directVisualWorkspace(search: string): VisualWorkspace | null {
   }
 }
 const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.search) : null;
+const initialHomeScreen = inApp &&
+  !new URLSearchParams(window.location.search).has('tool') &&
+  !window.location.hash;
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <OnlineOnlyGate><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : null}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
+    {inApp ? <OnlineOnlyGate><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 
