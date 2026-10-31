@@ -17,7 +17,8 @@ describe('Skeleton loading matches production landing navigation',()=>{
       expect(document.defaultView!.getComputedStyle(skeleton).display === 'none').toBe(!expectedSkeleton);
       expect(document.querySelector('.pico-initial-app-loader')).toBeNull();
     }
-    expect(entry).toContain('<Suspense fallback={null}><App />');
+    expect(entry).toContain('fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : null}');
+    expect(entry).toContain('const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.search) : null;');
   });
 
   it('shows placeholders for only the three existing production navigation links',()=>{
