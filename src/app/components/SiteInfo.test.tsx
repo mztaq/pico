@@ -22,7 +22,7 @@ beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, text: async () => '' })));
   localStorage.clear();
-  window.history.replaceState(null, '', window.location.pathname);
+  window.history.replaceState(null, '', '/app');
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
@@ -31,7 +31,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
-  window.history.replaceState(null, '', window.location.pathname);
+  window.history.replaceState(null, '', '/app');
   vi.unstubAllGlobals();
 });
 
