@@ -93,6 +93,10 @@ describe('compiler typing sounds', () => {
     expect(sendKey(editor, 'v', { metaKey: true })).toBe(false);
     expect(sendKey(editor, 'e', { altKey: true })).toBe(false);
     expect(sendKey(editor, 'a', { repeat: true })).toBe(false);
+    expect(sendKey(editor, 'Enter', { repeat: true })).toBe(true);
+    expect(sendKey(editor, 'Backspace', { repeat: true })).toBe(true);
+    expect(sendKey(editor, 'Delete', { repeat: true })).toBe(false);
+    expect(sendKey(editor, 'Tab', { repeat: true })).toBe(false);
     expect(sendKey(editor, 'a', { isComposing: true })).toBe(false);
     expect(sendKey(editor, 'Shift')).toBe(false);
     expect(sendKey(editor, 'ArrowLeft')).toBe(false);
@@ -131,6 +135,55 @@ describe('compiler typing sounds', () => {
     sendKey(editor, 'q');
     sendInput(editor, 'insertText');
     expect(count()).toBe(3);
+  });
+
+  it('repeats Enter and Backspace sounds on held keys without doubling beforeinput', () => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="code-editor"><div class="cm-content" contenteditable="true"></div></div><form class="console-input-form"><input /></form>';
+    document.body.append(host);
+    const editor = host.querySelector('.cm-content')!;
+    const consoleInput = host.querySelector('input')!;
+    const count = () => bursts.mock.calls.length;
+
+    sendKey(editor, 'Enter');
+    expect(count()).toBe(1);
+    clock += 45;
+    sendKey(editor, 'Enter', { repeat: true });
+    expect(count()).toBe(2);
+    clock += 45;
+    sendKey(editor, 'Enter', { repeat: true });
+    expect(count()).toBe(3);
+    // Keydown and beforeinput from the same repeat must produce one cue.
+    clock += 1;
+    sendInput(editor, 'insertLineBreak');
+    expect(count()).toBe(3);
+    expect(playedWaveforms[0]).toBe(playedWaveforms[1]);
+    expect(playedWaveforms[1]).toBe(playedWaveforms[2]);
+
+    clock += 45;
+    sendKey(editor, 'Backspace');
+    clock += 45;
+    sendKey(editor, 'Backspace', { repeat: true });
+    clock += 45;
+    sendKey(editor, 'Backspace', { repeat: true });
+    expect(count()).toBe(6);
+    sendInput(editor, 'deleteContentBackward');
+    expect(count()).toBe(6);
+    expect(playedWaveforms[3]).toBe(playedWaveforms[4]);
+    expect(playedWaveforms[4]).toBe(playedWaveforms[5]);
+
+    clock += 45;
+    sendKey(editor, 'a', { repeat: true });
+    expect(count()).toBe(6);
+    clock += 45;
+    sendKey(consoleInput, 'Backspace', { repeat: true });
+    expect(count()).toBe(7);
+
+    localStorage.setItem('pico.sound.v1', 'off');
+    clock += 45;
+    sendKey(editor, 'Enter', { repeat: true });
+    sendKey(editor, 'Backspace', { repeat: true });
+    expect(count()).toBe(7);
   });
 
   it('plays exactly the same cached waveform for the first and every later normal key', () => {
