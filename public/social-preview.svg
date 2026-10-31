@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">Pico. Built by students, for students.</title>
+<desc id="desc">Pico social preview with Pseudocode, Python, Flowcharts, Logic, CPU Studio and Binary Lab.</desc>
+<defs>
+  <linearGradient id="background" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0c0d18"/><stop offset=".67" stop-color="#141326"/><stop offset="1" stop-color="#231c3f"/></linearGradient>
+  <radialGradient id="glow" cx=".93" cy=".04" r=".86"><stop offset="0" stop-color="#7765cb" stop-opacity=".17"/><stop offset="1" stop-color="#7765cb" stop-opacity="0"/></radialGradient>
+  <linearGradient id="logo" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a68dfc"/><stop offset="1" stop-color="#8179ef"/></linearGradient>
+</defs>
+<rect width="1200" height="630" fill="#0c0d18"/>
+<rect width="1200" height="630" fill="url(#background)"/>
+<rect width="1200" height="630" fill="url(#glow)"/>
+<rect x="38" y="40" width="1124" height="550" rx="16" fill="#11121e" fill-opacity=".54" stroke="#4c4966" stroke-width="1.6"/>
+<g transform="translate(89 100) scale(1.14)">
+  <rect x="4" y="4" width="120" height="120" rx="34" fill="url(#logo)"/>
+  <path d="M39 29h35a24 24 0 0 1 0 48H53v24H39V29Zm14 14v20h21a10 10 0 0 0 0-20H53Z" fill="#11121a"/>
+  <circle cx="90" cy="93" r="8" fill="#c9c4ff"/>
+</g>
+<g font-family="DejaVu Sans,Arial,sans-serif">
+  <text x="255" y="201" fill="#f1f1fa" font-size="99" font-weight="bold" letter-spacing="-5">Pico.</text>
+  <text x="260" y="255" fill="#d3d4e8" font-size="32" font-weight="400">Built by students, for students.</text>
+  <path d="M 91 325 H 1108" fill="none" stroke="#55536e" stroke-width="1.5"/>
+  <g fill="#222234" stroke="#595776" stroke-width="1.5">
+    <rect x="93" y="361" width="172" height="49" rx="8"/>
+    <rect x="281" y="361" width="128" height="49" rx="8"/>
+    <rect x="425" y="361" width="176" height="49" rx="8"/>
+    <rect x="617" y="361" width="116" height="49" rx="8"/>
+    <rect x="749" y="361" width="174" height="49" rx="8"/>
+    <rect x="939" y="361" width="170" height="49" rx="8"/>
+  </g>
+  <g fill="#e1e0fa" font-size="19" font-weight="500" text-anchor="middle" letter-spacing="0">
+    <text x="179" y="392">PSEUDOCODE</text>
+    <text x="345" y="392">PYTHON</text>
+    <text x="513" y="392">FLOWCHARTS</text>
+    <text x="675" y="392">LOGIC</text>
+    <text x="836" y="392">CPU STUDIO</text>
+    <text x="1024" y="392">BINARY LAB</text>
+  </g>
+  <text x="94" y="528" font-size="25" fill="#a4a6bf" letter-spacing=".5">picompiler.pages.dev</text>
+</g>
+</svg>
