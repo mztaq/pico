@@ -3,7 +3,8 @@
   "include": [
     "/api/*",
     "/downloads/*",
-    "/app"
+    "/app",
+    "/app/*"
   ],
   "exclude": []
 }
