@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react';
-import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal, ArrowRight } from 'lucide-react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { ArrowUpRight, Download, Menu, X, Monitor, Laptop, Terminal, Code2, Network, CircuitBoard, Cpu, Binary } from 'lucide-react';
 import { LandingCurves } from './LandingCurves';
 import { getTheme } from '../app/themes';
 import './landing.css';
@@ -22,7 +22,6 @@ const landingStyle={
 
 const APP = '/app';
 const DOWNLOADS = '#downloads';
-const LiveCpuStudio = lazy(() => import('../cpu/CpuStudio').then(module => ({ default: module.CpuStudio })));
 
 function Brand() {
   return <a className="lp-brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt="" width="33" height="33"/><span>Pico<span className="lp-brand-dot">.</span></span></a>;
@@ -152,6 +151,24 @@ function DownloadsSection(){
   </section>;
 }
 
+function ToolShowcase() {
+  const [tab, setTab] = useState<'cpu' | 'code' | 'logic'>('cpu');
+  const [step, setStep] = useState(0);
+  const [ran, setRan] = useState(false);
+  const [inputs, setInputs] = useState([1, 0]);
+  const phases = ['Fetch', 'Decode', 'Execute'];
+  return <div className="lp-showcase">
+    <div className="lp-showcase-bar"><span aria-hidden="true">● ● ●</span><span>a little look inside Pico</span><span aria-hidden="true">✧</span></div>
+    <div className="lp-showcase-tabs" role="tablist" aria-label="Explore Pico tools">
+      {([['cpu', 'CPU Studio', Cpu], ['code', 'Pseudocode', Code2], ['logic', 'Logic Sim', CircuitBoard]] as const).map(([id, label, Icon]) => <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}><Icon size={15}/>{label}</button>)}
+    </div>
+    <div className="lp-showcase-body" role="tabpanel">
+      <div className="lp-showcase-heading"><span><b>EXAMPLE 0{tab === 'cpu' ? 1 : tab === 'code' ? 2 : 3}</b> {tab === 'cpu' ? 'The instruction cycle' : tab === 'code' ? 'Your first program' : 'The AND gate'}</span>{tab !== 'logic' ? <button onClick={() => tab === 'cpu' ? setStep((step + 1) % 3) : setRan(true)}>▷ &nbsp; Run sample</button> : <small>Click the inputs</small>}</div>
+      {tab === 'cpu' ? <><div className="lp-demo-cpu"><div className="lp-demo-panel"><strong>Central processing unit</strong><div className="lp-demo-registers"><div>Program counter <b>000{step}</b></div><div>Accumulator <b>{step === 2 ? 5 : 0}</b></div><div>Current instruction <b>LOAD 5</b></div><div>Control unit <b>{phases[step].toUpperCase()}</b></div></div></div><div className="lp-demo-bus">Address →<br/><br/>← Data bus</div><div className="lp-demo-panel lp-demo-memory"><strong>Main memory</strong><small>ADDRESS &nbsp;&nbsp; INSTRUCTION</small>{['0000　 LOAD 5','0001　 ADD 3','0002　 STORE 7','0003　 …'].map(row => <div key={row}>{row}</div>)}</div></div><div className="lp-demo-phases">{phases.map((phase, i) => <button key={phase} className={step === i ? 'active' : ''} onClick={() => setStep(i)}>{i + 1} &nbsp; {phase}</button>)}</div></> : tab === 'code' ? <><div className="lp-demo-code"><div>hello.pseudo</div><pre><span>1</span>  DECLARE name : STRING{'\n\n'}<span>2</span>  name ← "Pico"{'\n\n'}<span>3</span>  OUTPUT "Hello, " &amp; name &amp; "!"</pre></div><div className="lp-demo-output"><small>OUTPUT</small><p>{ran ? 'Hello, Pico!' : 'Ready when you are.'}</p></div></> : <><div className="lp-demo-logic"><div className="lp-demo-inputs">{inputs.map((value, i) => <button key={i} onClick={() => setInputs(inputs.map((v, j) => i === j ? 1 - v : v))}>{i === 0 ? 'A' : 'B'} &nbsp; {value}</button>)}</div><div className="lp-demo-gate">AND</div><div className="lp-demo-result">{inputs[0] & inputs[1]}</div></div><p className="lp-demo-explanation">{inputs[0]} AND {inputs[1]} = <strong>{inputs[0] & inputs[1]}</strong>. Both inputs must be 1 for the output to be 1.</p></>}
+    </div>
+  </div>;
+}
+
 export default function LandingPage() {
   useEffect(() => {
     document.title='Pico | Built by Students, for Students';
@@ -173,38 +190,25 @@ export default function LandingPage() {
         </div>
       </div>
       <div className="lp-hero-cpu" id="cpu-studio">
-        <div className="lp-cpu-live" aria-label="Live Pico CPU Studio simulation">
-          <Suspense fallback={<div className="lp-cpu-loading" role="status">Loading CPU Studio…</div>}>
-            <LiveCpuStudio landingPreview onHome={() => window.location.assign(APP)} />
-          </Suspense>
-        </div>
+        <ToolShowcase />
       </div>
     </section>
     <section className="lp-tools-downloads lp-container" aria-label="Pico tools and desktop downloads">
       <section id="features" className="lp-features" aria-labelledby="lp-features-title">
         <div className="lp-section-heading"><h2 id="lp-features-title">Pico's tools</h2></div>
-        <div className="lp-feature-groups">
-          <div className="lp-feature-group">
-            <div className="lp-feature-category"><h3>Programming</h3></div>
-            <div className="lp-feature-items">
-              <a className="lp-feature-item" href="/app?tool=pseudocode" aria-label="Open Pseudocode in Pico"><span className="lp-feature-item-head"><h4>Pseudocode</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Write and run pseudocode.</p></a>
-              <a className="lp-feature-item" href="/app?tool=python" aria-label="Open Python in Pico"><span className="lp-feature-item-head"><h4>Python</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Execute Python code.</p></a>
-            </div>
-          </div>
-          <div className="lp-feature-group">
-            <div className="lp-feature-category"><h3>Visual tools</h3></div>
-            <div className="lp-feature-items">
-              <a className="lp-feature-item" href="/app?tool=flowchart" aria-label="Open Flowchart Builder in Pico"><span className="lp-feature-item-head"><h4>Flowchart Builder</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Build and run flowcharts.</p></a>
-              <a className="lp-feature-item" href="/app?tool=logic" aria-label="Open Logic Sim in Pico"><span className="lp-feature-item-head"><h4>Logic Sim</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Test logic circuits.</p></a>
-            </div>
-          </div>
-          <div className="lp-feature-group">
-            <div className="lp-feature-category"><h3>Computer systems</h3></div>
-            <div className="lp-feature-items">
-              <a className="lp-feature-item" href="/app?tool=cpu" aria-label="Open CPU Studio in Pico"><span className="lp-feature-item-head"><h4>CPU Studio</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Explore CPU execution.</p></a>
-              <a className="lp-feature-item" href="/app?tool=binary" aria-label="Open Binary Lab in Pico"><span className="lp-feature-item-head"><h4>Binary Lab</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Convert binary and hexadecimal.</p></a>
-            </div>
-          </div>
+        <div className="lp-tool-grid">
+          {[
+            { tool: 'pseudocode', title: 'Pseudocode', category: 'Programming', icon: Code2, description: 'Focus on the idea. Write it, run it, understand it.', example: 'OUTPUT  "Hello, Pico!"' },
+            { tool: 'python', title: 'Python', category: 'Programming', icon: Terminal, description: 'Turn a few lines of Python into a working idea.', example: 'print ("Hello, Pico!")' },
+            { tool: 'flowchart', title: 'Flowchart Builder', category: 'Visual tools', icon: Network, description: 'Map out your thinking, one decision at a time.', example: 'Start  →  Your idea  →  End' },
+            { tool: 'logic', title: 'Logic Sim', category: 'Visual tools', icon: CircuitBoard, description: 'Connect the gates. See the logic light up.', example: '1  AND  1  →  1' },
+            { tool: 'cpu', title: 'CPU Studio', category: 'Computer systems', icon: Cpu, description: 'Follow an instruction through the heart of a CPU.', example: 'Fetch  →  Decode  →  Execute' },
+            { tool: 'binary', title: 'Binary Lab', category: 'Computer systems', icon: Binary, description: 'Make sense of binary, decimal, and hexadecimal.', example: '01000001  →  65  →  41 HEX' },
+          ].map(({ tool, title, category, icon: Icon, description, example }) => <a className="lp-tool-card" href={`/app?tool=${tool}`} aria-label={`Open ${title} in Pico`} key={tool}>
+            <div className="lp-tool-card-top"><span className="lp-tool-icon"><Icon size={17} aria-hidden="true" /></span><span className="lp-tool-category">{category}</span></div>
+            <div className="lp-tool-title"><h3>{title}</h3><ArrowUpRight size={16} aria-hidden="true" /></div>
+            <p>{description}</p><div className="lp-tool-example">{example}</div>
+          </a>)}
         </div>
       </section>
       <DownloadsSection/>

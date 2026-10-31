@@ -106,19 +106,17 @@ describe('Pico landing page', () => {
     expect(footer?.querySelector('img')).toBeNull();
     expect(footer?.querySelector('nav')).toBeNull();
   });
-  it('orders tools as three deliberate pairs without placeholder copy', async () => {
+  it('shows six linked tool cards', async () => {
     await render();
-    const groups=[...container.querySelectorAll('.lp-feature-group')];
-    expect(groups).toHaveLength(3);
-    expect(groups.map(group=>group.querySelector('h3')?.textContent)).toEqual(['Programming','Visual tools','Computer systems']);
-    expect(groups.map(group=>group.querySelectorAll('.lp-feature-item').length)).toEqual([2,2,2]);
+    expect(container.querySelectorAll('.lp-tool-card')).toHaveLength(6);
+    expect([...container.querySelectorAll('.lp-tool-category')].map(category=>category.textContent)).toEqual(['Programming','Programming','Visual tools','Visual tools','Computer systems','Computer systems']);
     expect(container.textContent).not.toContain('Six workspaces for programming, algorithms and computer architecture.');
     expect(container.textContent).not.toContain('Inside Pico');
     expect(container.querySelector('#lp-features-title')?.textContent).toBe("Pico's tools");
     expect(container.querySelector('.lp')?.getAttribute('data-landing-theme')).toBe('catppuccin-mocha');
     expect(container.querySelector('#about')).toBeNull();
     expect(container.querySelector('.lp-feature-card')).toBeNull();
-    const links=[...container.querySelectorAll<HTMLAnchorElement>('.lp-feature-item')];
+    const links=[...container.querySelectorAll<HTMLAnchorElement>('.lp-tool-card')];
     expect(links.map(link=>link.getAttribute('href'))).toEqual([
       '/app?tool=pseudocode','/app?tool=python','/app?tool=flowchart',
       '/app?tool=logic','/app?tool=cpu','/app?tool=binary',
@@ -216,14 +214,15 @@ describe('Pico landing page', () => {
     expect(container.querySelector('a[href="https://picompiler.pages.dev/downloads/Pico_x64.dmg"]')).toBeNull();
     expect(vi.mocked(fetch)).toHaveBeenCalledWith('/download-assets/manifest.json',expect.any(Object));
   });
-  it('shows real CPU Studio, without mock product or decorative feature previews', async () => {
+  it('offers interactive tool previews', async () => {
     await render();
-    expect(container.querySelector('.lp-hero .lp-hero-cpu [data-testid="live-cpu"]')).not.toBeNull();
-    expect(container.querySelector('.lp-cpu-section')).toBeNull();
-    expect(container.querySelector('.lp-hero-cpu-bar')).toBeNull();
-    expect(container.querySelector('.lp-cpu-live')).not.toBeNull();
-    expect(container.querySelector('.lp-product-window')).toBeNull();
-    expect(container.querySelector('.lp-visual-code')).toBeNull();
-    expect(container.querySelector('.lp-processor-svg')).toBeNull();
+    const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    expect(tabs.map(tab => tab.textContent)).toEqual(['CPU Studio', 'Pseudocode', 'Logic Sim']);
+    await act(async () => { tabs[1].click(); });
+    expect(container.textContent).toContain('Ready when you are.');
+    await act(async () => { container.querySelector<HTMLButtonElement>('.lp-showcase-heading button')!.click(); });
+    expect(container.textContent).toContain('Hello, Pico!');
+    await act(async () => { tabs[2].click(); });
+    expect(container.textContent).toContain('1 AND 0 = 0');
   });
 });
