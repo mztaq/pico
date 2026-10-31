@@ -147,7 +147,7 @@ describe('Pico landing page', () => {
     expect(container.querySelector('footer small')?.textContent)
       .toBe('© 2026 Pico Development Team. All rights reserved.');
   });
-  it('uses GitHub release assets for branch-preview downloads without changing production routes', () => {
+  it('serves Cloudflare installers even when the GitHub repository is private', () => {
     const names=[
       'Pico_x64-setup.exe','Pico_x64_en-US.msi',
       'Pico_aarch64.dmg','Pico_x64.dmg',
@@ -155,11 +155,12 @@ describe('Pico landing page', () => {
     ];
     for(const name of names){
       expect(installerDownloadHref(name,'feat-premium-landing-app-rou.picompiler.pages.dev'))
-        .toBe('https://github.com/mztaq/pico/releases/latest/download/'+name);
+        .toBe('https://picompiler.pages.dev/downloads/'+name);
       expect(installerDownloadHref(name,'preview-123.picompiler.pages.dev'))
-        .toBe('https://github.com/mztaq/pico/releases/latest/download/'+name);
+        .toBe('https://picompiler.pages.dev/downloads/'+name);
       expect(installerDownloadHref(name,'picompiler.pages.dev')).toBe('/downloads/'+name);
-      expect(installerDownloadHref(name,'localhost')).toBe('/downloads/'+name);
+      expect(installerDownloadHref(name,'localhost'))
+        .toBe('https://picompiler.pages.dev/downloads/'+name);
     }
   });
   it('lists all six platform-specific installers', async () => {
@@ -179,10 +180,10 @@ describe('Pico landing page', () => {
     expect(container.textContent).not.toContain('EXE installer');
     expect(container.textContent).not.toContain('MSI installer');
   });
-  it('updates displayed sizes from the latest release without changing download links',async()=>{
+  it('updates sizes from the deployed Cloudflare manifest without GitHub API access',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue({
       ok:true,
-      json:async()=>({assets:[{name:'Pico_x64-setup.exe',size:2000000}]}),
+      json:async()=>({files:{'Pico_x64-setup.exe':{size:2000000}}}),
     }));
     await render();
     await act(async()=>{await Promise.resolve();await Promise.resolve();});
@@ -194,11 +195,11 @@ describe('Pico landing page', () => {
   it('shows exactly one installer per OS once the universal macOS DMG is published', async () => {
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue({
       ok:true,
-      json:async()=>({assets:[
-        {name:'Pico_x64-setup.exe',size:1880000},
-        {name:'Pico_universal.dmg',size:4100000},
-        {name:'Pico_amd64.AppImage',size:81300000},
-      ]}),
+      json:async()=>({files:{
+        'Pico_x64-setup.exe':{size:1880000},
+        'Pico_universal.dmg':{size:4100000},
+        'Pico_amd64.AppImage':{size:81300000},
+      }}),
     }));
     await render();
     await act(async()=>{await Promise.resolve();await Promise.resolve();});
@@ -213,6 +214,7 @@ describe('Pico landing page', () => {
       '1.88 MB','4.10 MB','81.30 MB',
     ]);
     expect(container.querySelector('a[href="/downloads/Pico_x64.dmg"]')).toBeNull();
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith('/download-assets/manifest.json',expect.any(Object));
   });
   it('shows real CPU Studio, without mock product or decorative feature previews', async () => {
     await render();
