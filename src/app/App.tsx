@@ -262,11 +262,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     changeSettings({ referenceVisible: true, layoutPreset: 'custom' });
     setReferenceExpanded(true); setDocSearch('');
   }
-  function toggleReference() {
-    if (window.matchMedia('(max-width: 1070px)').matches) {
-      if (referenceExpanded) setReferenceExpanded(false); else openReference();
-    } else changeSettings({ referenceVisible: !settings.referenceVisible, layoutPreset: 'custom' });
-  }
   function closeReference() {
     setReferenceExpanded(false);
     if (!window.matchMedia('(max-width: 1070px)').matches) changeSettings({ referenceVisible: false, layoutPreset: 'custom' });
