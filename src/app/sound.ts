@@ -76,54 +76,53 @@ function tone(ctx: AudioContext, frequency: number, start: number, duration: num
 }
 
 /**
- * Pico's tiny, friendly digital key tones. Rounded attacks, quick soft decays
- * and a hint of glassy overtones replace the earlier noisy mechanical switch.
+ * A warm, glossy Pico typing blip. Each key category has ONE deterministic
+ * cached waveform, so the first typed character and every later character
+ * have identical pitch, attack, timbre and loudness.
  *
- * The three original waveforms are generated in-memory and cached per context.
- * No eDEX-UI recordings or third-party samples are used.
+ * A fast falling pitch and a tiny delayed resonance give it a soft liquid
+ * plop, rather than a dry switch click or an aggressive electronic beep.
+ * All samples are synthesized locally. No eDEX-UI recordings are used.
  */
 type KeyKind = 'normal' | 'enter' | 'erase';
-const keyBuffers = new WeakMap<AudioContext, Map<string, AudioBuffer>>();
-let keyVariation = 0;
+const keyBuffers = new WeakMap<AudioContext, Map<KeyKind, AudioBuffer>>();
 
-function buildKeyBuffer(ctx: AudioContext, kind: KeyKind, variation: number): AudioBuffer {
-  const duration = kind === 'enter' ? 0.118 : kind === 'erase' ? 0.062 : 0.079;
+function buildKeyBuffer(ctx: AudioContext, kind: KeyKind): AudioBuffer {
+  const duration = kind === 'enter' ? 0.116 : kind === 'erase' ? 0.064 : 0.079;
   const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
   const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   const tau = Math.PI * 2;
-  // Subtle pitch changes prevent a repetitive computer beep without harsh noise.
-  const variationHz = [-14, 0, 11, -6][variation] ?? 0;
-  const frequency = (kind === 'enter' ? 635 : kind === 'erase' ? 550 : 725) + variationHz;
+  const base = kind === 'enter' ? 545 : kind === 'erase' ? 490 : 590;
+  const sweep = kind === 'enter' ? 115 : kind === 'erase' ? 65 : 125;
+  const speed = kind === 'enter' ? 64 : 89;
+  const decay = kind === 'enter' ? 43 : kind === 'erase' ? 79 : 66;
 
-  // A 4ms round onset and a short decay prevent both a click at sample start
-  // and a hard cut at the end. No distorted/sawtooth or random-noise layer.
-  const envelope = (time: number, since: number, decay: number) => {
-    if (time < since) return 0;
-    const t = time - since;
-    return Math.sin(Math.min(1, t / 0.0045) * Math.PI / 2) * Math.exp(-t * decay);
+  // Integrating the frequency sweep produces a smooth warm "boop" without
+  // discontinuities from multiplying an instantaneous pitch by time.
+  const phase = (time: number, frequency: number, glide: number) =>
+    tau * (frequency * time + glide / speed * (1 - Math.exp(-speed * time)));
+  const envelope = (time: number, onset: number, falloff: number) => {
+    if (time < onset) return 0;
+    const elapsed = time - onset;
+    const attack = Math.sin(Math.min(1, elapsed / 0.005) * Math.PI / 2);
+    return attack * Math.exp(-elapsed * falloff);
   };
 
   for (let i = 0; i < length; i += 1) {
     const t = i / ctx.sampleRate;
-    const tail = Math.min(1, Math.max(0, (duration - t) / 0.012));
-    const baseEnvelope = envelope(t, 0, kind === 'enter' ? 52 : 65);
-    // A tiny downward pitch bend gives normal keys a soft, rounded 'bloop'.
-    const bend = kind === 'erase' ? 30 * Math.exp(-t * 85) : 55 * Math.exp(-t * 90);
-    const pitch = frequency + bend;
-    const base = Math.sin(tau * pitch * t) * 0.68 * baseEnvelope;
-    const sparkle = Math.sin(tau * pitch * 1.68 * t + 0.4) * 0.12
-      * envelope(t, 0, 105);
-    // Backspace gently falls; Enter answers with a small higher note.
-    const eraseTail = kind === 'erase'
-      ? Math.sin(tau * 430 * t) * 0.11 * envelope(t, 0.012, 85)
+    const tail = Math.sin(Math.min(1, Math.max(0, (duration - t) / 0.016)) * Math.PI / 2);
+    const wave = phase(t, base, sweep);
+    const warmth = Math.sin(wave) * 0.59 * envelope(t, 0, decay);
+    const roundBody = Math.sin(wave * 0.5 + 0.24) * 0.16 * envelope(t, 0, decay * 1.08);
+    const gloss = Math.sin(wave * 1.5 + 0.1) * 0.10 * envelope(t, 0.003, 105);
+    const rippleTime = t - 0.014;
+    const ripple = Math.sin(phase(Math.max(0, rippleTime), base * 1.17, sweep * 0.48)) *
+      0.13 * envelope(t, 0.014, 94);
+    const enterEcho = kind === 'enter'
+      ? Math.sin(phase(Math.max(0, t - 0.045), 805, 60)) * 0.23 * envelope(t, 0.045, 70)
       : 0;
-    const enterResponse = kind === 'enter'
-      ? (Math.sin(tau * (880 + variationHz) * (t - 0.041)) * 0.40
-        + Math.sin(tau * 1320 * (t - 0.041)) * 0.055)
-        * envelope(t, 0.041, 65)
-      : 0;
-    data[i] = Math.max(-0.9, Math.min(0.9, (base + sparkle + eraseTail + enterResponse) * tail));
+    data[i] = Math.max(-0.85, Math.min(0.85, (warmth + roundBody + gloss + ripple + enterEcho) * tail));
   }
   return buffer;
 }
@@ -134,18 +133,16 @@ function playKeyboardClick(ctx: AudioContext, start: number, kind: KeyKind): voi
     cached = new Map();
     keyBuffers.set(ctx, cached);
   }
-  const variant = keyVariation++ % 4;
-  const id = kind + ':' + variant;
-  let buffer = cached.get(id);
+  let buffer = cached.get(kind);
   if (!buffer) {
-    buffer = buildKeyBuffer(ctx, kind, variant);
-    cached.set(id, buffer);
+    buffer = buildKeyBuffer(ctx, kind);
+    cached.set(kind, buffer);
   }
   const source = ctx.createBufferSource();
   const gain = ctx.createGain();
   source.buffer = buffer;
-  // Lower than the other UI cues so fast typing stays gentle and unobtrusive.
-  gain.gain.setValueAtTime(kind === 'enter' ? 0.24 : kind === 'erase' ? 0.19 : 0.21, start);
+  // Keystrokes sit beneath the louder interface cues even during quick typing.
+  gain.gain.setValueAtTime(kind === 'enter' ? 0.23 : kind === 'erase' ? 0.19 : 0.21, start);
   source.connect(gain).connect(ctx.destination);
   source.start(start);
 }
@@ -243,6 +240,9 @@ export function installSoundEffects(): void {
   installed = true;
   document.addEventListener('pointerdown', event => {
     if (event.button !== 0 || !(event.target instanceof Element)) return;
+    // Wake Web Audio on the editor's initial click, not on the first letter.
+    // This avoids an audible difference from browser audio-device startup.
+    if (soundEnabled() && event.target.closest('.code-editor, .console-input-form')) audio();
     const cue = cueFor(event.target);
     if (cue) playCue(cue);
   }, { capture: true, passive: true });
