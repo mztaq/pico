@@ -7,7 +7,7 @@ import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
-import { WorkspaceLoading, type VisualWorkspace } from './app/components/WorkspaceLoading';
+import { HomeLoading, WorkspaceLoading, type VisualWorkspace } from './app/components/WorkspaceLoading';
 import './styles/tokens.css';
 import './styles/motion.css';
 import './styles/overlays.css';
@@ -41,11 +41,14 @@ function directVisualWorkspace(search: string): VisualWorkspace | null {
   }
 }
 const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.search) : null;
+const initialHomeScreen = inApp &&
+  !new URLSearchParams(window.location.search).has('tool') &&
+  !window.location.hash;
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <OnlineOnlyGate><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : null}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
+    {inApp ? <OnlineOnlyGate><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 
