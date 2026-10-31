@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, ArrowUpRight, Cookie, FileText, ShieldCheck, Users } from 'lucide-react';
+import { ArrowUpRight, Cookie, FileText, ShieldCheck, Users, X } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
 import '../styles/site-info.css';
 import '../../styles/info.css';
+import './site-info-dialog.css';
 
 const pages = [
   { id: 'team', title: 'Pico Team', icon: Users },
@@ -137,50 +138,110 @@ function Terms() {
   </>;
 }
 
-export function SiteInfo({ page }: { page: InformationPage }) {
+export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: () => void }) {
   const [settings] = useState(loadSettings);
   const theme = getTheme(settings.theme);
   const heading = useRef<HTMLHeadingElement>(null);
+  const dialog = useRef<HTMLElement>(null);
   const scrollArea = useRef<HTMLDivElement>(null);
   const { title, icon: Icon } = pages.find(item => item.id === page)!;
+
   useEffect(() => {
     for (const [property, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(property, value);
     document.documentElement.style.colorScheme = theme.appearance;
   }, [theme]);
+
   useEffect(() => {
     if (scrollArea.current) scrollArea.current.scrollTop = 0;
     heading.current?.focus({ preventScroll: true });
   }, [page]);
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(dialog.current?.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),[tabindex="0"]'
+      ) ?? []);
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      if (previouslyFocused?.isConnected) previouslyFocused.focus({ preventScroll: true });
+    };
+  }, [onClose]);
+
   const [sections, setSections] = useState<{ id: string; title: string }[]>([]);
   useEffect(() => {
-    const found = [...(scrollArea.current?.querySelectorAll<HTMLElement>('main .site-info-section') ?? [])].map(section => ({ id: section.id, title: section.querySelector('h2')?.textContent ?? '' }));
+    const found = [...(scrollArea.current?.querySelectorAll<HTMLElement>('main .site-info-section') ?? [])]
+      .map(section => ({ id: section.id, title: section.querySelector('h2')?.textContent ?? '' }));
     setSections(found);
   }, [page]);
-  return <div ref={scrollArea} className="site-info-page" data-page={page} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as React.CSSProperties}>
-    <header className="site-info-header">
-      <div className="site-info-header-inner">
-        <a className="site-info-brand" href="#" aria-label="Pico home"><img src="/pico-logo.svg" alt="" />Pico<span className="brand-period">.</span></a>
-        <a className="site-info-back" href="#"><ArrowLeft size={16} aria-hidden="true" />Back to workspaces</a>
+
+  return <div className="site-info-backdrop" role="presentation" onMouseDown={event => {
+    if (event.target === event.currentTarget) onClose();
+  }}>
+    <section
+      ref={dialog}
+      className="site-info-page site-info-dialog"
+      data-page={page}
+      data-pico-theme={theme.id}
+      data-high-contrast={theme.highContrast ? 'true' : undefined}
+      style={cssVariables(theme) as React.CSSProperties}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pico-info-dialog-title"
+    >
+      <header className="site-info-hero site-info-dialog-heading">
+        <div className="site-info-hero-inner">
+          <div className="site-info-title">
+            <span className="site-info-mark"><Icon size={24} aria-hidden="true" /></span>
+            <div className="site-info-heading-copy">
+              <h1 id="pico-info-dialog-title" ref={heading} tabIndex={-1}>{title}</h1>
+              {page === 'team'
+                ? <p className="site-info-author-subtitle">The people behind Pico.</p>
+                : <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
+            </div>
+          </div>
+          <button type="button" className="site-info-dialog-close" aria-label={`Close ${title}`} onClick={onClose}>
+            <X size={20} aria-hidden="true" />
+          </button>
+        </div>
+      </header>
+      <div ref={scrollArea} className="site-info-dialog-scroll">
+        <div className="site-info-shell">
+          <aside className="site-info-aside">
+            <SiteInfoLinks current={page} />
+            {sections.length > 0 && <nav className="site-info-toc" aria-label="On this page">
+              <span>On this page</span>
+              {sections.map(section => <button key={section.id} type="button" onClick={() => {
+                const target = scrollArea.current?.querySelector<HTMLElement>(`#${section.id}`);
+                target?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+              }}>{section.title}</button>)}
+            </nav>}
+          </aside>
+          <main>
+            {page === 'team' ? <PicoTeam /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
+            {page !== 'team' && <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>}
+          </main>
+        </div>
       </div>
-    </header>
-    <div className="site-info-hero">
-      <div className="site-info-hero-inner">
-        <div className="site-info-title"><span className="site-info-mark"><Icon size={24} aria-hidden="true" /></span><h1 ref={heading} tabIndex={-1}>{title}</h1></div>
-        {page === 'team' ? <p className="site-info-author-subtitle">The people behind Pico.</p> : <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
-      </div>
-    </div>
-    <div className="site-info-shell">
-      <aside className="site-info-aside">
-        <SiteInfoLinks current={page} />
-        {sections.length > 0 && <nav className="site-info-toc" aria-label="On this page">
-          <span>On this page</span>
-          {sections.map(section => <button key={section.id} type="button" onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })}>{section.title}</button>)}
-        </nav>}
-      </aside>
-      <main>
-        {page === 'team' ? <PicoTeam /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
-        {page !== 'team' && <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>}
-      </main>
-    </div>
+    </section>
   </div>;
 }
