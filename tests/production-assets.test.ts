@@ -32,3 +32,23 @@ it('publishes static security headers and search metadata', () => {
   expect(read('public/robots.txt')).toContain('Sitemap:');
   expect(read('public/sitemap.xml')).toContain('https://picompiler.pages.dev/');
 });
+
+it('shares a compact social card with the Pico student slogan and all six tools', () => {
+  const index=read('index.html');
+  const preview=read('public/social-preview.svg');
+  const publisher=read('.github/workflows/publish-downloads.yml');
+  expect(index).toContain('property="og:title" content="Pico."');
+  expect(index).toContain('property="og:description" content="Built by students, for students."');
+  expect(index).toContain('name="twitter:card" content="summary_large_image"');
+  expect(index).toContain('property="og:image" content="https://picompiler.pages.dev/social-preview.png"');
+  expect(index).toContain('name="twitter:image" content="https://picompiler.pages.dev/social-preview.png"');
+  expect(index).toContain('property="og:image:width" content="1200"');
+  expect(index).toContain('property="og:image:height" content="630"');
+  expect(preview).toContain('width="1200" height="630"');
+  expect(preview).toContain('Built by students, for students.');
+  for(const tool of ['PSEUDOCODE','PYTHON','FLOWCHARTS','LOGIC','CPU STUDIO','BINARY LAB']){
+    expect(preview).toContain(tool);
+  }
+  expect(preview).toContain('picompiler.pages.dev');
+  expect(publisher).toContain('rsvg-convert --width 1200 --height 630 public/social-preview.svg --output public/social-preview.png');
+});
