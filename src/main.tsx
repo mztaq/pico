@@ -13,7 +13,7 @@ import './styles/overlays.css';
 import './app/styles/accessibility.css';
 
 function LoadingScreen() {
-  return <div className="pico-loading" role="status"><img src="/pico-logo.svg" alt=""/><span>Loading Pico…</span><span className="pico-loading-spinner" aria-hidden="true"/></div>;
+  return <div className="pico-loading" role="status"><span className="pico-loading-label">Loading Pico…</span><div aria-hidden="true"><div className="pico-skeleton-nav"><div className="pico-skeleton pico-skeleton-logo"/><div className="pico-skeleton pico-skeleton-link"/><div className="pico-skeleton pico-skeleton-link"/></div><div className="pico-skeleton-hero"><div className="pico-skeleton-copy"><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-line"/><div className="pico-skeleton pico-skeleton-button"/></div><div className="pico-skeleton pico-skeleton-preview"/></div><div className="pico-skeleton-cards"><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/></div></div></div>;
 }
 
 function SkipToContent() {
