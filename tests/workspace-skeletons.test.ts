@@ -56,7 +56,7 @@ describe('Visual workspace loading skeletons',()=>{
     expect(app).toContain('lazy(() => import(\'../cpu/CpuStudio\')');
     expect(app).toContain('lazy(() => import(\'../binary/BinaryLab\')');
     expect(transition).toContain('<Suspense fallback={<WorkspaceLoading workspace={workspace} />}');
-    expect(entry).toContain('directVisualWorkspace(window.location.search)');
+    expect(entry).toContain('directVisualWorkspace(window.location.pathname, window.location.search)');
     expect(entry).toContain('fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}');
     expect(read('src/app/components/workspace-loading.css')).toContain('prefers-reduced-motion:reduce');
   });
