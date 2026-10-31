@@ -68,7 +68,9 @@ it('opens Pico Team above the preserved home and keeps founder/concept content',
   expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false, false, false]);
   expect([...dialog.querySelectorAll('.team-group-title')].map(heading => heading.textContent)).toEqual(['Co-founders', 'Concept Developers']);
   expect(dialog.textContent).not.toMatch(/11BR|11BB/);
-  expect(dialog.querySelectorAll('.site-info-links a')).toHaveLength(4);
+  expect(dialog.querySelectorAll('.site-info-links, .site-info-toc')).toHaveLength(0);
+  expect(dialog.querySelectorAll('a[href^="#"]')).toHaveLength(0);
+  expect(host.querySelectorAll('.pico-home .site-info-links a')).toHaveLength(4);
   expect(document.activeElement).toBe(dialog.querySelector('h1'));
 
   await act(async () => dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')?.click());
@@ -98,20 +100,18 @@ it.each([
   expect(host.querySelector('.pico-home')).not.toBeNull();
 });
 
-it('keeps policy navigation, modal scrolling, focus and saved theme', async () => {
+it('displays only the requested policy, scroll area, focus and saved theme', async () => {
   localStorage.setItem('pico.settings.v6', JSON.stringify({ theme: 'high-contrast-light' }));
   window.history.replaceState(null, '', '#terms');
   await renderApp();
   const page = host.querySelector<HTMLElement>('.site-info-page')!;
   expect(page.getAttribute('data-pico-theme')).toBe('high-contrast-light');
   expect(page.getAttribute('data-high-contrast')).toBe('true');
-  expect(page.querySelector('.site-info-section a[href="#privacy"]')).not.toBeNull();
+  expect(page.querySelector('.site-info-section .site-info-policy-reference')?.textContent).toBe('Privacy Policy');
+  expect(page.querySelectorAll('.site-info-aside, .site-info-links, .site-info-toc, a[href^="#"]')).toHaveLength(0);
   const scrollArea = page.querySelector<HTMLElement>('.site-info-dialog-scroll')!;
-  scrollArea.scrollTop = 400;
-  await navigate('#privacy');
-  expect(scrollArea.scrollTop).toBe(0);
+  expect(scrollArea).not.toBeNull();
   expect(document.activeElement).toBe(page.querySelector('h1'));
-  expect(page.querySelector('a[aria-current="page"]')?.textContent).toBe('Privacy Policy');
   expect(page.textContent).toContain('Cloudflare');
   expect(page.textContent).toContain('Google Fonts');
   expect(page.querySelector('a[href*="github.com"]')).toBeNull();
@@ -137,18 +137,30 @@ it('closes via Escape and backdrop, but not when clicking the dialog', async () 
   expect(host.querySelector('.site-info-dialog')).toBeNull();
 });
 
-it('keeps Tab focus inside the dialog and supports switching policies with hash links', async () => {
+it('shows one policy at a time and requires closing it before opening another from home', async () => {
   await renderApp();
-  await navigate('#cookies');
-  const dialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
-  const close = dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')!;
-  const links = [...dialog.querySelectorAll<HTMLElement>('a[href]')];
-  const last = links.at(-1)!;
-  last.focus();
+  const privacyLink = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#privacy"]')!;
+  privacyLink.focus();
+  await navigate('#privacy');
+  const firstDialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
+  expect(firstDialog.querySelector('h1')?.textContent).toBe('Privacy Policy');
+  expect(firstDialog.querySelectorAll('.site-info-aside, .site-info-links, .site-info-toc')).toHaveLength(0);
+  expect(firstDialog.querySelectorAll('a[href]')).toHaveLength(0);
+
+  const close = firstDialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')!;
+  close.focus();
   await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })));
   expect(document.activeElement).toBe(close);
-  await navigate('#privacy');
-  expect(host.querySelector('.site-info-dialog')).toBe(dialog);
-  expect(dialog.querySelector('h1')?.textContent).toBe('Privacy Policy');
-  expect(dialog.querySelector('a[aria-current="page"]')?.textContent).toBe('Privacy Policy');
+
+  await act(async () => close.click());
+  expect(host.querySelector('.site-info-dialog')).toBeNull();
+  expect(document.activeElement).toBe(privacyLink);
+
+  const cookieLink = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#cookies"]')!;
+  cookieLink.focus();
+  await navigate('#cookies');
+  const cookieDialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
+  expect(cookieDialog.querySelector('h1')?.textContent).toBe('Cookie Policy');
+  expect(host.querySelectorAll('.site-info-backdrop')).toHaveLength(1);
+  expect(cookieDialog.querySelectorAll('a[href]')).toHaveLength(0);
 });
