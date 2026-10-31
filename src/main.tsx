@@ -12,6 +12,10 @@ import './styles/motion.css';
 import './styles/overlays.css';
 import './app/styles/accessibility.css';
 
+function AppLoadingScreen() {
+  return <div className="pico-app-loader" role="status"><img src="/pico-logo.svg" alt=""/><span>Loading Pico…</span></div>;
+}
+
 function LoadingScreen() {
   return <div className="pico-loading" role="status"><span className="pico-loading-label">Loading Pico…</span><div aria-hidden="true"><div className="pico-skeleton-nav"><div className="pico-skeleton pico-skeleton-logo"/><div className="pico-skeleton-links"><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#home"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#features"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#downloads"/></div></div><div className="pico-skeleton-hero"><div className="pico-skeleton-copy"><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-line"/><div className="pico-skeleton-actions"><div className="pico-skeleton pico-skeleton-button" data-placeholder-for="/app"/><div className="pico-skeleton pico-skeleton-button" data-placeholder-for="#downloads"/></div></div><div className="pico-skeleton pico-skeleton-preview"/></div><div className="pico-skeleton-cards"><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/></div></div></div>;
 }
@@ -28,11 +32,12 @@ function SkipToContent() {
 // Previously released Tauri wrappers still load /. Render the full workspace
 // there only inside their native webviews, without changing the browser URL.
 const inApp = shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window));
+const isHomePage = (window.location.pathname === '/' || window.location.pathname === '/index.html') && !inApp;
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <OnlineOnlyGate><Suspense fallback={<LoadingScreen />}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={<LoadingScreen />}><LandingPage /></Suspense>}
+    {inApp ? <OnlineOnlyGate><Suspense fallback={<AppLoadingScreen />}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : <AppLoadingScreen />}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 
