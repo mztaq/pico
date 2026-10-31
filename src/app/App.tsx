@@ -422,7 +422,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     setFileMenuOpen(false);
   }
 
-  return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
+  return <div className="pico-app" data-execution-active={running ? "true" : undefined} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <header className="topbar pico-appbar" inert={tutorialOpen || tutorialOfferOpen}>
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
