@@ -20,7 +20,7 @@ import { TutorialOffer } from './components/TutorialOffer';
 import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen } from './components/HomeScreen';
-import { workspaceFromSearch } from './workspace-deeplink';
+import { workspaceFromLocation, workspaceUrl, type PicoWorkspace } from './workspace-deeplink';
 import { SiteInfo, informationPageFromHash } from './components/SiteInfo';
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
 import { WorkspaceTransition } from './components/WorkspaceTransition';
@@ -63,7 +63,18 @@ function closeInformationPage() {
 }
 
 export default function App() {
-  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | null>(() => workspaceFromSearch(window.location.search));
+  const [language, setLanguageState] = useState<PicoWorkspace | null>(() => workspaceFromLocation(window.location.pathname, window.location.search));
+  const setLanguage = (next: PicoWorkspace | null) => {
+    const target = workspaceUrl(next);
+    const current = window.location.pathname + window.location.search;
+    if (current !== target && window.location.pathname !== '/' ) window.history.pushState(window.history.state, '', target);
+    setLanguageState(next);
+  };
+  useEffect(() => {
+    const onPopState = () => setLanguageState(workspaceFromLocation(window.location.pathname, window.location.search));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
   const [informationPage, setInformationPage] = useState(() => informationPageFromHash(window.location.hash));
   useEffect(() => {
     const onHashChange = () => {
@@ -75,13 +86,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
   useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : 'Pico | Home'; }, [language, informationPage]);
-  useEffect(() => {
-    if (language !== null) return;
-    const url = new URL(window.location.href);
-    if (!url.searchParams.has('tool')) return;
-    url.searchParams.delete('tool');
-    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
-  }, [language]);
+  // Workspace URLs are updated by setLanguage, and popstate restores browser history.
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
