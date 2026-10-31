@@ -5,7 +5,7 @@ import { createInteractiveSession, type WorkerReply } from './worker';
 
 function sessionFor(code: string, files: Record<string, string[]> = {}) {
   const messages: WorkerReply[] = [];
-  const session = createInteractiveSession({ ast: compile(code).ast, runs: [{ inputs: [], options: { files } }], interactive: true }, reply => messages.push(reply));
+  const session = createInteractiveSession({ ast: compile(code).ast, runs: [{ inputs: [], options: { files } }], interactive: true }, reply => { if (!Array.isArray(reply) && reply.type === 'line') return; messages.push(reply); });
   session.start();
   const request = () => {
     const last = messages.at(-1);
