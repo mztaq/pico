@@ -1,5 +1,5 @@
 import { lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, CircleHelp, Code2, AlignLeft, Download, FileCode2, Keyboard, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, CircleHelp, Code2, Download, FileCode2, Keyboard, Play, Plus, Search, Settings2, Sparkles, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
@@ -431,13 +431,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
         <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />
       </div>
       <div className="topbar-spacer" />
-      <div className="topbar-actions">
-        <div className="pico-appbar-group" role="group" aria-label="Code formatting"><button className="toolbar-button editor-format-button" title={`Format ${isPython ? 'Python' : 'pseudocode'} code`} aria-label={`Format ${isPython ? 'Python' : 'pseudocode'} code`} disabled={running} onClick={() => editorRef.current?.formatCode()}><AlignLeft size={16}/><span>Format</span></button></div>
-        <div className="pico-appbar-group" role="group" aria-label="Edit history">
-          <button className="toolbar-button editor-history-button" aria-label="Undo last edit" onClick={() => editorRef.current?.undo()} title="Undo"><Undo2 size={16} /><span>Undo</span></button>
-          <button className="toolbar-button editor-history-button" aria-label="Redo last edit" onClick={() => editorRef.current?.redo()} title="Redo"><Redo2 size={16} /><span>Redo</span></button>
-        </div>
-      </div>
       <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} /></label><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> {isPython ? "Import .py / .pico" : "Import .pico"}</button>{isPython && <button onClick={exportPythonSource}><Download size={14} /> Export .py</button>}<button onClick={() => { exportProject(activeProject); markExported(); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept={isPython ? ".py,.pico,application/json" : ".pico,application/json"} hidden onChange={handleImport} /></div><div className="settings-anchor" ref={settingsAnchorRef}>
         <button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" data-tour="settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>
         <FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover">
