@@ -25,10 +25,19 @@ it.each(['python', 'pseudocode'] as const)('shows a plain prompt only while the 
     expect(host.querySelector('.cm-placeholder')?.textContent).toContain('Start typing your code.');
     expect(host.querySelectorAll('.cm-placeholder strong')).toHaveLength(0);
     expect(EditorView.findFromDOM(host.querySelector('.cm-editor')!)?.state.doc.toString()).toBe('');
+    expect(host.querySelector('.code-editor')?.getAttribute('data-pico-code-empty')).toBe('true');
     await act(async () => render(language === 'python' ? 'print(1)' : 'OUTPUT 1'));
     expect(host.querySelector('.cm-placeholder')).toBeNull();
+    expect(host.querySelector('.code-editor')?.getAttribute('data-pico-code-empty')).toBe('false');
     await act(async () => render(''));
     expect(host.querySelector('.cm-placeholder')).not.toBeNull();
+    expect(host.querySelector('.code-editor')?.getAttribute('data-pico-code-empty')).toBe('true');
+    // The attribute must reflect CodeMirror changes immediately, before React props rerender.
+    const editor = EditorView.findFromDOM(host.querySelector('.cm-editor')!)!;
+    await act(async () => editor.dispatch({ changes: { from: 0, insert: 'x' } }));
+    expect(host.querySelector('.code-editor')?.getAttribute('data-pico-code-empty')).toBe('false');
+    await act(async () => editor.dispatch({ changes: { from: 0, to: 1, insert: '' } }));
+    expect(host.querySelector('.code-editor')?.getAttribute('data-pico-code-empty')).toBe('true');
   } finally {
     await act(async () => root.unmount());
     host.remove();
