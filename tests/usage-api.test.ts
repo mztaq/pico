@@ -1,5 +1,7 @@
 import {describe,it,expect} from 'vitest';
-import {validateBatch} from '../functions/api/usage';
+import {readFileSync} from 'node:fs';
+import {validateBatch,WORKSPACE_COLUMNS} from '../functions/api/usage';
+import {isWorkspace} from '../functions/_lib/core';
 
 describe('Pico usage validation', () => {
   const id='123e4567-e89b-42d3-a456-426614174000';
@@ -13,6 +15,22 @@ describe('Pico usage validation', () => {
       {workspace:'flowchart',seconds:25},
       {workspace:'cpu',seconds:15},
     ]});
+  });
+  it('accepts Binary Lab usage alongside the other five workspace counters', () => {
+    const all=['logic','python','pseudocode','flowchart','cpu','binary'];
+    const entries=all.map(workspace=>({workspace,seconds:10}));
+    expect(validateBatch({batchId:id,entries})).toEqual({id,entries});
+    expect(Object.keys(WORKSPACE_COLUMNS)).toEqual(all);
+    for(const workspace of all) expect(isWorkspace(workspace)).toBe(true);
+    expect(WORKSPACE_COLUMNS.binary).toBe('binary_lab_seconds');
+  });
+  it('includes the Binary Lab migration and client-side title mapping', () => {
+    const migration=readFileSync(new URL('../migrations/0003_binary_lab_usage.sql',import.meta.url),'utf8');
+    const telemetry=readFileSync(new URL('../src/telemetry/PicoTelemetry.tsx',import.meta.url),'utf8');
+    const api=readFileSync(new URL('../functions/api/usage.ts',import.meta.url),'utf8');
+    expect(migration).toContain('ADD COLUMN binary_lab_seconds INTEGER NOT NULL DEFAULT 0');
+    expect(telemetry).toContain("'Pico | Binary Lab': 'binary'");
+    expect(api).toContain('cpu_studio_seconds,binary_lab_seconds FROM pico_usage');
   });
   it('rejects duplicate workspaces', () => {
     expect(validateBatch({batchId:id,entries:[
