@@ -1,12 +1,115 @@
-/* Compact, theme-aware loader shown only while a workspace chunk is pending. */
-.pico-load-stage{min-height:100dvh;box-sizing:border-box;display:grid;place-items:center;padding:32px;background:var(--bg,#1e1e2e);color:var(--text,#cdd6f4);font-family:inherit}
-.pico-load-content{width:min(230px,90vw);display:flex;flex-direction:column;align-items:center;text-align:center}
-.pico-load-icon{width:46px;height:46px;margin-bottom:14px}
-.pico-load-icon img{width:100%;height:100%;display:block}
-.pico-load-title{font-size:22px;font-weight:750;letter-spacing:-.05em;line-height:1.2}
-.pico-load-title span{color:var(--accent,#8179ef)}
-.pico-load-bar{width:140px;height:2px;overflow:hidden;border-radius:2px;background:var(--border,#393b4d);margin:22px auto 15px}
-.pico-load-bar>div{height:100%;width:35%;border-radius:2px;background:var(--accent,#8179ef);animation:pico-loading-sweep 1s ease-in-out infinite alternate}
-.pico-load-description{margin:0;font-size:12px;font-weight:500;letter-spacing:.01em;color:var(--muted,#9ba0bb)}
-@keyframes pico-loading-sweep{from{transform:translateX(-100%)}to{transform:translateX(390%)}}
-@media(prefers-reduced-motion:reduce){.pico-load-bar>div{animation:none;width:50%;transform:none}}
+/* Brief skeletons for visual workspace chunks. No fake controls or loading percentages. */
+.pico-load-stage{
+  --pico-load-surface:var(--surface,#181825);
+  --pico-load-border:var(--border,#343547);
+  --pico-load-shimmer-a:color-mix(in srgb,var(--surface-raised,#292839) 72%,var(--bg,#1e1e2e));
+  --pico-load-shimmer-b:color-mix(in srgb,var(--accent,#cba6f7) 16%,var(--surface-raised,#292839));
+  position:relative;min-height:100dvh;height:100dvh;width:100%;overflow:hidden;
+  background:var(--bg,#1e1e2e);color:var(--text,#cdd6f4);
+  font-family:var(--font-ui,system-ui,sans-serif);
+}
+.pico-load-stage *{box-sizing:border-box}
+.pico-load-screenreader{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.pico-load-layout{height:100%;display:flex;flex-direction:column;min-height:0}
+.pico-load-shimmer{
+  background:linear-gradient(105deg,var(--pico-load-shimmer-a) 20%,var(--pico-load-shimmer-b) 42%,var(--pico-load-shimmer-a) 64%);
+  background-size:220% 100%;border-radius:6px;animation:pico-workspace-shimmer 1.65s ease-in-out infinite;
+}
+@keyframes pico-workspace-shimmer{to{background-position-x:-220%}}
+.pico-load-topbar{
+  flex:0 0 58px;min-height:58px;padding:0 18px;border-bottom:1px solid var(--pico-load-border);
+  display:flex;align-items:center;justify-content:space-between;gap:18px;background:var(--ds-chrome,#101116);
+}
+.pico-load-brand,.pico-load-top-actions,.pico-load-toolbar-actions{display:flex;align-items:center;gap:10px;min-width:0}
+.pico-load-mark{width:27px;height:27px;border-radius:7px;flex-shrink:0}
+.pico-load-wordmark{width:66px;height:19px}
+.pico-load-separator{width:1px;height:19px;background:var(--pico-load-border)}
+.pico-load-workspace-name{width:120px;height:18px}
+.pico-load-action{width:86px;height:29px}.pico-load-action-short{width:64px}
+.pico-load-square{width:28px;height:28px;flex:0 0 28px}
+.pico-load-section-title{height:17px;width:60%;margin-bottom:17px}
+.pico-load-toolbar-label{width:112px;height:14px}
+.pico-load-visual-grid{flex:1;display:grid;min-height:0}
+.pico-load-flowchart-grid{grid-template-columns:214px minmax(0,1fr) 262px}
+.pico-load-logic-grid{grid-template-columns:226px minmax(0,1fr) 250px}
+.pico-load-palette,.pico-load-inspector{min-height:0;overflow:hidden;padding:20px 14px;background:var(--pico-load-surface)}
+.pico-load-palette{border-right:1px solid var(--pico-load-border)}
+.pico-load-inspector{border-left:1px solid var(--pico-load-border)}
+.pico-load-block-list{display:grid;gap:9px}
+.pico-load-block-row{height:52px;display:flex;align-items:center;gap:11px;padding:8px;border:1px solid var(--pico-load-border);border-radius:6px}
+.pico-load-block-icon{width:39px;height:26px;flex:0 0 39px}
+.pico-load-block-label{width:74px;height:13px}
+.pico-load-inspector-line{width:100%;height:13px;margin-bottom:14px}
+.pico-load-inspector-line-short{width:70%}
+.pico-load-inspector-field{height:43px;margin:15px 0}
+.pico-load-canvas-area{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg,#1e1e2e)}
+.pico-load-canvas-toolbar{
+  min-height:46px;display:flex;align-items:center;justify-content:space-between;
+  padding:6px 16px;gap:10px;background:var(--pico-load-surface);border-bottom:1px solid var(--pico-load-border)
+}
+.pico-load-canvas{display:grid;place-items:center;flex:1;min-height:0;overflow:hidden;position:relative}
+.pico-load-canvas-nodes{display:flex;flex-direction:column;align-items:center;gap:14px}
+.pico-load-flow-node{width:145px;height:58px;border-radius:8px}
+.pico-load-node-connector{width:2px;height:25px;background:var(--pico-load-border)}
+.pico-load-dock{flex:0 0 138px;display:grid;align-content:start;gap:23px;padding:18px;border-top:1px solid var(--pico-load-border);background:var(--pico-load-surface)}
+.pico-load-dock-line{height:13px;width:54%}
+.pico-load-logic-toolbar{min-height:46px;display:flex;align-items:center;gap:9px;padding:0 14px;border-bottom:1px solid var(--pico-load-border);background:var(--pico-load-surface);overflow:hidden}
+.pico-load-logic-tool{flex:0 0 63px;height:27px}
+.pico-load-logic-board .pico-load-canvas-nodes{flex-direction:row;gap:20px}
+.pico-load-logic-board .pico-load-node-connector{width:30px;height:2px}
+.pico-load-logic-gate{width:74px;height:65px;border-radius:18px}
+.pico-load-cpu-content{display:flex;flex:1;flex-direction:column;min-height:0;overflow:auto}
+.pico-load-cpu-controls{min-height:56px;display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--pico-load-border);background:var(--pico-load-surface);flex-wrap:wrap}
+.pico-load-cpu-control{width:89px;height:32px}
+.pico-load-cpu-control:nth-child(2){width:128px}.pico-load-cpu-control:nth-child(5){width:160px}
+.pico-load-cpu-figure{width:min(1180px,calc(100% - 32px));margin:20px auto;min-height:300px;flex:1;display:grid;grid-template-columns:1.75fr 1fr;gap:16px;padding:17px;border:1px solid var(--pico-load-border);border-radius:9px;background:var(--pico-load-surface)}
+.pico-load-cpu-registers{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;min-width:0;padding:12px}
+.pico-load-cpu-unit-row{display:flex;width:100%;justify-content:center;gap:18px}
+.pico-load-cpu-unit{width:min(46%,200px);height:57px}
+.pico-load-cpu-wide{width:min(100%,300px)}
+.pico-load-cpu-memory{border-left:1px solid var(--pico-load-border);padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.pico-load-cpu-memory-row{height:23px;width:100%}
+.pico-load-cpu-info{margin:0 16px 18px;padding:17px;border:1px solid var(--pico-load-border);border-radius:8px;background:var(--pico-load-surface)}
+.pico-load-binary-content{width:min(1120px,100%);margin:0 auto;padding:34px 22px 64px;display:flex;flex-direction:column;gap:18px;overflow:auto}
+.pico-load-binary-intro{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:8px 2px 16px}
+.pico-load-binary-intro-text{flex:1}
+.pico-load-binary-title{height:40px;width:min(300px,80%);margin-bottom:14px}
+.pico-load-binary-description{height:16px;width:min(500px,95%)}
+.pico-load-binary-badge{width:150px;height:78px;flex-shrink:0}
+.pico-load-binary-panel{padding:24px;border:1px solid var(--pico-load-border);background:var(--pico-load-surface);border-radius:14px}
+.pico-load-bits{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:12px;margin-top:27px}
+.pico-load-bit-column{min-width:0;display:grid;gap:9px;justify-items:stretch}
+.pico-load-bit-caption{width:55%;height:12px;margin-inline:auto}
+.pico-load-bit{height:62px;border-radius:9px}
+.pico-load-binary-pills{display:flex;gap:8px;margin-top:28px}
+.pico-load-binary-pill{width:58px;height:28px}
+.pico-load-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}
+.pico-load-value-card{border:1px solid var(--pico-load-border);padding:16px;background:var(--bg,#1e1e2e);border-radius:10px;display:grid;gap:14px}
+.pico-load-value-card .pico-load-bit-caption{margin-inline:0}
+.pico-load-value-field{height:50px}
+@media(max-width:900px){
+ .pico-load-flowchart-grid{grid-template-columns:178px minmax(0,1fr)}
+ .pico-load-logic-grid{grid-template-columns:180px minmax(0,1fr)}
+ .pico-load-inspector{display:none}
+ .pico-load-cpu-figure{grid-template-columns:minmax(0,1fr) minmax(170px,.7fr)}
+}
+@media(max-width:620px){
+ .pico-load-top-actions .pico-load-action{display:none}
+ .pico-load-workspace-name{width:94px}
+ .pico-load-flowchart-grid,.pico-load-logic-grid{grid-template-columns:1fr}
+ .pico-load-palette{display:none}
+ .pico-load-logic-toolbar{gap:7px}
+ .pico-load-logic-tool{flex-basis:45px}
+ .pico-load-canvas-nodes{transform:scale(.85)}
+ .pico-load-cpu-figure{grid-template-columns:1fr;gap:8px}
+ .pico-load-cpu-memory{display:none}
+ .pico-load-cpu-info{margin-bottom:12px}
+ .pico-load-binary-content{padding:24px 14px 42px}
+ .pico-load-binary-panel{padding:17px}
+ .pico-load-binary-badge{width:76px;height:60px}
+ .pico-load-bits{gap:5px}
+ .pico-load-bit{height:47px}
+ .pico-load-values{gap:7px}
+ .pico-load-value-card{padding:10px}
+}
+@media(prefers-reduced-motion:reduce){.pico-load-shimmer{animation:none;background:var(--pico-load-shimmer-a)}}
