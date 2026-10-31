@@ -250,3 +250,15 @@ it('supports Step Back and only shows decode unit in Advanced mode',async()=>{
  expect(container.querySelector('[aria-label="Request CPU interrupt"]')).not.toBeNull();
  expect(container.textContent).not.toContain('Von Neumann · Cambridge IGCSE');
 });
+
+it('opens the bug report dialog directly from /app/report and updates browser history', async()=>{
+  await act(async()=>{
+    window.history.pushState(null,'','/app/report');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  expect(window.location.pathname).toBe('/app/report');
+  expect(container.querySelector('.pico-home')).not.toBeNull();
+  expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+  await act(async()=>container.querySelector<HTMLButtonElement>('[aria-label="Close bug report"]')?.click());
+  expect(window.location.pathname).toBe('/app');
+});
