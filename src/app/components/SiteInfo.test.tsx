@@ -112,8 +112,9 @@ it('displays only the requested policy, scroll area, focus and saved theme', asy
   const scrollArea = page.querySelector<HTMLElement>('.site-info-dialog-scroll')!;
   expect(scrollArea).not.toBeNull();
   expect(document.activeElement).toBe(page.querySelector('h1'));
-  expect(page.textContent).toContain('Cloudflare');
-  expect(page.textContent).toContain('Google Fonts');
+  expect(page.textContent).toContain('These terms may change');
+  expect(page.textContent).not.toContain('Cloudflare');
+  expect(page.textContent).not.toContain('Google Fonts');
   expect(page.querySelector('a[href*="github.com"]')).toBeNull();
 });
 
