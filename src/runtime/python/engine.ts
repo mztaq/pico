@@ -12,13 +12,14 @@ export interface PythonIO {
   stdout: (line: string) => void;
   stderr: (line: string) => void;
   readInput: (prompt: string, line: number) => string;
+  onLine?: (line: number) => void;
 }
 
 /** The same CPython execution wrapper runs in the browser worker and integration tests. */
 export function runPythonProgram(runtime: PythonRuntime, request: PythonRequest, io: PythonIO): ExecutionReply {
   runtime.runPython("import sys; sys.modules.pop('_pico_bridge', None);");
   runtime.registerJsModule('_pico_bridge', {
-    stdout: io.stdout, stderr: io.stderr, read_input: io.readInput, flush: io.flush ?? (() => {}),
+    stdout: io.stdout, stderr: io.stderr, read_input: io.readInput, flush: io.flush ?? (() => {}), on_line: io.onLine ?? (() => {}),
   });
   const scope = runtime.runPython('dict()') as PythonScope;
   try {
@@ -98,6 +99,7 @@ def _tracer(frame, event, arg):
     if frame.f_code.co_filename in _source_names and event == 'line':
         _steps += 1
         _current_line = frame.f_lineno
+        _bridge.on_line(frame.f_lineno)
         values = dict(frame.f_globals)
         values.update(frame.f_locals)
         label = ('Call: ' + frame.f_code.co_name) if frame.f_code.co_name != '<module>' else 'Line'
