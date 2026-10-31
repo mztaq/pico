@@ -5,7 +5,7 @@ import { createInteractiveSession, type WorkerReply } from './worker';
 
 function sessionFor(code: string, files: Record<string, string[]> = {}) {
   const messages: WorkerReply[] = [];
-  const session = createInteractiveSession({ ast: compile(code).ast, runs: [{ inputs: [], options: { files } }], interactive: true }, reply => messages.push(reply));
+  const session = createInteractiveSession({ ast: compile(code).ast, runs: [{ inputs: [], options: { files } }], interactive: true }, reply => { if (!Array.isArray(reply) && reply.type === 'line') return; messages.push(reply); });
   session.start();
   const request = () => {
     const last = messages.at(-1);
@@ -65,7 +65,7 @@ describe('interactive execution', () => {
     expect(run.messages[0]).toEqual({ type: 'output', lines: ['Number 1'] });
     expect(run.request()).toMatchObject({ variable: 'N', dataType: 'INTEGER', line: 4 });
     run.input('3');
-    expect(run.messages[2]).toEqual({ type: 'output', lines: ['6', 'Number 2'] });
+    expect(run.messages.filter((reply): reply is Extract<WorkerReply, { type: 'output' }> => !Array.isArray(reply) && reply.type === 'output').flatMap(reply => reply.lines)).toEqual(['Number 1', '6', 'Number 2']);
     run.input('5');
     expect(run.result().result?.output).toEqual(['Number 1', '6', 'Number 2', '10']);
     expect(run.result().result?.variables.N).toBe(5);

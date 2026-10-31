@@ -138,6 +138,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const [result, setResult] = useState<RunResult | null>(null);
   const [executionError, setExecutionError] = useState<ReturnType<typeof friendlyError> | null>(null);
   const [debugIndex, setDebugIndex] = useState(0);
+  const [liveExecutionLine, setLiveExecutionLine] = useState<number | undefined>();
   const [selectedDoc, setSelectedDoc] = useState<ReferenceKeyword>('OUTPUT');
   const [docSearch, setDocSearch] = useState('');
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
@@ -172,6 +173,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const visibleError = executionError ?? parseError;
   const suggestions = useMemo(() => !isPython && settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeFile.code).slice(0, 3) : [], [activeFile.code, settings.autocorrect, dismissedSuggestions]);
   const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
+  const executionLine = liveExecutionLine ?? currentStep?.line;
 
   useEffect(() => { if (isPython) preloadPythonRuntime(); }, [isPython]);
   useEffect(() => () => { const job = jobRef.current; jobRef.current = null; job?.cancel(); }, []);
@@ -243,6 +245,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       autoDeclaredTypesRef.current[activeFile.id] = autoDeclaredTypes;
     }
     setDismissedSuggestions(false);
+    setLiveExecutionLine(undefined);
     setExecutionError(null); setResult(null); setConsoleEntries([]); setOutputTruncated(false);
     updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code, autoDeclaredTypes } : file), updatedAt: Date.now() }));
   }
@@ -321,6 +324,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   async function executeProgram(debug = false) {
     if (!isPython && !parsed.ast) return;
     jobRef.current?.cancel();
+    setLiveExecutionLine(undefined);
     setDockOpen(true);
     setConsoleEntries([]); setOutputTruncated(false); setPendingInput(null); setInputValue(''); setResult(null); setActivePanel('console');
     setOutputTruncated(false); setRunStatus(''); consoleCount.current = 0;
@@ -331,6 +335,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       setConsoleEntries(entries => [...entries, ...lines.map(text => ({ kind, text }))].slice(-MAX_CONSOLE_LINES));
     }
     const callbacks = {
+      onLine: (line: number) => { if (jobRef.current === job) setLiveExecutionLine(line); },
       onOutput: (lines: string[]) => appendOutput(lines, 'output'),
       onStderr: (lines: string[]) => appendOutput(lines, 'error'),
       onStatus: (message: string) => { if (jobRef.current === job) { setRunStatus(message.startsWith('Python ') ? '' : message); if (message.startsWith('Python ')) setPythonVersion(message); } },
@@ -345,6 +350,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     jobRef.current=null;setRunning(false);setPendingInput(null);
     const next=reply?.result;
     setResult(next??null); setDebugIndex(0);
+    setLiveExecutionLine(undefined);
     setRunStatus('');
     if (reply?.error?.code === 'cancelled') {
       setConsoleEntries(entries => [...entries, { kind: 'note', text: 'Execution stopped.' }].slice(-MAX_CONSOLE_LINES) as ConsoleEntry[]);
@@ -416,7 +422,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     setFileMenuOpen(false);
   }
 
-  return <div className="pico-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
+  return <div className="pico-app" data-execution-active={running ? "true" : undefined} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <header className="topbar pico-appbar" inert={tutorialOpen || tutorialOfferOpen}>
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
@@ -461,7 +467,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           <section className="editor-card" data-tour="editor">
             <div className="file-tabs" role="tablist" aria-label="Project files">{activeProject.files.map(file => <div className={`file-tab ${file.id === activeFile.id ? 'active' : ''}`} key={file.id} role="tab" aria-selected={file.id === activeFile.id} onDoubleClick={() => renameFile(file)}><button className="file-tab-select" onClick={() => selectFile(file.id)} title={`${file.name} · double-click to rename`}><FileCode2 size={12} /><span>{file.name}</span></button><button className="file-tab-close" onClick={() => closeFile(file)} aria-label={`Close ${file.name}`} title="Close file"><X size={11} /></button></div>)}<button className="file-tab-new" onClick={createFile} title="New file" aria-label="New file"><Plus size={13} /></button></div>
             {suggestions.length > 0 && <div className="suggestion-ribbon"><Sparkles size={13} /><span>Did you mean?</span>{suggestions.map((suggestion, index) => <button className="suggestion-chip" key={`${suggestion.line}-${suggestion.column}-${index}`} onClick={() => applySuggestion(suggestion)}><code>{suggestion.original}</code><span>→</span><b>{suggestion.replacement}</b><small>line {suggestion.line}</small></button>)}<button className="dismiss-suggestions" title="Dismiss suggestions" onClick={() => setDismissedSuggestions(true)}><X size={13} /></button></div>}
-            <div className="editor-body"><CodeEditor ref={editorRef} language={language} value={activeFile.code} onChange={updateCode} preferences={settings} theme={theme} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
+            <div className="editor-body"><CodeEditor ref={editorRef} language={language} value={activeFile.code} onChange={updateCode} preferences={settings} theme={theme} currentLine={executionLine} errorLine={visibleError?.line} /></div>
             <div className="editor-card-foot"><span><Keyboard size={12} /> <kbd>⌘</kbd> <kbd>↵</kbd> to run <span className="shortcut-separator">·</span> <kbd>Ctrl G</kbd> go to line</span></div>
           </section>
 

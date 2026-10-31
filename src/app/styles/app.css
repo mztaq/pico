@@ -574,3 +574,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
    background follow light and dark palettes instead of the dark fallback. */
 .pico-app { color: var(--text); }
 body { background: var(--bg); color: var(--text); }
+
+/* During execution only the moving runtime-line marker is highlighted. */
+.pico-app[data-execution-active="true"] .cm-activeLine:not(.pico-debug-line),
+.pico-app[data-execution-active="true"][data-pico-theme] .cm-activeLine:not(.pico-debug-line) { background-color: transparent !important; }
+.pico-app[data-execution-active="true"] .cm-activeLineGutter { background-color: transparent !important; color: inherit !important; font-weight: inherit !important; }

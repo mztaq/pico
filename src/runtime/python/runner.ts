@@ -51,6 +51,7 @@ export function startPythonExecution(request: PythonRequest, callbacks: Executio
   const worker = slot.worker;
   const inputBuffer = typeof SharedArrayBuffer === 'undefined' ? undefined : new SharedArrayBuffer(MAX_INPUT_BYTES + 8);
   const outputAck = typeof SharedArrayBuffer === 'undefined' ? undefined : new SharedArrayBuffer(4);
+  const lineAck = typeof SharedArrayBuffer === 'undefined' ? undefined : new SharedArrayBuffer(4);
   let settled = false;
   let pendingId: number | undefined;
   let finish!: (replies: ExecutionReply[]) => void;
@@ -81,12 +82,17 @@ export function startPythonExecution(request: PythonRequest, callbacks: Executio
     if (reply.type === 'output') { callbacks.onOutput?.(reply.lines); acknowledge(); return; }
     if (reply.type === 'stderr') { callbacks.onStderr?.(reply.lines); acknowledge(); return; }
     if (reply.type === 'status') { callbacks.onStatus?.(reply.message); return; }
+    if (reply.type === 'line') {
+      callbacks.onLine?.(reply.line);
+      if (lineAck) setTimeout(() => { if (!settled) { const ack = new Int32Array(lineAck); Atomics.store(ack, 0, 1); Atomics.notify(ack, 0); } }, 180);
+      return;
+    }
     pendingId = reply.request.id;
     callbacks.onInput?.(reply.request);
   };
   slot.cancel = () => settle([{error:{code:'cancelled',message:'Execution stopped.'}}]);
   worker.onerror = event => { event.preventDefault(); settle([{error:{code:'python-worker',message:'Python worker failed. Reload this page and try again.'}}]); };
-  try { worker.postMessage({ ...request, inputBuffer, outputAck }); }
+  try { worker.postMessage({ ...request, inputBuffer, outputAck, lineAck }); }
   catch { settle([{error:{code:'python-worker',message:'Python could not receive this program.'}}]); }
   return {
     promise,

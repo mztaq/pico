@@ -4,6 +4,7 @@ export interface ExecutionCallbacks {
   onInput?: (request: PendingInput) => void;
   onStderr?: (lines: string[]) => void;
   onStatus?: (message: string) => void;
+  onLine?: (line: number) => void;
 }
 export interface ExecutionJob {
   promise: Promise<ExecutionReply[]>;
@@ -12,7 +13,8 @@ export interface ExecutionJob {
 }
 export function startExecution(request: WorkerRequest, callbacks: ExecutionCallbacks = {}): ExecutionJob {
   const outputAck = request.interactive && globalThis.crossOriginIsolated === true && typeof SharedArrayBuffer !== 'undefined' ? new SharedArrayBuffer(4) : undefined;
-  if (outputAck) request = { ...request, outputAck };
+  const lineAck = request.interactive && globalThis.crossOriginIsolated === true && typeof SharedArrayBuffer !== 'undefined' ? new SharedArrayBuffer(4) : undefined;
+  if (outputAck || lineAck) request = { ...request, outputAck, lineAck };
   let worker: Worker;
   try {
     worker = new Worker(new URL('./worker.ts', import.meta.url), {
@@ -78,6 +80,11 @@ export function startExecution(request: WorkerRequest, callbacks: ExecutionCallb
     }
     if (reply.type === 'stderr') { callbacks.onStderr?.(reply.lines); return; }
     if (reply.type === 'status') { callbacks.onStatus?.(reply.message); return; }
+    if (reply.type === 'line') {
+      callbacks.onLine?.(reply.line);
+      if (lineAck) setTimeout(() => { if (!settled) { const ack = new Int32Array(lineAck); Atomics.store(ack, 0, 1); Atomics.notify(ack, 0); } }, 180);
+      return;
+    }
     pauseTimer();
     pendingId = reply.request.id;
     callbacks.onInput?.(reply.request);
