@@ -311,7 +311,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     const remaining = projects.filter(item => item.id !== id); setProjects(remaining);
     if (id === activeId) selectProject(remaining[0]!.id);
   }
-  function runProgram(debug = false) {
+  function runProgram(debug = true) {
     if (running) return;
     setExecutionError(null);
     setDockOpen(true);
@@ -354,7 +354,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       : friendlyError(Object.assign(new Error(reply.error.message), { name: 'RuntimeError', line: reply.error.line }), activeFile.code)
       : null);
     if (next?.outputTruncated) setOutputTruncated(true);
-    setActivePanel(debug && next && !reply?.error ? 'debugger' : 'console');
+    setActivePanel('console');
     if(next)updateProject(project=>({...project,virtualFiles:next.files,updatedAt:Date.now()}));
   }
   function stopExecution() { jobRef.current?.cancel(); }
@@ -445,7 +445,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       </div>
       <button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Tutorial</span></button>
       <div className="pico-appbar-run">
-        {running ? <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button> : <button className="toolbar-button debug-button" aria-label="Debug program" onClick={() => runProgram(true)}><Code2 size={16} /><span>Debug</span></button>}
+        {running && <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button>}
         <button data-tour="run" className="run-button" disabled={running} onClick={() => runProgram()}><Play size={14} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
       </div>
       {projectNameError && <p id="project-name-error" className="project-name-error" role="alert">{projectNameError}</p>}
