@@ -28,7 +28,17 @@ describe('Pico usage validation', () => {
     const migration=readFileSync(new URL('../migrations/0003_binary_lab_usage.sql',import.meta.url),'utf8');
     const telemetry=readFileSync(new URL('../src/telemetry/PicoTelemetry.tsx',import.meta.url),'utf8');
     const api=readFileSync(new URL('../functions/api/usage.ts',import.meta.url),'utf8');
-    expect(migration).toContain('ADD COLUMN binary_lab_seconds INTEGER NOT NULL DEFAULT 0');
+    expect(migration).toContain('CREATE TABLE pico_usage_reordered (');
+    expect(migration).toContain('binary_lab_seconds INTEGER NOT NULL DEFAULT 0');
+    expect(migration).toContain('FOREIGN KEY (visitor_id) REFERENCES pico_visitors(visitor_id) ON DELETE CASCADE');
+    expect(migration.indexOf('cpu_studio_seconds INTEGER')).toBeLessThan(migration.indexOf('binary_lab_seconds INTEGER'));
+    expect(migration.indexOf('binary_lab_seconds INTEGER')).toBeLessThan(migration.indexOf('last_updated INTEGER'));
+    expect(migration).toContain('INSERT INTO pico_usage_reordered (');
+    expect(migration).toContain('FROM pico_usage;');
+    expect(migration).toContain('DROP TABLE pico_usage;');
+    expect(migration).toContain('ALTER TABLE pico_usage_reordered RENAME TO pico_usage;');
+    expect(migration).toContain('PRAGMA foreign_key_check;');
+    expect(migration).not.toContain('ALTER TABLE pico_usage\\n  ADD COLUMN');
     expect(telemetry).toContain("'Pico | Binary Lab': 'binary'");
     expect(api).toContain('cpu_studio_seconds,binary_lab_seconds FROM pico_usage');
   });
