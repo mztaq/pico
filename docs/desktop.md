@@ -34,11 +34,16 @@ contain a second copy of the compilers.
 ## Releases and source archives
 
 The existing stable [Pico for Desktop release](https://github.com/mztaq/pico/releases/tag/desktop-v0.1.0-build.10)
-remains the single public release. Until verified replacements are manually
-published, its existing six assets stay available, and the landing download
-cards continue showing the working legacy links. Once the universal DMG is
-published with the two other installers, the cards automatically switch
-to one installer per OS.
+remains the sole release. On the first main-branch deployment after this
+change, the publish workflow backs up the six existing release files, replaces
+them with the three verified Windows, universal macOS and Linux installers,
+then packages the three binaries for public Cloudflare Pages downloads.
+Later deployments reuse the three existing release assets.
+
+The website reads the public `/download-assets/manifest.json` and serves
+downloads from `/downloads/` on Cloudflare, not from GitHub release URLs.
+Therefore download visitors never need access to the GitHub repository, even
+after the repository is made private.
 
 The **Update desktop release source archives** workflow runs after every push
 to `main` (or manually on `main`) and force-moves the existing

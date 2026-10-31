@@ -40,6 +40,20 @@ describe('Landing route migration leaves backend services available', () => {
     expect(route).toContain("pathname === '/' && inTauriWebview");
     expect(route).toContain('__TAURI_INTERNALS__');
   });
+  it('keeps installer staging and Cloudflare Pages publication compatible with private GitHub repositories', () => {
+    const landing=read('src/landing/LandingPage.tsx');
+    const staging=read('scripts/stage-desktop-downloads.mjs');
+    const publish=read('.github/workflows/publish-downloads.yml');
+    const downloadHandler=read('functions/downloads/[filename].js');
+    expect(landing).toContain("fetch('/download-assets/manifest.json'");
+    expect(landing).not.toContain("fetch('https://api.github.com/repos/");
+    expect(landing).toContain("'https://picompiler.pages.dev'+path");
+    expect(staging).toContain("Pico_universal.dmg");
+    expect(publish).toContain("gh run download 41126752856");
+    expect(publish).toContain("gh release upload");
+    expect(publish).toContain("node scripts/stage-desktop-downloads.mjs");
+    expect(downloadHandler).toContain("'Pico_universal.dmg'");
+  });
   it('keeps studio telemetry within the app route', () => {
     const entry = read('src/main.tsx');
     expect(entry).toContain('<PicoTelemetry />');
