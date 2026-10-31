@@ -109,6 +109,6 @@ export async function session(ctx: Context) {
 }
 export function isWorkspace(v: unknown): v is string {
   return typeof v === 'string' && [
-    'logic','python','pseudocode','flowchart','cpu'
+    'logic','python','pseudocode','flowchart','cpu','binary'
   ].includes(v);
 }
