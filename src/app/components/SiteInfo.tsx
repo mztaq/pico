@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowUpRight, Cookie, FileText, ShieldCheck, Users, X } from 'lucide-react';
+import { Cookie, FileText, ShieldCheck, Users, X } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
 import '../styles/site-info.css';
@@ -93,7 +93,7 @@ function Privacy() {
       <p>Optional records are retained for approximately 90 days, potentially renewed through continued use. Cookie Settings lets you withdraw consent; turning both optional categories off clears the identifier and requests deletion of linked records. You can clear local browser storage yourself.</p>
     </Section>
     <Section title="More information">
-      <p>External services have their own policies. See the <a href="#cookies">Cookie Policy</a> for storage choices.</p>
+      <p>External services have their own policies. See the <span className="site-info-policy-reference">Cookie Policy</span> for storage choices.</p>
     </Section>
   </>;
 }
@@ -109,7 +109,7 @@ function Cookies() {
     </Section>
     <Section title="Control and retention">
       <p>Optional records generally expire after approximately 90 days unless renewed. Change consent in Cookie Settings; disabling both optional categories clears the identifier and requests deletion of linked records. Pico remains usable without them.</p>
-      <p>For more detail, see the <a href="#privacy">Privacy Policy</a>.</p>
+      <p>For more detail, see the <span className="site-info-policy-reference">Privacy Policy</span>.</p>
     </Section>
   </>;
 }
@@ -130,7 +130,7 @@ function Terms() {
       <p>Pico is provided as available, without guaranteed uptime, accurate results or recovery of lost work. To the extent permitted by law, the maintainers disclaim warranties and liability. Applicable legal rights are not excluded.</p>
     </Section>
     <Section title="Privacy and third-party services">
-      <p>See the <a href="#privacy">Privacy Policy</a> for data handling. Third-party services and software have their own terms or licences.</p>
+      <p>See the <span className="site-info-policy-reference">Privacy Policy</span> for data handling. Third-party services and software have their own terms or licences.</p>
     </Section>
     <Section title="Updates and questions">
       <p>These terms may change; the current version appears here.</p>
@@ -187,13 +187,6 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
     heading.current?.focus({ preventScroll: true });
   }, [page]);
 
-  const [sections, setSections] = useState<{ id: string; title: string }[]>([]);
-  useEffect(() => {
-    const found = [...(scrollArea.current?.querySelectorAll<HTMLElement>('main .site-info-section') ?? [])]
-      .map(section => ({ id: section.id, title: section.querySelector('h2')?.textContent ?? '' }));
-    setSections(found);
-  }, [page]);
-
   return <div className="site-info-backdrop" role="presentation" onMouseDown={event => {
     if (event.target === event.currentTarget) onClose();
   }}>
@@ -226,19 +219,8 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
       </header>
       <div ref={scrollArea} className="site-info-dialog-scroll">
         <div className="site-info-shell">
-          <aside className="site-info-aside">
-            <SiteInfoLinks current={page} />
-            {sections.length > 0 && <nav className="site-info-toc" aria-label="On this page">
-              <span>On this page</span>
-              {sections.map(section => <button key={section.id} type="button" onClick={() => {
-                const target = scrollArea.current?.querySelector<HTMLElement>(`#${section.id}`);
-                target?.scrollIntoView({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-              }}>{section.title}</button>)}
-            </nav>}
-          </aside>
           <main>
             {page === 'team' ? <PicoTeam /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
-            {page !== 'team' && <p className="site-info-contact"><ArrowUpRight size={15} aria-hidden="true" />Related: <a href={page === 'privacy' ? '#cookies' : '#privacy'}>{page === 'privacy' ? 'Cookie Policy' : 'Privacy Policy'}</a></p>}
           </main>
         </div>
       </div>
