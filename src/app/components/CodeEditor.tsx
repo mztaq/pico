@@ -4,7 +4,7 @@ import { defaultKeymap, history, historyKeymap, indentLess, indentMore, redo, un
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { bracketMatching, foldGutter, foldKeymap, foldService, HighlightStyle, indentOnInput, indentUnit, syntaxHighlighting } from '@codemirror/language';
 import { Compartment, EditorState, type Extension, type Range } from '@codemirror/state';
-import { Decoration, drawSelection, EditorView, hoverTooltip, keymap, lineNumbers, placeholder, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
+import { Decoration, drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, hoverTooltip, keymap, lineNumbers, placeholder, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { completionSource } from './completions';
 import { documentationFor, type Suggestion } from '../../runtime/diagnostics';
@@ -54,6 +54,8 @@ function themeExtensions(theme: PicoTheme): Extension[] {
     '.cm-gutters': { backgroundColor: theme.bg, border: 'none', color: ui.gutter, minWidth: '58px', paddingLeft: '10px' },
     '.cm-lineNumbers .cm-gutterElement': { minWidth: '38px', padding: '0 12px 0 4px', textAlign: 'right', fontSize: '0.86em', letterSpacing: '0.2px' },
     '.cm-foldGutter .cm-gutterElement': { color: ui.gutter },
+    '.cm-activeLine': { backgroundColor: ui.lineHighlight },
+    '.cm-activeLineGutter': { color: ui.gutterActive, backgroundColor: ui.lineHighlight, fontWeight: '600' },
     '.cm-cursor, .cm-dropCursor': { borderLeftColor: ui.cursor, borderLeftWidth: '2px' },
     '.cm-selectionBackground': { backgroundColor: `${ui.selection} !important` },
     '&.cm-focused .cm-selectionBackground, .cm-content ::selection': { backgroundColor: `${ui.selection} !important` },
@@ -307,7 +309,7 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
       parent: host.current,
       extensions: [
         placeholder(emptyEditorHint),
-        lineNumbers(), foldGutter(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
+        lineNumbers(), foldGutter(), highlightActiveLineGutter(), highlightActiveLine(), drawSelection(), indentOnInput(), bracketMatching(), closeBrackets(), history(),
         highlightSelectionMatches(), EditorState.tabSize.of(INDENT_WIDTH), indentUnit.of(INDENT_TEXT),
         ...(language === 'python' ? [python()] : [pseudoLanguage, foldService.of(cambridgeFold)]), indentationGuides,
         keymap.of([{ key: 'Mod-Shift-f', run: view => formatEditor(view, language) }, { key: 'Enter', run: language === 'python' ? view => acceptCompletion(view) || false : insertCambridgeNewline }, { key: 'Tab', run: handleTab }, { key: 'Shift-Tab', run: indentLess }, { key: 'Mod-g', run: goToLine }, ...foldKeymap, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap]),
