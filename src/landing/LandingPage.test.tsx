@@ -172,7 +172,7 @@ describe('Pico landing page', () => {
     ];
     const sizes=['1.88 MB','2.85 MB','2.75 MB','2.93 MB','2.88 MB','81.30 MB'];
     for(const [index,file] of expected.entries()){
-      const link=container.querySelector('a[href="/downloads/'+file+'"]');
+      const link=container.querySelector('a[href="https://picompiler.pages.dev/downloads/'+file+'"]');
       expect(link).not.toBeNull();
       expect(link?.querySelector('strong')?.textContent).toBe(file);
       expect(link?.querySelector('small')?.textContent).toBe(sizes[index]);
@@ -187,10 +187,10 @@ describe('Pico landing page', () => {
     }));
     await render();
     await act(async()=>{await Promise.resolve();await Promise.resolve();});
-    const exe=container.querySelector('a[href="/downloads/Pico_x64-setup.exe"]');
+    const exe=container.querySelector('a[href="https://picompiler.pages.dev/downloads/Pico_x64-setup.exe"]');
     expect(exe?.querySelector('strong')?.textContent).toBe('Pico_x64-setup.exe');
     expect(exe?.querySelector('small')?.textContent).toBe('2.00 MB');
-    expect(container.querySelector('a[href="/downloads/Pico_x64_en-US.msi"] small')?.textContent).toBe('2.85 MB');
+    expect(container.querySelector('a[href="https://picompiler.pages.dev/downloads/Pico_x64_en-US.msi"] small')?.textContent).toBe('2.85 MB');
   });
   it('shows exactly one installer per OS once the universal macOS DMG is published', async () => {
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue({
@@ -206,14 +206,14 @@ describe('Pico landing page', () => {
     const links=[...container.querySelectorAll<HTMLAnchorElement>('.lp-download-option')];
     expect(links).toHaveLength(3);
     expect(links.map(link=>link.getAttribute('href'))).toEqual([
-      '/downloads/Pico_x64-setup.exe',
-      '/downloads/Pico_universal.dmg',
-      '/downloads/Pico_amd64.AppImage',
+      'https://picompiler.pages.dev/downloads/Pico_x64-setup.exe',
+      'https://picompiler.pages.dev/downloads/Pico_universal.dmg',
+      'https://picompiler.pages.dev/downloads/Pico_amd64.AppImage',
     ]);
     expect(links.map(link=>link.querySelector('small')?.textContent)).toEqual([
       '1.88 MB','4.10 MB','81.30 MB',
     ]);
-    expect(container.querySelector('a[href="/downloads/Pico_x64.dmg"]')).toBeNull();
+    expect(container.querySelector('a[href="https://picompiler.pages.dev/downloads/Pico_x64.dmg"]')).toBeNull();
     expect(vi.mocked(fetch)).toHaveBeenCalledWith('/download-assets/manifest.json',expect.any(Object));
   });
   it('shows real CPU Studio, without mock product or decorative feature previews', async () => {
