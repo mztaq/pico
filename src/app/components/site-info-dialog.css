@@ -12,7 +12,7 @@
 .site-info-page.site-info-dialog {
   display: flex;
   flex-direction: column;
-  width: min(1120px, 100%);
+  width: min(880px, 100%);
   height: min(88dvh, 820px);
   min-height: 0;
   max-height: calc(100dvh - 36px);
@@ -61,29 +61,25 @@
 .site-info-dialog-close:hover { background: var(--ds-hover); color: var(--ds-text); }
 .site-info-dialog-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .site-info-dialog-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.site-info-dialog .site-info-shell,
-.site-info-page.site-info-dialog[data-page='team'] .site-info-shell {
+/* Each dialog contains one page only. Links to other pages stay in the home footer. */
+.site-info-page.site-info-dialog[data-page='team'] { width: min(1120px, 100%); }
+.site-info-page.site-info-dialog .site-info-shell {
+  display: block;
   width: 100%;
-  grid-template-columns: 170px minmax(0, 1fr);
-  gap: 22px;
-  padding: 24px 24px 36px;
+  max-width: none;
+  padding: 24px 28px 36px;
 }
-.site-info-dialog .site-info-aside { position: sticky; top: 12px; }
+.site-info-page.site-info-dialog .site-info-shell main { width: 100%; min-width: 0; }
 .site-info-dialog .site-info-section { scroll-margin-top: 18px; }
+.site-info-dialog .site-info-policy-reference { color: var(--ds-text); font-weight: 600; }
 .site-info-home-underlay { height: 100dvh; overflow: hidden; }
-@media(max-width: 960px) {
-  .site-info-dialog .site-info-shell,
-  .site-info-page.site-info-dialog[data-page='team'] .site-info-shell { grid-template-columns: minmax(0,1fr); gap: 20px; }
-  .site-info-dialog .site-info-aside { position: static; }
-}
 @media(max-width: 640px) {
   .site-info-backdrop { padding: 10px; }
   .site-info-page.site-info-dialog { height: min(94dvh,860px); max-height: calc(100dvh - 20px); }
   .site-info-dialog .site-info-dialog-heading .site-info-hero-inner { padding: 15px; }
   .site-info-dialog .site-info-dialog-heading .site-info-title h1 { font-size: 23px; }
   .site-info-dialog .site-info-dialog-heading .site-info-mark { width: 36px; height: 36px; }
-  .site-info-dialog .site-info-shell,
-  .site-info-page.site-info-dialog[data-page='team'] .site-info-shell { padding: 18px 14px 24px; }
+  .site-info-page.site-info-dialog .site-info-shell { padding: 18px 14px 24px; }
 }
 @media(prefers-reduced-transparency: reduce) {
   .site-info-backdrop { backdrop-filter: none; }
