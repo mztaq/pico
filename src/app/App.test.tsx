@@ -63,9 +63,9 @@ describe('workspace execution integration',()=>{
     expect(consoleInput().getAttribute('aria-label')).toBe('Value for Name');
     await typeValue(consoleInput(),'Ada');await submitInput();
     expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Enter your name','Ada','Hello Ada!']);
-    await click(button('Debug'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     await typeValue(consoleInput(),'Ada');await submitInput();
-    expect(container.querySelector('.debugger-panel')).not.toBeNull();
+    await click(button('Debugger'));expect(container.querySelector('.debugger-panel')).not.toBeNull();
     const steps=BrowserWorker.pending.at(-1)!.request!;expect(steps.runs[0]!.options.files).toEqual({});
   });
   it('stops a pending run and rejects a late worker response',async()=>{
@@ -132,7 +132,7 @@ describe('workspace execution integration',()=>{
   });
   it('shows stopped debug runs in the Console instead of an empty debugger',async()=>{
     await typeValue(codeEditor(),'DECLARE Name : STRING\nINPUT Name');
-    await click(button('Debug'));
+    await click(button('Run⌘ ↵'));
     await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     await click(button('Stop'));
     expect(container.querySelector('.console-input-form')).toBeNull();
@@ -219,10 +219,10 @@ describe('workspace execution integration',()=>{
   });
   it('accepts an empty string and builds the debugger trace after interactive input',async()=>{
     await typeValue(codeEditor(),'DECLARE Name : STRING\nINPUT Name\nOUTPUT LENGTH(Name)');
-    await click(button('Debug'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
+    await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     expect(container.querySelector('.console-input-form')).not.toBeNull();
     await submitInput();
-    expect(container.querySelector('.debugger-panel')).not.toBeNull();
+    await click(button('Debugger'));expect(container.querySelector('.debugger-panel')).not.toBeNull();
     await click(button('Console'));
     expect(container.querySelector('.output-line:last-child')?.textContent).toBe('›0');
   });
@@ -287,7 +287,7 @@ describe('guided help and readable reference',()=>{
     await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
     expect(container.querySelector('.tutorial-offer')).toBeNull();
     expect(container.querySelector('.ide-shell')?.hasAttribute('inert')).toBe(false);
-    await click(button('Help'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
+    await click(button('Tutorial'));expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
   });
   it('dismisses the welcome with Not now and restores the workspace',async()=>{
     await act(async()=>root.unmount());localStorage.removeItem('pico.visitCount.v1');root=createRoot(container);
@@ -301,7 +301,7 @@ describe('guided help and readable reference',()=>{
     const editor=container.querySelector('textarea')!.value;
     const workspaceName = container.querySelector<HTMLInputElement>('[data-tour="workspace"]')!;
     const measuredName = vi.spyOn(workspaceName,'getBoundingClientRect').mockReturnValue(new DOMRect(200,80,150,32));
-    await click(button('Help'));
+    await click(button('Tutorial'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
     expect(container.querySelector('#tutorial-description')?.textContent).toContain('saves automatically');
     expect(container.querySelector('.tutorial-tip')?.textContent).toContain('open File');
@@ -332,7 +332,7 @@ describe('guided help and readable reference',()=>{
     expect(container.querySelector('.reference-card')).not.toBeNull();
   });
   it('handles keyboard exit and brings focus back to Help',async()=>{
-    const help=button('Help');help.focus();await click(help);
+    const help=button('Tutorial');help.focus();await click(help);
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Close tutorial');
     await act(async()=>document.activeElement!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
     expect(container.querySelector('.tutorial-layer')).toBeNull();expect(document.activeElement).toBe(help);
@@ -340,7 +340,7 @@ describe('guided help and readable reference',()=>{
   it('highlights File for renaming when the workspace name is hidden',async()=>{
     const fileButton = container.querySelector<HTMLElement>('[data-tour="files"]')!;
     const measure = vi.spyOn(fileButton,'getBoundingClientRect').mockReturnValue(new DOMRect(700,16,60,36));
-    await click(button('Help'));
+    await click(button('Tutorial'));
     expect(container.querySelector('#tutorial-title')?.textContent).toBe('Name your workspace');
     expect(container.querySelector<HTMLElement>('.tutorial-spotlight')?.style.left).toBe('695px');
     measure.mockRestore();
@@ -362,7 +362,7 @@ describe('guided help and readable reference',()=>{
   });
   it('opens the reference drawer from the completion screen on a small viewport',async()=>{
     vi.stubGlobal('matchMedia',()=>({matches:true}));
-    await click(button('Help'));
+    await click(button('Tutorial'));
     for(let i=0;i<tutorialSteps.length-1;i++)await click(button('Next'));
     await click(button('Finish tour'));await click(button('Open quick reference'));
     expect(container.querySelector('.tutorial-layer')).toBeNull();

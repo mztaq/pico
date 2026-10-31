@@ -24,8 +24,18 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
-  const [reportOpen, setReportOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(() => /^\/app\/report\/?$/.test(window.location.pathname));
   const [reportNotice, setReportNotice] = useState<{type: 'success' | 'error'; message: string} | null>(null);
+  const setReportRoute = (open: boolean) => {
+    const target = open ? '/app/report' : '/app';
+    if (window.location.pathname !== target) window.history.pushState(window.history.state, '', target);
+    setReportOpen(open);
+  };
+  useEffect(() => {
+    const syncRoute = () => setReportOpen(/^\/app\/report\/?$/.test(window.location.pathname));
+    window.addEventListener('popstate', syncRoute);
+    return () => window.removeEventListener('popstate', syncRoute);
+  }, []);
   const theme = getTheme(settings.theme);
   useEffect(() => {
     for (const [property, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(property, value);
@@ -134,12 +144,12 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       </div>
       <div className="home-footer-links">
         <SiteInfoLinks />
-        <button type="button" className="bug-report-trigger" onClick={() => setReportOpen(true)}>
+        <button type="button" className="bug-report-trigger" onClick={() => setReportRoute(true)}>
           <Bug size={17} aria-hidden="true" /><span>Report a Bug</span>
         </button>
       </div>
     </div>
-    {reportOpen && <BugReportDialog onClose={() => setReportOpen(false)} onResult={(type, message) => { setReportOpen(false); setReportNotice({type, message}); }} />}
+    {reportOpen && <BugReportDialog onClose={() => setReportRoute(false)} onResult={(type, message) => { setReportRoute(false); setReportNotice({type, message}); }} />}
     {reportNotice && <BugReportNotice type={reportNotice.type} message={reportNotice.message} onClose={() => setReportNotice(null)} />}
 
   </main>;

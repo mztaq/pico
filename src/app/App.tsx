@@ -1,5 +1,5 @@
 import { lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ArrowLeft, ChevronDown, CircleHelp, Code2, AlignLeft, Download, FileCode2, Keyboard, PanelRightClose, Play, Plus, Redo2, Search, Settings2, Sparkles, Undo2, Upload, X } from 'lucide-react';
+import { BookOpen, ArrowLeft, ChevronDown, CircleHelp, Download, FileCode2, Keyboard, Play, Plus, Search, Settings2, Sparkles, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
@@ -18,7 +18,6 @@ import { ThemePicker } from './components/ThemePicker';
 import { GuidedTutorial, tutorialSteps } from './components/GuidedTutorial';
 import { TutorialOffer } from './components/TutorialOffer';
 import { HighlightedCode } from './components/HighlightedCode';
-import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen } from './components/HomeScreen';
 import { workspaceFromLocation, workspaceUrl, type PicoWorkspace } from './workspace-deeplink';
 import { SiteInfo, informationPageFromHash, informationPageFromPath, type InformationPage } from './components/SiteInfo';
@@ -122,6 +121,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const [activeId, setActiveId] = useState(initial.activeId);
   const [settings, setSettings] = useState<PicoSettings>(() => loadSettings());
   const [activePanel, setActivePanel] = useState<PanelKey>('console');
+  const [dockOpen, setDockOpen] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [runStatus, setRunStatus] = useState('');
   const [pythonVersion, setPythonVersion] = useState('');
@@ -248,6 +248,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   }
   function startTutorial() {
     tutorialPanelRef.current = activePanel;
+    setDockOpen(true);
     setTutorialStep(0); setTutorialOpen(true); setTutorialOfferOpen(false);
     setSettingsOpen(false); setFileMenuOpen(false);
   }
@@ -260,11 +261,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   function openReference() {
     changeSettings({ referenceVisible: true, layoutPreset: 'custom' });
     setReferenceExpanded(true); setDocSearch('');
-  }
-  function toggleReference() {
-    if (window.matchMedia('(max-width: 1070px)').matches) {
-      if (referenceExpanded) setReferenceExpanded(false); else openReference();
-    } else changeSettings({ referenceVisible: !settings.referenceVisible, layoutPreset: 'custom' });
   }
   function closeReference() {
     setReferenceExpanded(false);
@@ -315,15 +311,17 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     const remaining = projects.filter(item => item.id !== id); setProjects(remaining);
     if (id === activeId) selectProject(remaining[0]!.id);
   }
-  function runProgram(debug = false) {
+  function runProgram(debug = true) {
     if (running) return;
     setExecutionError(null);
+    setDockOpen(true);
     if (!isPython && !parsed.ast) { setExecutionError(parseError ?? { message: 'Fix the syntax before running.' }); setActivePanel('console'); return; }
     executeProgram(debug);
   }
   async function executeProgram(debug = false) {
     if (!isPython && !parsed.ast) return;
     jobRef.current?.cancel();
+    setDockOpen(true);
     setConsoleEntries([]); setOutputTruncated(false); setPendingInput(null); setInputValue(''); setResult(null); setActivePanel('console');
     setOutputTruncated(false); setRunStatus(''); consoleCount.current = 0;
     function appendOutput(lines: string[], kind: 'output' | 'error') {
@@ -356,7 +354,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       : friendlyError(Object.assign(new Error(reply.error.message), { name: 'RuntimeError', line: reply.error.line }), activeFile.code)
       : null);
     if (next?.outputTruncated) setOutputTruncated(true);
-    setActivePanel(debug && next && !reply?.error ? 'debugger' : 'console');
+    setActivePanel('console');
     if(next)updateProject(project=>({...project,virtualFiles:next.files,updatedAt:Date.now()}));
   }
   function stopExecution() { jobRef.current?.cancel(); }
@@ -428,17 +426,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
         <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />
       </div>
       <div className="topbar-spacer" />
-      <div className="topbar-actions">
-        <div className="pico-appbar-group" role="group" aria-label="Code formatting"><button className="toolbar-button editor-format-button" title={`Format ${isPython ? 'Python' : 'pseudocode'} code`} aria-label={`Format ${isPython ? 'Python' : 'pseudocode'} code`} disabled={running} onClick={() => editorRef.current?.formatCode()}><AlignLeft size={16}/><span>Format</span></button></div>
-        <div className="pico-appbar-group" role="group" aria-label="Edit history">
-          <button className="toolbar-button editor-history-button" aria-label="Undo last edit" onClick={() => editorRef.current?.undo()} title="Undo"><Undo2 size={16} /><span>Undo</span></button>
-          <button className="toolbar-button editor-history-button" aria-label="Redo last edit" onClick={() => editorRef.current?.redo()} title="Redo"><Redo2 size={16} /><span>Redo</span></button>
-        </div>
-        <div className="pico-appbar-group" role="group" aria-label="Workspace tools">
-          <button className="toolbar-button reference-toggle" aria-label="Toggle quick reference" onClick={toggleReference} title="Quick reference"><BookOpen size={16} /><span>Reference</span></button>
-          <UpdateCenter />
-        </div>
-      </div>
       <div className="file-menu-anchor" ref={fileAnchorRef}><button data-tour="files" className={`help-button ${fileMenuOpen ? 'active' : ''}`} onClick={() => setFileMenuOpen(open => !open)}><FileCode2 size={15} /><span>File</span><ChevronDown size={12} /></button>{<FloatingPanel anchor={fileAnchorRef} open={fileMenuOpen} className="file-menu"><label className="file-menu-project">Workspace name<input aria-label="Workspace name in File menu" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} /></label><button onClick={() => { setFileMenuOpen(false); fileInputRef.current?.click(); }}><Upload size={14} /> {isPython ? "Import .py / .pico" : "Import .pico"}</button>{isPython && <button onClick={exportPythonSource}><Download size={14} /> Export .py</button>}<button onClick={() => { exportProject(activeProject); markExported(); setFileMenuOpen(false); }}><Download size={14} /> Export .pico</button></FloatingPanel>}<input ref={fileInputRef} type="file" accept={isPython ? ".py,.pico,application/json" : ".pico,application/json"} hidden onChange={handleImport} /></div><div className="settings-anchor" ref={settingsAnchorRef}>
         <button className={`topbar-icon ${settingsOpen ? 'active' : ''}`} title="Settings" data-tour="settings" aria-label="Open settings" onClick={() => setSettingsOpen(open => !open)}><Settings2 size={16} /></button>
         <FloatingPanel anchor={settingsAnchorRef} open={settingsOpen} className="settings-popover">
@@ -456,9 +443,9 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           <div className="settings-foot">Drag tool tabs to reorder</div>
         </FloatingPanel>
       </div>
-      <button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Help</span></button>
+      <button className="help-button" aria-label="Help: start the Pico tutorial" title="Start the guided tutorial" onClick={startTutorial}><CircleHelp size={15} /><span>Tutorial</span></button>
       <div className="pico-appbar-run">
-        {running ? <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button> : <button className="toolbar-button debug-button" aria-label="Debug program" onClick={() => runProgram(true)}><Code2 size={16} /><span>Debug</span></button>}
+        {running && <button className="toolbar-button stop-button" aria-label="Stop execution" onClick={stopExecution}><X size={16} /><span>Stop</span></button>}
         <button data-tour="run" className="run-button" disabled={running} onClick={() => runProgram()}><Play size={14} fill="currentColor" /><span>Run</span><kbd>⌘ ↵</kbd></button>
       </div>
       {projectNameError && <p id="project-name-error" className="project-name-error" role="alert">{projectNameError}</p>}
@@ -468,7 +455,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       <div className="project-list" role="tablist" aria-label="Workspace tabs">{projects.map(project => <div className={`project-row ${project.id === activeId ? 'active' : ''}`} key={project.id}><button className="project-select" role="tab" aria-selected={project.id === activeId} onClick={() => selectProject(project.id)} title={project.name}><FileCode2 size={15} /><span>{project.name}</span></button>{project.id === activeId && <button className="project-delete" title="Delete project" aria-label="Delete project" onClick={() => removeProject(project.id)}><X size={14} /></button>}</div>)}</div>
       <button className="small-icon-button new-workspace" onClick={createBlankProject} title="New project" aria-label="New project"><Plus size={17} /></button>
     </nav>
-    <div inert={tutorialOpen || tutorialOfferOpen} className={`ide-shell workspace-shell dock-${layout.dockSide} ${(referenceExpanded || tutorialReference) ? 'reference-open' : ''}`}>
+    <div inert={tutorialOpen || tutorialOfferOpen} className={`ide-shell workspace-shell ${dockOpen ? '' : 'dock-collapsed'} dock-${layout.dockSide} ${(referenceExpanded || tutorialReference) ? 'reference-open' : ''}`}>
       <main className="workspace-main" ref={workspaceMainRef}>
         <div className={`editor-split ${layout.referenceVisible ? '' : 'reference-hidden'}`}>
           <section className="editor-card" data-tour="editor">
@@ -496,7 +483,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
 
         <ResizeHandle axis={layout.dockSide === 'right' ? 'x' : 'y'} label="Resize tool panel" className="dock-resize-handle" onResize={resizeDock} />
         <section className="tool-dock" data-tour="tools">
-          <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => setActivePanel(tab.key)}>{panelIcon(tab.key)}<span>{tab.title}</span></button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Collapse panel" onClick={() => setActivePanel('console')}><PanelRightClose size={14} /></button></div>
+          <div className="dock-tab-row" role="tablist" aria-label="Pico tool panels">{orderedTabs.map(tab => <button draggable key={tab.key} role="tab" aria-selected={activePanel === tab.key} className={`dock-tab ${activePanel === tab.key ? 'active' : ''}`} onDragStart={() => setDraggedPanel(tab.key)} onDragOver={event => event.preventDefault()} onDrop={() => reorderPanels(tab.key)} onClick={() => { setActivePanel(tab.key); setDockOpen(true); }}>{panelIcon(tab.key)}<span>{tab.title}</span></button>)}<div className="dock-flex" /><span className="dock-panel-state"><span className="panel-state-dot" /> {activePanel === 'console' ? 'OUTPUT' : activePanel.toUpperCase()}</span><button className="small-icon-button dock-close" title="Close panel" onClick={() => setDockOpen(false)}><X size={14} /></button></div>
           <div className="dock-content" role="tabpanel" key={activePanel}>
             {activePanel === 'console' && <><ConsolePanel entries={consoleEntries} error={executionError ?? parseError} errorKind={executionError ? 'execution' : 'live'} onErrorClick={() => { const line = (executionError ?? parseError)?.line; if (line) editorRef.current?.goToLine(line); }} pendingInput={pendingInput} inputValue={inputValue} onInput={setInputValue} onSubmit={submitConsoleInput} running={running} ran={Boolean(result)} status={runStatus} outputTruncated={outputTruncated} /><PracticeFiles files={activeProject.virtualFiles} onChange={virtualFiles=>updateProject(project=>({...project,virtualFiles,updatedAt:Date.now()}))} /></>}
             {activePanel === 'debugger' && <DebuggerPanel language={language} trace={result?.trace ?? []} index={debugIndex} onIndex={setDebugIndex} truncated={result?.traceTruncated} error={executionError?.message} />}

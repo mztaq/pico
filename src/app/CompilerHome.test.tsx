@@ -169,7 +169,7 @@ it('preserves edits in memory even when browser storage rejects saves',async()=>
   await switchViaHome('Python Compiler');expect(container.querySelector('textarea')?.value).toBe('print("Python kept")');
 });
 it('runs Python source, accepts console input and displays final debugger variables',async()=>{
-  await choose('Python Compiler');expect(preloadPythonRuntime).toHaveBeenCalled();expect(container.querySelector('textarea')?.value).toBe('');await type(container.querySelector('textarea')!,'name=input("Enter your name: ")\nprint(f"Hello {name}!")');await click(button('Debug'));const execution=jobs[0]!;
+  await choose('Python Compiler');expect(preloadPythonRuntime).toHaveBeenCalled();expect(container.querySelector('textarea')?.value).toBe('');await type(container.querySelector('textarea')!,'name=input("Enter your name: ")\nprint(f"Hello {name}!")');await click(button('Run⌘ ↵'));const execution=jobs[0]!;
   expect(execution.request.code).toContain('input(');expect(execution.request.debug).toBe(true);expect(execution.request.filename).toBe('main.py');
   await act(async()=>{execution.callbacks.onStatus?.('Python 3.14.2');execution.callbacks.onOutput?.(['Enter your name: ']);execution.callbacks.onInput?.({id:1,variable:'input()',dataType:'STRING',line:3});});
   expect(container.querySelector('.brand-subtitle')?.textContent).toBe('Python 3.14.2');
@@ -177,7 +177,7 @@ it('runs Python source, accepts console input and displays final debugger variab
   await act(async()=>container.querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
   expect(execution.job.provideInput).toHaveBeenCalledWith(1,'Ada');
   await act(async()=>{execution.callbacks.onOutput?.(['Hello Ada!']);execution.finish([{result:{output:['Hello Ada!'],variables:{name:'Ada'},coverage:[],trace:[{line:4,label:'Finished',variables:{name:'Ada',ready:true},output:['Hello Ada!']}],steps:2,files:{},traceTruncated:false}}]);});
-  expect(container.querySelector('.debugger-panel')).not.toBeNull();expect(container.querySelector('.variable-list')?.textContent).toContain('"Ada"');expect(container.querySelector('.variable-list')?.textContent).toContain('True');
+  await click(button('Debugger'));expect(container.querySelector('.debugger-panel')).not.toBeNull();expect(container.querySelector('.variable-list')?.textContent).toContain('"Ada"');expect(container.querySelector('.variable-list')?.textContent).toContain('True');
 });
 it('shows Python failures as Error, ends pending input, and cancels runs when leaving the compiler',async()=>{
   await choose('Python Compiler');await click(button('Run⌘ ↵'));const execution=jobs[0]!;
@@ -191,7 +191,7 @@ it('shows Python failures as Error, ends pending input, and cancels runs when le
   expect(container.textContent).not.toContain('stale output');
 });
 it('shows a Python tutorial with matching syntax and no rendering loop',async()=>{
-  await choose('Python Compiler');await click(button('Help'));await click(button('Next'));
+  await choose('Python Compiler');await click(button('Tutorial'));await click(button('Next'));
   expect(container.querySelector('#tutorial-description')?.textContent).toContain('Python');expect(container.querySelector('.tutorial-example')?.textContent).toContain('input(');
   expect(container.querySelector('.tutorial-example')?.textContent).not.toContain('DECLARE');
   for(let i=0;i<6;i++)await click(button('Next')??button('Finish tour'));
@@ -249,4 +249,16 @@ it('supports Step Back and only shows decode unit in Advanced mode',async()=>{
  expect(container.querySelector('path[data-wire-id="interrupt-cu"]')).not.toBeNull();
  expect(container.querySelector('[aria-label="Request CPU interrupt"]')).not.toBeNull();
  expect(container.textContent).not.toContain('Von Neumann · Cambridge IGCSE');
+});
+
+it('opens the bug report dialog directly from /app/report and updates browser history', async()=>{
+  await act(async()=>{
+    window.history.pushState(null,'','/app/report');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  expect(window.location.pathname).toBe('/app/report');
+  expect(container.querySelector('.pico-home')).not.toBeNull();
+  expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+  await act(async()=>container.querySelector<HTMLButtonElement>('[aria-label="Close report form"]')?.click());
+  expect(window.location.pathname).toBe('/app');
 });
