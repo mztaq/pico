@@ -316,9 +316,15 @@ export const CodeEditor = forwardRef<EditorHandle, CodeEditorProps>(function Cod
         palette.current.of(themeExtensions(theme)),
         prefs.current.of(createPreferences(preferences, language)),
         marks.current.of(EditorView.decorations.of(v => buildDecorations(v, currentLine, errorLine))),
-        EditorView.updateListener.of(update => { if (update.docChanged) onChangeRef.current(update.state.doc.toString()); }),
+        EditorView.updateListener.of(update => {
+          if (!update.docChanged) return;
+          // Reflect the actual CodeMirror document, not the visible empty placeholder.
+          if (host.current) host.current.dataset.picoCodeEmpty = String(update.state.doc.length === 0);
+          onChangeRef.current(update.state.doc.toString());
+        }),
       ],
     });
+    host.current.dataset.picoCodeEmpty = String(editor.state.doc.length === 0);
     view.current = editor;
     return () => { editor.destroy(); view.current = null; };
     // The view is intentionally mounted once; changing inputs are synchronized by the effects below.

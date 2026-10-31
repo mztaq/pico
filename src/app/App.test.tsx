@@ -457,6 +457,17 @@ it('offers coloured and gradient high-contrast themes and preserves the chosen p
   }
 });
 
+it('keeps Did you mean guidance visible but marks live syntax diagnostics as silent',async()=>{
+  await typeValue(codeEditor(),'f');
+  expect(container.querySelector('.suggestion-ribbon')?.textContent).toContain('Did you mean?');
+  const live=container.querySelector('.runtime-error-card');
+  expect(live).not.toBeNull();
+  expect(live?.hasAttribute('data-sound-error')).toBe(false);
+  // A deliberate Run on invalid code is still an audible execution failure.
+  await click(button('Run⌘ ↵'));
+  expect(container.querySelector('.runtime-error-card')?.getAttribute('data-sound-error')).toBe('true');
+});
+
 it('keeps editor shortcuts while removing the scope caption shown in the screenshot',()=>{
   const footer = container.querySelector('.editor-card-foot')!;
   expect(footer.querySelector('.scope-note')).toBeNull();

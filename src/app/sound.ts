@@ -4,10 +4,15 @@
  * when muted, when storage is blocked, or when the browser has no Web Audio.
  */
 const KEY = 'pico.sound.v1';
-type Cue = 'tap' | 'toggleOn' | 'toggleOff' | 'run' | 'stop' | 'success' | 'error' | 'open' | 'close' | 'step' | 'stepBack' | 'tab' | 'add' | 'remove' | 'undo' | 'redo' | 'theme' | 'file' | 'notify' | 'zoomIn' | 'zoomOut' | 'place' | 'zap' | 'lampOn';
+type Cue = 'tap' | 'toggleOn' | 'toggleOff' | 'run' | 'stop' | 'success' | 'error' | 'open' | 'close' | 'step' | 'stepBack' | 'tab' | 'add' | 'remove' | 'undo' | 'redo' | 'theme' | 'file' | 'notify' | 'zoomIn' | 'zoomOut' | 'place' | 'zap' | 'lampOn' | 'type' | 'typeEnter' | 'typeErase';
 
 let context: AudioContext | null = null;
 let installed = false;
+const UI_CUE_GAIN = 1.7;
+const NOISE_CUE_GAIN = 1.25;
+const MIN_TYPING_INTERVAL_MS = 24;
+let lastTypingAt = -Infinity;
+let lastPhysicalTypingAt = -Infinity;
 const listeners = new Set<(enabled: boolean) => void>();
 
 export function soundEnabled(): boolean {
@@ -50,7 +55,7 @@ function crackle(ctx: AudioContext, start: number, duration: number, volume: num
   filter.type = 'bandpass';
   filter.frequency.value = frequency;
   filter.Q.value = 1.4;
-  gain.gain.setValueAtTime(volume, start);
+  gain.gain.setValueAtTime(Math.min(volume * NOISE_CUE_GAIN, 0.55), start);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
   source.connect(filter).connect(gain).connect(ctx.destination);
   source.start(start);
@@ -63,11 +68,83 @@ function tone(ctx: AudioContext, frequency: number, start: number, duration: num
   oscillator.frequency.setValueAtTime(frequency, start);
   if (endFrequency) oscillator.frequency.exponentialRampToValueAtTime(endFrequency, start + duration);
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.008);
+  gain.gain.exponentialRampToValueAtTime(Math.min(volume * UI_CUE_GAIN, 0.20), start + 0.008);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
   oscillator.connect(gain).connect(ctx.destination);
   oscillator.start(start);
   oscillator.stop(start + duration + 0.02);
+}
+
+/**
+ * A warm, glossy Pico typing blip. Each key category has ONE deterministic
+ * cached waveform, so the first typed character and every later character
+ * have identical pitch, attack, timbre and loudness.
+ *
+ * A fast falling pitch and a tiny delayed resonance give it a soft liquid
+ * plop, rather than a dry switch click or an aggressive electronic beep.
+ * All samples are synthesized locally. No eDEX-UI recordings are used.
+ */
+type KeyKind = 'normal' | 'enter' | 'erase';
+const keyBuffers = new WeakMap<AudioContext, Map<KeyKind, AudioBuffer>>();
+
+function buildKeyBuffer(ctx: AudioContext, kind: KeyKind): AudioBuffer {
+  const duration = kind === 'enter' ? 0.116 : kind === 'erase' ? 0.064 : 0.079;
+  const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  const tau = Math.PI * 2;
+  const base = kind === 'enter' ? 545 : kind === 'erase' ? 490 : 590;
+  const sweep = kind === 'enter' ? 115 : kind === 'erase' ? 65 : 125;
+  const speed = kind === 'enter' ? 64 : 89;
+  const decay = kind === 'enter' ? 43 : kind === 'erase' ? 79 : 66;
+
+  // Integrating the frequency sweep produces a smooth warm "boop" without
+  // discontinuities from multiplying an instantaneous pitch by time.
+  const phase = (time: number, frequency: number, glide: number) =>
+    tau * (frequency * time + glide / speed * (1 - Math.exp(-speed * time)));
+  const envelope = (time: number, onset: number, falloff: number) => {
+    if (time < onset) return 0;
+    const elapsed = time - onset;
+    const attack = Math.sin(Math.min(1, elapsed / 0.005) * Math.PI / 2);
+    return attack * Math.exp(-elapsed * falloff);
+  };
+
+  for (let i = 0; i < length; i += 1) {
+    const t = i / ctx.sampleRate;
+    const tail = Math.sin(Math.min(1, Math.max(0, (duration - t) / 0.016)) * Math.PI / 2);
+    const wave = phase(t, base, sweep);
+    const warmth = Math.sin(wave) * 0.59 * envelope(t, 0, decay);
+    const roundBody = Math.sin(wave * 0.5 + 0.24) * 0.16 * envelope(t, 0, decay * 1.08);
+    const gloss = Math.sin(wave * 1.5 + 0.1) * 0.10 * envelope(t, 0.003, 105);
+    const rippleTime = t - 0.014;
+    const ripple = Math.sin(phase(Math.max(0, rippleTime), base * 1.17, sweep * 0.48)) *
+      0.13 * envelope(t, 0.014, 94);
+    const enterEcho = kind === 'enter'
+      ? Math.sin(phase(Math.max(0, t - 0.045), 805, 60)) * 0.23 * envelope(t, 0.045, 70)
+      : 0;
+    data[i] = Math.max(-0.85, Math.min(0.85, (warmth + roundBody + gloss + ripple + enterEcho) * tail));
+  }
+  return buffer;
+}
+
+function playKeyboardClick(ctx: AudioContext, start: number, kind: KeyKind): void {
+  let cached = keyBuffers.get(ctx);
+  if (!cached) {
+    cached = new Map();
+    keyBuffers.set(ctx, cached);
+  }
+  let buffer = cached.get(kind);
+  if (!buffer) {
+    buffer = buildKeyBuffer(ctx, kind);
+    cached.set(kind, buffer);
+  }
+  const source = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  source.buffer = buffer;
+  // Keystrokes sit beneath the louder interface cues even during quick typing.
+  gain.gain.setValueAtTime(kind === 'enter' ? 0.23 : kind === 'erase' ? 0.19 : 0.21, start);
+  source.connect(gain).connect(ctx.destination);
+  source.start(start);
 }
 
 export function playCue(cue: Cue): void {
@@ -77,6 +154,9 @@ export function playCue(cue: Cue): void {
   const t = ctx.currentTime + 0.005;
   switch (cue) {
     case 'tap': tone(ctx, 1250, t, 0.035, 0.035, 'triangle'); break;
+    case 'type': playKeyboardClick(ctx, t, 'normal'); break;
+    case 'typeEnter': playKeyboardClick(ctx, t, 'enter'); break;
+    case 'typeErase': playKeyboardClick(ctx, t, 'erase'); break;
     case 'toggleOn': tone(ctx, 880, t, 0.05, 0.05, 'triangle'); tone(ctx, 1320, t + 0.045, 0.06, 0.04, 'triangle'); break;
     case 'toggleOff': tone(ctx, 1100, t, 0.05, 0.045, 'triangle'); tone(ctx, 740, t + 0.045, 0.06, 0.04, 'triangle'); break;
     case 'open': tone(ctx, 620, t, 0.07, 0.04, 'sine', 900); break;
@@ -110,6 +190,9 @@ export function playCue(cue: Cue): void {
 }
 
 function cueFor(target: Element): Cue | null {
+  // Autocorrect suggestions are passive guidance, not audible notifications.
+  // Choosing or dismissing a suggestion must not add an extra UI click.
+  if (target.closest('.suggestion-ribbon')) return null;
   const control = target.closest<HTMLElement>('button, [role="button"], [role="tab"], [role="switch"], [role="option"], summary, a[href], label:has(input[type="radio"]), label:has(input[type="checkbox"])');
   if (!control || control.matches(':disabled, [aria-disabled="true"]')) return null;
   const label = `${control.getAttribute('aria-label') ?? ''} ${control.getAttribute('title') ?? ''} ${control.textContent ?? ''}`.toLowerCase();
@@ -135,30 +218,96 @@ function cueFor(target: Element): Cue | null {
   return 'tap';
 }
 
+/** The editor's real document length is mirrored on its host by CodeEditor. */
+function isEmptyCodeEditor(target: Element): boolean {
+  return !!target.closest('.code-editor[data-pico-code-empty="true"]');
+}
+
+/** Keep typing feedback within the Python/pseudocode editors and their input prompt. */
+export function isCompilerTypingKey(event: KeyboardEvent): boolean {
+  if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return false;
+  // Enter and Backspace should sound on every OS key-repeat while held.
+  // Other keys remain silent after their initial keydown.
+  if (event.repeat && event.key !== 'Enter' && event.key !== 'Backspace') return false;
+  if (!(event.target instanceof Element)) return false;
+  if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return false;
+  // No erase cue if the currently selected code file has zero characters.
+  // The empty editor's placeholder is not part of the CodeMirror document.
+  if ((event.key === 'Backspace' || event.key === 'Delete') && isEmptyCodeEditor(event.target)) return false;
+  return event.key.length === 1 || ['Enter', 'Backspace', 'Delete', 'Tab'].includes(event.key);
+}
+
+function playTypingCue(physical: boolean, cue: 'type' | 'typeEnter' | 'typeErase'): void {
+  if (!soundEnabled()) return;
+  const now = performance.now();
+  // Track ALL physical keys, even throttled ones, so beforeinput never doubles them.
+  if (physical) lastPhysicalTypingAt = now;
+  if (!physical && now - lastPhysicalTypingAt < 90) return;
+  if (now - lastTypingAt < MIN_TYPING_INTERVAL_MS) return;
+  lastTypingAt = now;
+  playCue(cue);
+}
+
 /** Installs one document-level listener for interface cues and watches for new errors. */
 export function installSoundEffects(): void {
   if (installed || typeof document === 'undefined') return;
   installed = true;
   document.addEventListener('pointerdown', event => {
     if (event.button !== 0 || !(event.target instanceof Element)) return;
+    // Wake Web Audio on the editor's initial click, not on the first letter.
+    // This avoids an audible difference from browser audio-device startup.
+    if (soundEnabled() && event.target.closest('.code-editor, .console-input-form')) audio();
     const cue = cueFor(event.target);
     if (cue) playCue(cue);
   }, { capture: true, passive: true });
   document.addEventListener('keydown', event => {
+    if (isCompilerTypingKey(event)) playTypingCue(true,
+      event.key === 'Enter' ? 'typeEnter' : event.key === 'Backspace' || event.key === 'Delete' ? 'typeErase' : 'type'
+    );
     if ((event.key !== 'Enter' && event.key !== ' ') || !(event.target instanceof Element)) return;
     if (event.target.matches('input, textarea, [contenteditable="true"], .cm-content')) return;
     const cue = cueFor(event.target);
     if (cue) playCue(cue);
   }, { capture: true });
+  // On-screen keyboards trigger beforeinput without keyboard keydown events.
+  // Do not duplicate the click after a physical keypress or for pasted code.
+  document.addEventListener('beforeinput', event => {
+    if (!(event.target instanceof Element)) return;
+    if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return;
+    if (event.isComposing || !['insertText', 'insertLineBreak', 'insertParagraph', 'deleteContentBackward', 'deleteContentForward'].includes(event.inputType)) return;
+    // Virtual keyboards also send deletions via beforeinput, often without keydown.
+    if (event.inputType.startsWith('delete') && isEmptyCodeEditor(event.target)) return;
+    playTypingCue(false,
+      event.inputType === 'insertLineBreak' || event.inputType === 'insertParagraph' ? 'typeEnter'
+      : event.inputType.startsWith('delete') ? 'typeErase' : 'type'
+    );
+  }, { capture: true });
   if (typeof MutationObserver === 'undefined') return;
   new MutationObserver(records => {
-    for (const record of records) for (const node of record.addedNodes) {
-      if (!(node instanceof Element)) continue;
-      if (node.matches('.runtime-error-card, .console-entry-error') || node.querySelector('.runtime-error-card')) { playCue('error'); return; }
-      if (node.matches('.cpu-phase-halted, .tutorial-complete')) { playCue('success'); return; }
-      if (node.matches('.update-toast')) { playCue('notify'); return; }
-      if (node.matches('.console-input-form') || node.querySelector('.console-input-form')) { playCue('notify'); return; }
+    for (const record of records) {
+      // A syntax diagnostic may already be visible when Run is pressed.
+      // Announce its transition to a real execution error once.
+      if (record.type === 'attributes') {
+        if (record.target instanceof Element && record.target.matches('.runtime-error-card[data-sound-error="true"]')) {
+          playCue('error');
+          return;
+        }
+        continue;
+      }
+      for (const node of record.addedNodes) {
+        if (!(node instanceof Element)) continue;
+        // Live syntax diagnostics, including those beside "Did you mean?",
+        // are silent. Only errors caused by execution receive an error cue.
+        if (node.matches('.console-entry-error, .runtime-error-card[data-sound-error="true"]') ||
+            node.querySelector('.console-entry-error, .runtime-error-card[data-sound-error="true"]')) {
+          playCue('error');
+          return;
+        }
+        if (node.matches('.cpu-phase-halted, .tutorial-complete')) { playCue('success'); return; }
+        if (node.matches('.update-toast')) { playCue('notify'); return; }
+        if (node.matches('.console-input-form') || node.querySelector('.console-input-form')) { playCue('notify'); return; }
+      }
     }
-  }).observe(document.body, { childList: true, subtree: true });
+  }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-sound-error'] });
 }
 
