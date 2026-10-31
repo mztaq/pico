@@ -73,24 +73,10 @@ function Navigation() {
     <a href="#downloads" onClick={()=>setOpen(false)}>Downloads</a>
   </nav><div className="lp-nav-actions"><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header></div>;
 }
+// Production publishes one installer for each supported operating system.
+// Preview branches do not bundle the production binary manifest; never fall back
+// to six obsolete installer choices when preview manifest fetching fails.
 const installerGroups=[
-  {platform:'Windows',icon:Monitor,files:[
-    {name:'Pico_x64-setup.exe',format:'EXE installer',sizeBytes:1878445},
-    {name:'Pico_x64_en-US.msi',format:'MSI installer',sizeBytes:2850816},
-  ]},
-  {platform:'macOS',icon:Laptop,files:[
-    {name:'Pico_aarch64.dmg',format:'Apple Silicon DMG',sizeBytes:2745913},
-    {name:'Pico_x64.dmg',format:'Intel DMG',sizeBytes:2929669},
-  ]},
-  {platform:'Linux',icon:Terminal,files:[
-    {name:'Pico_amd64.deb',format:'DEB package',sizeBytes:2881950},
-    {name:'Pico_amd64.AppImage',format:'AppImage',sizeBytes:81304056},
-  ]},
-] as const;
-
-// Show only one installer per OS after the universal macOS asset has actually
-// been published. Until then, leave working legacy download links intact.
-const singleInstallerGroups=[
   {platform:'Windows',icon:Monitor,files:[{name:'Pico_x64-setup.exe',format:'EXE installer',sizeBytes:1878445}]},
   {platform:'macOS',icon:Laptop,files:[{name:'Pico_universal.dmg',format:'Universal DMG',sizeBytes:0}]},
   {platform:'Linux',icon:Terminal,files:[{name:'Pico_amd64.AppImage',format:'AppImage',sizeBytes:81304056}]},
@@ -108,7 +94,6 @@ export function installerDownloadHref(filename:string,hostname:string):string{
 }
 function DownloadsSection(){
   const [currentSizes,setCurrentSizes]=useState<Record<string,number>>({});
-  const [singleInstallerRelease,setSingleInstallerRelease]=useState(false);
   useEffect(()=>{
     // This public Pages manifest is the actual published download inventory,
     // including when the source repository and its release are private.
@@ -124,11 +109,6 @@ function DownloadsSection(){
           }
         }
         if(Object.keys(sizes).length)setCurrentSizes(sizes);
-        const three=['Pico_x64-setup.exe','Pico_universal.dmg','Pico_amd64.AppImage'];
-        // Never show files that are missing from the public download manifest.
-        if(three.every(name=>sizes[name]>0)&&Object.keys(sizes).length===3){
-          setSingleInstallerRelease(true);
-        }
       })
       .catch(()=>{/* Keep known sizes and legacy links until deployment completes. */});
     return()=>controller.abort();
@@ -138,12 +118,12 @@ function DownloadsSection(){
       <h2 id="lp-downloads-title">Download Pico</h2>
     </div>
     <div className="lp-download-groups">
-      {(singleInstallerRelease?singleInstallerGroups:installerGroups).map(({platform,icon:Icon,files})=>
+      {installerGroups.map(({platform,icon:Icon,files})=>
         <div className="lp-download-group" key={platform}>
           <div className="lp-download-group-header"><Icon size={19} aria-hidden="true"/><h3>{platform}</h3></div>
           <div className="lp-download-options">
             {files.map(file=><a className="lp-download-option" key={file.name} href={installerDownloadHref(file.name,window.location.hostname)} aria-label={'Download '+file.name+' for '+platform}>
-              <span className="lp-download-copy"><strong>{file.name}</strong><small>{(currentSizes[file.name]??file.sizeBytes)>0?formatDownloadSize(currentSizes[file.name]??file.sizeBytes):'Size unavailable'}</small></span>
+              <span className="lp-download-copy"><strong>{file.name}</strong><small>{(currentSizes[file.name]??file.sizeBytes)>0?formatDownloadSize(currentSizes[file.name]??file.sizeBytes):file.format}</small></span>
               <Download className="lp-download-arrow" size={17} aria-hidden="true"/>
             </a>)}
           </div>

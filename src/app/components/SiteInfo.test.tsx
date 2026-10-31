@@ -14,6 +14,10 @@ async function navigate(hash: string) {
   });
 }
 
+async function renderApp() {
+  await act(async () => root.render(<App />));
+}
+
 beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, text: async () => '' })));
@@ -23,6 +27,7 @@ beforeEach(() => {
   document.body.append(host);
   root = createRoot(host);
 });
+
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
@@ -30,14 +35,21 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-it('shows both co-founders and concept developers with their roles', async () => {
-  await act(async () => root.render(<App />));
-  expect(host.querySelector('a[href="#team"]')?.textContent).toBe('Pico Team');
+it('opens Pico Team above the preserved home and keeps founder/concept content', async () => {
+  await renderApp();
+  const opener = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#team"]')!;
+  expect(opener.textContent).toBe('Pico Team');
+  opener.focus();
   await navigate('#team');
   expect(document.title).toBe('Pico | Pico Team');
-  const cards = [...host.querySelectorAll('.author-card')];
+  expect(host.querySelector('.compiler-choices')).not.toBeNull();
+  expect(host.querySelector('.site-info-home-underlay[inert][aria-hidden="true"]')).not.toBeNull();
+  expect(host.querySelector('.site-info-backdrop')).not.toBeNull();
+  expect(host.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull();
+  const dialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
+  const cards = [...dialog.querySelectorAll('.author-card')];
   expect(cards.map(card => card.querySelector('h3')?.textContent)).toEqual([
-    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Mithunan Yogeswaran', 'Coming soon...', 
+    'Muhammad Mustaqim', 'Amar Ayache', 'Mohamed Hamza', 'Mithunan Yogeswaran', 'Coming soon...',
   ]);
   expect(cards.map(card => card.querySelector('.author-description')?.textContent)).toEqual([
     'I manage Pico’s deployments and help build new features with Amar’s approval. We also consider suggestions from our concept developers.',
@@ -54,51 +66,102 @@ it('shows both co-founders and concept developers with their roles', async () =>
     ['Concept Developer'],
   ]);
   expect(cards.map(card => card.classList.contains('author-card--founder'))).toEqual([true, true, false, false, false]);
-  expect([...host.querySelectorAll('.team-group-title')].map(heading => heading.textContent)).toEqual(['Co-founders', 'Concept Developers']);
-  expect(host.querySelectorAll('.author-founder-label')).toHaveLength(0);
-  expect(host.querySelectorAll('.author-index')).toHaveLength(0);
-  expect(cards.every(card => card.querySelector('.author-roles')?.compareDocumentPosition(card.querySelector('.author-description')!) === Node.DOCUMENT_POSITION_PRECEDING)).toBe(true);
-  expect(host.textContent).not.toMatch(/11BR|11BB/);
-  expect(host.querySelectorAll('.author-icon')).toHaveLength(0);
-  expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Pico Team');
-  expect(document.activeElement).toBe(host.querySelector('h1'));
-  expect(host.querySelector('a[aria-label="Pico home"]')?.getAttribute('href')).toBe('#');
-  expect(host.querySelectorAll('.site-info-links a')).toHaveLength(4);
-  await navigate('');
+  expect([...dialog.querySelectorAll('.team-group-title')].map(heading => heading.textContent)).toEqual(['Co-founders', 'Concept Developers']);
+  expect(dialog.textContent).not.toMatch(/11BR|11BB/);
+  expect(dialog.querySelectorAll('.site-info-links, .site-info-toc')).toHaveLength(0);
+  expect(dialog.querySelectorAll('a[href^="#"]')).toHaveLength(0);
+  expect(host.querySelectorAll('.pico-home .site-info-links a')).toHaveLength(4);
+  expect(document.activeElement).toBe(dialog.querySelector('h1'));
+
+  await act(async () => dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')?.click());
+  expect(host.querySelector('.site-info-backdrop')).toBeNull();
   expect(host.querySelector('.compiler-choices')).not.toBeNull();
+  expect(window.location.hash).toBe('');
   expect(document.title).toBe('Pico | Home');
+  expect(document.activeElement).toBe(opener);
 });
 
 it.each([
   ['#privacy', 'Privacy Policy', 'Service and storage'],
   ['#terms', 'Terms and Conditions', 'Your work'],
-] as const)('loads %s on first entry and preserves saved projects', async (hash, title, section) => {
+  ['#cookies', 'Cookie Policy', 'Essential storage'],
+] as const)('opens %s as a dimmed dialog on initial entry without losing saved work', async (hash, title, section) => {
   const savedProjects = JSON.stringify([{ id: 'untouched', code: 'OUTPUT 42' }]);
   localStorage.setItem('pico.projects.v1', savedProjects);
   window.history.replaceState(null, '', hash);
-  await act(async () => root.render(<App />));
-  expect(host.querySelector('h1')?.textContent).toBe(title);
+  await renderApp();
+  const dialog = host.querySelector<HTMLElement>('[role="dialog"][aria-modal="true"]')!;
+  expect(dialog.getAttribute('aria-labelledby')).toBe('pico-info-dialog-title');
+  expect(dialog.querySelector('h1')?.textContent).toBe(title);
   expect(document.title).toBe(`Pico | ${title}`);
-  expect([...host.querySelectorAll('h2')].some(heading => heading.textContent === section)).toBe(true);
+  expect([...dialog.querySelectorAll('h2')].some(heading => heading.textContent === section)).toBe(true);
   expect(localStorage.getItem('pico.projects.v1')).toBe(savedProjects);
-  expect(host.querySelector('time')?.getAttribute('dateTime')).toBe('2026-10-24');
+  expect(dialog.querySelector('time')?.getAttribute('dateTime')).toBe('2026-10-24');
+  expect(host.querySelector('.pico-home')).not.toBeNull();
 });
 
-it('keeps policy navigation, focus, scroll and the selected theme consistent', async () => {
+it('displays only the requested policy, scroll area, focus and saved theme', async () => {
   localStorage.setItem('pico.settings.v6', JSON.stringify({ theme: 'high-contrast-light' }));
   window.history.replaceState(null, '', '#terms');
-  await act(async () => root.render(<App />));
+  await renderApp();
   const page = host.querySelector<HTMLElement>('.site-info-page')!;
   expect(page.getAttribute('data-pico-theme')).toBe('high-contrast-light');
   expect(page.getAttribute('data-high-contrast')).toBe('true');
-  expect(host.querySelector('.site-info-section a[href="#privacy"]')).not.toBeNull();
-  page.scrollTop = 400;
+  expect(page.querySelector('.site-info-section .site-info-policy-reference')?.textContent).toBe('Privacy Policy');
+  expect(page.querySelectorAll('.site-info-aside, .site-info-links, .site-info-toc, a[href^="#"]')).toHaveLength(0);
+  const scrollArea = page.querySelector<HTMLElement>('.site-info-dialog-scroll')!;
+  expect(scrollArea).not.toBeNull();
+  expect(document.activeElement).toBe(page.querySelector('h1'));
+  expect(page.textContent).toContain('These terms may change');
+  expect(page.textContent).not.toContain('Cloudflare');
+  expect(page.textContent).not.toContain('Google Fonts');
+  expect(page.querySelector('a[href*="github.com"]')).toBeNull();
+});
+
+it('closes via Escape and backdrop, but not when clicking the dialog', async () => {
+  await renderApp();
+  const opener = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#privacy"]')!;
+  opener.focus();
   await navigate('#privacy');
-  expect(page.scrollTop).toBe(0);
-  expect(document.activeElement).toBe(host.querySelector('h1'));
-  expect(host.querySelector('a[aria-current="page"]')?.textContent).toBe('Privacy Policy');
-  expect(host.textContent).toContain("Cloudflare");
-  expect(host.textContent).toContain("Google Fonts");
-  expect(host.querySelector('a[href*="github.com"]')).toBeNull();
-  expect(host.textContent).toContain('analytics');
+  const dialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
+  await act(async () => dialog.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
+  expect(host.querySelector('.site-info-dialog')).not.toBeNull();
+  await act(async () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  });
+  expect(host.querySelector('.site-info-dialog')).toBeNull();
+  expect(document.activeElement).toBe(opener);
+
+  await navigate('#cookies');
+  const newBackdrop = host.querySelector<HTMLElement>('.site-info-backdrop')!;
+  await act(async () => newBackdrop.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
+  expect(host.querySelector('.site-info-dialog')).toBeNull();
+});
+
+it('shows one policy at a time and requires closing it before opening another from home', async () => {
+  await renderApp();
+  const privacyLink = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#privacy"]')!;
+  privacyLink.focus();
+  await navigate('#privacy');
+  const firstDialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
+  expect(firstDialog.querySelector('h1')?.textContent).toBe('Privacy Policy');
+  expect(firstDialog.querySelectorAll('.site-info-aside, .site-info-links, .site-info-toc')).toHaveLength(0);
+  expect(firstDialog.querySelectorAll('a[href]')).toHaveLength(0);
+
+  const close = firstDialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')!;
+  close.focus();
+  await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })));
+  expect(document.activeElement).toBe(close);
+
+  await act(async () => close.click());
+  expect(host.querySelector('.site-info-dialog')).toBeNull();
+  expect(document.activeElement).toBe(privacyLink);
+
+  const cookieLink = host.querySelector<HTMLAnchorElement>('.pico-home a[href="#cookies"]')!;
+  cookieLink.focus();
+  await navigate('#cookies');
+  const cookieDialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
+  expect(cookieDialog.querySelector('h1')?.textContent).toBe('Cookie Policy');
+  expect(host.querySelectorAll('.site-info-backdrop')).toHaveLength(1);
+  expect(cookieDialog.querySelectorAll('a[href]')).toHaveLength(0);
 });
