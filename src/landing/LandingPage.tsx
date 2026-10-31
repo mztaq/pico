@@ -97,37 +97,40 @@ const singleInstallerGroups=[
 ] as const;
 
 const formatDownloadSize=(bytes:number)=>`${(bytes/1_000_000).toFixed(2)} MB`;
-/** Preview deployments do not publish the production Pages installer chunks.
- * Link their download cards to GitHub's latest published release assets instead. */
+/** Always serve installers through public Cloudflare Pages assets.
+ * Private GitHub releases require authentication, so preview sites link to
+ * the live Cloudflare download service instead of GitHub. */
 export function installerDownloadHref(filename:string,hostname:string):string{
-  const preview=hostname!== 'picompiler.pages.dev' && hostname.endsWith('.picompiler.pages.dev');
-  return preview
-    ? 'https://github.com/mztaq/pico/releases/latest/download/'+encodeURIComponent(filename)
-    : '/downloads/'+filename;
+  const path='/downloads/'+encodeURIComponent(filename);
+  return hostname==='picompiler.pages.dev'
+    ? path
+    : 'https://picompiler.pages.dev'+path;
 }
 function DownloadsSection(){
   const [currentSizes,setCurrentSizes]=useState<Record<string,number>>({});
   const [singleInstallerRelease,setSingleInstallerRelease]=useState(false);
   useEffect(()=>{
-    // Update release sizes when assets are replaced, with known release sizes as fallback.
+    // This public Pages manifest is the actual published download inventory,
+    // including when the source repository and its release are private.
     const controller=new AbortController();
-    fetch('https://api.github.com/repos/mztaq/pico/releases/latest',{signal:controller.signal})
+    fetch('/download-assets/manifest.json',{signal:controller.signal})
       .then(response=>response.ok?response.json():null)
-      .then((release:{assets?:Array<{name?:string;size?:number}>}|null)=>{
-        const assets=release?.assets;
-        if(controller.signal.aborted||!Array.isArray(assets))return;
+      .then((manifest:{files?:Record<string,{size?:number}>}|null)=>{
+        if(controller.signal.aborted||!manifest?.files)return;
         const sizes:Record<string,number>={};
-        for(const asset of assets){
-          if(typeof asset.name==='string'&&typeof asset.size==='number'&&Number.isFinite(asset.size)&&asset.size>0){
-            sizes[asset.name]=asset.size;
+        for(const [name,file] of Object.entries(manifest.files)){
+          if(typeof file?.size==='number'&&Number.isSafeInteger(file.size)&&file.size>0){
+            sizes[name]=file.size;
           }
         }
         if(Object.keys(sizes).length)setCurrentSizes(sizes);
-        if(['Pico_x64-setup.exe','Pico_universal.dmg','Pico_amd64.AppImage'].every(name=>sizes[name]>0)){
+        const three=['Pico_x64-setup.exe','Pico_universal.dmg','Pico_amd64.AppImage'];
+        // Never show files that are missing from the public download manifest.
+        if(three.every(name=>sizes[name]>0)&&Object.keys(sizes).length===3){
           setSingleInstallerRelease(true);
         }
       })
-      .catch(()=>{/* Keep verified release size fallback if metadata is unavailable. */});
+      .catch(()=>{/* Keep known sizes and legacy links until deployment completes. */});
     return()=>controller.abort();
   },[]);
   return <section id="downloads" className="lp-downloads" aria-labelledby="lp-downloads-title">
