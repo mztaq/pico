@@ -21,7 +21,7 @@ import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen } from './components/HomeScreen';
 import { workspaceFromLocation, workspaceUrl, type PicoWorkspace } from './workspace-deeplink';
-import { SiteInfo, informationPageFromHash } from './components/SiteInfo';
+import { SiteInfo, informationPageFromHash, informationPageFromPath, type InformationPage } from './components/SiteInfo';
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
 import { WorkspaceTransition } from './components/WorkspaceTransition';
 import {useExitWarning} from './components/useExitWarning';
@@ -56,10 +56,8 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 function closeInformationPage() {
-  const url = new URL(window.location.href);
-  url.hash = '';
-  window.history.pushState(window.history.state, '', url.pathname + url.search);
-  window.dispatchEvent(new HashChangeEvent('hashchange'));
+  window.history.pushState(window.history.state, '', '/app');
+  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 export default function App() {
@@ -75,15 +73,19 @@ export default function App() {
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
-  const [informationPage, setInformationPage] = useState(() => informationPageFromHash(window.location.hash));
+  const [informationPage, setInformationPage] = useState<InformationPage | null>(() => informationPageFromPath(window.location.pathname) ?? informationPageFromHash(window.location.hash));
   useEffect(() => {
-    const onHashChange = () => {
-      const page = informationPageFromHash(window.location.hash);
+    const syncInformation = () => {
+      const page = informationPageFromPath(window.location.pathname) ?? informationPageFromHash(window.location.hash);
       setInformationPage(page);
-      if (page) setLanguage(null);
+      if (page) setLanguageState(null);
     };
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
+    window.addEventListener('popstate', syncInformation);
+    window.addEventListener('hashchange', syncInformation);
+    return () => {
+      window.removeEventListener('popstate', syncInformation);
+      window.removeEventListener('hashchange', syncInformation);
+    };
   }, []);
   useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : 'Pico | Home'; }, [language, informationPage]);
   // Workspace URLs are updated by setLanguage, and popstate restores browser history.
