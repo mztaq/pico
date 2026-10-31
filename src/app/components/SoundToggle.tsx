@@ -8,7 +8,7 @@ export function SoundSetting() {
   useEffect(() => onSoundChange(setEnabled), []);
   return <div className="sound-setting">
     <span className="sound-setting-icon" aria-hidden="true">{enabled ? <Volume2 size={15} /> : <VolumeX size={15} />}</span>
-    <div><strong>Sound effects</strong><small>Soft clicks and cues when you run, step or hit an error</small></div>
+    <div><strong>Sound effects</strong><small>Keyboard clicks and louder feedback for actions and errors</small></div>
     <button className={`switch ${enabled ? 'checked' : ''}`} role="switch" aria-label="Sound effects" aria-checked={enabled} onClick={() => setSoundEnabled(!enabled)}><span /></button>
   </div>;
 }
