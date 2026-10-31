@@ -35,7 +35,7 @@ it('publishes static security headers and search metadata', () => {
 
 it('shares a compact social card with the Pico student slogan and all six tools', () => {
   const index=read('index.html');
-  const preview=read('public/social-preview.svg');
+  const preview=read('public/pico-social-preview.svg');
   const publisher=read('.github/workflows/publish-downloads.yml');
   expect(index).toContain('property="og:title" content="Pico."');
   expect(index).not.toContain('property="og:site_name"');
@@ -51,5 +51,5 @@ it('shares a compact social card with the Pico student slogan and all six tools'
     expect(preview).toContain(tool);
   }
   expect(preview).toContain('picompiler.pages.dev');
-  expect(publisher).toContain('rsvg-convert --width 1200 --height 630 public/social-preview.svg --output public/social-preview.png');
+  expect(publisher).toContain('rsvg-convert --width 1200 --height 630 public/pico-social-preview.svg --output public/social-preview.png');
 });
