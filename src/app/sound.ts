@@ -215,6 +215,11 @@ function cueFor(target: Element): Cue | null {
   return 'tap';
 }
 
+/** The editor's real document length is mirrored on its host by CodeEditor. */
+function isEmptyCodeEditor(target: Element): boolean {
+  return !!target.closest('.code-editor[data-pico-code-empty="true"]');
+}
+
 /** Keep typing feedback within the Python/pseudocode editors and their input prompt. */
 export function isCompilerTypingKey(event: KeyboardEvent): boolean {
   if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return false;
@@ -223,6 +228,9 @@ export function isCompilerTypingKey(event: KeyboardEvent): boolean {
   if (event.repeat && event.key !== 'Enter' && event.key !== 'Backspace') return false;
   if (!(event.target instanceof Element)) return false;
   if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return false;
+  // No erase cue if the currently selected code file has zero characters.
+  // The empty editor's placeholder is not part of the CodeMirror document.
+  if ((event.key === 'Backspace' || event.key === 'Delete') && isEmptyCodeEditor(event.target)) return false;
   return event.key.length === 1 || ['Enter', 'Backspace', 'Delete', 'Tab'].includes(event.key);
 }
 
@@ -264,6 +272,8 @@ export function installSoundEffects(): void {
     if (!(event.target instanceof Element)) return;
     if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return;
     if (event.isComposing || !['insertText', 'insertLineBreak', 'insertParagraph', 'deleteContentBackward', 'deleteContentForward'].includes(event.inputType)) return;
+    // Virtual keyboards also send deletions via beforeinput, often without keydown.
+    if (event.inputType.startsWith('delete') && isEmptyCodeEditor(event.target)) return;
     playTypingCue(false,
       event.inputType === 'insertLineBreak' || event.inputType === 'insertParagraph' ? 'typeEnter'
       : event.inputType.startsWith('delete') ? 'typeErase' : 'type'
