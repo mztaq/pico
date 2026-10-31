@@ -4,6 +4,7 @@ export interface ExecutionCallbacks {
   onInput?: (request: PendingInput) => void;
   onStderr?: (lines: string[]) => void;
   onStatus?: (message: string) => void;
+  onLine?: (line: number) => void;
 }
 export interface ExecutionJob {
   promise: Promise<ExecutionReply[]>;
@@ -78,6 +79,7 @@ export function startExecution(request: WorkerRequest, callbacks: ExecutionCallb
     }
     if (reply.type === 'stderr') { callbacks.onStderr?.(reply.lines); return; }
     if (reply.type === 'status') { callbacks.onStatus?.(reply.message); return; }
+    if (reply.type === 'line') { callbacks.onLine?.(reply.line); return; }
     pauseTimer();
     pendingId = reply.request.id;
     callbacks.onInput?.(reply.request);
