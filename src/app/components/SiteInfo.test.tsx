@@ -123,7 +123,6 @@ it('closes via Escape and backdrop, but not when clicking the dialog', async () 
   opener.focus();
   await navigate('#privacy');
   const dialog = host.querySelector<HTMLElement>('.site-info-dialog')!;
-  const backdrop = host.querySelector<HTMLElement>('.site-info-backdrop')!;
   await act(async () => dialog.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })));
   expect(host.querySelector('.site-info-dialog')).not.toBeNull();
   await act(async () => {
