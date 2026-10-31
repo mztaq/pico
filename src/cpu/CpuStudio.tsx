@@ -128,24 +128,39 @@ export const ADVANCED_WIRES = [
  {id:'interrupt-cu',label:'Interrupt register to Control Unit',path:'M480 513 C508 513 522 505 548 505'},
  {id:'cu-interrupt',label:'Control Unit to interrupt register',path:'M548 520 C522 520 506 528 480 528'},
 ] as const;
-export function CpuStudio({onHome}:{onHome:()=>void}){
+export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landingPreview?:boolean}){
  const [mode,setMode]=useState<CpuMode>('normal');
  const [machine,setMachine]=useState<Machine>(()=>boot(DEFAULT_IMAGE));
  const [playing,setPlaying]=useState(false);
+ const previewRef=useRef<HTMLDivElement>(null);
+ const manualPlayback=useRef(false);
+ useEffect(()=>{
+  if(!landingPreview)return;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  const root=previewRef.current;
+  if(!root)return;
+  if(!('IntersectionObserver' in window)){setPlaying(true);return;}
+  const observer=new IntersectionObserver(([entry])=>{
+   if(!manualPlayback.current)setPlaying(Boolean(entry?.isIntersecting));
+  },{threshold:.06});
+  observer.observe(root);
+  return()=>observer.disconnect();
+ },[landingPreview]);
  const historyRef=useRef<{machine:Machine;interrupt:ReturnType<typeof initialInterrupt>}[]>([]);
  const [historyLength,setHistoryLength]=useState(0);
  const [interrupt,setInterrupt]=useState(initialInterrupt);
  const interruptRef=useRef(interrupt);interruptRef.current=interrupt;
  const [selected,setSelected]=useState<string>('PC');
- const [clock,setClock]=useState(2);
+ const [clock,setClock]=useState(()=>landingPreview?4.7:2);
  const [themeId,setThemeId]=useState(()=>loadSettings().theme);
  const [themeOpen,setThemeOpen]=useState(false);
  const [tourStep,setTourStep]=useState<number|null>(()=>{
+  if(landingPreview)return null;
   try{return localStorage.getItem(CPU_TUTORIAL_KEY)==='done'?null:0;}catch{return 0;}
  });
  const [stepKey,setStepKey]=useState(0);
  const machineRef=useRef(machine);machineRef.current=machine;
- const theme=getTheme(themeId);
+ const theme=getTheme(landingPreview?'catppuccin-mocha':themeId);
  const active=machine.frame.active;
  const transfer=machine.frame.transfer;
  const modeDone=machine.halted;
@@ -155,7 +170,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
   if(historyRef.current.length>2048)historyRef.current.shift();
   setHistoryLength(historyRef.current.length);
  }
- useEffect(()=>{const previous=loadSettings();saveSettings({...previous,theme:themeId});for(const [k,v] of Object.entries(cssVariables(theme)))document.documentElement.style.setProperty(k,v);document.documentElement.style.colorScheme=theme.appearance;},[theme,themeId]);
+ useEffect(()=>{if(landingPreview)return;const previous=loadSettings();saveSettings({...previous,theme:themeId});for(const [k,v] of Object.entries(cssVariables(theme)))document.documentElement.style.setProperty(k,v);document.documentElement.style.colorScheme=theme.appearance;},[theme,themeId,landingPreview]);
  useEffect(()=>{if(!isRunning)return;const interval=window.setInterval(()=>{
   const current=machineRef.current;
   const result=advanceRunFrame(current,interruptRef.current,mode);
@@ -199,7 +214,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
  const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
  const memoryActive=activeUnits.has('RAM');
  const renderedBoxes=BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=>mode==='normal'&&NORMAL_LAYOUT[box.key]?{...box,...NORMAL_LAYOUT[box.key]}:box);
- return <div className="cpu-app" style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
+ return <div ref={previewRef} className={landingPreview?"cpu-app cpu-embedded":"cpu-app"} style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
   <header className="cpu-topbar topbar pico-appbar">
    <div className="pico-appbar-lead cpu-brand"><button className="toolbar-button home-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></div><span className="pico-appbar-sep" aria-hidden="true">/</span><strong className="brand-subtitle pico-appbar-tool">CPU Studio</strong></div>
    <div className="topbar-spacer"/>
@@ -213,11 +228,11 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
    <div className="cpu-playback" data-cpu-tour="controls">
     <button aria-label="Step backward one CPU micro-operation" onClick={back} disabled={playing||historyLength===0}><StepBack size={16}/> Back</button>
     <button aria-label="Step forward one CPU micro-operation" onClick={advance} disabled={playing||modeDone}><StepForward size={16}/> Step</button>
-    <button className="cpu-play" onClick={()=>setPlaying(v=>!v)} disabled={Boolean(machine.error)}>{playing?<><Pause size={16}/> Pause</>:<><Play size={16}/> Run</>}</button>
+    <button className="cpu-play" onClick={()=>{manualPlayback.current=true;setPlaying(v=>!v);}} disabled={Boolean(machine.error)}>{playing?<><Pause size={16}/> Pause</>:<><Play size={16}/> Run</>}</button>
     <button onClick={()=>reset()}><RotateCcw size={16}/> Reset</button>
     {mode==='advanced'&&<button aria-label="Request CPU interrupt" disabled={machine.halted||interrupt.pending||interrupt.stage>0} onClick={()=>{const pending=requestInterrupt(interruptRef.current);interruptRef.current=pending;setInterrupt(pending);}}>Trigger interrupt</button>}
    </div>
-   <label className="cpu-speed" data-cpu-tour="speed"><Gauge size={17}/><span>Playback speed <strong>{clock.toFixed(1)} GHz</strong></span><input aria-label="Illustrative CPU clock speed GHz" type="range" min="0.5" max="9.2" step=".1" value={clock} onChange={e=>setClock(Number(e.target.value))}/></label>
+   <label className="cpu-speed" data-cpu-tour="speed"><Gauge size={17}/><span>{landingPreview?'Simulated speed':'Playback speed'} <strong>{clock.toFixed(1)} GHz</strong></span><input aria-label="Illustrative CPU clock speed GHz" type="range" min="0.5" max="9.2" step=".1" value={clock} onChange={e=>setClock(Number(e.target.value))}/></label>
    <span className="cpu-counter">Step {machine.cycles} · {machine.instructions} instruction(s)</span>
   </div>
   <main className="cpu-content">
@@ -231,7 +246,7 @@ export function CpuStudio({onHome}:{onHome:()=>void}){
       <marker id="cpu-wire-active-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--accent)"/></marker>
      </defs>
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
-     <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing BRAINROT / Unit</text><title>CPU (Central Processing Unit) is the correct Cambridge IGCSE term.</title>
+     <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing Unit (CPU)</text>
      {mode==='normal'&&<g className="cpu-connectors">
        <path d="M203 111 C300 96 440 96 548 111"/>
        <path d="M165 279 C150 291 150 291 165 299"/>

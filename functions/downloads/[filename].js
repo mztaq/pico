@@ -7,6 +7,7 @@ const ALLOWED = new Set([
   'Pico_x64_en-US.msi',
   'Pico_aarch64.dmg',
   'Pico_x64.dmg',
+  'Pico_universal.dmg',
   'Pico_amd64.deb',
   'Pico_amd64.AppImage',
 ]);

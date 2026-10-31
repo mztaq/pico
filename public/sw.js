@@ -26,7 +26,7 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname.startsWith('/python-runtime/') || url.pathname === '/pico-online.txt') return;
+  if (url.origin !== self.location.origin || url.pathname === '/app' || url.pathname.startsWith('/app/') || url.pathname.startsWith('/api/') || url.pathname.startsWith('/python-runtime/') || url.pathname === '/pico-online.txt') return;
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(async () => (await caches.match('/')) || Response.error()));
     return;

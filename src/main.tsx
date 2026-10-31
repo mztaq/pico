@@ -1,9 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './app/App';
+import { lazy, Suspense } from 'react';
+const App = lazy(() => import('./app/App'));
+const LandingPage = lazy(() => import('./landing/LandingPage'));
 import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
+import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
 import './styles/tokens.css';
 import './styles/motion.css';
 import './styles/overlays.css';
@@ -18,11 +21,14 @@ function SkipToContent() {
     target.focus();
   }}>Skip to content</a>;
 }
+// Previously released Tauri wrappers still load /. Render the full workspace
+// there only inside their native webviews, without changing the browser URL.
+const inApp = shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window));
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    <OnlineOnlyGate><App /><PicoTelemetry /></OnlineOnlyGate>
+    {inApp ? <OnlineOnlyGate><Suspense fallback={null}><App /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={<div style={{minHeight:'100vh',background:'#08070d'}}/>}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 
