@@ -86,6 +86,13 @@ jobs:
           gh release download desktop-v0.1.0-build.10 --repo "$GITHUB_REPOSITORY" --dir release-binaries --pattern 'Pico_*'
       - name: Split and verify release files
         run: node scripts/stage-desktop-downloads.mjs release-binaries public/download-assets
+      - name: Render public PNG for social link previews
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq librsvg2-bin
+          rsvg-convert --width 1200 --height 630 public/social-preview.svg --output public/social-preview.png
+          file public/social-preview.png
+          test "$(stat -c %s public/social-preview.png)" -gt 10000
       - name: Build and check
         run: |
           npm install --global pnpm@11.25.0
