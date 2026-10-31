@@ -8,7 +8,6 @@ import { ChartCanvas, BlockSymbol } from './Canvas';
 import { ConsolePanel, DebuggerPanel, type ConsoleEntry } from '../app/components/Panels';
 import { HighlightedCode } from '../app/components/HighlightedCode';
 import { ThemePicker } from '../app/components/ThemePicker';
-import { UpdateCenter } from '../app/components/UpdateCenter';
 import {useExitWarning} from '../app/components/useExitWarning';
 import { ResizeHandle } from '../app/components/ResizeHandle';
 import { contrastRatio, cssVariables, getTheme } from '../app/themes';
@@ -185,7 +184,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
       <button className="toolbar-button flow-convert-button" disabled={running||(tutorialActive&&tourStep!==8)} onClick={()=>{setPanel('pseudocode');if(!conversion.value)setSelected(conversion.error?.nodeId??null);}}><Code2 size={16}/><span>Convert to pseudocode</span></button>
       <div className="topbar-actions">
         <div className="pico-appbar-group" role="group" aria-label="Edit history"><button className="toolbar-button" disabled={running||tutorialActive||!history?.past.length} aria-label="Undo flowchart edit" onClick={()=>undo()}><Undo2 size={16}/></button><button className="toolbar-button" disabled={running||tutorialActive||!history?.future.length} aria-label="Redo flowchart edit" onClick={()=>undo(true)}><Redo2 size={16}/></button></div>
-        <div className="pico-appbar-group" role="group" aria-label="Workspace tools">{!tutorialActive&&<UpdateCenter/>}<button className="toolbar-button" aria-label="Flowchart settings" disabled={tutorialActive} onClick={()=>setSettingsOpen(v=>!v)}><Settings2 size={16}/></button><button className="help-button" disabled={tutorialActive} onClick={startWalkthrough}><CircleHelp size={16}/><span>Help</span></button></div>
+        <div className="pico-appbar-group" role="group" aria-label="Workspace tools"><button className="toolbar-button" aria-label="Flowchart settings" disabled={tutorialActive} onClick={()=>setSettingsOpen(v=>!v)}><Settings2 size={16}/></button><button className="help-button" disabled={tutorialActive} onClick={startWalkthrough}><CircleHelp size={16}/><span>Help</span></button></div>
       </div>
       <div className="pico-appbar-run">
         {running?<button className="toolbar-button stop-button" onClick={()=>jobRef.current?.cancel()}><X size={16}/><span>Stop</span></button>:<button className="toolbar-button debug-button" disabled={tutorialActive} onClick={()=>void run(true)}><Code2 size={16}/><span>Debug</span></button>}
