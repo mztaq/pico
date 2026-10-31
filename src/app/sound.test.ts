@@ -133,6 +133,33 @@ describe('compiler typing sounds', () => {
     expect(count()).toBe(3);
   });
 
+  it('plays exactly the same cached waveform for the first and every later normal key', () => {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = '<div class="code-editor"><div class="cm-content" contenteditable="true"></div></div>';
+    document.body.append(wrapper);
+    const editor = wrapper.querySelector('.cm-content')!;
+
+    sendKey(editor, 'a');
+    clock += 85;
+    sendKey(editor, 'b');
+    clock += 85;
+    sendKey(editor, 'c');
+    clock += 85;
+    sendKey(editor, 'Enter');
+    clock += 85;
+    sendKey(editor, 'd');
+
+    expect(bursts).toHaveBeenCalledTimes(5);
+    expect(playedWaveforms).toHaveLength(5);
+    expect(playedWaveforms[1]).toBe(playedWaveforms[0]);
+    expect(playedWaveforms[2]).toBe(playedWaveforms[0]);
+    expect(playedWaveforms[4]).toBe(playedWaveforms[0]);
+    expect(playedWaveforms[3]).not.toBe(playedWaveforms[0]);
+    expect(playedWaveforms[0]!.some(value => Math.abs(value) > 0.025)).toBe(true);
+    // One cached normal sample, even when users type many different characters.
+    expect(playedWaveforms[0]!.length).toBe(startedSampleLengths[4]);
+  });
+
   it('uses distinct, softly rounded Pico blips for typing, erase and Enter', () => {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = '<div class="code-editor"><div class="cm-content" contenteditable="true"></div></div>';
