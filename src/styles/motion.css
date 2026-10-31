@@ -40,20 +40,3 @@
   75% { transform: translate3d(0, 2%, 0) scale(1.05); }
   87.5% { transform: translate3d(-2.12%, 1.41%, 0) scale(1.05); }
 }
-
-/* Clouds drift away when the landing page replaces the loading skeleton. */
-@keyframes pico-cloud-clear {
-   0% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-90px); }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .lp::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    pointer-events: none;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 600'%3E%3Cg fill='%23cbb9df' stroke='%23eadcf8' stroke-width='3' opacity='.92'%3E%3Cpath d='M-90 260c0-35 29-63 64-61 15-55 91-65 121-17 44-22 96 9 96 58 0 33-25 56-59 56H-50c-23 0-40-14-40-36Z'/%3E%3Cpath d='M302 165c0-33 28-59 60-57 15-52 86-61 114-16 42-20 90 9 90 54 0 31-24 53-55 53H340c-22 0-38-13-38-34Z'/%3E%3Cpath d='M700 350c0-37 30-66 67-64 16-58 95-68 127-18 47-23 101 10 101 60 0 35-27 59-62 59H742c-25 0-42-15-42-37Z'/%3E%3Cpath d='M190 520c0-26 22-47 48-45 12-42 69-49 91-13 33-16 72 7 72 43 0 25-19 43-44 43H220c-18 0-30-11-30-28Z'/%3E%3C/g%3E%3C/svg%3E") center / cover no-repeat;
-    animation: pico-cloud-clear 1s cubic-bezier(.22,1,.36,1) both;
-  }
-}
