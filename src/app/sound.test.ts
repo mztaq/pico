@@ -5,6 +5,7 @@ import { installSoundEffects, isCompilerTypingKey, soundEnabled } from './sound'
 const bursts = vi.fn();
 const startedSampleLengths: number[] = [];
 const waveforms: Float32Array[] = [];
+const playedWaveforms: Float32Array[] = [];
 let clock = 100_000;
 
 type FakeNode = { connect: (destination?: unknown) => FakeNode };
@@ -27,7 +28,9 @@ class FakeAudioContext {
       buffer: null as { getChannelData: (channel: number) => Float32Array } | null,
       start() {
         bursts();
-        startedSampleLengths.push(source.buffer?.getChannelData(0).length ?? 0);
+        const samples = source.buffer?.getChannelData(0) ?? new Float32Array();
+        startedSampleLengths.push(samples.length);
+        playedWaveforms.push(samples);
       },
     };
     return source;
@@ -65,6 +68,7 @@ beforeEach(() => {
   bursts.mockClear();
   startedSampleLengths.length = 0;
   waveforms.length = 0;
+  playedWaveforms.length = 0;
 });
 afterEach(() => {
   document.body.innerHTML = '';
@@ -129,7 +133,7 @@ describe('compiler typing sounds', () => {
     expect(count()).toBe(3);
   });
 
-  it('gives ordinary keys, deletion and Enter distinct short Pico switch samples', () => {
+  it('uses distinct, softly rounded Pico blips for typing, erase and Enter', () => {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = '<div class="code-editor"><div class="cm-content" contenteditable="true"></div></div>';
     document.body.append(wrapper);
@@ -141,12 +145,17 @@ describe('compiler typing sounds', () => {
     sendKey(editor, 'Enter');
     expect(bursts).toHaveBeenCalledTimes(3);
     expect(startedSampleLengths).toHaveLength(3);
-    // Enter gets a longer, softer confirmation accent, unlike the regular click.
+    // Enter's playful two-note response is longer, while erase stays short.
     expect(startedSampleLengths[2]).toBeGreaterThan(startedSampleLengths[0]);
     expect(startedSampleLengths[1]).toBeLessThan(startedSampleLengths[0]);
-    // All sounds are original generated waveforms, not imported recordings.
-    expect(startedSampleLengths.every(length => length > 1700 && length < 4000)).toBe(true);
-    expect(waveforms.every(samples => samples.some(value => Math.abs(value) > 0.025))).toBe(true);
-    expect(waveforms.every(samples => samples.every(value => Number.isFinite(value) && Math.abs(value) <= 0.95))).toBe(true);
+    // Original synthesized audio. Smooth onset/tail, no noisy clipped transients.
+    expect(startedSampleLengths.every(length => length > 1700 && length < 6000)).toBe(true);
+    expect(playedWaveforms).toHaveLength(3);
+    for (const samples of playedWaveforms) {
+      expect(samples[0]).toBe(0);
+      expect(Math.abs(samples.at(-1) ?? 1)).toBeLessThan(0.015);
+      expect(samples.some(value => Math.abs(value) > 0.025)).toBe(true);
+      expect(samples.every(value => Number.isFinite(value) && Math.abs(value) <= 0.9)).toBe(true);
+    }
   });
 });
