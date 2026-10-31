@@ -3,6 +3,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { installSoundEffects, isCompilerTypingKey, soundEnabled } from './sound';
 
 const bursts = vi.fn();
+const oscillatorStarts = vi.fn();
 const startedSampleLengths: number[] = [];
 const waveforms: Float32Array[] = [];
 const playedWaveforms: Float32Array[] = [];
@@ -40,7 +41,7 @@ class FakeAudioContext {
     return { ...fakeNode(), gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} } };
   }
   createOscillator() {
-    return { ...fakeNode(), type: 'sine', frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, start() {}, stop() {} };
+    return { ...fakeNode(), type: 'sine', frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, start() { oscillatorStarts(); }, stop() {} };
   }
 }
 
@@ -66,6 +67,7 @@ beforeEach(() => {
   localStorage.setItem('pico.sound.v1', 'on');
   clock += 1000;
   bursts.mockClear();
+  oscillatorStarts.mockClear();
   startedSampleLengths.length = 0;
   waveforms.length = 0;
   playedWaveforms.length = 0;
@@ -235,6 +237,49 @@ describe('compiler typing sounds', () => {
     sendKey(editor, 'Enter', { repeat: true });
     sendKey(editor, 'Backspace', { repeat: true });
     expect(count()).toBe(7);
+  });
+
+  it('keeps Did you mean suggestions and live syntax errors silent without muting real run errors', async () => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="code-editor"><div class="cm-content" contenteditable="true"></div></div>';
+    document.body.append(host);
+    await Promise.resolve();
+    oscillatorStarts.mockClear();
+    const editor = host.querySelector('.cm-content')!;
+    sendKey(editor, 'f');
+    expect(bursts).toHaveBeenCalledTimes(1);
+
+    // Typing an incomplete keyword displays a passive autocorrect ribbon and
+    // a live parser diagnostic. Neither should emit the loud error sound.
+    const ribbon = document.createElement('div');
+    ribbon.className = 'suggestion-ribbon';
+    ribbon.innerHTML = '<span>Did you mean?</span><button class="suggestion-chip">IF</button><button class="dismiss-suggestions">Dismiss</button>';
+    const liveError = document.createElement('div');
+    liveError.className = 'runtime-error-card';
+    liveError.textContent = 'Incomplete pseudocode';
+    host.append(ribbon, liveError);
+    await Promise.resolve();
+    expect(oscillatorStarts).not.toHaveBeenCalled();
+
+    const chip = ribbon.querySelector('button.suggestion-chip')!;
+    const dismiss = ribbon.querySelector('button.dismiss-suggestions')!;
+    chip.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true }));
+    dismiss.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true }));
+    chip.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(oscillatorStarts).not.toHaveBeenCalled();
+    expect(bursts).toHaveBeenCalledTimes(1);
+
+    // Running code turns an existing live diagnostic into a real error.
+    liveError.setAttribute('data-sound-error', 'true');
+    await Promise.resolve();
+    expect(oscillatorStarts).toHaveBeenCalledTimes(1);
+
+    const executionError = document.createElement('div');
+    executionError.className = 'runtime-error-card';
+    executionError.setAttribute('data-sound-error', 'true');
+    host.append(executionError);
+    await Promise.resolve();
+    expect(oscillatorStarts).toHaveBeenCalledTimes(2);
   });
 
   it('plays exactly the same cached waveform for the first and every later normal key', () => {
