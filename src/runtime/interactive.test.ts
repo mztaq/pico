@@ -65,7 +65,7 @@ describe('interactive execution', () => {
     expect(run.messages[0]).toEqual({ type: 'output', lines: ['Number 1'] });
     expect(run.request()).toMatchObject({ variable: 'N', dataType: 'INTEGER', line: 4 });
     run.input('3');
-    expect(run.messages[2]).toEqual({ type: 'output', lines: ['6', 'Number 2'] });
+    expect(run.messages.filter((reply): reply is Extract<WorkerReply, { type: 'output' }> => !Array.isArray(reply) && reply.type === 'output').flatMap(reply => reply.lines)).toEqual(['Number 1', '6', 'Number 2']);
     run.input('5');
     expect(run.result().result?.output).toEqual(['Number 1', '6', 'Number 2', '10']);
     expect(run.result().result?.variables.N).toBe(5);
