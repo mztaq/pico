@@ -14,13 +14,22 @@ const pages = [
 ] as const;
 export type InformationPage = typeof pages[number]['id'];
 
+export function informationPageFromPath(pathname: string): InformationPage | null {
+  return pages.find(page => pathname === `/app/${page.id}` || pathname === `/app/${page.id}/`)?.id ?? null;
+}
+
 export function informationPageFromHash(hash: string): InformationPage | null {
   return pages.find(page => hash === `#${page.id}`)?.id ?? null;
 }
 
 export function SiteInfoLinks({ current }: { current?: InformationPage }) {
   return <nav className="site-info-links" aria-label="Pico information">
-    {pages.map(({ id, title, icon: Icon }) => <a key={id} href={`#${id}`} aria-current={current === id ? 'page' : undefined}>
+    {pages.map(({ id, title, icon: Icon }) => <a key={id} href={`/app/${id}`} aria-current={current === id ? 'page' : undefined} onClick={event => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      window.history.pushState(window.history.state, '', `/app/${id}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }}>
       <Icon size={17} aria-hidden="true" /><span>{title}</span>
     </a>)}
   </nav>;

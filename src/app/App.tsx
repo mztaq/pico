@@ -20,8 +20,8 @@ import { TutorialOffer } from './components/TutorialOffer';
 import { HighlightedCode } from './components/HighlightedCode';
 import { UpdateCenter } from './components/UpdateCenter';
 import { HomeScreen } from './components/HomeScreen';
-import { workspaceFromSearch } from './workspace-deeplink';
-import { SiteInfo, informationPageFromHash } from './components/SiteInfo';
+import { workspaceFromLocation, workspaceUrl, type PicoWorkspace } from './workspace-deeplink';
+import { SiteInfo, informationPageFromHash, informationPageFromPath, type InformationPage } from './components/SiteInfo';
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
 import { WorkspaceTransition } from './components/WorkspaceTransition';
 import {useExitWarning} from './components/useExitWarning';
@@ -56,32 +56,39 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 function closeInformationPage() {
-  const url = new URL(window.location.href);
-  url.hash = '';
-  window.history.pushState(window.history.state, '', url.pathname + url.search);
-  window.dispatchEvent(new HashChangeEvent('hashchange'));
+  window.history.pushState(window.history.state, '', '/app');
+  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 export default function App() {
-  const [language, setLanguage] = useState<CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | null>(() => workspaceFromSearch(window.location.search));
-  const [informationPage, setInformationPage] = useState(() => informationPageFromHash(window.location.hash));
+  const [language, setLanguageState] = useState<PicoWorkspace | null>(() => workspaceFromLocation(window.location.pathname, window.location.search));
+  const setLanguage = (next: PicoWorkspace | null) => {
+    const target = workspaceUrl(next);
+    const current = window.location.pathname + window.location.search;
+    if (current !== target && window.location.pathname !== '/' ) window.history.pushState(window.history.state, '', target);
+    setLanguageState(next);
+  };
   useEffect(() => {
-    const onHashChange = () => {
-      const page = informationPageFromHash(window.location.hash);
+    const onPopState = () => setLanguageState(workspaceFromLocation(window.location.pathname, window.location.search));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+  const [informationPage, setInformationPage] = useState<InformationPage | null>(() => informationPageFromPath(window.location.pathname) ?? informationPageFromHash(window.location.hash));
+  useEffect(() => {
+    const syncInformation = () => {
+      const page = informationPageFromPath(window.location.pathname) ?? informationPageFromHash(window.location.hash);
       setInformationPage(page);
-      if (page) setLanguage(null);
+      if (page) setLanguageState(null);
     };
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
+    window.addEventListener('popstate', syncInformation);
+    window.addEventListener('hashchange', syncInformation);
+    return () => {
+      window.removeEventListener('popstate', syncInformation);
+      window.removeEventListener('hashchange', syncInformation);
+    };
   }, []);
   useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : 'Pico | Home'; }, [language, informationPage]);
-  useEffect(() => {
-    if (language !== null) return;
-    const url = new URL(window.location.href);
-    if (!url.searchParams.has('tool')) return;
-    url.searchParams.delete('tool');
-    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
-  }, [language]);
+  // Workspace URLs are updated by setLanguage, and popstate restores browser history.
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {

@@ -167,22 +167,22 @@ export default function LandingPage() {
           <div className="lp-feature-group">
             <div className="lp-feature-category"><h3>Programming</h3></div>
             <div className="lp-feature-items">
-              <a className="lp-feature-item" href="/app?tool=pseudocode" aria-label="Open Pseudocode in Pico"><span className="lp-feature-item-head"><h4>Pseudocode</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Write and run pseudocode.</p></a>
-              <a className="lp-feature-item" href="/app?tool=python" aria-label="Open Python in Pico"><span className="lp-feature-item-head"><h4>Python</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Execute Python code.</p></a>
+              <a className="lp-feature-item" href="/app/pseudocode" aria-label="Open Pseudocode in Pico"><span className="lp-feature-item-head"><h4>Pseudocode</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Write and run pseudocode.</p></a>
+              <a className="lp-feature-item" href="/app/python" aria-label="Open Python in Pico"><span className="lp-feature-item-head"><h4>Python</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Execute Python code.</p></a>
             </div>
           </div>
           <div className="lp-feature-group">
             <div className="lp-feature-category"><h3>Visual tools</h3></div>
             <div className="lp-feature-items">
-              <a className="lp-feature-item" href="/app?tool=flowchart" aria-label="Open Flowchart Builder in Pico"><span className="lp-feature-item-head"><h4>Flowchart Builder</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Build and run flowcharts.</p></a>
-              <a className="lp-feature-item" href="/app?tool=logic" aria-label="Open Logic Sim in Pico"><span className="lp-feature-item-head"><h4>Logic Sim</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Test logic circuits.</p></a>
+              <a className="lp-feature-item" href="/app/flowchart" aria-label="Open Flowchart Builder in Pico"><span className="lp-feature-item-head"><h4>Flowchart Builder</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Build and run flowcharts.</p></a>
+              <a className="lp-feature-item" href="/app/logic" aria-label="Open Logic Sim in Pico"><span className="lp-feature-item-head"><h4>Logic Sim</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Test logic circuits.</p></a>
             </div>
           </div>
           <div className="lp-feature-group">
             <div className="lp-feature-category"><h3>Computer systems</h3></div>
             <div className="lp-feature-items">
-              <a className="lp-feature-item" href="/app?tool=cpu" aria-label="Open CPU Studio in Pico"><span className="lp-feature-item-head"><h4>CPU Studio</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Explore CPU execution.</p></a>
-              <a className="lp-feature-item" href="/app?tool=binary" aria-label="Open Binary Lab in Pico"><span className="lp-feature-item-head"><h4>Binary Lab</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Convert binary and hexadecimal.</p></a>
+              <a className="lp-feature-item" href="/app/cpu" aria-label="Open CPU Studio in Pico"><span className="lp-feature-item-head"><h4>CPU Studio</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Explore CPU execution.</p></a>
+              <a className="lp-feature-item" href="/app/binary" aria-label="Open Binary Lab in Pico"><span className="lp-feature-item-head"><h4>Binary Lab</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Convert binary and hexadecimal.</p></a>
             </div>
           </div>
         </div>

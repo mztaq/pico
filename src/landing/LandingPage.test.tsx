@@ -120,8 +120,8 @@ describe('Pico landing page', () => {
     expect(container.querySelector('.lp-feature-card')).toBeNull();
     const links=[...container.querySelectorAll<HTMLAnchorElement>('.lp-feature-item')];
     expect(links.map(link=>link.getAttribute('href'))).toEqual([
-      '/app?tool=pseudocode','/app?tool=python','/app?tool=flowchart',
-      '/app?tool=logic','/app?tool=cpu','/app?tool=binary',
+      '/app/pseudocode','/app/python','/app/flowchart',
+      '/app/logic','/app/cpu','/app/binary',
     ]);
     expect(links.every(link=>link.getAttribute('aria-label')?.startsWith('Open '))).toBe(true);
     const layout=container.querySelector('main > .lp-tools-downloads');

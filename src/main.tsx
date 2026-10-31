@@ -7,6 +7,8 @@ import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
+import { workspaceFromLocation } from './app/workspace-deeplink';
+import { informationPageFromPath } from './app/components/SiteInfo';
 import { HomeLoading, WorkspaceLoading, type VisualWorkspace } from './app/components/WorkspaceLoading';
 import './styles/tokens.css';
 import './styles/motion.css';
@@ -38,9 +40,9 @@ function SkipToContent() {
 // there only inside their native webviews, without changing the browser URL.
 const inApp = shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window));
 const isHomePage = (window.location.pathname === '/' || window.location.pathname === '/index.html') && !inApp;
-// The /app?tool=... deep link also needs a matching skeleton before App's chunk arrives.
-function directVisualWorkspace(search: string): VisualWorkspace | null {
-  switch (new URLSearchParams(search).get('tool')) {
+// Direct workspace paths and legacy query links share the same loading skeleton.
+function directVisualWorkspace(pathname: string, search: string): VisualWorkspace | null {
+  switch (workspaceFromLocation(pathname, search)) {
     case 'flowchart': return 'Flowchart Builder';
     case 'logic': return 'Logic Sim';
     case 'cpu': return 'CPU Studio';
@@ -48,9 +50,10 @@ function directVisualWorkspace(search: string): VisualWorkspace | null {
     default: return null;
   }
 }
-const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.search) : null;
+const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.pathname, window.location.search) : null;
 const initialHomeScreen = inApp &&
-  !new URLSearchParams(window.location.search).has('tool') &&
+  !workspaceFromLocation(window.location.pathname, window.location.search) &&
+  !informationPageFromPath(window.location.pathname) &&
   !window.location.hash;
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
