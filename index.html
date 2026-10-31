@@ -47,7 +47,9 @@
       @media(max-width:700px){.pico-skeleton-nav{height:66px;padding-inline:19px}.pico-skeleton-hero,.pico-skeleton-cards{width:calc(100% - 40px)}}
 
       /* Home skeleton is visible even before React downloads. Keep landing loader separate. */
-      .pico-initial-home-loading{display:none;min-height:100dvh;height:100dvh;overflow-y:auto;box-sizing:border-box;background:#1e1e2e;color:#cdd6f4;font-family:system-ui,sans-serif}
+      /* Keep this single pre-React skeleton visible until the real home screen mounts.
+         React may render a lazy fallback behind it, but the user sees no loader swap. */
+      .pico-initial-home-loading{display:none;position:fixed;inset:0;z-index:1000;min-height:100dvh;height:100dvh;overflow-y:auto;box-sizing:border-box;background:#1e1e2e;color:#cdd6f4;font-family:system-ui,sans-serif}
       .pico-initial-home-route .pico-initial-home-loading{display:block}
       .pico-initial-home-loading *{box-sizing:border-box}
       .pico-initial-home-nav{height:60px;padding:0 max(20px,calc(50% - 540px));display:flex;align-items:center;justify-content:space-between}
@@ -96,7 +98,7 @@
     </style>
   </head>
   <body>
-    <div id="root"><div class="pico-loading" role="status"><span class="pico-loading-label">Loading Pico…</span><div aria-hidden="true"><div class="pico-skeleton-nav"><div class="pico-skeleton pico-skeleton-logo"></div><div class="pico-skeleton-links"><div class="pico-skeleton pico-skeleton-link" data-placeholder-for="#home"></div><div class="pico-skeleton pico-skeleton-link" data-placeholder-for="#features"></div><div class="pico-skeleton pico-skeleton-link" data-placeholder-for="#downloads"></div></div></div><div class="pico-skeleton-hero"><div class="pico-skeleton-copy"><div class="pico-skeleton pico-skeleton-title"></div><div class="pico-skeleton pico-skeleton-title"></div><div class="pico-skeleton pico-skeleton-line"></div><div class="pico-skeleton-actions"><div class="pico-skeleton pico-skeleton-button" data-placeholder-for="/app"></div><div class="pico-skeleton pico-skeleton-button" data-placeholder-for="#downloads"></div></div></div><div class="pico-skeleton pico-skeleton-preview"></div></div><div class="pico-skeleton-cards"><div class="pico-skeleton pico-skeleton-card"></div><div class="pico-skeleton pico-skeleton-card"></div><div class="pico-skeleton pico-skeleton-card"></div></div></div></div>
+    <div id="root"><div class="pico-loading" role="status"><span class="pico-loading-label">Loading Pico…</span><div aria-hidden="true"><div class="pico-skeleton-nav"><div class="pico-skeleton pico-skeleton-logo"></div><div class="pico-skeleton-links"><div class="pico-skeleton pico-skeleton-link" data-placeholder-for="#home"></div><div class="pico-skeleton pico-skeleton-link" data-placeholder-for="#features"></div><div class="pico-skeleton pico-skeleton-link" data-placeholder-for="#downloads"></div></div></div><div class="pico-skeleton-hero"><div class="pico-skeleton-copy"><div class="pico-skeleton pico-skeleton-title"></div><div class="pico-skeleton pico-skeleton-title"></div><div class="pico-skeleton pico-skeleton-line"></div><div class="pico-skeleton-actions"><div class="pico-skeleton pico-skeleton-button" data-placeholder-for="/app"></div><div class="pico-skeleton pico-skeleton-button" data-placeholder-for="#downloads"></div></div></div><div class="pico-skeleton pico-skeleton-preview"></div></div><div class="pico-skeleton-cards"><div class="pico-skeleton pico-skeleton-card"></div><div class="pico-skeleton pico-skeleton-card"></div><div class="pico-skeleton pico-skeleton-card"></div></div></div></div></div>
     <div class="pico-initial-home-loading" role="status" aria-label="Opening Pico home">
       <div class="pico-initial-home-nav" aria-hidden="true"><div class="pico-skeleton" style="width:76px;height:32px"></div><div class="pico-initial-home-nav-actions"><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div></div>
       <div class="pico-initial-home-inner" aria-hidden="true">
@@ -114,7 +116,6 @@
           <div class="pico-initial-home-group pico-initial-home-data"><div class="pico-initial-home-group-head"><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div><div class="pico-initial-home-cards"><div class="pico-initial-home-card"><div class="pico-initial-home-card-art"><div class="pico-skeleton"></div></div><div class="pico-initial-home-card-copy"><div class="pico-skeleton"></div><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div></div></div></div>
         </div>
       </div>
-    </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
