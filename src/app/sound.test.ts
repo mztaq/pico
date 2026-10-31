@@ -3,6 +3,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { installSoundEffects, isCompilerTypingKey, soundEnabled } from './sound';
 
 const bursts = vi.fn();
+const startedSampleLengths: number[] = [];
+const waveforms: Float32Array[] = [];
 let clock = 100_000;
 
 type FakeNode = { connect: (destination?: unknown) => FakeNode };
@@ -14,8 +16,22 @@ class FakeAudioContext {
   sampleRate = 44100;
   destination = {};
   resume() { return Promise.resolve(); }
-  createBuffer() { return { getChannelData: () => new Float32Array(2048) }; }
-  createBufferSource() { bursts(); return { ...fakeNode(), buffer: null, start() {} }; }
+  createBuffer(_channels: number, length: number) {
+    const values = new Float32Array(length);
+    waveforms.push(values);
+    return { getChannelData: () => values };
+  }
+  createBufferSource() {
+    const source = {
+      ...fakeNode(),
+      buffer: null as { getChannelData: (channel: number) => Float32Array } | null,
+      start() {
+        bursts();
+        startedSampleLengths.push(source.buffer?.getChannelData(0).length ?? 0);
+      },
+    };
+    return source;
+  }
   createBiquadFilter() { return { ...fakeNode(), type: 'bandpass', frequency: { value: 0 }, Q: { value: 0 } }; }
   createGain() {
     return { ...fakeNode(), gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} } };
@@ -47,6 +63,8 @@ beforeEach(() => {
   localStorage.setItem('pico.sound.v1', 'on');
   clock += 1000;
   bursts.mockClear();
+  startedSampleLengths.length = 0;
+  waveforms.length = 0;
 });
 afterEach(() => {
   document.body.innerHTML = '';
@@ -109,5 +127,25 @@ describe('compiler typing sounds', () => {
     sendKey(editor, 'q');
     sendInput(editor, 'insertText');
     expect(count()).toBe(3);
+  it('gives ordinary keys, deletion and Enter distinct short Pico switch samples', () => {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = '<div class="code-editor"><div class="cm-content" contenteditable="true"></div></div>';
+    document.body.append(wrapper);
+    const editor = wrapper.querySelector('.cm-content')!;
+    sendKey(editor, 'a');
+    clock += 70;
+    sendKey(editor, 'Backspace');
+    clock += 70;
+    sendKey(editor, 'Enter');
+    expect(bursts).toHaveBeenCalledTimes(3);
+    expect(startedSampleLengths).toHaveLength(3);
+    // Enter gets a longer, softer confirmation accent, unlike the regular click.
+    expect(startedSampleLengths[2]).toBeGreaterThan(startedSampleLengths[0]);
+    expect(startedSampleLengths[1]).toBeLessThan(startedSampleLengths[0]);
+    // All sounds are original generated waveforms, not imported recordings.
+    expect(startedSampleLengths.every(length => length > 1700 && length < 4000)).toBe(true);
+    expect(waveforms.every(samples => samples.some(value => Math.abs(value) > 0.025))).toBe(true);
+    expect(waveforms.every(samples => samples.every(value => Number.isFinite(value) && Math.abs(value) <= 0.95))).toBe(true);
+  });
   });
 });
