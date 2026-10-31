@@ -90,7 +90,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq librsvg2-bin
-          rsvg-convert --width 1200 --height 630 public/social-preview.svg --output public/social-preview.png
+          rsvg-convert --width 1200 --height 630 public/pico-social-preview.svg --output public/social-preview.png
           file public/social-preview.png
           test "$(stat -c %s public/social-preview.png)" -gt 10000
       - name: Build and check
