@@ -1,5 +1,5 @@
 import { lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ArrowLeft, ChevronDown, CircleHelp, Code2, Download, FileCode2, Keyboard, Play, Plus, Search, Settings2, Sparkles, Upload, X } from 'lucide-react';
+import { BookOpen, ArrowLeft, ChevronDown, CircleHelp, Download, FileCode2, Keyboard, Play, Plus, Search, Settings2, Sparkles, Upload, X } from 'lucide-react';
 import { compile, synchronizeAutoDeclarations } from '../language';
 import type { DataType, Program } from '../language/ast';
 import { CodeEditor, type EditorHandle } from './components/CodeEditor';
