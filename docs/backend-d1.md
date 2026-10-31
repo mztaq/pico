@@ -14,7 +14,7 @@ Pico uses an opt-in Cloudflare D1 backend for anonymous workspace usage and opti
 - `GET /api/preferences`: read settings, gated by preference consent.
 - `PUT /api/preferences`: update theme, last workspace, and settings JSON.
 - `DELETE /api/preferences`: delete stored preferences.
-- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to five workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice.
+- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to six workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice. The six counters are `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, and `binary_lab_seconds`.
 
 ## Before new releases
 - Run `pnpm install`, `pnpm check`, `pnpm test`, and `pnpm build`. Review GitHub Actions results and run these checks locally when changing the backend.
@@ -55,6 +55,35 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 4. Verify `GET /api/cookies` still returns `database: connected`. Click Accept All and verify POST returns 200.
 5. Verify `POST /api/usage` sends a batch ID and one to five workspace entries. Replaying the **same** batch ID must return `applied:false` and leave totals unchanged.
 6. Check that excessively repeated requests return HTTP 429. The current per-minute ceilings are cookies 12, preferences 20 and usage 24 requests per IP address. Shared school networks may hit these sooner.
+
+## Binary Lab usage counter migration (required before releasing)
+
+Binary Lab is an additional analytics workspace. Its opt-in active-time total belongs in `pico_usage.binary_lab_seconds`, alongside the original five counters.
+
+The new application code includes the sixth field in **every** usage update. To prevent previously working analytics requests from failing with a missing-column SQL error, **apply `migrations/0003_binary_lab_usage.sql` to the correct D1 database before merging/deploying this PR**. Cloudflare Pages CI does not apply D1 migrations automatically.
+
+1. Identify the separate Preview and Production D1 database bindings named `DB` in Cloudflare Pages. Take a database backup before changing Production.
+2. In each appropriate D1 Console, verify that `pico_usage` exists and inspect its columns:
+   ```sql
+   PRAGMA table_info(pico_usage);
+   SELECT sql FROM sqlite_master WHERE type='table' AND name='pico_visitors';
+   ```
+   If `pico_visitors.last_workspace` or `most_used_workspace` has a CHECK constraint listing only the original five workspaces, update that constraint safely in a separate reviewed migration before deploying this API.
+3. Apply the one-time SQL statement from `migrations/0003_binary_lab_usage.sql`:
+   ```sql
+   ALTER TABLE pico_usage
+     ADD COLUMN binary_lab_seconds INTEGER NOT NULL DEFAULT 0
+     CHECK (binary_lab_seconds >= 0);
+   ```
+   **Do not re-run the ALTER TABLE** once the column is present. This adds the counter without deleting previous usage totals.
+4. Verify the column and initial values:
+   ```sql
+   PRAGMA table_info(pico_usage);
+   SELECT binary_lab_seconds FROM pico_usage LIMIT 5;
+   ```
+5. After migration, merge/deploy the updated API, accept Analytics on a test browser, spend time in Binary Lab, and verify `binary_lab_seconds` increments. Also test the five existing workspaces, Preferences sync, and an idempotent repeated batch.
+
+If using Wrangler instead of the D1 Console, ensure you target the correct existing D1 database by name and specify `--remote` with the migration SQL file. Do not run a remote database migration on the wrong environment. Applying this migration in GitHub source control alone does not modify the live D1 database.
 
 ## Scheduled retention cleanup
 
