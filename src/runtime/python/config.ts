@@ -12,6 +12,7 @@ export interface PythonRequest {
   sources: Record<string, string>;
   inputBuffer?: SharedArrayBuffer;
   outputAck?: SharedArrayBuffer;
+  lineAck?: SharedArrayBuffer;
 }
 
 export type PythonWorkerRequest = PythonRequest | { type: 'prepare' };
