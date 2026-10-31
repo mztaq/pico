@@ -138,6 +138,8 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const [result, setResult] = useState<RunResult | null>(null);
   const [executionError, setExecutionError] = useState<ReturnType<typeof friendlyError> | null>(null);
   const [debugIndex, setDebugIndex] = useState(0);
+  const [playbackLines, setPlaybackLines] = useState<number[]>([]);
+  const [playbackIndex, setPlaybackIndex] = useState(0);
   const [selectedDoc, setSelectedDoc] = useState<ReferenceKeyword>('OUTPUT');
   const [docSearch, setDocSearch] = useState('');
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
@@ -172,6 +174,15 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const visibleError = executionError ?? parseError;
   const suggestions = useMemo(() => !isPython && settings.autocorrect && !dismissedSuggestions ? findSuggestions(activeFile.code).slice(0, 3) : [], [activeFile.code, settings.autocorrect, dismissedSuggestions]);
   const currentStep = activePanel === 'debugger' ? result?.trace[debugIndex] : undefined;
+  const executionLine = playbackLines[playbackIndex] ?? currentStep?.line;
+  useEffect(() => {
+    if (!playbackLines.length) return;
+    const timer = window.setTimeout(() => {
+      if (playbackIndex + 1 >= playbackLines.length) setPlaybackLines([]);
+      else setPlaybackIndex(index => index + 1);
+    }, Math.max(60, Math.min(220, 5000 / playbackLines.length)));
+    return () => window.clearTimeout(timer);
+  }, [playbackLines, playbackIndex]);
 
   useEffect(() => { if (isPython) preloadPythonRuntime(); }, [isPython]);
   useEffect(() => () => { const job = jobRef.current; jobRef.current = null; job?.cancel(); }, []);
@@ -243,6 +254,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       autoDeclaredTypesRef.current[activeFile.id] = autoDeclaredTypes;
     }
     setDismissedSuggestions(false);
+    setPlaybackLines([]);
     setExecutionError(null); setResult(null); setConsoleEntries([]); setOutputTruncated(false);
     updateProject(project => ({ ...project, code, files: project.files.map(file => file.id === project.activeFileId ? { ...file, code, autoDeclaredTypes } : file), updatedAt: Date.now() }));
   }
@@ -321,6 +333,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   async function executeProgram(debug = false) {
     if (!isPython && !parsed.ast) return;
     jobRef.current?.cancel();
+    setPlaybackLines([]);
     setDockOpen(true);
     setConsoleEntries([]); setOutputTruncated(false); setPendingInput(null); setInputValue(''); setResult(null); setActivePanel('console');
     setOutputTruncated(false); setRunStatus(''); consoleCount.current = 0;
@@ -345,6 +358,12 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     jobRef.current=null;setRunning(false);setPendingInput(null);
     const next=reply?.result;
     setResult(next??null); setDebugIndex(0);
+    if (next?.trace?.length && !reply?.error) {
+      const lines = next.trace.map(step => step.line).filter((line): line is number => typeof line === 'number' && line > 0);
+      const stride = Math.max(1, Math.ceil(lines.length / 100));
+      setPlaybackIndex(0);
+      setPlaybackLines(lines.filter((_, index) => index % stride === 0));
+    }
     setRunStatus('');
     if (reply?.error?.code === 'cancelled') {
       setConsoleEntries(entries => [...entries, { kind: 'note', text: 'Execution stopped.' }].slice(-MAX_CONSOLE_LINES) as ConsoleEntry[]);
@@ -461,7 +480,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           <section className="editor-card" data-tour="editor">
             <div className="file-tabs" role="tablist" aria-label="Project files">{activeProject.files.map(file => <div className={`file-tab ${file.id === activeFile.id ? 'active' : ''}`} key={file.id} role="tab" aria-selected={file.id === activeFile.id} onDoubleClick={() => renameFile(file)}><button className="file-tab-select" onClick={() => selectFile(file.id)} title={`${file.name} · double-click to rename`}><FileCode2 size={12} /><span>{file.name}</span></button><button className="file-tab-close" onClick={() => closeFile(file)} aria-label={`Close ${file.name}`} title="Close file"><X size={11} /></button></div>)}<button className="file-tab-new" onClick={createFile} title="New file" aria-label="New file"><Plus size={13} /></button></div>
             {suggestions.length > 0 && <div className="suggestion-ribbon"><Sparkles size={13} /><span>Did you mean?</span>{suggestions.map((suggestion, index) => <button className="suggestion-chip" key={`${suggestion.line}-${suggestion.column}-${index}`} onClick={() => applySuggestion(suggestion)}><code>{suggestion.original}</code><span>→</span><b>{suggestion.replacement}</b><small>line {suggestion.line}</small></button>)}<button className="dismiss-suggestions" title="Dismiss suggestions" onClick={() => setDismissedSuggestions(true)}><X size={13} /></button></div>}
-            <div className="editor-body"><CodeEditor ref={editorRef} language={language} value={activeFile.code} onChange={updateCode} preferences={settings} theme={theme} currentLine={currentStep?.line} errorLine={visibleError?.line} /></div>
+            <div className="editor-body"><CodeEditor ref={editorRef} language={language} value={activeFile.code} onChange={updateCode} preferences={settings} theme={theme} currentLine={executionLine} errorLine={visibleError?.line} /></div>
             <div className="editor-card-foot"><span><Keyboard size={12} /> <kbd>⌘</kbd> <kbd>↵</kbd> to run <span className="shortcut-separator">·</span> <kbd>Ctrl G</kbd> go to line</span></div>
           </section>
 
