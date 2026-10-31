@@ -88,13 +88,12 @@ export default function App() {
     if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu' && language !== 'binary') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
-  if (informationPage) return <>
-    <div className="site-info-home-underlay" inert aria-hidden="true">
+  if (informationPage || !language) return <>
+    <div className="site-info-home-underlay" inert={Boolean(informationPage)} aria-hidden={informationPage ? true : undefined}>
       <HomeScreen onChoose={setLanguage} />
     </div>
-    <SiteInfo page={informationPage} onClose={closeInformationPage} />
+    {informationPage && <SiteInfo page={informationPage} onClose={closeInformationPage} />}
   </>;
-  if (!language) return <HomeScreen onChoose={setLanguage} />;
   if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><WorkspaceTransition workspace="CPU Studio"><CpuStudio onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'binary') return <WorkspaceLoadBoundary key="binary" workspace="Binary Lab"><WorkspaceTransition workspace="Binary Lab"><BinaryLab onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
