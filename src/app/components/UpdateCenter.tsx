@@ -93,6 +93,10 @@ export function UpdateCenter() {
   }, [refresh]);
 
   useEffect(() => {
+    if (toast) markSeen(toast);
+  }, [toast, markSeen]);
+
+  useEffect(() => {
     if (!toast || exiting || dialogOpen) return;
     const timeout = window.setTimeout(() => dismissToast(), TOAST_AUTO_DISMISS_MS);
     return () => window.clearTimeout(timeout);
