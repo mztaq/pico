@@ -168,8 +168,8 @@ export default function LandingPage() {
         <h1>By the<br/><span className="lp-hero-highlight">Pico Team.</span></h1>
         <p>Built by Students, for Students</p>
         <div className="lp-hero-actions">
-          <a className="lp-button lp-button-primary" href={APP}>Use Pico in browser <ArrowUpRight size={17}/></a>
-          <a className="lp-button lp-button-secondary" href={DOWNLOADS}>Download for desktop <Download size={17}/></a>
+          <a className="lp-button lp-button-primary" href={APP}><span>Use Pico in browser</span><ArrowUpRight size={18} aria-hidden="true"/></a>
+          <a className="lp-button lp-button-secondary" href={DOWNLOADS}><span>Download for desktop</span><Download size={18} aria-hidden="true"/></a>
         </div>
       </div>
       <div className="lp-hero-cpu" id="cpu-studio">
