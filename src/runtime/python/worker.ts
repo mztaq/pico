@@ -55,7 +55,12 @@ export function installPythonWorker(scope: PythonWorkerScope, load: () => Promis
         stdout: line => postOutput('output', line),
         stderr: line => postOutput('stderr', line),
         flush: flushOutput,
-        onLine: line => scope.postMessage({ type: 'line', line }),
+        onLine: line => {
+          const lineAck = request.lineAck ? new Int32Array(request.lineAck) : undefined;
+          if (lineAck) Atomics.store(lineAck, 0, 0);
+          scope.postMessage({ type: 'line', line });
+          if (lineAck) while (Atomics.load(lineAck, 0) === 0) Atomics.wait(lineAck, 0, 0);
+        },
         readInput: (_prompt, line) => {
           flushOutput();
           if (!request.inputBuffer) throw new Error('Python input needs an updated browser and the site’s isolation headers. Reload this page.');
