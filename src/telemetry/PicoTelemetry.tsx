@@ -13,6 +13,7 @@ const workspaces: Record<string,string> = {
   'Pico | Pseudocode Compiler': 'pseudocode',
   'Pico | Flowchart Builder': 'flowchart',
   'Pico | CPU Studio': 'cpu',
+  'Pico | Binary Lab': 'binary',
 };
 
 async function post(path: string, value: unknown) {

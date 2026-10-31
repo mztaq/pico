@@ -14,7 +14,7 @@ Pico uses an opt-in Cloudflare D1 backend for anonymous workspace usage and opti
 - `GET /api/preferences`: read settings, gated by preference consent.
 - `PUT /api/preferences`: update theme, last workspace, and settings JSON.
 - `DELETE /api/preferences`: delete stored preferences.
-- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to five workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice.
+- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to six workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice. The six counters are `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, and `binary_lab_seconds`.
 
 ## Before new releases
 - Run `pnpm install`, `pnpm check`, `pnpm test`, and `pnpm build`. Review GitHub Actions results and run these checks locally when changing the backend.
@@ -53,8 +53,40 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 2. In Cloudflare Pages → picompiler → Settings → Preview → Variables and secrets, add a secret variable named `RATE_LIMIT_SECRET`. Generate a unique random value at least 32 characters long. Do not commit the secret to GitHub or paste it into chat.
 3. Redeploy the feature-branch preview.
 4. Verify `GET /api/cookies` still returns `database: connected`. Click Accept All and verify POST returns 200.
-5. Verify `POST /api/usage` sends a batch ID and one to five workspace entries. Replaying the **same** batch ID must return `applied:false` and leave totals unchanged.
+5. Verify `POST /api/usage` sends a batch ID and one to six workspace entries. Replaying the **same** batch ID must return `applied:false` and leave totals unchanged.
 6. Check that excessively repeated requests return HTTP 429. The current per-minute ceilings are cookies 12, preferences 20 and usage 24 requests per IP address. Shared school networks may hit these sooner.
+
+## Binary Lab usage counter migration (required before releasing)
+
+The sixth workspace uses `pico_usage.binary_lab_seconds` for opt-in active time. Place **`last_updated` immediately after `visitor_id`**, followed by the five existing usage counters and `binary_lab_seconds` at the end. The migration uses the original production table definition supplied from the D1 Console.
+
+Cloudflare D1/SQLite appends columns with `ALTER TABLE ADD COLUMN`. Migration `migrations/0003_binary_lab_usage.sql` therefore creates `pico_usage_reordered` with the intended order, copies **every existing visitor ID, five usage totals, and timestamp**, initializes Binary Lab time to zero, then replaces the original table. It preserves the primary key and `ON DELETE CASCADE` foreign key to `pico_visitors`.
+
+**Do not deploy or merge the API until the migration has been applied successfully.** The API includes the sixth counter in all usage writes, so a missing column will break tracking for every workspace.
+
+1. Confirm the matching Cloudflare Pages D1 database binding `DB`, and back up the live database. Test the migration on a separate Preview D1 database first.
+2. Inspect the existing schema and check for custom indexes, triggers, dependent tables, or restrictive visitor-workspace CHECK constraints. Stop and adapt the migration if additional table dependencies are present:
+   ```sql
+   PRAGMA table_info(pico_usage);
+   SELECT type, name, sql FROM sqlite_master
+     WHERE tbl_name='pico_usage' AND type IN ('index','trigger') AND sql IS NOT NULL;
+   SELECT type, name, sql FROM sqlite_master
+     WHERE type='table' AND sql LIKE '%REFERENCES pico_usage%';
+   SELECT sql FROM sqlite_master WHERE type='table' AND name='pico_visitors';
+   ```
+3. Use the migration file with the **transactional Cloudflare D1 migrations runner** on the intended database. Configure Wrangler to target the correct database and verify whether older migrations were already manually applied, to avoid replaying them. Cloudflare's `wrangler d1 migrations apply` backs up the database and rolls back failed migrations. Avoid pasting individual `DROP TABLE` steps into the dashboard.
+4. Verify the new field order and data integrity:
+   ```sql
+   PRAGMA table_info(pico_usage);
+   PRAGMA foreign_key_check;
+   SELECT visitor_id, last_updated, logic_sim_seconds, python_seconds,
+          pseudocode_seconds, flowchart_seconds, cpu_studio_seconds, binary_lab_seconds
+     FROM pico_usage LIMIT 5;
+   ```
+   The expected order is `visitor_id`, `last_updated`, `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, `binary_lab_seconds`. Check original totals and row counts against the backup. New binary totals should be zero.
+5. Migrate Production only after Preview verification, then merge/deploy the API, accept Analytics on a test browser and spend time in Binary Lab. Verify that only `binary_lab_seconds` increments, and the other five workspace counters, Preferences API, and idempotent batch retries still work.
+
+This is a **one-time** table rebuild. If the sixth column already exists, do not re-run this migration. Applying the SQL file in GitHub does not alter the live database.
 
 ## Scheduled retention cleanup
 
