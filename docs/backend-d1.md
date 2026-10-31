@@ -58,7 +58,7 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 
 ## Binary Lab usage counter migration (required before releasing)
 
-The sixth workspace uses `pico_usage.binary_lab_seconds` for opt-in active time. Its **physical position must be immediately before `last_updated`**, matching the existing production schema supplied from the D1 Console.
+The sixth workspace uses `pico_usage.binary_lab_seconds` for opt-in active time. Place **`last_updated` immediately after `visitor_id`**, followed by the five existing usage counters and `binary_lab_seconds` at the end. The migration uses the original production table definition supplied from the D1 Console.
 
 Cloudflare D1/SQLite appends columns with `ALTER TABLE ADD COLUMN`. Migration `migrations/0003_binary_lab_usage.sql` therefore creates `pico_usage_reordered` with the intended order, copies **every existing visitor ID, five usage totals, and timestamp**, initializes Binary Lab time to zero, then replaces the original table. It preserves the primary key and `ON DELETE CASCADE` foreign key to `pico_visitors`.
 
@@ -79,11 +79,11 @@ Cloudflare D1/SQLite appends columns with `ALTER TABLE ADD COLUMN`. Migration `m
    ```sql
    PRAGMA table_info(pico_usage);
    PRAGMA foreign_key_check;
-   SELECT visitor_id, logic_sim_seconds, python_seconds, pseudocode_seconds,
-          flowchart_seconds, cpu_studio_seconds, binary_lab_seconds, last_updated
+   SELECT visitor_id, last_updated, logic_sim_seconds, python_seconds,
+          pseudocode_seconds, flowchart_seconds, cpu_studio_seconds, binary_lab_seconds
      FROM pico_usage LIMIT 5;
    ```
-   The expected order is `visitor_id`, `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, `binary_lab_seconds`, `last_updated`. Check original totals and row counts against the backup. New binary totals should be zero.
+   The expected order is `visitor_id`, `last_updated`, `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, `binary_lab_seconds`. Check original totals and row counts against the backup. New binary totals should be zero.
 5. Migrate Production only after Preview verification, then merge/deploy the API, accept Analytics on a test browser and spend time in Binary Lab. Verify that only `binary_lab_seconds` increments, and the other five workspace counters, Preferences API, and idempotent batch retries still work.
 
 This is a **one-time** table rebuild. If the sixth column already exists, do not re-run this migration. Applying the SQL file in GitHub does not alter the live database.
