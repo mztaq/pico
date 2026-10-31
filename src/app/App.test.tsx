@@ -65,7 +65,7 @@ describe('workspace execution integration',()=>{
     expect([...container.querySelectorAll('.output-line > span:last-child')].map(line=>line.textContent)).toEqual(['Enter your name','Ada','Hello Ada!']);
     await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     await typeValue(consoleInput(),'Ada');await submitInput();
-    expect(container.querySelector('.debugger-panel')).not.toBeNull();
+    await click(button('Debugger'));expect(container.querySelector('.debugger-panel')).not.toBeNull();
     const steps=BrowserWorker.pending.at(-1)!.request!;expect(steps.runs[0]!.options.files).toEqual({});
   });
   it('stops a pending run and rejects a late worker response',async()=>{
@@ -222,7 +222,7 @@ describe('workspace execution integration',()=>{
     await click(button('Run⌘ ↵'));await act(async()=>BrowserWorker.pending.at(-1)!.complete());
     expect(container.querySelector('.console-input-form')).not.toBeNull();
     await submitInput();
-    expect(container.querySelector('.debugger-panel')).not.toBeNull();
+    await click(button('Debugger'));expect(container.querySelector('.debugger-panel')).not.toBeNull();
     await click(button('Console'));
     expect(container.querySelector('.output-line:last-child')?.textContent).toBe('›0');
   });
