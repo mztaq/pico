@@ -40,3 +40,8 @@
   75% { transform: translate3d(0, 2%, 0) scale(1.05); }
   87.5% { transform: translate3d(-2.12%, 1.41%, 0) scale(1.05); }
 }
+
+/* Reveal the landing page once its loading skeleton has been replaced. */
+@media (prefers-reduced-motion: no-preference) {
+  .lp { animation: ds-fade .4s ease-out both; }
+}
