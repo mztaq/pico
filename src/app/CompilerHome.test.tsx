@@ -259,6 +259,6 @@ it('opens the bug report dialog directly from /app/report and updates browser hi
   expect(window.location.pathname).toBe('/app/report');
   expect(container.querySelector('.pico-home')).not.toBeNull();
   expect(container.querySelector('[role="dialog"]')).not.toBeNull();
-  await act(async()=>container.querySelector<HTMLButtonElement>('[aria-label="Close bug report"]')?.click());
+  await act(async()=>container.querySelector<HTMLButtonElement>('[aria-label="Close report form"]')?.click());
   expect(window.location.pathname).toBe('/app');
 });
