@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Palette, Terminal } from 'lucide-react';
+import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
@@ -11,7 +11,6 @@ import { SoundButton } from './SoundToggle';
 import { ThemePicker } from './ThemePicker';
 import { BugReportDialog } from './BugReportDialog';
 import { BugReportNotice } from './BugReportNotice';
-import { WifiOff, X as CloseIcon } from 'lucide-react';
 import { picoIsOnline } from './pico-connection';
 
 const HOME_AMBIENT_CURVES = [
