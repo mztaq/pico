@@ -11,7 +11,6 @@ import { SoundButton } from './SoundToggle';
 import { ThemePicker } from './ThemePicker';
 import { BugReportDialog } from './BugReportDialog';
 import { BugReportNotice } from './BugReportNotice';
-import { readPendingReport } from './pending-bug-report';
 
 const HOME_AMBIENT_CURVES = [
   { d: 'M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108', width: 2.6, opacity: .72 },
@@ -26,7 +25,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const [reportOpen, setReportOpen] = useState(() => /^\/app\/report\/?$/.test(window.location.pathname));
-  const [reportNotice, setReportNotice] = useState<{type: 'success' | 'error' | 'queued'; message: string} | null>(null);
+  const [reportNotice, setReportNotice] = useState<{type: 'success' | 'error'; message: string} | null>(null);
   const setReportRoute = (open: boolean) => {
     const target = open ? '/app/report' : '/app';
     if (window.location.pathname !== target) window.history.pushState(window.history.state, '', target);
@@ -36,18 +35,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     const syncRoute = () => setReportOpen(/^\/app\/report\/?$/.test(window.location.pathname));
     window.addEventListener('popstate', syncRoute);
     return () => window.removeEventListener('popstate', syncRoute);
-  }, []);
-  useEffect(() => {
-    let active = true;
-    const openPending = () => {
-      if (!navigator.onLine) return;
-      void readPendingReport().then(report => {
-        if (active && report && /^\/app\/?$/.test(window.location.pathname)) setReportRoute(true);
-      }).catch(() => {});
-    };
-    openPending();
-    window.addEventListener('online', openPending);
-    return () => { active = false; window.removeEventListener('online', openPending); };
   }, []);
   const theme = getTheme(settings.theme);
   useEffect(() => {
