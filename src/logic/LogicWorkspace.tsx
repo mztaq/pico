@@ -30,7 +30,7 @@ const stateName:Record<Signal,string>={0:'LOW',1:'HIGH',X:'UNKNOWN',Z:'HIGH Z'};
 const signalClass=(signal:Signal)=>signal===0?'s0':signal===1?'s1':signal==='Z'?'sz':'sx';
 const contentEqual=(a:CircuitDocument,b:CircuitDocument)=>JSON.stringify(a)===JSON.stringify(b);
 const snap=(n:number,enabled:boolean)=>enabled?Math.round(n/12)*12:n;
-const PROPAGATION_DELAY_MS = 220;
+const PROPAGATION_DELAY_MS = 600;
 export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [doc,setDoc]=useState<CircuitDocument>(getInitial);
  const [tourStep,setTourStep]=useState<number|null>(()=>{try{return localStorage.getItem(LOGIC_TOUR_KEY)==='done'?null:0;}catch{return 0;}});
@@ -53,7 +53,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [placement,setPlacement]=useState<ComponentKind|null>(null);
  const [simulation,setSimulation]=useState<SimulationState>(initialSimulation);
  const [running,setRunning]=useState(false);
- const [speed,setSpeed]=useState<0.25|0.5|1|2>(1);
+ const [speed,setSpeed]=useState(1);
  const propagationDelay=PROPAGATION_DELAY_MS/speed;
  const [zoom,setZoom]=useState(1),[offset,setOffset]=useState({x:45,y:45});
  const [status,setStatus]=useState('Ready. Select a component to place it.');
@@ -99,7 +99,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  useEffect(()=>{
   if(!playback)return;
   if(playback.index>=playback.frames.length-1){shownSignals.current=playback.frames.at(-1)!;return;}
-  const timer=window.setTimeout(()=>setPlayback(p=>p&&{...p,index:p.index+1}),PROPAGATION_DELAY_MS);
+  const timer=window.setTimeout(()=>setPlayback(p=>p&&{...p,index:p.index+1}),propagationDelay);
   return()=>window.clearTimeout(timer);
  },[playback,propagationDelay]);
  const selectedNode=selection?.type==='node'?doc.nodes.find(n=>n.id===selection.id):undefined;
@@ -286,7 +286,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   {connecting&&<div className="logic-placement-hint">Connect to an input pin <button onClick={()=>setConnecting(null)}>Cancel <X size={12}/></button></div>}
   </div>
   {expressionOpen&&<div className="logic-expression-panel"><header><strong>Boolean expressions</strong><button onClick={()=>setExpressionOpen(false)} aria-label="Close Boolean expressions"><X size={16}/></button></header>{expressions.error?<p role="alert">{expressions.error}</p>:expressions.rows.length?expressions.rows.map((v,i)=><section key={i}><b>{v.output}</b><label>Cambridge word notation <code>{v.word}</code></label><label>Algebraic symbols <code>{v.algebraic}</code></label><label>Programming notation <code>{v.programming}</code></label>{v.minimalSOP&&<label>Simplified sum of products <code>{v.minimalSOP}</code></label>}{v.minimalPOS&&<label>Equivalent product of sums <code>{v.minimalPOS}</code></label>}<button onClick={()=>navigator.clipboard?.writeText(v.word)}>Copy expression</button></section>):<p>Connect switches and gates to a bulb to see the expression.</p>}</div>}
-  <div className="logic-bottom"><div><span className={'logic-run-dot '+(running?'active':'')}/><span>{running?'RUNNING':'PAUSED'}</span><span>{doc.nodes.length} components · {doc.wires.length} wires</span></div><div className="logic-sim-controls"><button onClick={()=>setRunning(r=>!r)} className="logic-run">{running?<Pause size={15}/>:<Play size={15}/>} {running?'Pause':'Run'}</button><button title="Step next clock transition" onClick={()=>{setRunning(false);setSimulation(s=>stepSimulation(docRef.current,s).state);}}><StepForward size={16}/> Step</button><button onClick={reset}><RotateCw size={14}/> Reset</button><label className="logic-speed-select">Speed <select aria-label="Signal animation speed" value={speed} onChange={e=>setSpeed(Number(e.target.value) as 0.25|0.5|1|2)}><option value={0.25}>0.25×</option><option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option></select></label><span>{Math.round(simulation.time)} ms</span></div></div>
+  <div className="logic-bottom"><div><span className={'logic-run-dot '+(running?'active':'')}/><span>{running?'RUNNING':'PAUSED'}</span><span>{doc.nodes.length} components · {doc.wires.length} wires</span></div><div className="logic-sim-controls"><button onClick={()=>setRunning(r=>!r)} className="logic-run">{running?<Pause size={15}/>:<Play size={15}/>} {running?'Pause':'Run'}</button><button title="Step next clock transition" onClick={()=>{setRunning(false);setSimulation(s=>stepSimulation(docRef.current,s).state);}}><StepForward size={16}/> Step</button><button onClick={reset}><RotateCw size={14}/> Reset</button><label className="logic-speed-select"><span>Speed</span><input type="range" aria-label="Signal animation speed" min="0.25" max="2" step="0.05" value={speed} onChange={e=>setSpeed(Number(e.target.value))}/><output>{Number(speed.toFixed(2))}×</output></label><span>{Math.round(simulation.time)} ms</span></div></div>
   <div className="logic-status" role="status">{status}</div>
   {truthVisible&&<div className="logic-truth"><div className="logic-truth-head"><b>Truth table</b><div>{truth?.data&&<button onClick={()=>download(truthTableCSV(truth.data!),filename(doc.title,'-truth.csv'),'text/csv')}>Export CSV</button>}<button aria-label="Close truth table" onClick={()=>setTruthVisible(false)}><X size={16}/></button></div></div>{truth?.error?<p>{truth.error}</p>:truth?.data?<div className="logic-truth-scroll"><table><thead><tr>{truth.data.headers.map((h,i)=><th key={i}>{h}</th>)}</tr></thead><tbody>{truth.data.rows.map((row,i)=><tr key={i}>{row.map((value,j)=><td key={j}>{value}</td>)}</tr>)}</tbody></table></div>:null}</div>}
  </section>
