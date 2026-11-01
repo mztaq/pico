@@ -46,8 +46,19 @@ function pythonRuntime(): Plugin {
     },
   };
 }
+/** List hashed bundles and pinned Python files for offline caching after a successful visit. */
+function offlineAssetManifest(): Plugin {
+  return {
+    name: 'pico-offline-asset-manifest',
+    generateBundle(_options, bundle) {
+      const bundles = Object.keys(bundle).filter(path => /\.(js|css)$/.test(path)).map(path => '/' + path);
+      const pythonAssets = Object.keys(runtimeFiles).map(file => PYODIDE_INDEX_URL + file);
+      this.emitFile({ type: 'asset', fileName: 'offline-assets.json', source: JSON.stringify([...bundles, ...pythonAssets]) });
+    },
+  };
+}
 export default defineConfig({
-  plugins: [react(), pythonRuntime()],
+  plugins: [react(), pythonRuntime(), offlineAssetManifest()],
   build: { emptyOutDir: true },
   server: { host: '0.0.0.0', port: 3000, strictPort: true, allowedHosts: true, headers },
   preview: { host: '0.0.0.0', port: 3000, strictPort: true, allowedHosts: true, headers },
