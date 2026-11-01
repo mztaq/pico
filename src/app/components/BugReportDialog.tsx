@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent } fr
 import { Bug, ImagePlus, X } from 'lucide-react';
 import './bug-report.css';
 import {BugReportTurnstile} from './BugReportTurnstile';
-import { clearPendingReport, readPendingReport, savePendingReport } from './pending-bug-report';
 
 const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 const MAX_TOTAL_SCREENSHOT_BYTES = 10 * 1024 * 1024;
@@ -10,10 +9,8 @@ const MAX_SCREENSHOTS = 5;
 const SCREENSHOT_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio', 'Binary Lab'];
 
-export function BugReportDialog({ onClose, onResult }: { onClose: () => void; onResult: (type: 'success' | 'error' | 'queued', message: string) => void }) {
+export function BugReportDialog({ onClose, onResult }: { onClose: () => void; onResult: (type: 'success' | 'error', message: string) => void }) {
   const dialogRef = useRef<HTMLElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const retryPending = useRef(false);
   const [workspace, setWorkspace] = useState('');
   const [kind, setKind] = useState('');
   const [description, setDescription] = useState('');
@@ -22,26 +19,6 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
   const [fileError, setFileError] = useState('');
   const [sending, setSending] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [hasPending, setHasPending] = useState(false);
-  useEffect(() => {
-    let active = true;
-    void readPendingReport().then(report => {
-      if (!active || !report) return;
-      setKind(report.kind);
-      setWorkspace(report.workspace);
-      setDescription(report.description);
-      setEmail(report.email);
-      setScreenshots(report.screenshots);
-      setHasPending(true);
-    }).catch(() => {});
-    return () => { active = false; };
-  }, []);
-  useEffect(() => {
-    if (!hasPending || !turnstileToken || !navigator.onLine || sending || retryPending.current) return;
-    retryPending.current = true;
-    formRef.current?.requestSubmit();
-  }, [hasPending, turnstileToken, sending]);
-
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
     dialogRef.current?.querySelector<HTMLSelectElement>('select')?.focus();
@@ -110,17 +87,13 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
 
   const submitReport = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (sending || !kind || !workspace) return;
-    if (navigator.onLine && !turnstileToken) return;
-    if (description.trim().length < 10) return;
+    if (sending || !kind || !workspace || description.trim().length < 10) return;
+    if (!navigator.onLine) { setFileError('An internet connection is required to send a report.'); return; }
+    if (!turnstileToken) return;
     setSending(true);
-    const cacheDraft = async () => {
-      await savePendingReport({ kind, workspace, description: description.trim(), email: email.trim(), screenshots, createdAt: Date.now() });
-      onResult('queued', 'Report and screenshots saved on this device. Pico will retry when connected with fresh verification.');
-    };
+    setFileError('');
     try {
-      if (!navigator.onLine) { await cacheDraft(); return; }
-      const fields = {kind, workspace, description: description.trim(), email: email.trim(), turnstileToken: turnstileToken ?? ''};
+      const fields = {kind, workspace, description: description.trim(), email: email.trim(), turnstileToken};
       const payload = new FormData();
       Object.entries(fields).forEach(([key, value]) => payload.set(key, value));
       for (const screenshot of screenshots) payload.append('screenshots', screenshot, screenshot.name);
@@ -128,19 +101,12 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
         method: 'POST',
         ...(screenshots.length ? {body: payload} : {headers: {'Content-Type': 'application/json'}, body: JSON.stringify(fields)})
       });
-      const result: {ok?: boolean; error?: string; screenshotAttached?: boolean; screenshotsAttached?: number} = await response.json();
+      const result: {ok?: boolean; error?: string; screenshotsAttached?: number} = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
-      if (screenshots.length && result.screenshotsAttached !== screenshots.length) throw new Error('Report sent, but some screenshots may not have been attached. Please try again.');
-      if (hasPending) await clearPendingReport();
+      if (screenshots.length && result.screenshotsAttached !== screenshots.length) throw new Error('Report sent, but some screenshots may not have been attached.');
       onResult('success', screenshots.length ? `Report and ${screenshots.length} screenshot${screenshots.length === 1 ? '' : 's'} sent successfully!` : 'Thanks for helping improve Pico!');
     } catch (error) {
-      if (!navigator.onLine || error instanceof TypeError) {
-        try { await cacheDraft(); }
-        catch { onResult('error', 'Report could not be saved locally. Keep this form open and try again.'); }
-      } else {
-        retryPending.current = false;
-        onResult('error', error instanceof Error ? error.message : 'Could not send report. Please try again.');
-      }
+      setFileError(error instanceof Error ? error.message : 'Could not send report. Check your connection and try again.');
     } finally { setSending(false); }
   };
 
@@ -156,7 +122,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
         </div>
         <button type="button" className="bug-report-close" aria-label="Close report form" onClick={onClose}><X size={18} /></button>
       </header>
-      <form ref={formRef} className="bug-report-form" onSubmit={submitReport}>
+      <form className="bug-report-form" onSubmit={submitReport}>
         <div className="bug-report-field">
           <label htmlFor="bug-report-kind">Report type</label>
           <select required id="bug-report-kind" value={kind} onChange={event => setKind(event.target.value)}>
@@ -197,7 +163,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
           <p>Reports and optional screenshots are delivered by email.</p>
           <div className="bug-report-actions">
             <button type="button" className="bug-report-cancel" onClick={onClose}>Cancel</button>
-            <button type="submit" className="bug-report-submit" disabled={sending || (navigator.onLine && !turnstileToken)}>{sending ? "Sending…" : navigator.onLine ? "Send report" : "Save report offline"}</button>
+            <button type="submit" className="bug-report-submit" disabled={sending || !turnstileToken}>{sending ? "Sending…" : "Send report"}</button>
           </div>
         </footer>
       </form>
