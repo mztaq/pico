@@ -58,11 +58,11 @@ installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
+    {inApp ? <><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /></> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 
-// Cache the homepage shell for offline preview, not the functional workspaces.
+// Cache the Pico application and its dependencies for offline workspaces.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register('/sw.js').then(async registration => {
