@@ -1,17 +1,31 @@
 import { useEffect, useState } from 'react';
 import { WifiOff } from 'lucide-react';
+import { picoIsOnline } from './pico-connection';
 import './offline-status.css';
 
-/** A non-blocking notice. Offline workspaces remain fully interactive. */
+/** Non-blocking notice, backed by a real origin probe for desktop webviews. */
 export function OfflineStatus() {
   const [offline, setOffline] = useState(() => !navigator.onLine);
   useEffect(() => {
-    const update = () => setOffline(!navigator.onLine);
-    window.addEventListener('online', update);
-    window.addEventListener('offline', update);
+    let active = true;
+    let sequence = 0;
+    const check = async () => {
+      const current = ++sequence;
+      if (!navigator.onLine) { setOffline(true); return; }
+      const online = await picoIsOnline();
+      if (active && current === sequence) setOffline(!online);
+    };
+    const onOffline = () => { ++sequence; setOffline(true); };
+    const onOnline = () => { void check(); };
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    void check();
+    const timer = window.setInterval(() => { void check(); }, 12000);
     return () => {
-      window.removeEventListener('online', update);
-      window.removeEventListener('offline', update);
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
     };
   }, []);
   if (!offline) return null;
