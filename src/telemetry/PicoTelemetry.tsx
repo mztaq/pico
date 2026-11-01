@@ -149,6 +149,9 @@ export function PicoTelemetry() {
     document.addEventListener('visibilitychange',onVisibility);
     const onPageHide=()=>{record();void flush(true);};
     window.addEventListener('pagehide',onPageHide);
+    const onOnline = () => { retryAfter = 0; void flush(); };
+    window.addEventListener('online',onOnline);
+    if (pending) void flush();
     const timer=window.setInterval(()=>{
       record();
       if(totalSeconds()>=30) void flush();
@@ -159,6 +162,7 @@ export function PicoTelemetry() {
       observer.disconnect();
       document.removeEventListener('visibilitychange',onVisibility);
       window.removeEventListener('pagehide',onPageHide);
+      window.removeEventListener('online',onOnline);
       for(const type of ['pointerdown','keydown','wheel']) window.removeEventListener(type,noteActivity);
     };
   },[choice?.analytics]);
