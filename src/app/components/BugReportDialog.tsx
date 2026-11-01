@@ -120,7 +120,7 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
     };
     try {
       if (!navigator.onLine) { await cacheDraft(); return; }
-      const fields = {kind, workspace, description: description.trim(), email: email.trim(), turnstileToken};
+      const fields = {kind, workspace, description: description.trim(), email: email.trim(), turnstileToken: turnstileToken ?? ''};
       const payload = new FormData();
       Object.entries(fields).forEach(([key, value]) => payload.set(key, value));
       for (const screenshot of screenshots) payload.append('screenshots', screenshot, screenshot.name);
