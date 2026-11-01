@@ -86,6 +86,11 @@ export function PicoTelemetry() {
     } catch { /* Storage unavailable, keep the in-memory batch. */ }
     let posting = false;
     let retryAfter = 0;
+    let drainTimer: number | undefined;
+    const scheduleDrain = (delay = 1200) => {
+      window.clearTimeout(drainTimer);
+      if (!closed && navigator.onLine) drainTimer = window.setTimeout(() => void flush(), delay);
+    };
     let lastTick = performance.now();
     let activeWorkspace = workspaces[document.title] ?? null;
 
@@ -122,6 +127,7 @@ export function PicoTelemetry() {
         persistTotals();
         pending=null;
         try { localStorage.removeItem(pendingKey); } catch { /* Storage unavailable. */ }
+        if (totalSeconds() >= 1) scheduleDrain();
       } catch {
         // Retain the same batch identifier, so a retry cannot count twice.
       } finally {posting=false;}
@@ -151,7 +157,8 @@ export function PicoTelemetry() {
     window.addEventListener('pagehide',onPageHide);
     const onOnline = () => { retryAfter = 0; void flush(); };
     window.addEventListener('online',onOnline);
-    if (pending) void flush();
+    // Resume persisted usage immediately when the user reopens Pico online.
+    if (pending || totalSeconds() >= 1) void flush();
     const timer=window.setInterval(()=>{
       record();
       if(totalSeconds()>=30) void flush();
@@ -159,6 +166,7 @@ export function PicoTelemetry() {
     return ()=>{
       closed=true;
       window.clearInterval(timer);
+      window.clearTimeout(drainTimer);
       observer.disconnect();
       document.removeEventListener('visibilitychange',onVisibility);
       window.removeEventListener('pagehide',onPageHide);
