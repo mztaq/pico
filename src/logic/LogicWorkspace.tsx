@@ -9,7 +9,7 @@ import {selectionInRectangle,copyComponents,pasteComponents,deleteSelection,type
 import {booleanExpressions} from './expressions';
 import {CircuitSymbol,PaletteSymbol,inputLeadEnd,outputLeadStart} from './symbols';
 import {connectionPath,inputAtPoint,type InputTarget} from './wiring';
-import {ArrowLeft,ChevronDown,CircleHelp,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Settings2,StepForward,Trash2,Turtle,Undo2,Upload,Workflow,X,ZoomIn,ZoomOut} from 'lucide-react';
+import {ArrowLeft,ChevronDown,CircleHelp,Copy,Download,Hand,Maximize,Menu,MousePointer2,Pause,Play,Plus,Redo2,RotateCw,Settings2,StepForward,Trash2,Undo2,Upload,Workflow,X,ZoomIn,ZoomOut} from 'lucide-react';
 import {GROUPS,NODE_WIDTH,SPECS,makeDocument,makeNode,nodeHeight,parseDocument,portPosition,isWireValid,type CircuitDocument,type CircuitNode,type ComponentKind,type Signal} from './model';
 import {autoLayoutCircuit} from './layout';
 import {usePalettePointerDrag} from '../app/components/usePalettePointerDrag';
