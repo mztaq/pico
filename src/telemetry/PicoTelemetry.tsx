@@ -250,14 +250,35 @@ export function PicoTelemetry() {
     };
   }, [choice?.preferences]);
 
+  const syncConsent = async (next: Choice) => {
+    try {
+      await post('/api/cookies', next);
+      localStorage.removeItem('pico.consent.pendingSync.v1');
+    } catch {
+      try { localStorage.setItem('pico.consent.pendingSync.v1', '1'); } catch { /* Keep local consent. */ }
+    }
+  };
+  useEffect(() => {
+    const retry = () => {
+      if (!navigator.onLine) return;
+      try {
+        if (localStorage.getItem('pico.consent.pendingSync.v1') !== '1') return;
+      } catch { return; }
+      const saved = storedChoice();
+      if (saved) void syncConsent(saved);
+    };
+    window.addEventListener('online', retry);
+    retry();
+    return () => window.removeEventListener('online', retry);
+  }, []);
   const save = async (next:Choice) => {
     setBusy(true);setError('');
     try {
-      await post('/api/cookies',next);
       localStorage.setItem(KEY,JSON.stringify(next));
       setChoice(next);setDraft(next);setEditing(false);
+      void syncConsent(next);
     } catch {
-      setError('Settings were not saved. Check your connection and try again.');
+      setError('Settings could not be saved on this device. Please try again.');
     } finally {setBusy(false);}
   };
 
