@@ -87,7 +87,7 @@ export function PicoTelemetry() {
     let posting = false;
     let retryAfter = 0;
     let drainTimer: number | undefined;
-    const scheduleDrain = (delay = 1200) => {
+    const scheduleDrain = (delay = 3000) => {
       window.clearTimeout(drainTimer);
       if (!closed && navigator.onLine) drainTimer = window.setTimeout(() => void flush(), delay);
     };
