@@ -52,11 +52,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     window.addEventListener('popstate', syncRoute);
     return () => window.removeEventListener('popstate', syncRoute);
   }, []);
-  useEffect(() => {
-    if (!offlineReportWarning) return;
-    const timer = window.setTimeout(() => setOfflineReportWarning(false), 4500);
-    return () => window.clearTimeout(timer);
-  }, [offlineReportWarning]);
   const theme = getTheme(settings.theme);
   useEffect(() => {
     for (const [property, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(property, value);
@@ -170,10 +165,14 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </button>
       </div>
     </div>
-    {offlineReportWarning && <div className="pico-report-offline-toast" role="status">
-      <WifiOff size={17} aria-hidden="true" />
-      <span>Connect to the internet to report a bug.</span>
-      <button type="button" aria-label="Dismiss offline report notice" onClick={() => setOfflineReportWarning(false)}><CloseIcon size={15}/></button>
+    {offlineReportWarning && <div className="pico-offline-backdrop" role="presentation">
+      <section className="pico-offline-dialog" role="dialog" aria-modal="true" aria-labelledby="pico-report-offline-title">
+        <button type="button" className="pico-offline-close" aria-label="Close offline report notice" onClick={() => setOfflineReportWarning(false)}><CloseIcon size={17}/></button>
+        <WifiOff size={23} aria-hidden="true" />
+        <h2 id="pico-report-offline-title">You're offline</h2>
+        <p>Connect to the internet to report a bug.</p>
+        <button type="button" className="pico-offline-continue" onClick={() => setOfflineReportWarning(false)}>Close</button>
+      </section>
     </div>}
     {reportOpen && <BugReportDialog onClose={() => setReportRoute(false)} onResult={(type, message) => { setReportRoute(false); setReportNotice({type, message}); }} />}
     {reportNotice && <BugReportNotice type={reportNotice.type} message={reportNotice.message} onClose={() => setReportNotice(null)} />}
