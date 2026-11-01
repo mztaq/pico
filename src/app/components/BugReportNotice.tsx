@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from 'react';
 import {CheckCircle2, CircleAlert, X} from 'lucide-react';
 
 export function BugReportNotice({type, message, onClose}: {
-  type: 'success' | 'error' | 'queued'; message: string; onClose: () => void;
+  type: 'success' | 'error'; message: string; onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const [secondsLeft, setSecondsLeft] = useState(6);
@@ -28,7 +28,7 @@ export function BugReportNotice({type, message, onClose}: {
       <div className="bug-report-notice-icon" aria-hidden="true">
         {type === 'success' ? <CheckCircle2 size={30} /> : <CircleAlert size={30} />}
       </div>
-      <h2 id="bug-report-notice-title">{type === 'success' ? 'Report sent!' : type === 'queued' ? 'Saved for sending' : 'Something went wrong'}</h2>
+      <h2 id="bug-report-notice-title">{type === 'success' ? 'Report sent!' : 'Something went wrong'}</h2>
       <p id="bug-report-notice-message">{message}</p>
       <p className="bug-report-notice-timer">Closing automatically in {secondsLeft}s</p>
       <div className="bug-report-notice-progress" aria-hidden="true"><div /></div>
