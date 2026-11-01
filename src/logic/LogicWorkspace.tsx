@@ -30,8 +30,8 @@ const stateName:Record<Signal,string>={0:'LOW',1:'HIGH',X:'UNKNOWN',Z:'HIGH Z'};
 const signalClass=(signal:Signal)=>signal===0?'s0':signal===1?'s1':signal==='Z'?'sz':'sx';
 const contentEqual=(a:CircuitDocument,b:CircuitDocument)=>JSON.stringify(a)===JSON.stringify(b);
 const snap=(n:number,enabled:boolean)=>enabled?Math.round(n/12)*12:n;
-const PROPAGATION_DELAY_MS = 600;
-const INFINITE_PROPAGATION_DELAY_MS = 50;
+const PROPAGATION_DELAY_MS = 360;
+const INFINITE_PROPAGATION_DELAY_MS = 30;
 export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [doc,setDoc]=useState<CircuitDocument>(getInitial);
  const [tourStep,setTourStep]=useState<number|null>(()=>{try{return localStorage.getItem(LOGIC_TOUR_KEY)==='done'?null:0;}catch{return 0;}});
