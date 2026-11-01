@@ -124,3 +124,4 @@
 .bug-report-notice-progress > div { height: 100%; width: 100%; background: var(--ds-accent-fill); transform-origin: left; animation: bug-report-countdown 6s linear forwards; }
 @keyframes bug-report-countdown { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .bug-report-notice-progress > div { animation: none; } }
+

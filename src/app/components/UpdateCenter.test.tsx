@@ -35,25 +35,11 @@ describe('local changelog', () => {
     ]);
   });
 
-  it('shows a new update once, stores dismissal, and does not repeat after reload', async () => {
-    await mount();
-    expect(container.querySelector('.update-toast')?.textContent).toContain('ADDED LOCAL UPDATES');
-    await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label="Dismiss update notification"]')!.click(); });
-    expect(localStorage.getItem(LAST_SEEN_UPDATE_KEY)).toBe('2:2026-10-07:ADDED LOCAL UPDATES');
-    await act(async () => { await new Promise(resolve => window.setTimeout(resolve, 260)); });
-    expect(container.querySelector('.update-toast')).toBeNull();
-
-    await act(async () => root.unmount());
-    container.remove();
+  it('shows an unread dot without a toast until updates are opened', async () => {
     await mount();
     expect(container.querySelector('.update-toast')).toBeNull();
-  });
-
-  it('dismisses immediately when reduced motion is requested', async () => {
-    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: true }));
-    await mount();
-    await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label="Dismiss update notification"]')!.click(); });
-    expect(container.querySelector('.update-toast')).toBeNull();
+    expect(container.querySelector('.update-unread-dot')).not.toBeNull();
+    expect(localStorage.getItem(LAST_SEEN_UPDATE_KEY)).toBeNull();
   });
 
   it('opens the full changelog and marks the latest entry as seen', async () => {
@@ -63,18 +49,21 @@ describe('local changelog', () => {
     expect(localStorage.getItem(LAST_SEEN_UPDATE_KEY)).toBe('2:2026-10-07:ADDED LOCAL UPDATES');
   });
 
-  it('detects a newly appended entry on the next refresh', async () => {
+  it('shows the unread dot when a newer update arrives', async () => {
     await mount();
-    await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label="Dismiss update notification"]')!.click(); });
-    await act(async () => { await new Promise(resolve => window.setTimeout(resolve, 260)); });
+    await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label^="View updates"]')!.click(); });
+    await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label="Close updates"]')!.click(); });
+    expect(container.querySelector('.update-unread-dot')).toBeNull();
     vi.mocked(fetch).mockResolvedValue(response(`${sampleLog}\n[2026-10-08] : FIXED LOGIN BUG`));
     await act(async () => {
       window.dispatchEvent(new Event('focus'));
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(container.querySelector('.update-toast')?.textContent).toContain('FIXED LOGIN BUG');
+    expect(container.querySelector('.update-unread-dot')).not.toBeNull();
+    expect(container.querySelector('.update-toast')).toBeNull();
   });
+
 });
 
 it('keeps keyboard focus within the update dialog and removes the storage captions',async()=>{

@@ -8,6 +8,7 @@ import type { ExecutionReply } from '../runtime/worker';
 import { preloadPythonRuntime } from '../runtime/python/runner';
 import type { PythonRequest } from '../runtime/python/config';
 const jobs=vi.hoisted(()=>[] as {request:PythonRequest;callbacks:ExecutionCallbacks;job:ExecutionJob;finish:(value:ExecutionReply[])=>void}[]);
+vi.mock('./components/pico-connection',()=>({picoIsOnline:vi.fn().mockResolvedValue(true)}));
 vi.mock('./components/CodeEditor',()=>({CodeEditor:({value,onChange,language,preferences}:{value:string;onChange:(value:string)=>void;language:string;preferences:{fontSize:number}})=><textarea aria-label={`${language} editor`} data-font-size={preferences.fontSize} value={value} onInput={event=>onChange(event.currentTarget.value)} />}));
 vi.mock('../runtime/python/runner',()=>({preloadPythonRuntime:vi.fn(),startPythonExecution:(request:PythonRequest,callbacks:ExecutionCallbacks)=>{
   let finish!:(value:ExecutionReply[])=>void;const promise=new Promise<ExecutionReply[]>(resolve=>{finish=resolve;});

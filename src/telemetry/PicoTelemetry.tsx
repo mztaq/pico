@@ -62,9 +62,35 @@ export function PicoTelemetry() {
     if (!choice?.analytics) return;
     let closed = false;
     const totals = new Map<string, number>();
+    const totalsKey = 'pico.usage.totals.v1';
+    try {
+      const saved: unknown = JSON.parse(localStorage.getItem(totalsKey) || '[]');
+      if (Array.isArray(saved)) for (const entry of saved) {
+        if (Array.isArray(entry) && typeof entry[0] === 'string' &&
+            Object.values(workspaces).includes(entry[0]) &&
+            typeof entry[1] === 'number' && Number.isFinite(entry[1]) && entry[1] >= 0) totals.set(entry[0], entry[1]);
+      }
+    } catch { /* Storage may be disabled. */ }
+    const persistTotals = () => {
+      try { localStorage.setItem(totalsKey, JSON.stringify([...totals])); } catch { /* Memory fallback. */ }
+    };
+    const pendingKey = 'pico.usage.pending.v1';
     let pending: UsageBatch | null = null;
+    try {
+      const saved = localStorage.getItem(pendingKey);
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && 'batchId' in parsed && 'entries' in parsed &&
+            typeof parsed.batchId === 'string' && Array.isArray(parsed.entries)) pending = parsed as UsageBatch;
+      }
+    } catch { /* Storage unavailable, keep the in-memory batch. */ }
     let posting = false;
     let retryAfter = 0;
+    let drainTimer: number | undefined;
+    const scheduleDrain = (delay = 3000) => {
+      window.clearTimeout(drainTimer);
+      if (!closed && navigator.onLine) drainTimer = window.setTimeout(() => void flush(), delay);
+    };
     let lastTick = performance.now();
     let activeWorkspace = workspaces[document.title] ?? null;
 
@@ -76,12 +102,14 @@ export function PicoTelemetry() {
       if (activeWorkspace && !document.hidden && document.hasFocus() &&
           Date.now()-lastActivity.current < 120000) {
         attributeSeconds(totals,activeWorkspace,delta);
+        persistTotals();
       }
     };
     const flush = async (keepalive = false) => {
       if (closed || posting || Date.now() < retryAfter) return;
       if (!pending) pending=buildUsageBatch(totals,crypto.randomUUID());
       if (!pending) return;
+      try { localStorage.setItem(pendingKey, JSON.stringify(pending)); } catch { /* Memory retry still works. */ }
       const batch = pending;
       posting=true;
       try {
@@ -96,7 +124,10 @@ export function PicoTelemetry() {
         }
         if (closed) return;
         acknowledgeUsageBatch(totals,batch);
+        persistTotals();
         pending=null;
+        try { localStorage.removeItem(pendingKey); } catch { /* Storage unavailable. */ }
+        if (totalSeconds() >= 1) scheduleDrain();
       } catch {
         // Retain the same batch identifier, so a retry cannot count twice.
       } finally {posting=false;}
@@ -124,6 +155,10 @@ export function PicoTelemetry() {
     document.addEventListener('visibilitychange',onVisibility);
     const onPageHide=()=>{record();void flush(true);};
     window.addEventListener('pagehide',onPageHide);
+    const onOnline = () => { retryAfter = 0; void flush(); };
+    window.addEventListener('online',onOnline);
+    // Resume persisted usage immediately when the user reopens Pico online.
+    if (pending || totalSeconds() >= 1) void flush();
     const timer=window.setInterval(()=>{
       record();
       if(totalSeconds()>=30) void flush();
@@ -131,12 +166,22 @@ export function PicoTelemetry() {
     return ()=>{
       closed=true;
       window.clearInterval(timer);
+      window.clearTimeout(drainTimer);
       observer.disconnect();
       document.removeEventListener('visibilitychange',onVisibility);
       window.removeEventListener('pagehide',onPageHide);
+      window.removeEventListener('online',onOnline);
       for(const type of ['pointerdown','keydown','wheel']) window.removeEventListener(type,noteActivity);
     };
   },[choice?.analytics]);
+
+  useEffect(() => {
+    if (choice?.analytics) return;
+    try {
+      localStorage.removeItem('pico.usage.pending.v1');
+      localStorage.removeItem('pico.usage.totals.v1');
+    } catch { /* Storage unavailable. */ }
+  }, [choice?.analytics]);
 
   // Local settings remain authoritative on this device. Only consented preferences sync.
   useEffect(() => {
@@ -207,22 +252,45 @@ export function PicoTelemetry() {
     };
     const onSaved = () => schedule();
     window.addEventListener('pico:settings-saved', onSaved);
+    window.addEventListener('online', onSaved);
     void start();
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
       window.removeEventListener('pico:settings-saved',onSaved);
+      window.removeEventListener('online',onSaved);
     };
   }, [choice?.preferences]);
 
+  const syncConsent = async (next: Choice) => {
+    try {
+      await post('/api/cookies', next);
+      localStorage.removeItem('pico.consent.pendingSync.v1');
+    } catch {
+      try { localStorage.setItem('pico.consent.pendingSync.v1', '1'); } catch { /* Keep local consent. */ }
+    }
+  };
+  useEffect(() => {
+    const retry = () => {
+      if (!navigator.onLine) return;
+      try {
+        if (localStorage.getItem('pico.consent.pendingSync.v1') !== '1') return;
+      } catch { return; }
+      const saved = storedChoice();
+      if (saved) void syncConsent(saved);
+    };
+    window.addEventListener('online', retry);
+    retry();
+    return () => window.removeEventListener('online', retry);
+  }, []);
   const save = async (next:Choice) => {
     setBusy(true);setError('');
     try {
-      await post('/api/cookies',next);
       localStorage.setItem(KEY,JSON.stringify(next));
       setChoice(next);setDraft(next);setEditing(false);
+      void syncConsent(next);
     } catch {
-      setError('Settings were not saved. Check your connection and try again.');
+      setError('Settings could not be saved on this device. Please try again.');
     } finally {setBusy(false);}
   };
 

@@ -19,7 +19,6 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
   const [fileError, setFileError] = useState('');
   const [sending, setSending] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
     dialogRef.current?.querySelector<HTMLSelectElement>('select')?.focus();
@@ -88,9 +87,11 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
 
   const submitReport = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (sending || !turnstileToken || !kind || !workspace) return;
-    if (description.trim().length < 10) return;
+    if (sending || !kind || !workspace || description.trim().length < 10) return;
+    if (!navigator.onLine) { setFileError('An internet connection is required to send a report.'); return; }
+    if (!turnstileToken) return;
     setSending(true);
+    setFileError('');
     try {
       const fields = {kind, workspace, description: description.trim(), email: email.trim(), turnstileToken};
       const payload = new FormData();
@@ -100,12 +101,12 @@ export function BugReportDialog({ onClose, onResult }: { onClose: () => void; on
         method: 'POST',
         ...(screenshots.length ? {body: payload} : {headers: {'Content-Type': 'application/json'}, body: JSON.stringify(fields)})
       });
-      const result: {ok?: boolean; error?: string; screenshotAttached?: boolean; screenshotsAttached?: number} = await response.json();
+      const result: {ok?: boolean; error?: string; screenshotsAttached?: number} = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error || 'Could not send report');
-      if (screenshots.length && result.screenshotsAttached !== screenshots.length) throw new Error('Report sent, but some screenshots may not have been attached. Please try again.');
+      if (screenshots.length && result.screenshotsAttached !== screenshots.length) throw new Error('Report sent, but some screenshots may not have been attached.');
       onResult('success', screenshots.length ? `Report and ${screenshots.length} screenshot${screenshots.length === 1 ? '' : 's'} sent successfully!` : 'Thanks for helping improve Pico!');
     } catch (error) {
-      onResult('error', error instanceof Error ? error.message : 'Could not send report. Please try again.');
+      setFileError(error instanceof Error ? error.message : 'Could not send report. Check your connection and try again.');
     } finally { setSending(false); }
   };
 
