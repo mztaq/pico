@@ -21,6 +21,7 @@ export function OfflineStatus() {
     const updateHome = () => {
       homeRef.current = document.title === 'Pico | Home';
       setIsHome(homeRef.current);
+      if (homeRef.current) setShowPopup(false);
     };
     const title = document.querySelector('title');
     const observer = new MutationObserver(updateHome);
