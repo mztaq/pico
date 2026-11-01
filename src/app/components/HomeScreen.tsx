@@ -11,6 +11,7 @@ import { SoundButton } from './SoundToggle';
 import { ThemePicker } from './ThemePicker';
 import { BugReportDialog } from './BugReportDialog';
 import { BugReportNotice } from './BugReportNotice';
+import { picoIsOnline } from './pico-connection';
 
 const HOME_AMBIENT_CURVES = [
   { d: 'M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108', width: 2.6, opacity: .72 },
@@ -24,15 +25,29 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
-  const [reportOpen, setReportOpen] = useState(() => /^\/app\/report\/?$/.test(window.location.pathname));
+  const [reportOpen, setReportOpen] = useState(false);
   const [reportNotice, setReportNotice] = useState<{type: 'success' | 'error'; message: string} | null>(null);
   const setReportRoute = (open: boolean) => {
     const target = open ? '/app/report' : '/app';
     if (window.location.pathname !== target) window.history.pushState(window.history.state, '', target);
     setReportOpen(open);
   };
+  const openReport = async () => {
+    if (await picoIsOnline()) setReportRoute(true);
+    else setReportNotice({type: 'error', message: "You're offline. Connect to the internet to report a bug."});
+  };
   useEffect(() => {
-    const syncRoute = () => setReportOpen(/^\/app\/report\/?$/.test(window.location.pathname));
+    const syncRoute = () => {
+      if (!/^\/app\/report\/?$/.test(window.location.pathname)) { setReportOpen(false); return; }
+      void picoIsOnline().then(online => {
+        if (online) setReportOpen(true);
+        else {
+          setReportRoute(false);
+          setReportNotice({type: 'error', message: "You're offline. Connect to the internet to report a bug."});
+        }
+      });
+    };
+    syncRoute();
     window.addEventListener('popstate', syncRoute);
     return () => window.removeEventListener('popstate', syncRoute);
   }, []);
@@ -144,7 +159,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       </div>
       <div className="home-footer-links">
         <SiteInfoLinks />
-        <button type="button" className="bug-report-trigger" onClick={() => setReportRoute(true)}>
+        <button type="button" className="bug-report-trigger" onClick={() => { void openReport(); }}>
           <Bug size={17} aria-hidden="true" /><span>Report a Bug</span>
         </button>
       </div>
