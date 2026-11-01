@@ -55,7 +55,7 @@ jobs:
           PY
       - name: Back up all old installers before modifying the sole existing release
         if: steps.release_state.outputs.migrate == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backup-six-original-pico-installers
           path: previous-release-assets/*
