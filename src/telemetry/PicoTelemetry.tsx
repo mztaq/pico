@@ -62,7 +62,16 @@ export function PicoTelemetry() {
     if (!choice?.analytics) return;
     let closed = false;
     const totals = new Map<string, number>();
+    const pendingKey = 'pico.usage.pending.v1';
     let pending: UsageBatch | null = null;
+    try {
+      const saved = localStorage.getItem(pendingKey);
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && 'batchId' in parsed && 'entries' in parsed &&
+            typeof parsed.batchId === 'string' && Array.isArray(parsed.entries)) pending = parsed as UsageBatch;
+      }
+    } catch { /* Storage unavailable, keep the in-memory batch. */ }
     let posting = false;
     let retryAfter = 0;
     let lastTick = performance.now();
@@ -82,6 +91,7 @@ export function PicoTelemetry() {
       if (closed || posting || Date.now() < retryAfter) return;
       if (!pending) pending=buildUsageBatch(totals,crypto.randomUUID());
       if (!pending) return;
+      try { localStorage.setItem(pendingKey, JSON.stringify(pending)); } catch { /* Memory retry still works. */ }
       const batch = pending;
       posting=true;
       try {
@@ -97,6 +107,7 @@ export function PicoTelemetry() {
         if (closed) return;
         acknowledgeUsageBatch(totals,batch);
         pending=null;
+        try { localStorage.removeItem(pendingKey); } catch { /* Storage unavailable. */ }
       } catch {
         // Retain the same batch identifier, so a retry cannot count twice.
       } finally {posting=false;}
