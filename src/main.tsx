@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { lazy, Suspense } from 'react';
 const App = lazy(() => import('./app/App'));
 const LandingPage = lazy(() => import('./landing/LandingPage'));
-import { OnlineOnlyGate } from './app/components/OnlineOnlyGate';
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
@@ -59,7 +58,7 @@ installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <OnlineOnlyGate><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /></OnlineOnlyGate> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
+    {inApp ? <Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 
