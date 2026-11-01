@@ -11,11 +11,13 @@ it('includes installable Pico manifest and offline fallback', () => {
   expect(read('public/offline.html')).toContain('Pico is offline');
 });
 
-it('disables offline caching and requires live connectivity', () => {
+it('caches workspace resources but leaves APIs network-only', () => {
   const source = read('public/sw.js');
   expect(source).toContain("request.method !== 'GET'");
   expect(source).toContain("url.pathname.startsWith('/api/')");
   expect(source).toContain("url.pathname.startsWith('/python-runtime/')");
+  expect(source).toContain("cache.match('/app')");
+  expect(source).toContain("url.pathname.startsWith('/app/')");
   expect(source).toContain("url.pathname.startsWith('/assets/')");
   expect(source).not.toMatch(/localStorage|indexedDB|\.picochart|\.logic\.json/);
 });
