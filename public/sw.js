@@ -15,10 +15,24 @@ self.addEventListener('message', event => {
   if (event.data?.type !== 'CACHE_PICO_HOME') return;
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    const urls = ['/app', '/', '/pico-logo.svg', ...event.data.assets.filter(path => typeof path === 'string' && (path.startsWith('/assets/') || path.startsWith('/python-runtime/')))];
-    await Promise.allSettled(urls.map(async url => {
-      const response = await fetch(url, { cache: 'no-store' });
-      if (response.ok && response.type === 'basic') await cache.put(url, response);
+    let manifest = [];
+    try {
+      const response = await fetch('/offline-assets.json', { cache: 'no-store' });
+      if (response.ok) manifest = await response.json();
+    } catch { /* Partial caching remains available if the manifest is unreachable. */ }
+    const assets = Array.isArray(event.data.assets) ? event.data.assets : [];
+    const urls = [...new Set(['/app', '/', '/pico-logo.svg', ...manifest, ...assets].filter(url =>
+      typeof url === 'string' && (url === '/' || url === '/app' || url === '/pico-logo.svg' ||
+      url.startsWith('/assets/') || url.startsWith('/python-runtime/'))))];
+    let index = 0;
+    await Promise.all(Array.from({length: 4}, async () => {
+      while (index < urls.length) {
+        const url = urls[index++];
+        try {
+          const response = await fetch(url, { cache: 'no-store' });
+          if (response.ok && response.type === 'basic') await cache.put(url, response);
+        } catch { /* A later online visit may retry missing assets. */ }
+      }
     }));
   })());
 });
