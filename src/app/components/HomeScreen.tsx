@@ -11,6 +11,7 @@ import { SoundButton } from './SoundToggle';
 import { ThemePicker } from './ThemePicker';
 import { BugReportDialog } from './BugReportDialog';
 import { BugReportNotice } from './BugReportNotice';
+import { WifiOff, X as CloseIcon } from 'lucide-react';
 import { picoIsOnline } from './pico-connection';
 
 const HOME_AMBIENT_CURVES = [
@@ -26,6 +27,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  const [offlineReportWarning, setOfflineReportWarning] = useState(false);
   const [reportNotice, setReportNotice] = useState<{type: 'success' | 'error'; message: string} | null>(null);
   const setReportRoute = (open: boolean) => {
     const target = open ? '/app/report' : '/app';
@@ -33,8 +35,8 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     setReportOpen(open);
   };
   const openReport = async () => {
-    if (await picoIsOnline()) setReportRoute(true);
-    else setReportNotice({type: 'error', message: "You're offline. Connect to the internet to report a bug."});
+    if (await picoIsOnline()) { setOfflineReportWarning(false); setReportRoute(true); }
+    else setOfflineReportWarning(true);
   };
   useEffect(() => {
     const syncRoute = () => {
@@ -43,7 +45,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         if (online) setReportOpen(true);
         else {
           setReportRoute(false);
-          setReportNotice({type: 'error', message: "You're offline. Connect to the internet to report a bug."});
+          setOfflineReportWarning(true);
         }
       });
     };
@@ -51,6 +53,11 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     window.addEventListener('popstate', syncRoute);
     return () => window.removeEventListener('popstate', syncRoute);
   }, []);
+  useEffect(() => {
+    if (!offlineReportWarning) return;
+    const timer = window.setTimeout(() => setOfflineReportWarning(false), 4500);
+    return () => window.clearTimeout(timer);
+  }, [offlineReportWarning]);
   const theme = getTheme(settings.theme);
   useEffect(() => {
     for (const [property, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(property, value);
@@ -164,6 +171,11 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </button>
       </div>
     </div>
+    {offlineReportWarning && <div className="pico-report-offline-toast" role="status">
+      <WifiOff size={17} aria-hidden="true" />
+      <span>Connect to the internet to report a bug.</span>
+      <button type="button" aria-label="Dismiss offline report notice" onClick={() => setOfflineReportWarning(false)}><CloseIcon size={15}/></button>
+    </div>}
     {reportOpen && <BugReportDialog onClose={() => setReportRoute(false)} onResult={(type, message) => { setReportRoute(false); setReportNotice({type, message}); }} />}
     {reportNotice && <BugReportNotice type={reportNotice.type} message={reportNotice.message} onClose={() => setReportNotice(null)} />}
 
