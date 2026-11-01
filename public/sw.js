@@ -29,6 +29,7 @@ self.addEventListener('message', event => {
       while (index < urls.length) {
         const url = urls[index++];
         try {
+          if (url !== '/' && url !== '/app' && await cache.match(url)) continue;
           const response = await fetch(url, { cache: 'no-store' });
           if (response.ok && response.type === 'basic') await cache.put(url, response);
         } catch { /* A later online visit may retry missing assets. */ }
