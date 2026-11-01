@@ -62,6 +62,18 @@ export function PicoTelemetry() {
     if (!choice?.analytics) return;
     let closed = false;
     const totals = new Map<string, number>();
+    const totalsKey = 'pico.usage.totals.v1';
+    try {
+      const saved: unknown = JSON.parse(localStorage.getItem(totalsKey) || '[]');
+      if (Array.isArray(saved)) for (const entry of saved) {
+        if (Array.isArray(entry) && typeof entry[0] === 'string' &&
+            Object.values(workspaces).includes(entry[0]) &&
+            typeof entry[1] === 'number' && Number.isFinite(entry[1]) && entry[1] >= 0) totals.set(entry[0], entry[1]);
+      }
+    } catch { /* Storage may be disabled. */ }
+    const persistTotals = () => {
+      try { localStorage.setItem(totalsKey, JSON.stringify([...totals])); } catch { /* Memory fallback. */ }
+    };
     const pendingKey = 'pico.usage.pending.v1';
     let pending: UsageBatch | null = null;
     try {
@@ -85,6 +97,7 @@ export function PicoTelemetry() {
       if (activeWorkspace && !document.hidden && document.hasFocus() &&
           Date.now()-lastActivity.current < 120000) {
         attributeSeconds(totals,activeWorkspace,delta);
+        persistTotals();
       }
     };
     const flush = async (keepalive = false) => {
@@ -106,6 +119,7 @@ export function PicoTelemetry() {
         }
         if (closed) return;
         acknowledgeUsageBatch(totals,batch);
+        persistTotals();
         pending=null;
         try { localStorage.removeItem(pendingKey); } catch { /* Storage unavailable. */ }
       } catch {
@@ -148,6 +162,14 @@ export function PicoTelemetry() {
       for(const type of ['pointerdown','keydown','wheel']) window.removeEventListener(type,noteActivity);
     };
   },[choice?.analytics]);
+
+  useEffect(() => {
+    if (choice?.analytics) return;
+    try {
+      localStorage.removeItem('pico.usage.pending.v1');
+      localStorage.removeItem('pico.usage.totals.v1');
+    } catch { /* Storage unavailable. */ }
+  }, [choice?.analytics]);
 
   // Local settings remain authoritative on this device. Only consented preferences sync.
   useEffect(() => {
@@ -218,11 +240,13 @@ export function PicoTelemetry() {
     };
     const onSaved = () => schedule();
     window.addEventListener('pico:settings-saved', onSaved);
+    window.addEventListener('online', onSaved);
     void start();
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
       window.removeEventListener('pico:settings-saved',onSaved);
+      window.removeEventListener('online',onSaved);
     };
   }, [choice?.preferences]);
 
