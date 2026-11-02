@@ -54,6 +54,20 @@ describe('Pico MCP HTTP security',()=>{
     const listed=await invoke({jsonrpc:'2.0',id:2,method:'tools/list'});
     expect((await listed.json()).result.tools).toHaveLength(9);
   });
+  it('accepts scoped, resource-bound OAuth tokens through the private binding',async()=>{
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async(resource:string,token:string)=>
+      resource==='https://picompiler.pages.dev/app/mcp' && token==='oauth-test-token' ? {audience:resource,scope:['mcp:run'],userId:'123'} : null}};
+    const ok=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'POST',headers:{Authorization:'Bearer oauth-test-token'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'ping'})}),env:settings});
+    expect(ok.status).toBe(200);
+    const denied=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'POST',headers:{Authorization:'Bearer other'},body:JSON.stringify({jsonrpc:'2.0',id:2,method:'ping'})}),env:settings});
+    expect(denied.status).toBe(401);
+    expect(denied.headers.get('www-authenticate')).toContain('resource_metadata=');
+  });
+  it('refuses an OAuth token with a missing required scope',async()=>{
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async(resource:string,token:string)=>({audience:resource,scope:['offline_access'],userId:token})}};
+    const denied=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'POST',headers:{Authorization:'Bearer oauth-test-token'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'ping'})}),env:settings});
+    expect(denied.status).toBe(401);
+  });
   it('calls Pico engine and returns tool content',async()=>{
     const r=await invoke({jsonrpc:'2.0',id:3,method:'tools/call',params:{name:'pico_run_pseudocode',arguments:{code:'OUTPUT "ok"'}}});
     expect((await r.json()).result.structuredContent.output).toContain('ok');
