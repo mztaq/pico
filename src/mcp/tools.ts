@@ -1,6 +1,9 @@
 import { compile, autoDeclareVariables } from '../language';
 import { execute, RuntimeError } from '../runtime/interpreter';
 import { compileFlowchart } from '../flowchart/compiler';
+import { autoLayoutChart } from '../flowchart/layout';
+import { serializeChart } from '../flowchart/storage';
+import { autoLayoutCircuit } from '../logic/layout';
 import { NODE_KINDS, DATA_TYPES, type FlowchartProject } from '../flowchart/model';
 import { SPECS, parseDocument, type CircuitDocument } from '../logic/model';
 import { evaluateCircuit, initialSimulation, generateTruthTable } from '../logic/engine';
@@ -92,15 +95,15 @@ export function callTool(name:string, input:unknown):unknown {
     return run(code,inputs,name === 'pico_debug_pseudocode');
   }
   if (['pico_create_flowchart','pico_run_flowchart','pico_flowchart_to_pseudocode'].includes(name)) {
-    const project=flowchart(a.project);
+    const project=autoLayoutChart(flowchart(a.project));
     const compiled=compileFlowchart(project);
-    if(name==='pico_create_flowchart')return {document:project,code:compiled.code};
+    if(name==='pico_create_flowchart')return {document:project,code:compiled.code,importFileName:'pico-flowchart.json',importFileContents:serializeChart(project),openUrl:'https://picompiler.pages.dev/app/flowchart'};
     if(name==='pico_flowchart_to_pseudocode')return {code:compiled.code};
     return {code:compiled.code, ...run(compiled.code,boundedArray(a.inputs??[],32).map(v=>string(v,500)),false)};
   }
   if(['pico_create_circuit','pico_simulate_circuit','pico_truth_table'].includes(name)) {
-    const doc=circuit(a.document);
-    if(name==='pico_create_circuit')return {document:doc};
+    const doc=autoLayoutCircuit(circuit(a.document));
+    if(name==='pico_create_circuit')return {document:doc,importFileName:'pico-circuit.json',importFileContents:JSON.stringify(doc,null,2),openUrl:'https://picompiler.pages.dev/app/logic'};
     if(name==='pico_truth_table')return generateTruthTable(doc);
     const input=obj(a.inputs ?? {});
     for(const [id,value] of Object.entries(input))if(!doc.nodes.some(n=>n.id===id && n.kind==='switch') || (value!==0&&value!==1))fail('Invalid circuit switch input.');
