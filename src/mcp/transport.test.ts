@@ -1,3 +1,4 @@
+import routes from '../../public/_routes.json';
 // @vitest-environment jsdom
 import {describe,it,expect} from 'vitest';
 import {onRequest} from '../../functions/app/mcp';
@@ -77,5 +78,12 @@ describe('Pico MCP HTTP security',()=>{
   it('calls Pico engine and returns tool content',async()=>{
     const r=await invoke({jsonrpc:'2.0',id:3,method:'tools/call',params:{name:'pico_run_pseudocode',arguments:{code:'OUTPUT "ok"'}}});
     expect((await r.json()).result.structuredContent.output).toContain('ok');
+  });
+});
+
+describe('OAuth Pages route configuration',()=>{
+  it('includes OAuth protected-resource metadata in the Cloudflare Functions routes',()=>{
+    expect(routes.include).toContain('/.well-known/oauth-protected-resource/*');
+    expect(routes.include).toContain('/app/*');
   });
 });
