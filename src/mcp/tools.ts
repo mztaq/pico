@@ -11,6 +11,9 @@ import { evaluateCircuit, initialSimulation, generateTruthTable } from '../logic
 const MAX_CODE = 16_384;
 const MAX_STEPS = 10_000;
 const MAX_TRACE = 120;
+// Keep expensive loops below the Workers Free CPU budget. This is an instruction budget, not a CPU-time guarantee.
+const MAX_SERVER_STEPS = 2_000;
+const MAX_SERVER_TRACE = 60;
 const fail = (message: string): never => { throw new Error(message); };
 function obj(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return fail('Expected a JSON object.');
@@ -27,13 +30,13 @@ function boundedArray(value: unknown, max: number): unknown[] {
 function run(code: string, inputs: string[], trace: boolean) {
   try {
     const { ast } = compile(autoDeclareVariables(code));
-    const result = execute(ast, inputs, { limit: MAX_STEPS, trace });
+    const result = execute(ast, inputs, { limit: MAX_SERVER_STEPS, trace });
     return {ok: true, output: result.output, variables: result.variables, steps: result.steps,
-      trace: trace ? result.trace.slice(0, MAX_TRACE) : undefined, traceTruncated: result.traceTruncated || result.trace.length > MAX_TRACE,
+      trace: trace ? result.trace.slice(0, MAX_SERVER_TRACE) : undefined, traceTruncated: result.traceTruncated || result.trace.length > MAX_SERVER_TRACE,
       outputTruncated: result.outputTruncated};
   } catch (error) {
     if (error instanceof RuntimeError) return {ok: false, error: error.message, line: error.line, code: error.code,
-      output: error.result?.output, trace: trace ? error.result?.trace.slice(0, MAX_TRACE) : undefined};
+      output: error.result?.output, trace: trace ? error.result?.trace.slice(0, MAX_SERVER_TRACE) : undefined};
     return {ok: false, error: error instanceof Error ? error.message : 'Execution error'};
   }
 }
@@ -85,9 +88,9 @@ const schemas: Record<string, object> = {
 export function listTools() { return TOOLS.map(([name, description]) => ({name,description,inputSchema:schemas[name]})); }
 export function callTool(name:string, input:unknown):unknown {
   const a=obj(input);
-  if (JSON.stringify(a).length > 32_768) fail('Tool arguments exceed 32 KB.');
+  // HTTP transport enforces the full request's 32 KiB byte limit before JSON parsing.
   if (name === 'pico_capabilities') return {syntax:'Cambridge-style Pico pseudocode',flowchartBlocks:NODE_KINDS,variableTypes:DATA_TYPES,
-    circuitComponents:Object.keys(SPECS),limits:{codeBytes:MAX_CODE,executionSteps:MAX_STEPS,traceSteps:MAX_TRACE,flowchartNodes:100,circuitNodes:100,circuitWires:200,truthTableInputs:8},
+    circuitComponents:Object.keys(SPECS),limits:{codeBytes:MAX_CODE,executionSteps:MAX_SERVER_STEPS,traceSteps:MAX_SERVER_TRACE,flowchartNodes:100,circuitNodes:100,circuitWires:200,truthTableInputs:8},
     projectImport:'The tools return native Pico JSON documents. Import into Pico manually until a verified import bridge is implemented.'};
   if (name === 'pico_run_pseudocode' || name === 'pico_debug_pseudocode') {
     const code=string(a.code,MAX_CODE);
@@ -95,14 +98,16 @@ export function callTool(name:string, input:unknown):unknown {
     return run(code,inputs,name === 'pico_debug_pseudocode');
   }
   if (['pico_create_flowchart','pico_run_flowchart','pico_flowchart_to_pseudocode'].includes(name)) {
-    const project=autoLayoutChart(flowchart(a.project));
+    const raw=flowchart(a.project);
+    const project=name==='pico_create_flowchart' ? autoLayoutChart(raw) : raw;
     const compiled=compileFlowchart(project);
     if(name==='pico_create_flowchart')return {document:project,code:compiled.code,importFileName:'pico-flowchart.json',importFileContents:serializeChart(project),openUrl:'https://picompiler.pages.dev/app/flowchart'};
     if(name==='pico_flowchart_to_pseudocode')return {code:compiled.code};
     return {code:compiled.code, ...run(compiled.code,boundedArray(a.inputs??[],32).map(v=>string(v,500)),false)};
   }
   if(['pico_create_circuit','pico_simulate_circuit','pico_truth_table'].includes(name)) {
-    const doc=autoLayoutCircuit(circuit(a.document));
+    const raw=circuit(a.document);
+    const doc=name==='pico_create_circuit' ? autoLayoutCircuit(raw) : raw;
     if(name==='pico_create_circuit')return {document:doc,importFileName:'pico-circuit.json',importFileContents:JSON.stringify(doc,null,2),openUrl:'https://picompiler.pages.dev/app/logic'};
     if(name==='pico_truth_table')return generateTruthTable(doc);
     const input=obj(a.inputs ?? {});
