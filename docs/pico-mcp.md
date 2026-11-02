@@ -28,3 +28,14 @@ Shared tokens and location-scoped rate limits reduce misuse but are not a comple
 ## Development
 
 Run `pnpm test` and `pnpm build`; confirm request authentication, rate limits, malformed JSON, oversized input and code timeouts. Test all tools against an MCP client and evaluate off-host behavior before merging. No D1 migrations or email/API changes are required.
+
+
+## Cloudflare CPU review before merging
+
+Cloudflare Workers Free has a 10 ms CPU budget per HTTP request. A 10,000-step interpreter limit does **not** guarantee the request stays within the CPU budget. In the Cloudflare dashboard open the Pico Pages preview deployment's Functions/Workers observability and inspect CPU time and errors for representative calls to `pico_run_pseudocode`, `pico_debug_pseudocode`, `pico_run_flowchart`, `pico_simulate_circuit` and `pico_truth_table`. Include valid large projects and worst-case nested loops. Monitor resource-exhaustion errors, and reduce the execution/trace limits if workloads approach 10 ms. Do not load-test Production.
+
+The private rate gate is confirmed in preview by an authenticated 25-request burst yielding 20 HTTP 200 and five HTTP 429. This is location-scoped throttling, **not** proof of a daily quota or distributed-abuse resistance. Keep the token private and rotate it before a wider rollout.
+
+## ChatGPT connection readiness
+
+This beta's static bearer token is for CLI and compatible development clients. It is **not** OAuth, and should not be shared with ChatGPT or a third-party directory. For a ChatGPT custom app, implement MCP OAuth protected-resource metadata and a trusted authorization server that issues scoped, audience-bound tokens. Verify account/plan eligibility and connect through ChatGPT's current Apps settings. Do not disable authentication or turn the endpoint anonymous to make a tool scan work. Until then use the HTTP beta only with clients that support explicit bearer authorization.
