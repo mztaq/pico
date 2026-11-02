@@ -1,3 +1,4 @@
+import { onRequest as onMiddlewareRequest } from '../../functions/_middleware';
 import routes from '../../public/_routes.json';
 // @vitest-environment jsdom
 import {describe,it,expect} from 'vitest';
@@ -85,5 +86,25 @@ describe('OAuth Pages route configuration',()=>{
   it('includes OAuth protected-resource metadata in the Cloudflare Functions routes',()=>{
     expect(routes.include).toContain('/.well-known/oauth-protected-resource/*');
     expect(routes.include).toContain('/app/*');
+  });
+});
+
+describe('OAuth discovery Pages middleware',()=>{
+  it('serves metadata instead of the frontend fallback',async()=>{
+    const r=await onMiddlewareRequest({
+      request:new Request('https://feat-pico-mcp-github-oauth.picompiler.pages.dev/.well-known/oauth-protected-resource/app/mcp'),
+      env:{PICO_OAUTH_ISSUER:'https://pico-oauth.mztaq.workers.dev',PICO_OAUTH:{}},
+      next:async()=>new Response('SPA 404',{status:404}),
+    });
+    expect(r.status).toBe(200);
+    expect((await r.json()).authorization_servers).toEqual(['https://pico-oauth.mztaq.workers.dev']);
+  });
+  it('passes unrelated routes through unchanged',async()=>{
+    const r=await onMiddlewareRequest({
+      request:new Request('https://picompiler.pages.dev/app/mcp'),
+      env:{},
+      next:async()=>new Response('existing MCP',{status:200}),
+    });
+    expect(await r.text()).toBe('existing MCP');
   });
 });
