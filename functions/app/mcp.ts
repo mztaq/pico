@@ -17,9 +17,8 @@ async function digestExpected(secret:string):Promise<Uint8Array>{
 const response=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers});
 const error=(id:unknown,code:number,message:string)=>({jsonrpc:'2.0',id,error:{code,message}});
 const result=(id:unknown,value:unknown)=>({jsonrpc:'2.0',id,result:value});
-const RESOURCE='https://picompiler.pages.dev/app/mcp';
-const metadataUrl='https://picompiler.pages.dev/.well-known/oauth-protected-resource/app/mcp';
-const oauthChallenge=()=>`Bearer realm="Pico MCP", resource_metadata="${metadataUrl}", scope="mcp:run"`;
+const resourceFor=(request:Request)=>new URL('/app/mcp',request.url).href;
+const oauthChallenge=(request:Request)=>`Bearer realm="Pico MCP", resource_metadata="${new URL('/.well-known/oauth-protected-resource/app/mcp',request.url).href}", scope="mcp:run"`;
 async function authenticated(req:Request,env:Env) {
   if (!env.PICO_MCP_RATE_GATE) return {status:503,description:'MCP rate limiter is not configured.'};
   const legacyEnabled=Boolean(env.PICO_MCP_TOKEN && env.PICO_MCP_TOKEN.length>=32);
@@ -40,8 +39,8 @@ async function authenticated(req:Request,env:Env) {
   if(!legacyValid){
     if(!oauthEnabled)return {status:401,description:'Unauthorized.'};
     try{
-      const verified=await env.PICO_OAUTH!.validateToken(RESOURCE,token);
-      if(!verified || verified.audience!==RESOURCE || !verified.scope.includes('mcp:run'))return {status:401,description:'Unauthorized.'};
+      const verified=await env.PICO_OAUTH!.validateToken(resourceFor(req),token);
+      if(!verified || verified.audience!==resourceFor(req) || !verified.scope.includes('mcp:run'))return {status:401,description:'Unauthorized.'};
     }catch{return {status:503,description:'OAuth authorization server unavailable.'};}
   }
   const key=Array.from(a.slice(0,16)).map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -55,7 +54,7 @@ async function authenticated(req:Request,env:Env) {
 export async function onRequest({request,env}:Context):Promise<Response> {
   if(request.method==='OPTIONS')return new Response(null,{status:405,headers});
   if(request.method==='GET'){
-    if(env.PICO_OAUTH && env.PICO_OAUTH_ISSUER){const rejected=response({error:'Authorization required.'},401);rejected.headers.set('WWW-Authenticate',oauthChallenge());return rejected;}
+    if(env.PICO_OAUTH && env.PICO_OAUTH_ISSUER){const rejected=response({error:'Authorization required.'},401);rejected.headers.set('WWW-Authenticate',oauthChallenge(request));return rejected;}
     return response({error:'Use authenticated MCP POST requests.'},405);
   }
   if(request.method!=='POST')return response({error:'Method not allowed.'},405);
@@ -64,7 +63,7 @@ export async function onRequest({request,env}:Context):Promise<Response> {
   const fail=await authenticated(request,env);
   if(fail){
     const rejected=response({error:fail.description},fail.status);
-    if(fail.status===401 && env.PICO_OAUTH_ISSUER && env.PICO_OAUTH){rejected.headers.set('WWW-Authenticate',oauthChallenge());}
+    if(fail.status===401 && env.PICO_OAUTH_ISSUER && env.PICO_OAUTH){rejected.headers.set('WWW-Authenticate',oauthChallenge(request));}
     return rejected;
   }
   if(Number(request.headers.get('content-length')??0)>32768)return response({error:'Request too large.'},413);
