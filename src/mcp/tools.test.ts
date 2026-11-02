@@ -56,6 +56,11 @@ describe('Pico MCP tool contracts',()=>{
     expect(r.limits.executionSteps).toBe(500);
     expect(r.limits.traceSteps).toBe(40);
   });
+  it('keeps MCP traces bounded at collection time',()=>{
+    const r=callTool('pico_debug_pseudocode',{code:'DECLARE X : INTEGER\nFOR X <- 1 TO 80\nOUTPUT X\nNEXT X'}) as {trace:unknown[];traceTruncated:boolean};
+    expect(r.trace.length).toBeLessThanOrEqual(40);
+    expect(r.traceTruncated).toBe(true);
+  });
   it('lists native syntax and circuit capabilities',()=>{
     const c=callTool('pico_capabilities',{}) as {flowchartBlocks:string[];circuitComponents:string[]};
     expect(c.flowchartBlocks).toContain('decision');
