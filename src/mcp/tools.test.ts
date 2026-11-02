@@ -45,6 +45,17 @@ describe('Pico MCP tool contracts',()=>{
     const table=callTool('pico_truth_table',{document:doc}) as {rows:string[][]};
     expect(table.rows).toHaveLength(2);
   });
+  it('caps server execution before full interpreter budget',()=>{
+    const r=callTool('pico_run_pseudocode',{code:'WHILE TRUE DO\n    OUTPUT "LOOP"\nENDWHILE'}) as {ok:boolean;code:string;error:string};
+    expect(r.ok).toBe(false);
+    expect(r.code).toBe('step-limit');
+    expect(r.error).toContain('2,000');
+  });
+  it('reports the reduced free-tier limits to clients',()=>{
+    const r=callTool('pico_capabilities',{}) as {limits:{executionSteps:number;traceSteps:number}};
+    expect(r.limits.executionSteps).toBe(2000);
+    expect(r.limits.traceSteps).toBe(60);
+  });
   it('lists native syntax and circuit capabilities',()=>{
     const c=callTool('pico_capabilities',{}) as {flowchartBlocks:string[];circuitComponents:string[]};
     expect(c.flowchartBlocks).toContain('decision');
