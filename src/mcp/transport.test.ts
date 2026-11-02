@@ -2,7 +2,7 @@
 import {describe,it,expect} from 'vitest';
 import {onRequest} from '../../functions/mcp';
 const token='t'.repeat(40);
-const env={PICO_MCP_TOKEN:token,PICO_MCP_RATE_LIMITER:{limit:async()=>({success:true})}};
+const env={PICO_MCP_TOKEN:token,PICO_MCP_RATE_GATE:{fetch:async()=>new Response(null,{status:204})}};
 const invoke=(payload:unknown,authorization='Bearer '+token,settings:typeof env=env)=>onRequest({request:new Request('https://picompiler.pages.dev/mcp',{method:'POST',headers:{authorization,'content-type':'application/json'},body:JSON.stringify(payload)}),env:settings});
 describe('Pico MCP HTTP security',()=>{
   it('fails closed when secret or rate limiter is absent',async()=>{
@@ -13,7 +13,7 @@ describe('Pico MCP HTTP security',()=>{
     expect((await invoke({jsonrpc:'2.0',id:1,method:'tools/list'},'Bearer wrong')).status).toBe(401);
   });
   it('enforces edge limiter',async()=>{
-    const r=await invoke({jsonrpc:'2.0',id:1,method:'tools/list'},'Bearer '+token,{...env,PICO_MCP_RATE_LIMITER:{limit:async()=>({success:false})}});
+    const r=await invoke({jsonrpc:'2.0',id:1,method:'tools/list'},'Bearer '+token,{...env,PICO_MCP_RATE_GATE:{fetch:async()=>new Response(null,{status:429})}});
     expect(r.status).toBe(429);
   });
   it('handles initialization and lists Pico tools',async()=>{
