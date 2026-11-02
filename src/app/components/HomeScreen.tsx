@@ -21,7 +21,7 @@ const HOME_AMBIENT_CURVES = [
   { d: 'M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304', width: 1.3, opacity: .28 },
 ] as const;
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'sql') => void }) {
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
@@ -149,12 +149,15 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </svg>
           </WorkspaceChoice>
         </HomeGroup>
-        <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">
+        <HomeGroup label="Data lab" detail="Explore numbers and databases" kind="data">
           <WorkspaceChoice icon={<Calculator size={18} />} title="Binary Lab" description="Explore bits, hexadecimal, logical shifts, overflow and two’s complement." onClick={() => onChoose('binary')}>
             <div className="compiler-choice-preview home-binary-preview" aria-hidden="true">
               <div className="home-binary-byte">{'00101010'.split('').map((bit, index) => <span className={bit === '1' ? 'on' : ''} key={index}>{bit}</span>)}</div>
               <div className="home-binary-equation"><code>0010 1010</code><span>=</span><strong>42</strong><span>=</span><code>0x2A</code></div>
             </div>
+          </WorkspaceChoice>
+          <WorkspaceChoice icon={<Terminal size={18} />} tag=".sql" title="SQL Playground" description="Explore databases, run SQL and solve guided challenges." onClick={() => onChoose('sql')}>
+            <pre className="compiler-choice-preview" aria-hidden="true">{'SELECT Name, YearGroup\nFROM Students\nWHERE YearGroup = 10;'}</pre>
           </WorkspaceChoice>
         </HomeGroup>
       </div>

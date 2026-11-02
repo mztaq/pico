@@ -168,3 +168,4 @@
  .pico-load-home-section--data .pico-load-home-card{flex-direction:column}
  .pico-load-home-section--data .pico-load-home-card-stage{flex:auto;height:112px;min-height:0;border-right:0;border-bottom:1px solid var(--pico-load-border)}
 }
+.pico-load-sql{display:grid;grid-template-columns:minmax(220px,25%) minmax(0,1fr);gap:16px;padding:16px;min-height:0;flex:1}.pico-load-sql>aside,.pico-load-sql>div{display:flex;flex-direction:column;gap:14px;min-width:0}.pico-load-sql-editor{height:40%;min-height:150px}.pico-load-sql-results{height:35%;min-height:130px}@media(max-width:700px){.pico-load-sql{grid-template-columns:1fr}.pico-load-sql>aside{display:none}}

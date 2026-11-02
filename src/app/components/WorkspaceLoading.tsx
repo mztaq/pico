@@ -1,6 +1,6 @@
 import './workspace-loading.css';
 
-export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab';
+export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab' | 'SQL Playground';
 
 function Placeholder({ className = '' }: { className?: string }) {
   return <div className={`pico-load-shimmer ${className}`} />;
@@ -140,6 +140,13 @@ function BinarySkeleton() {
   </div>;
 }
 
+function SqlSkeleton() {
+  return <div className="pico-load-sql">
+    <aside><Placeholder className="pico-load-section-title" />{Array.from({ length: 3 }, (_, index) => <Placeholder className="pico-load-inspector-field" key={index} />)}</aside>
+    <div><Placeholder className="pico-load-section-title" /><Placeholder className="pico-load-sql-editor" /><Placeholder className="pico-load-section-title" /><Placeholder className="pico-load-sql-results" /></div>
+  </div>;
+}
+
 /** Visible only while React.lazy is fetching the workspace. No artificial delay. */
 export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) {
   return <div className="pico-load-stage" data-loading-workspace={workspace} role="status" aria-live="polite" aria-label={`Opening ${workspace}`}>
@@ -149,6 +156,7 @@ export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) 
       {workspace === 'Flowchart Builder' ? <FlowchartSkeleton /> :
        workspace === 'Logic Sim' ? <LogicSkeleton /> :
        workspace === 'CPU Studio' ? <CpuSkeleton /> :
+       workspace === 'SQL Playground' ? <SqlSkeleton /> :
        <BinarySkeleton />}
     </div>
   </div>;

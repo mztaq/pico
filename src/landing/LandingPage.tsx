@@ -169,6 +169,7 @@ export default function LandingPage() {
             <div className="lp-feature-items">
               <a className="lp-feature-item" href="/app/pseudocode" aria-label="Open Pseudocode in Pico"><span className="lp-feature-item-head"><h4>Pseudocode</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Write and run pseudocode.</p></a>
               <a className="lp-feature-item" href="/app/python" aria-label="Open Python in Pico"><span className="lp-feature-item-head"><h4>Python</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Execute Python code.</p></a>
+              <a className="lp-feature-item" href="/app/sql" aria-label="Open SQL Playground in Pico"><span className="lp-feature-item-head"><h4>SQL Playground</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Explore databases and run SQL.</p></a>
             </div>
           </div>
           <div className="lp-feature-group">

@@ -17,8 +17,17 @@
 - **Flowchart Builder** — Create and run flowcharts, then convert them into pseudocode.
 - **Logic Sim** — Build digital circuits, simulate gates and inspect truth tables.
 - **CPU Studio** — Explore the fetch–decode–execute cycle with animated CPU components and registers.
+- **SQL Playground** — Explore sample databases, run IGCSE SQL locally, and solve guided challenges.
 
 Pico includes customizable themes, guided tutorials and browser-based project saving. 
+
+### SQL Playground
+
+Open **SQL Playground** from the app home or the landing page. The sample database has Students, Clubs and Results tables. Select a table to inspect its columns, primary and foreign keys, and sample rows; use **Relationships** to see linked records. Click a table or column to insert its name into the editor.
+
+Write one statement and press **Run** or **Ctrl+Enter**. Results appear in a scrollable table with a short explanation. The local SQLite engine supports SELECT, WHERE with AND/OR, ORDER BY, basic JOINs, COUNT, SUM, AVG, MIN, MAX, GROUP BY, INSERT, UPDATE and DELETE. A valid query with no rows is shown separately from a SQL error. Only SELECT, INSERT, UPDATE and DELETE are accepted in this practice workspace.
+
+Switch to **Challenges** for short goals, stepwise hints and solution explanations. Completion compares query results or database effects, so equivalent SQL can succeed. **Reset data** restores the sample rows after confirmation. SQL, activity progress and practice data are saved in browser storage. Queries run in browser SQLite WebAssembly and are not submitted to a server.
 
 ## Desktop apps
 
