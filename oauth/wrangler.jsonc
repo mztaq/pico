@@ -5,8 +5,8 @@
   "compatibility_flags": ["global_fetch_strictly_public"],
   "workers_dev": true,
   "vars": {
-    "AUTH_ISSUER": "https://REPLACE_WITH_ACTUAL_OAUTH_WORKER_HOSTNAME",
+    "AUTH_ISSUER": "https://pico-oauth.mztaq.workers.dev",
     "MCP_RESOURCE": "https://picompiler.pages.dev/app/mcp"
   },
-  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "REPLACE_WITH_NEW_KV_NAMESPACE_ID" }]
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "031983c0d12942a4a87743017a6632a6" }]
 }
