@@ -49,12 +49,12 @@ describe('Pico MCP tool contracts',()=>{
     const r=callTool('pico_run_pseudocode',{code:'WHILE TRUE DO\n    OUTPUT "LOOP"\nENDWHILE'}) as {ok:boolean;code:string;error:string};
     expect(r.ok).toBe(false);
     expect(r.code).toBe('step-limit');
-    expect(r.error).toContain('2,000');
+    expect(r.error).toContain('500');
   });
   it('reports the reduced free-tier limits to clients',()=>{
     const r=callTool('pico_capabilities',{}) as {limits:{executionSteps:number;traceSteps:number}};
-    expect(r.limits.executionSteps).toBe(2000);
-    expect(r.limits.traceSteps).toBe(60);
+    expect(r.limits.executionSteps).toBe(500);
+    expect(r.limits.traceSteps).toBe(40);
   });
   it('lists native syntax and circuit capabilities',()=>{
     const c=callTool('pico_capabilities',{}) as {flowchartBlocks:string[];circuitComponents:string[]};
