@@ -10,8 +10,8 @@ import { evaluateCircuit, initialSimulation, generateTruthTable } from '../logic
 
 const MAX_CODE = 16_384;
 // Keep expensive loops below the Workers Free CPU budget. This is an instruction budget, not a CPU-time guarantee.
-const MAX_SERVER_STEPS = 2_000;
-const MAX_SERVER_TRACE = 60;
+const MAX_SERVER_STEPS = 500;
+const MAX_SERVER_TRACE = 40;
 const fail = (message: string): never => { throw new Error(message); };
 function obj(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return fail('Expected a JSON object.');
