@@ -12,6 +12,19 @@ describe('Pico MCP tool contracts',()=>{
     const r=callTool('pico_run_pseudocode',{code:'OUTPUT "hello"'}) as {ok:boolean;output:string[]};
     expect(r.ok, JSON.stringify(r)).toBe(true);expect(r.output).toContain('hello');
   });
+  it('profiles direct compilation only when requested',()=>{
+    const r=callTool('pico_run_pseudocode',{code:'DECLARE X : INTEGER\nX <- 5\nOUTPUT X',profile:true}) as {ok:boolean;profile:{compilerPath:string;compileMs:number;executeMs:number}};
+    expect(r.ok).toBe(true);
+    expect(r.profile.compilerPath).toBe('direct');
+    expect(r.profile.compileMs).toBeGreaterThanOrEqual(0);
+    expect(r.profile.executeMs).toBeGreaterThanOrEqual(0);
+  });
+  it('keeps automatic declaration inference for implicit variables',()=>{
+    const r=callTool('pico_run_pseudocode',{code:'X <- 5\nOUTPUT X',profile:true}) as {ok:boolean;output:string[];profile:{compilerPath:string}};
+    expect(r.ok).toBe(true);
+    expect(r.output).toContain('5');
+    expect(r.profile.compilerPath).toBe('inferred');
+  });
   it('returns bounded debug traces',()=>{
     const r=callTool('pico_debug_pseudocode',{code:'OUTPUT "hello"'}) as {trace:unknown[]};
     expect(r.trace, JSON.stringify(r)).toBeDefined();
