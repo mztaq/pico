@@ -3,6 +3,17 @@ import {callTool,listTools} from '../../src/mcp/tools';
 type Env={PICO_MCP_TOKEN?:string;PICO_MCP_RATE_GATE?:{fetch(input:Request):Promise<Response>}};
 type Context={request:Request;env:Env};
 const headers={'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'};
+const encoder=new TextEncoder();
+const decoder=new TextDecoder('utf-8',{fatal:true});
+// An isolate processes requests sequentially or concurrently; cache only the configured
+// digest and invalidate when the configured token changes (including rotations).
+let expectedDigest:{secret:string;digest:Uint8Array}|undefined;
+async function digestExpected(secret:string):Promise<Uint8Array>{
+  if(expectedDigest?.secret===secret)return expectedDigest.digest;
+  const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',encoder.encode(secret)));
+  expectedDigest={secret,digest};
+  return digest;
+}
 const response=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers});
 const error=(id:unknown,code:number,message:string)=>({jsonrpc:'2.0',id,error:{code,message}});
 const result=(id:unknown,value:unknown)=>({jsonrpc:'2.0',id,result:value});
@@ -10,10 +21,13 @@ async function authenticated(req:Request,env:Env) {
   if (!env.PICO_MCP_TOKEN || env.PICO_MCP_TOKEN.length<32 || !env.PICO_MCP_RATE_GATE) return {status:503,description:'MCP service is not configured.'};
   const auth=req.headers.get('authorization')??'';
   const token=auth.startsWith('Bearer ')?auth.slice(7):'';
-  const provided=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token));
-  const expected=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(env.PICO_MCP_TOKEN));
+  if(!token)return {status:401,description:'Unauthorized.'};
+  const [provided,expected]=await Promise.all([
+    crypto.subtle.digest('SHA-256',encoder.encode(token)),
+    digestExpected(env.PICO_MCP_TOKEN),
+  ]);
   let mismatch=token.length===env.PICO_MCP_TOKEN.length?0:1;
-  const a=new Uint8Array(provided),b=new Uint8Array(expected);
+  const a=new Uint8Array(provided),b=expected;
   for(let i=0;i<a.length;i++)mismatch |= a[i]! ^ b[i]!;
   if(mismatch) return {status:401,description:'Unauthorized.'};
   const key=Array.from(a.slice(0,16)).map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -46,10 +60,13 @@ export async function onRequest({request,env}:Context):Promise<Response> {
       if(bytes>32768){await reader.cancel();return response({error:'Request too large.'},413);}
       chunks.push(value);
     }
-    const body=new Uint8Array(bytes);
-    let position=0;
-    for(const chunk of chunks){body.set(chunk,position);position+=chunk.byteLength;}
-    raw=new TextDecoder('utf-8',{fatal:true}).decode(body);
+    if(chunks.length===1)raw=decoder.decode(chunks[0]);
+    else {
+      const body=new Uint8Array(bytes);
+      let position=0;
+      for(const chunk of chunks){body.set(chunk,position);position+=chunk.byteLength;}
+      raw=decoder.decode(body);
+    }
   } catch{return response({error:'Unable to read request.'},400);}
   let message:Record<string,unknown>;
   try {const parsed=JSON.parse(raw);if(!parsed||Array.isArray(parsed)||typeof parsed!=='object')throw Error();message=parsed;}
