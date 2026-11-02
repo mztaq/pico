@@ -24,6 +24,7 @@ async function authenticated(req:Request,env:Env) {
   if (!env.PICO_MCP_RATE_GATE) return {status:503,description:'MCP rate limiter is not configured.'};
   const legacyEnabled=Boolean(env.PICO_MCP_TOKEN && env.PICO_MCP_TOKEN.length>=32);
   const oauthEnabled=Boolean(env.PICO_OAUTH && env.PICO_OAUTH_ISSUER);
+  if(!legacyEnabled && !oauthEnabled)return {status:503,description:'MCP authentication is not configured.'};
   const auth=req.headers.get('authorization')??'';
   const token=auth.startsWith('Bearer ')?auth.slice(7):'';
   if(!token)return {status:401,description:'Unauthorized.'};
