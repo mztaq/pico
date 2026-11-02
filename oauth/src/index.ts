@@ -50,7 +50,7 @@ async function approve(request: Request, env: Env): Promise<Response> {
   const form=await request.formData();
   const state=form.get('state');
   const cookie=request.headers.get('cookie') ?? '';
-  const match=cookie.match(/(?:^|;\\s*)__Host-pico_oauth_state=([^;]+)/);
+  const match=cookie.match(/(?:^|;\s*)__Host-pico_oauth_state=([^;]+)/);
   if(typeof state!=='string' || !match || match[1]!==state || !await env.OAUTH_KV.get('github-state:'+state))return fail('Invalid consent state',403);
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', env.GITHUB_CLIENT_ID);
