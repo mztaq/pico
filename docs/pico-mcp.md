@@ -17,11 +17,11 @@ Server implementation: `functions/mcp.ts`; tool adapter: `src/mcp/tools.ts`.
 - Pico's existing interpreter, flowchart compiler and logic engine, including native project formats
 - Request size <=32 KiB, pseudocode <=16 KiB, execution <=10,000 steps, debug trace <=120 entries, flowcharts <=100 nodes, circuits <=100 nodes / 200 wires, truth tables <=8 switches
 - Stateless: no access to D1, production analytics, private projects, Resend or hosting credentials
-- Document generation returns **JSON compatible with Pico project formats**, rather than directly editing a user's local projects
+- Document generation returns native Pico import file contents and a URL for the matching workspace; users manually save the file and use Pico's Import control. No direct write access to anyone's local projects
 
 ## Important limits
 
-The v1 beta does **not** implement cross-origin browser access, OAuth discovery, public per-user authorization, or a verified one-click import link. For ChatGPT or other clients that demand OAuth, implement an OAuth provider with scoped tokens and proper authorization-server metadata before publishing there. Do not represent bearer-token-only beta as automatically ChatGPT compatible.
+The v1 beta does **not** implement cross-origin browser access, OAuth discovery, public per-user authorization, or one-click project import. Generated projects can be opened through Pico's existing file import UI after saving the returned JSON as a file. For ChatGPT or other clients that demand OAuth, implement an OAuth provider with scoped tokens and proper authorization-server metadata before publishing there. Do not represent bearer-token-only beta as automatically ChatGPT compatible.
 
 Shared tokens and location-scoped rate limits reduce misuse but are not a complete public abuse-prevention solution. Benchmark Workers CPU usage and confirm execution exhaustion behavior before any public rollout. Keep the endpoint disabled by omitting the secret and rate-limit binding until ready for controlled testing.
 
