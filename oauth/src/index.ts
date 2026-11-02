@@ -16,7 +16,7 @@ const randomState = () => crypto.randomUUID() + crypto.randomUUID();
 function server(env: Env) {
   return new OAuthAuthorizationServer<Env>({
     issuer: env.AUTH_ISSUER,
-    resources: [env.MCP_RESOURCE],
+    resources: [env.MCP_RESOURCE, 'https://feat-pico-mcp-github-oauth.picompiler.pages.dev/app/mcp'],
     scopesSupported: scopes,
     clientIdMetadataDocumentEnabled: true,
     clientRegistrationEndpoint: '/oauth/register',
