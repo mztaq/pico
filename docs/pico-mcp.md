@@ -43,3 +43,9 @@ This beta's static bearer token is for CLI and compatible development clients. I
 ## Free-tier performance changes
 
 The MCP endpoint uses a more conservative **500-step** execution budget and **40-entry** response trace, without changing Pico's browser interpreter limits. The adapter skips graph auto-layout for execution-only operations and runs layout only when creating import documents. These guardrails reduce CPU work but **do not guarantee** all accepted programs fit the Workers Free CPU budget. Benchmark with Cloudflare's request-level `cpuTime` after deploying this branch. Do not loosen these limits before measuring. More expensive simulations, truth tables or large outputs might still need further restrictions.
+
+## Profiling the MCP runtime
+
+Add `"profile": true` to `pico_run_pseudocode`, `pico_debug_pseudocode` or `pico_run_flowchart` tool arguments. The response includes `profile.compilerPath` (`direct` or `inferred`), `compileMs`, and `executeMs`. These measure elapsed stage times in the Worker; they are **not** Cloudflare's CPU-time measurements. Compare them with the full request's `cpuTime` from Cloudflare real-time logs to identify parsing vs execution vs transport overhead.
+
+To reduce work, MCP first compiles programs directly. Only when direct compilation fails does it fall back to Pico's automatic declaration inference. Browser execution continues to use its original compilation workflow. Track repeated runs and use Cloudflare logs to assess reliable performance instead of single-sample comparisons.
