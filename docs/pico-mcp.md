@@ -6,7 +6,7 @@ Pico MCP exposes `https://picompiler.pages.dev/mcp` as a stateless, authenticate
 
 Configure the `PICO_MCP_TOKEN` secret in Cloudflare Pages settings. Generate a random token containing at least 32 characters, and keep it outside the repository. Each client sends `Authorization: Bearer <token>`.
 
-Configure the `PICO_MCP_RATE_LIMITER` Cloudflare Rate Limiting binding for this Pages Functions project, for example 20 requests in 60 seconds. **The handler refuses all requests when either binding is missing.** The binding enforces throttling at the edge. This first beta uses one shared token and a shared quota, not per-user accounts. Rotate the token if it is disclosed. Do not publish or distribute the shared token.
+Cloudflare Pages Functions do not expose the Workers Rate Limiting binding directly. Deploy the private companion Worker in `workers/mcp-rate-gate.ts` using `wrangler.mcp-rate-gate.jsonc` and bind it as a **Service** named `PICO_MCP_RATE_GATE` to the Pages project. This Worker uses a 20-requests-per-60-seconds Cloudflare Rate Limiting binding. Deploy it without a public route (`workers_dev: false`), using a namespace ID unique to your account. Configure the Service binding in **Workers & Pages → Pico → Settings → Bindings → Add → Service binding** and redeploy Pages. **The MCP handler refuses all requests when either the secret or service binding is missing.** Cloudflare's rate-limit counters are approximate and location-scoped; this is abuse throttling, not a strict global quota. This first beta uses one shared token and a shared quota, not per-user accounts. Rotate the token if it is disclosed. Do not publish or distribute the shared token.
 
 Server implementation: `functions/mcp.ts`; tool adapter: `src/mcp/tools.ts`.
 
@@ -23,7 +23,7 @@ Server implementation: `functions/mcp.ts`; tool adapter: `src/mcp/tools.ts`.
 
 The v1 beta does **not** implement cross-origin browser access, OAuth discovery, public per-user authorization, or a verified one-click import link. For ChatGPT or other clients that demand OAuth, implement an OAuth provider with scoped tokens and proper authorization-server metadata before publishing there. Do not represent bearer-token-only beta as automatically ChatGPT compatible.
 
-Shared tokens and rate limits reduce misuse but are not a complete public abuse-prevention solution. Benchmark Workers CPU usage and confirm execution exhaustion behavior before any public rollout. Keep the endpoint disabled by omitting the secret and rate-limit binding until ready for controlled testing.
+Shared tokens and location-scoped rate limits reduce misuse but are not a complete public abuse-prevention solution. Benchmark Workers CPU usage and confirm execution exhaustion behavior before any public rollout. Keep the endpoint disabled by omitting the secret and rate-limit binding until ready for controlled testing.
 
 ## Development
 
