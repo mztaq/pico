@@ -23,11 +23,11 @@ Pico includes customizable themes, guided tutorials and browser-based project sa
 
 ### SQL Playground
 
-Open **SQL Playground** from the app home or the landing page. The sample database has Students, Clubs and Results tables. Select a table to inspect its columns, primary and foreign keys, and sample rows; use **Relationships** to see linked records. Click a table or column to insert its name into the editor.
+Open **SQL Playground** from the app home or the landing page. The sample database has Students, Clubs and Results tables. Click a table or column to inspect its columns, primary and foreign keys, and sample rows without changing your query. Use **Try query** when you want a table or column example in the editor. **Relationships** shows linked records.
 
-Write one statement and press **Run** or **Ctrl+Enter**. Results appear in a scrollable table with a short explanation. The local SQLite engine supports SELECT, WHERE with AND/OR, ORDER BY, basic JOINs, COUNT, SUM, AVG, MIN, MAX, GROUP BY, INSERT, UPDATE and DELETE. A valid query with no rows is shown separately from a SQL error. Only SELECT, INSERT, UPDATE and DELETE are accepted in this practice workspace.
+Write one statement and press **Run** or **Ctrl+Enter**. The editor highlights SQL, indents lines, completes keywords and schema names, and shows short help when you hover over them. **Examples** supplies starting queries. Errors are marked in the editor, with an optional correction suggestion for common spelling mistakes. **Inspect query** explains the clauses in order and shows SQLite's query plan when available. Results appear in a scrollable table with a short explanation. A valid query with no rows is shown separately from a SQL error. The local SQLite engine supports SELECT, WHERE with AND/OR, ORDER BY, basic JOINs, COUNT, SUM, AVG, MIN, MAX, GROUP BY, INSERT, UPDATE and DELETE. Only SELECT, INSERT, UPDATE and DELETE are accepted in this practice workspace.
 
-Switch to **Challenges** for short goals, stepwise hints and solution explanations. Completion compares query results or database effects, so equivalent SQL can succeed. **Reset data** restores the sample rows after confirmation. SQL, activity progress and practice data are saved in browser storage. Queries run in browser SQLite WebAssembly and are not submitted to a server.
+Switch to **Challenges** for short goals, stepwise hints and solution explanations. Completion compares query results or database effects, so equivalent SQL can succeed. **Reset data** restores the sample rows after confirmation; your current SQL and challenge progress stay saved. **Options** controls autocomplete, hover help and correction suggestions. The speaker button toggles sound effects. SQL, activity progress and practice data are saved in browser storage. Queries run in browser SQLite WebAssembly and are not submitted to a server.
 
 ## Desktop apps
 

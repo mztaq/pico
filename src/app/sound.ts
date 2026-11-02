@@ -195,6 +195,7 @@ function cueFor(target: Element): Cue | null {
   if (target.closest('.suggestion-ribbon')) return null;
   const control = target.closest<HTMLElement>('button, [role="button"], [role="tab"], [role="switch"], [role="option"], summary, a[href], label:has(input[type="radio"]), label:has(input[type="checkbox"])');
   if (!control || control.matches(':disabled, [aria-disabled="true"]')) return null;
+  if (control.matches('.sql-run')) return null; // SQL runs play their cue for both button and keyboard activation.
   const label = `${control.getAttribute('aria-label') ?? ''} ${control.getAttribute('title') ?? ''} ${control.textContent ?? ''}`.toLowerCase();
   const checkbox = control.querySelector<HTMLInputElement>('input[type="checkbox"]');
   if (control.matches('.run-button, .logic-run, .cpu-play')) return 'run';
@@ -220,7 +221,7 @@ function cueFor(target: Element): Cue | null {
 
 /** The editor's real document length is mirrored on its host by CodeEditor. */
 function isEmptyCodeEditor(target: Element): boolean {
-  return !!target.closest('.code-editor[data-pico-code-empty="true"]');
+  return !!target.closest('.code-editor[data-pico-code-empty="true"], .sql-editor[data-pico-code-empty="true"]');
 }
 
 /** Keep typing feedback within the Python/pseudocode editors and their input prompt. */
@@ -230,7 +231,7 @@ export function isCompilerTypingKey(event: KeyboardEvent): boolean {
   // Other keys remain silent after their initial keydown.
   if (event.repeat && event.key !== 'Enter' && event.key !== 'Backspace') return false;
   if (!(event.target instanceof Element)) return false;
-  if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return false;
+  if (!event.target.closest('.code-editor .cm-content, .sql-editor .cm-content, .console-input-form input')) return false;
   // No erase cue if the currently selected code file has zero characters.
   // The empty editor's placeholder is not part of the CodeMirror document.
   if ((event.key === 'Backspace' || event.key === 'Delete') && isEmptyCodeEditor(event.target)) return false;
@@ -256,7 +257,7 @@ export function installSoundEffects(): void {
     if (event.button !== 0 || !(event.target instanceof Element)) return;
     // Wake Web Audio on the editor's initial click, not on the first letter.
     // This avoids an audible difference from browser audio-device startup.
-    if (soundEnabled() && event.target.closest('.code-editor, .console-input-form')) audio();
+    if (soundEnabled() && event.target.closest('.code-editor, .sql-editor, .console-input-form')) audio();
     const cue = cueFor(event.target);
     if (cue) playCue(cue);
   }, { capture: true, passive: true });
@@ -273,7 +274,7 @@ export function installSoundEffects(): void {
   // Do not duplicate the click after a physical keypress or for pasted code.
   document.addEventListener('beforeinput', event => {
     if (!(event.target instanceof Element)) return;
-    if (!event.target.closest('.code-editor .cm-content, .console-input-form input')) return;
+    if (!event.target.closest('.code-editor .cm-content, .sql-editor .cm-content, .console-input-form input')) return;
     if (event.isComposing || !['insertText', 'insertLineBreak', 'insertParagraph', 'deleteContentBackward', 'deleteContentForward'].includes(event.inputType)) return;
     // Virtual keyboards also send deletions via beforeinput, often without keydown.
     if (event.inputType.startsWith('delete') && isEmptyCodeEditor(event.target)) return;

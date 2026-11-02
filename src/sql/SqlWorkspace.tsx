@@ -1,24 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
-import { autocompletion, completeFromList } from '@codemirror/autocomplete';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { sql as sqlLanguage } from '@codemirror/lang-sql';
-import { EditorState } from '@codemirror/state';
-import { EditorView, keymap, lineNumbers, placeholder } from '@codemirror/view';
-import { ArrowLeft, Database, Play, RotateCcw, Sparkles } from 'lucide-react';
+import type { Diagnostic } from '@codemirror/lint';
+import { ArrowLeft, BookOpen, BugPlay, Database, Play, RotateCcw, Settings2, Sparkles } from 'lucide-react';
 import type { Database as SqlDatabase } from 'sql.js';
 import { cssVariables, getTheme } from '../app/themes';
+import { SoundButton } from '../app/components/SoundToggle';
+import { playCue } from '../app/sound';
 import { loadSettings } from '../storage/settings';
 import { challenges } from './challenges';
 import { createDatabase, runQuery, sampleRows, tables, type QueryResult } from './engine';
+import { correctionFor, type Correction } from './editorHelp';
+import { inspectQuery, type QueryInspection } from './inspection';
+import { SqlEditor, type SqlEditorHandle, type SqlEditorOptions } from './SqlEditor';
 import './sql.css';
 
 const KEY = 'pico.sql.v1';
 const DEFAULT_SQL = 'SELECT Name, YearGroup\nFROM Students\nWHERE YearGroup = 10\nORDER BY Name;';
 type Mode = 'explore' | 'challenges';
-interface Saved { sql: string; mode: Mode; challenge: string; completed: string[]; database?: string }
+const DEFAULT_OPTIONS: SqlEditorOptions = { autocomplete: true, hoverDocs: true, fixSuggestions: true };
+interface Saved { sql: string; mode: Mode; challenge: string; completed: string[]; database?: string; options: SqlEditorOptions }
 function load(): Saved {
-  try { const value = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Saved>; return { sql: typeof value.sql === 'string' ? value.sql : DEFAULT_SQL, mode: value.mode === 'challenges' ? 'challenges' : 'explore', challenge: challenges.some(item => item.id === value.challenge) ? value.challenge! : challenges[0]!.id, completed: Array.isArray(value.completed) ? value.completed.filter((id): id is string => typeof id === 'string') : [], database: typeof value.database === 'string' ? value.database : undefined }; }
-  catch { return { sql: DEFAULT_SQL, mode: 'explore', challenge: challenges[0]!.id, completed: [] }; }
+  try { const value = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Saved>; return { sql: typeof value.sql === 'string' ? value.sql : DEFAULT_SQL, mode: value.mode === 'challenges' ? 'challenges' : 'explore', challenge: challenges.some(item => item.id === value.challenge) ? value.challenge! : challenges[0]!.id, completed: Array.isArray(value.completed) ? value.completed.filter((id): id is string => typeof id === 'string') : [], database: typeof value.database === 'string' ? value.database : undefined, options: { autocomplete: value.options?.autocomplete !== false, hoverDocs: value.options?.hoverDocs !== false, fixSuggestions: value.options?.fixSuggestions !== false } }; }
+  catch { return { sql: DEFAULT_SQL, mode: 'explore', challenge: challenges[0]!.id, completed: [], options: DEFAULT_OPTIONS }; }
 }
 function encode(bytes: Uint8Array): string { let text = ''; for (const byte of bytes) text += String.fromCharCode(byte); return btoa(text); }
 function decode(text: string): Uint8Array { return Uint8Array.from(atob(text), char => char.charCodeAt(0)); }
@@ -31,6 +33,19 @@ function friendlyError(error: unknown): string {
   if (/UNIQUE constraint/i.test(message)) return 'That primary key is already in use. Choose a different ID.';
   return message;
 }
+function diagnosticFor(source: string, message: string, correction: Correction | null): Diagnostic {
+  const token = /near ["']([^"']+)["']|no such (?:table|column):\s*([\w.]+)/i.exec(message)?.slice(1).find(Boolean);
+  const position = correction?.from ?? (token ? source.toLowerCase().indexOf(token.toLowerCase()) : -1);
+  const from = Math.max(0, position);
+  return { from, to: Math.min(source.length, Math.max(from + 1, correction?.to ?? from + (token?.length ?? 1))), severity: 'error', message };
+}
+
+const examples = [
+  { label: 'Year 10 students', sql: 'SELECT Name, YearGroup\nFROM Students\nWHERE YearGroup = 10\nORDER BY Name;' },
+  { label: 'Club members', sql: 'SELECT Clubs.ClubName, COUNT(*) AS Members\nFROM Students\nJOIN Clubs ON Students.ClubID = Clubs.ClubID\nGROUP BY Clubs.ClubID\nORDER BY Members DESC;' },
+  { label: 'Average score', sql: 'SELECT AVG(Score) AS AverageScore\nFROM Results;' },
+  { label: 'High scores', sql: 'SELECT Students.Name, Results.Score\nFROM Results\nJOIN Students ON Results.StudentID = Students.StudentID\nWHERE Results.Score > 85\nORDER BY Results.Score DESC;' },
+];
 
 export function SqlWorkspace({ onHome }: { onHome: () => void }) {
   const [saved] = useState(load);
@@ -50,12 +65,17 @@ export function SqlWorkspace({ onHome }: { onHome: () => void }) {
   const [notice, setNotice] = useState('Run the starter query to see data flow into the results.');
   const [saveError, setSaveError] = useState(false);
   const [view, setView] = useState<'tables' | 'schema'>('tables');
+  const [options, setOptions] = useState(saved.options);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [examplesOpen, setExamplesOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [inspection, setInspection] = useState<QueryInspection | null>(null);
+  const [correction, setCorrection] = useState<Correction | null>(null);
+  const [diagnostic, setDiagnostic] = useState<Diagnostic | null>(null);
   const theme = getTheme(loadSettings().theme);
-  const editorHost = useRef<HTMLDivElement>(null);
-  const editor = useRef<EditorView | null>(null);
+  const editor = useRef<SqlEditorHandle | null>(null);
   const sqlRef = useRef(sql); sqlRef.current = sql;
   const dbRef = useRef<SqlDatabase | null>(null); dbRef.current = db;
-  const runRef = useRef<() => void>(() => {});
   const challenge = challenges.find(item => item.id === challengeId)!;
 
   useEffect(() => {
@@ -68,45 +88,96 @@ export function SqlWorkspace({ onHome }: { onHome: () => void }) {
   useEffect(() => () => { dbRef.current?.close(); }, []);
   useEffect(() => { if (db) setSample(sampleRows(db, selectedTable)); }, [db, selectedTable, result]);
   useEffect(() => {
-    const timer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ sql, mode, challenge: challengeId, completed, database: db ? encode(db.export()) : undefined } satisfies Saved)); db?.exec('PRAGMA foreign_keys = ON'); setSaveError(false); } catch { setSaveError(true); } }, 350);
+    const timer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ sql, mode, challenge: challengeId, completed, database: db ? encode(db.export()) : undefined, options } satisfies Saved)); db?.exec('PRAGMA foreign_keys = ON'); setSaveError(false); } catch { setSaveError(true); } }, 350);
     return () => clearTimeout(timer);
-  }, [sql, mode, challengeId, completed, db, result]);
-  useEffect(() => {
-    if (!editorHost.current) return;
-    const completions = completeFromList([...tables.flatMap(table => [table.name, ...table.columns.map(column => column.name)]), 'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'ORDER BY', 'GROUP BY', 'INSERT INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE FROM', 'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'JOIN', 'ON'].map(label => ({ label, type: /^[A-Z ]+$/.test(label) ? 'keyword' : 'variable' })));
-    const cm = new EditorView({ parent: editorHost.current, state: EditorState.create({ doc: sqlRef.current, extensions: [lineNumbers(), history(), sqlLanguage(), autocompletion({ override: [completions] }), placeholder('Write SQL here…'), EditorView.contentAttributes.of({ 'aria-label': 'SQL editor' }), keymap.of([{ key: 'Mod-Enter', run: () => { runRef.current(); return true; } }, ...defaultKeymap, ...historyKeymap]), EditorView.lineWrapping, EditorView.theme({ '&': { height: '100%', backgroundColor: 'var(--bg)', color: 'var(--text)' }, '.cm-scroller': { fontFamily: 'var(--font-code)', fontSize: '14px', lineHeight: '1.65', overflow: 'auto' }, '.cm-gutters': { backgroundColor: 'var(--surface)', color: 'var(--muted)', borderColor: 'var(--border)' }, '.cm-content': { caretColor: 'var(--accent)', padding: '12px' }, '.cm-activeLine': { backgroundColor: 'var(--accent-soft)' }, '&.cm-focused': { outline: '2px solid var(--accent)', outlineOffset: '-2px' } }, { dark: theme.appearance === 'dark' }), EditorView.updateListener.of(update => { if (update.docChanged) setSql(update.state.doc.toString()); })] }) });
-    editor.current = cm;
-    return () => { cm.destroy(); editor.current = null; };
-  }, [theme.id]);
-  function replaceSql(text: string) { const cm = editor.current; if (cm) { cm.dispatch({ changes: { from: 0, to: cm.state.doc.length, insert: text } }); cm.focus(); } else setSql(text); }
-  function insertName(name: string) { const cm = editor.current; if (!cm) return; const { from, to } = cm.state.selection.main; cm.dispatch({ changes: { from, to, insert: name }, selection: { anchor: from + name.length } }); cm.focus(); }
+  }, [sql, mode, challengeId, completed, db, result, options]);
+  function replaceSql(text: string) { if (editor.current) editor.current.replace(text); else setSql(text); setError(''); setCorrection(null); setDiagnostic(null); setInspection(null); }
+  function changeSql(text: string) { setSql(text); setError(''); setCorrection(null); setDiagnostic(null); setInspection(null); }
+  function useExample(text: string) { replaceSql(text); setExamplesOpen(false); playCue('tab'); }
   function run() {
     const database = dbRef.current; if (!database) { setNotice('The practice database is loading.'); return; }
-    setError('');
+    setError(''); setCorrection(null); setDiagnostic(null); playCue('run');
     try {
       const output = runQuery(database, sqlRef.current);
-      setResult(output); setNotice(output.explanation);
+      setResult(output); setInspection(inspectQuery(database, sqlRef.current, output)); setNotice(output.explanation);
       if (mode === 'challenges') {
         const task = challenges.find(item => item.id === challengeId)!;
-        if (task.check(database, output)) { setCompleted(items => items.includes(task.id) ? items : [...items, task.id]); setNotice(`Nice work! ${task.why}`); }
+        if (task.check(database, output)) { setCompleted(items => items.includes(task.id) ? items : [...items, task.id]); setNotice(`Nice work! ${task.why}`); playCue('success'); }
         else setNotice(`${output.explanation} Keep trying: ${task.goal}`);
       }
-    } catch (cause) { setResult(null); setError(friendlyError(cause)); setNotice('Your database is ready for another try.'); }
+    } catch (cause) {
+      const raw = cause instanceof Error ? cause.message : String(cause);
+      const message = friendlyError(cause);
+      const fix = options.fixSuggestions ? correctionFor(sqlRef.current, raw) : null;
+      setResult(null); setInspection(null); setInspectorOpen(false); setError(message); setCorrection(fix); setDiagnostic(diagnosticFor(sqlRef.current, message, fix)); setNotice('Your database is ready for another try.'); playCue('error');
+    }
   }
-  runRef.current = run;
+  function applyCorrection() { if (!correction) return; editor.current?.replaceRange(correction.from, correction.to, correction.replacement); setCorrection(null); setDiagnostic(null); setError(''); setNotice('Correction applied. Run again to check your query.'); playCue('success'); }
   async function reset() {
     if (!window.confirm('Restore the original sample rows? Your SQL and completed challenges stay saved. Any data edits will be lost.')) return;
-    db?.close(); const fresh = await createDatabase(); setDb(fresh); setResult(null); setError(''); setNotice('Sample data restored. Ready for a fresh query!');
+    db?.close(); const fresh = await createDatabase(); setDb(fresh); setResult(null); setInspection(null); setError(''); setCorrection(null); setDiagnostic(null); setNotice('Sample data restored. Ready for a fresh query!'); playCue('success');
   }
   function chooseChallenge(id: string) { setChallengeId(id); setHint(0); setAnswer(false); const task = challenges.find(item => item.id === id)!; replaceSql(task.starter); setResult(null); setError(''); setNotice(task.goal); }
   const relation = selectedRelation === 'student-club' ? { from: 'Students.ClubID', to: 'Clubs.ClubID', example: 'Amina → Robotics (ClubID 1)' } : { from: 'Results.StudentID', to: 'Students.StudentID', example: 'Score 92 → Amina (StudentID 1)' };
   return <div className="sql-app" data-pico-theme={theme.id} style={cssVariables(theme) as React.CSSProperties}>
-    <header className="sql-header"><button className="sql-back" onClick={onHome} aria-label="Back to home"><ArrowLeft size={18} /></button><img src="/pico-logo.svg" alt="" /><strong>Pico<span>.</span></strong><span className="sql-divider" /><h1>SQL Playground</h1><span className="sql-local">● Local practice database</span></header>
-    <div className="sql-toolbar"><div className="sql-modes" role="group" aria-label="Activity mode"><button className={mode === 'explore' ? 'active' : ''} onClick={() => setMode('explore')}>Explore</button><button className={mode === 'challenges' ? 'active' : ''} onClick={() => setMode('challenges')}>Challenges <span>{completed.length}/{challenges.length}</span></button></div><div className="sql-actions"><button className="sql-reset" onClick={reset}><RotateCcw size={15} /> Reset data</button><button className="sql-run" onClick={run} disabled={!db}><Play size={15} fill="currentColor" /> Run <kbd>Ctrl ↵</kbd></button></div></div>
-    <main className="sql-layout"><aside className="sql-browser"><div className="sql-tabs"><button className={view === 'tables' ? 'active' : ''} onClick={() => setView('tables')}>Tables</button><button className={view === 'schema' ? 'active' : ''} onClick={() => setView('schema')}>Relationships</button></div>{view === 'tables' ? <><p className="sql-browser-tip">Click a table or column to insert its name into the editor.</p>{tables.map(table => <section className="sql-table-card" key={table.name}><button className={selectedTable === table.name ? 'selected' : ''} onClick={() => { setSelectedTable(table.name); setSelectedColumn(null); insertName(table.name); }}><Database size={15} /> <b>{table.name}</b><small>{table.description}</small></button>{selectedTable === table.name && <><div className="sql-columns">{table.columns.map(column => <button key={column.name} className={selectedColumn === column.name ? 'selected' : ''} onClick={() => { setSelectedColumn(column.name); insertName(column.name); }}><span>{column.name}</span><small>{column.type}</small>{column.primary && <em>PK</em>}{column.foreign && <em title={`References ${column.foreign}`}>FK</em>}</button>)}</div><div className="sql-mini"><b>Sample rows</b><div className="sql-scroll"><DataTable result={sample} /></div></div>{selectedColumn && <p className="sql-column-note">{selectedColumn}: {table.columns.find(column => column.name === selectedColumn)?.foreign ? `foreign key linking to ${table.columns.find(column => column.name === selectedColumn)?.foreign}` : table.columns.find(column => column.name === selectedColumn)?.primary ? 'primary key; uniquely identifies each row' : 'a value stored in each row'}.</p>}</>}</section>)}</> : <div className="sql-schema"><p>Keys connect records across tables. Select a link to see an example.</p><div className="sql-schema-nodes"><div>Clubs <small>ClubID · PK</small></div><button className={selectedRelation === 'student-club' ? 'active' : ''} onClick={() => setSelectedRelation('student-club')}>← ClubID links students to clubs</button><div>Students <small>StudentID · PK<br />ClubID · FK</small></div><button className={selectedRelation === 'result-student' ? 'active' : ''} onClick={() => setSelectedRelation('result-student')}>↑ StudentID links results to students</button><div>Results <small>ResultID · PK<br />StudentID · FK</small></div></div>{selectedRelation && <p className="sql-relation-detail"><b>{relation.from} → {relation.to}</b><br />Matching records: {relation.example}</p>}</div>}</aside>
-      <div className="sql-main"><section className="sql-editor-panel"><div className="sql-panel-head"><h2>Query editor</h2><span>SQL · Ctrl+Enter to run</span></div><div className="sql-editor" ref={editorHost} aria-label="SQL editor" /></section><section className="sql-results"><div className="sql-panel-head"><h2>Results</h2>{result && <span>{result.kind === 'select' ? `${result.rows.length} ${result.rows.length === 1 ? 'row' : 'rows'} · ${result.columns.length} columns` : `${result.changes} ${result.changes === 1 ? 'row' : 'rows'} changed`}</span>}</div>{error ? <div className="sql-message error" role="alert"><b>Let's fix that query</b><p>{error}</p></div> : result?.kind === 'select' ? result.rows.length ? <div className="sql-result-scroll"><DataTable result={result} highlight /></div> : <div className="sql-empty">The query worked, but found no rows. Try another condition.</div> : result ? <div className="sql-empty">Change saved in this practice database. Run a SELECT to inspect it.</div> : <div className="sql-empty">Your query results will appear here. Give it a try!</div>}<p className="sql-feedback" aria-live="polite">{notice}</p>{result?.cues.length ? <div className="sql-cues">{result.cues.map(cue => <span key={cue}>{cue}</span>)}</div> : null}</section></div>
+    <header className="sql-header">
+      <button className="sql-back" onClick={onHome} aria-label="Back to home"><ArrowLeft size={18} /></button>
+      <img src="/pico-logo.svg" alt="" /><strong>Pico<span>.</span></strong><span className="sql-divider" /><h1>SQL Playground</h1>
+      <span className="sql-local">● Local practice database</span><SoundButton />
+    </header>
+    <div className="sql-toolbar">
+      <div className="sql-modes" role="group" aria-label="Activity mode"><button className={mode === 'explore' ? 'active' : ''} onClick={() => setMode('explore')}>Explore</button><button className={mode === 'challenges' ? 'active' : ''} onClick={() => setMode('challenges')}>Challenges <span>{completed.length}/{challenges.length}</span></button></div>
+      <div className="sql-actions">
+        <button className={inspectorOpen ? 'active' : ''} onClick={() => setInspectorOpen(value => !value)} aria-pressed={inspectorOpen}><BugPlay size={16} /> Inspect query</button>
+        <div className="sql-options-wrap"><button onClick={() => setSettingsOpen(value => !value)} aria-expanded={settingsOpen} aria-controls="sql-options"><Settings2 size={16} /> Options</button>
+          {settingsOpen && <div id="sql-options" className="sql-options" role="group" aria-label="SQL editor options"><strong>Editor help</strong>
+            <label><input type="checkbox" checked={options.autocomplete} onChange={event => setOptions(value => ({ ...value, autocomplete: event.target.checked }))} /> Autocomplete tables and keywords</label>
+            <label><input type="checkbox" checked={options.hoverDocs} onChange={event => setOptions(value => ({ ...value, hoverDocs: event.target.checked }))} /> Hover documentation</label>
+            <label><input type="checkbox" checked={options.fixSuggestions} onChange={event => setOptions(value => ({ ...value, fixSuggestions: event.target.checked }))} /> Suggest corrections after errors</label>
+          </div>}
+        </div>
+        <button className="sql-reset" onClick={reset}><RotateCcw size={15} /> Reset data</button>
+        <button className="sql-run" onClick={run} disabled={!db}><Play size={15} fill="currentColor" /> Run <kbd>Ctrl ↵</kbd></button>
+      </div>
+    </div>
+    <main className="sql-layout">
+      <aside className="sql-browser" aria-label="Database browser">
+        <div className="sql-tabs"><button className={view === 'tables' ? 'active' : ''} onClick={() => setView('tables')}>Tables</button><button className={view === 'schema' ? 'active' : ''} onClick={() => setView('schema')}>Relationships</button></div>
+        {view === 'tables' ? <>
+          <p className="sql-browser-tip">Click to inspect. Use <b>Try query</b> when you want to edit the SQL.</p>
+          {tables.map(table => <section className="sql-table-card" key={table.name}>
+            <button className={`sql-table-heading ${selectedTable === table.name ? 'selected' : ''}`} onClick={() => { setSelectedTable(table.name); setSelectedColumn(null); }} aria-expanded={selectedTable === table.name}><Database size={16} /><b>{table.name}</b><small>{table.description}</small></button>
+            {selectedTable === table.name && <>
+              <div className="sql-browser-preview"><button onClick={() => useExample(`SELECT * FROM ${table.name};`)}>Try query: all {table.name.toLowerCase()}</button></div>
+              <div className="sql-columns">{table.columns.map(column => <div className="sql-column-row" key={column.name}>
+                <button className={`sql-column-select ${selectedColumn === column.name ? 'selected' : ''}`} onClick={() => setSelectedColumn(column.name)} aria-label={`Inspect ${table.name}.${column.name}`}><span>{column.name}</span><small>{column.type}</small>{column.primary && <em>PK</em>}{column.foreign && <em title={`References ${column.foreign}`}>FK</em>}</button>
+                <button className="sql-column-try" onClick={() => useExample(`SELECT ${column.name}\nFROM ${table.name};`)} aria-label={`Try a query for ${table.name}.${column.name}`}>Try</button>
+              </div>)}</div>
+              {selectedColumn && <p className="sql-column-note"><b>{selectedColumn}</b> · {table.columns.find(column => column.name === selectedColumn)?.foreign ? `Foreign key linking to ${table.columns.find(column => column.name === selectedColumn)?.foreign}` : table.columns.find(column => column.name === selectedColumn)?.primary ? 'Primary key that uniquely identifies each row' : `${table.columns.find(column => column.name === selectedColumn)?.type} value in each row`}.</p>}
+              <div className="sql-mini"><b>Sample rows</b><div className="sql-scroll"><DataTable result={sample} /></div></div>
+            </>}
+          </section>)}
+        </> : <div className="sql-schema"><p>Keys connect records across tables. Select a link to see matching values.</p><div className="sql-schema-nodes"><div>Clubs <small>ClubID · primary key</small></div><button className={selectedRelation === 'student-club' ? 'active' : ''} onClick={() => setSelectedRelation('student-club')}>↓ ClubID links students to clubs</button><div>Students <small>StudentID · primary key<br />ClubID · foreign key</small></div><button className={selectedRelation === 'result-student' ? 'active' : ''} onClick={() => setSelectedRelation('result-student')}>↓ StudentID links results to students</button><div>Results <small>ResultID · primary key<br />StudentID · foreign key</small></div></div>{selectedRelation && <p className="sql-relation-detail"><b>{relation.from} → {relation.to}</b><br />Example: {relation.example}</p>}</div>}
+      </aside>
+      <div className="sql-main">
+        <section className="sql-editor-panel" aria-labelledby="sql-editor-title">
+          <div className="sql-panel-head"><div><span className="sql-kicker">WORKSPACE</span><h2 id="sql-editor-title">Query editor</h2></div><button className="sql-example-trigger" onClick={() => setExamplesOpen(value => !value)} aria-expanded={examplesOpen}><BookOpen size={15} /> Examples</button></div>
+          {examplesOpen && <div className="sql-examples" role="group" aria-label="Example queries">{examples.map(example => <button key={example.label} onClick={() => useExample(example.sql)}>{example.label}</button>)}</div>}
+          <p id="sql-editor-help" className="sql-editor-help">One statement at a time · Ctrl+Enter to run · Hover over a keyword for help</p>
+          <SqlEditor ref={editor} value={saved.sql} onChange={changeSql} onRun={run} theme={theme} options={options} diagnostic={diagnostic} />
+          {error && <div id="sql-editor-error" className="sql-inline-error" role="alert"><strong>Check this query</strong><span>{error}</span>{correction && <button onClick={applyCorrection}>Replace {correction.original} with {correction.replacement}</button>}</div>}
+        </section>
+        <section className="sql-results" aria-labelledby="sql-results-title">
+          <div className="sql-panel-head sql-results-head"><div><span className="sql-kicker">OUTPUT</span><h2 id="sql-results-title">{inspectorOpen ? 'Query inspector' : 'Results'}</h2></div><div className="sql-result-controls"><button className={!inspectorOpen ? 'active' : ''} onClick={() => setInspectorOpen(false)}>Results</button><button className={inspectorOpen ? 'active' : ''} onClick={() => setInspectorOpen(true)}>Inspect</button>{result && <span>{result.kind === 'select' ? `${result.rows.length} rows · ${result.columns.length} columns` : `${result.changes} rows changed`}</span>}</div></div>
+          {inspectorOpen ? inspection ? <div className="sql-inspector"><p>How your query moved through the data:</p><div className="sql-inspector-steps">{inspection.steps.map(step => <div className="sql-inspector-step" key={step.label}><b>{step.label}</b><span>{step.detail}</span></div>)}</div>{inspection.plan.length > 0 && <details><summary>SQLite query plan</summary><p>SQLite's own description of how it read the tables:</p>{inspection.plan.map((line, index) => <code key={index}>{line}</code>)}</details>}</div> : <div className="sql-empty"><BugPlay size={26} /><b>Run a query to inspect it</b><span>See each clause in order and how SQLite accessed the tables.</span></div> : <>
+            {result && <div className="sql-feedback-banner" aria-live="polite"><span>{notice}</span>{result.cues.length > 0 && <div className="sql-cues">{result.cues.map(cue => <span key={cue}>{cue}</span>)}</div>}</div>}
+            {error ? <div className="sql-empty"><span>Fix the marked query above, then run it again.</span></div> : result?.kind === 'select' ? result.rows.length ? <div className="sql-result-scroll"><DataTable result={result} highlight /></div> : <div className="sql-empty"><b>No matching rows yet</b><span>The query ran successfully. Try changing the WHERE condition.</span></div> : result ? <div className="sql-empty"><b>Change saved locally</b><span>Run a SELECT to inspect the updated practice data.</span></div> : <div className="sql-empty"><Database size={26} /><b>Your results appear here</b><span>Run the starter query or choose an example to explore the data.</span><button onClick={run}>Run starter query</button></div>}
+          </>}
+        </section>
+      </div>
       {mode === 'challenges' && <aside className="sql-challenges"><div className="sql-panel-head"><h2>Challenges</h2><span>{completed.length}/{challenges.length} done</span></div><div className="sql-challenge-list">{challenges.map((item, index) => <button key={item.id} className={challengeId === item.id ? 'active' : ''} onClick={() => chooseChallenge(item.id)}><span>{completed.includes(item.id) ? '✓' : index + 1}</span>{item.title}</button>)}</div><div className="sql-task"><span className="sql-kicker"><Sparkles size={14} /> Your goal</span><h3>{challenge.title}</h3><p>{challenge.goal}</p><button onClick={() => replaceSql(challenge.starter)}>Use starting query</button><div className="sql-hints">{challenge.hints.slice(0, hint).map((text, index) => <p key={index}>Hint {index + 1}: {text}</p>)}{hint < challenge.hints.length && <button onClick={() => setHint(value => value + 1)}>Show {hint ? 'next hint' : 'a hint'}</button>}{hint >= challenge.hints.length && !answer && <button onClick={() => setAnswer(true)}>Reveal a solution</button>}{answer && <div><code>{challenge.solution}</code><p>{challenge.why}</p><button onClick={() => replaceSql(challenge.solution)}>Try this query</button></div>}</div></div></aside>}
-    </main><footer className="sql-footer"><span>{saveError ? 'Browser storage is unavailable; copy your SQL before leaving.' : 'SQL and sample data save in this browser.'}</span><span>SELECT · WHERE · ORDER BY · JOIN · GROUP BY · INSERT · UPDATE · DELETE</span></footer>
+    </main>
+    <footer className="sql-footer"><span>{saveError ? 'Browser storage is unavailable; copy your SQL before leaving.' : 'SQL and sample data save in this browser.'}</span><span>SELECT · WHERE · ORDER BY · JOIN · GROUP BY · INSERT · UPDATE · DELETE</span></footer>
   </div>;
 }
 function DataTable({ result, highlight = false }: { result: QueryResult | null; highlight?: boolean }) {
