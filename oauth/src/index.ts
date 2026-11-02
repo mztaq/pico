@@ -42,9 +42,9 @@ async function authorize(request: Request, env: Env): Promise<Response> {
   await env.OAUTH_KV.put('github-state:' + state, JSON.stringify(parsed), { expirationTtl: 600 });
   const client=await oauth.lookupClient(parsed.clientId);
   if(!client)return fail('Unknown OAuth client');
-  const display=(client.clientName || parsed.clientId).replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch] || ch));
+  const display=(client.clientName || parsed.clientId).replace(/[&<>"']/g, ch => { const map:Record<string,string> = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}; return map[ch] || ch; });
   const page=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize Pico MCP</title><main style="font:16px system-ui;max-width:460px;margin:9vh auto;padding:25px"><h1>Connect to Pico MCP</h1><p><strong>${display}</strong> is requesting permission to run Pico's programming tools as your GitHub account.</p><p>Only approve if you trust this AI client. The client will be able to execute code, generate flowcharts, and simulate circuits, but cannot access your private Pico projects.</p><form method="post" action="/authorize"><input type="hidden" name="state" value="${state}"><button type="submit" style="padding:12px 22px">Approve and sign in with GitHub</button></form><p>To decline, close this page.</p></main></html>`;
-  return new Response(page,{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','Set-Cookie':secureCookie(state),'content-security-policy':\"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'\"}});
+  return new Response(page,{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','Set-Cookie':secureCookie(state),'content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"}});
 }
 async function approve(request: Request, env: Env): Promise<Response> {
   const form=await request.formData();
