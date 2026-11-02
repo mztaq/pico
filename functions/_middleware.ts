@@ -14,7 +14,7 @@ export async function onRequest(context: Context): Promise<Response> {
     if (issuer.protocol !== 'https:' || issuer.username || issuer.password || issuer.search || issuer.hash || issuer.pathname !== '/')
       throw Error('Invalid issuer');
     return new Response(context.request.method === 'HEAD' ? null : JSON.stringify({
-      resource: 'https://picompiler.pages.dev/app/mcp',
+      resource: new URL('/app/mcp', context.request.url).href,
       authorization_servers: [issuer.origin],
       scopes_supported: ['mcp:run'],
       bearer_methods_supported: ['header'],
