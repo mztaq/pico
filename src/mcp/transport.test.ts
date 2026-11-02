@@ -108,3 +108,19 @@ describe('OAuth discovery Pages middleware',()=>{
     expect(await r.text()).toBe('existing MCP');
   });
 });
+
+describe('OAuth preview resource audience',()=>{
+  it('challenges and validates against the same Preview resource URL',async()=>{
+    const preview='https://feat-pico-mcp-github-oauth.picompiler.pages.dev/app/mcp';
+    const seen:string[]=[];
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.mztaq.workers.dev',PICO_OAUTH:{
+      validateToken:async(resource:string)=>{seen.push(resource);return {audience:resource,scope:['mcp:run'],userId:'123'};}
+    }};
+    const request=new Request(preview,{method:'POST',headers:{authorization:'Bearer oauth-preview-test'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'ping'})});
+    const ok=await onRequest({request,env:settings});
+    expect(ok.status).toBe(200);
+    expect(seen).toEqual([preview]);
+    const challenge=await onRequest({request:new Request(preview,{method:'GET'}),env:settings});
+    expect(challenge.headers.get('WWW-Authenticate')).toContain('https://feat-pico-mcp-github-oauth.picompiler.pages.dev/.well-known/oauth-protected-resource/app/mcp');
+  });
+});
