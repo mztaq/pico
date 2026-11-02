@@ -1,0 +1,20 @@
+name: OAuth Worker Check
+on:
+  pull_request:
+    paths:
+      - 'oauth/**'
+      - '.github/workflows/oauth-check.yml'
+  workflow_dispatch:
+jobs:
+  oauth-worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: oauth
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-audit --no-fund
+      - run: npx wrangler deploy --dry-run --config wrangler.jsonc --outdir ./dist
