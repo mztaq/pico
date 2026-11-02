@@ -1,4 +1,4 @@
-import {callTool,listTools} from '../src/mcp/tools';
+import {callTool,listTools} from '../../src/mcp/tools';
 
 type Env={PICO_MCP_TOKEN?:string;PICO_MCP_RATE_GATE?:{fetch(input:Request):Promise<Response>}};
 type Context={request:Request;env:Env};
