@@ -123,3 +123,14 @@ describe('debugger snapshots', () => {
     expect(execute(compile('OUTPUT 1').ast,[],{trace:false}).trace).toEqual([]);
   });
 });
+
+describe('MCP-only execution parity', () => {
+  it('matches normal execution outputs, variables and steps for loops and outputs', () => {
+    const ast = compile('DECLARE N : INTEGER\nN ← 0\nWHILE N < 5 DO\nN ← N + 1\nOUTPUT N\nENDWHILE').ast;
+    const regular = execute(ast, [], { trace: false, limit: 500 });
+    const mcp = execute(ast, [], { trace: false, limit: 500, mcpFast: true });
+    expect(mcp.output).toEqual(regular.output);
+    expect(mcp.variables).toEqual(regular.variables);
+    expect(mcp.steps).toBe(regular.steps);
+  });
+});

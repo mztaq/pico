@@ -40,6 +40,9 @@ export interface ExecutionOptions {
   files?: VirtualFiles;
   trace?: boolean;
   limit?: number;
+  /** MCP-only low-overhead execution. Default browser behavior is unchanged. */
+  mcpFast?: boolean;
+  traceEntryLimit?: number;
 }
 export class RuntimeError extends Error {
   name = 'RuntimeError';
@@ -173,11 +176,11 @@ class Interpreter {
   private result(): RunResult {
     return {
       output: [...this.output],
-      variables: structuredClone(this.scope.snapshot()),
-      coverage: [...this.coverage].sort((a, b) => a - b),
+      variables: this.options.mcpFast ? this.scope.snapshot() : structuredClone(this.scope.snapshot()),
+      coverage: this.options.mcpFast ? [] : [...this.coverage].sort((a, b) => a - b),
       trace: this.trace,
       steps: this.steps,
-      files: structuredClone(this.files),
+      files: this.options.mcpFast ? this.files : structuredClone(this.files),
       traceTruncated: this.traceTruncated,
       outputTruncated: this.outputTruncated,
     };
@@ -207,6 +210,7 @@ class Interpreter {
   }
   private record(line: number, label: string): void {
     if (this.options.trace === false || this.traceTruncated) return;
+    if (this.options.mcpFast && this.trace.length >= (this.options.traceEntryLimit ?? 40)) { this.traceTruncated = true; return; }
     const variables = this.scope.snapshot();
     // Bound snapshot storage independently of statement count and array allocation.
     const cost =
@@ -226,12 +230,12 @@ class Interpreter {
   }
   private tick(s: SourceSpan, label: string): void {
     this.consume(s.line);
-    this.coverage.add(s.line);
-    this.record(s.line, label);
+    if (!this.options.mcpFast) this.coverage.add(s.line);
+    if (this.options.trace !== false) this.record(s.line, label);
   }
   private *execute(s: Statement): Execution<void> {
-    this.tick(s, s.kind.replace(/([A-Z])/g, ' $1').trim());
-    yield { type: 'line', line: s.line };
+    this.tick(s, this.options.trace === false ? '' : s.kind.replace(/([A-Z])/g, ' $1').trim());
+    if (!this.options.mcpFast) yield { type: 'line', line: s.line };
     switch (s.kind) {
       case 'Declaration': {
         if (this.scope.bindings.has(s.name))
@@ -285,7 +289,7 @@ class Interpreter {
         if (text.length !== fullText.length) this.outputTruncated = true;
         if (this.output.length === 2000) { this.output.shift(); this.outputTruncated = true; }
         this.output.push(text);
-        yield { type: 'output', text };
+        if (!this.options.mcpFast) yield { type: 'output', text };
         return;
       }
       case 'IfStatement':
