@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import {describe,it,expect} from 'vitest';
-import {onRequest} from '../../functions/mcp';
+import {onRequest} from '../../functions/app/mcp';
 const token='t'.repeat(40);
 const env={PICO_MCP_TOKEN:token,PICO_MCP_RATE_GATE:{fetch:async()=>new Response(null,{status:204})}};
-const invoke=(payload:unknown,authorization='Bearer '+token,settings:typeof env=env)=>onRequest({request:new Request('https://picompiler.pages.dev/mcp',{method:'POST',headers:{authorization,'content-type':'application/json'},body:JSON.stringify(payload)}),env:settings});
+const invoke=(payload:unknown,authorization='Bearer '+token,settings:typeof env=env)=>onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'POST',headers:{authorization,'content-type':'application/json'},body:JSON.stringify(payload)}),env:settings});
 describe('Pico MCP HTTP security',()=>{
   it('fails closed when secret or rate limiter is absent',async()=>{
     const r=await invoke({jsonrpc:'2.0',id:1,method:'tools/list'},undefined,{...env,PICO_MCP_TOKEN:''});
