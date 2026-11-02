@@ -2,7 +2,7 @@ import {callTool,listTools} from '../src/mcp/tools';
 
 type Env={PICO_MCP_TOKEN?:string;PICO_MCP_RATE_GATE?:{fetch(input:Request):Promise<Response>}};
 type Context={request:Request;env:Env};
-const headers={'content-type':'application/json','cache-control':'no-store','access-control-allow-origin':'none','x-content-type-options':'nosniff'};
+const headers={'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'};
 const response=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers});
 const error=(id:unknown,code:number,message:string)=>({jsonrpc:'2.0',id,error:{code,message}});
 const result=(id:unknown,value:unknown)=>({jsonrpc:'2.0',id,result:value});
@@ -34,8 +34,23 @@ export async function onRequest({request,env}:Context):Promise<Response> {
   if(fail)return response({error:fail.description},fail.status);
   if(Number(request.headers.get('content-length')??0)>32768)return response({error:'Request too large.'},413);
   let raw:string;
-  try {raw=await request.text();if(raw.length>32768)return response({error:'Request too large.'},413);}
-  catch{return response({error:'Unable to read request.'},400);}
+  try {
+    const reader=request.body?.getReader();
+    if(!reader)return response({error:'Empty request.'},400);
+    const chunks:Uint8Array[]=[];
+    let bytes=0;
+    while(true) {
+      const {value,done}=await reader.read();
+      if(done)break;
+      bytes+=value.byteLength;
+      if(bytes>32768){await reader.cancel();return response({error:'Request too large.'},413);}
+      chunks.push(value);
+    }
+    const body=new Uint8Array(bytes);
+    let position=0;
+    for(const chunk of chunks){body.set(chunk,position);position+=chunk.byteLength;}
+    raw=new TextDecoder('utf-8',{fatal:true}).decode(body);
+  } catch{return response({error:'Unable to read request.'},400);}
   let message:Record<string,unknown>;
   try {const parsed=JSON.parse(raw);if(!parsed||Array.isArray(parsed)||typeof parsed!=='object')throw Error();message=parsed;}
   catch{return response(error(null,-32700,'Parse error.'),400);}
