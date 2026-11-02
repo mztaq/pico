@@ -25,17 +25,30 @@ function boundedArray(value: unknown, max: number): unknown[] {
   if (!Array.isArray(value) || value.length > max) return fail('Invalid or oversized array.');
   return value;
 }
-function run(code: string, inputs: string[], trace: boolean) {
+function run(code: string, inputs: string[], trace: boolean, profile = false) {
+  const start = performance.now();
+  let compileDone = start;
+  let executionDone = start;
+  let compilerPath: 'direct' | 'inferred' = 'direct';
   try {
-    // Prefer the direct compile path for explicitly declared programs. Fall back to\n    // Pico's inference pipeline for source relying on automatic declarations.\n    let ast: ReturnType<typeof compile>['ast'];\n    try { ast = compile(code).ast; }\n    catch { ast = compile(autoDeclareVariables(code)).ast; }
+    let ast: ReturnType<typeof compile>['ast'];
+    try { ast = compile(code).ast; }
+    catch { compilerPath = 'inferred'; ast = compile(autoDeclareVariables(code)).ast; }
+    compileDone = performance.now();
     const result = execute(ast, inputs, { limit: MAX_SERVER_STEPS, trace, mcpFast: true, traceEntryLimit: MAX_SERVER_TRACE });
+    executionDone = performance.now();
     return {ok: true, output: result.output, variables: result.variables, steps: result.steps,
-      trace: trace ? result.trace.slice(0, MAX_SERVER_TRACE) : undefined, traceTruncated: result.traceTruncated || result.trace.length > MAX_SERVER_TRACE,
-      outputTruncated: result.outputTruncated};
+      trace: trace ? result.trace.slice(0, MAX_SERVER_TRACE) : undefined,
+      traceTruncated: result.traceTruncated || result.trace.length > MAX_SERVER_TRACE,
+      outputTruncated: result.outputTruncated,
+      ...(profile ? {profile: {compilerPath, compileMs: +(compileDone-start).toFixed(2), executeMs: +(executionDone-compileDone).toFixed(2)}} : {})};
   } catch (error) {
+    executionDone = performance.now();
     if (error instanceof RuntimeError) return {ok: false, error: error.message, line: error.line, code: error.code,
-      output: error.result?.output, trace: trace ? error.result?.trace.slice(0, MAX_SERVER_TRACE) : undefined};
-    return {ok: false, error: error instanceof Error ? error.message : 'Execution error'};
+      output: error.result?.output, trace: trace ? error.result?.trace.slice(0, MAX_SERVER_TRACE) : undefined,
+      ...(profile ? {profile:{compilerPath, compileMs: +(compileDone-start).toFixed(2), executeMs: +(executionDone-compileDone).toFixed(2)}} : {})};
+    return {ok: false, error: error instanceof Error ? error.message : 'Execution error',
+      ...(profile ? {profile:{compilerPath, compileMs: +(executionDone-start).toFixed(2), executeMs:0}} : {})};
   }
 }
 function flowchart(input: unknown): FlowchartProject {
@@ -73,10 +86,10 @@ export const TOOLS = [
   ['pico_capabilities','List supported constructs, blocks, gates and limits.'],
 ] as const;
 const schemas: Record<string, object> = {
-  pico_run_pseudocode:{type:'object',properties:{code:{type:'string',maxLength:MAX_CODE},inputs:{type:'array',items:{type:'string',maxLength:500},maxItems:32}},required:['code'],additionalProperties:false},
+  pico_run_pseudocode:{type:'object',properties:{code:{type:'string',maxLength:MAX_CODE},inputs:{type:'array',items:{type:'string',maxLength:500},maxItems:32},profile:{type:'boolean'}},required:['code'],additionalProperties:false},
   pico_debug_pseudocode:{type:'object',properties:{code:{type:'string',maxLength:MAX_CODE},inputs:{type:'array',items:{type:'string',maxLength:500},maxItems:32}},required:['code'],additionalProperties:false},
   pico_create_flowchart:{type:'object',properties:{project:{type:'object'}},required:['project'],additionalProperties:false},
-  pico_run_flowchart:{type:'object',properties:{project:{type:'object'},inputs:{type:'array',items:{type:'string',maxLength:500},maxItems:32}},required:['project'],additionalProperties:false},
+  pico_run_flowchart:{type:'object',properties:{project:{type:'object'},inputs:{type:'array',items:{type:'string',maxLength:500},maxItems:32},profile:{type:'boolean'}},required:['project'],additionalProperties:false},
   pico_flowchart_to_pseudocode:{type:'object',properties:{project:{type:'object'}},required:['project'],additionalProperties:false},
   pico_create_circuit:{type:'object',properties:{document:{type:'object'}},required:['document'],additionalProperties:false},
   pico_simulate_circuit:{type:'object',properties:{document:{type:'object'},inputs:{type:'object',additionalProperties:{type:'integer',enum:[0,1]}}},required:['document'],additionalProperties:false},
@@ -93,7 +106,7 @@ export function callTool(name:string, input:unknown):unknown {
   if (name === 'pico_run_pseudocode' || name === 'pico_debug_pseudocode') {
     const code=string(a.code,MAX_CODE);
     const inputs=boundedArray(a.inputs ?? [],32).map(v=>string(v,500));
-    return run(code,inputs,name === 'pico_debug_pseudocode');
+    return run(code,inputs,name === 'pico_debug_pseudocode',a.profile === true);
   }
   if (['pico_create_flowchart','pico_run_flowchart','pico_flowchart_to_pseudocode'].includes(name)) {
     const raw=flowchart(a.project);
@@ -101,7 +114,7 @@ export function callTool(name:string, input:unknown):unknown {
     const compiled=compileFlowchart(project);
     if(name==='pico_create_flowchart')return {document:project,code:compiled.code,importFileName:'pico-flowchart.json',importFileContents:serializeChart(project),openUrl:'https://picompiler.pages.dev/app/flowchart'};
     if(name==='pico_flowchart_to_pseudocode')return {code:compiled.code};
-    return {code:compiled.code, ...run(compiled.code,boundedArray(a.inputs??[],32).map(v=>string(v,500)),false)};
+    return {code:compiled.code, ...run(compiled.code,boundedArray(a.inputs??[],32).map(v=>string(v,500)),false,a.profile === true)};
   }
   if(['pico_create_circuit','pico_simulate_circuit','pico_truth_table'].includes(name)) {
     const raw=circuit(a.document);
