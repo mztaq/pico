@@ -1,6 +1,7 @@
 {
   "version": 1,
   "include": [
+    "/.well-known/oauth-protected-resource/*",
     "/api/*",
     "/downloads/*",
     "/app",
