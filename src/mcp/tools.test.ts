@@ -8,10 +8,11 @@ describe('Pico MCP tool contracts',()=>{
   });
   it('executes pseudocode with the existing interpreter',()=>{
     const r=callTool('pico_run_pseudocode',{code:'OUTPUT "hello"'}) as {ok:boolean;output:string[]};
-    expect(r.ok).toBe(true);expect(r.output).toContain('hello');
+    expect(r.ok, JSON.stringify(r)).toBe(true);expect(r.output).toContain('hello');
   });
   it('returns bounded debug traces',()=>{
     const r=callTool('pico_debug_pseudocode',{code:'OUTPUT "hello"'}) as {trace:unknown[]};
+    expect(r.trace, JSON.stringify(r)).toBeDefined();
     expect(r.trace.length).toBeGreaterThan(0);
     expect(r.trace.length).toBeLessThanOrEqual(120);
   });
