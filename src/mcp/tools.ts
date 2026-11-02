@@ -9,8 +9,6 @@ import { SPECS, parseDocument, type CircuitDocument } from '../logic/model';
 import { evaluateCircuit, initialSimulation, generateTruthTable } from '../logic/engine';
 
 const MAX_CODE = 16_384;
-const MAX_STEPS = 10_000;
-const MAX_TRACE = 120;
 // Keep expensive loops below the Workers Free CPU budget. This is an instruction budget, not a CPU-time guarantee.
 const MAX_SERVER_STEPS = 2_000;
 const MAX_SERVER_TRACE = 60;
