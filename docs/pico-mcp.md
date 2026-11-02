@@ -1,6 +1,6 @@
 # Pico MCP v1 (private beta)
 
-Pico MCP exposes `https://picompiler.pages.dev/mcp` as a stateless, authenticated MCP Streamable HTTP endpoint. This is a **draft integration**, not a public anonymous API.
+Pico MCP exposes `https://picompiler.pages.dev/app/mcp` as a stateless, authenticated MCP Streamable HTTP endpoint. This is a **draft integration**, not a public anonymous API.
 
 ## Cloudflare setup
 
@@ -8,7 +8,7 @@ Configure the `PICO_MCP_TOKEN` secret in Cloudflare Pages settings. Generate a r
 
 Cloudflare Pages Functions do not expose the Workers Rate Limiting binding directly. Deploy the private companion Worker in `workers/mcp-rate-gate.ts` using `wrangler.mcp-rate-gate.jsonc` and bind it as a **Service** named `PICO_MCP_RATE_GATE` to the Pages project. This Worker uses a 20-requests-per-60-seconds Cloudflare Rate Limiting binding. Deploy it without a public route (`workers_dev: false`), using a namespace ID unique to your account. Configure the Service binding in **Workers & Pages → Pico → Settings → Bindings → Add → Service binding** and redeploy Pages. **The MCP handler refuses all requests when either the secret or service binding is missing.** Cloudflare's rate-limit counters are approximate and location-scoped; this is abuse throttling, not a strict global quota. This first beta uses one shared token and a shared quota, not per-user accounts. Rotate the token if it is disclosed. Do not publish or distribute the shared token.
 
-Server implementation: `functions/mcp.ts`; tool adapter: `src/mcp/tools.ts`.
+Server implementation: `functions/app/mcp.ts`; tool adapter: `src/mcp/tools.ts`.
 
 ## Operations
 
