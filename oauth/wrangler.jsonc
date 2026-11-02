@@ -1,0 +1,12 @@
+{
+  "name": "pico-oauth",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "workers_dev": true,
+  "vars": {
+    "AUTH_ISSUER": "https://REPLACE_WITH_ACTUAL_OAUTH_WORKER_HOSTNAME",
+    "MCP_RESOURCE": "https://picompiler.pages.dev/app/mcp"
+  },
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "REPLACE_WITH_NEW_KV_NAMESPACE_ID" }]
+}
