@@ -54,6 +54,12 @@ describe('Pico MCP HTTP security',()=>{
     const listed=await invoke({jsonrpc:'2.0',id:2,method:'tools/list'});
     expect((await listed.json()).result.tools).toHaveLength(9);
   });
+  it('advertises protected resource discovery for OAuth clients on GET',async()=>{
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async()=>null}};
+    const response=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'GET'}),env:settings});
+    expect(response.status).toBe(401);
+    expect(response.headers.get('WWW-Authenticate')).toContain('oauth-protected-resource/app/mcp');
+  });
   it('accepts scoped, resource-bound OAuth tokens through the private binding',async()=>{
     const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async(resource:string,token:string)=>
       resource==='https://picompiler.pages.dev/app/mcp' && token==='oauth-test-token' ? {audience:resource,scope:['mcp:run'],userId:'123'} : null}};
