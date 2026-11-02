@@ -28,7 +28,7 @@ function boundedArray(value: unknown, max: number): unknown[] {
 function run(code: string, inputs: string[], trace: boolean) {
   try {
     const { ast } = compile(autoDeclareVariables(code));
-    const result = execute(ast, inputs, { limit: MAX_SERVER_STEPS, trace });
+    const result = execute(ast, inputs, { limit: MAX_SERVER_STEPS, trace, mcpFast: true, traceEntryLimit: MAX_SERVER_TRACE });
     return {ok: true, output: result.output, variables: result.variables, steps: result.steps,
       trace: trace ? result.trace.slice(0, MAX_SERVER_TRACE) : undefined, traceTruncated: result.traceTruncated || result.trace.length > MAX_SERVER_TRACE,
       outputTruncated: result.outputTruncated};
