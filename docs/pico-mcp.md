@@ -15,7 +15,7 @@ Server implementation: `functions/app/mcp.ts`; tool adapter: `src/mcp/tools.ts`.
 - `initialize`, `ping`, `tools/list`, `tools/call` and `notifications/initialized` over JSON-RPC 2.0
 - Nine tools: execute and debug pseudocode; create, compile and execute Pico flowcharts; create and simulate Pico circuits; generate static truth tables; inspect capability references
 - Pico's existing interpreter, flowchart compiler and logic engine, including native project formats
-- Request size <=32 KiB, pseudocode <=16 KiB, execution <=500 steps, debug trace <=60 entries, flowcharts <=100 nodes, circuits <=100 nodes / 200 wires, truth tables <=8 switches
+- Request size <=32 KiB, pseudocode <=16 KiB, execution <=500 steps, debug trace <=40 entries, flowcharts <=100 nodes, circuits <=100 nodes / 200 wires, truth tables <=8 switches
 - Stateless: no access to D1, production analytics, private projects, Resend or hosting credentials
 - Document generation returns native Pico import file contents and a URL for the matching workspace; users manually save the file and use Pico's Import control. No direct write access to anyone's local projects
 
@@ -46,6 +46,6 @@ The MCP endpoint uses a more conservative **500-step** execution budget and **40
 
 ## Profiling the MCP runtime
 
-Add `"profile": true` to `pico_run_pseudocode`, `pico_debug_pseudocode` or `pico_run_flowchart` tool arguments. The response includes `profile.compilerPath` (`direct` or `inferred`), `compileMs`, and `executeMs`. These measure elapsed stage times in the Worker; they are **not** Cloudflare's CPU-time measurements. Compare them with the full request's `cpuTime` from Cloudflare real-time logs to identify parsing vs execution vs transport overhead.
+Add `"profile": true` to `pico_run_pseudocode`, `pico_debug_pseudocode` or `pico_run_flowchart` tool arguments. The response includes `profile.compilerPath` (`direct` or `inferred`), `compileMs`, and `executeMs`. These are diagnostic timestamps only. In deployed Cloudflare Workers, `performance.now()` does not advance during synchronous JavaScript execution, so `compileMs` and `executeMs` may both read zero even when CPU is used. **Do not use these fields to assess CPU cost.** Use Cloudflare's request-level `cpuTime` logs instead.
 
 To reduce work, MCP first compiles programs directly. Only when direct compilation fails does it fall back to Pico's automatic declaration inference. Browser execution continues to use its original compilation workflow. Track repeated runs and use Cloudflare logs to assess reliable performance instead of single-sample comparisons.
