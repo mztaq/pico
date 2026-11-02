@@ -36,6 +36,14 @@ describe('Pico MCP HTTP security',()=>{
     const r=await invoke({jsonrpc:'2.0',id:1,method:'ping'},'Bearer '+token,{...env,PICO_MCP_RATE_GATE:{fetch:async()=>new Response(null,{status:503})}});
     expect(r.status).toBe(503);
   });
+  it('keeps cached digest validation correct after token rotation',async()=>{
+    const first=await invoke({jsonrpc:'2.0',id:1,method:'ping'});
+    expect(first.status).toBe(200);
+    const rotated='r'.repeat(40);
+    const nextEnv={...env,PICO_MCP_TOKEN:rotated};
+    expect((await invoke({jsonrpc:'2.0',id:2,method:'ping'},'Bearer '+token,nextEnv)).status).toBe(401);
+    expect((await invoke({jsonrpc:'2.0',id:3,method:'ping'},'Bearer '+rotated,nextEnv)).status).toBe(200);
+  });
   it('rejects missing and incorrect authentication',async()=>{
     expect((await invoke({jsonrpc:'2.0',id:1,method:'tools/list'},'')).status).toBe(401);
     expect((await invoke({jsonrpc:'2.0',id:1,method:'tools/list'},'Bearer '+token+'x')).status).toBe(401);
