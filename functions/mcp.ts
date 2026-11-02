@@ -1,13 +1,13 @@
 import {callTool,listTools} from '../src/mcp/tools';
 
-type Env={PICO_MCP_TOKEN?:string;PICO_MCP_RATE_LIMITER?:{limit(input:{key:string}):Promise<{success:boolean}>}};
+type Env={PICO_MCP_TOKEN?:string;PICO_MCP_RATE_GATE?:{fetch(input:Request):Promise<Response>}};
 type Context={request:Request;env:Env};
 const headers={'content-type':'application/json','cache-control':'no-store','access-control-allow-origin':'none','x-content-type-options':'nosniff'};
 const response=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers});
 const error=(id:unknown,code:number,message:string)=>({jsonrpc:'2.0',id,error:{code,message}});
 const result=(id:unknown,value:unknown)=>({jsonrpc:'2.0',id,result:value});
 async function authenticated(req:Request,env:Env) {
-  if (!env.PICO_MCP_TOKEN || env.PICO_MCP_TOKEN.length<32 || !env.PICO_MCP_RATE_LIMITER) return {status:503,description:'MCP service is not configured.'};
+  if (!env.PICO_MCP_TOKEN || env.PICO_MCP_TOKEN.length<32 || !env.PICO_MCP_RATE_GATE) return {status:503,description:'MCP service is not configured.'};
   const auth=req.headers.get('authorization')??'';
   const token=auth.startsWith('Bearer ')?auth.slice(7):'';
   const provided=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token));
@@ -17,8 +17,11 @@ async function authenticated(req:Request,env:Env) {
   for(let i=0;i<a.length;i++)mismatch |= a[i]! ^ b[i]!;
   if(mismatch) return {status:401,description:'Unauthorized.'};
   const key=Array.from(a.slice(0,16)).map(x=>x.toString(16).padStart(2,'0')).join('');
-  try {const rate=await env.PICO_MCP_RATE_LIMITER.limit({key});if(!rate.success)return {status:429,description:'Rate limit exceeded.'};}
-  catch{return {status:503,description:'Rate limiter unavailable.'};}
+  try {
+    const checked=await env.PICO_MCP_RATE_GATE.fetch(new Request('https://internal/rate', {method:'POST',headers:{'x-pico-rate-key':key}}));
+    if(checked.status===429)return {status:429,description:'Rate limit exceeded.'};
+    if(checked.status!==204)return {status:503,description:'Rate limiter unavailable.'};
+  } catch{return {status:503,description:'Rate limiter unavailable.'};}
   return null;
 }
 export async function onRequest({request,env}:Context):Promise<Response> {
