@@ -53,7 +53,10 @@ async function authenticated(req:Request,env:Env) {
 }
 export async function onRequest({request,env}:Context):Promise<Response> {
   if(request.method==='OPTIONS')return new Response(null,{status:405,headers});
-  if(request.method==='GET')return response({error:'Use authenticated MCP POST requests.'},405);
+  if(request.method==='GET'){
+    if(env.PICO_OAUTH && env.PICO_OAUTH_ISSUER){const rejected=response({error:'Authorization required.'},401);rejected.headers.set('WWW-Authenticate',oauthChallenge());return rejected;}
+    return response({error:'Use authenticated MCP POST requests.'},405);
+  }
   if(request.method!=='POST')return response({error:'Method not allowed.'},405);
   const origin=request.headers.get('origin');
   if(origin && origin !== new URL(request.url).origin)return response({error:'Cross-origin browser access forbidden.'},403);
