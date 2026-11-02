@@ -37,16 +37,28 @@ async function authorize(request: Request, env: Env): Promise<Response> {
     }
     throw error;
   }
-  // Start a fresh, single-use state tied to the originating browser by a secure cookie.
+  // Start a fresh, browser-bound request. Require explicit consent before GitHub sign-in.
   const state = randomState();
   await env.OAUTH_KV.put('github-state:' + state, JSON.stringify(parsed), { expirationTtl: 600 });
+  const client=await oauth.lookupClient(parsed.clientId);
+  if(!client)return fail('Unknown OAuth client');
+  const display=(client.clientName || parsed.clientId).replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch] || ch));
+  const page=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize Pico MCP</title><main style="font:16px system-ui;max-width:460px;margin:9vh auto;padding:25px"><h1>Connect to Pico MCP</h1><p><strong>${display}</strong> is requesting permission to run Pico's programming tools as your GitHub account.</p><p>Only approve if you trust this AI client. The client will be able to execute code, generate flowcharts, and simulate circuits, but cannot access your private Pico projects.</p><form method="post" action="/authorize"><input type="hidden" name="state" value="${state}"><button type="submit" style="padding:12px 22px">Approve and sign in with GitHub</button></form><p>To decline, close this page.</p></main></html>`;
+  return new Response(page,{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','Set-Cookie':secureCookie(state),'content-security-policy':\"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'\"}});
+}
+async function approve(request: Request, env: Env): Promise<Response> {
+  const form=await request.formData();
+  const state=form.get('state');
+  const cookie=request.headers.get('cookie') ?? '';
+  const match=cookie.match(/(?:^|;\\s*)__Host-pico_oauth_state=([^;]+)/);
+  if(typeof state!=='string' || !match || match[1]!==state || !await env.OAUTH_KV.get('github-state:'+state))return fail('Invalid consent state',403);
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', env.GITHUB_CLIENT_ID);
   url.searchParams.set('redirect_uri', new URL('/callback', env.AUTH_ISSUER).href);
   url.searchParams.set('state', state);
   url.searchParams.set('scope', 'read:user');
   return new Response(null, { status: 302, headers: {
-    'Location': url.href, 'Set-Cookie': secureCookie(state), 'Cache-Control': 'no-store',
+    'Location': url.href, 'Cache-Control': 'no-store',
   }});
 }
 async function callback(request: Request, env: Env): Promise<Response> {
@@ -91,13 +103,14 @@ async function callback(request: Request, env: Env): Promise<Response> {
     props: {githubId: String(user.id), githubLogin: user.login},
   });
   return new Response(null, {status:302,headers:{
-    Location: redirectTo, 'Set-Cookie': secureCookie(''), 'Cache-Control':'no-store',
+    Location: redirectTo, 'Set-Cookie': '__Host-pico_oauth_state=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0', 'Cache-Control':'no-store',
   }});
 }
 export default class PicoOAuth extends WorkerEntrypoint<Env> {
   fetch(request: Request): Promise<Response> {
     const pathname = new URL(request.url).pathname;
     if (pathname === '/authorize' && request.method === 'GET') return authorize(request, this.env);
+    if (pathname === '/authorize' && request.method === 'POST') return approve(request, this.env);
     if (pathname === '/callback' && request.method === 'GET') return callback(request, this.env);
     return server(this.env).fetch(request, this.env, this.ctx);
   }
