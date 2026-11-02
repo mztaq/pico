@@ -40,6 +40,9 @@ export interface ExecutionOptions {
   files?: VirtualFiles;
   trace?: boolean;
   limit?: number;
+  /** MCP-only low-overhead execution. Default browser behavior is unchanged. */
+  mcpFast?: boolean;
+  traceEntryLimit?: number;
 }
 export class RuntimeError extends Error {
   name = 'RuntimeError';
@@ -207,6 +210,7 @@ class Interpreter {
   }
   private record(line: number, label: string): void {
     if (this.options.trace === false || this.traceTruncated) return;
+    if (this.options.mcpFast && this.trace.length >= (this.options.traceEntryLimit ?? 40)) { this.traceTruncated = true; return; }
     const variables = this.scope.snapshot();
     // Bound snapshot storage independently of statement count and array allocation.
     const cost =
@@ -231,7 +235,7 @@ class Interpreter {
   }
   private *execute(s: Statement): Execution<void> {
     this.tick(s, s.kind.replace(/([A-Z])/g, ' $1').trim());
-    yield { type: 'line', line: s.line };
+    if (!this.options.mcpFast) yield { type: 'line', line: s.line };
     switch (s.kind) {
       case 'Declaration': {
         if (this.scope.bindings.has(s.name))
