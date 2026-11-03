@@ -1,0 +1,18 @@
+{
+  "name": "pico-oauth",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true
+    }
+  },
+  "vars": {
+    "AUTH_ISSUER": "https://pico-oauth.mztaq.workers.dev",
+    "MCP_RESOURCE": "https://picompiler.pages.dev/app/mcp"
+  },
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "031983c0d12942a4a87743017a6632a6" }]
+}

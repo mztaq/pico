@@ -1,3 +1,5 @@
+import { onRequest as onMiddlewareRequest } from '../../functions/_middleware';
+import routes from '../../public/_routes.json';
 // @vitest-environment jsdom
 import {describe,it,expect} from 'vitest';
 import {onRequest} from '../../functions/app/mcp';
@@ -54,8 +56,71 @@ describe('Pico MCP HTTP security',()=>{
     const listed=await invoke({jsonrpc:'2.0',id:2,method:'tools/list'});
     expect((await listed.json()).result.tools).toHaveLength(9);
   });
+  it('advertises protected resource discovery for OAuth clients on GET',async()=>{
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async()=>null}};
+    const response=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'GET'}),env:settings});
+    expect(response.status).toBe(401);
+    expect(response.headers.get('WWW-Authenticate')).toContain('oauth-protected-resource/app/mcp');
+  });
+  it('accepts scoped, resource-bound OAuth tokens through the private binding',async()=>{
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async(resource:string,token:string)=>
+      resource==='https://picompiler.pages.dev/app/mcp' && token==='oauth-test-token' ? {audience:resource,scope:['mcp:run'],userId:'123'} : null}};
+    const ok=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'POST',headers:{Authorization:'Bearer oauth-test-token'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'ping'})}),env:settings});
+    expect(ok.status).toBe(200);
+    const denied=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'POST',headers:{Authorization:'Bearer other'},body:JSON.stringify({jsonrpc:'2.0',id:2,method:'ping'})}),env:settings});
+    expect(denied.status).toBe(401);
+    expect(denied.headers.get('www-authenticate')).toContain('resource_metadata=');
+  });
+  it('refuses an OAuth token with a missing required scope',async()=>{
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async(resource:string,token:string)=>({audience:resource,scope:['offline_access'],userId:token})}};
+    const denied=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'POST',headers:{Authorization:'Bearer oauth-test-token'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'ping'})}),env:settings});
+    expect(denied.status).toBe(401);
+  });
   it('calls Pico engine and returns tool content',async()=>{
     const r=await invoke({jsonrpc:'2.0',id:3,method:'tools/call',params:{name:'pico_run_pseudocode',arguments:{code:'OUTPUT "ok"'}}});
     expect((await r.json()).result.structuredContent.output).toContain('ok');
+  });
+});
+
+describe('OAuth Pages route configuration',()=>{
+  it('includes OAuth protected-resource metadata in the Cloudflare Functions routes',()=>{
+    expect(routes.include).toContain('/.well-known/oauth-protected-resource/*');
+    expect(routes.include).toContain('/app/*');
+  });
+});
+
+describe('OAuth discovery Pages middleware',()=>{
+  it('serves metadata instead of the frontend fallback',async()=>{
+    const r=await onMiddlewareRequest({
+      request:new Request('https://feat-pico-mcp-github-oauth.picompiler.pages.dev/.well-known/oauth-protected-resource/app/mcp'),
+      env:{PICO_OAUTH_ISSUER:'https://pico-oauth.mztaq.workers.dev',PICO_OAUTH:{}},
+      next:async()=>new Response('SPA 404',{status:404}),
+    });
+    expect(r.status).toBe(200);
+    expect((await r.json()).authorization_servers).toEqual(['https://pico-oauth.mztaq.workers.dev']);
+  });
+  it('passes unrelated routes through unchanged',async()=>{
+    const r=await onMiddlewareRequest({
+      request:new Request('https://picompiler.pages.dev/app/mcp'),
+      env:{},
+      next:async()=>new Response('existing MCP',{status:200}),
+    });
+    expect(await r.text()).toBe('existing MCP');
+  });
+});
+
+describe('OAuth preview resource audience',()=>{
+  it('challenges and validates against the same Preview resource URL',async()=>{
+    const preview='https://feat-pico-mcp-github-oauth.picompiler.pages.dev/app/mcp';
+    const seen:string[]=[];
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.mztaq.workers.dev',PICO_OAUTH:{
+      validateToken:async(resource:string)=>{seen.push(resource);return {audience:resource,scope:['mcp:run'],userId:'123'};}
+    }};
+    const request=new Request(preview,{method:'POST',headers:{authorization:'Bearer oauth-preview-test'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'ping'})});
+    const ok=await onRequest({request,env:settings});
+    expect(ok.status).toBe(200);
+    expect(seen).toEqual([preview]);
+    const challenge=await onRequest({request:new Request(preview,{method:'GET'}),env:settings});
+    expect(challenge.headers.get('WWW-Authenticate')).toContain('https://feat-pico-mcp-github-oauth.picompiler.pages.dev/.well-known/oauth-protected-resource/app/mcp');
   });
 });
