@@ -57,8 +57,16 @@ async function approve(request: Request, env: Env): Promise<Response> {
   url.searchParams.set('redirect_uri', new URL('/callback', env.AUTH_ISSUER).href);
   url.searchParams.set('state', state);
   url.searchParams.set('scope', 'read:user');
-  return new Response(null, { status: 302, headers: {
-    'Location': url.href, 'Cache-Control': 'no-store',
+  // A form POST followed by a cross-origin 302 can be blocked by Chromium's
+  // form-action CSP redirect enforcement. Finish the POST with a separate
+  // document navigation instead of redirecting the form submission chain.
+  const githubUrl = url.href.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=${githubUrl}"><title>Continue to GitHub</title><p>Continuing to GitHub... <a href="${githubUrl}">Continue manually</a></p></html>`;
+  return new Response(html, { status: 200, headers: {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-store',
+    'Referrer-Policy': 'no-referrer',
+    'Content-Security-Policy': "default-src 'none'; base-uri 'none'; frame-ancestors 'none'",
   }});
 }
 async function callback(request: Request, env: Env): Promise<Response> {
