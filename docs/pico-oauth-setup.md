@@ -21,3 +21,25 @@ OAuth tokens are resource-bound to the main MCP URL, checked over a private Serv
 OAuth compatibility does **not** guarantee your ChatGPT plan includes custom MCP connections. Test with a client that supports OAuth authorization-code flow + PKCE.
 
 Do not merge this draft until the full OAuth login, consent, token refresh, revocation, wrong-GitHub-user, bad-resource and rate-limit tests are done.
+
+## End-to-end token lifecycle smoke test (preview)
+
+After deploying the OAuth Worker and enabling the Preview Pages service binding, run from the repository root:
+
+```bash
+node oauth/scripts/test-token-lifecycle.mjs
+```
+
+The test creates a fresh dynamically registered OAuth client with a loopback callback. On Windows it prints an authorization URL for you to open. Sign in with your permitted GitHub account and approve. No GitHub secrets or existing OAuth tokens are required. Tokens and codes are never printed.
+
+It checks discovery, PKCE code issuance, MCP access, refresh-token rotation, access using the refreshed token, revocation, and rejected attempts to reuse revoked credentials. This affects the new test grant only, not your existing Inspector client.
+
+Real-time expiry is optional, because the default access token lasts around one hour:
+
+```bash
+PICO_TEST_WAIT_FOR_EXPIRY=1 node oauth/scripts/test-token-lifecycle.mjs
+```
+
+On Windows PowerShell set `$env:PICO_TEST_WAIT_FOR_EXPIRY='1'` before invoking `node`. It waits for `expires_in` plus five seconds. This slow expiry check is not part of CI.
+
+The test is browser-assisted and cannot run unattended in CI. The OAuth workflow syntax-checks the script. Check its results before merging. If HTTP 429 occurs during testing, let the shared rate-limit window reset and retry.
