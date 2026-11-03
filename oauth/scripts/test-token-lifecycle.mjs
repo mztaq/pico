@@ -39,8 +39,13 @@ const sleep = seconds => new Promise(resolve => setTimeout(resolve, seconds * 10
 
 function launchBrowser(url) {
   const os = platform();
-  const command = os === 'win32' ? 'cmd' : os === 'darwin' ? 'open' : 'xdg-open';
-  const args = os === 'win32' ? ['/c', 'start', '""', url] : [url];
+  // Print the link on Windows instead of routing an OAuth URL through cmd.exe.
+  if (os === 'win32') {
+    console.log('Open this URL in your browser: ' + url);
+    return;
+  }
+  const command = os === 'darwin' ? 'open' : 'xdg-open';
+  const args = [url];
   const child = spawn(command, args, { stdio: 'ignore', windowsHide: true });
   child.on('error', () => console.log('Open this URL in your browser: ' + url));
   child.unref();
