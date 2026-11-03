@@ -12,6 +12,7 @@
   },
   "vars": {
     "AUTH_ISSUER": "https://pico-oauth.mztaq.workers.dev",
+    "GITHUB_ACCESS_MODE": "public",
     "MCP_RESOURCE": "https://picompiler.pages.dev/app/mcp"
   },
   "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "031983c0d12942a4a87743017a6632a6" }]
