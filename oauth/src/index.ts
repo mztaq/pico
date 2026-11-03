@@ -7,7 +7,8 @@ interface Env {
   MCP_RESOURCE: string;
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
-  GITHUB_ALLOWED_ID: string;
+  GITHUB_ALLOWED_ID?: string;
+  GITHUB_ACCESS_MODE?: string;
 }
 const scopes = ['mcp:run', 'offline_access'];
 const secureCookie = (value: string) => `__Host-pico_oauth_state=${value}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=600`;
@@ -26,7 +27,7 @@ function fail(message: string, status = 400) {
   return new Response(message, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 async function authorize(request: Request, env: Env): Promise<Response> {
-  if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.GITHUB_ALLOWED_ID) return fail('OAuth not configured', 503);
+  if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || (env.GITHUB_ACCESS_MODE !== 'public' && !env.GITHUB_ALLOWED_ID)) return fail('OAuth not configured', 503);
   const oauth = server(env).getOAuthApi(env);
   let parsed: AuthRequest;
   try { parsed = await oauth.parseAuthRequest(request); }
@@ -98,7 +99,7 @@ async function callback(request: Request, env: Env): Promise<Response> {
   if (!userResponse.ok) return fail('GitHub identity verification failed', 502);
   const user = await userResponse.json() as {id:number;login:string};
   // Numeric account ID is stable across GitHub username changes.
-  if (String(user.id) !== env.GITHUB_ALLOWED_ID) return fail('GitHub account is not permitted', 403);
+  if (env.GITHUB_ACCESS_MODE !== 'public' && String(user.id) !== env.GITHUB_ALLOWED_ID) return fail('GitHub account is not permitted', 403);
   const oauth = server(env).getOAuthApi(env);
   const requestInfo = JSON.parse(saved) as AuthRequest;
   const client = await oauth.lookupClient(requestInfo.clientId);
