@@ -18,4 +18,5 @@ jobs:
           node-version: '24'
       - run: npm install --no-audit --no-fund
       - run: npm run check
+      - run: node --check scripts/test-token-lifecycle.mjs
       - run: npx wrangler deploy --dry-run --config wrangler.jsonc --outdir ./dist
