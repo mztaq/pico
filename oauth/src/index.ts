@@ -43,7 +43,7 @@ a{color:#beb6ff;text-decoration:underline;text-underline-offset:3px}
 @media(prefers-reduced-motion:reduce){.spinner{animation:none;border-top-color:#a79dff}button{transition:none}}
 @media(max-width:480px){main{padding:26px 22px}.brand{margin-bottom:27px}}
 `;
-const oauthHead = (title: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1e1e2e"><title>${title} | Pico</title><style>${oauthStyles}</style></head>`;
+const oauthHead = (title: string, extraHead = '') => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1e1e2e"><title>${title} | Pico</title>${extraHead}<style>${oauthStyles}</style></head>`;
 const oauthBrand = `<div class="brand">${picoLogo}<span>Pico.</span></div>`;
 
 
@@ -95,7 +95,7 @@ async function approve(request: Request, env: Env): Promise<Response> {
   // form-action CSP redirect enforcement. Finish the POST with a separate
   // document navigation instead of redirecting the form submission chain.
   const githubUrl = url.href.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-  const html = `${oauthHead('Continue to GitHub')}<head><meta http-equiv="refresh" content="0; url=${githubUrl}"></head><body><main>${oauthBrand}<div class="eyebrow">Authentication</div><h1>Connecting to GitHub</h1><p>Redirecting you to GitHub to securely verify your account.</p><div class="spinner" aria-hidden="true"></div><a class="primary" href="${githubUrl}">Continue to GitHub <span aria-hidden="true">↗</span></a><p class="note">If the redirect doesn't start, use the button above.</p></main></body></html>`;
+  const html = `${oauthHead('Continue to GitHub', '<meta http-equiv="refresh" content="0; url=' + githubUrl + '">')}<body><main>${oauthBrand}<div class="eyebrow">Authentication</div><h1>Connecting to GitHub</h1><p>Redirecting you to GitHub to securely verify your account.</p><div class="spinner" aria-hidden="true"></div><a class="primary" href="${githubUrl}">Continue to GitHub <span aria-hidden="true">↗</span></a><p class="note">If the redirect doesn't start, use the button above.</p></main></body></html>`;
   return new Response(html, { status: 200, headers: {
     'Content-Type': 'text/html; charset=utf-8',
     'Cache-Control': 'no-store',
