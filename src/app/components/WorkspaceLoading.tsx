@@ -1,6 +1,6 @@
 import './workspace-loading.css';
 
-export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab';
+export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab' | 'Bug Fix Lab';
 
 function Placeholder({ className = '' }: { className?: string }) {
   return <div className={`pico-load-shimmer ${className}`} />;
@@ -140,13 +140,21 @@ function BinarySkeleton() {
   </div>;
 }
 
+function BugFixSkeleton() {
+  return <div className="pico-load-visual-grid pico-load-flowchart-grid">
+    <PaletteSkeleton />
+    <div className="pico-load-canvas"><Placeholder className="pico-load-section-title" /><Placeholder className="pico-load-inspector-line" /><Placeholder className="pico-load-inspector-line" /><Placeholder className="pico-load-inspector-field" /></div>
+  </div>;
+}
+
 /** Visible only while React.lazy is fetching the workspace. No artificial delay. */
 export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) {
   return <div className="pico-load-stage" data-loading-workspace={workspace} role="status" aria-live="polite" aria-label={`Opening ${workspace}`}>
     <span className="pico-load-screenreader">Opening {workspace}…</span>
     <div className="pico-load-layout" aria-hidden="true">
       <LoadingTopbar />
-      {workspace === 'Flowchart Builder' ? <FlowchartSkeleton /> :
+      {workspace === 'Bug Fix Lab' ? <BugFixSkeleton /> :
+       workspace === 'Flowchart Builder' ? <FlowchartSkeleton /> :
        workspace === 'Logic Sim' ? <LogicSkeleton /> :
        workspace === 'CPU Studio' ? <CpuSkeleton /> :
        <BinarySkeleton />}
