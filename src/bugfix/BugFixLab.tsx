@@ -12,6 +12,7 @@ import type { ExecutionReply } from '../runtime/worker';
 import { challenges } from './challenges';
 import { loadProgress, saveProgress, type Attempt } from './progress';
 import './bugfix.css';
+import { ResizeHandle } from '../app/components/ResizeHandle';
 import { SolutionHelper } from './SolutionHelper';
 
 export function BugFixLab({ onHome }: { onHome: () => void }) {
@@ -23,6 +24,12 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [editorFontSize, setEditorFontSize] = useState(() => {
+    try { const value = Number(localStorage.getItem('pico.bugfix.font-size')); return value >= 12 && value <= 22 ? value : 14; } catch { return 14; }
+  });
+  const [focusEditor, setFocusEditor] = useState(false);
+  const [resultsWidth, setResultsWidth] = useState(300);
+  useEffect(() => { try { localStorage.setItem('pico.bugfix.font-size', String(editorFontSize)); } catch { /* Text size still applies. */ } }, [editorFontSize]);
   const [helperOpen, setHelperOpen] = useState(false);
   const helperTrigger = useRef<HTMLButtonElement>(null);
   const [themeOpen, setThemeOpen] = useState(false);
@@ -81,6 +88,7 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
     setSelected(id);
   }
   async function checkFix() {
+    setFocusEditor(false);
     clearRun();
     playCue('run');
     let current: ExecutionJob | null = null;
@@ -113,11 +121,11 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
   const selectedIndex = challenges.findIndex(item => item.id === selected);
   const following = [...challenges.slice(selectedIndex + 1), ...challenges.slice(0, selectedIndex)];
   const next = following.find(item => !progress[item.id]?.solved) ?? following[0] ?? challenge;
-  return <main className="bugfix-lab" tabIndex={-1} aria-label="Bug Fix Lab" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
+  return <main className={`bugfix-lab ${focusEditor ? 'bf-focus-editor' : ''}`} tabIndex={-1} aria-label="Bug Fix Lab" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--bf-results-width': `${resultsWidth}px` } as CSSProperties}>
     <header className="bf-topbar">
       <button className="bf-home" onClick={onHome}><ArrowLeft size={17} /><span>Workspaces</span></button>
       <a className="bf-brand" href="/app" onClick={event => { event.preventDefault(); onHome(); }}><img src="/pico-logo.svg" alt="" width="24" height="24" />Pico<span>.</span></a>
-      <div className="bf-tools" ref={themeMenu}><SoundButton /><button ref={themeTrigger} aria-expanded={themeOpen} aria-controls="bf-theme-picker" onClick={() => setThemeOpen(open => !open)}>Theme</button>{themeOpen && <div className="bf-theme-picker" id="bf-theme-picker"><button className="bf-theme-close" onClick={() => { setThemeOpen(false); themeTrigger.current?.focus(); }}>Close themes</button><ThemePicker value={settings.theme} showSound={false} onChange={id => { const nextSettings = { ...settings, theme: id }; setSettings(nextSettings); try { saveSettings(nextSettings); } catch { /* Theme still applies. */ } }} /></div>}</div>
+      <div className="bf-tools" ref={themeMenu}><SoundButton /><button className="bf-focus-toggle" aria-pressed={focusEditor} onClick={() => setFocusEditor(value => !value)}>{focusEditor ? 'Exit focus mode' : 'Focus editor'}</button><button ref={themeTrigger} aria-expanded={themeOpen} aria-controls="bf-theme-picker" onClick={() => setThemeOpen(open => !open)}>Theme</button>{themeOpen && <div className="bf-theme-picker" id="bf-theme-picker"><button className="bf-theme-close" onClick={() => { setThemeOpen(false); themeTrigger.current?.focus(); }}>Close themes</button><ThemePicker value={settings.theme} showSound={false} onChange={id => { const nextSettings = { ...settings, theme: id }; setSettings(nextSettings); try { saveSettings(nextSettings); } catch { /* Theme still applies. */ } }} /></div>}</div>
     </header>
     <div className="bf-content">
       <section className="bf-intro" aria-labelledby="bf-title">
@@ -129,12 +137,13 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
         <aside className="bf-sidebar" aria-label="Bug-fixing challenges"><div className="bf-sidebar-title"><h2>Your next aha</h2><span>{challenges.length} challenges</span></div><nav aria-label="Choose a challenge">{challenges.map((item, index) => <button key={item.id} className={`bf-challenge ${selected === item.id ? 'is-active' : ''}`} aria-current={selected === item.id ? 'true' : undefined} onClick={() => select(item.id)}><span className="bf-challenge-number">{progress[item.id]?.solved ? <Check size={17} aria-label="Solved" /> : String(index + 1).padStart(2, '0')}</span><span><strong>{item.title}</strong><small>{item.topic} <span aria-hidden="true">·</span> {item.difficulty}</small></span>{selected === item.id && <ArrowRight size={15} />}</button>)}</nav><div className="bf-sidebar-note"><Lightbulb size={18} /><p>Getting stuck is part of it.<br />Hints help you find your own fix.</p></div></aside>
         <section className="bf-workbench" aria-labelledby="bf-challenge-title">
           <div className="bf-brief"><div className="bf-tags"><span>{challenge.difficulty}</span><span>{challenge.topic}</span><span>Cambridge pseudocode</span></div><h2 id="bf-challenge-title" tabIndex={-1} ref={heading}>{challenge.title}</h2><p>{challenge.brief}</p></div>
-          <div className="bf-editor-heading"><span><Bug size={15} /> fix-me.pico</span><span>{saveError ? 'Changes are only kept in this tab' : 'Your edit is saved in this browser'}</span></div>
-          <div className="bf-editor"><CodeEditor key={selected} value={attempt.code} onChange={code => { clearRun(); setHelperOpen(false); updateAttempt({ code }); }} preferences={{ ...settings, autocomplete: false }} theme={theme} /></div>
-          <div className="bf-actions"><div><button className="bf-hint-button" disabled={attempt.hints >= challenge.hints.length} onClick={() => { updateAttempt({ hints: attempt.hints + 1 }); playCue('notify'); }}><Lightbulb size={16} />{challenge.hints.length === 0 ? 'No hints for this challenge' : attempt.hints >= challenge.hints.length ? 'All hints shown' : attempt.hints ? `Next hint (${attempt.hints}/${challenge.hints.length})` : 'Need a hint?'}</button><button className="bf-reset" onClick={reset}><RotateCcw size={15} />Reset</button></div>{running ? <button className="bf-primary" onClick={() => { clearRun(); playCue('stop'); }}><Square size={14} />Stop checks</button> : <button className="bf-primary" onClick={() => void checkFix()}><Play size={15} />Check my fix</button>}</div>
+          <div className="bf-editor-heading"><span><Bug size={15} /> fix-me.pico</span><div className="bf-font-controls" role="group" aria-label="Code text size"><button aria-label="Decrease code text size" disabled={editorFontSize <= 12} onClick={() => setEditorFontSize(size => size - 1)}>A−</button><span aria-live="polite">{editorFontSize}px</span><button aria-label="Increase code text size" disabled={editorFontSize >= 22} onClick={() => setEditorFontSize(size => size + 1)}>A+</button></div></div>
+          <div className="bf-editor"><CodeEditor key={selected} value={attempt.code} onChange={code => { clearRun(); setHelperOpen(false); updateAttempt({ code }); }} preferences={{ ...settings, autocomplete: false, fontSize: editorFontSize }} theme={theme} /></div>
+          <div className="bf-actions"><div><button className="bf-hint-button" disabled={attempt.hints >= challenge.hints.length} onClick={() => { updateAttempt({ hints: attempt.hints + 1 }); playCue('notify'); }}><Lightbulb size={16} />{challenge.hints.length === 0 ? 'No hints for this challenge' : attempt.hints >= challenge.hints.length ? 'All hints shown' : attempt.hints ? `Next hint (${attempt.hints}/${challenge.hints.length})` : 'Need a hint?'}</button><button className="bf-reset" onClick={reset}><RotateCcw size={15} />Reset</button><button ref={helperTrigger} className="bf-hint-button bf-walkthrough-trigger" aria-label="Walk me through it" aria-expanded={helperOpen} onClick={() => setHelperOpen(open => !open)}><Lightbulb size={16} /><span>Walk me through it</span></button></div>{running ? <button className="bf-primary" onClick={() => { clearRun(); playCue('stop'); }}><Square size={14} />Stop checks</button> : <button className="bf-primary" onClick={() => void checkFix()}><Play size={15} />Check my fix</button>}</div>
           {attempt.hints > 0 && <aside className="bf-hints" aria-label="Hints">{challenge.hints.slice(0, attempt.hints).map((hint, index) => <p key={hint}><Lightbulb size={15} /><span><strong>Hint {index + 1}.</strong> {hint}</span></p>)}</aside>}
-          <div className="bf-helper-entry"><button ref={helperTrigger} className="bf-hint-button" aria-expanded={helperOpen} onClick={() => setHelperOpen(open => !open)}><Lightbulb size={16} />Walk me through it</button><span>Stuck? Trace your code, see the bug’s effect, and reveal a fix.</span></div>
+
           {helperOpen && <SolutionHelper key={`${selected}-${attempt.code}`} challenge={challenge} code={attempt.code} onClose={() => { setHelperOpen(false); helperTrigger.current?.focus(); }} onApply={() => { clearRun(); updateAttempt({ code: challenge.solution }); setHelperOpen(false); helperTrigger.current?.focus(); playCue('notify'); }} />}
+          <ResizeHandle axis="x" label="Resize test bench" className="bf-results-resize" onResize={delta => setResultsWidth(width => Math.max(240, Math.min(480, width - delta)))} />
           <section className="bf-results" aria-labelledby="bf-results-title" aria-busy={running}>
             <div className="bf-results-heading"><h3 id="bf-results-title"><Terminal size={16} />Test bench</h3><span role="status" aria-live="polite">{running ? 'Checking your code…' : error ? 'Fix the error and try again' : replies ? `${passed} of ${challenge.tests.length} checks passed` : `${challenge.tests.length} checks ready`}</span></div>
             {error && <p className="bf-error" role="alert">{error}</p>}
@@ -148,7 +157,7 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
                 : reply ? '(no output captured)'
                 : error ? '(not run — fix the code error above)'
                 : running ? 'Running your code…' : 'Run checks to see what your code prints.';
-              return <details className={`bf-test ${reply ? ok ? 'is-pass' : 'is-fail' : ''}`} key={`${selected}-${index}`} open={Boolean(reply) || Boolean(error) || running}>
+              return <details className={`bf-test ${reply ? ok ? 'is-pass' : 'is-fail' : ''}`} key={`${selected}-${index}`} open={true}>
                 <summary>{reply ? ok ? <CheckCircle2 size={17} /> : <Bug size={17} /> : <Circle size={17} />}<span>{test.name}</span><small>{reply ? ok ? 'Passed' : 'Needs a fix' : error ? 'Not run' : running ? 'Running' : 'Ready'}</small></summary>
                 <div className="bf-test-details">
                   <div><strong>Test input</strong><pre>{test.inputs.length ? test.inputs.map(line => line === '' ? '⟨blank line⟩' : line).join('\n') : '(no input)'}</pre></div>
