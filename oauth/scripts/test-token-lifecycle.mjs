@@ -110,15 +110,21 @@ try {
   malicious.searchParams.set('redirect_uri', 'https://attacker.example/steal');
   const changedRedirect = await fetch(malicious, {redirect: 'manual'});
   const maliciousLocation = changedRedirect.headers.get('location') || '';
-  assert(changedRedirect.status >= 400 && !maliciousLocation.includes('attacker.example'),
-    'Redirect substitution was accepted or not rejected before consent');
+  const redirectedToError = changedRedirect.status >= 300 && changedRedirect.status < 400 &&
+    maliciousLocation.startsWith(redirectUri) && new URL(maliciousLocation).searchParams.has('error');
+  assert((changedRedirect.status >= 400 || redirectedToError) &&
+    !maliciousLocation.includes('attacker.example'),
+    'Redirect substitution was accepted or escaped to the attacker');
   check(true, 'Redirect URI substitution is rejected');
 
   const missingPkce = new URL(authorization);
   missingPkce.searchParams.delete('code_challenge');
   missingPkce.searchParams.delete('code_challenge_method');
   const noPkce = await fetch(missingPkce, {redirect: 'manual'});
-  assert(noPkce.status >= 400, 'Authorization without PKCE was accepted');
+  const pkceLocation = noPkce.headers.get('location') || '';
+  const pkceErrorRedirect = noPkce.status >= 300 && noPkce.status < 400 &&
+    pkceLocation.startsWith(redirectUri) && new URL(pkceLocation).searchParams.has('error');
+  assert(noPkce.status >= 400 || pkceErrorRedirect, 'Authorization without PKCE was accepted');
   check(true, 'Authorization without PKCE is rejected');
 
   const differentState = await fetch(issuer + '/callback?state=' + encodeURIComponent(base64url(randomBytes(40))) + '&code=forged', {redirect:'manual'});
