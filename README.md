@@ -30,3 +30,7 @@ Website changes are picked up on the next desktop launch/refresh, without reinst
 Pico retains **one existing GitHub release**, `desktop-v0.1.0-build.10`. Future desktop builds produce **one installer per OS**: `Pico_x64-setup.exe`, `Pico_universal.dmg` (both Intel and Apple Silicon) and `Pico_amd64.AppImage`. The existing release is upgraded in place during the verified Cloudflare publish workflow. Pico serves installers through Cloudflare Pages, so downloads keep working when the source repository is private. The prior six binaries are backed up before replacement. See [desktop build and update notes](docs/desktop.md).
 See [desktop build and update notes](docs/desktop.md) for installer formats and signing limitations.
  
+
+## Bug Fix Lab content
+
+Add exercises in [`src/bugfix/bugs.json`](src/bugfix/bugs.json). See the [challenge authoring guide](docs/bug-fix-lab.md) for an example and validation instructions.

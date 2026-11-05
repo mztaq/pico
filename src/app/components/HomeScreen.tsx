@@ -150,7 +150,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Practice" detail="Turn mistakes into understanding">
-          <WorkspaceChoice icon={<Bug size={18} />} tag="6 challenges" title="Bug Fix Lab" description="Find the bug, fix the code, and make every check pass." onClick={() => onChoose('bugfix')}>
+          <WorkspaceChoice icon={<Bug size={18} />} tag="Practice" title="Bug Fix Lab" description="Find the bug, fix the code, and make every check pass." onClick={() => onChoose('bugfix')}>
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode code={'// One tiny bug. Can you spot it?\nFOR Number ← 1 TO 4\n    OUTPUT Number\nNEXT Number'} /></pre>
           </WorkspaceChoice>
         </HomeGroup>

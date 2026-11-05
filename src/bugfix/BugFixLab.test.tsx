@@ -79,3 +79,37 @@ it('validates stored progress and tolerates blocked storage', () => {
   vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('Blocked'); });
   expect(loadProgress()).toEqual({});
 });
+
+it('dismisses themes with Escape and outside clicks', async () => {
+  await click(button('Theme'));
+  expect(container.querySelector('#bf-theme-picker')).not.toBeNull();
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  expect(container.querySelector('#bf-theme-picker')).toBeNull();
+  expect(document.activeElement).toBe(button('Theme'));
+  await click(button('Theme'));
+  await act(async () => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
+  expect(container.querySelector('#bf-theme-picker')).toBeNull();
+});
+it('focuses the new challenge after selection and shows every hint clearly', async () => {
+  await click(container.querySelectorAll<HTMLButtonElement>('.bf-challenge')[1]);
+  expect(document.activeElement).toBe(container.querySelector('#bf-challenge-title'));
+  expect(document.activeElement?.textContent).toBe(challenges[1].title);
+  await click(button('Need a hint?')); await click(button('Next hint (1/2)'));
+  expect(button('All hints shown').disabled).toBe(true);
+});
+it('reset is cancellable and clears code and hints while preserving completed badges', async () => {
+  await edit(challenges[0].solution); await click(button('Need a hint?'));
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  await click(button('Reset'));
+  expect(container.querySelector('textarea')!.value).toBe(challenges[0].solution);
+  confirm.mockReturnValue(true); await click(button('Reset'));
+  expect(container.querySelector('textarea')!.value).toBe(challenges[0].starter);
+  expect(container.querySelector('.bf-hints')).toBeNull();
+});
+it('stop ignores a worker completion that arrives after cancellation', async () => {
+  await click(button('Check my fix')); await click(button('Stop checks'));
+  expect(jobs[0].cancel).toHaveBeenCalled();
+  await act(async () => jobs[0].resolve([{ error: { message: 'Late error' } }]));
+  expect(container.textContent).not.toContain('Late error');
+  expect(button('Check my fix')).toBeDefined();
+});

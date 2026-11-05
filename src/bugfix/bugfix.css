@@ -1,4 +1,4 @@
-.bugfix-lab { min-height:100dvh; background:var(--bg); color:var(--text); font-family:var(--ds-font-ui); }
+.bugfix-lab { height:100dvh; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior-y:contain; scrollbar-gutter:stable; background:var(--bg); color:var(--text); font-family:var(--ds-font-ui); }
 .bugfix-lab button,.bugfix-lab a { -webkit-tap-highlight-color:transparent; }
 .bugfix-lab button { cursor:pointer; font:inherit; color:inherit; }
 .bugfix-lab button:disabled { opacity:.5; cursor:default; }
