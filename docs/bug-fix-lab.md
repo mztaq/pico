@@ -33,3 +33,7 @@ Copy an existing challenge, or use this example:
 `bugs.schema.json` provides editor assistance. Runtime validation names malformed fields, and the challenge tests verify the actual interpreter behavior.
 
 Run `pnpm test -- src/bugfix` and `pnpm build`, then open `/app/bugfix`. Commit and push your JSON changes to update the preview. Editing this source file requires rebuilding; it is not a live database.
+
+## Guided solution helper
+
+“Walk me through it” executes the student's current code and `solution` against the same test inputs. It selects the first failing case, animates real execution snapshots, compares final output and reveals the reference answer. `explanation` supplies the teaching text; line differences are computed automatically and are labeled as differences rather than guaranteed errors. No extra JSON fields are needed. Keep explanations specific about the bug and its effect on output. Students can pause, step, replay, switch sources or apply the reference fix; they must still run checks to earn completion. With reduced motion enabled, playback advances one step per click.

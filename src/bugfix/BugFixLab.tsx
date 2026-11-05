@@ -12,6 +12,7 @@ import type { ExecutionReply } from '../runtime/worker';
 import { challenges } from './challenges';
 import { loadProgress, saveProgress, type Attempt } from './progress';
 import './bugfix.css';
+import { SolutionHelper } from './SolutionHelper';
 
 export function BugFixLab({ onHome }: { onHome: () => void }) {
   const [settings, setSettings] = useState(loadSettings);
@@ -22,6 +23,8 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [helperOpen, setHelperOpen] = useState(false);
+  const helperTrigger = useRef<HTMLButtonElement>(null);
   const [themeOpen, setThemeOpen] = useState(false);
   const job = useRef<ExecutionJob | null>(null);
   const themeMenu = useRef<HTMLDivElement>(null);
@@ -73,6 +76,7 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
   }
   function select(id: string) {
     clearRun();
+    setHelperOpen(false);
     focusChallenge.current = id !== selected;
     setSelected(id);
   }
@@ -102,6 +106,7 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
   function reset() {
     if (!window.confirm('Reset this challenge to its original broken code? Your completed badge will be kept.')) return;
     clearRun();
+    setHelperOpen(false);
     updateAttempt({ code: challenge.starter, hints: 0 });
     playCue('undo');
   }
@@ -125,9 +130,11 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
         <section className="bf-workbench" aria-labelledby="bf-challenge-title">
           <div className="bf-brief"><div className="bf-tags"><span>{challenge.difficulty}</span><span>{challenge.topic}</span><span>Cambridge pseudocode</span></div><h2 id="bf-challenge-title" tabIndex={-1} ref={heading}>{challenge.title}</h2><p>{challenge.brief}</p></div>
           <div className="bf-editor-heading"><span><Bug size={15} /> fix-me.pico</span><span>{saveError ? 'Changes are only kept in this tab' : 'Your edit is saved in this browser'}</span></div>
-          <div className="bf-editor"><CodeEditor key={selected} value={attempt.code} onChange={code => { clearRun(); updateAttempt({ code }); }} preferences={{ ...settings, autocomplete: false }} theme={theme} /></div>
+          <div className="bf-editor"><CodeEditor key={selected} value={attempt.code} onChange={code => { clearRun(); setHelperOpen(false); updateAttempt({ code }); }} preferences={{ ...settings, autocomplete: false }} theme={theme} /></div>
           <div className="bf-actions"><div><button className="bf-hint-button" disabled={attempt.hints >= challenge.hints.length} onClick={() => { updateAttempt({ hints: attempt.hints + 1 }); playCue('notify'); }}><Lightbulb size={16} />{challenge.hints.length === 0 ? 'No hints for this challenge' : attempt.hints >= challenge.hints.length ? 'All hints shown' : attempt.hints ? `Next hint (${attempt.hints}/${challenge.hints.length})` : 'Need a hint?'}</button><button className="bf-reset" onClick={reset}><RotateCcw size={15} />Reset</button></div>{running ? <button className="bf-primary" onClick={() => { clearRun(); playCue('stop'); }}><Square size={14} />Stop checks</button> : <button className="bf-primary" onClick={() => void checkFix()}><Play size={15} />Check my fix</button>}</div>
           {attempt.hints > 0 && <aside className="bf-hints" aria-label="Hints">{challenge.hints.slice(0, attempt.hints).map((hint, index) => <p key={hint}><Lightbulb size={15} /><span><strong>Hint {index + 1}.</strong> {hint}</span></p>)}</aside>}
+          <div className="bf-helper-entry"><button ref={helperTrigger} className="bf-hint-button" aria-expanded={helperOpen} onClick={() => setHelperOpen(open => !open)}><Lightbulb size={16} />Walk me through it</button><span>Stuck? Trace your code, see the bug’s effect, and reveal a fix.</span></div>
+          {helperOpen && <SolutionHelper key={`${selected}-${attempt.code}`} challenge={challenge} code={attempt.code} onClose={() => { setHelperOpen(false); helperTrigger.current?.focus(); }} onApply={() => { clearRun(); updateAttempt({ code: challenge.solution }); setHelperOpen(false); helperTrigger.current?.focus(); playCue('notify'); }} />}
           <section className="bf-results" aria-labelledby="bf-results-title" aria-busy={running}>
             <div className="bf-results-heading"><h3 id="bf-results-title"><Terminal size={16} />Test bench</h3><span role="status" aria-live="polite">{running ? 'Checking your code…' : error ? 'Fix the error and try again' : replies ? `${passed} of ${challenge.tests.length} checks passed` : `${challenge.tests.length} checks ready`}</span></div>
             {error && <p className="bf-error" role="alert">{error}</p>}
