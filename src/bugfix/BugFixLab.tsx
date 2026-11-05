@@ -31,7 +31,7 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
   const challenge = challenges.find(item => item.id === selected)!;
   const attempt = progress[selected] ?? { code: challenge.starter, hints: 0, solved: false };
   const completed = challenges.filter(item => progress[item.id]?.solved).length;
-  const passed = challenge.tests.filter((test, index) => replies?.[index] && !replies[index].error && JSON.stringify(replies[index].result?.output) === JSON.stringify(test.expected)).length;
+  const passed = challenge.tests.filter((test, index) => replies?.[index] && !replies[index].error && !replies[index].result?.outputTruncated && JSON.stringify(replies[index].result?.output) === JSON.stringify(test.expected)).length;
   const allPassed = replies !== null && replies.length === challenge.tests.length && passed === challenge.tests.length;
 
   useEffect(() => { setSaveError(!saveProgress(progress)); }, [progress]);
@@ -88,7 +88,7 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
       const results = await current.promise;
       if (job.current !== current) return;
       setReplies(results);
-      const solved = results.length === challenge.tests.length && results.every((reply, index) => !reply.error && JSON.stringify(reply.result?.output) === JSON.stringify(challenge.tests[index].expected));
+      const solved = results.length === challenge.tests.length && results.every((reply, index) => !reply.error && !reply.result?.outputTruncated && JSON.stringify(reply.result?.output) === JSON.stringify(challenge.tests[index].expected));
       if (solved) updateAttempt({ solved: true });
       playCue(solved ? 'success' : 'error');
     } catch (failure) {
@@ -131,11 +131,28 @@ export function BugFixLab({ onHome }: { onHome: () => void }) {
           <section className="bf-results" aria-labelledby="bf-results-title" aria-busy={running}>
             <div className="bf-results-heading"><h3 id="bf-results-title"><Terminal size={16} />Test bench</h3><span role="status" aria-live="polite">{running ? 'Checking your code…' : error ? 'Fix the error and try again' : replies ? `${passed} of ${challenge.tests.length} checks passed` : `${challenge.tests.length} checks ready`}</span></div>
             {error && <p className="bf-error" role="alert">{error}</p>}
-            {!replies && !error && <p className="bf-results-help">Run the broken code first, or jump straight into a fix. Check every case to solve the challenge.</p>}
+            <p className="bf-results-help">Each check runs your current code with the input shown below. Actual output is what your code prints; expected output is the target.</p>
             {challenge.tests.map((test, index) => {
               const reply = replies?.[index];
-              const ok = Boolean(reply && !reply.error && JSON.stringify(reply.result?.output) === JSON.stringify(test.expected));
-              return <details className={`bf-test ${reply ? ok ? 'is-pass' : 'is-fail' : ''}`} key={`${selected}-${index}`} open={reply && !ok ? true : undefined}><summary>{reply ? ok ? <CheckCircle2 size={17} /> : <Bug size={17} /> : <Circle size={17} />}<span>{test.name}</span><small>{reply ? ok ? 'Passed' : 'Needs a fix' : 'Ready'}</small></summary><div className="bf-test-details"><div><strong>Input</strong><pre>{test.inputs.length ? test.inputs.join('\n') : '(no input)'}</pre></div><div><strong>Expected output</strong><pre>{test.expected.join('\n')}</pre></div><div><strong>Actual output</strong><pre>{reply ? [(reply.result?.output.slice(0, 20).join('\n') || '(no output)'), ...(reply.result && reply.result.output.length > 20 ? ['… Output shortened to the first 20 lines.'] : []), ...(reply.error ? [reply.error.message] : [])].join('\n') : 'Run checks to see the result.'}</pre></div></div></details>;
+              const ok = Boolean(reply && !reply.error && !reply.result?.outputTruncated && JSON.stringify(reply.result?.output) === JSON.stringify(test.expected));
+              const output = reply?.result?.output;
+              const actual = output
+                ? output.length ? output.map(line => line === '' ? '⟨blank line⟩' : line).join('\n') : '(no output)'
+                : reply ? '(no output captured)'
+                : error ? '(not run — fix the code error above)'
+                : running ? 'Running your code…' : 'Run checks to see what your code prints.';
+              return <details className={`bf-test ${reply ? ok ? 'is-pass' : 'is-fail' : ''}`} key={`${selected}-${index}`} open={Boolean(reply) || Boolean(error) || running}>
+                <summary>{reply ? ok ? <CheckCircle2 size={17} /> : <Bug size={17} /> : <Circle size={17} />}<span>{test.name}</span><small>{reply ? ok ? 'Passed' : 'Needs a fix' : error ? 'Not run' : running ? 'Running' : 'Ready'}</small></summary>
+                <div className="bf-test-details">
+                  <div><strong>Test input</strong><pre>{test.inputs.length ? test.inputs.map(line => line === '' ? '⟨blank line⟩' : line).join('\n') : '(no input)'}</pre></div>
+                  <div><strong>Expected output</strong><pre>{test.expected.length ? test.expected.map(line => line === '' ? '⟨blank line⟩' : line).join('\n') : '(no output)'}</pre></div>
+                  <div className="bf-actual-output" role="region" aria-label={`Actual console output for ${test.name}`}>
+                    <strong>Actual output · your code</strong><pre tabIndex={0} aria-label={`Console output for ${test.name}`}>{actual}</pre>
+                    {reply?.result?.outputTruncated && <p className="bf-output-note">The runtime output limit was reached. The available output is shown; this check cannot pass with truncated output.</p>}
+                    {reply?.error && <p className="bf-output-error"><strong>Execution error</strong><br />{reply.error.message}</p>}
+                  </div>
+                </div>
+              </details>;
             })}
             {allPassed && <div className="bf-success" role="status"><CheckCircle2 size={25} /><div><h3>Bug squashed. Nicely done.</h3><p>{challenge.explanation}</p></div><button onClick={() => select(next.id)}>{completed === challenges.length ? 'Keep practising' : 'Next challenge'}<ArrowRight size={16} /></button></div>}
           </section>

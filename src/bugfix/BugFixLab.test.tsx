@@ -113,3 +113,36 @@ it('stop ignores a worker completion that arrives after cancellation', async () 
   expect(container.textContent).not.toContain('Late error');
   expect(button('Check my fix')).toBeDefined();
 });
+it('shows real edited-program output separately from the expected answer', async () => {
+  await edit('OUTPUT "This is from my code"'); await click(button('Check my fix'));
+  const { runRequests } = await import('../runtime/worker');
+  await act(async () => jobs[0].resolve(runRequests(jobs[0].request)));
+  const actual = container.querySelector('.bf-actual-output pre')!;
+  expect(actual.textContent).toBe('This is from my code');
+  expect(actual.textContent).not.toBe(challenges[0].tests[0].expected.join('\n'));
+  expect(container.querySelector('details')?.open).toBe(true);
+  await edit(challenges[0].solution); await click(button('Check my fix'));
+  await act(async () => jobs[1].resolve(runRequests(jobs[1].request)));
+  expect(container.querySelector('details')?.open).toBe(true);
+  expect(container.querySelector('.bf-actual-output pre')?.textContent).toBe('1\n2\n3\n4\n5');
+});
+it('keeps every available output line, including text printed before a runtime error', async () => {
+  await edit('DECLARE I : INTEGER\nFOR I ← 1 TO 25\nOUTPUT I\nNEXT I\nOUTPUT 1 DIV 0');
+  await click(button('Check my fix'));
+  const { runRequests } = await import('../runtime/worker');
+  await act(async () => jobs[0].resolve(runRequests(jobs[0].request)));
+  expect(container.querySelector('.bf-actual-output pre')?.textContent).toBe(Array.from({ length: 25 }, (_, index) => String(index + 1)).join('\n'));
+  expect(container.querySelector('.bf-output-error')?.textContent).toContain('Execution error');
+});
+it('distinguishes a blank output line from no output and compile failure', async () => {
+  const { runRequests } = await import('../runtime/worker');
+  for (const [code, expected] of [['OUTPUT ""', '⟨blank line⟩'], ['DECLARE Number : INTEGER', '(no output)']]) {
+    await edit(code); await click(button('Check my fix'));
+    const current = jobs.at(-1)!;
+    await act(async () => current.resolve(runRequests(current.request)));
+    expect(container.querySelector('.bf-actual-output pre')?.textContent).toBe(expected);
+  }
+  await edit('DECLARE'); await click(button('Check my fix'));
+  expect(container.querySelector('.bf-actual-output pre')?.textContent).toContain('not run');
+  expect(container.querySelector('details')?.open).toBe(true);
+});
