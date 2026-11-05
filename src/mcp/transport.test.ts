@@ -4,8 +4,29 @@ import routes from '../../public/_routes.json';
 import {describe,it,expect} from 'vitest';
 import {onRequest} from '../../functions/app/mcp';
 const token='t'.repeat(40);
-const env={PICO_MCP_TOKEN:token,PICO_MCP_RATE_GATE:{fetch:async()=>new Response(null,{status:204})}};
+const env={PICO_MCP_TOKEN:token,PICO_MCP_LEGACY_AUTH:'enabled',PICO_MCP_RATE_GATE:{fetch:async()=>new Response(null,{status:204})}};
 const invoke=(payload:unknown,authorization='Bearer '+token,settings:typeof env=env)=>onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{method:'POST',headers:{authorization,'content-type':'application/json'},body:JSON.stringify(payload)}),env:settings});
+describe('OAuth-only production defaults',()=>{
+  it('rejects legacy shared bearer tokens without explicit opt-in',async()=>{
+    const configured={...env,PICO_MCP_LEGACY_AUTH:undefined,
+      PICO_OAUTH_ISSUER:'https://pico-oauth.example',
+      PICO_OAUTH:{validateToken:async()=>null}};
+    const r=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{
+      method:'POST',headers:{Authorization:'Bearer '+token},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'ping'}),
+    }),env:configured});
+    expect(r.status).toBe(401);
+  });
+  it('fails closed if neither OAuth nor an explicitly enabled legacy mode is present',async()=>{
+    const configured={...env,PICO_MCP_LEGACY_AUTH:undefined};
+    const r=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{
+      method:'POST',headers:{Authorization:'Bearer '+token},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:'ping'}),
+    }),env:configured});
+    expect(r.status).toBe(503);
+  });
+});
+
 describe('Pico MCP HTTP security',()=>{
   it('fails closed when secret or rate limiter is absent',async()=>{
     const r=await invoke({jsonrpc:'2.0',id:1,method:'tools/list'},undefined,{...env,PICO_MCP_TOKEN:''});
