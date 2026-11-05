@@ -1,6 +1,6 @@
 import {callTool,listTools} from '../../src/mcp/tools';
 
-type Env={PICO_MCP_TOKEN?:string;PICO_MCP_RATE_GATE?:{fetch(input:Request):Promise<Response>};PICO_OAUTH_ISSUER?:string;PICO_OAUTH?:{validateToken(resource:string,token:string):Promise<{scope:string[];userId:string;audience:string}|null>}};
+type Env={PICO_MCP_TOKEN?:string;PICO_MCP_LEGACY_AUTH?:string;PICO_MCP_RATE_GATE?:{fetch(input:Request):Promise<Response>};PICO_OAUTH_ISSUER?:string;PICO_OAUTH?:{validateToken(resource:string,token:string):Promise<{scope:string[];userId:string;audience:string}|null>}};
 type Context={request:Request;env:Env};
 const headers={'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'};
 const encoder=new TextEncoder();
@@ -21,7 +21,9 @@ const resourceFor=(request:Request)=>new URL('/app/mcp',request.url).href;
 const oauthChallenge=(request:Request)=>`Bearer realm="Pico MCP", resource_metadata="${new URL('/.well-known/oauth-protected-resource/app/mcp',request.url).href}", scope="mcp:run"`;
 async function authenticated(req:Request,env:Env) {
   if (!env.PICO_MCP_RATE_GATE) return {status:503,description:'MCP rate limiter is not configured.'};
-  const legacyEnabled=Boolean(env.PICO_MCP_TOKEN && env.PICO_MCP_TOKEN.length>=32);
+  // Legacy shared-token authentication is disabled by default. Explicitly opt in
+  // for a temporary rollback while migrating clients to GitHub OAuth.
+  const legacyEnabled=Boolean(env.PICO_MCP_LEGACY_AUTH==='enabled' && env.PICO_MCP_TOKEN && env.PICO_MCP_TOKEN.length>=32);
   const oauthEnabled=Boolean(env.PICO_OAUTH && env.PICO_OAUTH_ISSUER);
   if(!legacyEnabled && !oauthEnabled)return {status:503,description:'MCP authentication is not configured.'};
   const auth=req.headers.get('authorization')??'';
