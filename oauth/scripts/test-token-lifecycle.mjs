@@ -105,6 +105,58 @@ try {
     scope: 'mcp:run offline_access', resource, state,
     code_challenge: challenge, code_challenge_method: 'S256',
   }).forEach(([key, value]) => authorization.searchParams.set(key, value));
+  // Negative checks run before browser consent. Never follow a malicious redirect.
+  const malicious = new URL(authorization);
+  malicious.searchParams.set('redirect_uri', 'https://attacker.example/steal');
+  const changedRedirect = await fetch(malicious, {redirect: 'manual'});
+  const maliciousLocation = changedRedirect.headers.get('location') || '';
+  const redirectedToError = changedRedirect.status >= 300 && changedRedirect.status < 400 &&
+    maliciousLocation.startsWith(redirectUri) && new URL(maliciousLocation).searchParams.has('error');
+  assert((changedRedirect.status >= 400 || redirectedToError) &&
+    !maliciousLocation.includes('attacker.example'),
+    'Redirect substitution was accepted or escaped to the attacker');
+  check(true, 'Redirect URI substitution is rejected');
+
+  const missingPkce = new URL(authorization);
+  missingPkce.searchParams.delete('code_challenge');
+  missingPkce.searchParams.delete('code_challenge_method');
+  const noPkce = await fetch(missingPkce, {redirect: 'manual'});
+  const pkceLocation = noPkce.headers.get('location') || '';
+  const pkceErrorRedirect = noPkce.status >= 300 && noPkce.status < 400 &&
+    pkceLocation.startsWith(redirectUri) && new URL(pkceLocation).searchParams.has('error');
+  assert(noPkce.status >= 400 || pkceErrorRedirect, 'Authorization without PKCE was accepted');
+  check(true, 'Authorization without PKCE is rejected');
+
+  const differentState = await fetch(issuer + '/callback?state=' + encodeURIComponent(base64url(randomBytes(40))) + '&code=forged', {redirect:'manual'});
+  assert(differentState.status === 403, 'Unbound GitHub callback state was accepted');
+  check(true, 'Unbound GitHub callback state is rejected');
+
+  // Dynamic registration permits self-asserted client names, so the UI must
+  // identify them as unverified rather than presenting branding as verified.
+  const spoofRegistration = await fetch(discovery.registration_endpoint, {
+    method: 'POST', headers: {'content-type':'application/json'},
+    body: JSON.stringify({
+      client_name: 'ChatGPT', redirect_uris: [redirectUri],
+      grant_types: ['authorization_code'], response_types: ['code'],
+      token_endpoint_auth_method: 'none',
+    }),
+  });
+  const spoof = await json(spoofRegistration);
+  assert(spoofRegistration.ok && spoof.client_id, 'Impersonation test client registration failed');
+  const spoofAuthorize = new URL(authorization);
+  spoofAuthorize.searchParams.set('client_id', spoof.client_id);
+  const spoofPage = await fetch(spoofAuthorize, {redirect:'manual'});
+  const hasUnverifiedWarning = spoofPage.status === 200 &&
+    (await spoofPage.text()).includes('Unverified app identity');
+  if (process.env.PICO_TEST_REQUIRE_HARDENING === '1') {
+    assert(hasUnverifiedWarning, 'Unverified client identity warning missing from consent');
+    check(true, 'DCR client impersonation is visibly flagged');
+  } else if (hasUnverifiedWarning) {
+    check(true, 'DCR client impersonation is visibly flagged');
+  } else {
+    console.log('SKIP DCR identity warning: not deployed on this OAuth Worker yet. Run with PICO_TEST_REQUIRE_HARDENING=1 after deployment.');
+  }
+
   console.log('Approve the GitHub login in your browser to continue the test.');
   launchBrowser(authorization.href);
   const code = await callback;
@@ -119,7 +171,10 @@ try {
 
   const access = await toolList(issued.access_token);
   const accessBody = await json(access);
-  check(access.status === 200 && Array.isArray(accessBody.result?.tools), 'New access token accesses Pico tools');
+  assert(access.status === 200 && Array.isArray(accessBody.result?.tools),
+    'New access token accesses Pico tools failed: HTTP ' + access.status +
+    (accessBody?.error ? ' (' + String(accessBody.error).slice(0,160) + ')' : ''));
+  check(true, 'New access token accesses Pico tools');
 
   const refresh = await postForm(discovery.token_endpoint, {
     grant_type: 'refresh_token', client_id: registration.client_id,
@@ -153,6 +208,27 @@ try {
   check(afterRevocation.status === 400, 'Revoked refresh token is rejected');
   const revokedAccess = await toolList(rotated.access_token);
   check(revokedAccess.status === 401, 'Revoked grant no longer accesses Pico tools');
+
+  // Run replay probes AFTER lifecycle validation. Some OAuth implementations
+  // revoke the entire grant when a redeemed authorization code is replayed.
+  // A code must not be redeemable again, even with a valid original verifier.
+  const reused = await postForm(discovery.token_endpoint, {
+    grant_type: 'authorization_code', client_id: registration.client_id,
+    redirect_uri: redirectUri, code, code_verifier: verifier, resource,
+  });
+  assert(reused.status === 400 || reused.status === 401, 'Authorization code replay succeeded');
+  check(true, 'Authorization code reuse is rejected');
+
+  const wrongRedirect = await postForm(discovery.token_endpoint, {
+    grant_type: 'authorization_code', client_id: registration.client_id,
+    redirect_uri: 'https://attacker.example/steal', code,
+    code_verifier: verifier, resource,
+  });
+  assert(!wrongRedirect.ok, 'Token request accepted an altered redirect URI');
+  check(true, 'Token exchange rejects altered redirect URI');
+
+
+
   console.log('Lifecycle tests complete. No tokens were printed.');
 } catch (error) {
   console.error('FAIL ' + (error instanceof Error ? error.message : 'Unknown test error'));
