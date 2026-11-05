@@ -21,7 +21,7 @@ const HOME_AMBIENT_CURVES = [
   { d: 'M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304', width: 1.3, opacity: .28 },
 ] as const;
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'bugfix') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary') => void }) {
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
@@ -147,11 +147,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           <rect x="273" y="15" width="71" height="45" rx="5"/>
           <text x="308.5" y="42">RAM</text>
         </svg>
-          </WorkspaceChoice>
-        </HomeGroup>
-        <HomeGroup label="Practice" detail="Turn mistakes into understanding">
-          <WorkspaceChoice icon={<Bug size={18} />} tag="Practice" title="Bug Fix Lab" description="Find the bug, fix the code, and make every check pass." onClick={() => onChoose('bugfix')}>
-            <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode code={'// One tiny bug. Can you spot it?\nFOR Number ← 1 TO 4\n    OUTPUT Number\nNEXT Number'} /></pre>
           </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">

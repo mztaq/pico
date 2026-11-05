@@ -47,7 +47,6 @@ function directVisualWorkspace(pathname: string, search: string): VisualWorkspac
     case 'logic': return 'Logic Sim';
     case 'cpu': return 'CPU Studio';
     case 'binary': return 'Binary Lab';
-    case 'bugfix': return 'Bug Fix Lab';
     default: return null;
   }
 }
