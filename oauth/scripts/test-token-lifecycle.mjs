@@ -169,26 +169,12 @@ try {
   assert(exchange.ok && issued.access_token && issued.refresh_token, 'Token issuance failed: HTTP ' + exchange.status);
   check(true, 'Authorization code issuance with PKCE and refresh token');
 
-  // A code must not be redeemable again, even with a valid original verifier.
-  const reused = await postForm(discovery.token_endpoint, {
-    grant_type: 'authorization_code', client_id: registration.client_id,
-    redirect_uri: redirectUri, code, code_verifier: verifier, resource,
-  });
-  assert(reused.status === 400 || reused.status === 401, 'Authorization code replay succeeded');
-  check(true, 'Authorization code reuse is rejected');
-
-  const wrongRedirect = await postForm(discovery.token_endpoint, {
-    grant_type: 'authorization_code', client_id: registration.client_id,
-    redirect_uri: 'https://attacker.example/steal', code,
-    code_verifier: verifier, resource,
-  });
-  assert(!wrongRedirect.ok, 'Token request accepted an altered redirect URI');
-  check(true, 'Token exchange rejects altered redirect URI');
-
-
   const access = await toolList(issued.access_token);
   const accessBody = await json(access);
-  check(access.status === 200 && Array.isArray(accessBody.result?.tools), 'New access token accesses Pico tools');
+  assert(access.status === 200 && Array.isArray(accessBody.result?.tools),
+    'New access token accesses Pico tools failed: HTTP ' + access.status +
+    (accessBody?.error ? ' (' + String(accessBody.error).slice(0,160) + ')' : ''));
+  check(true, 'New access token accesses Pico tools');
 
   const refresh = await postForm(discovery.token_endpoint, {
     grant_type: 'refresh_token', client_id: registration.client_id,
@@ -222,6 +208,27 @@ try {
   check(afterRevocation.status === 400, 'Revoked refresh token is rejected');
   const revokedAccess = await toolList(rotated.access_token);
   check(revokedAccess.status === 401, 'Revoked grant no longer accesses Pico tools');
+
+  // Run replay probes AFTER lifecycle validation. Some OAuth implementations
+  // revoke the entire grant when a redeemed authorization code is replayed.
+  // A code must not be redeemable again, even with a valid original verifier.
+  const reused = await postForm(discovery.token_endpoint, {
+    grant_type: 'authorization_code', client_id: registration.client_id,
+    redirect_uri: redirectUri, code, code_verifier: verifier, resource,
+  });
+  assert(reused.status === 400 || reused.status === 401, 'Authorization code replay succeeded');
+  check(true, 'Authorization code reuse is rejected');
+
+  const wrongRedirect = await postForm(discovery.token_endpoint, {
+    grant_type: 'authorization_code', client_id: registration.client_id,
+    redirect_uri: 'https://attacker.example/steal', code,
+    code_verifier: verifier, resource,
+  });
+  assert(!wrongRedirect.ok, 'Token request accepted an altered redirect URI');
+  check(true, 'Token exchange rejects altered redirect URI');
+
+
+
   console.log('Lifecycle tests complete. No tokens were printed.');
 } catch (error) {
   console.error('FAIL ' + (error instanceof Error ? error.message : 'Unknown test error'));
