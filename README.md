@@ -16,6 +16,7 @@
 - **Python Compiler** — Run real Python in your browser, with an editor, console and debugger.
 - **Flowchart Builder** — Create and run flowcharts, then convert them into pseudocode.
 - **Logic Sim** — Build digital circuits, simulate gates and inspect truth tables.
+- **Bug Fix Lab** — Repair six broken pseudocode programs with progressive hints, executable checks, saved progress and optional sound feedback. Open `/app/bugfix`.
 - **CPU Studio** — Explore the fetch–decode–execute cycle with animated CPU components and registers.
 
 Pico includes customizable themes, guided tutorials and browser-based project saving. 
