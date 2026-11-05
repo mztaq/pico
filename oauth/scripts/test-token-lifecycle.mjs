@@ -105,6 +105,45 @@ try {
     scope: 'mcp:run offline_access', resource, state,
     code_challenge: challenge, code_challenge_method: 'S256',
   }).forEach(([key, value]) => authorization.searchParams.set(key, value));
+  // Negative checks run before browser consent. Never follow a malicious redirect.
+  const malicious = new URL(authorization);
+  malicious.searchParams.set('redirect_uri', 'https://attacker.example/steal');
+  const changedRedirect = await fetch(malicious, {redirect: 'manual'});
+  const maliciousLocation = changedRedirect.headers.get('location') || '';
+  assert(changedRedirect.status >= 400 && !maliciousLocation.includes('attacker.example'),
+    'Redirect substitution was accepted or not rejected before consent');
+  check(true, 'Redirect URI substitution is rejected');
+
+  const missingPkce = new URL(authorization);
+  missingPkce.searchParams.delete('code_challenge');
+  missingPkce.searchParams.delete('code_challenge_method');
+  const noPkce = await fetch(missingPkce, {redirect: 'manual'});
+  assert(noPkce.status >= 400, 'Authorization without PKCE was accepted');
+  check(true, 'Authorization without PKCE is rejected');
+
+  const differentState = await fetch(issuer + '/callback?state=' + encodeURIComponent(base64url(randomBytes(40))) + '&code=forged', {redirect:'manual'});
+  assert(differentState.status === 403, 'Unbound GitHub callback state was accepted');
+  check(true, 'Unbound GitHub callback state is rejected');
+
+  // Dynamic registration permits self-asserted client names, so the UI must
+  // identify them as unverified rather than presenting branding as verified.
+  const spoofRegistration = await fetch(discovery.registration_endpoint, {
+    method: 'POST', headers: {'content-type':'application/json'},
+    body: JSON.stringify({
+      client_name: 'ChatGPT', redirect_uris: [redirectUri],
+      grant_types: ['authorization_code'], response_types: ['code'],
+      token_endpoint_auth_method: 'none',
+    }),
+  });
+  const spoof = await json(spoofRegistration);
+  assert(spoofRegistration.ok && spoof.client_id, 'Impersonation test client registration failed');
+  const spoofAuthorize = new URL(authorization);
+  spoofAuthorize.searchParams.set('client_id', spoof.client_id);
+  const spoofPage = await fetch(spoofAuthorize, {redirect:'manual'});
+  assert(spoofPage.status === 200 && (await spoofPage.text()).includes('Unverified app identity'),
+    'Unverified client identity warning missing from consent');
+  check(true, 'DCR client impersonation is visibly flagged');
+
   console.log('Approve the GitHub login in your browser to continue the test.');
   launchBrowser(authorization.href);
   const code = await callback;
@@ -116,6 +155,23 @@ try {
   const issued = await json(exchange);
   assert(exchange.ok && issued.access_token && issued.refresh_token, 'Token issuance failed: HTTP ' + exchange.status);
   check(true, 'Authorization code issuance with PKCE and refresh token');
+
+  // A code must not be redeemable again, even with a valid original verifier.
+  const reused = await postForm(discovery.token_endpoint, {
+    grant_type: 'authorization_code', client_id: registration.client_id,
+    redirect_uri: redirectUri, code, code_verifier: verifier, resource,
+  });
+  assert(reused.status === 400 || reused.status === 401, 'Authorization code replay succeeded');
+  check(true, 'Authorization code reuse is rejected');
+
+  const wrongRedirect = await postForm(discovery.token_endpoint, {
+    grant_type: 'authorization_code', client_id: registration.client_id,
+    redirect_uri: 'https://attacker.example/steal', code,
+    code_verifier: verifier, resource,
+  });
+  assert(!wrongRedirect.ok, 'Token request accepted an altered redirect URI');
+  check(true, 'Token exchange rejects altered redirect URI');
+
 
   const access = await toolList(issued.access_token);
   const accessBody = await json(access);
