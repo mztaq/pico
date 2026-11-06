@@ -163,6 +163,23 @@
       .docs-grid #troubleshooting .faq details p{padding:0 18px 18px;font-size:14px}
     }
 
+
+    /* Compact, readable examples matching Pico's editor colors. */
+    .example-list{display:grid;gap:18px;margin-top:19px}
+    .example-item{min-width:0}
+    .example-item h3{font-size:14px;font-weight:700;margin:0 0 8px;color:var(--text)}
+    .example-item pre{background:#151520;border:1px solid #38384c;border-radius:8px;padding:15px 17px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.7}
+    .example-item pre code{font-size:inherit}
+    .example-item > p{margin:7px 0 0;font-size:13px}
+    .syn-comment{color:#a6adc8}
+    .syn-keyword{color:#cba6f7;font-weight:600}
+    .syn-type{color:#f9e2af}
+    .syn-var{color:#89b4fa}
+    .syn-number{color:#fab387}
+    .syn-operator{color:#89dceb}
+    .syn-string{color:#a6e3a1}
+    @media(max-width:520px){.example-item pre{padding:13px 14px;font-size:11px}}
+
   </style>
 </head>
 <body>
@@ -201,13 +218,30 @@
     <div class="content-layout">
       <article class="docs-grid">
         <section class="doc-section" id="example">
-          <h2>Example</h2>
-          <p>Once connected, ask your assistant:</p>
-          <pre><code>Use Pico to run this pseudocode:
-DECLARE Number : INTEGER
-Number &larr; 5
-OUTPUT Number * 2</code></pre>
-          <p>Expected output: <strong>10</strong>.</p>
+          <h2>Examples</h2>
+          <p>Once connected, try these prompts with your assistant.</p>
+          <div class="example-list">
+            <div class="example-item">
+              <h3>Pseudocode</h3>
+              <pre><code><span class="syn-comment">Use Pico to run this pseudocode:</span>
+<span class="syn-keyword">DECLARE</span> <span class="syn-var">Number</span> : <span class="syn-type">INTEGER</span>
+<span class="syn-var">Number</span> <span class="syn-operator">&larr;</span> <span class="syn-number">5</span>
+<span class="syn-keyword">OUTPUT</span> <span class="syn-var">Number</span> <span class="syn-operator">*</span> <span class="syn-number">2</span></code></pre>
+              <p>Output: <strong>10</strong></p>
+            </div>
+            <div class="example-item">
+              <h3>Flowchart</h3>
+              <pre><code>Create a flowchart that <span class="syn-keyword">inputs</span> a number,
+<span class="syn-keyword">checks</span> whether it's even or odd,
+and <span class="syn-keyword">outputs</span> <span class="syn-string">"Even"</span> or <span class="syn-string">"Odd"</span>.</code></pre>
+            </div>
+            <div class="example-item">
+              <h3>Logic circuit</h3>
+              <pre><code>Create a <span class="syn-type">half-adder</span> with two inputs.
+Use <span class="syn-keyword">XOR</span> for the <span class="syn-var">Sum</span> output
+and <span class="syn-keyword">AND</span> for the <span class="syn-var">Carry</span> output.</code></pre>
+            </div>
+          </div>
         </section>
         <section class="doc-section" id="tools">
           <h2>Available tools</h2>
