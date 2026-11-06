@@ -96,6 +96,7 @@ describe('Pico landing page', () => {
     expect(document.documentElement.classList.contains('pico-landing-scroll')).toBe(true);
     expect(container.querySelector('a[href="#features"]')).not.toBeNull();
     expect(container.querySelector('a[href="#downloads"]')).not.toBeNull();
+    expect(container.querySelector('header.lp-header a[href="/mcp-docs"]')?.textContent).toBe('MCP Docs');
   });
   it('uses only one small copyright line in the footer', async () => {
     await render();
