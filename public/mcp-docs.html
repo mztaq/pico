@@ -127,9 +127,40 @@
     @media(max-width:520px){
       .intro-grid{padding:38px 0 35px;gap:32px}
       .intro-grid .endpoint{flex-wrap:wrap}
-      .intro-grid 
       .intro-grid .endpoint code{font-size:11px}
       .intro-connect .steps li{margin-bottom:14px}
+    }
+
+
+    /* Same full-width columns for the example, tools, and expanded Q&A. */
+    .content-layout{width:100%;max-width:none;margin:0;padding:42px 0 76px}
+    .docs-grid{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,.97fr);column-gap:clamp(38px,5vw,74px);row-gap:42px;align-items:start}
+    .docs-grid > .doc-section{min-width:0;margin:0;padding:0;border:0}
+    .docs-grid #example{grid-column:1}
+    .docs-grid #tools{grid-column:2}
+    .docs-grid #troubleshooting{grid-column:1/-1;border-top:1px solid #343547;padding-top:38px}
+    .docs-grid #example pre{margin:16px 0 15px;white-space:pre;max-width:100%}
+    .docs-grid #tools .tools{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .docs-grid #tools .tool{padding:13px;min-height:85px}
+    .docs-grid #tools .tool code{font-size:11px;line-height:1.5}
+    .docs-grid #tools .tool p{font-size:12px}
+    .docs-grid #troubleshooting h2{font-size:29px;margin-bottom:22px}
+    .docs-grid #troubleshooting .faq{gap:12px}
+    .docs-grid #troubleshooting .faq details{background:rgba(24,24,37,.72)}
+    .docs-grid #troubleshooting .faq summary{padding:22px 24px;font-size:18px}
+    .docs-grid #troubleshooting .faq details p{padding:0 24px 23px;font-size:15px;max-width:900px}
+    @media(max-width:920px){
+      .docs-grid{grid-template-columns:1fr;row-gap:36px}
+      .docs-grid #example,.docs-grid #tools,.docs-grid #troubleshooting{grid-column:1}
+      .docs-grid #tools .tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .docs-grid #troubleshooting{padding-top:30px}
+      .content-layout{padding-top:34px}
+    }
+    @media(max-width:520px){
+      .docs-grid #tools .tools{grid-template-columns:1fr}
+      .docs-grid #troubleshooting h2{font-size:25px}
+      .docs-grid #troubleshooting .faq summary{font-size:16px;padding:18px}
+      .docs-grid #troubleshooting .faq details p{padding:0 18px 18px;font-size:14px}
     }
 
   </style>
@@ -168,7 +199,7 @@
       </section>
     </div>
     <div class="content-layout">
-      <article>
+      <article class="docs-grid">
         <section class="doc-section" id="example">
           <h2>Example</h2>
           <p>Once connected, ask your assistant:</p>
