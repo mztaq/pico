@@ -38,11 +38,22 @@ describe('Custom 404 for invalid app routes',()=>{
       expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
     }
   });
-  it('preserves the app homepage when a trailing slash reaches the fallback',async()=>{
-    const {ctx,fetch}=context('/app/');
-    const response=await nestedRoute(ctx);
-    expect(response.status).toBe(200);
-    expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
+  it('keeps /app and /app/ working even when Pages selects the catch-all',async()=>{
+    for(const route of ['/app','/app/']){
+      const {ctx,fetch}=context(route);
+      const response=await nestedRoute(ctx);
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain('<title>Pico</title>');
+      expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
+    }
+  });
+  it('keeps direct workspaces and information pages working through the catch-all',async()=>{
+    for(const route of ['/app/flowchart','/app/logic','/app/python','/app/team','/app/report']){
+      const {ctx,fetch}=context(route);
+      const response=await nestedRoute(ctx);
+      expect(response.status).toBe(200);
+      expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
+    }
   });
   it('serves the same 404 page for unsupported nested paths',async()=>{
     const {ctx,fetch}=context('/app/not-a-workspace/other');
