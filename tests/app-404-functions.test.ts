@@ -1,4 +1,5 @@
 import {describe,expect,it,vi} from 'vitest';
+import {readFileSync} from 'node:fs';
 import {onRequestGet as workspaceRoute} from '../functions/app/[workspace]';
 import {onRequestGet as nestedRoute} from '../functions/app/[[path]]';
 
@@ -13,6 +14,13 @@ function context(path:string){
 }
 
 describe('Custom 404 for invalid app routes',()=>{
+  it('uses Pico saved theme on both 404 and MCP browser error pages',()=>{
+    const html=readFileSync(new URL('../public/404.html',import.meta.url),'utf8');
+    expect(html).toContain("'pico.settings.v6'");
+    expect(html).toContain("root.style.setProperty('--'+name,theme[name])");
+    expect(html).toContain("location.pathname === '/app/mcp'");
+    expect(html).toContain("const elements = [...document.querySelectorAll");
+  });
   it('serves the existing joke page with HTTP 404 for a missing workspace',async()=>{
     const {ctx,fetch}=context('/app/la');
     const response=await workspaceRoute(ctx);
