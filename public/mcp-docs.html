@@ -23,7 +23,7 @@
     .endpoint{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid #3b3b50;border-radius:9px;padding:12px 13px;width:min(100%,590px)}
     .endpoint-label{font-size:11px;white-space:nowrap;color:var(--muted);font-weight:700}.endpoint code{overflow-wrap:anywhere;font-size:12px;color:#e5d4ff;flex:1;min-width:0}
     .copy{border:1px solid var(--line);border-radius:6px;background:#313244;color:var(--text);padding:7px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}.copy:hover{border-color:var(--accent)}
-    .hero,.content-layout{width:min(780px,100%);margin-inline:auto}.content-layout{padding:34px 0 80px}
+    main.shell{width:min(1280px,calc(100% - 80px))}.hero{width:100%;margin:0}.content-layout{width:min(780px,100%);margin-inline:auto;padding:34px 0 80px}
     .doc-section{padding:0 0 31px;margin:0 0 32px;border-bottom:1px solid #343547}.doc-section:last-child{border:0;margin:0;padding:0}
     h2{font-size:24px;line-height:1.25;letter-spacing:-.7px;margin:0 0 12px}h3{font-size:16px;margin:24px 0 7px}p{margin:0 0 17px;color:var(--muted)}strong{color:var(--text)}ol,ul{padding-left:21px;margin:14px 0 0;color:var(--muted)}li{padding-left:3px;margin-bottom:11px}li::marker{color:var(--accent)}
     .steps{counter-reset:step;list-style:none;padding:0;margin-top:16px}.steps li{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:start;gap:13px;margin:0 0 14px;padding:0}.steps li:before{counter-increment:step;content:counter(step);display:grid;place-items:center;width:26px;height:26px;border:1px solid #615078;border-radius:7px;color:var(--accent);font-size:12px;font-weight:700}
@@ -31,8 +31,9 @@
     pre{background:#151520;border:1px solid #38384c;padding:18px 20px;border-radius:9px;overflow-x:auto;color:#e8def5;font-size:13px;line-height:1.7;margin:14px 0 20px}
     .tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tool{border:1px solid #3d3e55;background:var(--panel);padding:15px;border-radius:8px;min-width:0}.tool code{color:var(--accent);overflow-wrap:anywhere;display:block;margin-bottom:6px;font-size:12px}.tool p{font-size:13px;line-height:1.5;margin:0}
     .footer{border-top:1px solid #343547;padding:24px 0 38px;color:var(--muted);font-size:12px}.footer-inner{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    .faq{display:grid;gap:8px}.faq details{border:1px solid #3d3e55;border-radius:8px;background:rgba(24,24,37,.8)}.faq summary{cursor:pointer;padding:14px 17px;font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:20px;list-style:none}.faq summary::-webkit-details-marker{display:none}.faq summary:after{content:"+";font-size:19px;line-height:1;color:var(--accent);font-weight:400}.faq details[open] summary:after{content:"−"}.faq details p{margin:0;padding:0 17px 16px;font-size:14px}.faq summary:hover{color:var(--accent)}
     @media(max-width:800px){.content-layout{padding-top:30px}.hero{padding-top:45px}.top nav{gap:15px}}
-    @media(max-width:520px){.shell{width:calc(100% - 36px)}.top-inner{height:64px}.top nav{font-size:12px;gap:12px}.hero{padding-top:38px}.lead{font-size:15px}.tools{grid-template-columns:1fr}.endpoint{gap:9px;flex-wrap:wrap}.endpoint-label{width:100%}.endpoint code{font-size:11px}}
+    @media(max-width:520px){.shell,main.shell{width:calc(100% - 36px)}.top-inner{height:64px}.top nav{font-size:12px;gap:12px}.hero{padding-top:38px}.lead{font-size:15px}.tools{grid-template-columns:1fr}.endpoint{gap:9px;flex-wrap:wrap}.endpoint-label{width:100%}.endpoint code{font-size:11px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
 @keyframes docs-curves-orbit {
@@ -161,10 +162,12 @@ OUTPUT Number * 2</code></pre>
           <p style="margin-top:18px">To open a generated flowchart or circuit in Pico, save the JSON file and import it into the matching workspace.</p>
         </section>
         <section class="doc-section" id="troubleshooting">
-          <h2>Having trouble?</h2>
-          <h3>Connection failed</h3><p>Check the server URL and reconnect using GitHub sign-in. Your AI client must support remote MCP connections.</p>
-          <h3>Tools aren't showing</h3><p>Reconnect Pico and check that the connection is enabled in your AI client.</p>
-          <h3>Too many requests</h3><p>Try again shortly.</p>
+          <h2>Questions &amp; answers</h2>
+          <div class="faq">
+            <details><summary>Why won't Pico connect?</summary><p>Check the MCP server URL, then reconnect and sign in with GitHub. Your AI client must support remote MCP servers.</p></details>
+            <details><summary>Why can't I see Pico's tools?</summary><p>Check that Pico is enabled in your AI client, then reconnect.</p></details>
+            <details><summary>What if I reach the request limit?</summary><p>Try again shortly.</p></details>
+          </div>
         </section>
       </article>
     </div>
