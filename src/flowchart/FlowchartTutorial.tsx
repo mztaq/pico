@@ -27,11 +27,11 @@ export function FlowchartTutorial({step,project,result,pending,running,panel,onN
     ['Connect Start to Output','Drag the highlighted dot below Start onto Output.'],
     ['Connect Output to End','Drag the highlighted dot below Output onto End.'],
     ['Run your flowchart','Click Run. Your message appears in the console below.'],
-    ['Convert it to pseudocode','Click Convert to pseudocode to see your chart as code.'],
+    ['View the pseudocode','Select the Pseudocode tab below the canvas to see your chart as code.'],
     ['You’re ready to build','Start your own chart. Open Help to repeat these steps.'],
   ];
   const addKind=step===1?'start':step===2?'output':step===4?'end':null;
-  const selectors=addKind?[`.flow-palette-block.flow-kind-${addKind}`,'.flow-viewport']:step===3?['.flow-inspector [aria-label="Block expression"]']:step===5?['.flow-node.flow-kind-start .port-next','.flow-node.flow-kind-output']:step===6?['.flow-node.flow-kind-output .port-next','.flow-node.flow-kind-end']:step===7?['.flow-builder > .topbar .run-button','.flow-dock']:step===8?['.flow-convert-button','.flow-code-panel']:[];
+  const selectors=addKind?[`.flow-palette-block.flow-kind-${addKind}`,'.flow-viewport']:step===3?['.flow-inspector [aria-label="Block expression"]']:step===5?['.flow-node.flow-kind-start .port-next','.flow-node.flow-kind-output']:step===6?['.flow-node.flow-kind-output .port-next','.flow-node.flow-kind-end']:step===7?['.flow-builder > .topbar .run-button','.flow-dock']:step===8?['.flow-dock .dock-tab:last-child','.flow-code-panel']:[];
   const key=selectors.join('|');
   const [rects,setRects]=useState<{x:number;y:number;width:number;height:number}[]>([]);
   useLayoutEffect(()=>{

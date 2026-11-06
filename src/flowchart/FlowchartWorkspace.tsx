@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, Code2, Copy, Download, GitBranch, CircleHelp, Pl
 import { compileFlowchart, ChartError, type ChartCompilation } from './compiler';
 import { autoLayoutChart } from './layout';
 import { BLOCKS, DATA_TYPES, NODE_HEIGHT, NODE_WIDTH, connectNodes, createNode, newChart, blockName, nodeLabel, ports, removeNode, type FlowchartProject, type NodeKind, type Port } from './model';
-import { chartNameExists, importChart, loadCharts, saveCharts, serializeChart, uniqueChartName, type ChartStore } from './storage';
+import { chartNameExists, importChart, readChart, loadCharts, saveCharts, serializeChart, uniqueChartName, type ChartStore } from './storage';
 import { ChartCanvas, BlockSymbol } from './Canvas';
 import { ConsolePanel, DebuggerPanel, type ConsoleEntry } from '../app/components/Panels';
 import { HighlightedCode } from '../app/components/HighlightedCode';
@@ -17,6 +17,7 @@ import { startExecution, type ExecutionJob } from '../runtime/runner';
 import type { ExecutionFailure, PendingInput } from '../runtime/worker';
 import type { RunResult } from '../runtime/interpreter';
 import { FlowchartTutorial, lessonReady } from './FlowchartTutorial';
+import { PasteJsonDialog } from '../app/components/PasteJsonDialog';
 import { usePalettePointerDrag } from '../app/components/usePalettePointerDrag';
 import './flowchart-builder.css';
 import '../styles/flowchart.css';
@@ -36,6 +37,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
   const [selected,setSelected]=useState<string|null>(null),[connection,setConnection]=useState<{from:string;port:Port}|null>(null);
   const [zoom,setZoom]=useState(0.85),[dockHeight,setDockHeight]=useState(250),[panel,setPanel]=useState<'console'|'debugger'|'pseudocode'>('console');
   const [settingsOpen,setSettingsOpen]=useState(false),[nameDraft,setNameDraft]=useState(project.name);
+  const [jsonImportOpen,setJsonImportOpen]=useState(false);
   const [message,setMessage]=useState(''),[saveError,setSaveError]=useState(false),[running,setRunning]=useState(false);
   const [entries,setEntries]=useState<ConsoleEntry[]>([]),[pending,setPending]=useState<PendingInput|null>(null),[input,setInput]=useState('');
   const [error,setError]=useState<ExecutionFailure|null>(null),[errorNode,setErrorNode]=useState<string>(),[result,setResult]=useState<RunResult|null>(null),[debugIndex,setDebugIndex]=useState(0),[truncated,setTruncated]=useState(false);
@@ -106,6 +108,24 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
   }
   function saveNow():ChartStore {try{saveCharts(store);}catch{setSaveError(true);}return store;}
   function download(text:string,name:string,mime='text/plain') {const url=URL.createObjectURL(new Blob([text],{type:mime}));const a=document.createElement('a');a.href=url;a.download=name.replace(/[<>:"/\\|?*]/g,'_');a.click();setTimeout(()=>URL.revokeObjectURL(url),0);}
+  function importJson(source:string):boolean {
+    if(tutorialActive||running)return false;
+    if(source.length>2_000_000)throw Error('Flowchart JSON must be smaller than 2 MB.');
+    let raw:unknown;
+    try {raw=JSON.parse(source);}catch{throw Error('Invalid JSON. Check the pasted text.');}
+    const value=raw as {format?:unknown;version?:unknown;project?:unknown;document?:unknown}|null;
+    const p=value?.format==='pico-flowchart'
+      ?importChart(source)
+      :readChart(value?.document??value?.project??raw);
+    p.id=crypto.randomUUID();
+    if(store.projects.length>=50)throw Error('Use at most 50 flowchart workspaces.');
+    resetExecution();
+    setStore(previous=>{
+      p.name=uniqueChartName(p.name,previous.projects);
+      return {...previous,projects:[...previous.projects,p],activeId:p.id};
+    });
+    return true;
+  }
   async function importFile(file:File) {
     if(tutorialActive)return;
     const previousId=project.id;
@@ -181,24 +201,25 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
         <input className="project-title-input topbar-project-name" aria-label="Flowchart workspace name" value={nameDraft} maxLength={42} disabled={running||tutorialActive} onChange={e=>setNameDraft(e.target.value)} onBlur={rename} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/>
       </div>
       <div className="topbar-spacer"/>
-      <button className="toolbar-button flow-convert-button" disabled={running||(tutorialActive&&tourStep!==8)} onClick={()=>{setPanel('pseudocode');if(!conversion.value)setSelected(conversion.error?.nodeId??null);}}><Code2 size={16}/><span>Convert to pseudocode</span></button>
       <div className="topbar-actions">
         <div className="pico-appbar-group" role="group" aria-label="Edit history"><button className="toolbar-button" disabled={running||tutorialActive||!history?.past.length} aria-label="Undo flowchart edit" onClick={()=>undo()}><Undo2 size={16}/></button><button className="toolbar-button" disabled={running||tutorialActive||!history?.future.length} aria-label="Redo flowchart edit" onClick={()=>undo(true)}><Redo2 size={16}/></button></div>
         <div className="pico-appbar-group" role="group" aria-label="Workspace tools"><button className="toolbar-button" aria-label="Flowchart settings" disabled={tutorialActive} onClick={()=>setSettingsOpen(v=>!v)}><Settings2 size={16}/></button><button className="help-button" disabled={tutorialActive} onClick={startWalkthrough}><CircleHelp size={16}/><span>Help</span></button></div>
+        <div className="pico-appbar-group flow-header-file-actions" role="group" aria-label="Flowchart files"><button className="toolbar-button" disabled={tutorialActive} onClick={()=>importRef.current?.click()}><Upload size={15}/><span>Import</span></button><button className="toolbar-button" disabled={tutorialActive||running} onClick={()=>setJsonImportOpen(true)}><Copy size={15}/><span>Paste JSON</span></button><button className="toolbar-button" disabled={tutorialActive} onClick={()=>{download(serializeChart(project),`${project.name}.picochart`,'application/json');markExported();}}><Download size={15}/><span>Export</span></button><button className="toolbar-button" disabled={tutorialActive||running} aria-label="Delete flowchart workspace" title="Delete workspace" onClick={removeProject}><Trash2 size={15}/></button></div>
       </div>
       <div className="pico-appbar-run">
         {running?<button className="toolbar-button stop-button" onClick={()=>jobRef.current?.cancel()}><X size={16}/><span>Stop</span></button>:<button className="toolbar-button debug-button" disabled={tutorialActive} onClick={()=>void run(true)}><Code2 size={16}/><span>Debug</span></button>}
         <button className="run-button" disabled={running||(tutorialActive&&tourStep!==7)} onClick={()=>void run()}><Play size={14} fill="currentColor"/><span>Run</span></button>
       </div>
     </header>
+    <input ref={importRef} type="file" accept=".picochart,application/json" hidden onChange={e=>{const file=e.currentTarget.files?.[0];e.currentTarget.value='';if(file)void importFile(file);}}/>
     <nav inert={tutorialActive} className="workspace-tabs" aria-label="Flowchart workspaces"><div className="project-list">{store.projects.map(p=><div className={`project-row ${p.id===project.id?'active':''}`} key={p.id}><button className="project-select" aria-current={p.id===project.id?'page':undefined} onClick={()=>{resetExecution();setStore(s=>({...s,activeId:p.id}));}}><GitBranch size={14}/><span>{p.name}</span></button></div>)}</div><button className="icon-button new-workspace" aria-label="New flowchart workspace" onClick={()=>createProject()}><Plus size={16}/></button></nav>
     {saveError&&<p className="autosave-error" role="alert">Browser storage is unavailable. Export your flowchart to keep your work.</p>}
     {message&&<p className="flow-message" role="status">{message}<button aria-label="Dismiss message" onClick={()=>setMessage('')}><X size={14}/></button></p>}
     <div className="flow-workspace" ref={layoutRef}>
       <aside className="flow-palette" aria-label="Flowchart blocks"><h2>Blocks</h2><p>Drag a block onto the canvas, or click to add it.</p><div className="flow-block-list">{BLOCKS.map(b=><button key={b.kind} className={`flow-palette-block flow-kind-${b.kind}`} disabled={running||(tutorialActive&&((tourStep===1?'start':tourStep===2?'output':tourStep===4?'end':null)!==b.kind||project.nodes.some(n=>n.kind===b.kind)))} onPointerDown={e=>paletteDrag.start(e,b.kind,b.label)} onDragStart={e=>e.preventDefault()} onClick={()=>paletteDrag.click(()=>add(b.kind))} title={b.hint}><BlockSymbol kind={b.kind}/><span><strong>{b.label}</strong><small>{b.hint}</small></span></button>)}</div>
 
-        <div className="flow-file-actions" inert={tutorialActive}><button onClick={()=>{download(serializeChart(project),`${project.name}.picochart`,'application/json');markExported();}}><Download size={14}/>Export flowchart</button><button onClick={()=>importRef.current?.click()}><Upload size={14}/>Import flowchart</button><button onClick={removeProject}><Trash2 size={14}/>Delete workspace</button></div>
-        <input ref={importRef} type="file" accept=".picochart,application/json" hidden onChange={e=>{const file=e.currentTarget.files?.[0];e.currentTarget.value='';if(file)void importFile(file);}}/>
+
+
       </aside>
       {paletteDrag.preview&&<div className={`pico-palette-drag-preview flow-drag-preview flow-kind-${paletteDrag.preview.kind}`} aria-hidden="true" style={{left:paletteDrag.preview.x,top:paletteDrag.preview.y}}><BlockSymbol kind={paletteDrag.preview.kind}/></div>}
       <main className="flow-main"><div className="flow-canvas-toolbar"><span>{connection?`Choose a destination for ${connection.port==='next'?'Next':connection.port==='yes'?'Yes':'No'}`:'Drag a connection port onto another block. Drag the background to pan.'}</span><div>{connection&&<button aria-label="Cancel connection" onClick={()=>setConnection(null)}><X size={15}/></button>}<button aria-label="Zoom out" disabled={zoom<=0.35} onClick={()=>setZoom(v=>Math.max(0.35,v-0.1))}><ZoomOut size={16}/></button><output>{Math.round(zoom*100)}%</output><button aria-label="Zoom in" disabled={zoom>=1.5} onClick={()=>setZoom(v=>Math.min(1.5,v+0.1))}><ZoomIn size={16}/></button><button aria-label="Fit flowchart" onClick={fit}><Maximize2 size={16}/></button><button className="flow-auto-layout" aria-label="Auto-layout flowchart" title="Auto-layout flowchart" disabled={running||tutorialActive||project.nodes.length<2} onClick={autoLayout}><Network size={15}/></button></div></div>
@@ -221,6 +242,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
       </aside>
     </div>
 
+    {jsonImportOpen&&!tutorialActive&&<PasteJsonDialog kind="flowchart" onClose={()=>setJsonImportOpen(false)} onImport={importJson}/>}
     {tutorialActive&&<FlowchartTutorial step={tourStep} project={project} result={result} pending={Boolean(pending)} running={running} panel={panel} onNext={nextLesson} onBack={()=>enterLesson(Math.max(0,tourStep-1))} onSkip={closeLesson}/>}
     {settingsOpen&&<div className="flow-settings" ref={settingsRef} role="dialog" aria-label="Flowchart appearance"><header><strong>Appearance</strong><button aria-label="Close flowchart settings" onClick={()=>setSettingsOpen(false)}><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id}))}/></div>}
 

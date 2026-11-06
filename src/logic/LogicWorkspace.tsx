@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
 import {LogicTutorial,LOGIC_TOUR_KEY} from './LogicTutorial';
+import {PasteJsonDialog} from '../app/components/PasteJsonDialog';
 import {useExitWarning} from '../app/components/useExitWarning';
 import {playCue} from '../app/sound';
 import {ThemePicker} from '../app/components/ThemePicker';
@@ -69,6 +70,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  const [wireTarget,setWireTarget]=useState<InputTarget|null>(null);
  const [interaction,setInteraction]=useState<Interaction>(null);
  const [importing,setImporting]=useState(false);
+ const [jsonImportOpen,setJsonImportOpen]=useState(false);
  const importRef=useRef<HTMLInputElement>(null);
  const boardRef=useRef<SVGSVGElement>(null);
  const simResult=useMemo(()=>evaluateCircuit(doc,simulation),[doc,simulation]);
@@ -224,6 +226,18 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();remove();}
   if(e.key==='Escape'){if(interaction?.type==='move'&&interaction.before)setDoc(interaction.before);else if(interaction?.type==='pan')setOffset({x:interaction.origX,y:interaction.origY});if(interaction&&boardRef.current?.hasPointerCapture?.(interaction.pointerId))boardRef.current.releasePointerCapture(interaction.pointerId);setInteraction(null);marqueeRef.current=null;setMarquee(null);if(wireDrag.current&&boardRef.current?.hasPointerCapture?.(wireDrag.current.pointerId))boardRef.current.releasePointerCapture(wireDrag.current.pointerId);wireDrag.current=null;setWireTarget(null);setPointer(null);setConnecting(null);setPlacement(null);setPaletteOpen(false);setInspectorOpen(false);}
  }window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);});
+ function importJson(source:string):boolean {
+  if(tutorialActive)return false;
+  if(source.length>800000)throw Error('Circuit JSON must be smaller than 800 KB.');
+  let raw:unknown;
+  try{raw=JSON.parse(source);}catch{throw Error('Invalid JSON. Check the pasted text.');}
+  const value=raw as {document?:unknown}|null;
+  const data=parseDocument(value?.document??raw);
+  if(docRef.current.nodes.length&&!window.confirm('Replace the current circuit with this imported project?'))return false;
+  edit(data);setSimulation(initialSimulation());setSelection(null);setSelectedNodes([]);setRunning(false);
+  setStatus('Circuit imported successfully.');
+  return true;
+ }
  async function importFile(file:File){try{if(file.size>800000)throw Error('This circuit file exceeds the 800 KB limit.');const data=parseDocument(JSON.parse(await file.text()));if(doc.nodes.length&&!window.confirm('Replace the current circuit with this imported project?'))return;edit(data);setSimulation(initialSimulation());setSelection(null);setRunning(false);setStatus('Circuit imported successfully.');}catch(error){setStatus(error instanceof Error?error.message:'Invalid circuit file.');}finally{setImporting(false);}}
  const inspectorContent=<div className="logic-inspector-body">
   {selectedNode?<><span className="logic-eyebrow">SELECTED COMPONENT</span><h3>{SPECS[selectedNode.kind].title}</h3><p>{SPECS[selectedNode.kind].description}</p>
@@ -241,7 +255,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
   {saveState==='error'&&<span className="pico-appbar-alert" role="alert">Autosave failed. Export your circuit.</span>}
   <div className="topbar-actions logic-header-right">
    <div className="pico-appbar-group" role="group" aria-label="Help and appearance"><button className="help-button" onClick={()=>setTourStep(0)} aria-label="Help: Logic Simulator tutorial"><CircleHelp size={16}/><span>Help</span></button><button className="toolbar-button" aria-label="Logic Simulator theme" onClick={()=>setThemeOpen(v=>!v)}><Settings2 size={16}/></button></div>
-   <div className="pico-appbar-group" role="group" aria-label="Circuit file"><button className="toolbar-button" onClick={()=>{setImporting(true);importRef.current?.click();}}><Upload size={15}/><span>Import</span></button></div>
+   <div className="pico-appbar-group" role="group" aria-label="Circuit file"><button className="toolbar-button" onClick={()=>{setImporting(true);importRef.current?.click();}}><Upload size={15}/><span>Import</span></button><button className="toolbar-button" disabled={tutorialActive} onClick={()=>setJsonImportOpen(true)}><Copy size={15}/><span>Paste JSON</span></button></div>
   </div>
   <div className="pico-appbar-run"><button className="logic-primary pico-primary-button" onClick={()=>{download(JSON.stringify(doc,null,2),filename(doc.title,'.logic.json'),'application/json');markExported();}}><Download size={15}/><span>Export</span></button><input ref={importRef} type="file" accept=".json,application/json" hidden onChange={e=>{const file=e.target.files?.[0];if(file)void importFile(file);e.target.value='';}}/></div>
  </header>
@@ -295,6 +309,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  </div>
  {themeOpen&&<aside className="logic-theme-menu"><header><strong>Theme</strong><button onClick={()=>setThemeOpen(false)} aria-label="Close theme picker"><X size={16}/></button></header><ThemePicker value={settings.theme} onChange={id=>setSettings(s=>({...s,theme:id as typeof s.theme}))}/></aside>}
 
+ {jsonImportOpen&&!tutorialActive&&<PasteJsonDialog kind="circuit" onClose={()=>setJsonImportOpen(false)} onImport={importJson}/>}
  {tutorialActive&&<LogicTutorial step={tourStep!} onStep={setTourStep} onClose={closeTour}/>}
  {importing&&<button className="logic-import-close" onClick={()=>setImporting(false)}>Cancel import</button>}
  </div>;

@@ -7,15 +7,15 @@
 
   Pico is a browser-based learning platform for exploring programming, algorithms, digital logic and computer architecture. No installation or account is required.
 
-  **[Visit Pico](https://picompiler.pages.dev)** · **[Open the browser app](https://picompiler.pages.dev/app)**
+  **[Visit Pico](https://picompiler.pages.dev)** · **[Open the browser app](https://picompiler.pages.dev/app)** · **[MCP Docs](https://picompiler.pages.dev/mcp-docs)**
 </div>
 
 ## Features
 
 - **Pseudocode Compiler** — Write, run and debug Cambridge-style pseudocode with interactive input and syntax assistance.
 - **Python Compiler** — Run real Python in your browser, with an editor, console and debugger.
-- **Flowchart Builder** — Create and run flowcharts, then convert them into pseudocode.
-- **Logic Sim** — Build digital circuits, simulate gates and inspect truth tables.
+- **Flowchart Builder** — Build and run flowcharts, convert them to pseudocode, and import projects from files or pasted JSON.
+- **Logic Sim** — Build and simulate logic circuits, view truth tables, and import circuits from files or pasted JSON.
 - **CPU Studio** — Explore the fetch–decode–execute cycle with animated CPU components and registers.
 
 Pico includes customizable themes, guided tutorials and browser-based project saving. 
