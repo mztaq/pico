@@ -186,6 +186,35 @@
     .example-copy:hover{border-color:#cba6f7}
     .example-copy:focus-visible{outline:2px solid #cba6f7;outline-offset:3px}
 
+
+    /* Readability pass: slightly larger copy, numbered steps, examples and tool cards. */
+    body{font-size:16px}
+    .lead{font-size:17px}
+    .intro-connect .steps{font-size:16px}
+    .steps li{grid-template-columns:32px minmax(0,1fr);gap:14px}
+    .steps li:before{width:30px;height:30px;font-size:14px}
+    .intro-connect .steps li{margin-bottom:19px}
+    .example-item h3{font-size:16px;margin-bottom:10px}
+    .example-item pre{font-size:14px;line-height:1.75}
+    .example-code pre{padding:16px 84px 16px 18px}
+    .example-copy{font-size:13px;padding:6px 12px}
+    .docs-grid #tools .tool{padding:15px;min-height:100px}
+    .docs-grid #tools .tool code{font-size:12.5px;line-height:1.55}
+    .docs-grid #tools .tool p{font-size:14px;line-height:1.55}
+    .docs-grid #troubleshooting .faq details p{font-size:16px}
+    @media(max-width:520px){
+      body{font-size:15px}
+      .lead{font-size:16px}
+      .intro-connect .steps{font-size:15px}
+      .steps li{grid-template-columns:30px minmax(0,1fr);gap:12px}
+      .steps li:before{width:28px;height:28px;font-size:13px}
+      .example-item pre{font-size:12.5px}
+      .example-code pre{padding:14px 78px 14px 14px}
+      .docs-grid #tools .tool code{font-size:12px}
+      .docs-grid #tools .tool p{font-size:13px}
+      .docs-grid #troubleshooting .faq details p{font-size:15px}
+    }
+
   </style>
 </head>
 <body>
