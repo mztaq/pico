@@ -30,6 +30,12 @@ describe('Custom 404 for invalid app routes',()=>{
       expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
     }
   });
+  it('preserves the app homepage when a trailing slash reaches the fallback',async()=>{
+    const {ctx,fetch}=context('/app/');
+    const response=await nestedRoute(ctx);
+    expect(response.status).toBe(200);
+    expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
+  });
   it('serves the same 404 page for unsupported nested paths',async()=>{
     const {ctx,fetch}=context('/app/not-a-workspace/other');
     const response=await nestedRoute(ctx);
