@@ -36,19 +36,54 @@
     @media(max-width:800px){.content-layout{grid-template-columns:1fr;gap:20px}.sidebar{position:static}.sidebar nav{flex-direction:row;overflow:auto;gap:8px}.sidebar a{border:1px solid #38394c;border-radius:6px;white-space:nowrap;padding:7px 10px}.hero{padding-top:50px}.top nav{gap:15px}}
     @media(max-width:520px){.shell{width:calc(100% - 36px)}.top-inner{height:64px}.top nav{font-size:12px;gap:12px}.hero{padding-top:45px}.lead{font-size:16px}.tools{grid-template-columns:1fr}.endpoint{width:100%}.endpoint code{font-size:11px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+@keyframes docs-curves-orbit {
+  0%, 100% { transform: translate3d(-3%, 0, 0) scale(1.05); }
+  12.5% { transform: translate3d(-2.12%, -1.41%, 0) scale(1.05); }
+  25% { transform: translate3d(0, -2%, 0) scale(1.05); }
+  37.5% { transform: translate3d(2.12%, -1.41%, 0) scale(1.05); }
+  50% { transform: translate3d(3%, 0, 0) scale(1.05); }
+  62.5% { transform: translate3d(2.12%, 1.41%, 0) scale(1.05); }
+  75% { transform: translate3d(0, 2%, 0) scale(1.05); }
+  87.5% { transform: translate3d(-2.12%, 1.41%, 0) scale(1.05); }
+}
+@keyframes docs-curve-trace{to{stroke-dashoffset:-1000}}
+.docs-curves{position:fixed;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;overflow:visible;color:var(--accent);fill:none;stroke:currentColor;opacity:.15}
+.docs-curves path{stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.docs-curve-flow{stroke-width:3.8;stroke-dasharray:150 850;opacity:.24}
+.top,main,.footer{position:relative;z-index:1}
+.top{position:sticky}
+.hero{padding:67px 0 50px}
+.lead{max-width:615px}
+@media(prefers-reduced-motion:no-preference){
+.docs-curves{animation:docs-curves-orbit 22s linear infinite}
+.docs-curve-flow{animation:docs-curve-trace 29s linear infinite}
+.docs-curve-flow-right{animation-duration:34s;animation-delay:-10s}
+}
+@media(prefers-reduced-motion:reduce){.docs-curves,.docs-curve-flow{animation:none!important}}
+@media(forced-colors:active){.docs-curves{display:none}}
+
   </style>
 </head>
 <body>
+  <svg class="docs-curves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+<path d="M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108" stroke-width="2.6" opacity=".72"/>
+<path d="M -230 -120 C -10 46 186 200 168 370 C 149 548 -75 659 62 850 C 174 1008 341 1080 476 1163" stroke-width="1.5" opacity=".39"/>
+<path d="M 1260 -185 C 1080 30 1183 190 1375 350 C 1564 506 1459 670 1390 805 C 1334 954 1429 1075 1684 1176" stroke-width="2.6" opacity=".72"/>
+<path d="M 1332 -220 C 1150 22 1246 193 1428 353 C 1599 511 1520 676 1441 819 C 1375 960 1478 1096 1743 1200" stroke-width="1.5" opacity=".40"/>
+<path d="M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304" stroke-width="1.3" opacity=".28"/>
+<path class="docs-curve-flow" d="M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108" pathLength="1000"/>
+<path class="docs-curve-flow docs-curve-flow-right" d="M 1260 -185 C 1080 30 1183 190 1375 350 C 1564 506 1459 670 1390 805 C 1334 954 1429 1075 1684 1176" pathLength="1000"/>
+</svg>
   <header class="top"><div class="shell top-inner">
     <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt=""><span>Pico<span class="dot">.</span></span></a>
     <nav aria-label="Main navigation"><a href="/">Home</a><a href="/app">Open Pico</a><a href="/mcp-docs" aria-current="page">MCP Docs</a></nav>
   </div></header>
   <main class="shell">
     <div class="hero">
-      <span class="eyebrow">Developer documentation</span>
-      <h1>Pico <span>MCP.</span></h1>
-      <p class="lead">Use Pico's pseudocode, flowchart and logic tools from an MCP-compatible AI client. Sign in with GitHub to connect. No shared API key required.</p>
-      <div class="endpoint"><span class="endpoint-label">Server URL</span><code id="endpoint-url">https://picompiler.pages.dev/app/mcp</code><button class="copy" id="copy-endpoint" type="button" aria-label="Copy MCP server URL">Copy</button></div>
+      <h1>Pico MCP<span>.</span></h1>
+      <p class="lead">Connect Pico to your AI client. Run pseudocode, build flowcharts and test logic circuits with GitHub sign-in.</p>
+      <div class="endpoint"><span class="endpoint-label">MCP endpoint</span><code id="endpoint-url">https://picompiler.pages.dev/app/mcp</code><button class="copy" id="copy-endpoint" type="button" aria-label="Copy MCP server URL">Copy</button></div>
     </div>
     <div class="content-layout">
       <aside class="sidebar"><p>On this page</p><nav aria-label="Documentation sections">
@@ -57,7 +92,7 @@
       <article>
         <section class="doc-section" id="connect">
           <h2>Connect Pico</h2>
-          <p>Pico uses OAuth with GitHub sign-in and the <code>mcp:run</code> permission. Your AI client must support remote MCP servers and OAuth authorization.</p>
+          <p>Connect using a client that supports remote MCP servers and OAuth. Pico uses GitHub sign-in and requests the <code>mcp:run</code> scope.</p>
           <ol class="steps">
             <li><div>Open your AI client's MCP server or custom connector settings. In ChatGPT, use its Apps settings if custom MCP connections are available on your plan.</div></li>
             <li><div>Add a remote MCP server using <strong>https://picompiler.pages.dev/app/mcp</strong>. Select OAuth authentication if your client asks for an authentication method.</div></li>
