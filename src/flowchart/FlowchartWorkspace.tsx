@@ -113,10 +113,10 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     if(source.length>2_000_000)throw Error('Flowchart JSON must be smaller than 2 MB.');
     let raw:unknown;
     try {raw=JSON.parse(source);}catch{throw Error('Invalid JSON. Check the pasted text.');}
-    const value=raw as {format?:unknown;version?:unknown;project?:unknown}|null;
+    const value=raw as {format?:unknown;version?:unknown;project?:unknown;document?:unknown}|null;
     const p=value?.format==='pico-flowchart'
       ?importChart(source)
-      :readChart(value?.project??raw);
+      :readChart(value?.document??value?.project??raw);
     p.id=crypto.randomUUID();
     if(store.projects.length>=50)throw Error('Use at most 50 flowchart workspaces.');
     resetExecution();
