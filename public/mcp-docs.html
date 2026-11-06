@@ -180,9 +180,9 @@
     .syn-string{color:#a6e3a1}
     @media(max-width:520px){.example-item pre{padding:13px 14px;font-size:11px}}
 
-    .example-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
-    .example-heading h3{margin:0}
-    .example-copy{border:1px solid #454761;border-radius:6px;background:#313244;color:#cdd6f4;padding:5px 11px;font:600 12px 'DM Sans',system-ui,sans-serif;cursor:pointer;flex-shrink:0}
+    .example-code{position:relative;min-width:0}
+    .example-code pre{padding-top:43px}
+    .example-copy{position:absolute;top:9px;right:10px;z-index:1;border:1px solid #454761;border-radius:6px;background:#313244;color:#cdd6f4;padding:5px 11px;font:600 12px 'DM Sans',system-ui,sans-serif;cursor:pointer}
     .example-copy:hover{border-color:#cba6f7}
     .example-copy:focus-visible{outline:2px solid #cba6f7;outline-offset:3px}
 
@@ -228,23 +228,26 @@
           <p>Once connected, try these prompts with your assistant.</p>
           <div class="example-list">
             <div class="example-item">
-              <div class="example-heading"><h3>Pseudocode</h3><button class="example-copy" type="button" aria-label="Copy pseudocode example">Copy</button></div>
+              <h3>Pseudocode</h3>
+              <div class="example-code"><button class="example-copy" type="button" aria-label="Copy pseudocode example">Copy</button>
               <pre><code><span class="syn-comment">Use Pico to run this pseudocode:</span>
 <span class="syn-keyword">DECLARE</span> <span class="syn-var">Number</span> : <span class="syn-type">INTEGER</span>
 <span class="syn-var">Number</span> <span class="syn-operator">&larr;</span> <span class="syn-number">5</span>
-<span class="syn-keyword">OUTPUT</span> <span class="syn-var">Number</span> <span class="syn-operator">*</span> <span class="syn-number">2</span></code></pre>
+<span class="syn-keyword">OUTPUT</span> <span class="syn-var">Number</span> <span class="syn-operator">*</span> <span class="syn-number">2</span></code></pre></div>
             </div>
             <div class="example-item">
-              <div class="example-heading"><h3>Flowchart</h3><button class="example-copy" type="button" aria-label="Copy flowchart example">Copy</button></div>
+              <h3>Flowchart</h3>
+              <div class="example-code"><button class="example-copy" type="button" aria-label="Copy flowchart example">Copy</button>
               <pre><code>Create a flowchart that inputs a number,
 checks whether it's even or odd,
-and outputs "Even" or "Odd".</code></pre>
+and outputs "Even" or "Odd".</code></pre></div>
             </div>
             <div class="example-item">
-              <div class="example-heading"><h3>Logic circuit</h3><button class="example-copy" type="button" aria-label="Copy logic circuit example">Copy</button></div>
+              <h3>Logic circuit</h3>
+              <div class="example-code"><button class="example-copy" type="button" aria-label="Copy logic circuit example">Copy</button>
               <pre><code>Create a half-adder with two inputs.
 Use XOR for the Sum output
-and AND for the Carry output.</code></pre>
+and AND for the Carry output.</code></pre></div>
             </div>
           </div>
         </section>
