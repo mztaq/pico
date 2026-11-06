@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#1e1e2e">
+  <title>MCP Docs | Pico</title>
+  <meta name="description" content="Connect Pico's MCP tools to an AI client using GitHub OAuth. Read setup instructions, tools, limits, and troubleshooting.">
+  <link rel="canonical" href="https://picompiler.pages.dev/mcp-docs">
+  <link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+    :root{color-scheme:dark;--bg:#1e1e2e;--panel:#181825;--line:#454761;--text:#cdd6f4;--muted:#a6adc8;--accent:#cba6f7}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:95px}body{margin:0;background:var(--bg);color:var(--text);font:400 15px/1.65 'DM Sans',system-ui,sans-serif}a{color:inherit;text-decoration:none}a:hover{color:#fff}a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+    .shell{width:min(1150px,calc(100% - 64px));margin:auto}
+    .top{position:sticky;top:0;z-index:10;background:rgba(30,30,46,.95);backdrop-filter:blur(14px);border-bottom:1px solid #343547}
+    .top-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;height:74px}
+    .brand{display:inline-flex;align-items:center;gap:10px;font-size:21px;font-weight:800;color:#fff;letter-spacing:-.7px}.brand img{height:33px;width:33px}.brand .dot{color:var(--accent)}
+    .top nav{display:flex;gap:27px;align-items:center;color:var(--muted);font-size:14px}.top nav a[aria-current=page]{color:var(--accent)}
+    .hero{padding:72px 0 46px;border-bottom:1px solid #343547}.eyebrow{display:block;color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+    h1{font-size:clamp(46px,6vw,72px);line-height:1.08;letter-spacing:-.055em;margin:0 0 18px}h1 span{color:var(--accent)}
+    .lead{font-size:18px;color:var(--muted);max-width:650px;margin:0 0 27px;line-height:1.65}
+    .endpoint{display:flex;align-items:center;flex-wrap:wrap;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 15px;width:fit-content;max-width:100%}
+    .endpoint-label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:800}.endpoint code{overflow-wrap:anywhere;font-size:13px;color:#e5d4ff}
+    .copy{border:1px solid var(--line);border-radius:6px;background:#313244;color:var(--text);padding:6px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.copy:hover{border-color:var(--accent)}
+    .content-layout{display:grid;grid-template-columns:208px minmax(0,1fr);gap:66px;padding:42px 0 90px}
+    .sidebar{position:sticky;top:100px;align-self:start}.sidebar p{margin:0 0 10px;color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}.sidebar nav{display:flex;flex-direction:column;gap:4px}.sidebar a{padding:8px 11px;border-left:2px solid transparent;color:var(--muted);font-size:13px}.sidebar a:hover,.sidebar a:focus-visible{border-color:var(--accent);color:var(--text)}
+    .doc-section{padding:0 0 36px;margin:0 0 37px;border-bottom:1px solid #343547}.doc-section:last-child{border:0;margin:0;padding:0}
+    h2{font-size:26px;line-height:1.2;letter-spacing:-.8px;margin:0 0 16px}h3{font-size:16px;margin:24px 0 7px}p{margin:0 0 17px;color:var(--muted)}strong{color:var(--text)}ol,ul{padding-left:21px;margin:14px 0 0;color:var(--muted)}li{padding-left:3px;margin-bottom:11px}li::marker{color:var(--accent)}
+    .steps{counter-reset:step;list-style:none;padding:0}.steps li{display:grid;grid-template-columns:30px 1fr;gap:14px;margin:0 0 17px;padding:0}.steps li:before{counter-increment:step;content:counter(step);display:grid;place-items:center;width:28px;height:28px;border:1px solid #65507f;border-radius:8px;color:var(--accent);font-size:13px;font-weight:800}
+    code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.91em}p code,li code{padding:2px 5px;background:#313244;border-radius:4px;color:#e6d6ff}
+    pre{background:#151520;border:1px solid #38384c;padding:18px 20px;border-radius:9px;overflow-x:auto;color:#e8def5;font-size:13px;line-height:1.7;margin:14px 0 20px}
+    .tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tool{border:1px solid #3d3e55;background:var(--panel);padding:15px;border-radius:8px;min-width:0}.tool code{color:var(--accent);overflow-wrap:anywhere;display:block;margin-bottom:6px;font-size:12px}.tool p{font-size:13px;line-height:1.5;margin:0}
+    .note{padding:14px 17px;border-left:2px solid var(--accent);background:rgba(203,166,247,.055);color:var(--muted);border-radius:0 6px 6px 0;margin-top:18px}
+    .footer{border-top:1px solid #343547;padding:24px 0 38px;color:var(--muted);font-size:12px}.footer-inner{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    @media(max-width:800px){.content-layout{grid-template-columns:1fr;gap:20px}.sidebar{position:static}.sidebar nav{flex-direction:row;overflow:auto;gap:8px}.sidebar a{border:1px solid #38394c;border-radius:6px;white-space:nowrap;padding:7px 10px}.hero{padding-top:50px}.top nav{gap:15px}}
+    @media(max-width:520px){.shell{width:calc(100% - 36px)}.top-inner{height:64px}.top nav{font-size:12px;gap:12px}.hero{padding-top:45px}.lead{font-size:16px}.tools{grid-template-columns:1fr}.endpoint{width:100%}.endpoint code{font-size:11px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  </style>
+</head>
+<body>
+  <header class="top"><div class="shell top-inner">
+    <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt=""><span>Pico<span class="dot">.</span></span></a>
+    <nav aria-label="Main navigation"><a href="/">Home</a><a href="/app">Open Pico</a><a href="/mcp-docs" aria-current="page">MCP Docs</a></nav>
+  </div></header>
+  <main class="shell">
+    <div class="hero">
+      <span class="eyebrow">Developer documentation</span>
+      <h1>Pico <span>MCP.</span></h1>
+      <p class="lead">Use Pico's pseudocode, flowchart and logic tools from an MCP-compatible AI client. Sign in with GitHub to connect. No shared API key required.</p>
+      <div class="endpoint"><span class="endpoint-label">Server URL</span><code id="endpoint-url">https://picompiler.pages.dev/app/mcp</code><button class="copy" id="copy-endpoint" type="button" aria-label="Copy MCP server URL">Copy</button></div>
+    </div>
+    <div class="content-layout">
+      <aside class="sidebar"><p>On this page</p><nav aria-label="Documentation sections">
+        <a href="#connect">Connect</a><a href="#example">First run</a><a href="#tools">Available tools</a><a href="#limits">Limits &amp; access</a><a href="#troubleshooting">Troubleshooting</a>
+      </nav></aside>
+      <article>
+        <section class="doc-section" id="connect">
+          <h2>Connect Pico</h2>
+          <p>Pico uses OAuth with GitHub sign-in and the <code>mcp:run</code> permission. Your AI client must support remote MCP servers and OAuth authorization.</p>
+          <ol class="steps">
+            <li><div>Open your AI client's MCP server or custom connector settings. In ChatGPT, use its Apps settings if custom MCP connections are available on your plan.</div></li>
+            <li><div>Add a remote MCP server using <strong>https://picompiler.pages.dev/app/mcp</strong>. Select OAuth authentication if your client asks for an authentication method.</div></li>
+            <li><div>Follow the sign-in prompt, authenticate with GitHub, review the requested permissions, and approve only if you trust the requesting application.</div></li>
+            <li><div>After the connection succeeds, ask your AI assistant to call <code>pico_capabilities</code> or run a small pseudocode program.</div></li>
+          </ol>
+          <div class="note">Pico requires a GitHub account but does not require you to share a GitHub access token or an old <code>PICO_MCP_TOKEN</code> with your AI client. Client support and availability vary.</div>
+        </section>
+        <section class="doc-section" id="example">
+          <h2>Try a first request</h2>
+          <p>Once connected, ask your assistant:</p>
+          <pre><code>Use Pico to run this pseudocode:
+DECLARE Number : INTEGER
+Number &larr; 5
+OUTPUT Number * 2</code></pre>
+          <p>Expected output: <strong>10</strong>. For supported clients, Pico provides the <code>pico_run_pseudocode</code> tool and returns the program's output, variables and instruction count.</p>
+        </section>
+        <section class="doc-section" id="tools">
+          <h2>Nine available tools</h2>
+          <div class="tools">
+            <div class="tool"><code>pico_run_pseudocode</code><p>Execute Cambridge-style pseudocode.</p></div>
+            <div class="tool"><code>pico_debug_pseudocode</code><p>Inspect execution with a bounded trace.</p></div>
+            <div class="tool"><code>pico_create_flowchart</code><p>Create an editable flowchart document.</p></div>
+            <div class="tool"><code>pico_run_flowchart</code><p>Compile and execute a flowchart.</p></div>
+            <div class="tool"><code>pico_flowchart_to_pseudocode</code><p>Convert a flowchart to pseudocode.</p></div>
+            <div class="tool"><code>pico_create_circuit</code><p>Create an editable logic circuit.</p></div>
+            <div class="tool"><code>pico_simulate_circuit</code><p>Evaluate circuit signals for given inputs.</p></div>
+            <div class="tool"><code>pico_truth_table</code><p>Generate a truth table for a circuit.</p></div>
+            <div class="tool"><code>pico_capabilities</code><p>Read supported syntax and runtime limits.</p></div>
+          </div>
+          <p style="margin-top:18px">Flowchart and circuit creation tools return Pico JSON project content for manual import. They do not directly edit your local browser projects.</p>
+        </section>
+        <section class="doc-section" id="limits">
+          <h2>Limits &amp; access</h2>
+          <ul>
+            <li><strong>Authentication:</strong> GitHub OAuth. No anonymous access.</li>
+            <li><strong>Execution:</strong> up to 500 instructions and 40 debug trace entries per request.</li>
+            <li><strong>Input:</strong> 32 KiB maximum HTTP request and 16,384 characters of pseudocode.</li>
+            <li><strong>Projects:</strong> up to 100 flowchart nodes, 100 circuit nodes, 200 circuit wires, and eight truth-table switches.</li>
+            <li><strong>Rate limiting:</strong> Requests are throttled to protect the free-tier service. A 429 response means you reached a temporary limit.</li>
+          </ul>
+          <div class="note">Pico MCP executes or validates the submitted data. It does not grant AI clients access to Pico's user database, email service, deployment credentials or private local files.</div>
+        </section>
+        <section class="doc-section" id="troubleshooting">
+          <h2>Troubleshooting</h2>
+          <h3>401 Unauthorized</h3><p>The OAuth token is missing, expired, or not valid for this MCP resource. Disconnect and reconnect through GitHub sign-in. Do not paste a legacy shared token.</p>
+          <h3>429 Too Many Requests</h3><p>The server's rate limit has been reached. Retry after the rate-limit window resets.</p>
+          <h3>Connection or consent fails</h3><p>Confirm your client supports remote MCP and OAuth with PKCE. Check that the server URL ends in <code>/app/mcp</code>, not <code>/mcp-docs</code>.</p>
+          <h3>Tools do not appear</h3><p>Reconnect the client and check whether the application's MCP permissions are enabled. Some clients and ChatGPT plans do not provide custom MCP connections.</p>
+          <h3>Looking for Pico itself?</h3><p>Open <a href="/app" style="color:var(--accent);text-decoration:underline">the Pico browser app</a> to work directly with the same programming and visual tools.</p>
+        </section>
+      </article>
+    </div>
+  </main>
+  <footer class="footer"><div class="shell footer-inner"><span>© 2026 Pico Development Team. All rights reserved.</span><a href="/">Back to Pico</a></div></footer>
+  <script>
+    document.getElementById('copy-endpoint').addEventListener('click', async function () {
+      try {
+        await navigator.clipboard.writeText(document.getElementById('endpoint-url').textContent);
+        this.textContent = 'Copied';
+      } catch {
+        this.textContent = 'Select URL to copy';
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById('endpoint-url'));
+        getSelection().removeAllRanges();
+        getSelection().addRange(range);
+      }
+    });
+  </script>
+</body>
+</html>
