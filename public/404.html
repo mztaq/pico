@@ -1327,8 +1327,17 @@
     crypto.getRandomValues(random);
     const index = candidates[random[0] % candidates.length];
     try { sessionStorage.setItem('pico.404.lastJoke', String(index)); } catch {}
-    document.getElementById('joke-title').textContent = messages[index][0];
-    document.getElementById('joke-description').textContent = messages[index][1];
+    const mcpBrowserPage = location.pathname === '/app/mcp';
+    if (mcpBrowserPage) {
+      document.title = 'Pico MCP | Connect';
+      document.querySelector('.status').textContent = '401';
+      document.getElementById('joke-title').textContent = 'Connect Pico through your AI app.';
+      document.getElementById('joke-description').textContent = 'Add Pico as an MCP server in your AI app, then sign in with GitHub.';
+      document.getElementById('go-back').textContent = 'MCP Docs';
+    } else {
+      document.getElementById('joke-title').textContent = messages[index][0];
+      document.getElementById('joke-description').textContent = messages[index][1];
+    }
 
     // Change the composition and type styles on each refresh.
     const layouts = ['left','center','right','up','down','tilt','tilt-right','stagger','reverse'];
@@ -1398,6 +1407,7 @@
 
     // Decorative labels must never cover the content, controls or brand.
     // Check their real rendered bounds after webfonts finish loading.
+    const elements = [...document.querySelectorAll('.brand, .content, .actions')];
     const removeOverlaps = () => {
       const zones = elements.map(element => element.getBoundingClientRect());
       for (const bit of [...scatter.children]) {
@@ -1468,6 +1478,7 @@
     // A single back action returns to the previous browser page;
     // direct visitors without history have the homepage as a safe fallback.
     document.getElementById('go-back').addEventListener('click', () => {
+      if (mcpBrowserPage) { location.assign('/mcp-docs'); return; }
       if (history.length > 1) history.back();
       else location.assign('/');
     });

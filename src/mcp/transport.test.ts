@@ -83,6 +83,41 @@ describe('Pico MCP HTTP security',()=>{
     expect(response.status).toBe(401);
     expect(response.headers.get('WWW-Authenticate')).toContain('oauth-protected-resource/app/mcp');
   });
+  it('shows the selected-theme Pico page only for human browser navigation',async()=>{
+    const html='<!doctype html><html><head><title>404 | Pico</title></head><body>Pico joke page</body></html>';
+    const assets={fetch:async()=>new Response(html,{status:200,headers:{'content-type':'text/html'}})};
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async()=>null},ASSETS:assets};
+    const browser=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{
+      method:'GET',headers:{accept:'text/html,application/xhtml+xml','sec-fetch-mode':'navigate'}
+    }),env:settings});
+    expect(browser.status).toBe(401);
+    expect(browser.headers.get('content-type')).toContain('text/html');
+    expect(browser.headers.get('WWW-Authenticate')).toContain('oauth-protected-resource/app/mcp');
+    expect(await browser.text()).toContain('Pico joke page');
+    const api=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{
+      method:'GET',headers:{accept:'application/json','sec-fetch-mode':'navigate'}
+    }),env:settings});
+    expect(api.status).toBe(401);
+    expect(api.headers.get('content-type')).toContain('application/json');
+    expect((await api.json()).error).toBe('Authorization required.');
+    const withBearer=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{
+      method:'GET',headers:{accept:'text/html','sec-fetch-mode':'navigate',authorization:'Bearer token'}
+    }),env:settings});
+    expect(withBearer.headers.get('content-type')).toContain('application/json');
+    const machine=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{
+      method:'GET',headers:{accept:'text/html'}
+    }),env:settings});
+    expect(machine.headers.get('content-type')).toContain('application/json');
+  });
+  it('preserves MCP POST errors as JSON even when HTML is accepted',async()=>{
+    const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async()=>null},
+      ASSETS:{fetch:async()=>new Response('<html></html>')}};
+    const post=await onRequest({request:new Request('https://picompiler.pages.dev/app/mcp',{
+      method:'POST',headers:{accept:'text/html','sec-fetch-mode':'navigate'},body:'{}'
+    }),env:settings});
+    expect(post.status).toBe(401);
+    expect(post.headers.get('content-type')).toContain('application/json');
+  });
   it('accepts scoped, resource-bound OAuth tokens through the private binding',async()=>{
     const settings={...env,PICO_OAUTH_ISSUER:'https://pico-oauth.example',PICO_OAUTH:{validateToken:async(resource:string,token:string)=>
       resource==='https://picompiler.pages.dev/app/mcp' && token==='oauth-test-token' ? {audience:resource,scope:['mcp:run'],userId:'123'} : null}};
