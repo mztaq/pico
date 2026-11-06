@@ -1,6 +1,7 @@
+import {picoNotFound} from '../_lib/pico-not-found';
 import {callTool,listTools} from '../../src/mcp/tools';
 
-type Env={PICO_MCP_TOKEN?:string;PICO_MCP_LEGACY_AUTH?:string;PICO_MCP_RATE_GATE?:{fetch(input:Request):Promise<Response>};PICO_OAUTH_ISSUER?:string;PICO_OAUTH?:{validateToken(resource:string,token:string):Promise<{scope:string[];userId:string;audience:string}|null>}};
+type Env={ASSETS?:{fetch(request:Request):Promise<Response>};PICO_MCP_TOKEN?:string;PICO_MCP_LEGACY_AUTH?:string;PICO_MCP_RATE_GATE?:{fetch(input:Request):Promise<Response>};PICO_OAUTH_ISSUER?:string;PICO_OAUTH?:{validateToken(resource:string,token:string):Promise<{scope:string[];userId:string;audience:string}|null>}};
 type Context={request:Request;env:Env};
 const headers={'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'};
 const encoder=new TextEncoder();
@@ -56,7 +57,24 @@ async function authenticated(req:Request,env:Env) {
 export async function onRequest({request,env}:Context):Promise<Response> {
   if(request.method==='OPTIONS')return new Response(null,{status:405,headers});
   if(request.method==='GET'){
-    if(env.PICO_OAUTH && env.PICO_OAUTH_ISSUER){const rejected=response({error:'Authorization required.'},401);rejected.headers.set('WWW-Authenticate',oauthChallenge(request));return rejected;}
+    const oauthReady=Boolean(env.PICO_OAUTH && env.PICO_OAUTH_ISSUER);
+    // Only a browser page navigation explicitly requesting HTML gets the themed UI.
+    // All MCP clients, even those doing unauthenticated discovery, keep JSON responses.
+    const accept=request.headers.get('accept')??'';
+    const mode=request.headers.get('sec-fetch-mode');
+    const browserPage=oauthReady && Boolean(env.ASSETS) &&
+      /(?:^|,)\s*text\/html(?:\s*;[^,]*)?(?:,|$)/i.test(accept) &&
+      !/(?:application\/json|text\/event-stream)/i.test(accept) &&
+      !request.headers.has('authorization') &&
+      (mode===null || mode==='navigate');
+    if(browserPage){
+      try {
+        const page=await picoNotFound({request,env:{ASSETS:env.ASSETS!}},401);
+        page.headers.set('WWW-Authenticate',oauthChallenge(request));
+        return page;
+      } catch { /* A missing static page must never stop MCP discovery. */ }
+    }
+    if(oauthReady){const rejected=response({error:'Authorization required.'},401);rejected.headers.set('WWW-Authenticate',oauthChallenge(request));return rejected;}
     return response({error:'Use authenticated MCP POST requests.'},405);
   }
   if(request.method!=='POST')return response({error:'Method not allowed.'},405);
