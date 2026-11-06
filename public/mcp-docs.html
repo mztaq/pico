@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#1e1e2e">
+  <title>MCP Docs | Pico</title>
+  <meta name="description" content="Connect Pico to your AI client with GitHub sign-in. See setup steps, available tools and examples.">
+  <link rel="canonical" href="https://picompiler.pages.dev/mcp-docs">
+  <link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+    :root{color-scheme:dark;--bg:#1e1e2e;--panel:#181825;--line:#454761;--text:#cdd6f4;--muted:#a6adc8;--accent:#cba6f7}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:95px}body{margin:0;background:var(--bg);color:var(--text);font:400 15px/1.65 'DM Sans',system-ui,sans-serif}a{color:inherit;text-decoration:none}a:hover{color:#fff}a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+    .shell{width:min(1150px,calc(100% - 64px));margin:auto}
+    .top{position:sticky;top:0;z-index:10;background:rgba(30,30,46,.95);backdrop-filter:blur(14px);border-bottom:1px solid #343547}
+    .top-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;height:74px}
+    .brand{display:inline-flex;align-items:center;gap:10px;font-size:21px;font-weight:800;color:#fff;letter-spacing:-.7px}.brand img{height:33px;width:33px}.brand .dot{color:var(--accent)}
+    .top nav{display:flex;gap:27px;align-items:center;color:var(--muted);font-size:14px}.top nav a[aria-current=page]{color:var(--accent)}
+    .hero{padding:58px 0 38px;border-bottom:1px solid #343547}.eyebrow{display:block;color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+    h1{font-size:clamp(44px,5.5vw,64px);line-height:1.1;letter-spacing:-.05em;margin:0 0 14px}h1 span{color:var(--accent)}
+    .lead{font-size:16px;color:var(--muted);max-width:620px;margin:0 0 24px;line-height:1.65}
+    .endpoint{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid #3b3b50;border-radius:9px;padding:12px 13px;width:min(100%,590px)}
+    .endpoint code{overflow-wrap:anywhere;font-size:14px;color:#e5d4ff;flex:1;min-width:0}
+    .copy{border:1px solid var(--line);border-radius:6px;background:#313244;color:var(--text);padding:7px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}.copy:hover{border-color:var(--accent)}
+    main.shell{width:min(1280px,calc(100% - 80px))}.hero{width:100%;margin:0}.content-layout{width:min(780px,100%);margin-inline:auto;padding:34px 0 80px}
+    .doc-section{padding:0 0 31px;margin:0 0 32px;border-bottom:1px solid #343547}.doc-section:last-child{border:0;margin:0;padding:0}
+    h2{font-size:24px;line-height:1.25;letter-spacing:-.7px;margin:0 0 12px}h3{font-size:16px;margin:24px 0 7px}p{margin:0 0 17px;color:var(--muted)}strong{color:var(--text)}ol,ul{padding-left:21px;margin:14px 0 0;color:var(--muted)}li{padding-left:3px;margin-bottom:11px}li::marker{color:var(--accent)}
+    .steps{counter-reset:step;list-style:none;padding:0;margin-top:16px}.steps li{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:start;gap:13px;margin:0 0 14px;padding:0}.steps li:before{counter-increment:step;content:counter(step);display:grid;place-items:center;width:26px;height:26px;border:1px solid #615078;border-radius:7px;color:var(--accent);font-size:12px;font-weight:700}
+    code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.91em}p code,li code{padding:2px 5px;background:#313244;border-radius:4px;color:#e6d6ff}
+    pre{background:#151520;border:1px solid #38384c;padding:18px 20px;border-radius:9px;overflow-x:auto;color:#e8def5;font-size:13px;line-height:1.7;margin:14px 0 20px}
+    .tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tool{border:1px solid #3d3e55;background:var(--panel);padding:15px;border-radius:8px;min-width:0}.tool code{color:var(--accent);overflow-wrap:anywhere;display:block;margin-bottom:6px;font-size:12px}.tool p{font-size:13px;line-height:1.5;margin:0}
+    .footer{border-top:1px solid #343547;padding:24px 0 38px;color:var(--muted);font-size:12px}.footer-inner{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+    .faq{display:grid;gap:8px}.faq details{border:1px solid #3d3e55;border-radius:8px;background:rgba(24,24,37,.8)}.faq summary{cursor:pointer;padding:14px 17px;font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:20px;list-style:none}.faq summary::-webkit-details-marker{display:none}.faq summary:after{content:"+";font-size:19px;line-height:1;color:var(--accent);font-weight:400}.faq details[open] summary:after{content:"−"}.faq details p{margin:0;padding:0 17px 16px;font-size:14px}.faq summary:hover{color:var(--accent)}
+    @media(max-width:800px){.content-layout{padding-top:30px}.hero{padding-top:45px}.top nav{gap:15px}}
+    @media(max-width:520px){.shell,main.shell{width:calc(100% - 36px)}.top-inner{height:64px}.top nav{font-size:12px;gap:12px}.hero{padding-top:38px}.lead{font-size:15px}.tools{grid-template-columns:1fr}.endpoint{gap:9px;flex-wrap:wrap}.endpoint code{font-size:11px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+@keyframes docs-curves-orbit {
+  0%, 100% { transform: translate3d(-3%, 0, 0) scale(1.05); }
+  12.5% { transform: translate3d(-2.12%, -1.41%, 0) scale(1.05); }
+  25% { transform: translate3d(0, -2%, 0) scale(1.05); }
+  37.5% { transform: translate3d(2.12%, -1.41%, 0) scale(1.05); }
+  50% { transform: translate3d(3%, 0, 0) scale(1.05); }
+  62.5% { transform: translate3d(2.12%, 1.41%, 0) scale(1.05); }
+  75% { transform: translate3d(0, 2%, 0) scale(1.05); }
+  87.5% { transform: translate3d(-2.12%, 1.41%, 0) scale(1.05); }
+}
+@keyframes docs-curve-trace{to{stroke-dashoffset:-1000}}
+.docs-curves{position:fixed;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;overflow:visible;color:var(--accent);fill:none;stroke:currentColor;opacity:.15}
+.docs-curves path{stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.docs-curve-flow{stroke-width:3.8;stroke-dasharray:150 850;opacity:.24}
+.top,main,.footer{position:relative;z-index:1}
+.top{position:sticky}
+.hero{padding-top:58px}
+.lead{max-width:620px}
+@media(prefers-reduced-motion:no-preference){
+.docs-curves{animation:docs-curves-orbit 22s linear infinite}
+.docs-curve-flow{animation:docs-curve-trace 29s linear infinite}
+.docs-curve-flow-right{animation-duration:34s;animation-delay:-10s}
+}
+@media(prefers-reduced-motion:reduce){.docs-curves,.docs-curve-flow{animation:none!important}}
+@media(forced-colors:active){.docs-curves{display:none}}
+
+
+    /* Match Pico's landing navbar, including its fixed-height sticky slot. */
+    .top-slot{position:sticky;top:0;z-index:50;height:74px}
+    .top{position:absolute;top:0;left:0;right:0;width:100%;margin-inline:auto;border:0;border-bottom:1px solid #343547;border-radius:0;background:rgba(30,30,46,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:width .36s cubic-bezier(.22,1,.36,1),top .36s cubic-bezier(.22,1,.36,1),border-radius .36s cubic-bezier(.22,1,.36,1),background-color .36s ease,box-shadow .36s ease}
+    .top-inner{width:min(1280px,calc(100% - 80px));margin-inline:auto;height:74px;display:flex;align-items:center;gap:30px;justify-content:flex-start;transition:height .23s cubic-bezier(.2,.8,.2,1),gap .23s ease}
+    .brand{font-size:21px;letter-spacing:-.8px;white-space:nowrap;transition:font-size .23s ease}
+    .brand img{border-radius:9px;transition:width .23s ease,height .23s ease}
+    .brand .dot{color:#fff}
+    .top .nav-links{display:flex;align-items:center;gap:32px;margin-left:auto;transition:gap .23s ease}
+    .top .nav-links a{font-size:15px;font-weight:600;color:#9ba0bb;transition:font-size .23s ease,color .2s ease}
+    .top .nav-links a:hover{color:#fff}
+    .top .nav-links a[aria-current=page]{color:var(--accent)}
+    .top.top-compact{width:min(980px,calc(100% - 42px));top:10px;border:1px solid #454761;border-radius:14px;background:rgba(24,24,37,.96);box-shadow:0 12px 32px rgba(0,0,0,.23)}
+    .top.top-compact .top-inner{width:calc(100% - 42px);height:56px}
+    .top.top-compact .brand{font-size:19px}
+    .top.top-compact .brand img{width:27px;height:27px}
+    .top.top-compact .nav-links{gap:27px}
+    .top.top-compact .nav-links a{font-size:14px}
+    .menu-toggle{display:none}
+    /* Same centered 14px copyright as the landing page. */
+    .footer{border-top:1px solid #343547;padding:22px 0 24px;text-align:center}
+    .footer-inner{display:block}
+    .footer small{display:block;color:#9ba0bb;font-size:14px;line-height:1.6;letter-spacing:.1px}
+    @media(max-width:700px){
+      .top-slot{height:66px}
+      .top-inner{width:calc(100% - 38px);height:66px}
+      .top.top-compact{width:calc(100% - 24px);top:8px;border-radius:12px}
+      .top.top-compact .top-inner{width:calc(100% - 28px);height:56px}
+      .top .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:#181825;border-bottom:1px solid #343547;padding:12px 20px 20px;z-index:30;flex-direction:column;gap:0}
+      .top .nav-links.is-open{display:flex;align-items:stretch}
+      .top .nav-links a,.top.top-compact .nav-links a{padding:11px 7px;font-size:16px;font-weight:600}
+      .menu-toggle{display:grid;place-items:center;margin-left:auto;width:38px;height:37px;border:1px solid #454761;border-radius:6px;background:#242435;color:#cdd6f4;cursor:pointer}
+      .menu-lines{display:block;width:16px;height:12px;border-top:2px solid currentColor;border-bottom:2px solid currentColor;position:relative}
+      .menu-lines:before{content:'';position:absolute;left:0;right:0;top:4px;border-top:2px solid currentColor}
+      .menu-toggle[aria-expanded=true] .menu-lines{height:16px;border:0}
+      .menu-toggle[aria-expanded=true] .menu-lines:before,.menu-toggle[aria-expanded=true] .menu-lines:after{content:'';position:absolute;left:-1px;right:-1px;top:7px;border-top:2px solid currentColor;transform:rotate(45deg)}
+      .menu-toggle[aria-expanded=true] .menu-lines:after{transform:rotate(-45deg)}
+    }
+    @media(prefers-reduced-motion:reduce){.top,.top-inner,.brand,.brand img,.top .nav-links,.top .nav-links a{transition:none}}
+
+
+    /* Desktop: introduction and setup share a single, aligned two-column row. */
+    .intro-grid{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,.97fr);gap:clamp(38px,5vw,74px);align-items:start;border-bottom:1px solid #343547;padding:64px 0 54px}
+    .intro-grid .hero{width:auto;min-width:0;margin:0;padding:0;border:0}
+    .intro-grid h1{margin:0 0 19px}
+    .intro-grid .lead{margin:0 0 27px;max-width:530px}
+    .intro-grid .endpoint{width:100%;max-width:100%;gap:10px}
+    .intro-grid .endpoint code{font-size:14px}
+    .intro-connect{min-width:0;padding:9px 0 0}
+    .intro-connect h2{margin:0 0 13px}
+    .intro-connect p{margin:0 0 19px}
+    .intro-connect .steps{margin:0}
+    .intro-connect .steps li{margin-bottom:17px;line-height:1.65}
+    .intro-connect .steps li:last-child{margin-bottom:0}
+    .content-layout{padding-top:40px}
+    @media(max-width:920px){
+      .intro-grid{grid-template-columns:1fr;gap:40px;padding:50px 0 43px}
+      .intro-connect{padding:0}
+      .intro-grid .endpoint{max-width:590px}
+       .intro-grid .endpoint code{font-size:13px}
+      .content-layout{padding-top:34px}
+    }
+    @media(max-width:520px){
+      .intro-grid{padding:38px 0 35px;gap:32px}
+      .intro-grid .endpoint{flex-wrap:wrap}
+       .intro-grid .endpoint code{font-size:12px}
+      .intro-connect .steps li{margin-bottom:14px}
+    }
+
+
+    /* Same full-width columns for the example, tools, and expanded Q&A. */
+    .content-layout{width:100%;max-width:none;margin:0;padding:42px 0 76px}
+    .docs-grid{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,.97fr);column-gap:clamp(38px,5vw,74px);row-gap:42px;align-items:start}
+    .docs-grid > .doc-section{min-width:0;margin:0;padding:0;border:0}
+    .docs-grid #example{grid-column:1}
+    .docs-grid #tools{grid-column:2}
+    .docs-grid #troubleshooting{grid-column:1/-1;border-top:1px solid #343547;padding-top:38px}
+    .docs-grid #example pre{margin:16px 0 15px;white-space:pre;max-width:100%}
+    .docs-grid #tools .tools{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .docs-grid #tools .tool{padding:13px;min-height:85px}
+    .docs-grid #tools .tool code{font-size:11px;line-height:1.5}
+    .docs-grid #tools .tool p{font-size:12px}
+    .docs-grid #troubleshooting h2{font-size:29px;margin-bottom:22px}
+    .docs-grid #troubleshooting .faq{gap:12px}
+    .docs-grid #troubleshooting .faq details{background:rgba(24,24,37,.72)}
+    .docs-grid #troubleshooting .faq summary{padding:22px 24px;font-size:18px}
+    .docs-grid #troubleshooting .faq details p{padding:0 24px 23px;font-size:15px;max-width:900px}
+    @media(max-width:920px){
+      .docs-grid{grid-template-columns:1fr;row-gap:36px}
+      .docs-grid #example,.docs-grid #tools,.docs-grid #troubleshooting{grid-column:1}
+      .docs-grid #tools .tools{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .docs-grid #troubleshooting{padding-top:30px}
+      .content-layout{padding-top:34px}
+    }
+    @media(max-width:520px){
+      .docs-grid #tools .tools{grid-template-columns:1fr}
+      .docs-grid #troubleshooting h2{font-size:25px}
+      .docs-grid #troubleshooting .faq summary{font-size:16px;padding:18px}
+      .docs-grid #troubleshooting .faq details p{padding:0 18px 18px;font-size:14px}
+    }
+
+
+    /* Compact, readable examples matching Pico's editor colors. */
+    .example-list{display:grid;gap:18px;margin-top:19px}
+    .example-item{min-width:0}
+    .example-item h3{font-size:14px;font-weight:700;margin:0 0 8px;color:var(--text)}
+    .example-item pre{background:#151520;border:1px solid #38384c;border-radius:8px;padding:15px 17px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.7}
+    .example-item pre code{font-size:inherit}
+    .example-item > p{margin:7px 0 0;font-size:13px}
+    .syn-comment{color:#a6adc8}
+    .syn-keyword{color:#cba6f7;font-weight:600}
+    .syn-type{color:#f9e2af}
+    .syn-var{color:#89b4fa}
+    .syn-number{color:#fab387}
+    .syn-operator{color:#89dceb}
+    .syn-string{color:#a6e3a1}
+    @media(max-width:520px){.example-item pre{font-size:11px}.example-code pre{padding:13px 76px 13px 14px}}
+
+    .example-code{position:relative;min-width:0}
+    .example-code pre{padding:15px 82px 15px 17px}
+    .example-copy{position:absolute;top:9px;right:10px;z-index:1;border:1px solid #454761;border-radius:6px;background:#313244;color:#cdd6f4;padding:5px 11px;font:600 12px 'DM Sans',system-ui,sans-serif;cursor:pointer}
+    .example-copy:hover{border-color:#cba6f7}
+    .example-copy:focus-visible{outline:2px solid #cba6f7;outline-offset:3px}
+
+
+    /* Readability pass: slightly larger copy, numbered steps, examples and tool cards. */
+    body{font-size:16px}
+    .lead{font-size:17px}
+    .intro-connect .steps{font-size:16px}
+    .steps li{grid-template-columns:32px minmax(0,1fr);gap:14px}
+    .steps li:before{width:30px;height:30px;font-size:14px}
+    .intro-connect .steps li{margin-bottom:19px}
+    .example-item h3{font-size:16px;margin-bottom:10px}
+    .example-item pre{font-size:14px;line-height:1.75}
+    .example-code pre{padding:16px 18px}
+    .example-copy{font-size:13px;padding:6px 12px;top:12px;right:18px}
+    .docs-grid #tools .tool{padding:15px;min-height:100px}
+    .docs-grid #tools .tool code{font-size:12.5px;line-height:1.55}
+    .docs-grid #tools .tool p{font-size:14px;line-height:1.55}
+    .docs-grid #troubleshooting .faq details p{font-size:16px}
+    @media(max-width:520px){
+      body{font-size:15px}
+      .lead{font-size:16px}
+      .intro-connect .steps{font-size:15px}
+      .steps li{grid-template-columns:30px minmax(0,1fr);gap:12px}
+      .steps li:before{width:28px;height:28px;font-size:13px}
+      .example-item pre{font-size:12.5px}
+      .example-code pre{padding:14px}
+      .example-copy{top:10px;right:14px}
+      .docs-grid #tools .tool code{font-size:12px}
+      .docs-grid #tools .tool p{font-size:13px}
+      .docs-grid #troubleshooting .faq details p{font-size:15px}
+    }
+
+
+    /* The code and Copy control occupy separate columns within one bordered surface. */
+    .example-code{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;column-gap:12px;padding:16px 18px;background:#151520;border:1px solid #38384c;border-radius:8px;min-width:0}
+    .docs-grid #example .example-code pre{grid-column:1;grid-row:1;min-width:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;white-space:pre-wrap;overflow-wrap:anywhere}
+    .example-code .example-copy{grid-column:2;grid-row:1;position:static;align-self:start;margin:0;white-space:nowrap}
+    @media(max-width:520px){
+      .example-code{padding:14px;column-gap:10px}
+      .docs-grid #example .example-code pre{padding:0}
+    }
+
+  </style>
+</head>
+<body>
+  <svg class="docs-curves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+<path d="M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108" stroke-width="2.6" opacity=".72"/>
+<path d="M -230 -120 C -10 46 186 200 168 370 C 149 548 -75 659 62 850 C 174 1008 341 1080 476 1163" stroke-width="1.5" opacity=".39"/>
+<path d="M 1260 -185 C 1080 30 1183 190 1375 350 C 1564 506 1459 670 1390 805 C 1334 954 1429 1075 1684 1176" stroke-width="2.6" opacity=".72"/>
+<path d="M 1332 -220 C 1150 22 1246 193 1428 353 C 1599 511 1520 676 1441 819 C 1375 960 1478 1096 1743 1200" stroke-width="1.5" opacity=".40"/>
+<path d="M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304" stroke-width="1.3" opacity=".28"/>
+<path class="docs-curve-flow" d="M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108" pathLength="1000"/>
+<path class="docs-curve-flow docs-curve-flow-right" d="M 1260 -185 C 1080 30 1183 190 1375 350 C 1564 506 1459 670 1390 805 C 1334 954 1429 1075 1684 1176" pathLength="1000"/>
+</svg>
+  <div class="top-slot"><header class="top" id="docs-header"><div class="top-inner">
+    <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt=""><span>Pico<span class="dot">.</span></span></a>
+    <nav id="docs-nav" class="nav-links" aria-label="Main navigation"><a href="/">Home</a><a href="/app">Open Pico</a><a href="/mcp-docs" aria-current="page">MCP Docs</a></nav>
+    <button id="docs-menu" class="menu-toggle" type="button" aria-controls="docs-nav" aria-expanded="false" aria-label="Open menu"><span class="menu-lines" aria-hidden="true"></span></button>
+  </div></header></div>
+  <main class="shell">
+    <div class="intro-grid">
+      <section class="hero" aria-labelledby="mcp-title">
+        <h1 id="mcp-title">Pico MCP<span>.</span></h1>
+        <p class="lead">Connect Pico to your AI client. Run pseudocode, build flowcharts and test logic circuits with GitHub sign-in.</p>
+        <div class="endpoint"><code id="endpoint-url">https://picompiler.pages.dev/app/mcp</code><button class="copy" id="copy-endpoint" type="button" aria-label="Copy MCP server URL">Copy</button></div>
+      </section>
+      <section class="intro-connect" id="connect" aria-labelledby="connect-title">
+        <h2 id="connect-title">Connect Pico</h2>
+        <p>Use an AI client that supports remote MCP connections.</p>
+        <ol class="steps">
+          <li><div>Open your AI client's MCP or app connection settings.</div></li>
+          <li><div>Add the MCP endpoint shown on the left.</div></li>
+          <li><div>Sign in with GitHub and approve the connection.</div></li>
+          <li><div>Ask your assistant to use a Pico tool.</div></li>
+        </ol>
+      </section>
+    </div>
+    <div class="content-layout">
+      <article class="docs-grid">
+        <section class="doc-section" id="example">
+          <h2>Examples</h2>
+          <p>Once connected, try these prompts with your assistant.</p>
+          <div class="example-list">
+            <div class="example-item">
+              <h3>Pseudocode</h3>
+              <div class="example-code"><button class="example-copy" type="button" aria-label="Copy pseudocode example">Copy</button>
+              <pre><code><span class="syn-comment">Use Pico to run this pseudocode:</span>
+<span class="syn-keyword">DECLARE</span> <span class="syn-var">Number</span> : <span class="syn-type">INTEGER</span>
+<span class="syn-var">Number</span> <span class="syn-operator">&larr;</span> <span class="syn-number">5</span>
+<span class="syn-keyword">OUTPUT</span> <span class="syn-var">Number</span> <span class="syn-operator">*</span> <span class="syn-number">2</span></code></pre></div>
+            </div>
+            <div class="example-item">
+              <h3>Flowchart</h3>
+              <div class="example-code"><button class="example-copy" type="button" aria-label="Copy flowchart example">Copy</button>
+              <pre><code>Create a flowchart that inputs a number,
+checks whether it's even or odd,
+and outputs "Even" or "Odd".</code></pre></div>
+            </div>
+            <div class="example-item">
+              <h3>Logic circuit</h3>
+              <div class="example-code"><button class="example-copy" type="button" aria-label="Copy logic circuit example">Copy</button>
+              <pre><code>Create a half-adder with two inputs.
+Use XOR for the Sum output
+and AND for the Carry output.</code></pre></div>
+            </div>
+          </div>
+        </section>
+        <section class="doc-section" id="tools">
+          <h2>Available tools</h2>
+          <div class="tools">
+            <div class="tool"><code>pico_run_pseudocode</code><p>Execute Cambridge-style pseudocode.</p></div>
+            <div class="tool"><code>pico_debug_pseudocode</code><p>Inspect execution with a bounded trace.</p></div>
+            <div class="tool"><code>pico_create_flowchart</code><p>Create an editable flowchart document.</p></div>
+            <div class="tool"><code>pico_run_flowchart</code><p>Compile and execute a flowchart.</p></div>
+            <div class="tool"><code>pico_flowchart_to_pseudocode</code><p>Convert a flowchart to pseudocode.</p></div>
+            <div class="tool"><code>pico_create_circuit</code><p>Create an editable logic circuit.</p></div>
+            <div class="tool"><code>pico_simulate_circuit</code><p>Evaluate circuit signals for given inputs.</p></div>
+            <div class="tool"><code>pico_truth_table</code><p>Generate a truth table for a circuit.</p></div>
+            <div class="tool"><code>pico_capabilities</code><p>Read supported syntax and runtime limits.</p></div>
+          </div>
+          <p style="margin-top:18px">To open a generated flowchart or circuit in Pico, save the JSON file and import it into the matching workspace.</p>
+        </section>
+        <section class="doc-section" id="troubleshooting">
+          <h2>Questions &amp; answers</h2>
+          <div class="faq">
+            <details><summary>Why won't Pico connect?</summary><p>Check the MCP server URL, then reconnect and sign in with GitHub. Your AI client must support remote MCP servers.</p></details>
+            <details><summary>Why can't I see Pico's tools?</summary><p>Check that Pico is enabled in your AI client, then reconnect.</p></details>
+            <details><summary>What if I reach the request limit?</summary><p>Try again shortly.</p></details>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+  <footer class="footer"><div class="shell footer-inner"><small>© 2026 Pico Development Team. All rights reserved.</small></div></footer>
+  <script>
+
+    const header = document.getElementById('docs-header');
+    const menu = document.getElementById('docs-menu');
+    const nav = document.getElementById('docs-nav');
+    let previousY = window.scrollY;
+    let lastDirection = 0;
+    let directionDistance = 0;
+    const setMenu = (open) => {
+      nav.classList.toggle('is-open', open);
+      menu.setAttribute('aria-expanded', String(open));
+      menu.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      if (open) header.classList.remove('top-compact');
+    };
+    menu.addEventListener('click', () => setMenu(menu.getAttribute('aria-expanded') !== 'true'));
+    nav.addEventListener('click', (event) => {
+      if (event.target.closest('a')) setMenu(false);
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && menu.getAttribute('aria-expanded') === 'true') {
+        setMenu(false);
+        menu.focus();
+      }
+    });
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - previousY;
+      previousY = y;
+      if (menu.getAttribute('aria-expanded') === 'true' || y <= 32) {
+        lastDirection = 0;
+        directionDistance = 0;
+        header.classList.remove('top-compact');
+        return;
+      }
+      if (Math.abs(delta) < 1) return;
+      const direction = Math.sign(delta);
+      if (direction !== lastDirection) {
+        lastDirection = direction;
+        directionDistance = 0;
+      }
+      directionDistance += Math.abs(delta);
+      if (directionDistance < 24) return;
+      header.classList.toggle('top-compact', direction > 0 && y > 120);
+      directionDistance = 0;
+    };
+    header.classList.toggle('top-compact', previousY > 120);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.getElementById('copy-endpoint').addEventListener('click', async function () {
+      try {
+        await navigator.clipboard.writeText(document.getElementById('endpoint-url').textContent);
+        this.textContent = 'Copied';
+      } catch {
+        this.textContent = 'Select URL to copy';
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById('endpoint-url'));
+        getSelection().removeAllRanges();
+        getSelection().addRange(range);
+      }
+    });
+
+    document.querySelectorAll('.example-copy').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const code = button.closest('.example-item').querySelector('pre code');
+        const value = code.textContent.trim();
+        try {
+          await navigator.clipboard.writeText(value);
+          button.textContent = 'Copied';
+        } catch {
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(code);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          button.textContent = 'Select to copy';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
