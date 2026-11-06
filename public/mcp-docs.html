@@ -102,6 +102,36 @@
     }
     @media(prefers-reduced-motion:reduce){.top,.top-inner,.brand,.brand img,.top .nav-links,.top .nav-links a{transition:none}}
 
+
+    /* Desktop: introduction and setup share a single, aligned two-column row. */
+    .intro-grid{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(0,.97fr);gap:clamp(38px,5vw,74px);align-items:start;border-bottom:1px solid #343547;padding:64px 0 54px}
+    .intro-grid .hero{width:auto;min-width:0;margin:0;padding:0;border:0}
+    .intro-grid h1{margin:0 0 19px}
+    .intro-grid .lead{margin:0 0 27px;max-width:530px}
+    .intro-grid .endpoint{width:100%;max-width:100%;gap:10px}
+    .intro-grid .endpoint code{font-size:clamp(10px,.94vw,12px)}
+    .intro-connect{min-width:0;padding:9px 0 0}
+    .intro-connect h2{margin:0 0 13px}
+    .intro-connect p{margin:0 0 19px}
+    .intro-connect .steps{margin:0}
+    .intro-connect .steps li{margin-bottom:17px;line-height:1.65}
+    .intro-connect .steps li:last-child{margin-bottom:0}
+    .content-layout{padding-top:40px}
+    @media(max-width:920px){
+      .intro-grid{grid-template-columns:1fr;gap:40px;padding:50px 0 43px}
+      .intro-connect{padding:0}
+      .intro-grid .endpoint{max-width:590px}
+      .intro-grid .endpoint code{font-size:12px}
+      .content-layout{padding-top:34px}
+    }
+    @media(max-width:520px){
+      .intro-grid{padding:38px 0 35px;gap:32px}
+      .intro-grid .endpoint{flex-wrap:wrap}
+      .intro-grid .endpoint-label{width:100%}
+      .intro-grid .endpoint code{font-size:11px}
+      .intro-connect .steps li{margin-bottom:14px}
+    }
+
   </style>
 </head>
 <body>
@@ -120,23 +150,25 @@
     <button id="docs-menu" class="menu-toggle" type="button" aria-controls="docs-nav" aria-expanded="false" aria-label="Open menu"><span class="menu-lines" aria-hidden="true"></span></button>
   </div></header></div>
   <main class="shell">
-    <div class="hero">
-      <h1>Pico MCP<span>.</span></h1>
-      <p class="lead">Connect Pico to your AI client. Run pseudocode, build flowcharts and test logic circuits with GitHub sign-in.</p>
-      <div class="endpoint"><span class="endpoint-label">MCP endpoint</span><code id="endpoint-url">https://picompiler.pages.dev/app/mcp</code><button class="copy" id="copy-endpoint" type="button" aria-label="Copy MCP server URL">Copy</button></div>
+    <div class="intro-grid">
+      <section class="hero" aria-labelledby="mcp-title">
+        <h1 id="mcp-title">Pico MCP<span>.</span></h1>
+        <p class="lead">Connect Pico to your AI client. Run pseudocode, build flowcharts and test logic circuits with GitHub sign-in.</p>
+        <div class="endpoint"><span class="endpoint-label">MCP endpoint</span><code id="endpoint-url">https://picompiler.pages.dev/app/mcp</code><button class="copy" id="copy-endpoint" type="button" aria-label="Copy MCP server URL">Copy</button></div>
+      </section>
+      <section class="intro-connect" id="connect" aria-labelledby="connect-title">
+        <h2 id="connect-title">Connect Pico</h2>
+        <p>Use an AI client that supports remote MCP connections.</p>
+        <ol class="steps">
+          <li><div>Open your AI client's MCP or app connection settings.</div></li>
+          <li><div>Add the MCP endpoint shown on the left.</div></li>
+          <li><div>Sign in with GitHub and approve the connection.</div></li>
+          <li><div>Ask your assistant to use a Pico tool.</div></li>
+        </ol>
+      </section>
     </div>
     <div class="content-layout">
       <article>
-        <section class="doc-section" id="connect">
-          <h2>Connect Pico</h2>
-          <p>Use an AI client that supports remote MCP connections.</p>
-          <ol class="steps">
-            <li><div>Open your AI client's MCP or app connection settings.</div></li>
-            <li><div>Add <strong>https://picompiler.pages.dev/app/mcp</strong> as a remote MCP server.</div></li>
-            <li><div>Sign in with GitHub and approve the connection.</div></li>
-            <li><div>Ask your assistant to use a Pico tool.</div></li>
-          </ol>
-        </section>
         <section class="doc-section" id="example">
           <h2>Example</h2>
           <p>Once connected, ask your assistant:</p>
