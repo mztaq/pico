@@ -66,7 +66,7 @@ export async function onRequest({request,env}:Context):Promise<Response> {
       /(?:^|,)\s*text\/html(?:\s*;[^,]*)?(?:,|$)/i.test(accept) &&
       !/(?:application\/json|text\/event-stream)/i.test(accept) &&
       !request.headers.has('authorization') &&
-      (mode===null || mode==='navigate');
+      mode==='navigate';
     if(browserPage){
       try {
         const page=await picoNotFound({request,env:{ASSETS:env.ASSETS!}},401);
