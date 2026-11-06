@@ -63,6 +63,46 @@
 @media(prefers-reduced-motion:reduce){.docs-curves,.docs-curve-flow{animation:none!important}}
 @media(forced-colors:active){.docs-curves{display:none}}
 
+
+    /* Match Pico's landing navbar, including its fixed-height sticky slot. */
+    .top-slot{position:sticky;top:0;z-index:50;height:74px}
+    .top{position:absolute;top:0;left:0;right:0;width:100%;margin-inline:auto;border:0;border-bottom:1px solid #343547;border-radius:0;background:rgba(30,30,46,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:width .36s cubic-bezier(.22,1,.36,1),top .36s cubic-bezier(.22,1,.36,1),border-radius .36s cubic-bezier(.22,1,.36,1),background-color .36s ease,box-shadow .36s ease}
+    .top-inner{width:min(1280px,calc(100% - 80px));margin-inline:auto;height:74px;display:flex;align-items:center;gap:30px;justify-content:flex-start;transition:height .23s cubic-bezier(.2,.8,.2,1),gap .23s ease}
+    .brand{font-size:21px;letter-spacing:-.8px;white-space:nowrap;transition:font-size .23s ease}
+    .brand img{border-radius:9px;transition:width .23s ease,height .23s ease}
+    .brand .dot{color:#fff}
+    .top .nav-links{display:flex;align-items:center;gap:32px;margin-left:auto;transition:gap .23s ease}
+    .top .nav-links a{font-size:14px;color:#9ba0bb;transition:font-size .23s ease,color .2s ease}
+    .top .nav-links a:hover{color:#fff}
+    .top .nav-links a[aria-current=page]{color:var(--accent)}
+    .top.top-compact{width:min(980px,calc(100% - 42px));top:10px;border:1px solid #454761;border-radius:14px;background:rgba(24,24,37,.96);box-shadow:0 12px 32px rgba(0,0,0,.23)}
+    .top.top-compact .top-inner{width:calc(100% - 42px);height:56px}
+    .top.top-compact .brand{font-size:19px}
+    .top.top-compact .brand img{width:27px;height:27px}
+    .top.top-compact .nav-links{gap:27px}
+    .top.top-compact .nav-links a{font-size:13px}
+    .menu-toggle{display:none}
+    /* Same centered 14px copyright as the landing page. */
+    .footer{border-top:1px solid #343547;padding:22px 0 24px;text-align:center}
+    .footer-inner{display:block}
+    .footer small{display:block;color:#9ba0bb;font-size:14px;line-height:1.6;letter-spacing:.1px}
+    @media(max-width:700px){
+      .top-slot{height:66px}
+      .top-inner{width:calc(100% - 38px);height:66px}
+      .top.top-compact{width:calc(100% - 24px);top:8px;border-radius:12px}
+      .top.top-compact .top-inner{width:calc(100% - 28px);height:56px}
+      .top .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:#181825;border-bottom:1px solid #343547;padding:12px 20px 20px;z-index:30;flex-direction:column;gap:0}
+      .top .nav-links.is-open{display:flex;align-items:stretch}
+      .top .nav-links a,.top.top-compact .nav-links a{padding:11px 7px;font-size:15px}
+      .menu-toggle{display:grid;place-items:center;margin-left:auto;width:38px;height:37px;border:1px solid #454761;border-radius:6px;background:#242435;color:#cdd6f4;cursor:pointer}
+      .menu-lines{display:block;width:16px;height:12px;border-top:2px solid currentColor;border-bottom:2px solid currentColor;position:relative}
+      .menu-lines:before{content:'';position:absolute;left:0;right:0;top:4px;border-top:2px solid currentColor}
+      .menu-toggle[aria-expanded=true] .menu-lines{height:16px;border:0}
+      .menu-toggle[aria-expanded=true] .menu-lines:before,.menu-toggle[aria-expanded=true] .menu-lines:after{content:'';position:absolute;left:-1px;right:-1px;top:7px;border-top:2px solid currentColor;transform:rotate(45deg)}
+      .menu-toggle[aria-expanded=true] .menu-lines:after{transform:rotate(-45deg)}
+    }
+    @media(prefers-reduced-motion:reduce){.top,.top-inner,.brand,.brand img,.top .nav-links,.top .nav-links a{transition:none}}
+
   </style>
 </head>
 <body>
@@ -75,10 +115,11 @@
 <path class="docs-curve-flow" d="M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108" pathLength="1000"/>
 <path class="docs-curve-flow docs-curve-flow-right" d="M 1260 -185 C 1080 30 1183 190 1375 350 C 1564 506 1459 670 1390 805 C 1334 954 1429 1075 1684 1176" pathLength="1000"/>
 </svg>
-  <header class="top"><div class="shell top-inner">
+  <div class="top-slot"><header class="top" id="docs-header"><div class="top-inner">
     <a class="brand" href="/" aria-label="Pico home"><img src="/pico-logo.svg" alt=""><span>Pico<span class="dot">.</span></span></a>
-    <nav aria-label="Main navigation"><a href="/">Home</a><a href="/app">Open Pico</a><a href="/mcp-docs" aria-current="page">MCP Docs</a></nav>
-  </div></header>
+    <nav id="docs-nav" class="nav-links" aria-label="Main navigation"><a href="/">Home</a><a href="/app">Open Pico</a><a href="/mcp-docs" aria-current="page">MCP Docs</a></nav>
+    <button id="docs-menu" class="menu-toggle" type="button" aria-controls="docs-nav" aria-expanded="false" aria-label="Open menu"><span class="menu-lines" aria-hidden="true"></span></button>
+  </div></header></div>
   <main class="shell">
     <div class="hero">
       <h1>Pico MCP<span>.</span></h1>
@@ -147,8 +188,54 @@ OUTPUT Number * 2</code></pre>
       </article>
     </div>
   </main>
-  <footer class="footer"><div class="shell footer-inner"><span>© 2026 Pico Development Team. All rights reserved.</span><a href="/">Back to Pico</a></div></footer>
+  <footer class="footer"><div class="shell footer-inner"><small>© 2026 Pico Development Team. All rights reserved.</small></div></footer>
   <script>
+
+    const header = document.getElementById('docs-header');
+    const menu = document.getElementById('docs-menu');
+    const nav = document.getElementById('docs-nav');
+    let previousY = window.scrollY;
+    let lastDirection = 0;
+    let directionDistance = 0;
+    const setMenu = (open) => {
+      nav.classList.toggle('is-open', open);
+      menu.setAttribute('aria-expanded', String(open));
+      menu.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      if (open) header.classList.remove('top-compact');
+    };
+    menu.addEventListener('click', () => setMenu(menu.getAttribute('aria-expanded') !== 'true'));
+    nav.addEventListener('click', (event) => {
+      if (event.target.closest('a')) setMenu(false);
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && menu.getAttribute('aria-expanded') === 'true') {
+        setMenu(false);
+        menu.focus();
+      }
+    });
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - previousY;
+      previousY = y;
+      if (menu.getAttribute('aria-expanded') === 'true' || y <= 32) {
+        lastDirection = 0;
+        directionDistance = 0;
+        header.classList.remove('top-compact');
+        return;
+      }
+      if (Math.abs(delta) < 1) return;
+      const direction = Math.sign(delta);
+      if (direction !== lastDirection) {
+        lastDirection = direction;
+        directionDistance = 0;
+      }
+      directionDistance += Math.abs(delta);
+      if (directionDistance < 24) return;
+      header.classList.toggle('top-compact', direction > 0 && y > 120);
+      directionDistance = 0;
+    };
+    header.classList.toggle('top-compact', previousY > 120);
+    window.addEventListener('scroll', onScroll, { passive: true });
     document.getElementById('copy-endpoint').addEventListener('click', async function () {
       try {
         await navigator.clipboard.writeText(document.getElementById('endpoint-url').textContent);
