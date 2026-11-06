@@ -201,7 +201,6 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
         <input className="project-title-input topbar-project-name" aria-label="Flowchart workspace name" value={nameDraft} maxLength={42} disabled={running||tutorialActive} onChange={e=>setNameDraft(e.target.value)} onBlur={rename} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/>
       </div>
       <div className="topbar-spacer"/>
-      <button className="toolbar-button flow-convert-button" disabled={running||(tutorialActive&&tourStep!==8)} onClick={()=>{setPanel('pseudocode');if(!conversion.value)setSelected(conversion.error?.nodeId??null);}}><Code2 size={16}/><span>Convert to pseudocode</span></button>
       <div className="topbar-actions">
         <div className="pico-appbar-group" role="group" aria-label="Edit history"><button className="toolbar-button" disabled={running||tutorialActive||!history?.past.length} aria-label="Undo flowchart edit" onClick={()=>undo()}><Undo2 size={16}/></button><button className="toolbar-button" disabled={running||tutorialActive||!history?.future.length} aria-label="Redo flowchart edit" onClick={()=>undo(true)}><Redo2 size={16}/></button></div>
         <div className="pico-appbar-group" role="group" aria-label="Workspace tools"><button className="toolbar-button" aria-label="Flowchart settings" disabled={tutorialActive} onClick={()=>setSettingsOpen(v=>!v)}><Settings2 size={16}/></button><button className="help-button" disabled={tutorialActive} onClick={startWalkthrough}><CircleHelp size={16}/><span>Help</span></button></div>
