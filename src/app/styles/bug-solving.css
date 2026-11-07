@@ -57,6 +57,22 @@
 .bug-program-output strong { font-size:12px; }
 .bug-program-output pre { overflow:auto; margin:8px 0 0; padding:10px; border-radius:7px; background:var(--ds-sunken,#11131a); font:12px/1.5 var(--ds-font-code,monospace); white-space:pre-wrap; overflow-wrap:anywhere; }
 .bug-success-note { margin:12px 0 0; color:#70d6a0; font-size:12px; }
+.bug-editor-head { height:auto; min-height:46px; gap:12px; }
+.bug-language-badge { display:inline-flex; align-items:center; gap:7px; padding:5px 9px; border:1px solid var(--ds-line,#30333d); border-radius:999px; color:var(--ds-text,#f1f2f5); font-size:11px; font-weight:600; letter-spacing:0; }
+.bug-language-badge>span { width:7px; height:7px; border-radius:50%; background:var(--ds-accent,#9b8cff); box-shadow:0 0 0 3px color-mix(in srgb,var(--ds-accent,#9b8cff) 16%,transparent); }
+.bug-syntax-legend { display:flex; align-items:center; flex-wrap:wrap; gap:7px 14px; min-height:36px; padding:6px 16px; border-bottom:1px solid var(--ds-line,#30333d); color:var(--ds-muted,#aeb4c2); font-size:10px; }
+.bug-syntax-legend>span { display:inline-flex; align-items:center; gap:6px; }
+.bug-syntax-legend i { width:8px; height:8px; border-radius:50%; background:var(--syntax-variable,#9cdcfe); }
+.bug-syntax-legend i.keyword { background:var(--syntax-keyword,#c586c0); }
+.bug-syntax-legend i.type { background:var(--syntax-type,#4ec9b0); }
+.bug-syntax-legend i.string { background:var(--syntax-string,#ce9178); }
+.bug-syntax-legend i.number { background:var(--syntax-number,#b5cea8); }
+.bug-editor .cm-content { line-height:1.8; }
+.bug-editor .cm-line { min-width:max-content; }
+.bug-editor .cm-scroller { overflow:auto; scrollbar-gutter:stable; }
+.bug-editor-panel button { min-height:40px; }
+.bug-editor-panel button:focus-visible { outline:2px solid var(--ds-accent,#9b8cff); outline-offset:3px; }
+@media(max-width:520px) { .bug-syntax-legend { gap:6px 10px; padding:7px 11px; font-size:9px; } .bug-editor .cm-editor { font-size:13px; } }
 @media(max-width:800px) {
   .bug-layout { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,170px) minmax(0,1fr); }
   .bug-sidebar { max-height:none; padding:10px 12px; }

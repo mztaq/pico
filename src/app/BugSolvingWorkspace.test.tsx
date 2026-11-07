@@ -75,6 +75,8 @@ describe('Bug Solving', () => {
     const language = container.querySelector<HTMLSelectElement>('[aria-label="Filter questions by language"]')!;
     await act(async () => { language.value = 'pseudocode'; language.dispatchEvent(new Event('change', { bubbles: true })); });
     expect(container.querySelector('.bug-app h1')?.textContent).toBe('Double the input');
+    expect(container.querySelector('.bug-syntax-legend')?.textContent).toContain('Keywords');
+    expect(container.querySelector('.bug-language-badge')?.textContent).toContain('Pseudocode');
     expect(container.querySelector('[aria-label="Python editor"]')?.getAttribute('data-language')).toBe('pseudocode');
     expect([...container.querySelectorAll('.bug-question-link')].map(item => item.textContent).join(' ')).not.toContain('Find the largest');
     expect(container.querySelector('.bug-examples')?.textContent).toContain('8');
