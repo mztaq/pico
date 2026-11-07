@@ -45,12 +45,18 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Binary Lab']);
+  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Bug Solving','Flowchart Builder','Logic Sim','CPU Studio','Binary Lab']);
   expect(container.querySelector('footer')).toBeNull();
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/team"]')?.textContent).toBe('Pico Team');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
+});
+it('opens the Bug Solving workspace from Home and uses its app route',async()=>{
+  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Bug Solving');
+  await click(choice!);
+  expect(document.title).toBe('Pico | Bug Solving');
+  expect(container.querySelector('.bug-app h1')?.textContent).toBe('Add the numbers');
 });
 it('shows three matching concept developer cards and prominent co-founders',async()=>{
   await act(async()=>{
@@ -202,7 +208,7 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
 
 it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
  expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
- expect(container.querySelectorAll('.compiler-choice')).toHaveLength(6);
+ expect(container.querySelectorAll('.compiler-choice')).toHaveLength(7);
 });
 it('offers both CPU simulation modes and a guided tutorial',async()=>{
  const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');

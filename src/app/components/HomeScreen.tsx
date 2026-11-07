@@ -21,7 +21,7 @@ const HOME_AMBIENT_CURVES = [
   { d: 'M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304', width: 1.3, opacity: .28 },
 ] as const;
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'bugs') => void }) {
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
@@ -117,6 +117,9 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           </WorkspaceChoice>
           <WorkspaceChoice icon={<Code2 size={18} />} tag=".py" title="Python Compiler" description="Run Python with interactive input and debugging." onClick={() => onChoose('python')}>
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
+          </WorkspaceChoice>
+          <WorkspaceChoice icon={<Bug size={18} />} title="Bug Solving" description="Find bugs, fix Python code, and check your solution with tests." onClick={() => onChoose('bugs')}>
+            <div className="compiler-choice-preview home-bug-preview" aria-hidden="true"><code><span>def</span> total(numbers):<br />&nbsp;&nbsp;&nbsp;&nbsp;result = <b>1</b><br />&nbsp;&nbsp;&nbsp;&nbsp;return result</code><span className="home-bug-mark">?</span></div>
           </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Visual labs" detail="Build and explore interactive models" kind="visual">

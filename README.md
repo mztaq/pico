@@ -14,6 +14,7 @@
 
 - **Pseudocode Compiler** — Write, run and debug Cambridge-style pseudocode with interactive input and syntax assistance.
 - **Python Compiler** — Run real Python in your browser, with an editor, console and debugger.
+- **Bug Solving** — Find and fix Python bugs with a themed editor, progressive hints and automated tests.
 - **Flowchart Builder** — Build and run flowcharts, convert them to pseudocode, and import projects from files or pasted JSON.
 - **Logic Sim** — Build and simulate logic circuits, view truth tables, and import circuits from files or pasted JSON.
 - **CPU Studio** — Explore the fetch–decode–execute cycle with animated CPU components and registers.
