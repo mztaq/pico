@@ -26,6 +26,12 @@ const TO_EDGE_PATHS = [
 const THROUGH_EDGE_PATHS = TO_EDGE_PATHS.map(path => path + ' L 645 185 C 740 185 780 185 825 185');
 const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
 
+/** Gradual 14-second rise, with an eased start and finish. Never affects real traffic. */
+export function trafficRamp(seconds: number): number {
+  const progress = Math.max(0, Math.min(1, seconds / 14));
+  return 0.02 + 0.98 * progress * progress * (3 - 2 * progress);
+}
+
 export function forwardedRequests(rps: number, protectedByProxy: boolean): number {
   return Math.round(Math.max(0, rps) * (protectedByProxy ? 1 - PROXY_FILTER_RATIO : 1));
 }
@@ -186,11 +192,11 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       const fan = coolingRef.current;
       const now = ctx.currentTime;
       const load = cpu / 100;
-      fan.filter.frequency.setTargetAtTime(240 + load * 1050, now, 0.25);
-      fan.source.playbackRate.setTargetAtTime(0.8 + load * 0.65, now, 0.25);
-      fan.gain.gain.setTargetAtTime(0.035 + load * 0.16, now, 0.32);
-      fan.hum.frequency.setTargetAtTime(72 + load * 96, now, 0.3);
-      fan.humGain.gain.setTargetAtTime(0.009 + load * 0.014, now, 0.3);
+      fan.filter.frequency.setTargetAtTime(160 + load * 1100, now, 0.55);
+      fan.source.playbackRate.setTargetAtTime(0.65 + load * 0.9, now, 0.55);
+      fan.gain.gain.setTargetAtTime(0.002 + Math.pow(load, 1.6) * 0.18, now, 0.6);
+      fan.hum.frequency.setTargetAtTime(48 + load * 135, now, 0.55);
+      fan.humGain.gain.setTargetAtTime(0.001 + Math.pow(load, 1.5) * 0.022, now, 0.6);
     } catch { /* Unsupported audio never blocks the simulation. */ }
   }, [mode, soundOn, pageVisible, cpu]);
 
@@ -219,7 +225,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       setStats(previous => {
         if (previous.health <= 0) return previous;
         // No real traffic. Each displayed packet and number is a browser-only model.
-        const ramp = Math.min(1, 0.18 + previous.seconds / 4);
+        const ramp = trafficRamp(previous.seconds);
         const variation = 0.96 + 0.045 * Math.sin(now / 330) + 0.035 * Math.sin(now / 860);
         const rps = Math.round(scenario.bots * 1.65 * variation * ramp);
         const forwarded = forwardedRequests(rps, proxyEnabled);
@@ -238,16 +244,18 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     return () => window.clearInterval(id);
   }, [mode, scenario, proxyEnabled]);
 
-  // One quiet synthesized cue per on-screen packet group, capped below 10/s.
-  // Thousands of modeled requests never become thousands of audio oscillators.
+  // Throttle packet sounds and increase their frequency across the gradual ramp.
+  // These represent visible packet groups, never individual real requests.
+  const packetAudioStep = Math.floor(trafficRamp(stats.seconds) * 6);
   useEffect(() => {
     if (mode !== 'running') return;
+    const intervalMs = Math.max(140, 630 - packetAudioStep * 80);
     const id = window.setInterval(() => {
       if (document.hidden || !audioRef.current) return;
       playEffect('packet');
-    }, 130);
+    }, intervalMs);
     return () => window.clearInterval(id);
-  }, [mode]);
+  }, [mode, packetAudioStep]);
 
   useEffect(() => {
     if (mode !== 'running') return;
@@ -288,6 +296,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     return String(x) + ',' + String(y);
   }).join(' ');
   const safeName = scenario?.hacker ?? 'Operator';
+  const visiblePacketCount = Math.max(1, Math.round(30 * trafficRamp(stats.seconds)));
 
   return <main className={'storm-app' + (mode === 'setup' ? ' storm-start' : ' storm-in-session')} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
     <header className="storm-header pico-appbar">
@@ -358,7 +367,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               {(proxyEnabled ? TO_EDGE_PATHS : DIRECT_PATHS).map((path, index) => <path key={index} d={path} className="storm-path"/>)}
               {proxyEnabled && <path d="M 645 185 L 825 185" className="storm-path storm-accepted-path"/>}
               {proxyEnabled && <g className="storm-proxy-edge"><rect x="590" y="133" width="55" height="104" rx="12"/><path d="M 617 149 L 636 158 V 179 Q 635 195 617 205 Q 598 195 598 179 V 158 Z"/><path d="M 607 176 L 614 183 L 628 167"/><text x="617" y="254">FILTERING</text></g>}
-              {mode === 'running' && Array.from({ length: 30 }, (_, index) => <circle key={index} className={'storm-packet' + (proxyEnabled && index % 5 !== 0 ? ' is-filtered' : '')} r={index % 4 === 0 ? 4 : 2.7}><animateMotion path={proxyEnabled ? (index % 5 === 0 ? THROUGH_EDGE_PATHS[index % 4] : TO_EDGE_PATHS[index % 4]) : DIRECT_PATHS[index % 4]} dur={(1.1 + index % 6 * 0.16) + 's'} begin={(-index * 0.12) + 's'} repeatCount="indefinite"/></circle>)}
+              {mode === 'running' && Array.from({ length: visiblePacketCount }, (_, index) => <circle key={index} className={'storm-packet' + (proxyEnabled && index % 5 !== 0 ? ' is-filtered' : '')} r={index % 4 === 0 ? 4 : 2.7}><animateMotion path={proxyEnabled ? (index % 5 === 0 ? THROUGH_EDGE_PATHS[index % 4] : TO_EDGE_PATHS[index % 4]) : DIRECT_PATHS[index % 4]} dur={(1.1 + index % 6 * 0.16) + 's'} begin={(-index * 0.12) + 's'} repeatCount="indefinite"/></circle>)}
               <g className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : stats.health <= 35 ? ' is-critical' : '')}>
                 <rect x="825" y="126" width="99" height="118" rx="13"/>
                 <rect x="841" y="146" width="67" height="24" rx="4"/><rect x="841" y="181" width="67" height="24" rx="4"/><rect x="841" y="216" width="67" height="14" rx="4"/>
@@ -382,7 +391,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             <div className="storm-system-health">
               <div className={'storm-server-icon' + (mode === 'offline' ? ' is-offline' : '')}><Server size={32}/></div>
               <div><span>WEBSITE STATUS</span><strong className={mode === 'offline' ? 'storm-danger' : ''}>{status}</strong><small>{mode === 'offline' ? 'Connection lost' : 'Response: ' + responseMs + ' ms'}</small></div>
-              <div className={'storm-fan' + (mode !== 'running' ? ' stopped' : '')} style={{ '--storm-fan-duration': Math.max(0.22, 2.6 - cpu / 42).toFixed(2) + 's' } as CSSProperties}><Fan size={31}/><small>{mode === 'offline' ? 'FAN STOPPED' : mode === 'paused' ? 'FAN PAUSED' : 'COOLING FAN'}</small></div>
+              <div className={'storm-fan' + (mode !== 'running' ? ' stopped' : '')} style={{ '--storm-fan-duration': Math.max(0.26, 3.1 - cpu / 39).toFixed(2) + 's' } as CSSProperties}><Fan size={31}/><small>{mode === 'offline' ? 'FAN STOPPED' : mode === 'paused' ? 'FAN PAUSED' : 'COOLING FAN'}</small></div>
             </div>
             <div className="storm-cpu-row"><span>CPU load</span><strong>{cpu}%</strong></div>
             <div className="storm-meter"><i style={{width:cpu+'%'}}/></div>
