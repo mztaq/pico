@@ -1272,3 +1272,29 @@
 @media(prefers-reduced-motion:reduce){
   .storm-identity-input{transition:none!important}
 }
+
+/* Quiet annotations explain each network stage without covering the hardware. */
+.storm-network-svg .storm-diagram-annotations{pointer-events:none}
+.storm-network-svg .storm-diagram-annotation rect{
+  fill:color-mix(in srgb,var(--ds-panel) 91%,var(--ds-text) 9%);
+  stroke:var(--ds-line-strong);stroke-width:1;
+}
+.storm-network-svg .storm-diagram-annotation text{
+  fill:var(--ds-muted);font:650 11px var(--ds-font-ui);
+  letter-spacing:0;text-anchor:middle;
+}
+.storm-network-svg .storm-diagram-annotation--accent rect{
+  stroke:color-mix(in srgb,var(--accent) 48%,var(--ds-line));
+}
+.storm-network-svg .storm-diagram-annotation--accent text{fill:var(--accent)}
+.storm-network-svg .storm-diagram-annotation--danger rect{
+  stroke:color-mix(in srgb,var(--ds-danger) 55%,var(--ds-line));
+}
+.storm-network-svg .storm-diagram-annotation--danger text{fill:var(--ds-danger)}
+.storm-network-svg .storm-diagram-annotation--success rect{
+  stroke:color-mix(in srgb,var(--ds-success) 49%,var(--ds-line));
+}
+.storm-network-svg .storm-diagram-annotation--success text{fill:var(--ds-success)}
+@media(max-width:700px){
+  .storm-network-svg .storm-diagram-annotation text{font-size:12px}
+}
