@@ -1021,7 +1021,11 @@
   font-size:0;
   line-height:1;
   letter-spacing:0;
-  animation:none;
+  animation:storm-high-traffic-flash .9s ease-in-out infinite;
+}
+@keyframes storm-high-traffic-flash{
+  0%,100%{opacity:1;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent),0 0 18px color-mix(in srgb,var(--accent) 30%,transparent);background:color-mix(in srgb,var(--accent) 26%,var(--ds-panel))}
+  50%{opacity:.28;box-shadow:0 0 0 0 transparent,0 0 0 transparent;background:color-mix(in srgb,var(--accent) 5%,var(--ds-panel))}
 }
 .storm-in-session .storm-metric-incoming>.storm-traffic-warning svg{
   display:block;
@@ -1176,4 +1180,12 @@
   }
   .storm-in-session .storm-live-bot-army label{font-size:13px}
   .storm-in-session .storm-live-bot-army output{font-size:13px}
+}
+
+/* Low-motion preference: keep a visible, non-flashing high-traffic indicator. */
+@media(prefers-reduced-motion:reduce){
+  .storm-in-session .storm-metric-incoming>.storm-traffic-warning{
+    animation:none!important;
+    opacity:1!important;
+  }
 }
