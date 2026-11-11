@@ -474,7 +474,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   // Audible confirmation for successful *visible groups* of delivered requests.
   // Actual modeled RPS is much higher, so a bounded rate avoids stacked audio.
-  const deliveryAudioInterval = deliverySoundIntervalMs(Math.min(deliveredRps, SERVER_CAPACITY * serverCount));
+  const deliveryAudioInterval = stats.health > 0 ? deliverySoundIntervalMs(Math.min(deliveredRps, SERVER_CAPACITY * serverCount)) : null;
   useEffect(() => {
     if (mode !== 'running' || !soundOn || !pageVisible || deliveryAudioInterval === null) return;
     const timer = window.setInterval(() => {
@@ -592,7 +592,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
           Enter simulation <ArrowRight size={17} aria-hidden="true"/>
         </button>
       </form>
-      <p className="storm-identity-note">Browser-only simulation. No real traffic is sent.</p>
     </section> : <div className="storm-session">
       <div className="storm-intro">
         <div className="storm-titleline"><h1>Traffic Storm<span>.</span></h1></div>
