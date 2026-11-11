@@ -34,10 +34,21 @@ const SERVER_IN_X = 990;
 const networkPositions = (count: number): number[] =>
   Array.from({ length: count }, (_, i) => 60 + 405 * (i + 1) / (count + 1));
 
-/** Keep the WEBSERVER heading a consistent 18px above the first chassis. */
+/** Keep stage headings 18 SVG units above the first corresponding chassis. */
+const headingAboveNode = (centerY: number, halfHeight: number): number => centerY - halfHeight - 18;
+
+export function botnetHeadingY(): number {
+  return headingAboveNode(BOT_Y[0], 29);
+}
+
+export function proxyHeadingY(count: number): number {
+  const firstProxyY = networkPositions(Math.max(1, Math.min(4, Math.floor(count))))[0];
+  return headingAboveNode(firstProxyY, 34);
+}
+
 export function webserverHeadingY(count: number): number {
   const firstServerY = networkPositions(Math.max(1, Math.min(4, Math.floor(count))))[0];
-  return firstServerY - 55;
+  return headingAboveNode(firstServerY, 37);
 }
 
 export function botLanePath(bot: number, serverY: number, proxyY: number | null): string {
@@ -532,7 +543,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </div>
 
       <section className="storm-metrics" aria-label="Simulation metrics">
-        <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficWarning && <span className="storm-traffic-warning" role="status" aria-label="Rapid traffic increase detected" title="Rapid traffic increase">!</span>}</div>
+        <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficWarning && <span className="storm-traffic-warning" role="status" aria-label="Rapid traffic increase detected" title="Rapid traffic increase"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9.3" y="2.2" width="5.4" height="14" rx="2.5" fill="currentColor"/><circle cx="12" cy="20.2" r="2.9" fill="currentColor"/></svg></span>}</div>
         <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
         <div className="storm-metric"><span>RESPONSE TIME</span><strong>{responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
@@ -545,8 +556,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             <svg ref={networkRef} viewBox="0 0 1200 465" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four botnet groups, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every animated packet follows a drawn connection.'}>
               <g className="storm-stage-titles">
                 
-                <text x="400" y="38">BOTNET</text>
-                {proxyEnabled && <text x="750" y="38">{deviceHeading('PROXY', 'PROXIES', proxyCount)}</text>}
+                <text x="400" y={botnetHeadingY()}>BOTNET</text>
+                {proxyEnabled && <text x="750" y={proxyHeadingY(proxyCount)}>{deviceHeading('PROXY', 'PROXIES', proxyCount)}</text>}
                 <text x="1075" y={webserverHeadingY(serverCount)}>{deviceHeading('WEBSERVER', 'WEBSERVERS', serverCount)}</text>
               </g>
               <g className="storm-diagram-routes">
