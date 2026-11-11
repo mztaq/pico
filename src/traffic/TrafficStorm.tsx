@@ -82,6 +82,19 @@ export function trafficRamp(seconds: number): number {
   return 0.003 + 0.997 * progress * progress * (3 - 2 * progress);
 }
 
+/** Short, uneven modeled bursts, rather than a nearly flat sine wave.
+ * This varies only the browser simulation and never sends real requests.
+ */
+export function trafficSpikeFactor(seconds: number): number {
+  const t = Math.max(0, seconds);
+  const burst = Math.abs(Math.sin(t * 2.75) * Math.sin(t * 5.85));
+  return 0.90 + 0.45 * burst;
+}
+
+export function deviceHeading(singular: string, plural: string, count: number): string {
+  return count === 1 ? singular : plural;
+}
+
 /** A visible idle spin starts as soon as the simulation runs, before heavy CPU load. */
 export function coolingFanDemand(cpu: number, running: boolean): number {
   return running ? Math.max(0.34, Math.min(1, Math.max(0, cpu) / 100)) : 0;
@@ -381,7 +394,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         if (previous.health <= 0) return previous;
         // No real traffic. Each displayed packet and number is a browser-only model.
         const ramp = trafficRamp(previous.seconds);
-        const variation = 0.96 + 0.045 * Math.sin(now / 330) + 0.035 * Math.sin(now / 860);
+        const variation = trafficSpikeFactor(previous.seconds);
         const rps = Math.round(scenario.bots * BOT_REQUEST_RATE * variation * ramp);
         const forwarded = forwardedRequests(rps, proxyCount);
         const overload = forwarded / (SERVER_CAPACITY * serverCount);
@@ -474,7 +487,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const serverTrafficLabel = formatTraffic(arriving);
   const points = stats.history.map((value, index) => {
     const x = stats.history.length <= 1 ? 0 : index / (stats.history.length - 1) * 600;
-    const y = 82 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * 1.9)) * 74;
+    const y = 82 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * BOT_REQUEST_RATE * 1.5)) * 74;
     return String(x) + ',' + String(y);
   }).join(' ');
   const safeName = scenario?.hacker ?? 'Operator';
@@ -563,13 +576,13 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             <div className="storm-panel-heading"><h2>Network traffic</h2></div>
             <svg ref={networkRef} viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
               <g className="storm-stage-titles">
-                <text x="140" y="30">HACKER</text>
-                <text x="370" y="30">BOTNET · {compact(scenario?.bots ?? 0)}</text>
-                <text x="750" y="30">{proxyEnabled ? 'PROXIES · ' + proxyCount : 'NO PROXIES'}</text>
-                <text x="1075" y="30">SERVERS · {serverCount}</text>
+                
+                <text x="400" y="38">BOTNET</text>
+                {proxyEnabled && <text x="750" y="38">{deviceHeading('PROXY', 'PROXIES', proxyCount)}</text>}
+                <text x="1075" y="38">{deviceHeading('WEBSERVER', 'WEBSERVERS', serverCount)}</text>
               </g>
               <g className="storm-diagram-routes">
-                {BOT_Y.map(y => <path key={'control-' + y} d={'M 215 251 C 253 251 255 ' + y + ' 292 ' + y} className="storm-controller-line"/>)}
+                {BOT_Y.map(y => <path key={'control-' + y} d={'M 215 251 C 275 251 300 ' + y + ' 350 ' + y} className="storm-controller-line"/>)}
                 {BOT_Y.map((_, index) => <path key={'attack-link-' + index} id={'storm-attack-link-' + index}
                   d={botLanePath(index, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)}
                   className="storm-network-link storm-network-link--attack"/>)}
@@ -583,6 +596,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>
 
               <g className="storm-hacker-node">
+                <text x="140" y="173" className="storm-hacker-heading">HACKER</text>
                 <rect x="63" y="187" width="154" height="145" rx="18" className="storm-hacker-shell"/>
                 <circle cx="140" cy="260" r="55" className="storm-hacker-emblem-bg"/>
                 <path d="M 140 210 C 110 210 91 239 91 267 C 91 286 101 302 116 310 L 125 297 C 115 290 110 278 111 264 C 112 245 125 231 140 231 C 155 231 168 245 169 264 C 170 278 165 290 155 297 L 164 310 C 180 302 189 285 189 267 C 189 239 170 210 140 210 Z" className="storm-hacker-hood"/>
@@ -593,8 +607,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>
 
               {BOT_Y.map((y, index) => <g key={y} className="storm-bot-node">
-                <rect x="292" y={y - 29} width="158" height="58" rx="11" className="storm-device-shell"/>
-                <g transform={'translate(324 ' + y + ')'} className="storm-bot-emblem">
+                <rect x="350" y={y - 29} width="100" height="58" rx="11" className="storm-device-shell"/>
+                <g transform={'translate(400 ' + y + ')'} className="storm-bot-emblem">
                   <circle r="21" className="storm-bot-emblem-bg"/>
                   <path d="M 0 -13 V -18" className="storm-bot-antenna"/>
                   <circle cy="-19" r="3.2" className="storm-bot-antenna-light"/>
@@ -602,9 +616,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   <path d="M -9 -3 L -3 0 L -5 4 L -11 0 Z M 9 -3 L 3 0 L 5 4 L 11 0 Z" className="storm-bot-eyes"/>
                   <path d="M -6 8 H 6" className="storm-bot-mouth"/>
                 </g>
-                <path d={'M 355 ' + (y - 11) + ' h 74 M 355 ' + (y + 6) + ' h 53'} className="storm-bot-vents"/>
-                <text x="372" y={y - 39} className="storm-device-name">BOT 0{index + 1}</text>
-                <circle cx="431" cy={y + 15} r="2.5" className="storm-bot-led"/>
               </g>)}
               <g className="storm-real-node">
                 <rect x="292" y={REAL_USER_Y - 27} width="158" height="54" rx="11"/>
@@ -616,7 +627,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
               {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoads[index] > 1 ? ' is-overloaded' : proxyLoads[index] > 0.8 ? ' is-busy' : '')}>
                 <rect x="710" y={y - 34} width="80" height="68" rx="11" className="storm-proxy-shell"/>
-                <text x="750" y={y - 22} className="storm-proxy-number">PROXY {index + 1}</text>
                 <circle cx="750" cy={y + 6} r="24" className="storm-proxy-ring"/>
                 <path d={'M 750 ' + (y - 14) + ' v 2 M 750 ' + (y + 24) + ' v 2'} className="storm-proxy-link"/>
                 <rect x="733" y={y - 10} width="34" height="13" rx="3" className="storm-proxy-rack"/>
@@ -629,7 +639,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
               {serverYs.map((y, index) => <g key={'server-' + index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : serverLoads[index] > 1 ? ' is-critical' : '')}>
                 <rect x="990" y={y - 36} width="170" height="72" rx="10" className="storm-server-shell"/>
-                <text x="1048" y={y - 21} className="storm-server-name">SERVER 0{index + 1}</text>
                 <rect x="1002" y={y - 12} width="92" height="37" rx="5" className="storm-server-rack"/>
                 <rect x="1010" y={y - 6} width="76" height="10" rx="2" className="storm-server-slot"/>
                 <rect x="1010" y={y + 10} width="76" height="8" rx="2" className="storm-server-slot"/>
