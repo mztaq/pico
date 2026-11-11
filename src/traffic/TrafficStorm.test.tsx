@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, appendPingHistory, botLanePath, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, visualSurvivorCount, type PingEntry } from './TrafficStorm';
+import { TrafficStorm, appendPingHistory, botLanePath, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, visualSurvivorCount, type PingEntry } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -9,7 +9,10 @@ describe('Traffic Storm setup', () => {
     expect(html).toContain('Traffic Storm');
     expect(html).toContain('Hacker name');
     expect(html).toContain('Botnet army size');
-    expect(html).toContain('Server IP address');
+    expect(html).toContain('Generated server IP');
+    expect(html).toContain('Generate IP');
+    expect(html).toContain('readOnly=""');
+    expect(html).not.toContain('placeholder="203.0.113.10"');
     expect(html).toContain('Start simulation');
     expect(html).toContain('Web servers');
     expect(html).toContain('Defensive proxies');
@@ -19,6 +22,17 @@ describe('Traffic Storm setup', () => {
     expect(html).not.toContain('NETWORK LAB');
     expect(html).not.toContain('LOCAL MODEL');
     expect(html).not.toContain('LIVE TRAFFIC VISUALIZATION');
+    expect(html).not.toContain('storm-ping-activity');
+  });
+
+  it('generates only reserved documentation IP addresses without manual entry', () => {
+    expect(generateDemoIp(() => 0)).toBe('192.0.2.1');
+    expect(generateDemoIp(() => 0.5)).toBe('198.51.100.128');
+    expect(generateDemoIp(() => 0.999999)).toBe('203.0.113.254');
+    for (const sample of [0, 0.1, 0.34, 0.55, 0.67, 0.99, 1, -1]) {
+      const ip = generateDemoIp(() => sample);
+      expect(/^(192\.0\.2|198\.51\.100|203\.0\.113)\.(?:[1-9]|[1-9]\d|1\d\d|2[0-4]\d|25[0-4])$/.test(ip)).toBe(true);
+    }
   });
 
   it('formats modeled bandwidth in Gbps and Tbps', () => {
@@ -96,12 +110,12 @@ describe('Traffic Storm setup', () => {
     const direct = botLanePath(0, 220, null);
     const realUser = realUserLanePath(220, 260);
 
-    expect(incoming.startsWith('M 450 88 C ')).toBe(true);
+    expect(incoming.startsWith('M 450 92 C ')).toBe(true);
     expect(incoming.endsWith('710 260')).toBe(true);
     expect(accepted.startsWith('M 790 260 C ')).toBe(true);
     expect(accepted.endsWith('990 220')).toBe(true);
     expect(direct.endsWith('990 220')).toBe(true);
-    expect(realUser.startsWith('M 450 407 C ')).toBe(true);
+    expect(realUser.startsWith('M 450 470 C ')).toBe(true);
     expect(realUser.endsWith('710 260')).toBe(true);
     for (const path of [incoming, accepted, direct, realUser]) {
       expect(path).not.toMatch(/(?:NaN|undefined|null)/);
