@@ -57,8 +57,25 @@ describe('Visual workspace loading skeletons',()=>{
     expect(html).not.toContain('pico-load-cpu-registers');
     expect(html).not.toContain('pico-load-cpu-memory');
     const css=read('src/app/components/workspace-loading.css');
-    expect(css).toContain('var(--accent,var(--pico-boot-accent,#cba6f7))');
+    expect(css).toContain('--pico-storm-load-bg:var(--pico-boot-bg,#1e1e2e)');
+    expect(css).toContain('--pico-storm-load-accent:var(--pico-boot-accent,#cba6f7)');
+    expect(css).toContain('--pico-storm-load-accent:var(--accent)');
+    expect(css).toContain('background:var(--pico-storm-load-bg)');
+    expect(css).not.toContain('var(--accent,var(--pico-boot-accent,#cba6f7))');
     expect(css).toContain('data-loading-workspace="Traffic Storm"');
+  });
+
+  it('keeps the saved theme during the HTML-to-React loading transition',()=> {
+    const css=read('src/app/components/workspace-loading.css');
+    const rootDefaults=read('src/app/styles/app.css');
+    const page=read('index.html');
+    expect(rootDefaults).toContain('--accent: #0e7ad3');
+    expect(css).toContain('--pico-storm-load-accent:var(--pico-boot-accent,#cba6f7)');
+    expect(css).toContain('--pico-load-shimmer-b:color-mix(in srgb,var(--pico-storm-load-accent)');
+    expect(css).toContain('--pico-storm-load-bg:var(--pico-boot-bg,#1e1e2e)');
+    expect(css).toContain('.pico-app .pico-load-stage[data-loading-workspace="Traffic Storm"]');
+    expect(page).toContain("'--pico-boot-accent'");
+    expect(page).toContain("'--pico-boot-bg'");
   });
 
   it('uses the saved theme for the first Traffic Storm skeleton before React starts',()=> {
