@@ -615,14 +615,15 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>
 
               {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoads[index] > 1 ? ' is-overloaded' : proxyLoads[index] > 0.8 ? ' is-busy' : '')}>
-                <rect x="710" y={y - 31} width="80" height="62" rx="11" className="storm-proxy-shell"/>
-                <text x="750" y={y - 18} className="storm-proxy-number">PROXY {index + 1}</text>
-                <circle cx="750" cy={y + 9} r="20" className="storm-proxy-ring"/>
-                <rect x="736" y={y - 5} width="28" height="12" rx="3" className="storm-proxy-rack"/>
-                <rect x="736" y={y + 11} width="28" height="12" rx="3" className="storm-proxy-rack"/>
-                <circle cx="742" cy={y + 1} r="2.5" className="storm-proxy-led"/>
-                <circle cx="742" cy={y + 17} r="2.5" className="storm-proxy-led"/>
-                <path d={'M 750 ' + (y + 1) + ' h 8 M 750 ' + (y + 17) + ' h 8'} className="storm-proxy-slot"/>
+                <rect x="710" y={y - 34} width="80" height="68" rx="11" className="storm-proxy-shell"/>
+                <text x="750" y={y - 22} className="storm-proxy-number">PROXY {index + 1}</text>
+                <circle cx="750" cy={y + 6} r="24" className="storm-proxy-ring"/>
+                <path d={'M 750 ' + (y - 14) + ' v 2 M 750 ' + (y + 24) + ' v 2'} className="storm-proxy-link"/>
+                <rect x="733" y={y - 10} width="34" height="13" rx="3" className="storm-proxy-rack"/>
+                <rect x="733" y={y + 10} width="34" height="13" rx="3" className="storm-proxy-rack"/>
+                <circle cx="740" cy={y - 3.5} r="2.6" className="storm-proxy-led"/>
+                <circle cx="740" cy={y + 16.5} r="2.6" className="storm-proxy-led"/>
+                <path d={'M 750 ' + (y - 3.5) + ' h 11 M 750 ' + (y + 16.5) + ' h 11'} className="storm-proxy-slot"/>
                 {proxyLoads[index] > 1 && <text x="779" y={y - 17} className="storm-proxy-overload">!</text>}
               </g>)}
 
