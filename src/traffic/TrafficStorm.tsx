@@ -34,6 +34,12 @@ const SERVER_IN_X = 990;
 const networkPositions = (count: number): number[] =>
   Array.from({ length: count }, (_, i) => 60 + 405 * (i + 1) / (count + 1));
 
+/** Keep the WEBSERVER heading a consistent 18px above the first chassis. */
+export function webserverHeadingY(count: number): number {
+  const firstServerY = networkPositions(Math.max(1, Math.min(4, Math.floor(count))))[0];
+  return firstServerY - 55;
+}
+
 export function botLanePath(bot: number, serverY: number, proxyY: number | null): string {
   const y = BOT_Y[bot % BOT_Y.length];
   const toX = proxyY === null ? SERVER_IN_X : PROXY_IN_X;
@@ -541,7 +547,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 
                 <text x="400" y="38">BOTNET</text>
                 {proxyEnabled && <text x="750" y="38">{deviceHeading('PROXY', 'PROXIES', proxyCount)}</text>}
-                <text x="1075" y="38">{deviceHeading('WEBSERVER', 'WEBSERVERS', serverCount)}</text>
+                <text x="1075" y={webserverHeadingY(serverCount)}>{deviceHeading('WEBSERVER', 'WEBSERVERS', serverCount)}</text>
               </g>
               <g className="storm-diagram-routes">
                 {BOT_Y.map(y => <path key={'control-' + y} d={'M 215 251 C 275 251 300 ' + y + ' 350 ' + y} className="storm-controller-line"/>)}
