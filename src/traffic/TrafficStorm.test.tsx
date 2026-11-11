@@ -1,28 +1,62 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
+import { TrafficStorm, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deliverySoundIntervalMs, deviceHeading, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, sanitizeHackerName, serverPressure, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
     const html = renderToStaticMarkup(createElement(TrafficStorm, { onHome: () => {} }));
     expect(html).toContain('Traffic Storm');
     expect(html).toContain('Hacker name');
-    expect(html).toContain('Botnet army size');
-    expect(html).toContain('Generated server IP');
-    expect(html).toContain('Generate IP');
-    expect(html).toContain('readOnly=""');
-    expect(html).not.toContain('placeholder="203.0.113.10"');
-    expect(html).toContain('Start simulation');
-    expect(html).toContain('Web servers');
-    expect(html).toContain('Defensive proxies');
-    expect(html).toContain('Add web server');
-    expect(html).toContain('Add defensive proxy');
-    expect(html).toContain('No requests are sent to the IP');
+    expect(html).toContain('Enter simulation');
+    expect(html).toContain('Letters and spaces only');
+    expect(html).toContain('maxLength="24"');
+    expect(html).toContain('No real traffic is sent.');
+    expect(html).not.toContain('Botnet army size');
+    expect(html).not.toContain('Generated server IP');
+    expect(html).not.toContain('Generate IP');
+    expect(html).not.toContain('Start simulation');
+    expect(html).not.toContain('Add web server');
+    expect(html).not.toContain('Add defensive proxy');
+    expect(html).not.toContain('type="range"');
+    expect(html).not.toContain('type="number"');
     expect(html).not.toContain('NETWORK LAB');
     expect(html).not.toContain('LOCAL MODEL');
     expect(html).not.toContain('LIVE TRAFFIC VISUALIZATION');
     expect(html).not.toContain('storm-ping-activity');
+  });
+
+  it('filters digits, emoji and symbols from hacker names', () => {
+    expect(sanitizeHackerName('Amar123!')).toBe('Amar');
+    expect(sanitizeHackerName('  Muhammad  Mustaqim ')).toBe('Muhammad Mustaqim ');
+    expect(sanitizeHackerName('Alex_99!')).toBe('Alex');
+    expect(sanitizeHackerName('Élodie')).toBe('Élodie');
+    expect(sanitizeHackerName('A'.repeat(30))).toHaveLength(24);
+    expect(sanitizeHackerName('🧠')).toBe('');
+  });
+
+  it('requires a sensible 2–24 character letters-only hacker name', () => {
+    expect(validateHackerName('Amar')).toBeNull();
+    expect(validateHackerName('Muhammad Mustaqim')).toBeNull();
+    expect(validateHackerName('Élodie')).toBeNull();
+    expect(validateHackerName('')).toBeTruthy();
+    expect(validateHackerName('A')).toBeTruthy();
+    expect(validateHackerName('1234')).toBeTruthy();
+    expect(validateHackerName('Amar99')).toBeTruthy();
+    expect(validateHackerName('Amar!')).toBeTruthy();
+    expect(validateHackerName('A'.repeat(25))).toBeTruthy();
+  });
+
+  it('sounds a successful delivery chime only for modeled delivered groups, at a bounded cadence', () => {
+    expect(deliverySoundIntervalMs(0)).toBeNull();
+    expect(deliverySoundIntervalMs(-3)).toBeNull();
+    expect(deliverySoundIntervalMs(Number.NaN)).toBeNull();
+    expect(deliverySoundIntervalMs(1)).toBe(760);
+    expect(deliverySoundIntervalMs(2500)).toBe(650);
+    expect(deliverySoundIntervalMs(10000)).toBe(320);
+    expect(deliverySoundIntervalMs(10000000)).toBe(320);
+    expect(deliveredTrafficRps(5000, 2, true)).toBe(0);
+    expect(deliveredTrafficRps(5000, 2, false)).toBeGreaterThan(0);
   });
 
   it('generates only reserved documentation IP addresses without manual entry', () => {
