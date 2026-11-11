@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, httpOutcomes, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, serverPressure, trafficRamp } from './TrafficStorm';
+import { TrafficStorm, botLanePath, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, httpOutcomes, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -107,6 +107,24 @@ describe('Traffic Storm setup', () => {
     expect(offline.ok).toBe(0);
     expect(offline.notFound).toBe(0);
     expect(offline.unavailable).toBe(50000);
+  });
+
+  it('uses exact connected path endpoints for incoming and filtered request packets', () => {
+    const incoming = botLanePath(0, 220, 260);
+    const accepted = relayLanePath(260, 220);
+    const direct = botLanePath(0, 220, null);
+    const realUser = realUserLanePath(220, 260);
+
+    expect(incoming.startsWith('M 450 115 C ')).toBe(true);
+    expect(incoming.endsWith('710 260')).toBe(true);
+    expect(accepted.startsWith('M 790 260 C ')).toBe(true);
+    expect(accepted.endsWith('990 220')).toBe(true);
+    expect(direct.endsWith('990 220')).toBe(true);
+    expect(realUser.startsWith('M 450 470 C ')).toBe(true);
+    expect(realUser.endsWith('710 260')).toBe(true);
+    for (const path of [incoming, accepted, direct, realUser]) {
+      expect(path).not.toMatch(/(?:NaN|undefined|null)/);
+    }
   });
 
 });
