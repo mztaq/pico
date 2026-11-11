@@ -527,63 +527,125 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <div className="storm-left-stack">
           <section className="storm-panel storm-network" aria-label="Animated network traffic">
             <div className="storm-panel-heading"><div><h2>Network traffic</h2></div><span className={'storm-status storm-status--' + status.toLowerCase()}><i/>{status}</span></div>
-            <svg ref={networkRef} viewBox="0 0 1000 370" className="storm-network-svg" role="img" aria-label={'Fictional hacker and botnet feeding ' + proxyCount + ' defensive proxy nodes and ' + serverCount + ' web servers'}>
-              <defs><linearGradient id="storm-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--accent)" stopOpacity=".16"/><stop offset="1" stopColor="var(--accent)" stopOpacity=".75"/></linearGradient><filter id="storm-glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-              <text x="77" y="25" className="storm-diagram-label">HACKER</text>
-              <text x="282" y="25" className="storm-diagram-label">BOTNET · {compact(scenario?.bots ?? 0)}</text>
-              <text x="279" y="295" className="storm-diagram-label storm-real-users-label">REAL USERS · {LEGITIMATE_RPS}/s</text>
-              <text x="881" y="25" className="storm-diagram-label">WEB SERVERS · {serverCount}</text>
-              {proxyEnabled && <><text x="617" y="25" className="storm-diagram-label">PROXIES · {proxyCount}</text><text x="617" y="43" className={'storm-diagram-count' + (proxyLoad > 1 ? ' is-overloaded' : '')}>{proxyState}</text></>}
-              {BOT_Y.map(y => <path key={'controller-' + y} d={'M 113 180 C 166 180 176 ' + y + ' 224 ' + y} className="storm-controller-line"/>)}
-              <g className="storm-hacker-node"><rect x="28" y="123" width="99" height="112" rx="15"/><path d="M 49 176 C 49 143 63 139 77 138 C 91 139 106 143 106 176 L 106 198 C 95 211 59 211 49 198 Z"/><path d="M 60 180 L 70 184 M 84 184 L 94 180"/><rect x="47" y="202" width="60" height="19" rx="4"/><text x="77" y="251">{safeName.slice(0, 12)}</text></g>
-              {BOT_Y.map((y, index) => <g key={y} className="storm-bot-node"><rect x="224" y={y - 22} width="110" height="44" rx="9"/><circle cx="245" cy={y} r="7"/><path d={'M 264 ' + (y - 6) + ' h 44 M 264 ' + (y + 6) + ' h 29'}/><text x="281" y={y - 30}>BOT 0{index + 1}</text></g>)}
-              <g className="storm-real-node"><rect x="224" y="304" width="110" height="43" rx="9"/><circle cx="245" cy="326" r="8"/><path d="M 240 323 a 5 5 0 0 1 10 0 M 234 338 Q 245 326 256 338"/><path d="M 265 321 h 45 M 265 334 h 30"/></g>
-              {BOT_Y.map((_, index) => <path key={index} d={packetPath(index, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)} className="storm-path"/> )}
-              <path d={userPacketPath(serverYs[0], proxyEnabled ? proxyYs[0] : null)} className="storm-user-path"/>
-              {proxyEnabled && <path d={userPacketPath(serverYs[0], proxyYs[0], true)} className="storm-user-path"/>}
-              {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoads[index] > 1 ? ' is-overloaded' : proxyLoads[index] > 0.8 ? ' is-busy' : '')}>
-                <rect x="591" y={y - 23} width="54" height="46" rx="9"/>
-                <rect className="storm-proxy-rack" x="602" y={y - 14} width="32" height="11" rx="3"/>
-                <rect className="storm-proxy-rack" x="602" y={y + 3} width="32" height="11" rx="3"/>
-                <circle className="storm-proxy-led" cx="609" cy={y - 8.5} r="2"/>
-                <circle className="storm-proxy-led" cx="609" cy={y + 8.5} r="2"/>
-                <text x="618" y={y + 34}>P{index + 1}</text>
-                {proxyLoads[index] > 1 && <text x="618" y={y + 46} className="storm-proxy-overload">OVERLOAD</text>}
+            <svg ref={networkRef} viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
+              <defs>
+                <pattern id="storm-network-dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--ds-line-strong)" opacity=".35"/></pattern>
+                <linearGradient id="storm-attack-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--ds-danger)" stopOpacity=".24"/><stop offset="1" stopColor="var(--ds-danger)" stopOpacity=".8"/></linearGradient>
+                <linearGradient id="storm-approved-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--accent)" stopOpacity=".4"/><stop offset="1" stopColor="var(--accent)" stopOpacity=".9"/></linearGradient>
+              </defs>
+              <rect x="0" y="0" width="1200" height="520" className="storm-diagram-ground"/>
+              <rect x="0" y="0" width="1200" height="520" fill="url(#storm-network-dots)" opacity=".37"/>
+              <path d="M 255 58 V 505 M 675 58 V 505 M 952 58 V 505" className="storm-stage-separator"/>
+              <g className="storm-stage-titles">
+                <text x="135" y="30">ATTACK SOURCE</text>
+                <text x="370" y="30">BOTNET · {compact(scenario?.bots ?? 0)}</text>
+                <text x="750" y="30">{proxyEnabled ? 'PROXY SERVERS · ' + proxyCount : 'DIRECT TRAFFIC'}</text>
+                <text x="1075" y="30">WEB SERVERS · {serverCount}</text>
+              </g>
+              <g className="storm-stage-subtitles">
+                <text x="135" y="49">CONTROLLER</text>
+                <text x="370" y="49">4 SIMULATED GROUPS</text>
+                <text x="750" y="49">{proxyEnabled ? proxyState + ' · ' + Math.round(effectiveFilter * 100) + '% FILTERED' : 'NO FILTERING'}</text>
+                <text x="1075" y="49">{mode === 'offline' ? 'UNAVAILABLE' : 'LIVE MONITORING'}</text>
+              </g>
+
+              <g className="storm-diagram-routes">
+                {BOT_Y.map(y => <path key={'control-' + y} d={'M 215 251 C 253 251 255 ' + y + ' 292 ' + y} className="storm-controller-line"/>)}
+                {BOT_Y.map((_, index) => <path key={'attack-link-' + index} id={'storm-attack-link-' + index}
+                  d={botLanePath(index, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)}
+                  className="storm-network-link storm-network-link--attack"/>)}
+                {proxyEnabled && BOT_Y.map((_, index) => <path key={'survivor-link-' + index} id={'storm-survivor-link-' + index}
+                  d={relayLanePath(proxyYs[index % proxyCount], serverYs[index % serverCount])}
+                  className="storm-network-link storm-network-link--approved"/>)}
+                <path id="storm-legitimate-in" d={realUserLanePath(serverYs[0], proxyEnabled ? proxyYs[0] : null)}
+                  className="storm-network-link storm-network-link--legitimate"/>
+                {proxyEnabled && <path id="storm-legitimate-out" d={relayLanePath(proxyYs[0], serverYs[0])}
+                  className="storm-network-link storm-network-link--legitimate"/>}
+              </g>
+
+              <g className="storm-hacker-node">
+                <rect x="63" y="187" width="154" height="145" rx="20" className="storm-hacker-shell"/>
+                <rect x="78" y="203" width="124" height="112" rx="14" className="storm-hacker-inner"/>
+                <path d="M 94 280 C 93 243 107 217 139 215 C 172 217 186 243 184 280 L 177 293 Q 139 302 101 293 Z" className="storm-hacker-hood"/>
+                <path d="M 115 260 l 17 5 M 147 265 l 17 -5" className="storm-hacker-eyes"/>
+                <rect x="103" y="287" width="72" height="17" rx="5" className="storm-hacker-keyboard"/>
+                <circle cx="190" cy="211" r="3" className="storm-hacker-status"/>
+                <text x="140" y="357" className="storm-hacker-name">{safeName.slice(0, 14)}</text>
+              </g>
+
+              {BOT_Y.map((y, index) => <g key={y} className="storm-bot-node">
+                <rect x="292" y={y - 29} width="158" height="58" rx="12" className="storm-device-shell"/>
+                <rect x="307" y={y - 15} width="28" height="30" rx="7" className="storm-bot-avatar"/>
+                <path d={'M 320 ' + (y - 8) + ' v 8 M 314 ' + (y + 6) + ' q 6 -8 12 0'} className="storm-bot-face"/>
+                <path d={'M 346 ' + (y - 10) + ' h 84 M 346 ' + (y + 4) + ' h 57'} className="storm-bot-vents"/>
+                <text x="367" y={y - 39} className="storm-device-name">BOT 0{index + 1}</text>
+                <circle cx="429" cy={y + 13} r="3" className="storm-bot-led"/>
               </g>)}
-              {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) => {
-                const path = packetPath(index % 4, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null, proxyEnabled);
-                return <circle key={'flood-' + index} className="storm-packet storm-packet-attack" r={index % 4 === 0 ? 3.7 : 2.6}><animateMotion path={path} dur={(0.42 + index % 5 * 0.065) + 's'} begin={(-index * 0.075) + 's'} repeatCount="indefinite"/></circle>;
-              })}
-              {mode === 'running' && proxyEnabled && Array.from({length:Math.max(1, Math.round(visiblePacketCount * (1 - effectiveFilter)))}, (_, index) =>
-                <circle key={'survivor-' + index} className="storm-packet storm-packet-survivor" r="3.2">
-                  <animateMotion path={acceptedAttackPath(serverYs[index % serverCount], proxyYs[index % proxyCount])} dur={(1.2 + index % 4 * 0.17) + 's'} begin={(-index * 0.37) + 's'} repeatCount="indefinite"/>
+              <g className="storm-real-node">
+                <rect x="292" y={REAL_USER_Y - 27} width="158" height="54" rx="12"/>
+                <circle cx="321" cy={REAL_USER_Y - 3} r="8"/>
+                <path d={'M 307 ' + (REAL_USER_Y + 13) + ' q 14 -18 28 0'}/>
+                <path d={'M 345 ' + (REAL_USER_Y - 8) + ' h 84 M 345 ' + (REAL_USER_Y + 6) + ' h 55'}/>
+                <text x="370" y={REAL_USER_Y - 39} className="storm-real-users-label">REAL USERS · {LEGITIMATE_RPS}/s</text>
+              </g>
+
+              {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoads[index] > 1 ? ' is-overloaded' : proxyLoads[index] > 0.8 ? ' is-busy' : '')}>
+                <rect x="710" y={y - 31} width="80" height="62" rx="13" className="storm-proxy-shell"/>
+                <rect x="723" y={y - 18} width="54" height="17" rx="4" className="storm-proxy-rack"/>
+                <rect x="723" y={y + 4} width="54" height="17" rx="4" className="storm-proxy-rack"/>
+                <circle cx="733" cy={y - 9} r="3" className="storm-proxy-led"/>
+                <circle cx="733" cy={y + 12} r="3" className="storm-proxy-led"/>
+                <path d={'M 744 ' + (y - 9) + ' h 22 M 744 ' + (y + 12) + ' h 22'} className="storm-proxy-slot"/>
+                <text x="750" y={y + 45} className="storm-proxy-number">PROXY {index + 1}</text>
+                {proxyLoads[index] > 1 && <text x="750" y={y + 58} className="storm-proxy-overload">OVERLOADED</text>}
+              </g>)}
+
+              {serverYs.map((y, index) => <g key={'server-' + index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : serverLoads[index] > 1 ? ' is-critical' : '')}>
+                <rect x="990" y={y - 36} width="170" height="72" rx="13" className="storm-server-shell"/>
+                <rect x="1003" y={y - 24} width="89" height="48" rx="7" className="storm-server-rack"/>
+                <rect x="1010" y={y - 17} width="76" height="14" rx="3" className="storm-server-slot"/>
+                <rect x="1010" y={y + 6} width="76" height="13" rx="3" className="storm-server-slot"/>
+                {[y - 10, y + 12].map(ledY => <circle key={ledY} cx="1019" cy={ledY} r="3" className="storm-led"/>)}
+                {[1115, 1140].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + y + ')'} className="storm-rack-fan">
+                  <circle r="12" className="storm-fan-ring"/>
+                  <circle r="9" className="storm-fan-shroud"/>
+                  <g className="storm-fan-rotor">
+                    {[0,90,180,270].map(angle => <path key={angle} transform={'rotate(' + angle + ')'} d="M -1 -1 Q -11 -12 1 -9 Q 8 -7 3 -1 Z" className="storm-fan-blade"/>)}
+                  </g>
+                  <circle r="2.4" className="storm-fan-hub"/>
+                </g>)}
+                <text x="1049" y={y - 41} className="storm-server-name">SERVER 0{index + 1}</text>
+                <text x="1073" y={y + 51} className="storm-server-caption">{mode === 'offline' ? 'OFFLINE' : serverLoads[index] > 1 ? 'HIGH LOAD' : 'RESPONDING'}</text>
+              </g>)}
+
+              {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) =>
+                <circle key={'attack-' + index} className="storm-packet-attack" r={index % 4 === 0 ? 3.5 : 2.6}>
+                  <animateMotion dur={(0.42 + index % 5 * 0.055) + 's'} begin={(-index * 0.075) + 's'} repeatCount="indefinite">
+                    <mpath href={'#storm-attack-link-' + (index % 4)}/>
+                  </animateMotion>
+                </circle>
+              )}
+              {mode === 'running' && proxyEnabled && Array.from({length:Math.max(0, Math.round(visiblePacketCount * (1 - effectiveFilter)))}, (_, index) =>
+                <circle key={'approved-' + index} className="storm-packet-survivor" r="3">
+                  <animateMotion dur={(1.2 + index % 4 * 0.14) + 's'} begin={(-index * 0.29) + 's'} repeatCount="indefinite">
+                    <mpath href={'#storm-survivor-link-' + (index % 4)}/>
+                  </animateMotion>
                 </circle>
               )}
               {mode === 'running' && Array.from({length:3}, (_, index) =>
-                <circle key={'user-in-' + index} className="storm-packet-user" r="3.5">
-                  <animateMotion path={userPacketPath(serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)} dur={proxyEnabled ? '0.9s' : '1.3s'} begin={(-index * 0.36) + 's'} repeatCount="indefinite"/>
+                <circle key={'real-in-' + index} className="storm-packet-user" r="3.7">
+                  <animateMotion dur="1.15s" begin={(-index * 0.41) + 's'} repeatCount="indefinite">
+                    <mpath href="#storm-legitimate-in"/>
+                  </animateMotion>
                 </circle>
               )}
               {mode === 'running' && proxyEnabled && Array.from({length:2}, (_, index) =>
-                <circle key={'user-out-' + index} className="storm-packet-user" r="3.5">
-                  <animateMotion path={userPacketPath(serverYs[index % serverCount], proxyYs[index % proxyCount], true)} dur="1.35s" begin={(-index * 0.52) + 's'} repeatCount="indefinite"/>
+                <circle key={'real-out-' + index} className="storm-packet-user" r="3.7">
+                  <animateMotion dur="1.55s" begin={(-index * 0.7) + 's'} repeatCount="indefinite">
+                    <mpath href="#storm-legitimate-out"/>
+                  </animateMotion>
                 </circle>
               )}
-              {serverYs.map((y, index) => <g key={'server-'+index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : stats.health <= 35 ? ' is-critical' : '')}>
-                <rect x="825" y={y - 27} width="112" height="54" rx="9"/>
-                <rect x="838" y={y - 15} width="48" height="11" rx="3"/><rect x="838" y={y + 4} width="48" height="11" rx="3"/>
-                {[y - 9, y + 10].map(ledY => <circle key={ledY} cx="845" cy={ledY} r="2.8" className="storm-led"/>)}
-                {[899, 922].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + y + ')'} className="storm-rack-fan">
-                  <circle r="10" className="storm-fan-ring"/>
-                  <circle r="7.6" className="storm-fan-shroud"/>
-                  <g className="storm-fan-rotor">
-                    {[0, 90, 180, 270].map(angle => <path key={angle} transform={'rotate(' + angle + ')'} d="M -1 -1 Q -9 -11 1 -8 Q 6 -7 3 -1 Z" className="storm-fan-blade"/>)}
-                  </g>
-                  <circle r="2" className="storm-fan-hub"/>
-                </g>)}
-                <text x="881" y={y + 40}>SERVER {index + 1}</text>
-              </g>)}
-              {mode === 'offline' && <text x="881" y="362" className="storm-offline-caption">WEBSITE OFFLINE</text>}
             </svg>
             <div className="storm-network-foot"><span className="storm-legend-attack"><i/> Attack</span><span className="storm-legend-real"><i/> Real users</span><span>{serverCount} servers · {proxyCount} proxies</span><span>{stats.seconds.toFixed(1)}s</span></div>
           </section>
