@@ -1140,3 +1140,40 @@
   .storm-in-session .storm-metric-incoming>.storm-traffic-warning{top:8px;right:8px;width:33px;height:33px;min-width:33px}
   .storm-in-session .storm-metric-incoming>.storm-traffic-warning svg{width:26px;height:26px}
 }
+/* Live botnet sizing sits alongside the server and proxy node controls. */
+.storm-in-session .storm-infra-bar{flex-wrap:wrap;row-gap:9px}
+.storm-in-session .storm-live-bot-army{
+  display:grid;grid-template-columns:auto minmax(110px,1fr) auto;
+  align-items:center;column-gap:12px;
+  flex:1 1 255px;max-width:390px;min-width:235px;
+  margin-left:auto;padding:3px 0 3px 14px;
+  border-left:1px solid var(--ds-line);
+}
+.storm-in-session .storm-live-bot-army label{
+  color:var(--ds-text);font:700 14px var(--ds-font-ui);white-space:nowrap;
+}
+.storm-in-session .storm-live-bot-army input[type="range"]{
+  display:block;width:100%;min-width:0;height:20px;margin:0;
+  accent-color:var(--accent);cursor:pointer;
+}
+.storm-in-session .storm-live-bot-army input:focus-visible{
+  outline:2px solid var(--accent);outline-offset:3px;border-radius:3px;
+}
+.storm-in-session .storm-live-bot-army output{
+  min-width:52px;text-align:right;white-space:nowrap;
+  color:var(--accent);font:700 14px var(--ds-font-code);
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:1080px){
+  .storm-in-session .storm-live-bot-army{margin-left:0;max-width:none}
+  .storm-in-session .storm-infra-bar{overflow-x:visible}
+}
+@media(max-width:700px){
+  .storm-in-session .storm-live-bot-army{
+    flex:1 1 100%;width:100%;min-width:0;
+    border-left:0;border-top:1px solid var(--ds-line);
+    padding:10px 2px 3px;column-gap:10px;
+  }
+  .storm-in-session .storm-live-bot-army label{font-size:13px}
+  .storm-in-session .storm-live-bot-army output{font-size:13px}
+}
