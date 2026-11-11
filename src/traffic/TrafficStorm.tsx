@@ -11,6 +11,7 @@ const SERVER_CAPACITY = 3200;
 const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measured bandwidth.
 const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const PROXY_CAPACITY = 60_000; // Illustrative requests/sec per defensive proxy, not real hardware throughput.
+export const FAN_BLADE_ANGLES = [0, 72, 144, 216, 288] as const;
 
 /** RFC 5737 reserved addresses, used only as simulated server labels. */
 export function generateDemoIp(random: () => number = Math.random): string {
@@ -591,7 +592,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   <circle r="13" className="storm-fan-ring"/>
                   <circle r="11.2" className="storm-fan-shroud"/>
                   <g className="storm-fan-rotor">
-                    {[0, 72, 144, 216, 288].map(angle => <path key={angle} transform={'rotate(' + angle + ')'} d="M 0 -2 C 2 -6 5 -11 9 -10 C 13 -9 11 -4 8 -1 Q 4 2 1 2 Z" className="storm-fan-blade"/>)}
+                    {FAN_BLADE_ANGLES.map(angle => <path key={angle} transform={'rotate(' + angle + ')'} d="M 0 -2 C 2 -6 5 -11 9 -10 C 13 -9 11 -4 8 -1 Q 4 2 1 2 Z" className="storm-fan-blade"/>)}
                   </g>
                   <circle r="2.9" className="storm-fan-hub"/>
                   <path d="M -9 -9 L 9 9 M -9 9 L 9 -9" className="storm-fan-grille"/>
