@@ -507,7 +507,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
       <section className="storm-metrics" aria-label="Simulation metrics">
         <div className="storm-metric"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong></div>
-        <div className="storm-metric"><span>REACHING SERVERS</span><strong>{serverTrafficLabel}</strong><small>{proxyEnabled ? Math.round(effectiveFilter * 100) + '% filtered' : 'Unfiltered'}</small></div>
+        <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong><small>{proxyEnabled ? Math.round(effectiveFilter * 100) + '% filtered' : 'Unfiltered'}</small></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
         <div className="storm-metric"><span>RESPONSE TIME</span><strong>{responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
       </section>
@@ -520,18 +520,44 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               <defs><linearGradient id="storm-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--accent)" stopOpacity=".16"/><stop offset="1" stopColor="var(--accent)" stopOpacity=".75"/></linearGradient><filter id="storm-glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
               <text x="77" y="25" className="storm-diagram-label">HACKER</text>
               <text x="282" y="25" className="storm-diagram-label">BOTNET · {compact(scenario?.bots ?? 0)}</text>
+              <text x="279" y="295" className="storm-diagram-label storm-real-users-label">REAL USERS</text>
               <text x="881" y="25" className="storm-diagram-label">WEB SERVERS · {serverCount}</text>
               {proxyEnabled && <><text x="617" y="25" className="storm-diagram-label">PROXIES · {proxyCount}</text><text x="617" y="43" className={'storm-diagram-count' + (proxyLoad > 1 ? ' is-overloaded' : '')}>{proxyState}</text></>}
               {BOT_Y.map(y => <path key={'controller-' + y} d={'M 113 180 C 166 180 176 ' + y + ' 224 ' + y} className="storm-controller-line"/>)}
               <g className="storm-hacker-node"><rect x="28" y="123" width="99" height="112" rx="15"/><path d="M 49 176 C 49 143 63 139 77 138 C 91 139 106 143 106 176 L 106 198 C 95 211 59 211 49 198 Z"/><path d="M 60 180 L 70 184 M 84 184 L 94 180"/><rect x="47" y="202" width="60" height="19" rx="4"/><text x="77" y="251">{safeName.slice(0, 12)}</text></g>
               {BOT_Y.map((y, index) => <g key={y} className="storm-bot-node"><rect x="224" y={y - 22} width="110" height="44" rx="9"/><circle cx="245" cy={y} r="7"/><path d={'M 264 ' + (y - 6) + ' h 44 M 264 ' + (y + 6) + ' h 29'}/><text x="281" y={y - 30}>BOT 0{index + 1}</text></g>)}
-              {BOT_Y.map((_, index) => <path key={index} d={packetPath(index, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)} className="storm-path"/>)}
-              {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoad > 1 ? ' is-overloaded' : proxyLoad > 0.8 ? ' is-busy' : '')}><rect x="591" y={y - 23} width="54" height="46" rx="10"/><path d={'M 618 ' + (y - 15) + ' l 15 6 v 13 q -2 12 -15 19 q -13 -7 -15 -19 v -13 Z'}/><path d={'M 608 ' + (y - 1) + ' l 7 7 l 14 -15'}/><text x="618" y={y + 34}>P{index + 1}</text>{proxyLoad > 1 && <text x="618" y={y + 46} className="storm-proxy-overload">OVERLOAD</text>}</g>)}
+              <g className="storm-real-node"><rect x="224" y="304" width="110" height="43" rx="9"/><circle cx="245" cy="326" r="8"/><path d="M 240 323 a 5 5 0 0 1 10 0 M 234 338 Q 245 326 256 338"/><path d="M 265 321 h 45 M 265 334 h 30"/></g>
+              {BOT_Y.map((_, index) => <path key={index} d={packetPath(index, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)} className="storm-path"/> )}
+              <path d={userPacketPath(serverYs[0], proxyEnabled ? proxyYs[0] : null)} className="storm-user-path"/>
+              {proxyEnabled && <path d={userPacketPath(serverYs[0], proxyYs[0], true)} className="storm-user-path"/>}
+              {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoads[index] > 1 ? ' is-overloaded' : proxyLoads[index] > 0.8 ? ' is-busy' : '')}>
+                <rect x="591" y={y - 23} width="54" height="46" rx="9"/>
+                <rect className="storm-proxy-rack" x="602" y={y - 14} width="32" height="11" rx="3"/>
+                <rect className="storm-proxy-rack" x="602" y={y + 3} width="32" height="11" rx="3"/>
+                <circle className="storm-proxy-led" cx="609" cy={y - 8.5} r="2"/>
+                <circle className="storm-proxy-led" cx="609" cy={y + 8.5} r="2"/>
+                <text x="618" y={y + 34}>P{index + 1}</text>
+                {proxyLoads[index] > 1 && <text x="618" y={y + 46} className="storm-proxy-overload">OVERLOAD</text>}
+              </g>)}
               {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) => {
-                const blocked = proxyEnabled && index % 100 < Math.round(effectiveFilter * 100);
-                const path = packetPath(index % 4, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null, blocked);
-                return <circle key={index} className={'storm-packet' + (blocked ? ' is-filtered' : '')} r={index % 4 === 0 ? 3.9 : 2.6}><animateMotion path={path} dur={(1.1 + index % 6 * 0.16) + 's'} begin={(-index * 0.12) + 's'} repeatCount="indefinite"/></circle>;
+                const path = packetPath(index % 4, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null, proxyEnabled);
+                return <circle key={'flood-' + index} className="storm-packet storm-packet-attack" r={index % 4 === 0 ? 3.7 : 2.6}><animateMotion path={path} dur={(0.42 + index % 5 * 0.065) + 's'} begin={(-index * 0.075) + 's'} repeatCount="indefinite"/></circle>;
               })}
+              {mode === 'running' && proxyEnabled && Array.from({length:Math.max(1, Math.round(visiblePacketCount * (1 - effectiveFilter)))}, (_, index) =>
+                <circle key={'survivor-' + index} className="storm-packet storm-packet-survivor" r="3.2">
+                  <animateMotion path={acceptedAttackPath(serverYs[index % serverCount], proxyYs[index % proxyCount])} dur={(1.2 + index % 4 * 0.17) + 's'} begin={(-index * 0.37) + 's'} repeatCount="indefinite"/>
+                </circle>
+              )}
+              {mode === 'running' && Array.from({length:3}, (_, index) =>
+                <circle key={'user-in-' + index} className="storm-packet-user" r="3.5">
+                  <animateMotion path={userPacketPath(serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)} dur={proxyEnabled ? '0.9s' : '1.3s'} begin={(-index * 0.36) + 's'} repeatCount="indefinite"/>
+                </circle>
+              )}
+              {mode === 'running' && proxyEnabled && Array.from({length:2}, (_, index) =>
+                <circle key={'user-out-' + index} className="storm-packet-user" r="3.5">
+                  <animateMotion path={userPacketPath(serverYs[index % serverCount], proxyYs[index % proxyCount], true)} dur="1.35s" begin={(-index * 0.52) + 's'} repeatCount="indefinite"/>
+                </circle>
+              )}
               {serverYs.map((y, index) => <g key={'server-'+index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : stats.health <= 35 ? ' is-critical' : '')}>
                 <rect x="825" y={y - 27} width="112" height="54" rx="9"/>
                 <rect x="838" y={y - 15} width="48" height="11" rx="3"/><rect x="838" y={y + 4} width="48" height="11" rx="3"/>
@@ -548,7 +574,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>)}
               {mode === 'offline' && <text x="881" y="362" className="storm-offline-caption">WEBSITE OFFLINE</text>}
             </svg>
-            <div className="storm-network-foot"><span><i/> Simulated traffic</span><span>{serverCount} servers · {proxyCount} proxies</span><span>{stats.seconds.toFixed(1)}s</span></div>
+            <div className="storm-network-foot"><span className="storm-legend-attack"><i/> Attack</span><span className="storm-legend-real"><i/> Real users</span><span>{serverCount} servers · {proxyCount} proxies</span><span>{stats.seconds.toFixed(1)}s</span></div>
           </section>
 
           <section className="storm-panel storm-chart-panel" aria-label="Simulated bandwidth history">
