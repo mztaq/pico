@@ -53,20 +53,6 @@ export function nodeLoadRatio(rps: number, count: number, index: number, capacit
   return Math.max(0, rps) * weights[index] / totalWeight / capacity;
 }
 
-/** Fictional per-second HTTP responses; 404 is a separate missing-path check,
- * not an effect caused by a DDoS flood. */
-export function httpOutcomes(rps: number, proxies: number, servers: number, offline: boolean) {
-  const forwarded = forwardedRequests(rps, proxies);
-  const deniedAtEdge = Math.max(0, rps - forwarded);
-  const rateLimited = Math.round(deniedAtEdge * 0.72);
-  const overflow = Math.max(0, forwarded - servers * SERVER_CAPACITY);
-  const unavailable = offline ? forwarded : Math.round(overflow * 0.26);
-  const timeout = offline ? 0 : Math.round(overflow * 0.15);
-  const notFound = offline ? 0 : 1;
-  const success = offline ? 0 : Math.max(0, forwarded - unavailable - timeout - notFound);
-  return { ok: success, rateLimited, notFound, unavailable, timeout };
-}
-
 const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
 
 /** Slow 16-second startup, easing at both ends. */
