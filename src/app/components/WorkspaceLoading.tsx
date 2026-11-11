@@ -140,6 +140,21 @@ function BinarySkeleton() {
   </div>;
 }
 
+function TrafficStormSkeleton() {
+  return <div className="pico-load-storm-content">
+    <div className="pico-load-storm-entry">
+      <Placeholder className="pico-load-storm-heading" />
+      <Placeholder className="pico-load-storm-label" />
+      <Placeholder className="pico-load-storm-input" />
+      <div className="pico-load-storm-helper">
+        <Placeholder className="pico-load-storm-hint" />
+        <Placeholder className="pico-load-storm-counter" />
+      </div>
+      <Placeholder className="pico-load-storm-button" />
+    </div>
+  </div>;
+}
+
 /** Visible only while React.lazy is fetching the workspace. No artificial delay. */
 export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) {
   return <div className="pico-load-stage" data-loading-workspace={workspace} role="status" aria-live="polite" aria-label={`Opening ${workspace}`}>
@@ -149,7 +164,7 @@ export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) 
       {workspace === 'Flowchart Builder' ? <FlowchartSkeleton /> :
        workspace === 'Logic Sim' ? <LogicSkeleton /> :
        workspace === 'CPU Studio' ? <CpuSkeleton /> :
-       workspace === 'Traffic Storm' ? <CpuSkeleton /> :
+       workspace === 'Traffic Storm' ? <TrafficStormSkeleton /> :
        <BinarySkeleton />}
     </div>
   </div>;
