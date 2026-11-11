@@ -580,7 +580,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
     {mode === 'setup' ? <section className="storm-setup storm-identity-setup" aria-labelledby="storm-setup-title">
       <div className="storm-setup-title storm-identity-title">
-        <h1 id="storm-setup-title">Enter your name<span>.</span></h1>
+        <h1 id="storm-setup-title">Enter hacker name<span>.</span></h1>
       </div>
       <form onSubmit={start} className="storm-setup-form storm-identity-form" noValidate>
         <label htmlFor="storm-hacker-name">Hacker name</label>
