@@ -30,6 +30,16 @@ export function trafficRamp(seconds: number): number {
 }
 
 /** Illustrative clean-traffic filtering before capacity constraints. */
+/** Smooth physical spin-up and spin-down, with a slower wind-down. */
+export function nextFanSpeed(current: number, target: number, dt: number): number {
+  const currentSpeed = Math.max(0, Math.min(1, current));
+  const targetSpeed = Math.max(0, Math.min(1, target));
+  const delta = Math.max(0, Math.min(0.065, dt));
+  const tau = targetSpeed > currentSpeed ? 2.7 : 3.9;
+  const speed = currentSpeed + (targetSpeed - currentSpeed) * (1 - Math.exp(-delta / tau));
+  return targetSpeed === 0 && speed < 0.003 ? 0 : speed;
+}
+
 export function proxyFilterRatio(count: number): number {
   const n = Math.max(0, Math.min(4, Math.floor(count) || 0));
   return [0, 0.86, 0.92, 0.95, 0.97][n];
@@ -256,9 +266,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       previous = now;
       const target = fanTarget.current;
       const motion = fanMotion.current;
-      const tau = target > motion.speed ? 2.7 : 3.9;
-      motion.speed += (target - motion.speed) * (1 - Math.exp(-dt / tau));
-      if (target === 0 && motion.speed < 0.003) motion.speed = 0;
+      motion.speed = nextFanSpeed(motion.speed, target, dt);
       motion.angle = (motion.angle + motion.speed * 790 * dt) % 360;
       const angle = motion.angle.toFixed(1);
       for (const rotor of rotors) rotor.setAttribute('transform', 'rotate(' + angle + ')');
@@ -305,7 +313,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
           health, rps,
           total: previous.total + rps * dt,
           blocked: previous.blocked + (rps - forwarded) * dt,
-          dropped: previous.dropped + Math.max(0, forwarded - SERVER_CAPACITY) * dt,
+          dropped: previous.dropped + Math.max(0, forwarded - SERVER_CAPACITY * serverCount) * dt,
           history: [...previous.history.slice(-65), rps],
         };
       });
@@ -509,7 +517,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               <div className="storm-site-head"><span className="storm-site-led"/><span>example.test</span><strong>{mode === 'offline' ? '503' : responseMs !== null && responseMs > 300 ? 'SLOW' : '200'}</strong></div>
               <p>{mode === 'offline' ? 'Website unavailable' : responseMs !== null && responseMs > 300 ? 'Responding slowly' : 'Website responding'}</p>
             </div>
-            <div className="storm-live-ping" role="status"><span><i className={'storm-ping-dot' + (mode === 'offline' ? ' is-offline' : '')}/> AUTO PING</span><strong>{pingOutput ?? 'Starting…'}</strong></div>
+            <div className="storm-live-ping" role="status" aria-live="off"><span><i className={'storm-ping-dot' + (mode === 'offline' ? ' is-offline' : '')}/> AUTO PING</span><strong>{pingOutput ?? 'Starting…'}</strong></div>
           </section>
         </aside>
       </div>
