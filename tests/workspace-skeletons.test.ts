@@ -120,11 +120,27 @@ describe('Visual workspace loading skeletons',()=>{
     const page=read('index.html');
     expect(rootDefaults).toContain('--accent: #0e7ad3');
     expect(css).toContain('--pico-storm-load-accent:var(--pico-boot-accent,#cba6f7)');
-    expect(css).toContain('--pico-load-shimmer-b:color-mix(in srgb,var(--pico-storm-load-accent)');
+    expect(css).toContain('--pico-load-shimmer-b:color-mix(in srgb,var(--pico-storm-load-bg) 62%,var(--pico-storm-load-accent) 38%)');
     expect(css).toContain('--pico-storm-load-bg:var(--pico-boot-bg,#1e1e2e)');
     expect(css).toContain('.pico-app .pico-load-stage[data-loading-workspace="Traffic Storm"]');
     expect(page).toContain("'--pico-boot-accent'");
     expect(page).toContain("'--pico-boot-bg'");
+  });
+
+  it('uses tinted theme colors rather than gray-white mixes on both loading stages', () => {
+    const css = read('src/app/components/workspace-loading.css');
+    const html = read('index.html');
+    const cssStorm = css.slice(css.indexOf('.pico-load-stage[data-loading-workspace="Traffic Storm"]{'));
+    const htmlStorm = html.slice(
+      html.indexOf('/* Direct Traffic Storm first paint:'),
+      html.indexOf('.pico-app-route .pico-loading{display:none}'),
+    );
+    expect(cssStorm).toContain('--pico-load-surface:color-mix(in srgb,var(--pico-storm-load-bg) 93%,var(--pico-storm-load-accent) 7%)');
+    expect(cssStorm).toContain('--pico-load-shimmer-a:color-mix(in srgb,var(--pico-storm-load-bg) 85%,var(--pico-storm-load-accent) 15%)');
+    expect(cssStorm).not.toContain('--pico-storm-load-fg');
+    expect(htmlStorm).toContain('var(--pico-boot-bg,#1e1e2e) 93%,var(--pico-boot-accent,#cba6f7) 7%');
+    expect(htmlStorm).toContain('var(--pico-boot-bg,#1e1e2e) 62%,var(--pico-boot-accent,#cba6f7) 38%');
+    expect(htmlStorm).not.toContain('var(--pico-boot-foreground,#fff)');
   });
 
   it('uses the saved theme for the first Traffic Storm skeleton before React starts',()=> {
