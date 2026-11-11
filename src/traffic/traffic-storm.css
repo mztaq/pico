@@ -434,3 +434,71 @@
  .storm-in-session .storm-side .storm-server-details{gap:5px}
  .storm-live-ping{padding:7px 9px;gap:3px}
 }
+
+/* Individual web/proxy loads and meaningful simulated HTTP outcomes. */
+.storm-in-session .storm-side>.storm-server-details{display:flex;flex-direction:column;gap:9px;overflow-y:auto;scrollbar-width:thin}
+.storm-node-usage{display:grid;gap:9px;flex:0 0 auto}
+.storm-node-group{display:grid;gap:5px}
+.storm-node-heading{display:flex;align-items:center;gap:6px;color:var(--ds-muted);font:700 10px var(--ds-font-code);letter-spacing:.04em}
+.storm-node-heading svg{color:var(--accent)}
+.storm-node-heading>span{margin-left:auto;font-weight:500;letter-spacing:0;text-transform:none}
+.storm-node-load-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;row-gap:7px}
+.storm-node-load{min-width:0;display:grid;gap:4px}
+.storm-node-load>div:first-child{display:flex;gap:5px;align-items:center;justify-content:space-between;min-width:0;color:var(--ds-muted);font-size:10px}
+.storm-node-load>div:first-child span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.storm-node-load strong{color:var(--ds-text);font:700 11px var(--ds-font-code);white-space:nowrap}
+.storm-node-load strong.storm-danger{color:var(--ds-danger)}
+.storm-node-load .storm-meter{height:5px;margin:0}
+.storm-node-load .storm-meter.is-overloaded>i{background:var(--ds-danger)}
+.storm-node-load .storm-proxy-load-bar>i{background:var(--ds-success)}
+.storm-node-load .storm-proxy-load-bar.is-overloaded>i{background:var(--ds-danger)}
+.storm-http{display:grid;gap:7px;padding-top:9px;border-top:1px solid var(--ds-line)}
+.storm-http-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.storm-http-code{display:grid;justify-items:center;gap:3px;min-width:0;min-height:57px;padding:7px 2px;border:1px solid var(--ds-line);border-radius:7px;background:var(--ds-sunken);text-align:center}
+.storm-http-code>span{color:var(--ds-muted);font:700 12px var(--ds-font-code)}
+.storm-http-code>strong{max-width:100%;color:var(--ds-text);font:700 12px var(--ds-font-code);overflow:hidden;text-overflow:ellipsis}
+.storm-http-code>small{color:var(--ds-muted);font-size:8px;white-space:nowrap}
+.storm-http-code--200>span{color:var(--ds-success)}
+.storm-http-code--429>span,.storm-http-code--504>span{color:var(--accent)}
+.storm-http-code--503>span{color:var(--ds-danger)}
+.storm-in-session .storm-live-ping{display:flex;flex-direction:column;flex:1 1 130px;min-height:112px;max-height:165px;gap:7px;margin-top:3px;padding:9px 10px;border:1px solid var(--ds-line);border-radius:9px;background:var(--ds-sunken);overflow:hidden}
+.storm-ping-terminal-header{display:flex;align-items:center;justify-content:space-between;gap:8px;font:700 10px var(--ds-font-code);color:var(--ds-muted)}
+.storm-ping-terminal-header>span:first-child{display:inline-flex;align-items:center;gap:7px}
+.storm-ping-terminal-header>span:last-child{font-weight:500}
+.storm-ping-terminal-lines{display:flex;flex-direction:column;min-width:0;min-height:0;flex:1;gap:3px;overflow-y:auto;scrollbar-width:thin;color:var(--ds-text);font:10px/1.35 var(--ds-font-code)}
+.storm-ping-terminal-lines>div{flex:0 0 auto;white-space:nowrap}
+.storm-ping-terminal-lines>div:first-child{color:var(--accent)}
+.storm-in-session .storm-server-details .storm-system-health{min-height:68px;padding:9px}
+.storm-in-session .storm-server-details .storm-panel-heading{flex:0 0 auto}
+.storm-in-session .storm-server-details .storm-system-health{flex:0 0 auto}
+.storm-network .storm-packet-attack{fill:var(--ds-danger);filter:url(#storm-glow);opacity:.91}
+.storm-network .storm-packet-survivor{fill:var(--accent);opacity:.9;filter:url(#storm-glow)}
+.storm-network .storm-packet-user{fill:var(--ds-success);opacity:.98;filter:url(#storm-glow)}
+.storm-user-path{fill:none;stroke:var(--ds-success);stroke-width:1.8;stroke-dasharray:5 8;opacity:.75}
+.storm-real-users-label{fill:var(--ds-success)!important}
+.storm-real-node rect{fill:var(--ds-panel-raised);stroke:var(--ds-success);stroke-width:1.4}
+.storm-real-node circle{fill:var(--ds-success);opacity:.95}
+.storm-real-node path{fill:none;stroke:var(--ds-success);stroke-width:1.8;stroke-linecap:round}
+.storm-network-foot .storm-legend-attack i{background:var(--ds-danger)}
+.storm-network-foot .storm-legend-real i{background:var(--ds-success)}
+.storm-proxy-edge .storm-proxy-rack{fill:var(--ds-sunken);stroke:var(--ds-success);stroke-width:.85}
+.storm-proxy-edge .storm-proxy-led{fill:var(--ds-success)}
+.storm-proxy-edge.is-overloaded .storm-proxy-rack{stroke:var(--ds-danger)}
+.storm-proxy-edge.is-overloaded .storm-proxy-led{fill:var(--ds-danger)}
+@media(max-width:1080px){
+ .storm-in-session .storm-side>.storm-server-details{overflow:visible}
+ .storm-in-session .storm-live-ping{flex-basis:150px;max-height:175px}
+}
+@media(max-width:480px){
+ .storm-node-load-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .storm-ping-terminal-lines{font-size:9.5px}
+ .storm-http-code>small{font-size:7.5px}
+}
+@media(max-height:740px) and (min-width:1081px){
+ .storm-in-session .storm-side>.storm-server-details{gap:6px}
+ .storm-node-usage{gap:5px}
+ .storm-node-load-grid{row-gap:4px}
+ .storm-http{gap:5px;padding-top:6px}
+ .storm-http-code{min-height:48px;padding:4px 2px}
+ .storm-in-session .storm-live-ping{min-height:90px;max-height:125px}
+}
