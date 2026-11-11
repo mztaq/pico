@@ -11,7 +11,7 @@ describe('Traffic Storm setup', () => {
     expect(html).toContain('Enter simulation');
     expect(html).toContain('Letters and spaces only');
     expect(html).toContain('maxLength="24"');
-    expect(html).toContain('No real traffic is sent.');
+    expect(html).not.toContain('storm-identity-note');
     expect(html).not.toContain('Botnet army size');
     expect(html).not.toContain('Generated server IP');
     expect(html).not.toContain('Generate IP');
