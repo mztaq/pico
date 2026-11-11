@@ -161,10 +161,6 @@ function validIPv4(value: string): boolean {
   return octets.length === 4 && octets.every(part => /^\d{1,3}$/.test(part) && Number(part) <= 255);
 }
 
-function compact(value: number): string {
-  return Math.floor(value).toLocaleString('en-US');
-}
-
 export function TrafficStorm({ onHome }: { onHome: () => void }) {
   // Nothing is sent to this address. The IP is a label in a browser-only model.
   const [hacker, setHacker] = useState('');
@@ -515,7 +511,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </form>
     </section> : <div className="storm-session">
       <div className="storm-intro">
-        <div className="storm-titleline"><h1>Traffic Storm<span>.</span></h1><p>{safeName} · {compact(scenario?.bots ?? 0)} bots · <code>{scenario?.ip}</code></p></div>
+        <div className="storm-titleline"><h1>Traffic Storm<span>.</span></h1></div>
         <div className="storm-controls">
           {mode === 'offline' ? <button type="button" className="storm-primary" onClick={restart}><RotateCcw size={15}/> Restart</button> : <button type="button" className="storm-primary" onClick={() => setMode(value => value === 'paused' ? 'running' : 'paused')}>{mode === 'paused' ? <Play size={15}/> : <Pause size={15}/>} {mode === 'paused' ? 'Resume' : 'Pause'}</button>}
           <button type="button" className="storm-secondary" onClick={newScenario}>New scenario</button>
@@ -630,7 +626,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 </circle>
               )}
             </svg>
-            <div className="storm-network-foot"><span className="storm-legend-attack"><i/> Attack</span><span>{serverCount} servers · {proxyCount} proxies</span><span>{stats.seconds.toFixed(1)}s</span></div>
           </section>
 
         </div>
@@ -671,7 +666,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
           </section>
         </aside>
       </div>
-      <footer className="storm-session-footer"><span>Browser-only simulation. No packets sent.</span><span>{stats.seconds.toFixed(1)}s</span></footer>
     </div>}
     {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>A hacker controls fictional botnet nodes sending simulated traffic. The modeled website becomes slower or goes offline if incoming requests exceed server capacity.</p><p>Choose 1–4 web servers to share the simulated load, and 0–4 defensive proxies to filter it. This model illustrates diminishing returns across proxy layers. Real DDoS protection varies and is not guaranteed by adding proxies or servers.</p><p>Traffic uses fictional units of 512 KiB and 16 requests per bot per second. Proxy capacity is also fictional: excessive incoming requests overload the proxies and reduce filtering. The graph shows fictional bursty traffic and does not contact the address.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
   </main>;
