@@ -1,6 +1,6 @@
 import './workspace-loading.css';
 
-export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab';
+export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab' | 'Traffic Storm';
 
 function Placeholder({ className = '' }: { className?: string }) {
   return <div className={`pico-load-shimmer ${className}`} />;
@@ -149,6 +149,7 @@ export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) 
       {workspace === 'Flowchart Builder' ? <FlowchartSkeleton /> :
        workspace === 'Logic Sim' ? <LogicSkeleton /> :
        workspace === 'CPU Studio' ? <CpuSkeleton /> :
+       workspace === 'Traffic Storm' ? <CpuSkeleton /> :
        <BinarySkeleton />}
     </div>
   </div>;
@@ -199,7 +200,7 @@ export function HomeLoading() {
         </div>
         <div className="pico-load-home-groups">
           <HomeSectionSkeleton kind="code" count={2} />
-          <HomeSectionSkeleton kind="visual" count={3} />
+          <HomeSectionSkeleton kind="visual" count={4} />
           <HomeSectionSkeleton kind="data" count={1} />
         </div>
         <div className="pico-load-home-footer"><Placeholder className="pico-load-home-footer-item" /><Placeholder className="pico-load-home-footer-item" /><Placeholder className="pico-load-home-footer-item" /></div>
