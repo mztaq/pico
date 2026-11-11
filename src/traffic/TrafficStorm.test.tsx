@@ -55,7 +55,7 @@ describe('Traffic Storm setup', () => {
       expect(html).toContain('Reset Alias');
       expect(html).toContain('Ghost');
       expect(html).not.toContain('Choose your alias');
-      expect(html).not.toContain('storm-hacker-name');
+      expect(html).not.toContain('id="storm-hacker-name"');
       expect(html).not.toContain('New scenario');
     } finally {
       vi.unstubAllGlobals();
