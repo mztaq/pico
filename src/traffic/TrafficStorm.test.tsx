@@ -24,7 +24,7 @@ describe('Traffic Storm setup', () => {
   it('formats modeled bandwidth in Gbps and Tbps', () => {
     expect(formatTraffic(0)).toBe('0.00 Gbps');
     expect(formatTraffic(5000)).toBe('20.97 Gbps');
-    expect(formatTraffic(4_000_000)).toBe('16777.22 Tbps');
+    expect(formatTraffic(4_000_000)).toBe('16.78 Tbps');
   });
 
   it('eases synthetic traffic in gradually over 16 seconds', () => {
