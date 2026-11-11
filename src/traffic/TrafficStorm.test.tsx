@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, isTrafficSurge, nextTrafficWarningFloor, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount } from './TrafficStorm';
+import { TrafficStorm, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, isTrafficSurge, nextTrafficWarningFloor, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -40,6 +40,14 @@ describe('Traffic Storm setup', () => {
     expect(deviceHeading('WEBSERVER', 'WEBSERVERS', 4)).toBe('WEBSERVERS');
     expect(deviceHeading('PROXY', 'PROXIES', 1)).toBe('PROXY');
     expect(deviceHeading('PROXY', 'PROXIES', 2)).toBe('PROXIES');
+  });
+
+  it('keeps the webserver heading close to its first rack for one to four servers', () => {
+    expect(webserverHeadingY(1)).toBeCloseTo(207.5);
+    expect(webserverHeadingY(2)).toBeCloseTo(140);
+    expect(webserverHeadingY(3)).toBeCloseTo(106.25);
+    expect(webserverHeadingY(4)).toBeCloseTo(86);
+    expect(webserverHeadingY(1)).toBeGreaterThan(webserverHeadingY(4));
   });
 
   it('creates irregular traffic bursts rather than a constant or smooth line', () => {
