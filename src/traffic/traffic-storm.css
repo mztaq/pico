@@ -704,3 +704,216 @@
   .storm-in-session .storm-network{min-height:330px}
   .storm-in-session .storm-network-svg{min-height:265px}
 }
+
+/* Network hardware: recognizable workstation, monitors and client towers. */
+.storm-network-svg .storm-hacker-node .storm-workstation-panel{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-line-strong);
+  stroke-width:1.4;
+}
+.storm-network-svg .storm-hacker-node .storm-workstation-monitor{
+  fill:var(--ds-panel-raised);
+  stroke:color-mix(in srgb,var(--accent) 54%,var(--ds-line-strong));
+  stroke-width:1.8;
+}
+.storm-network-svg .storm-hacker-node .storm-workstation-screen{
+  fill:color-mix(in srgb,var(--accent) 8%,var(--ds-sunken));
+  stroke:var(--ds-line);
+  stroke-width:1;
+}
+.storm-network-svg .storm-hacker-node .storm-workstation-prompt{
+  fill:none;
+  stroke:var(--accent);
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.storm-network-svg .storm-hacker-node .storm-workstation-readout{
+  fill:none;
+  stroke:color-mix(in srgb,var(--accent) 65%,var(--ds-muted));
+  stroke-width:1.7;
+  stroke-linecap:round;
+  opacity:.78;
+}
+.storm-network-svg .storm-hacker-node .storm-workstation-stand{
+  fill:none;
+  stroke:var(--ds-muted);
+  stroke-width:2.5;
+  stroke-linecap:round;
+}
+.storm-network-svg .storm-hacker-node .storm-workstation-keyboard{
+  fill:var(--ds-panel-raised);
+  stroke:var(--ds-line-strong);
+  stroke-width:1.2;
+}
+.storm-network-svg .storm-hacker-node .storm-workstation-keys{
+  fill:none;
+  stroke:var(--ds-muted);
+  stroke-width:1;
+  opacity:.55;
+}
+.storm-network-svg .storm-bot-node .storm-client-monitor{
+  fill:var(--ds-panel);
+  stroke:var(--ds-line-strong);
+  stroke-width:1.25;
+}
+.storm-network-svg .storm-bot-node .storm-client-screen{
+  fill:color-mix(in srgb,var(--accent) 11%,var(--ds-sunken));
+  stroke:var(--accent);
+  stroke-opacity:.5;
+  stroke-width:.85;
+}
+.storm-network-svg .storm-bot-node .storm-client-stand,
+.storm-network-svg .storm-bot-node .storm-client-screen-lines{
+  fill:none;
+  stroke:var(--accent);
+  stroke-width:1.1;
+  stroke-linecap:round;
+}
+.storm-network-svg .storm-bot-node .storm-client-screen-lines{opacity:.7}
+.storm-network-svg .storm-bot-node .storm-client-tower{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-line-strong);
+  stroke-width:1.25;
+}
+.storm-network-svg .storm-bot-node .storm-client-power{fill:var(--ds-success)}
+.storm-network-svg .storm-bot-node .storm-client-vents{
+  fill:none;
+  stroke:var(--ds-muted);
+  stroke-width:1;
+}
+.storm-network-svg .storm-bot-node .storm-client-details{
+  fill:none;
+  stroke:var(--accent);
+  stroke-opacity:.75;
+  stroke-width:1.7;
+  stroke-linecap:round;
+}
+.storm-network-svg .storm-bot-node .storm-bot-led,
+.storm-network-svg .storm-hacker-node .storm-hacker-status{fill:var(--ds-success)}
+.storm-network.is-active .storm-bot-led{
+  animation:storm-hardware-led 2s ease-in-out infinite;
+}
+.storm-network.is-active .storm-hacker-status{
+  animation:storm-hardware-led 1.4s ease-in-out infinite;
+}
+@keyframes storm-hardware-led{
+  0%,100%{opacity:1}
+  50%{opacity:.45}
+}
+
+/* Ping: use the otherwise empty server panel for readable, live terminal output. */
+.storm-in-session .storm-live-ping{
+  display:flex;
+  flex:1 1 235px;
+  height:auto;
+  min-height:210px;
+  max-height:none;
+  margin-top:16px;
+  padding:13px 13px 12px;
+  gap:10px;
+  overflow:hidden;
+  background:var(--ds-sunken);
+  border:1px solid var(--ds-line);
+  border-radius:10px;
+}
+.storm-ping-activity{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex:0 0 auto;
+  gap:10px;
+  padding-bottom:9px;
+  border-bottom:1px solid var(--ds-line);
+  font:600 11px var(--ds-font-code);
+  min-width:0;
+}
+.storm-ping-activity>span{
+  display:inline-flex;
+  align-items:center;
+  min-width:0;
+  gap:9px;
+  color:var(--ds-muted);
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.storm-ping-indicator{
+  display:inline-block;
+  width:8px;
+  height:8px;
+  flex:0 0 8px;
+  border-radius:50%;
+  background:var(--ds-success);
+}
+.storm-ping-indicator.is-active{
+  animation:storm-ping-beacon 1s ease-in-out infinite;
+}
+.storm-ping-indicator.is-paused{background:var(--ds-muted);opacity:.5}
+.storm-ping-indicator.is-offline{background:var(--ds-danger)}
+.storm-ping-latest{
+  color:var(--accent);
+  white-space:nowrap;
+  font:700 12px var(--ds-font-code);
+  animation:storm-ping-number .38s ease-out both;
+}
+.storm-ping-latest.is-timeout{color:var(--ds-danger)}
+.storm-in-session .storm-ping-terminal-lines{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:0;
+  gap:3px;
+  overflow-y:auto;
+  overflow-x:auto;
+  scrollbar-width:thin;
+  font:10.5px/1.5 var(--ds-font-code);
+  color:var(--ds-text);
+}
+.storm-ping-entry{
+  flex:0 0 auto;
+  min-width:max-content;
+  padding:4px 7px;
+  border-radius:5px;
+  border-left:2px solid transparent;
+  color:var(--ds-muted);
+  white-space:nowrap;
+}
+.storm-ping-entry.is-latest{
+  color:var(--ds-text);
+  border-left-color:var(--accent);
+  background:var(--ds-accent-soft);
+  animation:storm-ping-arrival .55s ease-out both;
+}
+@keyframes storm-ping-beacon{
+  0%,100%{opacity:.95;box-shadow:0 0 0 0 color-mix(in srgb,var(--ds-success) 25%,transparent)}
+  50%{opacity:.55;box-shadow:0 0 0 5px transparent}
+}
+@keyframes storm-ping-arrival{
+  0%{opacity:.1;transform:translateY(5px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@keyframes storm-ping-number{
+  0%{opacity:.4;transform:translateY(3px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@media(max-width:1080px){
+  .storm-in-session .storm-live-ping{flex-basis:230px;min-height:205px}
+}
+@media(max-width:700px){
+  .storm-in-session .storm-live-ping{min-height:190px;padding:11px;gap:8px}
+  .storm-in-session .storm-ping-terminal-lines{font-size:10px}
+}
+@media(max-height:740px) and (min-width:1081px){
+  .storm-in-session .storm-live-ping{
+    flex-basis:190px;
+    min-height:175px;
+    max-height:none;
+    height:auto;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .storm-ping-indicator,.storm-ping-entry.is-latest,.storm-ping-latest,
+  .storm-network.is-active .storm-bot-led,.storm-network.is-active .storm-hacker-status{
+    animation:none!important;
+  }
+}
