@@ -505,3 +505,80 @@
 
 /* Keep full terminal replies readable on narrower server panels. */
 .storm-ping-terminal-lines{font-size:clamp(8.5px,.7vw,10px);overflow-x:auto}
+
+/* Traffic map v3. All animated packets reference the SVG paths drawn underneath. */
+.storm-in-session .storm-network{padding:15px 16px 12px;min-width:0}
+.storm-in-session .storm-network-svg{display:block;width:100%;height:100%;max-width:none;min-width:0;min-height:0;flex:1 1 0;margin:6px 0 4px;overflow:hidden}
+.storm-network-svg .storm-diagram-ground{fill:color-mix(in srgb,var(--ds-sunken) 35%,transparent)}
+.storm-network-svg .storm-stage-separator{fill:none;stroke:var(--ds-line);stroke-width:1.2;stroke-dasharray:3 11;opacity:.75}
+.storm-network-svg .storm-stage-titles text{fill:var(--ds-text);font:800 14px var(--ds-font-code);letter-spacing:.065em;text-anchor:middle}
+.storm-network-svg .storm-stage-subtitles text{fill:var(--ds-muted);font:600 10.5px var(--ds-font-code);letter-spacing:.06em;text-anchor:middle}
+.storm-network-svg .storm-diagram-routes path{fill:none;stroke-linecap:round;stroke-width:2;stroke-dasharray:5 9}
+.storm-network-svg .storm-controller-line{stroke:var(--ds-muted);stroke-width:1.6;opacity:.5}
+.storm-network-svg .storm-network-link--attack{stroke:url(#storm-attack-gradient);opacity:.83}
+.storm-network-svg .storm-network-link--approved{stroke:url(#storm-approved-gradient);opacity:.85}
+.storm-network-svg .storm-network-link--legitimate{stroke:var(--ds-success);stroke-width:2.4;opacity:.84}
+/* Hacker controller */
+.storm-network-svg .storm-hacker-node .storm-hacker-shell{fill:var(--ds-panel-raised);stroke:color-mix(in srgb,var(--accent) 48%,var(--ds-line-strong));stroke-width:2.2}
+.storm-network-svg .storm-hacker-node .storm-hacker-inner{fill:var(--ds-sunken);stroke:var(--ds-line);stroke-width:1.3}
+.storm-network-svg .storm-hacker-node .storm-hacker-hood{fill:color-mix(in srgb,var(--accent) 36%,var(--ds-sunken));stroke:var(--accent);stroke-opacity:.55;stroke-width:1.6}
+.storm-network-svg .storm-hacker-node .storm-hacker-eyes{fill:none;stroke:var(--accent);stroke-width:3.3;stroke-linecap:round}
+.storm-network-svg .storm-hacker-node .storm-hacker-keyboard{fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:1.6}
+.storm-network-svg .storm-hacker-node .storm-hacker-status{fill:var(--ds-success)}
+.storm-network-svg .storm-hacker-node .storm-hacker-name{font:800 13px var(--ds-font-code);fill:var(--accent);letter-spacing:.05em;text-anchor:middle}
+/* More legible bot terminals */
+.storm-network-svg .storm-bot-node .storm-device-shell{fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:2}
+.storm-network-svg .storm-bot-node .storm-bot-avatar{fill:color-mix(in srgb,var(--accent) 23%,var(--ds-sunken));stroke:color-mix(in srgb,var(--accent) 50%,var(--ds-line));stroke-width:1}
+.storm-network-svg .storm-bot-node .storm-bot-face{stroke:var(--accent);stroke-width:1.5;fill:none;stroke-linecap:round}
+.storm-network-svg .storm-bot-node .storm-bot-vents{stroke:var(--accent);stroke-opacity:.85;stroke-width:2;fill:none;stroke-linecap:round}
+.storm-network-svg .storm-bot-node .storm-device-name{font:800 12px var(--ds-font-code);fill:var(--ds-text);text-anchor:middle;letter-spacing:.07em}
+.storm-network-svg .storm-bot-node .storm-bot-led{fill:var(--ds-success)}
+/* Legitimate users are visually distinct from attacker clients. */
+.storm-network-svg .storm-real-node rect{fill:color-mix(in srgb,var(--ds-success) 7%,var(--ds-panel-raised));stroke:var(--ds-success);stroke-width:1.9}
+.storm-network-svg .storm-real-node circle{fill:var(--ds-success)}
+.storm-network-svg .storm-real-node path{fill:none;stroke:var(--ds-success);stroke-width:1.9;stroke-linecap:round}
+.storm-network-svg .storm-real-node text{fill:var(--ds-success);font:800 12px var(--ds-font-code);text-anchor:middle;letter-spacing:.04em}
+/* Stacked proxy servers and network hardware. */
+.storm-network-svg .storm-proxy-edge .storm-proxy-shell{fill:color-mix(in srgb,var(--ds-success) 9%,var(--ds-panel-raised));stroke:var(--ds-success);stroke-width:2.2}
+.storm-network-svg .storm-proxy-edge .storm-proxy-rack{fill:var(--ds-sunken);stroke:var(--ds-success);stroke-opacity:.7;stroke-width:1.2}
+.storm-network-svg .storm-proxy-edge .storm-proxy-led{fill:var(--ds-success)}
+.storm-network-svg .storm-proxy-edge .storm-proxy-slot{fill:none;stroke:var(--ds-success);stroke-opacity:.6;stroke-width:1.4}
+.storm-network-svg .storm-proxy-edge .storm-proxy-number{fill:var(--ds-text);font:800 11px var(--ds-font-code);text-anchor:middle;letter-spacing:.06em}
+.storm-network-svg .storm-proxy-edge .storm-proxy-overload{fill:var(--ds-danger);font:800 10px var(--ds-font-code);text-anchor:middle}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-shell{fill:color-mix(in srgb,var(--ds-danger) 12%,var(--ds-panel-raised));stroke:var(--ds-danger)}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-rack{stroke:var(--ds-danger)}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-led{fill:var(--ds-danger)}
+.storm-network-svg .storm-proxy-edge.is-busy .storm-proxy-shell{stroke:var(--accent)}
+/* Larger web server racks with two separate mechanical fans. */
+.storm-network-svg .storm-server-graphic .storm-server-shell{fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:2.2}
+.storm-network-svg .storm-server-graphic .storm-server-rack{fill:var(--ds-sunken);stroke:var(--ds-line-strong);stroke-width:1.2}
+.storm-network-svg .storm-server-graphic .storm-server-slot{fill:var(--ds-panel);stroke:var(--ds-line-strong);stroke-width:1}
+.storm-network-svg .storm-server-graphic .storm-led{fill:var(--ds-success)}
+.storm-network-svg .storm-server-graphic .storm-server-name{fill:var(--ds-text);font:800 12px var(--ds-font-code);text-anchor:middle;letter-spacing:.06em}
+.storm-network-svg .storm-server-graphic .storm-server-caption{fill:var(--ds-muted);font:700 10.5px var(--ds-font-code);text-anchor:middle;letter-spacing:.04em}
+.storm-network-svg .storm-server-graphic.is-offline .storm-server-shell{stroke:var(--ds-danger)}
+.storm-network-svg .storm-server-graphic.is-offline .storm-server-caption{fill:var(--ds-danger)}
+.storm-network-svg .storm-server-graphic.is-offline .storm-led{fill:var(--ds-danger)}
+.storm-network-svg .storm-server-graphic .storm-fan-ring{fill:var(--ds-sunken);stroke:var(--ds-line-strong)}
+.storm-network-svg .storm-server-graphic .storm-fan-rotor{animation:none!important}
+.storm-network-svg .storm-server-graphic .storm-fan-blade{fill:var(--accent);opacity:.93}
+/* Packets are tied with SVG mpath to exactly the same visible connectors. */
+.storm-network-svg .storm-packet-attack{fill:var(--ds-danger);opacity:.98}
+.storm-network-svg .storm-packet-survivor{fill:var(--accent);opacity:.98}
+.storm-network-svg .storm-packet-user{fill:var(--ds-success);opacity:1}
+.storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,.storm-network-svg .storm-packet-user{filter:none;stroke:var(--ds-panel);stroke-opacity:.25;stroke-width:.4}
+.storm-in-session .storm-network-foot{gap:15px;justify-content:flex-start;white-space:nowrap}
+.storm-in-session .storm-network-foot>span:last-child{margin-left:auto}
+@media(max-width:1080px){
+ .storm-in-session .storm-network{min-height:390px}
+ .storm-in-session .storm-network-svg{min-height:290px}
+}
+@media(max-width:700px){
+ .storm-in-session .storm-network{min-height:315px;padding:12px}
+ .storm-in-session .storm-network-svg{min-height:220px}
+ .storm-in-session .storm-network-foot{gap:8px;font-size:9px;flex-wrap:wrap}
+ .storm-in-session .storm-network-foot>span:last-child{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){
+ .storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,.storm-network-svg .storm-packet-user{display:none}
+}
