@@ -120,6 +120,12 @@ export function formatTraffic(rps: number): string {
   return gbps >= 1000 ? (gbps / 1000).toFixed(2) + ' Tbps' : gbps.toFixed(2) + ' Gbps';
 }
 
+type PingEntry = { id: number; text: string; latency: number | null };
+
+export function appendPingHistory(previous: PingEntry[], entry: PingEntry, limit = 10): PingEntry[] {
+  return [...previous.slice(-Math.max(0, limit - 1)), entry];
+}
+
 type Scenario = { hacker: string; bots: number; ip: string };
 type Mode = 'setup' | 'running' | 'paused' | 'offline';
 type EffectName = 'start' | 'warning' | 'shutdown' | 'packet';
@@ -141,7 +147,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const [ipDraft, setIpDraft] = useState('203.0.113.10');
   const [proxyCount, setProxyCount] = useState(0);
   const [serverCount, setServerCount] = useState(1);
-  const [pingLines, setPingLines] = useState<string[]>([]);
+  const [pingLines, setPingLines] = useState<PingEntry[]>([]);
   const proxyEnabled = proxyCount > 0;
   const [error, setError] = useState('');
   const [scenario, setScenario] = useState<Scenario | null>(null);
@@ -162,6 +168,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const fanTarget = useRef(0);
   const pingTarget = useRef({ ip: '', latency: null as number | null });
   const pingScrollRef = useRef<HTMLDivElement | null>(null);
+  const pingSequence = useRef(0);
   const arriving = forwardedRequests(stats.rps, proxyCount);
   const pressure = arriving / (SERVER_CAPACITY * serverCount);
   const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
@@ -434,7 +441,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       const line = latency === null
         ? 'Request timed out.'
         : 'Reply from ' + ip + ': bytes=32 time=' + latency + 'ms TTL=55';
-      setPingLines(previous => [...previous.slice(-4), line]);
+      const entry: PingEntry = { id: ++pingSequence.current, text: line, latency };
+      setPingLines(previous => appendPingHistory(previous, entry));
     };
     tick();
     if (mode === 'paused') return;
@@ -446,6 +454,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     if (!pingScrollRef.current) return;
     pingScrollRef.current.scrollTop = pingScrollRef.current.scrollHeight;
   }, [pingLines]);
+  const latestPing = pingLines[pingLines.length - 1];
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(arriving);
   const points = stats.history.map((value, index) => {
@@ -550,25 +559,34 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>
 
               <g className="storm-hacker-node">
-                <rect x="63" y="187" width="154" height="145" rx="20" className="storm-hacker-shell"/>
-                <rect x="78" y="203" width="124" height="112" rx="14" className="storm-hacker-inner"/>
-                <path d="M 94 280 C 93 243 107 217 139 215 C 172 217 186 243 184 280 L 177 293 Q 139 302 101 293 Z" className="storm-hacker-hood"/>
-                <path d="M 115 260 l 17 5 M 147 265 l 17 -5" className="storm-hacker-eyes"/>
-                <rect x="103" y="287" width="72" height="17" rx="5" className="storm-hacker-keyboard"/>
-                <circle cx="190" cy="211" r="3" className="storm-hacker-status"/>
+                <rect x="63" y="187" width="154" height="145" rx="18" className="storm-hacker-shell"/>
+                <rect x="78" y="201" width="124" height="111" rx="11" className="storm-workstation-panel"/>
+                <rect x="87" y="213" width="106" height="68" rx="6" className="storm-workstation-monitor"/>
+                <rect x="94" y="220" width="92" height="54" rx="3" className="storm-workstation-screen"/>
+                <path d="M 104 233 l 5 5 -5 5 M 117 238 h 38" className="storm-workstation-prompt"/>
+                <path d="M 104 253 h 66 M 104 263 h 46" className="storm-workstation-readout"/>
+                <circle cx="180" cy="226" r="2.4" className="storm-hacker-status"/>
+                <path d="M 140 281 v 8 M 119 289 h 42" className="storm-workstation-stand"/>
+                <path d="M 96 296 h 88 l 9 10 h -106 Z" className="storm-workstation-keyboard"/>
+                <path d="M 102 300 h 76 M 106 303 h 68" className="storm-workstation-keys"/>
                 <text x="140" y="357" className="storm-hacker-name">{safeName.slice(0, 14)}</text>
               </g>
 
               {BOT_Y.map((y, index) => <g key={y} className="storm-bot-node">
-                <rect x="292" y={y - 29} width="158" height="58" rx="12" className="storm-device-shell"/>
-                <rect x="307" y={y - 15} width="28" height="30" rx="7" className="storm-bot-avatar"/>
-                <path d={'M 320 ' + (y - 8) + ' v 8 M 314 ' + (y + 6) + ' q 6 -8 12 0'} className="storm-bot-face"/>
-                <path d={'M 346 ' + (y - 10) + ' h 84 M 346 ' + (y + 4) + ' h 57'} className="storm-bot-vents"/>
-                <text x="367" y={y - 39} className="storm-device-name">BOT 0{index + 1}</text>
-                <circle cx="429" cy={y + 13} r="3" className="storm-bot-led"/>
+                <rect x="292" y={y - 29} width="158" height="58" rx="11" className="storm-device-shell"/>
+                <rect x="306" y={y - 17} width="37" height="28" rx="4" className="storm-client-monitor"/>
+                <rect x="311" y={y - 12} width="27" height="16" rx="2" className="storm-client-screen"/>
+                <path d={'M 324 ' + (y + 11) + ' v 4 M 316 ' + (y + 15) + ' h 16'} className="storm-client-stand"/>
+                <path d={'M 316 ' + (y - 5) + ' h 12 M 316 ' + y + ' h 8'} className="storm-client-screen-lines"/>
+                <rect x="350" y={y - 17} width="19" height="33" rx="3" className="storm-client-tower"/>
+                <circle cx="359" cy={y - 10} r="2" className="storm-client-power"/>
+                <path d={'M 356 ' + (y - 1) + ' h 7 M 356 ' + (y + 4) + ' h 7'} className="storm-client-vents"/>
+                <path d={'M 378 ' + (y - 10) + ' h 53 M 378 ' + (y + 4) + ' h 37'} className="storm-client-details"/>
+                <text x="372" y={y - 39} className="storm-device-name">BOT 0{index + 1}</text>
+                <circle cx="432" cy={y + 15} r="2.5" className="storm-bot-led"/>
               </g>)}
               <g className="storm-real-node">
-                <rect x="292" y={REAL_USER_Y - 27} width="158" height="54" rx="12"/>
+                <rect x="292" y={REAL_USER_Y - 27} width="158" height="54" rx="11"/>
                 <circle cx="321" cy={REAL_USER_Y - 3} r="8"/>
                 <path d={'M 307 ' + (REAL_USER_Y + 13) + ' q 14 -18 28 0'}/>
                 <path d={'M 345 ' + (REAL_USER_Y - 8) + ' h 84 M 345 ' + (REAL_USER_Y + 6) + ' h 55'}/>
@@ -668,8 +686,14 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </div>}
             </div>
             <div className="storm-live-ping" aria-label="Simulated ping replies">
+              <div className="storm-ping-activity">
+                <span><i className={'storm-ping-indicator' + (mode === 'offline' ? ' is-offline' : mode === 'paused' ? ' is-paused' : ' is-active')}/>{scenario?.ip}</span>
+                <strong key={latestPing?.id} className={'storm-ping-latest' + (latestPing?.latency === null ? ' is-timeout' : '')}>
+                  {latestPing ? (latestPing.latency === null ? 'Timeout' : latestPing.latency + ' ms') : '…'}
+                </strong>
+              </div>
               <div ref={pingScrollRef} className="storm-ping-terminal-lines" role="log" aria-live="off">
-                {pingLines.map((line,index) => <div key={index}>{line}</div>)}
+                {pingLines.map((entry, index) => <div key={entry.id} className={'storm-ping-entry' + (index === pingLines.length - 1 ? ' is-latest' : '')}>{entry.text}</div>)}
               </div>
             </div>
           </section>
