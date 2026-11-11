@@ -172,3 +172,40 @@
 /* Four visual workspaces, two columns for consistent card proportions. */
 .pico-load-home-section--visual .pico-load-home-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(max-width:640px){.pico-load-home-section--visual .pico-load-home-grid{grid-template-columns:minmax(0,1fr)}}
+/* Traffic Storm starts with one hacker-name field, not CPU registers or controls.
+   Use the selected theme during React.lazy loading and the HTML boot phase. */
+.pico-load-stage[data-loading-workspace="Traffic Storm"]{
+  --pico-load-surface:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 88%,var(--pico-boot-foreground,#fff) 5%);
+  --pico-load-border:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 78%,var(--pico-boot-foreground,#fff) 22%);
+  --pico-load-shimmer-a:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 92%,var(--pico-boot-foreground,#fff) 8%);
+  --pico-load-shimmer-b:color-mix(in srgb,var(--accent,var(--pico-boot-accent,#cba6f7)) 25%,var(--pico-load-shimmer-a));
+  background:var(--bg,var(--pico-boot-bg,#1e1e2e));
+}
+.pico-load-stage[data-loading-workspace="Traffic Storm"] .pico-load-topbar{
+  min-height:52px;flex-basis:52px;
+  background:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 90%,#000 10%);
+}
+.pico-load-storm-content{
+  flex:1 1 auto;min-height:0;display:grid;place-items:center;
+  padding:32px 24px 72px;
+}
+.pico-load-storm-entry{
+  width:min(452px,100%);
+  display:flex;flex-direction:column;align-items:stretch;
+  gap:0;
+}
+.pico-load-storm-heading{height:43px;width:78%;margin-bottom:31px;border-radius:7px}
+.pico-load-storm-label{height:13px;width:95px;margin-bottom:14px;border-radius:4px}
+.pico-load-storm-input{height:52px;width:100%;border-radius:9px}
+.pico-load-storm-helper{
+  display:flex;justify-content:space-between;align-items:center;gap:15px;
+  margin-top:13px;
+}
+.pico-load-storm-hint{height:10px;width:min(230px,65%);border-radius:3px}
+.pico-load-storm-counter{height:10px;width:31px;border-radius:3px}
+.pico-load-storm-button{height:46px;width:100%;margin-top:23px;border-radius:9px}
+@media(max-width:600px){
+ .pico-load-storm-content{padding:25px 19px 55px}
+ .pico-load-storm-heading{height:35px;margin-bottom:26px;width:86%}
+ .pico-load-storm-input{height:49px}
+}
