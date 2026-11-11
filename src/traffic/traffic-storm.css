@@ -1016,3 +1016,67 @@
   .storm-in-session .storm-side>.storm-server-details{min-height:380px}
   .storm-traffic-chart svg{min-height:140px}
 }
+
+/* Live spike detection is restrained, brief and disabled for reduced motion. */
+.storm-metric-incoming,.storm-traffic-chart{position:relative;isolation:isolate}
+.storm-metric-incoming{overflow:hidden}
+.storm-metric-incoming>span,.storm-metric-incoming>strong,
+.storm-traffic-chart-heading,.storm-traffic-chart>svg{position:relative;z-index:1}
+.storm-surge-flash,.storm-chart-surge-flash{
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+  border-radius:inherit;
+  animation:storm-traffic-surge .65s ease-out both;
+}
+.storm-chart-surge-flash{border-radius:8px}
+@keyframes storm-traffic-surge{
+  0%{background:color-mix(in srgb,var(--accent) 23%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 50%,transparent)}
+  35%{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 28%,transparent)}
+  100%{background:transparent;box-shadow:inset 0 0 0 1px transparent}
+}
+/* Functional webserver front panels: independent removable bays and guarded fans. */
+.storm-network-svg .storm-server-graphic .storm-server-shell{
+  fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:2.2
+}
+.storm-network-svg .storm-server-graphic .storm-server-rack{
+  fill:var(--ds-sunken);stroke:var(--ds-line-strong);stroke-width:1.15
+}
+.storm-network-svg .storm-server-graphic .storm-server-slot{
+  fill:var(--ds-panel);stroke:var(--ds-line-strong);stroke-width:.85
+}
+.storm-network-svg .storm-server-graphic .storm-server-vents{
+  fill:none;stroke:var(--ds-muted);stroke-width:1.15;stroke-linecap:round;opacity:.65
+}
+.storm-network-svg .storm-server-graphic .storm-server-handle{
+  fill:none;stroke:var(--ds-muted);stroke-width:1.5;stroke-linecap:round;opacity:.8
+}
+.storm-network-svg .storm-server-graphic .storm-rack-screw{
+  fill:var(--ds-muted);opacity:.6
+}
+.storm-network-svg .storm-server-graphic .storm-fan-ring{
+  fill:var(--ds-sunken);stroke:var(--ds-muted);stroke-width:1.4
+}
+.storm-network-svg .storm-server-graphic .storm-fan-shroud{
+  fill:color-mix(in srgb,var(--ds-sunken) 72%,#05070d);
+  stroke:var(--ds-line-strong);stroke-width:.95
+}
+.storm-network-svg .storm-server-graphic .storm-fan-blade{
+  fill:color-mix(in srgb,var(--accent) 43%,var(--ds-text));
+  stroke:var(--ds-line-strong);stroke-width:.45;opacity:.95
+}
+.storm-network-svg .storm-server-graphic .storm-fan-hub{
+  fill:var(--ds-muted);stroke:var(--ds-text);stroke-width:.6
+}
+.storm-network-svg .storm-server-graphic .storm-fan-grille{
+  fill:none;stroke:var(--ds-muted);stroke-width:.72;opacity:.5;pointer-events:none
+}
+.storm-network-svg .storm-server-graphic.is-offline .storm-fan-blade{
+  fill:var(--ds-muted);opacity:.7
+}
+.storm-network-svg .storm-server-graphic.is-critical .storm-server-shell{
+  stroke:var(--ds-danger)
+}
+/* Removal of the legitimate traffic lane leaves attack routing uninterrupted. */
+.storm-network-foot .storm-legend-attack i{background:var(--ds-danger)}
+@media(prefers-reduced-motion:reduce){
+  .storm-surge-flash,.storm-chart-surge-flash{animation:none;display:none}
+}
