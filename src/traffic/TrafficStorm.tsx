@@ -552,11 +552,14 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               <g className="storm-hacker-node">
                 <text x="140" y="173" className="storm-hacker-heading">HACKER</text>
                 <rect x="63" y="187" width="154" height="145" rx="18" className="storm-hacker-shell"/>
-                <circle cx="140" cy="260" r="55" className="storm-hacker-emblem-bg"/>
-                <path d="M 140 210 C 110 210 91 239 91 267 C 91 286 101 302 116 310 L 125 297 C 115 290 110 278 111 264 C 112 245 125 231 140 231 C 155 231 168 245 169 264 C 170 278 165 290 155 297 L 164 310 C 180 302 189 285 189 267 C 189 239 170 210 140 210 Z" className="storm-hacker-hood"/>
-                <path d="M 111 267 Q 124 259 140 260 Q 156 259 169 267 L 161 286 L 147 290 L 140 283 L 133 290 L 119 286 Z" className="storm-hacker-mask"/>
-                <path d="M 119 270 l 13 4 M 148 274 l 13 -4" className="storm-hacker-eyes"/>
-                <path d="M 133 283 l 7 7 l 7 -7 M 128 292 l 12 11 l 12 -11" className="storm-hacker-beard"/>
+                <circle cx="140" cy="260" r="57" className="storm-hacker-emblem-bg"/>
+                <path d="M 140 205 C 122 205 105 222 97 242 C 89 262 88 281 97 296 C 105 309 116 317 126 324 L 121 306 C 112 296 108 283 110 266 C 112 244 123 227 140 227 C 157 227 168 244 170 266 C 172 283 168 296 159 306 L 154 324 C 164 317 175 309 183 296 C 192 281 191 262 183 242 C 175 222 158 205 140 205 Z" className="storm-hacker-hood"/>
+                <path d="M 140 228 C 125 228 114 245 113 266 C 112 289 124 307 140 316 C 156 307 168 289 167 266 C 166 245 155 228 140 228 Z" className="storm-hacker-face-shadow"/>
+                <path d="M 114 269 L 130 264 Q 140 269 150 264 L 166 269 L 162 284 L 151 291 L 148 284 L 132 284 L 129 291 L 118 284 Z" className="storm-hacker-face-mask"/>
+                <path d="M 120 272 L 132 275 L 126 280 Z M 160 272 L 148 275 L 154 280 Z" className="storm-hacker-eye-slits"/>
+                <path d="M 135 283 L 140 288 L 145 283 L 140 294 Z" className="storm-hacker-nose"/>
+                <path d="M 126 292 Q 131 289 140 297 Q 149 289 154 292 L 150 302 L 144 300 L 140 309 L 136 300 L 130 302 Z" className="storm-hacker-beard"/>
+                <path d="M 117 243 Q 128 224 140 225 Q 152 224 163 243" className="storm-hacker-hood-highlight"/>
                 <text x="140" y="357" className="storm-hacker-name">{safeName.slice(0, 14)}</text>
               </g>
 
