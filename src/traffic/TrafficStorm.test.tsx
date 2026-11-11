@@ -1,15 +1,15 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, TRAFFIC_TUTORIAL_STEPS, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deliverySoundIntervalMs, deviceHeading, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, sanitizeHackerName, serverPressure, successfulDeliveryFraction, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
+import { TrafficStorm, TRAFFIC_TUTORIAL_STEPS, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deliverySoundIntervalMs, deviceHeading, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, sanitizeHackerName, serverHealthDrainPerSecond, serverPressure, successfulDeliveryFraction, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
     const html = renderToStaticMarkup(createElement(TrafficStorm, { onHome: () => {} }));
     expect(html).toContain('Traffic Storm');
     expect(html).toContain('Hacker name');
-    expect(html).toContain('Enter simulation');
-    expect(html).toContain('Letters and spaces only');
+    expect(html).toContain('Continue');
+    expect(html).toContain('Letters and spaces');
     expect(html).toContain('maxLength="24"');
     expect(html).not.toContain('storm-identity-note');
     expect(html).not.toContain('Botnet army size');
@@ -60,14 +60,17 @@ describe('Traffic Storm setup', () => {
   });
 
   it('has a complete progressive tutorial for setup, controls, and recovery', () => {
-    expect(TRAFFIC_TUTORIAL_STEPS).toHaveLength(6);
-    expect(TRAFFIC_TUTORIAL_STEPS[0].title).toBe('Your network');
+    expect(TRAFFIC_TUTORIAL_STEPS).toHaveLength(12);
+    expect(TRAFFIC_TUTORIAL_STEPS[0].target).toBe('controls');
+    expect(TRAFFIC_TUTORIAL_STEPS[0].title).toBe('Start and pause');
     expect(TRAFFIC_TUTORIAL_STEPS.some(step => step.text.includes('Start Simulation'))).toBe(true);
-    expect(TRAFFIC_TUTORIAL_STEPS.some(step => step.text.includes('confirmation chime'))).toBe(true);
-    expect(new Set(TRAFFIC_TUTORIAL_STEPS.map(step => step.title)).size).toBe(6);
+    expect(TRAFFIC_TUTORIAL_STEPS.some(step => step.target === 'graph')).toBe(true);
+    expect(new Set(TRAFFIC_TUTORIAL_STEPS.map(step => step.title)).size).toBe(12);
+    expect(new Set(TRAFFIC_TUTORIAL_STEPS.map(step => step.target)).size).toBe(12);
     TRAFFIC_TUTORIAL_STEPS.forEach(step => {
-      expect(step.text.length).toBeGreaterThan(30);
-      expect(step.hint.length).toBeGreaterThan(20);
+      expect(step.text.length).toBeGreaterThan(25);
+      expect(step.target.length).toBeGreaterThan(3);
+      expect('hint' in step).toBe(false);
     });
   });
 
@@ -152,8 +155,8 @@ describe('Traffic Storm setup', () => {
   it('shows the high-traffic warning only at or above 100 Gbps', () => {
     expect(HIGH_TRAFFIC_THRESHOLD_GBPS).toBe(100);
     expect(isHighTraffic(0)).toBe(false);
-    expect(isHighTraffic(23841)).toBe(false);
-    expect(isHighTraffic(23842)).toBe(true);
+    expect(isHighTraffic(7947)).toBe(false);
+    expect(isHighTraffic(7948)).toBe(true);
     expect(isHighTraffic(48000)).toBe(true);
     expect(isHighTraffic(-1)).toBe(false);
     expect(isHighTraffic(Number.NaN)).toBe(false);
@@ -198,8 +201,19 @@ describe('Traffic Storm setup', () => {
 
   it('formats modeled bandwidth in Gbps and Tbps', () => {
     expect(formatTraffic(0)).toBe('0.00 Gbps');
-    expect(formatTraffic(5000)).toBe('20.97 Gbps');
-    expect(formatTraffic(4_000_000)).toBe('16.78 Tbps');
+    expect(formatTraffic(5000)).toBe('62.91 Gbps');
+    expect(formatTraffic(4_000_000)).toBe('50.33 Tbps');
+    expect(formatTraffic(20_000 * 16 * 1.35)).toBe('5.44 Tbps');
+  });
+
+  it('slows webserver health loss enough to survive intense 5 Tbps traffic', () => {
+    expect(serverHealthDrainPerSecond(0)).toBe(-5);
+    expect(serverHealthDrainPerSecond(1)).toBe(-5);
+    expect(serverHealthDrainPerSecond(2)).toBeGreaterThan(0);
+    expect(serverHealthDrainPerSecond(130)).toBeLessThanOrEqual(2.3);
+    expect(serverHealthDrainPerSecond(130)).toBeGreaterThan(0);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(40);
+    expect(serverHealthDrainPerSecond(Number.NaN)).toBe(-5);
   });
 
   it('eases synthetic traffic in gradually over 16 seconds', () => {
