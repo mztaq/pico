@@ -30,7 +30,7 @@ describe('Custom 404 for invalid app routes',()=>{
     expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/404.html');
   });
   it('keeps valid deep links loading the app',async()=>{
-    for(const route of ['/app/flowchart','/app/logic','/app/team']){
+    for(const route of ['/app/flowchart','/app/logic','/app/traffic','/app/traffic/','/app/team']){
       const {ctx,fetch}=context(route);
       const response=await workspaceRoute(ctx);
       expect(response.status).toBe(200);
