@@ -450,7 +450,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     nodeLoadRatio(arriving, serverCount, index, SERVER_CAPACITY));
   const proxyLoads = proxyYs.map((_, index) =>
     nodeLoadRatio(stats.rps, proxyCount, index, PROXY_CAPACITY));
-  const proxyState = proxyCount === 0 ? 'OFF' : proxyLoad > 1 ? 'OVERLOADED' : proxyLoad > 0.8 ? 'BUSY' : 'FILTERING';
+  const maximumProxyLoad = Math.max(0, ...proxyLoads);
+  const proxyState = proxyCount === 0 ? 'OFF' : maximumProxyLoad > 1 ? 'OVERLOADED' : maximumProxyLoad > 0.8 ? 'BUSY' : 'FILTERING';
 
   return <main className={'storm-app' + (mode === 'setup' ? ' storm-start' : ' storm-in-session')} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
     <header className="storm-header pico-appbar">
@@ -502,7 +503,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
           <div><span>Servers</span><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={13}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
           <div><span>Proxies</span><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={13}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
         </div>
-        {proxyEnabled && <span className={'storm-infra-state' + (proxyLoad > 1 ? ' is-overloaded' : '')}><span className="storm-infra-dot"/>{proxyState} · {Math.round(proxyLoad * 100)}% load</span>}
+        {proxyEnabled && <span className={'storm-infra-state' + (maximumProxyLoad > 1 ? ' is-overloaded' : '')}><span className="storm-infra-dot"/>{proxyState} · {Math.round(proxyLoad * 100)}% load</span>}
       </div>
 
       <section className="storm-metrics" aria-label="Simulation metrics">
