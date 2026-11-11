@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { ArrowLeft, ArrowRight, CircleHelp, Minus, Pause, Play, Plus, RotateCcw, Server, ServerCog, Settings2, UserRound, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CircleHelp, Minus, Pause, Play, Plus, RotateCcw, Server, ServerCog, Settings2 } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
+import { StormGuidedTour } from './StormGuidedTour';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
 import { onSoundChange, soundEnabled } from '../app/sound';
@@ -8,7 +9,7 @@ import { loadSettings, saveSettings } from '../storage/settings';
 import './traffic-storm.css';
 
 const SERVER_CAPACITY = 3200;
-const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measured bandwidth.
+const BITS_PER_REQUEST = 12_582_912; // Fictional 1.5 MiB request unit for a ~5 Tbps peak; not measured bandwidth.
 export const HIGH_TRAFFIC_THRESHOLD_GBPS = 100;
 const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const PROXY_CAPACITY = 60_000; // Illustrative requests/sec per defensive proxy, not real hardware throughput.
@@ -211,12 +212,18 @@ export function validateHackerName(input: string): string | null {
 }
 
 export const TRAFFIC_TUTORIAL_STEPS = [
-  { title: 'Your network', text: 'The hacker commands four fictional botnet groups. Red links show commands, and animated packets travel to webservers directly or through proxies.', hint: 'The generated address is a reserved example. No actual packets are sent.' },
-  { title: 'Adjust the bot army', text: 'Move the Bot army slider between 100 and 20,000 simulated devices. A larger army produces more modeled traffic. You may change it during the simulation.', hint: 'You start with 3,000 simulated bot devices.' },
-  { title: 'Configure your defences', text: 'Use the Servers controls for one to four webservers and Proxies for zero to four filtering nodes. Proxies filter requests until their modeled capacity is overwhelmed.', hint: 'These capacities are illustrative, not real-world hardware benchmarks.' },
-  { title: 'Start and monitor', text: 'Press Start Simulation. Pause and Resume control the run. Incoming Traffic shows total attack volume, Delivered Traffic shows traffic reaching online webservers, and Server Health measures survival.', hint: 'The exclamation icon flashes at 100 Gbps or higher.' },
-  { title: 'Follow successful packets', text: 'Dots travel along the drawn connections. When a representative packet arrives at a working webserver, a short confirmation chime plays at its arrival.', hint: 'The sound toggle mutes chimes without changing the outcome.' },
-  { title: 'Recover and retry', text: 'Excess load drains health and increases response time. At zero health the webserver goes offline. Use Restart to retry or New scenario to enter a new hacker name.', hint: 'All traffic, packets and bandwidth values are simulated in your browser.' },
+  { target: 'controls', title: 'Start and pause', text: 'Start Simulation begins the traffic. Use Pause, Resume or Restart to control the run. New scenario lets you choose another hacker name.' },
+  { target: 'bots', title: 'Bot army', text: 'Set the simulated bot army from 100 to 20,000 devices. More bots increase the fictional request rate. Change this while the simulation runs.' },
+  { target: 'servers', title: 'Webservers', text: 'Add up to four webservers to share the incoming requests. Each has its own load meter and spinning fans.' },
+  { target: 'proxies', title: 'Proxies', text: 'Add up to four defensive proxies. These filter simulated requests, but heavy traffic eventually overwhelms their capacity.' },
+  { target: 'diagram', title: 'Network diagram', text: 'Red command lines connect the hacker to botnet nodes. Animated dots represent groups of attack requests passing through the network.' },
+  { target: 'incoming', title: 'Incoming traffic', text: 'This is the total modeled attack bandwidth. The exclamation mark flashes at 100 Gbps and above. Peak values can exceed 5 Tbps.' },
+  { target: 'delivered', title: 'Delivered traffic', text: 'This is modeled traffic reaching the webservers after proxy filtering. It falls to zero when the website is offline.' },
+  { target: 'health', title: 'Server health', text: 'Health decreases when incoming load exceeds capacity. Once it reaches zero, the website goes offline.' },
+  { target: 'latency', title: 'Response time', text: 'Response time rises as server pressure increases. When the website goes offline, the indicator changes to OFFLINE.' },
+  { target: 'server-panel', title: 'Server and proxy load', text: 'Each server CPU and proxy load appears here. Add or remove nodes to compare how the network behaves.' },
+  { target: 'graph', title: 'Traffic graph', text: 'This graph tracks the fictional traffic bursts over time. Each spike reflects a change in the simulated attack rate.' },
+  { target: 'sound', title: 'Sound controls', text: 'Use the sound button to mute packet and fan audio. Successful request-group arrivals play a short confirmation chime.' },
 ] as const;
 
 /** Only a fraction of packets is served when the fictional origin exceeds capacity. */
@@ -246,6 +253,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const [stats, setStats] = useState(initialStats);
   const [showHelp, setShowHelp] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
+  const autoTourChecked = useRef(false);
   const [themeId, setThemeId] = useState(() => loadSettings().theme);
   const [themeOpen, setThemeOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(soundEnabled);
@@ -273,6 +281,18 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   }, [theme]);
 
   useEffect(() => onSoundChange(setSoundOn), []);
+
+  // First-time tour opens when the user reaches the dashboard, not on name entry.
+  useEffect(() => {
+    if (mode !== 'ready' || autoTourChecked.current) return;
+    autoTourChecked.current = true;
+    try {
+      if (localStorage.getItem('pico.trafficStorm.tourSeen.v1')) return;
+      localStorage.setItem('pico.trafficStorm.tourSeen.v1', '1');
+    } catch { /* Private sessions still get one tour per mount. */ }
+    setTutorialStep(0);
+    setShowHelp(true);
+  }, [mode]);
 
   useEffect(() => {
     const handleVisibility = () => setPageVisible(!document.hidden);
@@ -588,7 +608,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </div>
       <div className="storm-header-actions">
         <button type="button" className="storm-icon-button" aria-label="Traffic Storm tutorial" title="Open tutorial" onClick={() => { setTutorialStep(0); setShowHelp(value => !value); }}><CircleHelp size={17}/></button>
-        <SoundButton/>
+        <span data-storm-tour="sound" className="storm-tour-sound-target"><SoundButton/></span>
         <div className="storm-theme-wrap">
           <button type="button" className="storm-icon-button" aria-label="Change Traffic Storm theme" onClick={() => setThemeOpen(value => !value)}><Settings2 size={17}/></button>
           {themeOpen && <div className="storm-theme-popover"><ThemePicker value={themeId} onChange={id => { setThemeId(id); try { saveSettings({ ...loadSettings(), theme: id }); } catch { /* Session theme still updates. */ } setThemeOpen(false); }}/></div>}
@@ -597,24 +617,14 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     </header>
 
     {mode === 'setup' ? <section className="storm-setup storm-identity-setup" aria-labelledby="storm-setup-title">
-      <div className="storm-identity-emblem" aria-hidden="true">
-        <span className="storm-identity-orbit storm-identity-orbit-outer"/>
-        <span className="storm-identity-orbit storm-identity-orbit-inner"/>
-        <span className="storm-identity-avatar"><UserRound size={38} strokeWidth={1.5}/></span>
-        <span className="storm-identity-dot storm-identity-dot-one"/>
-        <span className="storm-identity-dot storm-identity-dot-two"/>
-      </div>
       <div className="storm-setup-title storm-identity-title">
-        <span className="storm-identity-eyebrow">TRAFFIC STORM</span>
-        <h1 id="storm-setup-title">Who's in control<span>?</span></h1>
-        <p>Enter your hacker name to begin.</p>
+        <h1 id="storm-setup-title">Enter your name<span>.</span></h1>
       </div>
       <form onSubmit={start} className="storm-setup-form storm-identity-form" noValidate>
         <label htmlFor="storm-hacker-name">Hacker name</label>
         <div className={'storm-identity-input' + (error ? ' is-invalid' : '')}>
-          <UserRound size={19} aria-hidden="true"/>
           <input id="storm-hacker-name" autoFocus type="text" autoComplete="off" autoCapitalize="words"
-            spellCheck={false} maxLength={24} value={hacker} placeholder="Enter your name"
+            spellCheck={false} maxLength={24} value={hacker} placeholder="Your name"
             aria-invalid={Boolean(error)} aria-describedby={error ? 'storm-hacker-help storm-hacker-error' : 'storm-hacker-help'}
             onChange={event => {
               const raw = event.target.value;
@@ -624,18 +634,18 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             }}/>
         </div>
         <div className="storm-identity-hint">
-          <span id="storm-hacker-help">Letters and spaces only, 2–24 characters</span>
+          <span id="storm-hacker-help">Letters and spaces, 2–24 characters</span>
           <span>{hacker.length}/24</span>
         </div>
         {error && <p className="storm-error" id="storm-hacker-error" role="alert">{error}</p>}
         <button type="submit" className="storm-primary storm-identity-submit">
-          Enter simulation <ArrowRight size={17} aria-hidden="true"/>
+          Continue <ArrowRight size={17} aria-hidden="true"/>
         </button>
       </form>
     </section> : <div className="storm-session">
       <div className="storm-intro">
         <div className="storm-titleline"><h1>Traffic Storm<span>.</span></h1></div>
-        <div className="storm-controls">
+        <div className="storm-controls" data-storm-tour="controls">
           {mode === 'ready'
             ? <button type="button" className="storm-primary storm-start-simulation" onClick={beginSimulation}><Play size={16} fill="currentColor"/> Start Simulation</button>
             : mode === 'offline'
@@ -648,10 +658,10 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       <div className="storm-infra-bar">
         <span className="storm-infra-label">NODES</span>
         <div className="storm-live-steppers">
-          <div><span>Servers</span><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={13}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
-          <div><span>Proxies</span><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={13}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
+          <div data-storm-tour="servers"><span>Servers</span><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={13}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
+          <div data-storm-tour="proxies"><span>Proxies</span><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={13}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
         </div>
-        <div className="storm-live-bot-army">
+        <div className="storm-live-bot-army" data-storm-tour="bots">
           <label htmlFor="storm-live-bot-army">Bot army</label>
           <input id="storm-live-bot-army" type="range" min={100} max={20000} step={100} value={scenario?.bots ?? 3000}
             onChange={event => {
@@ -664,15 +674,15 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </div>
 
       <section className="storm-metrics" aria-label="Simulation metrics">
-        <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficWarning && <span className="storm-traffic-warning" role="status" aria-label="Incoming traffic at or above 100 Gbps" title="High traffic: at least 100 Gbps"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9.3" y="2.2" width="5.4" height="14" rx="2.5" fill="currentColor"/><circle cx="12" cy="20.2" r="2.9" fill="currentColor"/></svg></span>}</div>
-        <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong></div>
-        <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
-        <div className="storm-metric"><span>RESPONSE TIME</span><strong>{mode === 'ready' ? 'READY' : responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
+        <div className="storm-metric storm-metric-incoming" data-storm-tour="incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficWarning && <span className="storm-traffic-warning" role="status" aria-label="Incoming traffic at or above 100 Gbps" title="High traffic: at least 100 Gbps"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9.3" y="2.2" width="5.4" height="14" rx="2.5" fill="currentColor"/><circle cx="12" cy="20.2" r="2.9" fill="currentColor"/></svg></span>}</div>
+        <div className="storm-metric" data-storm-tour="delivered"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong></div>
+        <div className="storm-metric" data-storm-tour="health"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
+        <div className="storm-metric" data-storm-tour="latency"><span>RESPONSE TIME</span><strong>{mode === 'ready' ? 'READY' : responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
       </section>
 
       <div className="storm-main-grid">
         <div className="storm-left-stack">
-          <section className={'storm-panel storm-network' + (mode === 'running' ? ' is-active' : '')} aria-label="Animated network traffic">
+          <section className={'storm-panel storm-network' + (mode === 'running' ? ' is-active' : '')} aria-label="Animated network traffic" data-storm-tour="diagram">
             <div className="storm-panel-heading"><h2>Network traffic</h2></div>
             <svg ref={networkRef} viewBox="0 0 1200 465" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four botnet groups, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every animated packet follows a drawn connection.'}>
               <g className="storm-stage-titles">
@@ -776,7 +786,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         </div>
 
         <aside className="storm-side">
-          <section className="storm-panel storm-server-details">
+          <section className="storm-panel storm-server-details" data-storm-tour="server-panel">
             <div className="storm-panel-heading"><div><h2>Server response</h2><p>{scenario?.ip}</p></div><Server size={18}/></div>
             <div className="storm-node-usage">
               <div className="storm-node-group">
@@ -801,7 +811,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 </div>
               </div>}
             </div>
-            <div className="storm-traffic-chart" aria-label="Simulated network traffic over time">
+            <div className="storm-traffic-chart" aria-label="Simulated network traffic over time" data-storm-tour="graph">
               <div className="storm-traffic-chart-heading"><span>Traffic</span><strong>{trafficLabel}</strong></div>
               <svg viewBox="0 0 600 110" preserveAspectRatio="none" role="img" aria-label="Spiky modeled incoming traffic">
                 <path d="M 0 106 H 600 M 0 57 H 600" className="storm-chart-axis"/>
@@ -812,27 +822,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         </aside>
       </div>
     </div>}
-    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}>
-      <section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" aria-describedby="storm-help-copy" className="storm-dialog storm-tutorial" onClick={event => event.stopPropagation()}>
-        <button type="button" aria-label="Close tutorial" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button>
-        <div className="storm-tutorial-eyebrow">PICO TUTORIAL</div>
-        <div className="storm-tutorial-progress" aria-label={'Tutorial step ' + (tutorialStep + 1) + ' of ' + TRAFFIC_TUTORIAL_STEPS.length}>
-          {TRAFFIC_TUTORIAL_STEPS.map((_, index) => <span key={index} className={index <= tutorialStep ? 'is-complete' : ''}/>)}
-        </div>
-        <div className="storm-tutorial-counter">STEP {tutorialStep + 1} / {TRAFFIC_TUTORIAL_STEPS.length}</div>
-        <div aria-live="polite" aria-atomic="true">
-          <h2 id="storm-help-heading">{TRAFFIC_TUTORIAL_STEPS[tutorialStep].title}</h2>
-          <p id="storm-help-copy">{TRAFFIC_TUTORIAL_STEPS[tutorialStep].text}</p>
-          <p className="storm-tutorial-hint">{TRAFFIC_TUTORIAL_STEPS[tutorialStep].hint}</p>
-        </div>
-        <div className="storm-tutorial-actions">
-          <button type="button" className="storm-secondary" disabled={tutorialStep === 0} onClick={() => setTutorialStep(previous => Math.max(0, previous - 1))}>Previous</button>
-          <button type="button" className="storm-primary" onClick={() => {
-            if (tutorialStep === TRAFFIC_TUTORIAL_STEPS.length - 1) { setShowHelp(false); return; }
-            setTutorialStep(previous => Math.min(TRAFFIC_TUTORIAL_STEPS.length - 1, previous + 1));
-          }}>{tutorialStep === TRAFFIC_TUTORIAL_STEPS.length - 1 ? 'Finish tutorial' : 'Next step'} <ArrowRight size={15}/></button>
-        </div>
-      </section>
-    </div>}
+    {showHelp && <StormGuidedTour steps={TRAFFIC_TUTORIAL_STEPS} step={tutorialStep}
+      onStep={setTutorialStep} onClose={() => setShowHelp(false)}/>}
   </main>;
 }
