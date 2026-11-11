@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, isTrafficSurge, nextTrafficWarningFloor, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY } from './TrafficStorm';
+import { TrafficStorm, HIGH_TRAFFIC_THRESHOLD_GBPS, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -55,12 +55,34 @@ describe('Traffic Storm setup', () => {
     expect(proxyHeadingY(1)).toBeGreaterThan(proxyHeadingY(4));
   });
 
-  it('keeps the webserver heading close to its first rack for one to four servers', () => {
-    expect(webserverHeadingY(1)).toBeCloseTo(207.5);
-    expect(webserverHeadingY(2)).toBeCloseTo(140);
-    expect(webserverHeadingY(3)).toBeCloseTo(106.25);
-    expect(webserverHeadingY(4)).toBeCloseTo(86);
+  it('keeps the webserver heading near its first rack for one to four servers', () => {
+    expect(webserverHeadingY(1)).toBeCloseTo(177.5);
+    expect(webserverHeadingY(2)).toBeCloseTo(127.5);
+    expect(webserverHeadingY(3)).toBeCloseTo(77.5);
+    expect(webserverHeadingY(4)).toBeCloseTo(27.5);
     expect(webserverHeadingY(1)).toBeGreaterThan(webserverHeadingY(4));
+  });
+
+  it('spaces all four server racks apart and keeps them inside the SVG', () => {
+    expect(webserverPositions(1)).toEqual([232.5]);
+    expect(webserverPositions(2)).toEqual([182.5, 282.5]);
+    const centers = webserverPositions(4);
+    expect(centers).toEqual([82.5, 182.5, 282.5, 382.5]);
+    expect(centers[0] - 37).toBeGreaterThan(0);
+    expect(centers[3] + 37).toBeLessThan(465);
+    centers.slice(1).forEach((center, index) => {
+      expect(center - centers[index] - 74).toBeGreaterThanOrEqual(26);
+    });
+  });
+
+  it('connects hacker commands to each bot along its visible curve', () => {
+    const ends = [92, 190, 288, 386];
+    ends.forEach((botY, index) => {
+      const path = hackerCommandPath(index);
+      expect(path.startsWith('M 215 251 C ')).toBe(true);
+      expect(path.endsWith('350 ' + botY)).toBe(true);
+      expect(path).not.toMatch(/(?:NaN|undefined|null)/);
+    });
   });
 
   it('creates irregular traffic bursts rather than a constant or smooth line', () => {
@@ -71,23 +93,23 @@ describe('Traffic Storm setup', () => {
     expect(trafficSpikeFactor(2)).toBeLessThanOrEqual(1.35);
   });
 
-  it('signals only sharp increases in modeled traffic', () => {
-    expect(isTrafficSurge(1000, 1500)).toBe(true);
-    expect(isTrafficSurge(1000, 1300)).toBe(true);
-    expect(isTrafficSurge(1000, 1150)).toBe(false);
-    expect(isTrafficSurge(1000, 900)).toBe(false);
-    expect(isTrafficSurge(0, 3000)).toBe(false);
-    expect(isTrafficSurge(Number.NaN, 3000)).toBe(false);
+  it('shows the high-traffic warning only at or above 100 Gbps', () => {
+    expect(HIGH_TRAFFIC_THRESHOLD_GBPS).toBe(100);
+    expect(isHighTraffic(0)).toBe(false);
+    expect(isHighTraffic(23841)).toBe(false);
+    expect(isHighTraffic(23842)).toBe(true);
+    expect(isHighTraffic(48000)).toBe(true);
+    expect(isHighTraffic(-1)).toBe(false);
+    expect(isHighTraffic(Number.NaN)).toBe(false);
   });
 
-  it('persists the first sharp-rise warning until traffic meaningfully falls', () => {
-    const started = nextTrafficWarningFloor(null, 1000, 1300);
-    expect(started).toBeCloseTo(780);
-    expect(nextTrafficWarningFloor(started, 1300, 1100)).toBe(started);
-    expect(nextTrafficWarningFloor(started, 1100, 800)).toBe(started);
-    expect(nextTrafficWarningFloor(started, 800, 779)).toBeNull();
-    expect(nextTrafficWarningFloor(null, 1000, 1090)).toBeNull();
-    expect(nextTrafficWarningFloor(null, 1000, Number.NaN)).toBeNull();
+  it('shows offline webserver delivery as zero while keeping attack and proxy loads', () => {
+    const incoming = 320_000;
+    expect(deliveredTrafficRps(incoming, 4, true)).toBe(0);
+    expect(formatTraffic(deliveredTrafficRps(incoming, 4, true))).toBe('0.00 Gbps');
+    expect(deliveredTrafficRps(incoming, 4, false)).toBe(forwardedRequests(incoming, 4));
+    expect(proxyLoadRatio(incoming, 4)).toBeGreaterThan(1);
+    expect(isHighTraffic(incoming)).toBe(true);
   });
 
   it('positions the webserver fans above the bay region', () => {
