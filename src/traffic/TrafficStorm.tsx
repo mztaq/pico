@@ -132,6 +132,12 @@ export function deviceHeading(singular: string, plural: string, count: number): 
   return count === 1 ? singular : plural;
 }
 
+/** Match the setup controls: 100–20,000 imaginary botnet devices in steps of 100. */
+export function normalizeBotArmy(value: number): number {
+  if (!Number.isFinite(value)) return 100;
+  return Math.max(100, Math.min(20_000, Math.round(value / 100) * 100));
+}
+
 /** A visible idle spin starts as soon as the simulation runs, before heavy CPU load. */
 export function coolingFanDemand(cpu: number, running: boolean): number {
   return running ? Math.max(0.34, Math.min(1, Math.max(0, cpu) / 100)) : 0;
@@ -549,6 +555,16 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <div className="storm-live-steppers">
           <div><span>Servers</span><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={13}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
           <div><span>Proxies</span><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={13}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
+        </div>
+        <div className="storm-live-bot-army">
+          <label htmlFor="storm-live-bot-army">Bot army</label>
+          <input id="storm-live-bot-army" type="range" min={100} max={20000} step={100} value={scenario?.bots ?? 3000}
+            onChange={event => {
+              const bots = normalizeBotArmy(Number(event.target.value));
+              setScenario(previous => previous ? { ...previous, bots } : previous);
+              setBotsDraft(String(bots));
+            }}/>
+          <output htmlFor="storm-live-bot-army">{(scenario?.bots ?? 3000).toLocaleString('en-US')}</output>
         </div>
       </div>
 
