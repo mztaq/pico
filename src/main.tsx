@@ -23,6 +23,7 @@ function LoadingScreen() {
 function AppBootReady() {
   useLayoutEffect(() => {
     document.querySelector('.pico-initial-home-loading')?.remove();
+    document.querySelector('.pico-initial-traffic-loading')?.remove();
   }, []);
   return <App />;
 }
