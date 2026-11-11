@@ -955,51 +955,6 @@
   min-height:0;
 }
 
-/* Reference-led hooded icon. High-contrast facial opening, clean angular beard. */
-.storm-network-svg .storm-hacker-node .storm-hacker-emblem-bg{
-  fill:color-mix(in srgb, #090b14 78%, var(--ds-sunken));
-  stroke:color-mix(in srgb,var(--accent) 32%,var(--ds-line-strong));
-  stroke-width:1.6;
-}
-.storm-network-svg .storm-hacker-node .storm-hacker-hood{
-  fill:color-mix(in srgb,#f8f6ff 74%,var(--accent));
-  stroke:color-mix(in srgb,#f8f6ff 65%,var(--accent));
-  stroke-width:1.2;
-  stroke-linejoin:round;
-}
-.storm-network-svg .storm-hacker-node .storm-hacker-face-shadow{
-  fill:#0c0b13;
-  stroke:color-mix(in srgb,var(--accent) 18%,#0c0b13);
-  stroke-width:.8;
-}
-.storm-network-svg .storm-hacker-node .storm-hacker-face-mask,
-.storm-network-svg .storm-hacker-node .storm-hacker-beard{
-  fill:color-mix(in srgb,#fff 78%,var(--accent));
-  stroke:none;
-}
-.storm-network-svg .storm-hacker-node .storm-hacker-eye-slits,
-.storm-network-svg .storm-hacker-node .storm-hacker-nose{
-  fill:#111019;
-  stroke:none;
-}
-.storm-network-svg .storm-hacker-node .storm-hacker-hood-highlight{
-  fill:none;
-  stroke:#fff;
-  opacity:.65;
-  stroke-width:1.4;
-  stroke-linecap:round;
-}
-.storm-network-svg .storm-hacker-node .storm-hacker-heading{
-  fill:var(--ds-text);
-  font:750 15px var(--ds-font-code);
-  letter-spacing:.055em;
-  text-anchor:middle;
-}
-.storm-network-svg .storm-hacker-node .storm-hacker-name{
-  fill:var(--accent);
-  font:750 14px var(--ds-font-code);
-}
-
 /* Spiky traffic history lives in the right panel beneath individual load bars. */
 .storm-in-session .storm-side{
   display:block;
