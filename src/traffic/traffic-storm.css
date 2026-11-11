@@ -7,8 +7,6 @@
 .storm-header-actions{display:flex;align-items:center;gap:8px}
 .storm-icon-button{display:grid;place-items:center;height:32px;min-width:32px;padding:0 7px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--ds-muted);cursor:pointer}
 .storm-icon-button:hover{border-color:var(--ds-line);color:var(--ds-text);background:var(--ds-hover)}
-.storm-local{display:flex;align-items:center;gap:7px;margin-right:8px;color:var(--ds-muted);font:600 10px var(--ds-font-code);letter-spacing:.09em}
-.storm-local span{width:7px;height:7px;background:var(--ds-success);border-radius:50%;box-shadow:0 0 8px var(--ds-success)}
 .storm-theme-wrap{position:relative}
 .storm-theme-popover{position:absolute;right:0;top:40px;z-index:30;min-width:275px;max-height:75vh;overflow-y:auto;padding:14px;border:1px solid var(--ds-line);border-radius:12px;background:var(--ds-panel);box-shadow:var(--ds-shadow-float)}
 .storm-setup{max-width:690px;min-height:calc(100dvh - 52px);margin:0 auto;padding:36px 24px 70px;text-align:center;display:flex;align-items:center;flex-direction:column}
@@ -18,8 +16,7 @@
 .storm-orbit-core{display:grid;place-items:center;width:75px;height:75px;border:1px solid color-mix(in srgb,var(--accent) 50%,var(--ds-line));border-radius:19px;background:var(--ds-accent-soft);color:var(--accent);box-shadow:0 0 52px color-mix(in srgb,var(--accent) 13%,transparent)}
 .storm-setup-orbit i{width:7px;height:7px;position:absolute;inset:calc(50% - 3px) auto auto calc(50% - 3px);border-radius:50%;background:var(--accent);opacity:.8}
 .storm-setup-orbit i:nth-child(3n){background:var(--ds-text);opacity:.5}
-.storm-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--accent);font:700 11px var(--ds-font-code);letter-spacing:.13em}
-.storm-setup-title h1,.storm-intro h1{margin:8px 0 0;letter-spacing:-.05em;font-size:clamp(35px,5vw,52px);font-weight:750;line-height:1.1}
+.storm-setup-title h1,.storm-intro h1{margin:0;letter-spacing:-.05em;font-size:clamp(35px,5vw,52px);font-weight:750;line-height:1.1}
 .storm-setup-title h1 span,.storm-intro h1 span{color:var(--accent)}
 .storm-setup-title p{margin:13px auto 0;color:var(--ds-muted);line-height:1.6}
 .storm-setup-form{display:flex;flex-direction:column;gap:21px;text-align:left;width:100%;max-width:470px;margin-top:29px;padding:27px;background:var(--ds-panel);border:1px solid var(--ds-line);border-radius:16px;box-shadow:0 16px 45px color-mix(in srgb,#000 12%,transparent)}
@@ -56,13 +53,13 @@
 .storm-meter{margin-top:auto;width:100%;height:6px;overflow:hidden;border-radius:20px;background:var(--ds-sunken)}
 .storm-meter i{display:block;height:100%;border-radius:20px;background:var(--accent);transition:width .3s ease}
 .storm-meter .storm-health{background:var(--ds-success)}
-.storm-main-grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(295px,.85fr);gap:14px;padding:0 24px 14px}
+.storm-main-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(330px,.9fr);align-items:start;gap:14px;padding:0 24px 14px}
 .storm-panel{min-width:0;padding:20px;border:1px solid var(--ds-line);border-radius:12px;background:var(--ds-panel)}
 .storm-panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .storm-panel-heading h2{margin:0;color:var(--ds-text);font-size:15px;font-weight:700}
 .storm-panel-heading p{color:var(--ds-muted);font-size:11.5px;margin:6px 0 0;line-height:1.5}
 .storm-panel-heading>svg{color:var(--accent)}
-.storm-network{display:flex;flex-direction:column;min-height:370px;overflow:hidden}
+.storm-network{display:flex;flex-direction:column;min-height:435px;overflow:hidden}
 .storm-status{display:inline-flex;gap:7px;align-items:center;border:1px solid var(--ds-line);border-radius:30px;padding:6px 9px;color:var(--ds-success);font:700 10px var(--ds-font-code);white-space:nowrap}
 .storm-status i{width:7px;height:7px;border-radius:50%;background:currentColor}
 .storm-status--overloaded,.storm-status--degraded{color:var(--ds-danger)}
@@ -118,5 +115,48 @@
 .storm-dialog .storm-primary{margin-top:8px}
 .storm-dialog-close{position:absolute;top:12px;right:12px;display:grid;place-items:center;border:0;background:transparent;color:var(--ds-muted);cursor:pointer}
 @media(max-width:940px){.storm-main-grid{grid-template-columns:minmax(0,1fr)}.storm-side{grid-template-columns:repeat(2,minmax(0,1fr))}.storm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.storm-header{padding:0 10px}.storm-local{display:none}.storm-setup{padding:25px 16px}.storm-setup-form{padding:20px}.storm-intro{padding:22px 16px 16px;display:block}.storm-intro h1{font-size:28px}.storm-controls{margin-top:17px;flex-wrap:wrap}.storm-metrics{padding:0 16px 12px;gap:9px}.storm-metric{padding:13px;min-height:104px}.storm-metric>strong{font-size:23px}.storm-main-grid{padding:0 16px 12px}.storm-side{grid-template-columns:1fr}.storm-panel{padding:14px}.storm-network{min-height:260px}.storm-network-svg{min-height:190px}.storm-network-foot{gap:9px}.storm-network-foot>span:last-child{margin-left:0}.storm-chart-panel{margin-left:16px;margin-right:16px}.storm-outcome{margin:12px 16px;align-items:flex-start;flex-wrap:wrap}.storm-outcome button{margin-left:0}.storm-bottom-note{padding:0 16px}.storm-theme-popover{right:-4px}}
+@media(max-width:600px){.storm-header{padding:0 10px}.storm-setup{padding:25px 16px}.storm-setup-form{padding:20px}.storm-intro{padding:22px 16px 16px;display:block}.storm-intro h1{font-size:28px}.storm-controls{margin-top:17px;flex-wrap:wrap}.storm-metrics{padding:0 16px 12px;gap:9px}.storm-metric{padding:13px;min-height:104px}.storm-metric>strong{font-size:23px}.storm-main-grid{padding:0 16px 12px}.storm-side{grid-template-columns:1fr}.storm-panel{padding:14px}.storm-network{min-height:260px}.storm-network-svg{min-height:190px}.storm-network-foot{gap:9px}.storm-network-foot>span:last-child{margin-left:0}.storm-chart-panel{margin-left:16px;margin-right:16px}.storm-outcome{margin:12px 16px;align-items:flex-start;flex-wrap:wrap}.storm-outcome button{margin-left:0}.storm-bottom-note{padding:0 16px}.storm-theme-popover{right:-4px}}
 @media(prefers-reduced-motion:reduce){.storm-app *{animation:none!important;transition:none!important}.storm-packet{display:none}}
+
+/* The animated diagram is an educational view of a fictional network. */
+.storm-diagram-label{fill:var(--ds-text);font:700 11px var(--ds-font-code);text-anchor:middle;letter-spacing:.1em}
+.storm-diagram-count{fill:var(--ds-muted);font:10px var(--ds-font-code);text-anchor:middle}
+.storm-proxy-node rect{fill:var(--ds-accent-soft);stroke:var(--accent);stroke-width:1.3}
+.storm-proxy-node circle{fill:var(--accent);opacity:.85}
+.storm-proxy-node text{fill:var(--ds-text);font:700 11px var(--ds-font-code);text-anchor:middle}
+.storm-server-graphic.is-critical>rect:first-child{stroke:var(--ds-danger);animation:storm-server-pulse 1.4s ease-in-out infinite}
+.storm-server-graphic.is-critical .storm-led{fill:var(--ds-danger)}
+@keyframes storm-server-pulse{50%{stroke-width:4;filter:drop-shadow(0 0 10px var(--ds-danger))}}
+/* A read-only imitation terminal. Nothing in this panel is executable. */
+.storm-console{margin-top:15px;border:1px solid var(--ds-line);border-radius:10px;overflow:hidden;background:var(--ds-sunken);color:var(--ds-text);font:11px/1.7 var(--ds-font-code)}
+.storm-console-line{display:flex;align-items:baseline;gap:9px;padding:3px 12px;word-break:break-word;animation:storm-line-enter .24s ease-out both}
+.storm-console-line:first-child{padding-top:11px}
+.storm-console-line:last-of-type{padding-bottom:10px}
+.storm-console-line>span:last-child{min-width:0}
+.storm-console-index{color:var(--ds-muted);font-size:10px;opacity:.5;flex-shrink:0}
+.storm-console-alert{color:var(--ds-danger)}
+.storm-console-readout{margin:10px 0 0;padding:10px 12px;border-top:1px solid var(--ds-line);border-bottom:1px solid var(--ds-line);display:grid;gap:4px;color:var(--ds-muted)}
+.storm-console-readout>div{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.storm-console-readout span{color:var(--ds-text);font-weight:650;text-align:right;overflow-wrap:anywhere}
+.storm-console-prompt{display:flex;align-items:center;gap:8px;padding:9px 12px 11px;color:var(--accent)}
+.storm-console-caret{display:inline-block;width:7px;height:13px;border-radius:1px;background:var(--accent);animation:storm-caret-blink .85s steps(1,end) infinite}
+@keyframes storm-caret-blink{50%{opacity:0}}
+@keyframes storm-line-enter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* Progressive operator messages create a replayable visual narrative. */
+.storm-chatter{display:grid;gap:9px;margin-top:15px}
+.storm-chat-line{display:flex;align-items:flex-start;gap:9px;padding:10px;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-sunken);animation:storm-line-enter .3s ease-out both}
+.storm-chat-avatar{width:26px;height:26px;display:grid;place-items:center;flex:0 0 26px;background:var(--ds-accent-soft);border-radius:8px;color:var(--accent);font:700 12px var(--ds-font-ui)}
+.storm-chat-line>div{min-width:0}
+.storm-chat-line strong{font-size:11px;line-height:1.2;overflow-wrap:anywhere}
+.storm-chat-line p{margin:3px 0 0;font-size:11.5px;line-height:1.5;color:var(--ds-muted);overflow-wrap:anywhere}
+.storm-chatter-typing{display:flex;gap:4px;align-items:center;padding:10px 12px;width:max-content;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-sunken)}
+.storm-chatter-typing i{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:storm-typing 1.2s ease-in-out infinite}
+.storm-chatter-typing i:nth-child(2){animation-delay:.17s}
+.storm-chatter-typing i:nth-child(3){animation-delay:.34s}
+@keyframes storm-typing{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.storm-console-panel,.storm-chatter-panel{min-width:0}
+.storm-server-details .storm-thermometer{margin:12px 0}
+@media(min-width:941px){.storm-network{min-height:460px}}
+@media(max-width:940px){.storm-main-grid{align-items:stretch}.storm-side{align-items:start}}
+@media(max-width:600px){.storm-main-grid{grid-template-columns:1fr}.storm-network{min-height:280px}.storm-chatter{gap:7px}.storm-console{font-size:10.5px}.storm-console-line{padding-inline:9px}}
+@media(prefers-reduced-motion:reduce){.storm-console-line,.storm-chat-line,.storm-console-caret,.storm-chatter-typing i,.storm-server-graphic.is-critical>rect:first-child{animation:none!important}}
