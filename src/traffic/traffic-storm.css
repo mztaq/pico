@@ -1189,3 +1189,168 @@
     opacity:1!important;
   }
 }
+
+/* One-question identity entry, followed by the live simulator controls. */
+.storm-app .storm-identity-setup{
+  width:100%;
+  max-width:600px;
+  min-height:calc(100dvh - 54px);
+  margin:0 auto;
+  padding:32px 22px 44px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+}
+.storm-identity-emblem{
+  position:relative;
+  display:grid;place-items:center;
+  width:148px;height:148px;
+  margin:0 auto 19px;
+  isolation:isolate;
+}
+.storm-identity-orbit{
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+}
+.storm-identity-orbit-outer{
+  inset:3px;
+  border:1px dashed color-mix(in srgb,var(--accent) 42%,var(--ds-line));
+  opacity:.78;
+  animation:storm-identity-turn 32s linear infinite;
+}
+.storm-identity-orbit-inner{
+  inset:21px;
+  border:1px solid color-mix(in srgb,var(--accent) 28%,var(--ds-line));
+  box-shadow:0 0 36px color-mix(in srgb,var(--accent) 12%,transparent);
+}
+.storm-identity-avatar{
+  display:grid;place-items:center;
+  width:82px;height:82px;
+  border:1px solid color-mix(in srgb,var(--accent) 60%,var(--ds-line));
+  border-radius:23px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 16%,var(--ds-panel-raised)),var(--ds-sunken));
+  color:var(--accent);
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--accent) 20%,transparent),0 12px 32px color-mix(in srgb,#000 14%,transparent);
+}
+.storm-identity-dot{
+  position:absolute;z-index:2;
+  width:8px;height:8px;
+  background:var(--accent);border-radius:50%;
+  box-shadow:0 0 12px color-mix(in srgb,var(--accent) 48%,transparent);
+}
+.storm-identity-dot-one{left:14px;top:36px}
+.storm-identity-dot-two{right:10px;bottom:33px;width:6px;height:6px;opacity:.66}
+@keyframes storm-identity-turn{to{transform:rotate(360deg)}}
+.storm-identity-eyebrow{
+  display:block;
+  margin-bottom:13px;
+  color:var(--accent);
+  font:800 11px var(--ds-font-code);
+  letter-spacing:.22em;
+}
+.storm-identity-setup .storm-identity-title h1{
+  margin:0;
+  color:var(--ds-text);
+  font-size:clamp(33px,5vw,48px);
+  font-weight:750;
+  letter-spacing:-.052em;
+  line-height:1.11;
+}
+.storm-identity-setup .storm-identity-title h1 span{color:var(--accent)}
+.storm-identity-setup .storm-identity-title p{
+  margin:13px auto 0;
+  max-width:370px;
+  color:var(--ds-muted);
+  font-size:14px;
+  line-height:1.55;
+}
+.storm-identity-setup .storm-identity-form{
+  width:100%;max-width:435px;
+  margin:27px auto 0;
+  padding:24px;
+  display:flex;flex-direction:column;gap:12px;
+  text-align:left;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--accent) 5%,var(--ds-panel)),var(--ds-panel) 54%);
+  border:1px solid var(--ds-line-strong);
+  border-radius:17px;
+  box-shadow:0 20px 55px color-mix(in srgb,#000 18%,transparent);
+}
+.storm-identity-setup .storm-identity-form>label{
+  display:block;
+  color:var(--ds-text);
+  font:750 13px var(--ds-font-ui);
+}
+.storm-identity-setup .storm-identity-input{
+  display:flex;align-items:center;gap:12px;
+  min-height:55px;
+  padding:0 15px;
+  border:1px solid var(--ds-line-strong);
+  border-radius:10px;
+  background:var(--ds-sunken);
+  transition:border-color .16s ease,box-shadow .16s ease;
+}
+.storm-identity-setup .storm-identity-input:focus-within{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent);
+}
+.storm-identity-setup .storm-identity-input.is-invalid{border-color:var(--ds-danger)}
+.storm-identity-input>svg{flex:0 0 auto;color:var(--accent)}
+.storm-identity-setup .storm-identity-form .storm-identity-input input:not([type="range"]){
+  flex:1 1 auto;
+  width:100%;height:52px;min-width:0;
+  border:0;border-radius:0;outline:0;
+  padding:0;
+  background:transparent;
+  color:var(--ds-text);
+  font:650 16px var(--ds-font-ui);
+  box-shadow:none;
+}
+.storm-identity-setup .storm-identity-form .storm-identity-input input:focus-visible{
+  outline:0;box-shadow:none;
+}
+.storm-identity-setup .storm-identity-input input::placeholder{
+  color:var(--ds-muted);font-weight:450;opacity:.8;
+}
+.storm-identity-hint{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:12px;
+  color:var(--ds-muted);
+  font:500 11px/1.45 var(--ds-font-ui);
+}
+.storm-identity-hint>span:last-child{
+  flex:0 0 auto;white-space:nowrap;
+  font:650 11px var(--ds-font-code);
+  font-variant-numeric:tabular-nums;
+}
+.storm-identity-setup .storm-identity-form .storm-error{
+  margin:1px 0 0;
+  color:var(--ds-danger);
+  font:600 12px/1.4 var(--ds-font-ui);
+}
+.storm-identity-setup .storm-identity-form .storm-identity-submit{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  width:100%;min-height:49px;margin-top:7px;
+  border-radius:10px;
+  font-size:14px;font-weight:750;
+}
+.storm-identity-submit svg{transition:transform .18s ease}
+.storm-identity-submit:hover svg{transform:translateX(3px)}
+.storm-identity-note{
+  color:var(--ds-muted);
+  margin:17px auto 0;
+  font:500 11px/1.4 var(--ds-font-ui);
+}
+@media(max-width:600px){
+  .storm-app .storm-identity-setup{padding:24px 17px 37px;min-height:calc(100dvh - 52px)}
+  .storm-identity-emblem{width:120px;height:120px;margin-bottom:14px}
+  .storm-identity-avatar{width:67px;height:67px;border-radius:19px}
+  .storm-identity-setup .storm-identity-title h1{font-size:clamp(29px,7vw,39px)}
+  .storm-identity-setup .storm-identity-form{margin-top:23px;padding:18px}
+  .storm-identity-setup .storm-identity-form .storm-identity-input input:not([type="range"]){font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){
+  .storm-identity-orbit-outer{animation:none!important}
+  .storm-identity-submit svg{transition:none}
+  .storm-identity-submit:hover svg{transform:none}
+}
