@@ -141,6 +141,7 @@ describe('Traffic Storm setup', () => {
     const timeouts = appendPingHistory(entries, { id: 15, latency: null, text: 'Request timed out.' });
     expect(timeouts[timeouts.length - 1].latency).toBeNull();
     expect(timeouts).toHaveLength(10);
+    expect(appendPingHistory(entries, { id: 16, latency: 55, text: 'One reply' }, 1)).toHaveLength(1);
   });
 
 });
