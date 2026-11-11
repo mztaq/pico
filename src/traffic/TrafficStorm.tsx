@@ -136,22 +136,9 @@ export function serverPressure(rps: number, proxies: number, servers: number): n
   return forwardedRequests(rps, proxies) / (SERVER_CAPACITY * count);
 }
 
-export function modeledPing(ip: string, responseMs: number | null): string {
-  return responseMs === null
-    ? 'Request timed out (simulation)'
-    : 'Reply from ' + ip + ': ' + responseMs + ' ms (simulation)';
-}
-
 export function formatTraffic(rps: number): string {
   const gbps = Math.max(0, rps) * BITS_PER_REQUEST / 1e9;
   return gbps >= 1000 ? (gbps / 1000).toFixed(2) + ' Tbps' : gbps.toFixed(2) + ' Gbps';
-}
-
-export type PingEntry = { id: number; text: string; latency: number | null };
-
-export function appendPingHistory(previous: PingEntry[], entry: PingEntry, limit = 10): PingEntry[] {
-  const count = Math.max(1, Math.floor(limit) || 1);
-  return [...previous, entry].slice(-count);
 }
 
 type Scenario = { hacker: string; bots: number; ip: string };
@@ -175,7 +162,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const [ipDraft, setIpDraft] = useState(() => generateDemoIp());
   const [proxyCount, setProxyCount] = useState(0);
   const [serverCount, setServerCount] = useState(1);
-  const [pingLines, setPingLines] = useState<PingEntry[]>([]);
   const proxyEnabled = proxyCount > 0;
   const [error, setError] = useState('');
   const [scenario, setScenario] = useState<Scenario | null>(null);
@@ -194,9 +180,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const networkRef = useRef<SVGSVGElement | null>(null);
   const fanMotion = useRef({ angle: 0, speed: 0 });
   const fanTarget = useRef(0);
-  const pingTarget = useRef({ ip: '', latency: null as number | null });
-  const pingScrollRef = useRef<HTMLDivElement | null>(null);
-  const pingSequence = useRef(0);
   const arriving = forwardedRequests(stats.rps, proxyCount);
   const pressure = arriving / (SERVER_CAPACITY * serverCount);
   const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
@@ -368,7 +351,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   function start(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPingLines([]);
     const bots = Number(botsDraft);
     if (!hacker.trim()) { setError('Give the operator a name.'); return; }
     if (!Number.isInteger(bots) || bots < 100 || bots > 20000) { setError('Choose between 100 and 20,000 fictional bots.'); return; }
@@ -439,7 +421,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   function restart() {
     setStats(initialStats());
-    setPingLines([]);
     warningPlayed.current = false;
     lastFrame.current = performance.now();
     setMode('running');
@@ -452,42 +433,15 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setError('');
     setStats(initialStats());
     setShowHelp(false);
-    setPingLines([]);
     setIpDraft(generateDemoIp());
   }
 
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
-  // Auto-ping uses only this local synthetic latency, never ICMP or network fetch.
-  useEffect(() => {
-    pingTarget.current = { ip: scenario?.ip ?? '0.0.0.0', latency: mode === 'offline' ? null : responseMs };
-  }, [scenario?.ip, responseMs, mode]);
-
-  useEffect(() => {
-    if (mode === 'setup' || !scenario) return;
-    const tick = () => {
-      if (mode === 'paused') return;
-      const { ip, latency } = pingTarget.current;
-      const line = latency === null
-        ? 'Request timed out.'
-        : 'Reply from ' + ip + ': bytes=32 time=' + latency + 'ms TTL=55';
-      const entry: PingEntry = { id: ++pingSequence.current, text: line, latency };
-      setPingLines(previous => appendPingHistory(previous, entry));
-    };
-    tick();
-    if (mode === 'paused') return;
-    const timer = window.setInterval(tick, 1000);
-    return () => window.clearInterval(timer);
-  }, [mode, scenario?.ip]);
-
-  useEffect(() => {
-    if (!pingScrollRef.current) return;
-    pingScrollRef.current.scrollTop = pingScrollRef.current.scrollHeight;
-  }, [pingLines]);
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(arriving);
   const points = stats.history.map((value, index) => {
     const x = stats.history.length <= 1 ? 0 : index / (stats.history.length - 1) * 600;
-    const y = 82 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * BOT_REQUEST_RATE * 1.5)) * 74;
+    const y = 106 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * BOT_REQUEST_RATE * 1.5)) * 99;
     return String(x) + ',' + String(y);
   }).join(' ');
   const safeName = scenario?.hacker ?? 'Operator';
@@ -687,10 +641,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             <div className="storm-network-foot"><span className="storm-legend-attack"><i/> Attack</span><span className="storm-legend-real"><i/> Real users</span><span>{serverCount} servers · {proxyCount} proxies</span><span>{stats.seconds.toFixed(1)}s</span></div>
           </section>
 
-          <section className="storm-panel storm-chart-panel" aria-label="Simulated bandwidth history">
-            <div className="storm-chart-top"><span>Traffic history</span><strong>{trafficLabel}</strong></div>
-            <svg viewBox="0 0 600 88" preserveAspectRatio="none" role="img" aria-label="Modeled incoming traffic over time"><path d="M 0 82 H 600 M 0 45 H 600" className="storm-chart-axis"/>{points && <polyline points={points} className="storm-chart-line"/>}</svg>
-          </section>
         </div>
 
         <aside className="storm-side">
@@ -719,16 +669,18 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 </div>
               </div>}
             </div>
-            <div className="storm-live-ping" aria-label="Simulated ping replies">
-              <div ref={pingScrollRef} className="storm-ping-terminal-lines" role="log" aria-live="off">
-                {pingLines.map((entry, index) => <div key={entry.id} className={'storm-ping-entry' + (index === pingLines.length - 1 ? ' is-latest' : '') + (entry.latency === null ? ' is-timeout' : '')}>{entry.text}</div>)}
-              </div>
+            <div className="storm-traffic-chart" aria-label="Simulated network traffic over time">
+              <div className="storm-traffic-chart-heading"><span>Traffic</span><strong>{trafficLabel}</strong></div>
+              <svg viewBox="0 0 600 110" preserveAspectRatio="none" role="img" aria-label="Spiky modeled incoming traffic">
+                <path d="M 0 106 H 600 M 0 57 H 600" className="storm-chart-axis"/>
+                {points && <polyline points={points} className="storm-chart-line"/>}
+              </svg>
             </div>
           </section>
         </aside>
       </div>
       <footer className="storm-session-footer"><span>Browser-only simulation. No packets sent.</span><span>{stats.seconds.toFixed(1)}s</span></footer>
     </div>}
-    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>A hacker controls fictional botnet nodes sending simulated traffic. The modeled website becomes slower or goes offline if incoming requests exceed server capacity.</p><p>Choose 1–4 web servers to share the simulated load, and 0–4 defensive proxies to filter it. This model illustrates diminishing returns across proxy layers. Real DDoS protection varies and is not guaranteed by adding proxies or servers.</p><p>Traffic uses fictional units of 512 KiB and 16 requests per bot per second. Proxy capacity is also fictional: excessive incoming requests overload the proxies and reduce filtering. Ping replies report fictional latency without contacting the address.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
+    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>A hacker controls fictional botnet nodes sending simulated traffic. The modeled website becomes slower or goes offline if incoming requests exceed server capacity.</p><p>Choose 1–4 web servers to share the simulated load, and 0–4 defensive proxies to filter it. This model illustrates diminishing returns across proxy layers. Real DDoS protection varies and is not guaranteed by adding proxies or servers.</p><p>Traffic uses fictional units of 512 KiB and 16 requests per bot per second. Proxy capacity is also fictional: excessive incoming requests overload the proxies and reduce filtering. The graph shows fictional bursty traffic and does not contact the address.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
   </main>;
 }
