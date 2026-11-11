@@ -1273,28 +1273,28 @@
   .storm-identity-input{transition:none!important}
 }
 
-/* Quiet annotations explain each network stage without covering the hardware. */
+/* Plain leader labels keep command, proxy and server paths visible. */
 .storm-network-svg .storm-diagram-annotations{pointer-events:none}
-.storm-network-svg .storm-diagram-annotation rect{
-  fill:color-mix(in srgb,var(--ds-panel) 91%,var(--ds-text) 9%);
-  stroke:var(--ds-line-strong);stroke-width:1;
-}
+.storm-network-svg .storm-diagram-annotation{color:var(--ds-muted)}
 .storm-network-svg .storm-diagram-annotation text{
-  fill:var(--ds-muted);font:650 11px var(--ds-font-ui);
-  letter-spacing:0;text-anchor:middle;
+  fill:currentColor;
+  font:650 12px var(--ds-font-ui);
+  letter-spacing:0;
+  text-anchor:start;
+  paint-order:stroke;
+  stroke:var(--ds-panel);
+  stroke-width:3.5;
+  stroke-linejoin:round;
 }
-.storm-network-svg .storm-diagram-annotation--accent rect{
-  stroke:color-mix(in srgb,var(--accent) 48%,var(--ds-line));
+.storm-network-svg .storm-diagram-annotation .storm-annotation-leader,
+.storm-network-svg .storm-diagram-annotation .storm-annotation-arrow{
+  fill:none;stroke:currentColor;stroke-width:1.65;
+  stroke-linecap:round;stroke-linejoin:round;
+  opacity:.82;
 }
-.storm-network-svg .storm-diagram-annotation--accent text{fill:var(--accent)}
-.storm-network-svg .storm-diagram-annotation--danger rect{
-  stroke:color-mix(in srgb,var(--ds-danger) 55%,var(--ds-line));
-}
-.storm-network-svg .storm-diagram-annotation--danger text{fill:var(--ds-danger)}
-.storm-network-svg .storm-diagram-annotation--success rect{
-  stroke:color-mix(in srgb,var(--ds-success) 49%,var(--ds-line));
-}
-.storm-network-svg .storm-diagram-annotation--success text{fill:var(--ds-success)}
+.storm-network-svg .storm-diagram-annotation--accent{color:var(--accent)}
+.storm-network-svg .storm-diagram-annotation--danger{color:var(--ds-danger)}
+.storm-network-svg .storm-diagram-annotation--success{color:var(--ds-success)}
 @media(max-width:700px){
-  .storm-network-svg .storm-diagram-annotation text{font-size:12px}
+  .storm-network-svg .storm-diagram-annotation text{font-size:13px;stroke-width:4}
 }
