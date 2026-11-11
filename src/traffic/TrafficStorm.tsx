@@ -180,6 +180,15 @@ export function serverPressure(rps: number, proxies: number, servers: number): n
   return forwardedRequests(rps, proxies) / (SERVER_CAPACITY * count);
 }
 
+/** Health drains gradually under high load, even near the model's 5 Tbps peak.
+ * -5 is a per-second recovery rate when the origin is within capacity.
+ */
+export function serverHealthDrainPerSecond(pressure: number): number {
+  if (!Number.isFinite(pressure) || pressure <= 0) return -5;
+  if (pressure <= 1) return -5;
+  return Math.min(2.3, 0.45 + 0.42 * Math.log2(pressure));
+}
+
 export function formatTraffic(rps: number): string {
   const gbps = Math.max(0, rps) * BITS_PER_REQUEST / 1e9;
   return gbps >= 1000 ? (gbps / 1000).toFixed(2) + ' Tbps' : gbps.toFixed(2) + ' Gbps';
@@ -213,16 +222,16 @@ export function validateHackerName(input: string): string | null {
 
 export const TRAFFIC_TUTORIAL_STEPS = [
   { target: 'controls', title: 'Start and pause', text: 'Start Simulation begins the traffic. Use Pause, Resume or Restart to control the run. New scenario lets you choose another hacker name.' },
-  { target: 'bots', title: 'Bot army', text: 'Set the simulated bot army from 100 to 20,000 devices. More bots increase the fictional request rate. Change this while the simulation runs.' },
+  { target: 'bots', title: 'Bot army', text: 'Set your bot army from 100 to 20,000 devices. More bots create more traffic. Adjust it at any time.' },
   { target: 'servers', title: 'Webservers', text: 'Add up to four webservers to share the incoming requests. Each has its own load meter and spinning fans.' },
-  { target: 'proxies', title: 'Proxies', text: 'Add up to four defensive proxies. These filter simulated requests, but heavy traffic eventually overwhelms their capacity.' },
-  { target: 'diagram', title: 'Network diagram', text: 'Red command lines connect the hacker to botnet nodes. Animated dots represent groups of attack requests passing through the network.' },
-  { target: 'incoming', title: 'Incoming traffic', text: 'This is the total modeled attack bandwidth. The exclamation mark flashes at 100 Gbps and above. Peak values can exceed 5 Tbps.' },
-  { target: 'delivered', title: 'Delivered traffic', text: 'This is modeled traffic reaching the webservers after proxy filtering. It falls to zero when the website is offline.' },
-  { target: 'health', title: 'Server health', text: 'Health decreases when incoming load exceeds capacity. Once it reaches zero, the website goes offline.' },
+  { target: 'proxies', title: 'Proxies', text: 'Add up to four defensive proxies to filter requests. Heavy traffic can overwhelm them.' },
+  { target: 'diagram', title: 'Network diagram', text: 'Red lines show commands from the hacker to the botnet. Moving dots follow request routes to the webservers.' },
+  { target: 'incoming', title: 'Incoming traffic', text: 'Track incoming bandwidth here, reaching over 5 Tbps at peak. The exclamation mark flashes above 100 Gbps.' },
+  { target: 'delivered', title: 'Delivered traffic', text: 'Traffic that reaches the webservers after proxy filtering appears here. It drops to zero if the site goes offline.' },
+  { target: 'health', title: 'Server health', text: 'Health gradually decreases under overload, even at 5 Tbps. When it reaches zero, the website goes offline.' },
   { target: 'latency', title: 'Response time', text: 'Response time rises as server pressure increases. When the website goes offline, the indicator changes to OFFLINE.' },
   { target: 'server-panel', title: 'Server and proxy load', text: 'Each server CPU and proxy load appears here. Add or remove nodes to compare how the network behaves.' },
-  { target: 'graph', title: 'Traffic graph', text: 'This graph tracks the fictional traffic bursts over time. Each spike reflects a change in the simulated attack rate.' },
+  { target: 'graph', title: 'Traffic graph', text: 'Follow traffic changes over time. Sharp spikes show sudden increases.' },
   { target: 'sound', title: 'Sound controls', text: 'Use the sound button to mute packet and fan audio. Successful request-group arrivals play a short confirmation chime.' },
 ] as const;
 
@@ -492,7 +501,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         const rps = Math.round(scenario.bots * BOT_REQUEST_RATE * variation * ramp);
         const forwarded = forwardedRequests(rps, proxyCount);
         const overload = forwarded / (SERVER_CAPACITY * serverCount);
-        const health = Math.max(0, Math.min(100, previous.health - (overload > 1 ? (overload - 1) * 12 : -5) * dt));
+        const health = Math.max(0, Math.min(100, previous.health - serverHealthDrainPerSecond(overload) * dt));
         return {
           seconds: previous.seconds + dt,
           health, rps,
