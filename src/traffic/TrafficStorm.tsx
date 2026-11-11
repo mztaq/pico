@@ -385,7 +385,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const visiblePacketCount = Math.max(1, Math.round(30 * trafficRamp(stats.seconds)));
   const serverYs = networkPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
-  const filterRatio = proxyFilterRatio(proxyCount);
   const proxyLoad = proxyLoadRatio(stats.rps, proxyCount);
   const effectiveFilter = effectiveProxyFilterRatio(stats.rps, proxyCount);
   const proxyState = proxyCount === 0 ? 'OFF' : proxyLoad > 1 ? 'OVERLOADED' : proxyLoad > 0.8 ? 'BUSY' : 'FILTERING';
@@ -430,18 +429,22 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       <div className="storm-intro">
         <div className="storm-titleline"><h1>Traffic Storm<span>.</span></h1><p>{safeName} · {compact(scenario?.bots ?? 0)} bots · <code>{scenario?.ip}</code></p></div>
         <div className="storm-controls">
-          <div className="storm-live-steppers">
-            <div><span>Servers</span><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={13}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
-            <div><span>Proxies</span><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={13}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
-          </div>
           {mode === 'offline' ? <button type="button" className="storm-primary" onClick={restart}><RotateCcw size={15}/> Restart</button> : <button type="button" className="storm-primary" onClick={() => setMode(value => value === 'paused' ? 'running' : 'paused')}>{mode === 'paused' ? <Play size={15}/> : <Pause size={15}/>} {mode === 'paused' ? 'Resume' : 'Pause'}</button>}
           <button type="button" className="storm-secondary" onClick={newScenario}>New scenario</button>
         </div>
       </div>
+      <div className="storm-infra-bar">
+        <span className="storm-infra-label">NODES</span>
+        <div className="storm-live-steppers">
+          <div><span>Servers</span><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={13}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
+          <div><span>Proxies</span><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={13}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
+        </div>
+        {proxyEnabled && <span className={'storm-infra-state' + (proxyLoad > 1 ? ' is-overloaded' : '')}><span className="storm-infra-dot"/>{proxyState} · {Math.round(proxyLoad * 100)}% load</span>}
+      </div>
 
       <section className="storm-metrics" aria-label="Simulation metrics">
         <div className="storm-metric"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong></div>
-        <div className="storm-metric"><span>REACHING SERVERS</span><strong>{serverTrafficLabel}</strong><small>{proxyEnabled ? Math.round(filterRatio * 100) + '% filtered' : 'Unfiltered'}</small></div>
+        <div className="storm-metric"><span>REACHING SERVERS</span><strong>{serverTrafficLabel}</strong><small>{proxyEnabled ? Math.round(effectiveFilter * 100) + '% filtered' : 'Unfiltered'}</small></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
         <div className="storm-metric"><span>RESPONSE TIME</span><strong>{responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
       </section>
@@ -450,19 +453,19 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <div className="storm-left-stack">
           <section className="storm-panel storm-network" aria-label="Animated network traffic">
             <div className="storm-panel-heading"><div><h2>Network traffic</h2></div><span className={'storm-status storm-status--' + status.toLowerCase()}><i/>{status}</span></div>
-            <svg viewBox="0 0 1000 370" className="storm-network-svg" role="img" aria-label={'Fictional hacker and botnet feeding ' + proxyCount + ' defensive proxy nodes and ' + serverCount + ' web servers'}>
+            <svg ref={networkRef} viewBox="0 0 1000 370" className="storm-network-svg" role="img" aria-label={'Fictional hacker and botnet feeding ' + proxyCount + ' defensive proxy nodes and ' + serverCount + ' web servers'}>
               <defs><linearGradient id="storm-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--accent)" stopOpacity=".16"/><stop offset="1" stopColor="var(--accent)" stopOpacity=".75"/></linearGradient><filter id="storm-glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
               <text x="77" y="25" className="storm-diagram-label">HACKER</text>
               <text x="282" y="25" className="storm-diagram-label">BOTNET · {compact(scenario?.bots ?? 0)}</text>
               <text x="881" y="25" className="storm-diagram-label">WEB SERVERS · {serverCount}</text>
-              {proxyEnabled && <text x="617" y="25" className="storm-diagram-label">PROXIES · {proxyCount}</text>}
+              {proxyEnabled && <><text x="617" y="25" className="storm-diagram-label">PROXIES · {proxyCount}</text><text x="617" y="43" className={'storm-diagram-count' + (proxyLoad > 1 ? ' is-overloaded' : '')}>{proxyState}</text></>}
               {BOT_Y.map(y => <path key={'controller-' + y} d={'M 113 180 C 166 180 176 ' + y + ' 224 ' + y} className="storm-controller-line"/>)}
               <g className="storm-hacker-node"><rect x="28" y="123" width="99" height="112" rx="15"/><path d="M 49 176 C 49 143 63 139 77 138 C 91 139 106 143 106 176 L 106 198 C 95 211 59 211 49 198 Z"/><path d="M 60 180 L 70 184 M 84 184 L 94 180"/><rect x="47" y="202" width="60" height="19" rx="4"/><text x="77" y="251">{safeName.slice(0, 12)}</text></g>
               {BOT_Y.map((y, index) => <g key={y} className="storm-bot-node"><rect x="224" y={y - 22} width="110" height="44" rx="9"/><circle cx="245" cy={y} r="7"/><path d={'M 264 ' + (y - 6) + ' h 44 M 264 ' + (y + 6) + ' h 29'}/><text x="281" y={y - 30}>BOT 0{index + 1}</text></g>)}
               {BOT_Y.map((_, index) => <path key={index} d={packetPath(index, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)} className="storm-path"/>)}
-              {proxyYs.map((y, index) => <g key={'proxy-' + index} className="storm-proxy-edge"><rect x="591" y={y - 24} width="54" height="48" rx="10"/><path d={'M 618 ' + (y - 15) + ' l 15 6 v 13 q -2 12 -15 19 q -13 -7 -15 -19 v -13 Z'}/><path d={'M 608 ' + (y - 1) + ' l 7 7 l 14 -15'}/><text x="618" y={y + 37}>P{index + 1}</text></g>)}
+              {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoad > 1 ? ' is-overloaded' : proxyLoad > 0.8 ? ' is-busy' : '')}><rect x="591" y={y - 23} width="54" height="46" rx="10"/><path d={'M 618 ' + (y - 15) + ' l 15 6 v 13 q -2 12 -15 19 q -13 -7 -15 -19 v -13 Z'}/><path d={'M 608 ' + (y - 1) + ' l 7 7 l 14 -15'}/><text x="618" y={y + 34}>P{index + 1}</text>{proxyLoad > 1 && <text x="618" y={y + 46} className="storm-proxy-overload">OVERLOAD</text>}</g>)}
               {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) => {
-                const blocked = proxyEnabled && index % 100 < Math.round(filterRatio * 100);
+                const blocked = proxyEnabled && index % 100 < Math.round(effectiveFilter * 100);
                 const path = packetPath(index % 4, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null, blocked);
                 return <circle key={index} className={'storm-packet' + (blocked ? ' is-filtered' : '')} r={index % 4 === 0 ? 3.9 : 2.6}><animateMotion path={path} dur={(1.1 + index % 6 * 0.16) + 's'} begin={(-index * 0.12) + 's'} repeatCount="indefinite"/></circle>;
               })}
@@ -470,11 +473,14 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 <rect x="825" y={y - 27} width="112" height="54" rx="9"/>
                 <rect x="838" y={y - 15} width="48" height="11" rx="3"/><rect x="838" y={y + 4} width="48" height="11" rx="3"/>
                 {[y - 9, y + 10].map(ledY => <circle key={ledY} cx="845" cy={ledY} r="2.8" className="storm-led"/>)}
-                <g transform={'translate(908 ' + y + ')'} className={'storm-rack-fan' + (mode !== 'running' ? ' is-stopped' : '')} style={{'--storm-fan-duration': fanDuration} as CSSProperties}>
-                  <circle r="12" className="storm-fan-ring"/>
-                  <g className="storm-fan-rotor"><path d="M 0 -8 Q 8 -12 5 -3 L 1 0 Q 12 -8 10 2 L 2 2 Q 10 9 0 9 L 0 2 Q -9 11 -10 0 L -2 0 Q -10 -8 0 -8 Z"/></g>
+                {[899, 922].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + y + ')'} className="storm-rack-fan">
+                  <circle r="10" className="storm-fan-ring"/>
+                  <circle r="7.6" className="storm-fan-shroud"/>
+                  <g className="storm-fan-rotor">
+                    {[0, 90, 180, 270].map(angle => <path key={angle} transform={'rotate(' + angle + ')'} d="M -1 -1 Q -9 -11 1 -8 Q 6 -7 3 -1 Z" className="storm-fan-blade"/>)}
+                  </g>
                   <circle r="2" className="storm-fan-hub"/>
-                </g>
+                </g>)}
                 <text x="881" y={y + 40}>SERVER {index + 1}</text>
               </g>)}
               {mode === 'offline' && <text x="881" y="362" className="storm-offline-caption">WEBSITE OFFLINE</text>}
@@ -497,21 +503,18 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             </div>
             <div className="storm-cpu-row"><span>CPU load per server</span><strong>{cpu}%</strong></div>
             <div className="storm-meter"><i style={{width:cpu+'%'}}/></div>
-            <div className="storm-node-count"><span><Server size={14}/> {serverCount} web servers</span><span><Shield size={14}/> {proxyCount} proxies</span></div>
+            <div className="storm-node-count"><span><Server size={14}/> {serverCount} servers</span><span className={proxyLoad > 1 ? 'storm-proxy-danger' : ''}><Shield size={14}/> {proxyCount} proxies{proxyCount ? ' · ' + proxyState : ''}</span></div>
+            {proxyEnabled && <div className="storm-proxy-meter"><div><span>Proxy load</span><strong className={proxyLoad > 1 ? 'storm-danger' : ''}>{Math.round(proxyLoad * 100)}%</strong></div><div className="storm-meter"><i style={{width:Math.min(proxyLoad * 100, 100) + '%'}}/></div></div>}
             <div className={'storm-site-preview' + (mode === 'offline' ? ' is-offline' : '')}>
               <div className="storm-site-head"><span className="storm-site-led"/><span>example.test</span><strong>{mode === 'offline' ? '503' : responseMs !== null && responseMs > 300 ? 'SLOW' : '200'}</strong></div>
               <p>{mode === 'offline' ? 'Website unavailable' : responseMs !== null && responseMs > 300 ? 'Responding slowly' : 'Website responding'}</p>
             </div>
-            <form className="storm-ping-form" onSubmit={runPing} aria-label="Simulated ping command">
-              <div className="storm-ping-command"><span>$</span><input value={pingCommand} onChange={event => setPingCommand(event.target.value)} aria-label="Ping command" placeholder="ping" spellCheck={false}/></div>
-              <button type="submit">Ping</button>
-            </form>
-            <p className="storm-ping-result" role="status">{pingOutput ?? 'Ping the simulated server to check its response.'}</p>
+            <div className="storm-live-ping" role="status"><span><i className={'storm-ping-dot' + (mode === 'offline' ? ' is-offline' : '')}/> AUTO PING</span><strong>{pingOutput ?? 'Starting…'}</strong></div>
           </section>
         </aside>
       </div>
       <footer className="storm-session-footer"><span>Browser-only simulation. No packets sent.</span><span>{stats.seconds.toFixed(1)}s</span></footer>
     </div>}
-    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>A hacker controls fictional botnet nodes sending simulated traffic. The modeled website becomes slower or goes offline if incoming requests exceed server capacity.</p><p>Choose 1–4 web servers to share the simulated load, and 0–4 defensive proxies to filter it. This model illustrates diminishing returns across proxy layers. Real DDoS protection varies and is not guaranteed by adding proxies or servers.</p><p>Traffic uses fictional units of 512 KiB and 16 requests per bot per second. The ping command reports modeled latency without contacting the address. Audio and animations are generated in your browser.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
+    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>A hacker controls fictional botnet nodes sending simulated traffic. The modeled website becomes slower or goes offline if incoming requests exceed server capacity.</p><p>Choose 1–4 web servers to share the simulated load, and 0–4 defensive proxies to filter it. This model illustrates diminishing returns across proxy layers. Real DDoS protection varies and is not guaranteed by adding proxies or servers.</p><p>Traffic uses fictional units of 512 KiB and 16 requests per bot per second. Proxy capacity is also fictional: excessive incoming requests overload the proxies and reduce filtering. The automatic ping reports modeled latency without contacting the address.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
   </main>;
 }
