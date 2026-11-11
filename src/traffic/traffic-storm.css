@@ -302,3 +302,5 @@
 @media (prefers-reduced-motion:reduce){
  .storm-fan svg,.storm-toggle-track i{animation:none!important;transition:none!important}
 }
+.storm-site-preview.is-offline .storm-site-head strong{background:transparent;color:var(--ds-danger)}
+.storm-site-preview.is-offline .storm-site-led{background:var(--ds-danger)}
