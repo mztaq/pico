@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
+import { TRAFFIC_ALIAS_STORAGE_KEY } from '../src/traffic/traffic-alias';
 import { WorkspaceLoading, type VisualWorkspace } from '../src/app/components/WorkspaceLoading';
 
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -63,6 +65,53 @@ describe('Visual workspace loading skeletons',()=>{
     expect(css).toContain('background:var(--pico-storm-load-bg)');
     expect(css).not.toContain('var(--accent,var(--pico-boot-accent,#cba6f7))');
     expect(css).toContain('data-loading-workspace="Traffic Storm"');
+  });
+
+  it('renders a network diagram loader for returning users with a saved alias', () => {
+    vi.stubGlobal('window', {
+      localStorage: { getItem: (key: string) => key === TRAFFIC_ALIAS_STORAGE_KEY ? 'Ghost' : null },
+    });
+    try {
+      const html = renderToStaticMarkup(createElement(WorkspaceLoading, { workspace: 'Traffic Storm' }));
+      expect(html).toContain('data-storm-loading="dashboard"');
+      expect(html).toContain('pico-load-storm-dashboard-svg');
+      expect(html).toContain('pico-load-storm-dashboard-metrics');
+      expect((html.match(/pico-load-storm-skeleton-route/g) ?? [])).toHaveLength(8);
+      expect(html).not.toContain('pico-load-storm-entry');
+      expect(html).not.toContain('pico-load-storm-input');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('switches the pre-React loader based on a validated saved alias', () => {
+    const html = read('index.html');
+    for (const path of ['/app/traffic', '/app?tool=traffic']) {
+      const returning = new JSDOM(html, {
+        url: 'https://picompiler.pages.dev' + path,
+        runScripts: 'dangerously',
+        beforeParse(window) { window.localStorage.setItem(TRAFFIC_ALIAS_STORAGE_KEY, 'Ghost'); },
+      }).window.document;
+      expect(returning.documentElement.classList.contains('pico-initial-traffic-saved-alias')).toBe(true);
+      const screen = returning.querySelector('.pico-initial-traffic-loading');
+      expect(screen).not.toBeNull();
+      expect(returning.defaultView!.getComputedStyle(returning.querySelector('.pico-initial-traffic-entry')!).display).toBe('none');
+      expect(returning.defaultView!.getComputedStyle(returning.querySelector('.pico-initial-traffic-dashboard')!).display).toBe('flex');
+      expect(screen?.querySelectorAll('.pico-initial-traffic-dash-metric')).toHaveLength(4);
+      expect(screen?.querySelectorAll('.pico-initial-traffic-dash-node')).toHaveLength(6);
+    }
+    const firstVisit = new JSDOM(html, {
+      url: 'https://picompiler.pages.dev/app/traffic', runScripts: 'dangerously',
+    }).window.document;
+    expect(firstVisit.documentElement.classList.contains('pico-initial-traffic-saved-alias')).toBe(false);
+    expect(firstVisit.defaultView!.getComputedStyle(firstVisit.querySelector('.pico-initial-traffic-entry')!).display).not.toBe('none');
+    expect(firstVisit.defaultView!.getComputedStyle(firstVisit.querySelector('.pico-initial-traffic-dashboard')!).display).toBe('none');
+    const invalid = new JSDOM(html, {
+      url: 'https://picompiler.pages.dev/app/traffic',
+      runScripts: 'dangerously',
+      beforeParse(window) { window.localStorage.setItem(TRAFFIC_ALIAS_STORAGE_KEY, 'Ghost123!'); },
+    }).window.document;
+    expect(invalid.documentElement.classList.contains('pico-initial-traffic-saved-alias')).toBe(false);
   });
 
   it('keeps the saved theme during the HTML-to-React loading transition',()=> {
