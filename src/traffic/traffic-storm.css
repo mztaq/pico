@@ -902,3 +902,32 @@
 @media(prefers-reduced-motion:reduce){
   .storm-network-svg .storm-bot-node .storm-bot-antenna-light{animation:none!important}
 }
+
+/* Distinct round proxy-server badge, matching the stacked-rack reference. */
+.storm-network-svg .storm-proxy-edge .storm-proxy-ring{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-success);
+  stroke-width:2.35;
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-rack{
+  fill:var(--ds-panel-raised);
+  stroke:var(--ds-success);
+  stroke-width:1.5;
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-led{
+  fill:var(--ds-success);
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-slot,
+.storm-network-svg .storm-proxy-edge .storm-proxy-link{
+  fill:none;
+  stroke:var(--ds-success);
+  stroke-width:1.5;
+  stroke-linecap:round;
+}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-ring,
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-rack,
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-slot,
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-link{
+  stroke:var(--ds-danger);
+}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-led{fill:var(--ds-danger)}
