@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { Activity, ArrowLeft, CircleHelp, Pause, Play, RotateCcw, Server, Settings2, Shield, ShieldAlert, Users, Waves, X } from 'lucide-react';
+import { ArrowLeft, CircleHelp, MessageSquareText, Pause, Play, RotateCcw, Route, Server, Settings2, Shield, ShieldAlert, Terminal, Users, X } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
@@ -8,11 +8,12 @@ import { loadSettings, saveSettings } from '../storage/settings';
 import './traffic-storm.css';
 
 const SERVER_CAPACITY = 3200;
+// Deliberately fictional routes. The circles travel across SVG paths only.
 const PACKET_PATHS = [
-  'M 150 70 C 300 70 310 165 490 165 S 700 185 835 185',
-  'M 150 138 C 350 138 370 185 490 185 S 700 185 835 185',
-  'M 150 240 C 350 240 380 205 490 205 S 700 185 835 185',
-  'M 150 310 C 320 310 345 225 490 225 S 700 185 835 185',
+  'M 183 70 C 310 70 388 145 545 145 L 598 145 C 704 145 738 185 804 185',
+  'M 183 138 C 302 138 388 185 545 185 L 598 185 L 804 185',
+  'M 183 240 C 315 240 392 225 545 225 L 598 225 C 709 225 738 185 804 185',
+  'M 183 310 C 304 310 388 225 545 225 L 598 225 C 709 225 738 185 804 185',
 ];
 const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, dropped: 0, history: [] as number[] });
 type Scenario = { hacker: string; bots: number; ip: string };
@@ -178,6 +179,30 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     return String(x) + ',' + String(y);
   }).join(' ');
   const safeName = scenario?.hacker ?? 'Operator';
+  const proxyCount = Math.max(6, Math.round((scenario?.bots ?? 0) / 24));
+
+  // Presentation-only terminal transcript and messages, gated by simulated time.
+  // No executable commands, proxy connections or attack requests exist here.
+  const consoleSteps = [
+    { at: 0, text: 'pico@demo:~$ open traffic-storm' },
+    { at: 0.9, text: '[ok] Operator profile loaded' },
+    { at: 1.8, text: '[ok] Fictional botnet nodes mapped' },
+    { at: 2.8, text: '[ok] Virtual relay layer assembled' },
+    { at: 3.8, text: '[sim] Visualising request paths' },
+    ...(stats.rps > SERVER_CAPACITY ? [{ at: 4.4, text: '[warn] Synthetic throughput above capacity' }] : []),
+    ...(stats.health <= 35 ? [{ at: 5.2, text: '[critical] Server health approaching zero' }] : []),
+    ...(mode === 'offline' ? [{ at: 5.6, text: '[offline] Website unavailable in model' }] : []),
+  ];
+  const chatter = [
+    { at: 0, text: 'Scenario connected. Standing by.' },
+    { at: 1.5, text: 'Botnet nodes synced in the model.' },
+    { at: 3, text: 'Virtual relay paths established.' },
+    { at: 4.5, text: 'Watching the simulated traffic grow.' },
+    ...(stats.rps > SERVER_CAPACITY ? [{ at: 5, text: 'Target latency is rising.' }] : []),
+    ...(stats.dropped > 0 ? [{ at: 5.5, text: 'Requests are being dropped.' }] : []),
+    ...(stats.health <= 35 ? [{ at: 6, text: 'Server health is critical.' }] : []),
+    ...(mode === 'offline' ? [{ at: 6.5, text: 'Target is offline in this scenario.' }] : []),
+  ].filter(message => stats.seconds >= message.at || mode === 'offline').slice(-5);
 
   return <main className="storm-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
     <header className="storm-header pico-appbar">
@@ -188,7 +213,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <strong className="pico-appbar-tool">Traffic Storm</strong>
       </div>
       <div className="storm-header-actions">
-        <span className="storm-local"><span/> LOCAL MODEL</span>
         <button type="button" className="storm-icon-button" aria-label="About Traffic Storm" title="About this lab" onClick={() => setShowHelp(value => !value)}><CircleHelp size={17}/></button>
         <SoundButton/>
         <div className="storm-theme-wrap">
@@ -200,7 +224,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
     {mode === 'setup' ? <section className="storm-setup" aria-labelledby="storm-setup-title">
       <div className="storm-setup-orbit" aria-hidden="true"><div className="storm-orbit-core"><Server size={45}/></div>{Array.from({ length: 12 }, (_, i) => <i key={i} style={{ transform: 'rotate(' + (i * 30) + 'deg) translateX(116px)' }}/>)}</div>
-      <div className="storm-setup-title"><span className="storm-eyebrow"><Waves size={14}/> NETWORK LAB</span><h1 id="storm-setup-title">Traffic Storm<span>.</span></h1><p>Watch a fictional server handle a growing wave of requests.</p></div>
+      <div className="storm-setup-title"><h1 id="storm-setup-title">Traffic Storm<span>.</span></h1><p>Explore how distributed traffic from botnet nodes and optional relay paths overloads a fictional server.</p></div>
       <form onSubmit={start} className="storm-setup-form">
         <label>Operator name<input autoFocus type="text" maxLength={32} value={hacker} placeholder="Enter hacker name" onChange={event => setHacker(event.target.value)}/></label>
         <label>Botnet army size<span className="storm-field-sub">Simulated clients, not real devices</span><div className="storm-bot-field"><input type="number" min={100} max={20000} step={100} value={botsDraft} onChange={event => setBotsDraft(event.target.value)}/><Users size={17}/></div><input aria-label="Botnet army size slider" type="range" min={100} max={20000} step={100} value={Math.min(20000, Math.max(100, Number(botsDraft) || 100))} onChange={event => setBotsDraft(event.target.value)}/></label>
@@ -211,7 +235,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </form>
     </section> : <>
       <section className="storm-intro">
-        <div><span className="storm-eyebrow"><Activity size={14}/> LIVE TRAFFIC VISUALIZATION</span><h1>Traffic Storm<span>.</span></h1><p><strong>{safeName}</strong> · {compact(scenario?.bots ?? 0)} fictional bots · Target <code>{scenario?.ip}</code></p></div>
+        <div><h1>Traffic Storm<span>.</span></h1><p><strong>{safeName}</strong> · {compact(scenario?.bots ?? 0)} fictional bots · {compact(proxyCount)} virtual relays · Target <code>{scenario?.ip}</code></p></div>
         <div className="storm-controls">
           {mode === 'offline' ? <button type="button" className="storm-primary" onClick={restart}><RotateCcw size={16}/> Restart server</button> : <button type="button" className="storm-primary" onClick={() => setMode(value => value === 'paused' ? 'running' : 'paused')}>{mode === 'paused' ? <Play size={16}/> : <Pause size={16}/>} {mode === 'paused' ? 'Resume' : 'Pause'}</button>}
           <button type="button" className="storm-secondary" onClick={newScenario}>New scenario</button>
@@ -219,13 +243,13 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </section>
       <section className="storm-metrics" aria-label="Simulation metrics">
         <div className="storm-metric"><span>SIMULATED REQUESTS / SEC</span><strong>{compact(mode === 'offline' ? 0 : stats.rps)}</strong><small>Server capacity: {compact(SERVER_CAPACITY)} / sec</small></div>
-        <div className="storm-metric"><span>ACTIVE BOTNET</span><strong>{compact(scenario?.bots ?? 0)}</strong><small>Fictional client nodes</small></div>
+        <div className="storm-metric"><span>BOTNET NODES</span><strong>{compact(scenario?.bots ?? 0)}</strong><small>{compact(proxyCount)} optional virtual relays</small></div>
         <div className="storm-metric"><span>CPU LOAD</span><strong>{cpu}%</strong><div className="storm-meter"><i style={{ width: cpu + '%' }}/></div></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
       </section>
       <div className="storm-main-grid">
         <section className="storm-panel storm-network" aria-label="Animated network traffic">
-          <div className="storm-panel-heading"><div><h2>Network activity</h2><p>Requests moving from simulated bot nodes to the server</p></div><span className={'storm-status storm-status--' + status.toLowerCase()}><i/>{status}</span></div>
+          <div className="storm-panel-heading"><div><h2>Traffic map</h2><p>Botnet nodes → virtual proxy layer → target server</p></div><span className={'storm-status storm-status--' + status.toLowerCase()}><i/>{status}</span></div>
           <svg viewBox="0 0 960 375" className="storm-network-svg" role="img" aria-label={mode === 'offline' ? 'The fictional server is offline' : 'Animated fictional request packets flowing towards a server'}>
             <defs>
               <linearGradient id="storm-line" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--accent)" stopOpacity=".18"/><stop offset="1" stopColor="var(--accent)" stopOpacity=".75"/></linearGradient>
@@ -233,6 +257,10 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             </defs>
             {PACKET_PATHS.map((path, index) => <path key={'line-' + index} d={path} className="storm-path"/>)}
             {[70, 138, 240, 310].map((y, index) => <g key={y} className="storm-bot-node"><rect x="83" y={y - 26} width="100" height="52" rx="11"/><circle cx="112" cy={y} r="9"/><path d={'M 132 ' + (y - 6) + ' h 31 M 132 ' + (y + 6) + ' h 20'}/><text x="133" y={y - 34}>NODE 0{index + 1}</text></g>)}
+            <text x="124" y="21" className="storm-diagram-label">BOTNET</text>
+            <text x="563" y="87" className="storm-diagram-label">PROXY RELAYS</text>
+            <text x="563" y="105" className="storm-diagram-count">{compact(proxyCount)} virtual</text>
+            {[145, 185, 225].map((y, index) => <g key={y} className="storm-proxy-node"><rect x="532" y={y - 16} width="63" height="32" rx="8"/><circle cx="549" cy={y} r="5"/><text x="568" y={y + 3.5}>R{index + 1}</text></g>)}
             {mode === 'running' && Array.from({ length: 28 }, (_, index) => <circle key={index} className="storm-packet" r={index % 5 === 0 ? 4 : 2.8}><animateMotion path={PACKET_PATHS[index % 4]} dur={(1.5 + index % 5 * 0.24) + 's'} begin={(-index * 0.18) + 's'} repeatCount="indefinite"/></circle>)}
             <g className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : '')}>
               <rect x="804" y="115" width="110" height="144" rx="16"/>
@@ -242,20 +270,37 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             </g>
             {mode === 'offline' && <g className="storm-offline-symbol"><circle cx="859" cy="187" r="64"/><path d="M 841 169 L 877 205 M 877 169 L 841 205"/></g>}
           </svg>
-          <div className="storm-network-foot"><span><i/> Simulated packets</span><span><i/> Server throughput</span><span>Elapsed {stats.seconds.toFixed(1)} s</span></div>
+          <div className="storm-network-foot"><span><i/> Simulated packets</span><span><i/> Virtual relay paths</span><span>Elapsed {stats.seconds.toFixed(1)} s</span></div>
         </section>
         <aside className="storm-side">
+          <section className="storm-panel storm-console-panel" aria-label="Simulated operator console">
+            <div className="storm-panel-heading"><div><h2>Operator console</h2><p>Fictional CLI playback</p></div><Terminal size={18}/></div>
+            <div className="storm-console" role="log" aria-live="off">
+              {consoleSteps.filter(step => stats.seconds >= step.at || mode === 'offline').map((step, index) => <div key={step.text} className={'storm-console-line' + (step.text.includes('[warn]') || step.text.includes('[critical]') || step.text.includes('[offline]') ? ' storm-console-alert' : '')}><span className="storm-console-index">{String(index + 1).padStart(2, '0')}</span><span>{step.text}</span></div>)}
+              <div className="storm-console-readout"><div>&gt; operator <span>{safeName}</span></div><div>&gt; target <span>{scenario?.ip}</span></div><div>&gt; relays <span>{compact(proxyCount)} virtual</span></div><div>&gt; traffic <span>{compact(mode === 'offline' ? 0 : stats.rps)} req/s</span></div><div>&gt; health <span>{Math.ceil(stats.health)}%</span></div><div>&gt; status <span>{status}</span></div></div>
+              <div className="storm-console-prompt"><span>pico@demo:~$</span><span className="storm-console-caret" aria-hidden="true"/></div>
+            </div>
+          </section>
+          <section className="storm-panel storm-chatter-panel" aria-label="Simulated operator messages">
+            <div className="storm-panel-heading"><div><h2>Live chatter</h2><p>Messages from the fictional operator</p></div><MessageSquareText size={18}/></div>
+            <div className="storm-chatter" role="log" aria-live="off">
+              {chatter.map(message => <div className="storm-chat-line" key={message.text}><span className="storm-chat-avatar" aria-hidden="true">{safeName.charAt(0).toUpperCase()}</span><div><strong>{safeName}</strong><p>{message.text}</p></div></div>)}
+              {mode === 'running' && <div className="storm-chatter-typing" aria-label="Operator is typing"><i/><i/><i/></div>}
+            </div>
+          </section>
           <section className="storm-panel storm-server-details">
             <div className="storm-panel-heading"><div><h2>Server monitor</h2><p>{scenario?.ip}</p></div><Server size={19}/></div>
             <div className={'storm-thermometer' + (mode === 'offline' ? ' storm-dead' : '')}><Server size={44}/><span>{mode === 'offline' ? 'CONNECTION LOST' : pressure >= 1 ? 'FANS AT MAX SPEED' : 'SYSTEM OPERATIONAL'}</span></div>
+            <div className="storm-key-row"><span>Proxy relays</span><strong>{compact(proxyCount)} virtual</strong></div>
             <div className="storm-key-row"><span>Requests processed</span><strong>{compact(stats.total - stats.dropped)}</strong></div>
             <div className="storm-key-row"><span>Requests dropped</span><strong>{compact(stats.dropped)}</strong></div>
             <div className="storm-key-row"><span>Elapsed time</span><strong>{stats.seconds.toFixed(1)} s</strong></div>
             <div className="storm-key-row"><span>Protection</span><strong>Not enabled</strong></div>
           </section>
-          <section className="storm-panel storm-event-panel"><div className="storm-panel-heading"><div><h2>Event log</h2><p>What is happening inside the model</p></div><ShieldAlert size={18}/></div>
+          <section className="storm-panel storm-event-panel"><div className="storm-panel-heading"><div><h2>Impact log</h2><p>Changes to the simulated target</p></div><ShieldAlert size={18}/></div>
             <ol aria-live="off">
-              <li>00:00 · {safeName} started the model</li>
+              <li>00:00 · {safeName} started the scenario</li>
+              {stats.seconds >= 2.8 && <li>Virtual relays mapped · {compact(proxyCount)} nodes</li>}
               {stats.rps > 0 && <li>{stats.seconds.toFixed(1)}s · {compact(stats.rps)} simulated requests/s</li>}
               {stats.rps > SERVER_CAPACITY && <li>Over capacity · Cooling fans spin up</li>}
               {stats.dropped > 0 && <li>Overload · Requests begin dropping</li>}
@@ -270,6 +315,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       {mode === 'offline' && <div className="storm-outcome" role="status"><ShieldAlert size={22}/><div><strong>Server offline. The simulated website is unavailable.</strong><p>A request flood exceeded the server's synthetic capacity. Real services defend against overload with rate limits, traffic filtering and distributed protection.</p></div><button type="button" onClick={restart}>Try again</button></div>}
       <p className="storm-disclaimer storm-bottom-note"><Shield size={14}/> This is an educational, browser-only model. It does not contact the entered IP or generate network traffic.</p>
     </>}
-    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>The botnet size controls a synthetic requests-per-second number. Once simulated traffic exceeds server capacity, health declines until the website goes offline.</p><p>Packets, server failures and sound effects are generated entirely in your browser. The server IP is only text on the screen.</p><p>Small botnets might not overload the server. Increase the fictional bot count to compare outcomes.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
+    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>The botnet size controls a synthetic requests-per-second number. Optional relay paths are drawn to help explain how traffic flows through networks. Real DDoS attacks do not always use proxy relays.</p><p>Once simulated traffic exceeds server capacity, health declines until the website goes offline.</p><p>The console, operator messages, packets, server failures and sounds are all fictional. Nothing connects to the server IP, and no commands execute.</p><p>Small botnets might not overload the server. Increase the fictional bot count to compare outcomes.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
   </main>;
 }
