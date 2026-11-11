@@ -103,9 +103,9 @@ export function nodeLoadRatio(rps: number, count: number, index: number, capacit
 
 const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
 
-/** Slow 16-second startup, easing at both ends. */
+/** Reach full attack speed in eight seconds without instantly jumping to peak. */
 export function trafficRamp(seconds: number): number {
-  const progress = Math.max(0, Math.min(1, seconds / 16));
+  const progress = Math.max(0, Math.min(1, seconds / 8));
   return 0.003 + 0.997 * progress * progress * (3 - 2 * progress);
 }
 
@@ -186,7 +186,7 @@ export function serverPressure(rps: number, proxies: number, servers: number): n
 export function serverHealthDrainPerSecond(pressure: number): number {
   if (!Number.isFinite(pressure) || pressure <= 0) return -5;
   if (pressure <= 1) return -5;
-  return Math.min(4.5, 0.85 + 0.68 * Math.log2(pressure));
+  return Math.min(13, 1 + 2.15 * Math.log2(pressure));
 }
 
 export function formatTraffic(rps: number): string {
@@ -214,7 +214,7 @@ export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: 
   const proxyTextY = firstProxyY === null ? 118 : Math.max(51, firstProxyY - 90);
   return [
     {
-      id: 'commands', text: active ? 'Sending commands' : mode === 'paused' ? 'Commands paused' : 'Command links',
+      id: 'commands', text: active ? 'Sending commands' : mode === 'paused' ? 'Commands paused' : 'Hacker commands',
       x: 190, y: 109, fromX: 292, fromY: 114, tipX: 300, tipY: 154, tone: 'accent',
     },
     {
@@ -743,13 +743,14 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 <circle cx="1158" cy={y + 33} r="1.4" className="storm-rack-screw"/>
               </g>)}
 
-              <g className="storm-diagram-annotations" aria-hidden="true">
+              {/* SVG text and arrows only, with no label backgrounds or pill elements. */}
+              <g className="storm-route-notes" aria-hidden="true">
                 {diagramAnnotations(mode, proxyCount, serverCount, proxyLoads.some(load => load > 1), pressure, serverYs[serverYs.length - 1]).map(note => {
                   const angle = Math.atan2(note.tipY - note.fromY, note.tipX - note.fromX) * 180 / Math.PI;
-                  return <g key={note.id} className={'storm-diagram-annotation storm-diagram-annotation--' + note.tone}>
-                    <text x={note.x} y={note.y}>{note.text}</text>
-                    <path className="storm-annotation-leader" d={'M ' + note.fromX + ' ' + note.fromY + ' L ' + note.tipX + ' ' + note.tipY}/>
-                    <path className="storm-annotation-arrow" d="M -7 -4 L 0 0 L -7 4"
+                  return <g key={note.id} className={'storm-route-note storm-route-note--' + note.tone}>
+                    <text className="storm-route-note-text" x={note.x} y={note.y}>{note.text}</text>
+                    <path className="storm-route-note-line" d={'M ' + note.fromX + ' ' + note.fromY + ' L ' + note.tipX + ' ' + note.tipY}/>
+                    <path className="storm-route-note-head" d="M -7 -4 L 0 0 L -7 4"
                       transform={'translate(' + note.tipX + ' ' + note.tipY + ') rotate(' + angle + ')'}/>
                   </g>;
                 })}
