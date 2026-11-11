@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, botLanePath, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, visualSurvivorCount } from './TrafficStorm';
+import { TrafficStorm, appendPingHistory, botLanePath, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, visualSurvivorCount, type PingEntry } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -127,6 +127,20 @@ describe('Traffic Storm setup', () => {
       expect(path.startsWith('M 790 ' + proxies[index % 2])).toBe(true);
       expect(path.endsWith('990 ' + servers[index])).toBe(true);
     });
+  });
+
+  it('keeps unique rolling ping replies so the latest response animates as a new row', () => {
+    let entries: PingEntry[] = [];
+    for (let id = 1; id <= 14; id += 1) {
+      entries = appendPingHistory(entries, { id, latency: id * 10, text: 'Reply ' + id });
+    }
+    expect(entries).toHaveLength(10);
+    expect(entries[0]).toEqual({ id: 5, latency: 50, text: 'Reply 5' });
+    expect(entries[9]).toEqual({ id: 14, latency: 140, text: 'Reply 14' });
+    expect(new Set(entries.map(entry => entry.id)).size).toBe(10);
+    const timeouts = appendPingHistory(entries, { id: 15, latency: null, text: 'Request timed out.' });
+    expect(timeouts[timeouts.length - 1].latency).toBeNull();
+    expect(timeouts).toHaveLength(10);
   });
 
 });
