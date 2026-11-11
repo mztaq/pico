@@ -151,9 +151,23 @@ describe('Traffic Storm setup', () => {
       'Sending commands', 'Flooding servers', 'Filtering traffic', 'Server overloaded',
     ]);
     expect(active.map(note => note.tone)).toEqual(['accent', 'danger', 'success', 'danger']);
-    expect(active.every(note => note.x >= 0 && note.x + note.width < 1200)).toBe(true);
-    expect(active.every(note => note.y >= 0 && note.y + 22 <= 465)).toBe(true);
+    expect(active.every(note => note.x >= 0 && note.x < 1200 && note.tipX >= 0 && note.tipX < 1200)).toBe(true);
+    expect(active.every(note => note.y >= 0 && note.y <= 465 && note.tipY >= 0 && note.tipY <= 465)).toBe(true);
+    expect(active.every(note => note.fromX >= 0 && note.fromX < 1200 && note.fromY >= 0 && note.fromY <= 465)).toBe(true);
+    expect(active[3].tipY).toBeGreaterThan(382.5);
     expect(active[3].y).toBeGreaterThan(382.5 + 37);
+  });
+
+  it('places plain annotation text with arrows to network links and nodes, without callout boxes', () => {
+    const source = renderToStaticMarkup(createElement(TrafficStorm, { onHome: () => {} }));
+    // The setup screen does not render diagram notes before the alias is entered.
+    expect(source).not.toContain('storm-diagram-annotations');
+    const enabled = diagramAnnotations('running', 4, 4, true, 5, 382.5);
+    expect(enabled.every(note => note.fromX !== note.tipX || note.fromY !== note.tipY)).toBe(true);
+    expect(enabled[2].tipX).toBeGreaterThan(750);
+    expect(enabled[2].tipY).toBeGreaterThan(80);
+    expect(enabled[3].tipX).toBeGreaterThan(990);
+    expect(enabled.every(note => typeof note.text === 'string' && note.text.length > 5)).toBe(true);
   });
 
   it('switches network notes for ready, direct, overloaded and offline states', () => {
@@ -283,10 +297,11 @@ describe('Traffic Storm setup', () => {
     expect(serverHealthDrainPerSecond(0)).toBe(-5);
     expect(serverHealthDrainPerSecond(1)).toBe(-5);
     expect(serverHealthDrainPerSecond(2)).toBeGreaterThan(0);
-    expect(serverHealthDrainPerSecond(130)).toBe(2.6);
+    expect(serverHealthDrainPerSecond(130)).toBe(4.5);
     expect(serverHealthDrainPerSecond(130)).toBeGreaterThan(0);
-    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(35);
-    expect(100 / serverHealthDrainPerSecond(130)).toBeLessThan(40);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(20);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeLessThan(25);
+    expect(serverHealthDrainPerSecond(8)).toBeGreaterThan(2.5);
     expect(serverHealthDrainPerSecond(Number.NaN)).toBe(-5);
   });
 
