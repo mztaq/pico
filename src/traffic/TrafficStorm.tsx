@@ -66,7 +66,7 @@ export function nodeLoadRatio(rps: number, count: number, index: number, capacit
   return Math.max(0, rps) * weights[index] / totalWeight / capacity;
 }
 
-const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
+const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[], trafficWarningFloor: null as number | null });
 
 /** Slow 16-second startup, easing at both ends. */
 export function trafficRamp(seconds: number): number {
@@ -83,10 +83,20 @@ export function trafficSpikeFactor(seconds: number): number {
   return 0.90 + 0.45 * burst;
 }
 
-/** A sharp relative rise triggers a brief indicator; ordinary gradual growth does not. */
+/** Detect a significant increase between consecutive model updates. */
 export function isTrafficSurge(previous: number, current: number): boolean {
   return Number.isFinite(previous) && Number.isFinite(current)
     && previous >= 100 && current >= previous * 1.22;
+}
+
+/** Preserve the first surge warning while modeled traffic stays elevated.
+ * A 70% threshold prevents the icon flickering as burst levels fluctuate.
+ */
+export function nextTrafficWarningFloor(floor: number | null, previousRps: number, currentRps: number): number | null {
+  if (!Number.isFinite(currentRps) || currentRps < 0) return null;
+  if (floor !== null && currentRps >= floor) return floor;
+  if (isTrafficSurge(previousRps, currentRps)) return currentRps * 0.70;
+  return null;
 }
 
 export function deviceHeading(singular: string, plural: string, count: number): string {
@@ -382,6 +392,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         return {
           seconds: previous.seconds + dt,
           health, rps,
+          trafficWarningFloor: nextTrafficWarningFloor(previous.trafficWarningFloor, previous.rps, rps),
           total: previous.total + rps * dt,
           blocked: previous.blocked + (rps - forwarded) * dt,
           dropped: previous.dropped + Math.max(0, forwarded - SERVER_CAPACITY * serverCount) * dt,
@@ -437,9 +448,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(arriving);
-  const trafficHistory = stats.history;
-  const trafficSurge = mode === 'running' && trafficHistory.length > 1
-    && isTrafficSurge(trafficHistory[trafficHistory.length - 2], trafficHistory[trafficHistory.length - 1]);
+  const trafficWarning = stats.trafficWarningFloor !== null && mode !== 'setup';
   const points = stats.history.map((value, index) => {
     const x = stats.history.length <= 1 ? 0 : index / (stats.history.length - 1) * 600;
     const y = 106 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * BOT_REQUEST_RATE * 1.5)) * 99;
@@ -519,7 +528,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </div>
 
       <section className="storm-metrics" aria-label="Simulation metrics">
-        <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficSurge && <i key={'surge-' + stats.history.length} className="storm-surge-flash" aria-hidden="true"/>}</div>
+        <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficWarning && <span className="storm-traffic-warning" role="status" aria-label="Rapid traffic increase detected" title="Rapid traffic increase">!</span>}</div>
         <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
         <div className="storm-metric"><span>RESPONSE TIME</span><strong>{responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
@@ -649,7 +658,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 </div>
               </div>}
             </div>
-            <div className="storm-traffic-chart" aria-label="Simulated network traffic over time">{trafficSurge && <i key={'chart-surge-' + stats.history.length} className="storm-chart-surge-flash" aria-hidden="true"/>}
+            <div className="storm-traffic-chart" aria-label="Simulated network traffic over time">
               <div className="storm-traffic-chart-heading"><span>Traffic</span><strong>{trafficLabel}</strong></div>
               <svg viewBox="0 0 600 110" preserveAspectRatio="none" role="img" aria-label="Spiky modeled incoming traffic">
                 <path d="M 0 106 H 600 M 0 57 H 600" className="storm-chart-axis"/>
