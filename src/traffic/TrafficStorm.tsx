@@ -11,17 +11,37 @@ const SERVER_CAPACITY = 3200;
 const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measured bandwidth.
 const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const PROXY_CAPACITY = 100_000; // Synthetic requests per second handled by each edge node.
-const BOT_Y = [65, 130, 195, 260] as const;
-const REAL_USER_Y = 326;
+// All visible network links and animated packets share the same SVG path IDs.
+// Keeping the connection coordinates here prevents packet/path drift.
+const BOT_Y = [115, 207, 299, 391] as const;
+const REAL_USER_Y = 470;
 const LEGITIMATE_RPS = 125;
+const BOT_EXIT_X = 450;
+const PROXY_IN_X = 710;
+const PROXY_OUT_X = 790;
+const SERVER_IN_X = 990;
 const networkPositions = (count: number): number[] =>
-  Array.from({length:count}, (_, i) => 370 * (i + 1) / (count + 1));
+  Array.from({ length: count }, (_, i) => 60 + 405 * (i + 1) / (count + 1));
 
-function packetPath(bot: number, serverY: number, proxyY: number | null, blocked = false): string {
+export function botLanePath(bot: number, serverY: number, proxyY: number | null): string {
   const y = BOT_Y[bot % BOT_Y.length];
-  if (proxyY === null) return 'M 334 ' + y + ' C 545 ' + y + ' 670 ' + serverY + ' 825 ' + serverY;
-  const incoming = 'M 334 ' + y + ' C 465 ' + y + ' 518 ' + proxyY + ' 591 ' + proxyY;
-  return blocked ? incoming : incoming + ' L 645 ' + proxyY + ' C 733 ' + proxyY + ' 759 ' + serverY + ' 825 ' + serverY;
+  const toX = proxyY === null ? SERVER_IN_X : PROXY_IN_X;
+  const targetY = proxyY ?? serverY;
+  const dx = toX - BOT_EXIT_X;
+  return 'M ' + BOT_EXIT_X + ' ' + y + ' C ' + (BOT_EXIT_X + dx * 0.46) + ' ' + y
+    + ' ' + (toX - dx * 0.42) + ' ' + targetY + ' ' + toX + ' ' + targetY;
+}
+
+export function relayLanePath(proxyY: number, serverY: number): string {
+  return 'M ' + PROXY_OUT_X + ' ' + proxyY + ' C 876 ' + proxyY + ' 908 ' + serverY
+    + ' ' + SERVER_IN_X + ' ' + serverY;
+}
+
+export function realUserLanePath(serverY: number, proxyY: number | null): string {
+  const toX = proxyY === null ? SERVER_IN_X : PROXY_IN_X;
+  const targetY = proxyY ?? serverY;
+  return 'M ' + BOT_EXIT_X + ' ' + REAL_USER_Y + ' C 565 ' + REAL_USER_Y
+    + ' ' + (toX - 95) + ' ' + targetY + ' ' + toX + ' ' + targetY;
 }
 
 /** Deterministic per-node load with slightly uneven load-balancer allocation. */
@@ -45,16 +65,6 @@ export function httpOutcomes(rps: number, proxies: number, servers: number, offl
   const notFound = offline ? 0 : 1;
   const success = offline ? 0 : Math.max(0, forwarded - unavailable - timeout - notFound);
   return { ok: success, rateLimited, notFound, unavailable, timeout };
-}
-
-function userPacketPath(serverY: number, proxyY: number | null, fromEdge = false): string {
-  if (proxyY === null) return 'M 340 ' + REAL_USER_Y + ' C 550 325 710 ' + serverY + ' 825 ' + serverY;
-  if (fromEdge) return 'M 645 ' + proxyY + ' C 741 ' + proxyY + ' 760 ' + serverY + ' 825 ' + serverY;
-  return 'M 340 ' + REAL_USER_Y + ' C 470 328 520 ' + proxyY + ' 591 ' + proxyY;
-}
-
-function acceptedAttackPath(serverY: number, proxyY: number): string {
-  return 'M 645 ' + proxyY + ' C 728 ' + proxyY + ' 776 ' + serverY + ' 825 ' + serverY;
 }
 
 const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
