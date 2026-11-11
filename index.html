@@ -64,6 +64,32 @@
       }
     </script>
     <style>
+      /* Direct Traffic Storm first paint: its actual alias entry, not CPU Studio. */
+      .pico-initial-traffic-loading{display:none;position:fixed;inset:0;z-index:1001;height:100dvh;overflow:hidden;background:var(--pico-boot-bg,#1e1e2e)}
+      .pico-initial-traffic-route .pico-initial-traffic-loading{display:block}
+      .pico-initial-traffic-loading *{box-sizing:border-box}
+      .pico-initial-traffic-shimmer{
+        background:linear-gradient(100deg,color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 91%,var(--pico-boot-foreground,#fff) 9%) 15%,
+        color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 80%,var(--pico-boot-accent,#cba6f7) 20%) 45%,
+        color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 91%,var(--pico-boot-foreground,#fff) 9%) 75%);
+        background-size:220% 100%;border-radius:6px;animation:pico-shimmer 1.6s ease-in-out infinite
+      }
+      .pico-initial-traffic-topbar{height:52px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 18px;border-bottom:1px solid color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 76%,var(--pico-boot-foreground,#fff) 24%)}
+      .pico-initial-traffic-nav,.pico-initial-traffic-actions{display:flex;align-items:center;gap:10px}
+      .pico-initial-traffic-nav .pico-initial-traffic-shimmer:nth-child(1){width:27px;height:27px}
+      .pico-initial-traffic-nav .pico-initial-traffic-shimmer:nth-child(2){width:66px;height:19px}
+      .pico-initial-traffic-nav .pico-initial-traffic-shimmer:nth-child(3){width:120px;height:18px}
+      .pico-initial-traffic-actions .pico-initial-traffic-shimmer{width:28px;height:28px}
+      .pico-initial-traffic-entry{height:calc(100dvh - 52px);display:flex;flex-direction:column;justify-content:center;width:min(452px,calc(100% - 38px));margin:auto;padding-bottom:72px}
+      .pico-initial-traffic-entry .title{width:78%;height:43px;margin-bottom:31px}
+      .pico-initial-traffic-entry .label{width:95px;height:13px;margin-bottom:14px}
+      .pico-initial-traffic-entry .field{width:100%;height:52px;border-radius:9px}
+      .pico-initial-traffic-help{display:flex;justify-content:space-between;gap:15px;margin-top:13px}
+      .pico-initial-traffic-help .pico-initial-traffic-shimmer:first-child{width:51%;height:10px}
+      .pico-initial-traffic-help .pico-initial-traffic-shimmer:last-child{width:31px;height:10px}
+      .pico-initial-traffic-entry .button{width:100%;height:46px;margin-top:23px;border-radius:9px}
+      @media(max-width:600px){.pico-initial-traffic-entry .title{height:35px;width:86%}}
+      @media(prefers-reduced-motion:reduce){.pico-initial-traffic-shimmer{animation:none}}
       .pico-app-route .pico-loading{display:none}
       html, body { margin: 0; min-height: 100%; background: #15131e; }
       .pico-app-route, .pico-app-route body { background: var(--pico-boot-bg, #1e1e2e); }
