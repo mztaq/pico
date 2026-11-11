@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, botLanePath, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount } from './TrafficStorm';
+import { TrafficStorm, FAN_BLADE_ANGLES, botLanePath, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, isTrafficSurge, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -48,6 +48,20 @@ describe('Traffic Storm setup', () => {
     expect(trafficSpikeFactor(0.25)).toBeGreaterThan(trafficSpikeFactor(0.5));
     expect(trafficSpikeFactor(1.3)).toBeGreaterThanOrEqual(0.9);
     expect(trafficSpikeFactor(2)).toBeLessThanOrEqual(1.35);
+  });
+
+  it('signals only sharp increases in modeled traffic', () => {
+    expect(isTrafficSurge(1000, 1500)).toBe(true);
+    expect(isTrafficSurge(1000, 1300)).toBe(true);
+    expect(isTrafficSurge(1000, 1150)).toBe(false);
+    expect(isTrafficSurge(1000, 900)).toBe(false);
+    expect(isTrafficSurge(0, 3000)).toBe(false);
+    expect(isTrafficSurge(Number.NaN, 3000)).toBe(false);
+  });
+
+  it('uses five evenly-spaced blades for each webserver fan', () => {
+    expect(FAN_BLADE_ANGLES).toEqual([0, 72, 144, 216, 288]);
+    expect(new Set(FAN_BLADE_ANGLES).size).toBe(5);
   });
 
   it('formats modeled bandwidth in Gbps and Tbps', () => {
@@ -141,16 +155,13 @@ describe('Traffic Storm setup', () => {
     const incoming = botLanePath(0, 220, 260);
     const accepted = relayLanePath(260, 220);
     const direct = botLanePath(0, 220, null);
-    const realUser = realUserLanePath(220, 260);
 
     expect(incoming.startsWith('M 450 92 C ')).toBe(true);
     expect(incoming.endsWith('710 260')).toBe(true);
     expect(accepted.startsWith('M 790 260 C ')).toBe(true);
     expect(accepted.endsWith('990 220')).toBe(true);
     expect(direct.endsWith('990 220')).toBe(true);
-    expect(realUser.startsWith('M 450 470 C ')).toBe(true);
-    expect(realUser.endsWith('710 260')).toBe(true);
-    for (const path of [incoming, accepted, direct, realUser]) {
+    for (const path of [incoming, accepted, direct]) {
       expect(path).not.toMatch(/(?:NaN|undefined|null)/);
     }
   });
