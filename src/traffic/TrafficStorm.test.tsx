@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, formatTraffic, forwardedRequests } from './TrafficStorm';
+import { TrafficStorm, formatTraffic, forwardedRequests, trafficRamp } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -22,6 +22,16 @@ describe('Traffic Storm setup', () => {
     expect(formatTraffic(0)).toBe('0.00 Gbps');
     expect(formatTraffic(5000)).toBe('1.28 Gbps');
     expect(formatTraffic(4_000_000)).toBe('1.02 Tbps');
+  });
+
+  it('eases synthetic traffic in gradually over 14 seconds', () => {
+    expect(trafficRamp(-2)).toBeCloseTo(0.02);
+    expect(trafficRamp(0)).toBeCloseTo(0.02);
+    expect(trafficRamp(3)).toBeLessThan(trafficRamp(7));
+    expect(trafficRamp(7)).toBeLessThan(trafficRamp(11));
+    expect(trafficRamp(11)).toBeLessThan(trafficRamp(14));
+    expect(trafficRamp(14)).toBeCloseTo(1);
+    expect(trafficRamp(25)).toBeCloseTo(1);
   });
 
   it('filters 82 percent of requests only when protection is on', () => {
