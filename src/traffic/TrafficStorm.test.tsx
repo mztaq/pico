@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, isTrafficSurge, nextTrafficWarningFloor, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY } from './TrafficStorm';
+import { TrafficStorm, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, isTrafficSurge, nextTrafficWarningFloor, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -40,6 +40,19 @@ describe('Traffic Storm setup', () => {
     expect(deviceHeading('WEBSERVER', 'WEBSERVERS', 4)).toBe('WEBSERVERS');
     expect(deviceHeading('PROXY', 'PROXIES', 1)).toBe('PROXY');
     expect(deviceHeading('PROXY', 'PROXIES', 2)).toBe('PROXIES');
+  });
+
+  it('places BOTNET above the first bot icon without an excessive gap', () => {
+    expect(botnetHeadingY()).toBe(45);
+    expect(92 - 29 - botnetHeadingY()).toBe(18);
+  });
+
+  it('moves PROXY/PROXIES close to the first proxy for every node count', () => {
+    expect(proxyHeadingY(1)).toBeCloseTo(210.5);
+    expect(proxyHeadingY(2)).toBeCloseTo(143);
+    expect(proxyHeadingY(3)).toBeCloseTo(109.25);
+    expect(proxyHeadingY(4)).toBeCloseTo(89);
+    expect(proxyHeadingY(1)).toBeGreaterThan(proxyHeadingY(4));
   });
 
   it('keeps the webserver heading close to its first rack for one to four servers', () => {
