@@ -10,6 +10,7 @@ import './traffic-storm.css';
 const SERVER_CAPACITY = 3200;
 const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measured bandwidth.
 const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
+const PROXY_CAPACITY = 100_000; // Synthetic requests per second handled by each edge node.
 const BOT_Y = [70, 145, 225, 300] as const;
 const networkPositions = (count: number): number[] =>
   Array.from({length:count}, (_, i) => 370 * (i + 1) / (count + 1));
@@ -28,14 +29,26 @@ export function trafficRamp(seconds: number): number {
   return 0.003 + 0.997 * progress * progress * (3 - 2 * progress);
 }
 
-/** Simplified defensive filter with diminishing returns, not a guaranteed protection rate. */
+/** Illustrative clean-traffic filtering before capacity constraints. */
 export function proxyFilterRatio(count: number): number {
   const n = Math.max(0, Math.min(4, Math.floor(count) || 0));
-  return 1 - Math.pow(0.6, n);
+  return [0, 0.86, 0.92, 0.95, 0.97][n];
+}
+
+export function proxyLoadRatio(rps: number, count: number): number {
+  const n = Math.max(0, Math.min(4, Math.floor(count) || 0));
+  return n ? Math.max(0, rps) / (n * PROXY_CAPACITY) : 0;
+}
+
+/** An overwhelmed defensive edge filters less effectively in this model. */
+export function effectiveProxyFilterRatio(rps: number, count: number): number {
+  const nominal = proxyFilterRatio(count);
+  const overload = Math.max(0, proxyLoadRatio(rps, count) - 1);
+  return nominal / (1 + overload * 0.55);
 }
 
 export function forwardedRequests(rps: number, proxies: number): number {
-  return Math.round(Math.max(0, rps) * (1 - proxyFilterRatio(proxies)));
+  return Math.round(Math.max(0, rps) * (1 - effectiveProxyFilterRatio(rps, proxies)));
 }
 
 export function serverPressure(rps: number, proxies: number, servers: number): number {
@@ -75,7 +88,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const [ipDraft, setIpDraft] = useState('203.0.113.10');
   const [proxyCount, setProxyCount] = useState(0);
   const [serverCount, setServerCount] = useState(1);
-  const [pingCommand, setPingCommand] = useState('ping');
   const [pingOutput, setPingOutput] = useState<string | null>(null);
   const proxyEnabled = proxyCount > 0;
   const [error, setError] = useState('');
@@ -92,6 +104,10 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const coolingRef = useRef<CoolingAudio | null>(null);
   const warningPlayed = useRef(false);
   const lastFrame = useRef(0);
+  const networkRef = useRef<SVGSVGElement | null>(null);
+  const fanMotion = useRef({ angle: 0, speed: 0 });
+  const fanTarget = useRef(0);
+  const pingTarget = useRef({ ip: '', latency: null as number | null });
   const arriving = forwardedRequests(stats.rps, proxyCount);
   const pressure = arriving / (SERVER_CAPACITY * serverCount);
   const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
@@ -305,16 +321,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setPingOutput(null);
   }
 
-  function runPing(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const value = pingCommand.trim();
-    if (value !== 'ping' && value !== 'ping ' + scenario?.ip) {
-      setPingOutput('Use ping or ping ' + scenario?.ip + ' (simulated target only)');
-      return;
-    }
-    setPingOutput(modeledPing(scenario?.ip ?? '0.0.0.0', mode === 'offline' ? null : responseMs));
-  }
-
   const status = mode === 'offline' ? 'OFFLINE' : pressure >= 1 ? 'OVERLOADED' : stats.health < 65 ? 'DEGRADED' : 'ONLINE';
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   const trafficLabel = formatTraffic(stats.rps);
@@ -329,7 +335,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const serverYs = networkPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
   const filterRatio = proxyFilterRatio(proxyCount);
-  const fanDuration = Math.max(0.26, 3.1 - cpu / 39).toFixed(2) + 's';
+  const proxyLoad = proxyLoadRatio(stats.rps, proxyCount);
+  const effectiveFilter = effectiveProxyFilterRatio(stats.rps, proxyCount);
+  const proxyState = proxyCount === 0 ? 'OFF' : proxyLoad > 1 ? 'OVERLOADED' : proxyLoad > 0.8 ? 'BUSY' : 'FILTERING';
 
   return <main className={'storm-app' + (mode === 'setup' ? ' storm-start' : ' storm-in-session')} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
     <header className="storm-header pico-appbar">
