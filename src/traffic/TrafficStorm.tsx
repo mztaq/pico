@@ -185,7 +185,7 @@ export function formatTraffic(rps: number): string {
 }
 
 type Scenario = { hacker: string; bots: number; ip: string };
-type Mode = 'setup' | 'running' | 'paused' | 'offline';
+type Mode = 'setup' | 'ready' | 'running' | 'paused' | 'offline';
 type EffectName = 'start' | 'warning' | 'shutdown' | 'packet' | 'delivered';
 /** More audible effects at typical listening volume, with an upper gain cap. */
 export const EFFECT_GAIN_MULTIPLIER = 3;
@@ -210,6 +210,15 @@ export function validateHackerName(input: string): string | null {
   return null;
 }
 
+export const TRAFFIC_TUTORIAL_STEPS = [
+  { title: 'Your network', text: 'The hacker commands four fictional botnet groups. Red links show commands, and animated packets travel to webservers directly or through proxies.', hint: 'The generated address is a reserved example. No actual packets are sent.' },
+  { title: 'Adjust the bot army', text: 'Move the Bot army slider between 100 and 20,000 simulated devices. A larger army produces more modeled traffic. You may change it during the simulation.', hint: 'You start with 3,000 simulated bot devices.' },
+  { title: 'Configure your defences', text: 'Use the Servers controls for one to four webservers and Proxies for zero to four filtering nodes. Proxies filter requests until their modeled capacity is overwhelmed.', hint: 'These capacities are illustrative, not real-world hardware benchmarks.' },
+  { title: 'Start and monitor', text: 'Press Start Simulation. Pause and Resume control the run. Incoming Traffic shows total attack volume, Delivered Traffic shows traffic reaching online webservers, and Server Health measures survival.', hint: 'The exclamation icon flashes at 100 Gbps or higher.' },
+  { title: 'Follow successful packets', text: 'Dots travel along the drawn connections. When a representative packet arrives at a working webserver, a short confirmation chime plays at its arrival.', hint: 'The sound toggle mutes chimes without changing the outcome.' },
+  { title: 'Recover and retry', text: 'Excess load drains health and increases response time. At zero health the webserver goes offline. Use Restart to retry or New scenario to enter a new hacker name.', hint: 'All traffic, packets and bandwidth values are simulated in your browser.' },
+] as const;
+
 /** A sound plays for each represented successful delivery group, never per raw modeled request. */
 export function deliverySoundIntervalMs(rps: number): number | null {
   if (!Number.isFinite(rps) || rps <= 0) return null;
@@ -230,6 +239,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const [mode, setMode] = useState<Mode>('setup');
   const [stats, setStats] = useState(initialStats);
   const [showHelp, setShowHelp] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
   const [themeId, setThemeId] = useState(() => loadSettings().theme);
   const [themeOpen, setThemeOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(soundEnabled);
@@ -238,6 +248,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const audioRef = useRef<AudioContext | null>(null);
   const coolingRef = useRef<CoolingAudio | null>(null);
   const warningPlayed = useRef(false);
+  const lastDeliverySoundAt = useRef(-Infinity);
   const lastFrame = useRef(0);
   const networkRef = useRef<SVGSVGElement | null>(null);
   const fanMotion = useRef({ angle: 0, speed: 0 });
@@ -425,6 +436,13 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     warningPlayed.current = false;
     lastFrame.current = performance.now();
     setError('');
+    lastDeliverySoundAt.current = -Infinity;
+    setMode('ready');
+  }
+
+  function beginSimulation() {
+    lastDeliverySoundAt.current = -Infinity;
+    lastFrame.current = performance.now();
     setMode('running');
     playEffect('start');
   }
@@ -499,6 +517,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   function restart() {
     setStats(initialStats());
     warningPlayed.current = false;
+    lastDeliverySoundAt.current = -Infinity;
     lastFrame.current = performance.now();
     setMode('running');
     playEffect('start');
@@ -510,6 +529,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setError('');
     setStats(initialStats());
     setShowHelp(false);
+    setTutorialStep(0);
     setIpDraft(generateDemoIp());
     setHacker('');
     setBotsDraft('3000');
@@ -517,7 +537,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setProxyCount(0);
   }
 
-  const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
+  const responseMs = mode === 'offline' || mode === 'ready' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(deliveredRps);
   const trafficWarning = isHighTraffic(stats.rps) && mode !== 'setup';
@@ -547,7 +567,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <strong className="pico-appbar-tool">Traffic Storm</strong>
       </div>
       <div className="storm-header-actions">
-        <button type="button" className="storm-icon-button" aria-label="About Traffic Storm" title="About this lab" onClick={() => setShowHelp(value => !value)}><CircleHelp size={17}/></button>
+        <button type="button" className="storm-icon-button" aria-label="Traffic Storm tutorial" title="Open tutorial" onClick={() => { setTutorialStep(0); setShowHelp(value => !value); }}><CircleHelp size={17}/></button>
         <SoundButton/>
         <div className="storm-theme-wrap">
           <button type="button" className="storm-icon-button" aria-label="Change Traffic Storm theme" onClick={() => setThemeOpen(value => !value)}><Settings2 size={17}/></button>
@@ -596,7 +616,12 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       <div className="storm-intro">
         <div className="storm-titleline"><h1>Traffic Storm<span>.</span></h1></div>
         <div className="storm-controls">
-          {mode === 'offline' ? <button type="button" className="storm-primary" onClick={restart}><RotateCcw size={15}/> Restart</button> : <button type="button" className="storm-primary" onClick={() => setMode(value => value === 'paused' ? 'running' : 'paused')}>{mode === 'paused' ? <Play size={15}/> : <Pause size={15}/>} {mode === 'paused' ? 'Resume' : 'Pause'}</button>}
+          {mode === 'ready'
+            ? <button type="button" className="storm-primary storm-start-simulation" onClick={beginSimulation}><Play size={16} fill="currentColor"/> Start Simulation</button>
+            : mode === 'offline'
+              ? <button type="button" className="storm-primary" onClick={restart}><RotateCcw size={15}/> Restart</button>
+              : <button type="button" className="storm-primary" onClick={() => setMode(value => value === 'paused' ? 'running' : 'paused')}>{mode === 'paused' ? <Play size={15}/> : <Pause size={15}/>} {mode === 'paused' ? 'Resume' : 'Pause'}</button>}
+          {mode === 'ready' && <button type="button" className="storm-secondary" onClick={() => { setTutorialStep(0); setShowHelp(true); }}><CircleHelp size={15}/> Tutorial</button>}
           <button type="button" className="storm-secondary" onClick={newScenario}>New scenario</button>
         </div>
       </div>
@@ -622,7 +647,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficWarning && <span className="storm-traffic-warning" role="status" aria-label="Incoming traffic at or above 100 Gbps" title="High traffic: at least 100 Gbps"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9.3" y="2.2" width="5.4" height="14" rx="2.5" fill="currentColor"/><circle cx="12" cy="20.2" r="2.9" fill="currentColor"/></svg></span>}</div>
         <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
-        <div className="storm-metric"><span>RESPONSE TIME</span><strong>{responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
+        <div className="storm-metric"><span>RESPONSE TIME</span><strong>{mode === 'ready' ? 'READY' : responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
       </section>
 
       <div className="storm-main-grid">
@@ -738,7 +763,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 <div className="storm-node-heading"><Server size={13}/> SERVER CPU</div>
                 <div className="storm-node-load-grid">
                   {serverLoads.map((load, index) => {
-                    const percent = mode === 'offline' ? 0 : Math.round(Math.min(100, 12 + load * 72));
+                    const percent = mode === 'offline' || mode === 'ready' ? 0 : Math.round(Math.min(100, 12 + load * 72));
                     return <div className="storm-node-load" key={'cpu-' + index}>
                       <div><span>Server {index + 1}</span><strong className={load > 1 ? 'storm-danger' : ''}>{percent}%</strong></div>
                       <div className={'storm-meter' + (load > 1 ? ' is-overloaded' : '')}><i style={{width:percent+'%'}}/></div>
@@ -767,6 +792,27 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         </aside>
       </div>
     </div>}
-    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>A hacker controls fictional botnet nodes sending simulated traffic. The modeled website becomes slower or goes offline if incoming requests exceed server capacity.</p><p>Choose 1–4 web servers to share the simulated load, and 0–4 defensive proxies to filter it. This model illustrates diminishing returns across proxy layers. Real DDoS protection varies and is not guaranteed by adding proxies or servers.</p><p>Traffic uses fictional units of 512 KiB and 16 requests per bot per second. Proxy capacity is also fictional: excessive incoming requests overload the proxies and reduce filtering. The graph shows fictional bursty traffic and does not contact the address.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
+    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}>
+      <section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" aria-describedby="storm-help-copy" className="storm-dialog storm-tutorial" onClick={event => event.stopPropagation()}>
+        <button type="button" aria-label="Close tutorial" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button>
+        <div className="storm-tutorial-eyebrow">PICO TUTORIAL</div>
+        <div className="storm-tutorial-progress" aria-label={'Tutorial step ' + (tutorialStep + 1) + ' of ' + TRAFFIC_TUTORIAL_STEPS.length}>
+          {TRAFFIC_TUTORIAL_STEPS.map((_, index) => <span key={index} className={index <= tutorialStep ? 'is-complete' : ''}/>)}
+        </div>
+        <div className="storm-tutorial-counter">STEP {tutorialStep + 1} / {TRAFFIC_TUTORIAL_STEPS.length}</div>
+        <div aria-live="polite" aria-atomic="true">
+          <h2 id="storm-help-heading">{TRAFFIC_TUTORIAL_STEPS[tutorialStep].title}</h2>
+          <p id="storm-help-copy">{TRAFFIC_TUTORIAL_STEPS[tutorialStep].text}</p>
+          <p className="storm-tutorial-hint">{TRAFFIC_TUTORIAL_STEPS[tutorialStep].hint}</p>
+        </div>
+        <div className="storm-tutorial-actions">
+          <button type="button" className="storm-secondary" disabled={tutorialStep === 0} onClick={() => setTutorialStep(previous => Math.max(0, previous - 1))}>Previous</button>
+          <button type="button" className="storm-primary" onClick={() => {
+            if (tutorialStep === TRAFFIC_TUTORIAL_STEPS.length - 1) { setShowHelp(false); return; }
+            setTutorialStep(previous => Math.min(TRAFFIC_TUTORIAL_STEPS.length - 1, previous + 1));
+          }}>{tutorialStep === TRAFFIC_TUTORIAL_STEPS.length - 1 ? 'Finish tutorial' : 'Next step'} <ArrowRight size={15}/></button>
+        </div>
+      </section>
+    </div>}
   </main>;
 }
