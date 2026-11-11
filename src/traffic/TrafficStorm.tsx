@@ -9,6 +9,7 @@ import './traffic-storm.css';
 
 const SERVER_CAPACITY = 3200;
 const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measured bandwidth.
+export const HIGH_TRAFFIC_THRESHOLD_GBPS = 100;
 const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const PROXY_CAPACITY = 60_000; // Illustrative requests/sec per defensive proxy, not real hardware throughput.
 export const FAN_BLADE_ANGLES = [0, 72, 144, 216, 288] as const;
@@ -97,7 +98,7 @@ export function nodeLoadRatio(rps: number, count: number, index: number, capacit
   return Math.max(0, rps) * weights[index] / totalWeight / capacity;
 }
 
-const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[], trafficWarningFloor: null as number | null });
+const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
 
 /** Slow 16-second startup, easing at both ends. */
 export function trafficRamp(seconds: number): number {
@@ -114,20 +115,17 @@ export function trafficSpikeFactor(seconds: number): number {
   return 0.90 + 0.45 * burst;
 }
 
-/** Detect a significant increase between consecutive model updates. */
-export function isTrafficSurge(previous: number, current: number): boolean {
-  return Number.isFinite(previous) && Number.isFinite(current)
-    && previous >= 100 && current >= previous * 1.22;
+/** A static warning appears at 100 Gbps incoming and clears below the threshold. */
+export function isHighTraffic(rps: number): boolean {
+  return Number.isFinite(rps) && rps >= 0
+    && rps * BITS_PER_REQUEST >= HIGH_TRAFFIC_THRESHOLD_GBPS * 1e9;
 }
 
-/** Preserve the first surge warning while modeled traffic stays elevated.
- * A 60% threshold prevents the icon flickering as burst levels fluctuate.
+/** An offline origin cannot deliver successful application traffic.
+ * Incoming botnet traffic and proxy load remain modeled independently.
  */
-export function nextTrafficWarningFloor(floor: number | null, previousRps: number, currentRps: number): number | null {
-  if (!Number.isFinite(currentRps) || currentRps < 0) return null;
-  if (floor !== null && currentRps >= floor) return floor;
-  if (isTrafficSurge(previousRps, currentRps)) return currentRps * 0.60;
-  return null;
+export function deliveredTrafficRps(rps: number, proxyCount: number, offline: boolean): number {
+  return offline ? 0 : forwardedRequests(rps, proxyCount);
 }
 
 export function deviceHeading(singular: string, plural: string, count: number): string {
@@ -419,7 +417,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         return {
           seconds: previous.seconds + dt,
           health, rps,
-          trafficWarningFloor: nextTrafficWarningFloor(previous.trafficWarningFloor, previous.rps, rps),
           total: previous.total + rps * dt,
           blocked: previous.blocked + (rps - forwarded) * dt,
           dropped: previous.dropped + Math.max(0, forwarded - SERVER_CAPACITY * serverCount) * dt,
@@ -474,8 +471,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   const trafficLabel = formatTraffic(stats.rps);
-  const serverTrafficLabel = formatTraffic(arriving);
-  const trafficWarning = stats.trafficWarningFloor !== null && mode !== 'setup';
+  const deliveredRps = deliveredTrafficRps(stats.rps, proxyCount, mode === 'offline');
+  const serverTrafficLabel = formatTraffic(deliveredRps);
+  const trafficWarning = isHighTraffic(stats.rps) && mode !== 'setup';
   const points = stats.history.map((value, index) => {
     const x = stats.history.length <= 1 ? 0 : index / (stats.history.length - 1) * 600;
     const y = 106 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * BOT_REQUEST_RATE * 1.5)) * 99;
@@ -489,7 +487,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const serverYs = webserverPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
   const serverLoads = serverYs.map((_, index) =>
-    nodeLoadRatio(arriving, serverCount, index, SERVER_CAPACITY));
+    nodeLoadRatio(deliveredRps, serverCount, index, SERVER_CAPACITY));
   const proxyLoads = proxyYs.map((_, index) =>
     nodeLoadRatio(stats.rps, proxyCount, index, PROXY_CAPACITY));
 
@@ -555,7 +553,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </div>
 
       <section className="storm-metrics" aria-label="Simulation metrics">
-        <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficWarning && <span className="storm-traffic-warning" role="status" aria-label="Rapid traffic increase detected" title="Rapid traffic increase"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9.3" y="2.2" width="5.4" height="14" rx="2.5" fill="currentColor"/><circle cx="12" cy="20.2" r="2.9" fill="currentColor"/></svg></span>}</div>
+        <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficWarning && <span className="storm-traffic-warning" role="status" aria-label="Incoming traffic at or above 100 Gbps" title="High traffic: at least 100 Gbps"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9.3" y="2.2" width="5.4" height="14" rx="2.5" fill="currentColor"/><circle cx="12" cy="20.2" r="2.9" fill="currentColor"/></svg></span>}</div>
         <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
         <div className="storm-metric"><span>RESPONSE TIME</span><strong>{responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
