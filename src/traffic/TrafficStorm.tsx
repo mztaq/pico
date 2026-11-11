@@ -579,21 +579,27 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>)}
 
               {serverYs.map((y, index) => <g key={'server-' + index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : serverLoads[index] > 1 ? ' is-critical' : '')}>
-                <rect x="990" y={y - 36} width="170" height="72" rx="10" className="storm-server-shell"/>
-                <rect x="1002" y={y - 12} width="92" height="37" rx="5" className="storm-server-rack"/>
-                <rect x="1010" y={y - 6} width="76" height="10" rx="2" className="storm-server-slot"/>
-                <rect x="1010" y={y + 10} width="76" height="8" rx="2" className="storm-server-slot"/>
-                <circle cx="1020" cy={y - 1} r="2.5" className="storm-led"/>
-                <circle cx="1020" cy={y + 14} r="2.5" className="storm-led"/>
-                <path d={'M 1099 ' + (y - 9) + ' v 29 M 1106 ' + (y - 9) + ' v 29'} className="storm-server-handle"/>
-                {[1121, 1145].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + (y + 5) + ')'} className="storm-rack-fan">
-                  <circle r="11.5" className="storm-fan-ring"/>
-                  <circle r="8.5" className="storm-fan-shroud"/>
-                  <g className="storm-fan-rotor">
-                    {[0,90,180,270].map(angle => <path key={angle} transform={'rotate(' + angle + ')'} d="M -1 -1 Q -11 -12 1 -9 Q 8 -7 3 -1 Z" className="storm-fan-blade"/>)}
-                  </g>
-                  <circle r="2.2" className="storm-fan-hub"/>
+                <rect x="990" y={y - 36} width="170" height="72" rx="9" className="storm-server-shell"/>
+                <rect x="997" y={y - 30} width="102" height="60" rx="6" className="storm-server-rack"/>
+                {[-20, -2, 16].map((offset, bay) => <g key={'bay-' + bay} className="storm-rack-unit">
+                  <rect x="1004" y={y + offset} width="88" height="14" rx="2.5" className="storm-server-slot"/>
+                  <circle cx="1014" cy={y + offset + 7} r="2.5" className="storm-led"/>
+                  <path d={'M 1024 ' + (y + offset + 5) + ' h 13 M 1024 ' + (y + offset + 9) + ' h 13 M 1044 ' + (y + offset + 5) + ' h 37 M 1044 ' + (y + offset + 9) + ' h 37'} className="storm-server-vents"/>
                 </g>)}
+                <path d={'M 1102 ' + (y - 24) + ' v 48 M 1106 ' + (y - 24) + ' v 48'} className="storm-server-handle"/>
+                {[1119, 1145].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + y + ')'} className="storm-rack-fan">
+                  <circle r="13" className="storm-fan-ring"/>
+                  <circle r="11.2" className="storm-fan-shroud"/>
+                  <g className="storm-fan-rotor">
+                    {[0, 72, 144, 216, 288].map(angle => <path key={angle} transform={'rotate(' + angle + ')'} d="M 0 -2 C 2 -6 5 -11 9 -10 C 13 -9 11 -4 8 -1 Q 4 2 1 2 Z" className="storm-fan-blade"/>)}
+                  </g>
+                  <circle r="2.9" className="storm-fan-hub"/>
+                  <path d="M -9 -9 L 9 9 M -9 9 L 9 -9" className="storm-fan-grille"/>
+                </g>)}
+                <circle cx="992" cy={y - 32} r="1.4" className="storm-rack-screw"/>
+                <circle cx="1158" cy={y - 32} r="1.4" className="storm-rack-screw"/>
+                <circle cx="992" cy={y + 32} r="1.4" className="storm-rack-screw"/>
+                <circle cx="1158" cy={y + 32} r="1.4" className="storm-rack-screw"/>
               </g>)}
 
               {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) =>
