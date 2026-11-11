@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, botLanePath, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp } from './TrafficStorm';
+import { TrafficStorm, botLanePath, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, visualSurvivorCount } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -96,16 +96,37 @@ describe('Traffic Storm setup', () => {
     const direct = botLanePath(0, 220, null);
     const realUser = realUserLanePath(220, 260);
 
-    expect(incoming.startsWith('M 450 115 C ')).toBe(true);
+    expect(incoming.startsWith('M 450 88 C ')).toBe(true);
     expect(incoming.endsWith('710 260')).toBe(true);
     expect(accepted.startsWith('M 790 260 C ')).toBe(true);
     expect(accepted.endsWith('990 220')).toBe(true);
     expect(direct.endsWith('990 220')).toBe(true);
-    expect(realUser.startsWith('M 450 470 C ')).toBe(true);
+    expect(realUser.startsWith('M 450 407 C ')).toBe(true);
     expect(realUser.endsWith('710 260')).toBe(true);
     for (const path of [incoming, accepted, direct, realUser]) {
       expect(path).not.toMatch(/(?:NaN|undefined|null)/);
     }
+  });
+
+  it('shows representative accepted traffic on all four outgoing paths even at 97% filtering', () => {
+    expect(visualSurvivorCount(16, 0.97, 4)).toBe(4);
+    expect(visualSurvivorCount(16, 0.86, 4)).toBeGreaterThanOrEqual(4);
+    expect(visualSurvivorCount(16, 0.2, 4)).toBeLessThanOrEqual(8);
+    expect(visualSurvivorCount(2, 0.97, 4)).toBe(2);
+    expect(visualSurvivorCount(0, 0.97, 4)).toBe(0);
+    expect(visualSurvivorCount(16, 0.97, 0)).toBe(0);
+  });
+
+  it('provides a valid curve for each server with two proxies and four servers', () => {
+    const sources = [0, 1, 2, 3];
+    const proxies = [195, 330];
+    const servers = [141, 222, 303, 384];
+    const paths = sources.map(index => relayLanePath(proxies[index % 2], servers[index]));
+    expect(new Set(paths).size).toBe(4);
+    paths.forEach((path, index) => {
+      expect(path.startsWith('M 790 ' + proxies[index % 2])).toBe(true);
+      expect(path.endsWith('990 ' + servers[index])).toBe(true);
+    });
   });
 
 });
