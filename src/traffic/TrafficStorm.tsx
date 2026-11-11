@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { ArrowLeft, CircleHelp, MessageSquareText, Pause, Play, RotateCcw, Server, Settings2, Shield, ShieldAlert, Terminal, Users, X } from 'lucide-react';
+import { ArrowLeft, CircleHelp, Fan, Pause, Play, RotateCcw, Server, Settings2, Shield, Terminal, Users, X } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
@@ -8,17 +8,32 @@ import { loadSettings, saveSettings } from '../storage/settings';
 import './traffic-storm.css';
 
 const SERVER_CAPACITY = 3200;
-// Deliberately fictional routes. The circles travel across SVG paths only.
-const PACKET_PATHS = [
-  'M 183 70 C 310 70 388 145 545 145 L 598 145 C 704 145 738 185 804 185',
-  'M 183 138 C 302 138 388 185 545 185 L 598 185 L 804 185',
-  'M 183 240 C 315 240 392 225 545 225 L 598 225 C 709 225 738 185 804 185',
-  'M 183 310 C 304 310 388 225 545 225 L 598 225 C 709 225 738 185 804 185',
+const BITS_PER_REQUEST = 256000; // Explicit synthetic 32 kB average request size.
+const PROXY_FILTER_RATIO = 0.82; // Simplified defensive reverse-proxy scenario, not a guarantee.
+const BOT_Y = [70, 145, 225, 300] as const;
+const DIRECT_PATHS = [
+  'M 334 70 C 505 70 675 176 825 185',
+  'M 334 145 C 545 145 690 180 825 185',
+  'M 334 225 C 545 225 690 190 825 185',
+  'M 334 300 C 505 300 675 194 825 185',
 ];
-const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, dropped: 0, history: [] as number[] });
+const TO_EDGE_PATHS = [
+  'M 334 70 C 445 70 506 185 591 185',
+  'M 334 145 C 440 145 510 185 591 185',
+  'M 334 225 C 440 225 510 185 591 185',
+  'M 334 300 C 445 300 506 185 591 185',
+];
+const THROUGH_EDGE_PATHS = TO_EDGE_PATHS.map(path => path + ' L 645 185 C 740 185 780 185 825 185');
+const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
+
+export function formatTraffic(rps: number): string {
+  const gbps = Math.max(0, rps) * BITS_PER_REQUEST / 1e9;
+  return gbps >= 1000 ? (gbps / 1000).toFixed(2) + ' Tbps' : gbps.toFixed(2) + ' Gbps';
+}
+
 type Scenario = { hacker: string; bots: number; ip: string };
 type Mode = 'setup' | 'running' | 'paused' | 'offline';
-type EffectName = 'start' | 'fan' | 'warning' | 'shutdown';
+type EffectName = 'start' | 'fan' | 'warning' | 'shutdown' | 'packet';
 
 function validIPv4(value: string): boolean {
   const octets = value.split('.');
@@ -34,6 +49,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const [hacker, setHacker] = useState('');
   const [botsDraft, setBotsDraft] = useState('3000');
   const [ipDraft, setIpDraft] = useState('203.0.113.10');
+  const [proxyEnabled, setProxyEnabled] = useState(false);
   const [error, setError] = useState('');
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [mode, setMode] = useState<Mode>('setup');
@@ -77,7 +93,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         osc.start(start + delay);
         osc.stop(start + delay + length + 0.02);
       };
-      if (name === 'start') {
+      if (name === 'packet') {
+        tone(430, 350, 0.038, 0.008, 0, 'triangle');
+      } else if (name === 'start') {
         tone(220, 480, 0.23, 0.035);
         tone(380, 660, 0.25, 0.028, 0.12);
       } else if (name === 'fan') {
@@ -118,24 +136,36 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       lastFrame.current = now;
       setStats(previous => {
         if (previous.health <= 0) return previous;
-        // Synthetic traffic only. No fetch, sockets, or network packets.
-        const variation = 0.93 + 0.07 * Math.sin(now / 370) + 0.06 * Math.sin(now / 850);
-        const rps = Math.round(scenario.bots * 1.65 * variation);
-        const overload = rps / SERVER_CAPACITY;
-        const damage = overload > 1 ? (overload - 1) * 8.5 * dt : -3 * dt;
-        const health = Math.max(0, Math.min(100, previous.health - damage));
+        // No real traffic. Each displayed packet and number is a browser-only model.
+        const ramp = Math.min(1, 0.18 + previous.seconds / 4);
+        const variation = 0.96 + 0.045 * Math.sin(now / 330) + 0.035 * Math.sin(now / 860);
+        const rps = Math.round(scenario.bots * 1.65 * variation * ramp);
+        const forwarded = Math.round(rps * (proxyEnabled ? 1 - PROXY_FILTER_RATIO : 1));
+        const overload = forwarded / SERVER_CAPACITY;
+        const health = Math.max(0, Math.min(100, previous.health - (overload > 1 ? (overload - 1) * 12 : -5) * dt));
         return {
           seconds: previous.seconds + dt,
-          health,
-          rps,
+          health, rps,
           total: previous.total + rps * dt,
-          dropped: previous.dropped + Math.max(0, rps - SERVER_CAPACITY) * dt,
+          blocked: previous.blocked + (rps - forwarded) * dt,
+          dropped: previous.dropped + Math.max(0, forwarded - SERVER_CAPACITY) * dt,
           history: [...previous.history.slice(-65), rps],
         };
       });
     }, 160);
     return () => window.clearInterval(id);
-  }, [mode, scenario]);
+  }, [mode, scenario, proxyEnabled]);
+
+  // One quiet synthesized cue per on-screen packet group, capped below 10/s.
+  // Thousands of modeled requests never become thousands of audio oscillators.
+  useEffect(() => {
+    if (mode !== 'running') return;
+    const id = window.setInterval(() => {
+      if (document.hidden || !audioRef.current) return;
+      playEffect('packet');
+    }, 130);
+    return () => window.clearInterval(id);
+  }, [mode]);
 
   useEffect(() => {
     if (mode !== 'running') return;
@@ -170,39 +200,21 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setShowHelp(false);
   }
 
-  const pressure = stats.rps / SERVER_CAPACITY;
+  const arriving = stats.rps * (proxyEnabled ? 1 - PROXY_FILTER_RATIO : 1);
+  const pressure = arriving / SERVER_CAPACITY;
   const status = mode === 'offline' ? 'OFFLINE' : pressure >= 1 ? 'OVERLOADED' : stats.health < 65 ? 'DEGRADED' : 'ONLINE';
-  const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 15 + pressure * 64));
+  const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
+  const fanRpm = mode === 'offline' ? 0 : Math.round(800 + cpu * 49);
+  const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
+  const trafficLabel = formatTraffic(stats.rps);
+  const serverTrafficLabel = formatTraffic(arriving);
+  const lastMessage = mode === 'offline' ? 'Target offline.' : proxyEnabled && pressure < 1 ? 'Protection is absorbing the flood.' : stats.health < 40 ? 'Target struggling to respond.' : stats.rps > 0 ? 'Traffic climbing.' : 'Botnet standing by.';
   const points = stats.history.map((value, index) => {
     const x = stats.history.length <= 1 ? 0 : index / (stats.history.length - 1) * 600;
-    const y = 104 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * 1.9)) * 95;
+    const y = 82 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * 1.9)) * 74;
     return String(x) + ',' + String(y);
   }).join(' ');
   const safeName = scenario?.hacker ?? 'Operator';
-  const proxyCount = Math.max(6, Math.round((scenario?.bots ?? 0) / 24));
-
-  // Presentation-only terminal transcript and messages, gated by simulated time.
-  // No executable commands, proxy connections or attack requests exist here.
-  const consoleSteps = [
-    { at: 0, text: 'pico@demo:~$ open traffic-storm' },
-    { at: 0.9, text: '[ok] Operator profile loaded' },
-    { at: 1.8, text: '[ok] Fictional botnet nodes mapped' },
-    { at: 2.8, text: '[ok] Virtual relay layer assembled' },
-    { at: 3.8, text: '[sim] Visualising request paths' },
-    ...(stats.rps > SERVER_CAPACITY ? [{ at: 4.4, text: '[warn] Synthetic throughput above capacity' }] : []),
-    ...(stats.health <= 35 ? [{ at: 5.2, text: '[critical] Server health approaching zero' }] : []),
-    ...(mode === 'offline' ? [{ at: 5.6, text: '[offline] Website unavailable in model' }] : []),
-  ];
-  const chatter = [
-    { at: 0, text: 'Scenario connected. Standing by.' },
-    { at: 1.5, text: 'Botnet nodes synced in the model.' },
-    { at: 3, text: 'Virtual relay paths established.' },
-    { at: 4.5, text: 'Watching the simulated traffic grow.' },
-    ...(stats.rps > SERVER_CAPACITY ? [{ at: 5, text: 'Target latency is rising.' }] : []),
-    ...(stats.dropped > 0 ? [{ at: 5.5, text: 'Requests are being dropped.' }] : []),
-    ...(stats.health <= 35 ? [{ at: 6, text: 'Server health is critical.' }] : []),
-    ...(mode === 'offline' ? [{ at: 6.5, text: 'Target is offline in this scenario.' }] : []),
-  ].filter(message => stats.seconds >= message.at || mode === 'offline').slice(-5);
 
   return <main className="storm-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
     <header className="storm-header pico-appbar">
