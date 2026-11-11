@@ -931,3 +931,26 @@
   stroke:var(--ds-danger);
 }
 .storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-led{fill:var(--ds-danger)}
+
+/* Deep-route scroll fix: scroll inside the page even if the host shell locks body overflow. */
+.storm-app.storm-in-session{
+  height:100dvh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+  scrollbar-width:thin;
+}
+.storm-in-session .storm-session{
+  flex:0 0 auto;
+  height:auto;
+  min-height:calc(100dvh - 52px);
+  overflow:visible;
+}
+.storm-in-session .storm-main-grid{
+  flex:0 0 auto;
+  min-height:0;
+}
