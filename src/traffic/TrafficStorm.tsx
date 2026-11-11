@@ -180,13 +180,11 @@ export function serverPressure(rps: number, proxies: number, servers: number): n
   return forwardedRequests(rps, proxies) / (SERVER_CAPACITY * count);
 }
 
-/** Health drains gradually under high load, even near the model's 5 Tbps peak.
- * -5 is a per-second recovery rate when the origin is within capacity.
- */
+/** Health drains gradually under overload. -5 restores health within capacity. */
 export function serverHealthDrainPerSecond(pressure: number): number {
   if (!Number.isFinite(pressure) || pressure <= 0) return -5;
   if (pressure <= 1) return -5;
-  return Math.min(2.3, 0.45 + 0.42 * Math.log2(pressure));
+  return Math.min(2.6, 0.48 + 0.46 * Math.log2(pressure));
 }
 
 export function formatTraffic(rps: number): string {
@@ -226,9 +224,9 @@ export const TRAFFIC_TUTORIAL_STEPS = [
   { target: 'servers', title: 'Webservers', text: 'Add up to four webservers to share the incoming requests. Each has its own load meter and spinning fans.' },
   { target: 'proxies', title: 'Proxies', text: 'Add up to four defensive proxies to filter requests. Heavy traffic can overwhelm them.' },
   { target: 'diagram', title: 'Network diagram', text: 'Red lines show commands from the hacker to the botnet. Moving dots follow request routes to the webservers.' },
-  { target: 'incoming', title: 'Incoming traffic', text: 'Track incoming bandwidth here, reaching over 5 Tbps at peak. The exclamation mark flashes above 100 Gbps.' },
+  { target: 'incoming', title: 'Incoming traffic', text: 'See the traffic heading toward your network. Adjust the bot army and watch the incoming rate change.' },
   { target: 'delivered', title: 'Delivered traffic', text: 'Traffic that reaches the webservers after proxy filtering appears here. It drops to zero if the site goes offline.' },
-  { target: 'health', title: 'Server health', text: 'Health gradually decreases under overload, even at 5 Tbps. When it reaches zero, the website goes offline.' },
+  { target: 'health', title: 'Server health', text: 'Watch the webservers lose health under sustained overload. When health reaches zero, the website goes offline.' },
   { target: 'latency', title: 'Response time', text: 'Response time rises as server pressure increases. When the website goes offline, the indicator changes to OFFLINE.' },
   { target: 'server-panel', title: 'Server and proxy load', text: 'Each server CPU and proxy load appears here. Add or remove nodes to compare how the network behaves.' },
   { target: 'graph', title: 'Traffic graph', text: 'Follow traffic changes over time. Sharp spikes show sudden increases.' },
