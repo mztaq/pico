@@ -1,4 +1,5 @@
 import './workspace-loading.css';
+import { readSavedTrafficAlias } from '../../traffic/traffic-alias';
 
 export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab' | 'Traffic Storm';
 
@@ -155,16 +156,67 @@ function TrafficStormSkeleton() {
   </div>;
 }
 
+/** Matches the network dashboard shown after a returning visitor's saved alias loads. */
+function TrafficStormDiagramSkeleton() {
+  const lanes = [88, 165, 242, 319];
+  return <div className="pico-load-storm-dashboard">
+    <div className="pico-load-storm-dashboard-heading">
+      <Placeholder className="pico-load-storm-dashboard-title"/>
+      <div className="pico-load-storm-dashboard-actions">
+        <Placeholder className="pico-load-storm-dashboard-action"/>
+        <Placeholder className="pico-load-storm-dashboard-action"/>
+      </div>
+    </div>
+    <div className="pico-load-storm-dashboard-toolbar">
+      <Placeholder className="pico-load-storm-dashboard-control"/>
+      <Placeholder className="pico-load-storm-dashboard-control"/>
+      <Placeholder className="pico-load-storm-dashboard-slider"/>
+    </div>
+    <div className="pico-load-storm-dashboard-metrics">
+      {lanes.map((_, index) => <div key={index} className="pico-load-storm-dashboard-metric">
+        <Placeholder className="pico-load-storm-dashboard-metric-label"/>
+        <Placeholder className="pico-load-storm-dashboard-metric-value"/>
+      </div>)}
+    </div>
+    <div className="pico-load-storm-dashboard-main">
+      <section className="pico-load-storm-dashboard-panel pico-load-storm-dashboard-network">
+        <Placeholder className="pico-load-storm-dashboard-section-title"/>
+        <svg viewBox="0 0 1200 405" preserveAspectRatio="xMidYMid meet" className="pico-load-storm-dashboard-svg" aria-hidden="true">
+          {lanes.map((y,index)=><g key={'lane-'+index}>
+            <path d={'M 220 215 C 285 215 303 '+y+' 348 '+y} className="pico-load-storm-skeleton-route"/>
+            <path d={'M 456 '+y+' C 620 '+y+' 760 206 974 206'} className="pico-load-storm-skeleton-route"/>
+          </g>)}
+          <rect x="67" y="153" width="150" height="124" rx="15" className="pico-load-storm-skeleton-node"/>
+          <circle cx="142" cy="215" r="35" className="pico-load-storm-skeleton-node-core"/>
+          {lanes.map(y => <rect key={'bot-'+y} x="348" y={y-26} width="108" height="52" rx="10" className="pico-load-storm-skeleton-node"/>)}
+          <rect x="974" y="165" width="170" height="82" rx="11" className="pico-load-storm-skeleton-node"/>
+          <rect x="995" y="180" width="130" height="12" rx="4" className="pico-load-storm-skeleton-node-core"/>
+          <rect x="995" y="201" width="130" height="12" rx="4" className="pico-load-storm-skeleton-node-core"/>
+          <rect x="995" y="222" width="130" height="12" rx="4" className="pico-load-storm-skeleton-node-core"/>
+        </svg>
+      </section>
+      <section className="pico-load-storm-dashboard-panel pico-load-storm-dashboard-side">
+        <Placeholder className="pico-load-storm-dashboard-section-title"/>
+        <Placeholder className="pico-load-storm-dashboard-side-line"/>
+        <Placeholder className="pico-load-storm-dashboard-side-line pico-load-storm-dashboard-side-short"/>
+        <Placeholder className="pico-load-storm-dashboard-side-meter"/>
+        <Placeholder className="pico-load-storm-dashboard-side-chart"/>
+      </section>
+    </div>
+  </div>;
+}
+
 /** Visible only while React.lazy is fetching the workspace. No artificial delay. */
 export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) {
-  return <div className="pico-load-stage" data-loading-workspace={workspace} role="status" aria-live="polite" aria-label={`Opening ${workspace}`}>
+  const returningToStorm = workspace === 'Traffic Storm' && readSavedTrafficAlias() !== null;
+  return <div className="pico-load-stage" data-loading-workspace={workspace} data-storm-loading={workspace === 'Traffic Storm' ? (returningToStorm ? 'dashboard' : 'alias') : undefined} role="status" aria-live="polite" aria-label={`Opening ${workspace}`}>
     <span className="pico-load-screenreader">Opening {workspace}…</span>
     <div className="pico-load-layout" aria-hidden="true">
       <LoadingTopbar />
       {workspace === 'Flowchart Builder' ? <FlowchartSkeleton /> :
        workspace === 'Logic Sim' ? <LogicSkeleton /> :
        workspace === 'CPU Studio' ? <CpuSkeleton /> :
-       workspace === 'Traffic Storm' ? <TrafficStormSkeleton /> :
+       workspace === 'Traffic Storm' ? (returningToStorm ? <TrafficStormDiagramSkeleton /> : <TrafficStormSkeleton />) :
        <BinarySkeleton />}
     </div>
   </div>;
