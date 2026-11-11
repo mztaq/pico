@@ -24,8 +24,6 @@ export function generateDemoIp(random: () => number = Math.random): string {
 // All visible network links and animated packets share the same SVG path IDs.
 // Keeping the connection coordinates here prevents packet/path drift.
 const BOT_Y = [92, 190, 288, 386] as const;
-const REAL_USER_Y = 470;
-const LEGITIMATE_RPS = 125;
 const BOT_EXIT_X = 450;
 const PROXY_IN_X = 710;
 const PROXY_OUT_X = 790;
@@ -58,13 +56,6 @@ export function visualSurvivorCount(incomingDots: number, filteredFraction: numb
   return Math.min(8, Math.max(Math.min(lanes, incoming), passed));
 }
 
-export function realUserLanePath(serverY: number, proxyY: number | null): string {
-  const toX = proxyY === null ? SERVER_IN_X : PROXY_IN_X;
-  const targetY = proxyY ?? serverY;
-  return 'M ' + BOT_EXIT_X + ' ' + REAL_USER_Y + ' C 565 ' + REAL_USER_Y
-    + ' ' + (toX - 95) + ' ' + targetY + ' ' + toX + ' ' + targetY;
-}
-
 /** Deterministic per-node load with slightly uneven load-balancer allocation. */
 export function nodeLoadRatio(rps: number, count: number, index: number, capacity: number): number {
   const n = Math.max(1, Math.min(4, Math.floor(count) || 1));
@@ -89,6 +80,12 @@ export function trafficSpikeFactor(seconds: number): number {
   const t = Math.max(0, seconds);
   const burst = Math.abs(Math.sin(t * 2.75) * Math.sin(t * 5.85));
   return 0.90 + 0.45 * burst;
+}
+
+/** A sharp relative rise triggers a brief indicator; ordinary gradual growth does not. */
+export function isTrafficSurge(previous: number, current: number): boolean {
+  return Number.isFinite(previous) && Number.isFinite(current)
+    && previous >= 100 && current >= previous * 1.22;
 }
 
 export function deviceHeading(singular: string, plural: string, count: number): string {
@@ -439,6 +436,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(arriving);
+  const trafficHistory = stats.history;
+  const trafficSurge = mode === 'running' && trafficHistory.length > 1
+    && isTrafficSurge(trafficHistory[trafficHistory.length - 2], trafficHistory[trafficHistory.length - 1]);
   const points = stats.history.map((value, index) => {
     const x = stats.history.length <= 1 ? 0 : index / (stats.history.length - 1) * 600;
     const y = 106 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * BOT_REQUEST_RATE * 1.5)) * 99;
@@ -518,7 +518,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </div>
 
       <section className="storm-metrics" aria-label="Simulation metrics">
-        <div className="storm-metric"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong></div>
+        <div className="storm-metric storm-metric-incoming"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong>{trafficSurge && <i key={'surge-' + stats.history.length} className="storm-surge-flash" aria-hidden="true"/>}</div>
         <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
         <div className="storm-metric"><span>RESPONSE TIME</span><strong>{responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
@@ -528,7 +528,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <div className="storm-left-stack">
           <section className={'storm-panel storm-network' + (mode === 'running' ? ' is-active' : '')} aria-label="Animated network traffic">
             <div className="storm-panel-heading"><h2>Network traffic</h2></div>
-            <svg ref={networkRef} viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
+            <svg ref={networkRef} viewBox="0 0 1200 465" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four botnet groups, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every animated packet follows a drawn connection.'}>
               <g className="storm-stage-titles">
                 
                 <text x="400" y="38">BOTNET</text>
@@ -543,10 +543,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 {proxyEnabled && BOT_Y.map((_, index) => <path key={'survivor-link-' + index} id={'storm-survivor-link-' + index}
                   d={relayLanePath(proxyYs[index % proxyCount], serverYs[index % serverCount])}
                   className="storm-network-link storm-network-link--approved"/>)}
-                <path id="storm-legitimate-in" d={realUserLanePath(serverYs[0], proxyEnabled ? proxyYs[0] : null)}
-                  className="storm-network-link storm-network-link--legitimate"/>
-                {proxyEnabled && <path id="storm-legitimate-out" d={relayLanePath(proxyYs[0], serverYs[0])}
-                  className="storm-network-link storm-network-link--legitimate"/>}
               </g>
 
               <g className="storm-hacker-node">
@@ -570,14 +566,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   <path d="M -6 8 H 6" className="storm-bot-mouth"/>
                 </g>
               </g>)}
-              <g className="storm-real-node">
-                <rect x="292" y={REAL_USER_Y - 27} width="158" height="54" rx="11"/>
-                <circle cx="321" cy={REAL_USER_Y - 3} r="8"/>
-                <path d={'M 307 ' + (REAL_USER_Y + 13) + ' q 14 -18 28 0'}/>
-                <path d={'M 345 ' + (REAL_USER_Y - 8) + ' h 84 M 345 ' + (REAL_USER_Y + 6) + ' h 55'}/>
-                <text x="370" y={REAL_USER_Y - 39} className="storm-real-users-label">REAL USERS · {LEGITIMATE_RPS}/s</text>
-              </g>
-
               {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoads[index] > 1 ? ' is-overloaded' : proxyLoads[index] > 0.8 ? ' is-busy' : '')}>
                 <rect x="710" y={y - 34} width="80" height="68" rx="11" className="storm-proxy-shell"/>
                 <circle cx="750" cy={y + 6} r="24" className="storm-proxy-ring"/>
@@ -622,22 +610,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   </animateMotion>
                 </circle>
               )}
-              {mode === 'running' && Array.from({length:3}, (_, index) =>
-                <circle key={'real-in-' + index} className="storm-packet-user" r="3.7">
-                  <animateMotion dur="1.15s" begin={(-index * 0.41) + 's'} repeatCount="indefinite">
-                    <mpath href="#storm-legitimate-in"/>
-                  </animateMotion>
-                </circle>
-              )}
-              {mode === 'running' && proxyEnabled && Array.from({length:2}, (_, index) =>
-                <circle key={'real-out-' + index} className="storm-packet-user" r="3.7">
-                  <animateMotion dur="1.55s" begin={(-index * 0.7) + 's'} repeatCount="indefinite">
-                    <mpath href="#storm-legitimate-out"/>
-                  </animateMotion>
-                </circle>
-              )}
             </svg>
-            <div className="storm-network-foot"><span className="storm-legend-attack"><i/> Attack</span><span className="storm-legend-real"><i/> Real users</span><span>{serverCount} servers · {proxyCount} proxies</span><span>{stats.seconds.toFixed(1)}s</span></div>
+            <div className="storm-network-foot"><span className="storm-legend-attack"><i/> Attack</span><span>{serverCount} servers · {proxyCount} proxies</span><span>{stats.seconds.toFixed(1)}s</span></div>
           </section>
 
         </div>
@@ -668,7 +642,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 </div>
               </div>}
             </div>
-            <div className="storm-traffic-chart" aria-label="Simulated network traffic over time">
+            <div className="storm-traffic-chart" aria-label="Simulated network traffic over time">{trafficSurge && <i key={'chart-surge-' + stats.history.length} className="storm-chart-surge-flash" aria-hidden="true"/>}
               <div className="storm-traffic-chart-heading"><span>Traffic</span><strong>{trafficLabel}</strong></div>
               <svg viewBox="0 0 600 110" preserveAspectRatio="none" role="img" aria-label="Spiky modeled incoming traffic">
                 <path d="M 0 106 H 600 M 0 57 H 600" className="storm-chart-axis"/>
