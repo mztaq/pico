@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, TRAFFIC_TUTORIAL_STEPS, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, diagramAnnotations, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, sanitizeHackerName, serverHealthDrainPerSecond, serverPressure, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
+import { TrafficStorm, TRAFFIC_ALIAS_STORAGE_KEY, TRAFFIC_TUTORIAL_STEPS, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, clearTrafficAlias, coolingFanDemand, deliveredTrafficRps, deviceHeading, diagramAnnotations, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, readSavedTrafficAlias, relayLanePath, sanitizeHackerName, saveTrafficAlias, serverHealthDrainPerSecond, serverPressure, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -24,6 +24,47 @@ describe('Traffic Storm setup', () => {
     expect(html).not.toContain('LOCAL MODEL');
     expect(html).not.toContain('LIVE TRAFFIC VISUALIZATION');
     expect(html).not.toContain('storm-ping-activity');
+  });
+
+  it('stores a valid alias for later visits and removes it only on Reset Alias', () => {
+    const stored = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => { stored.set(key, value); },
+      removeItem: (key: string) => { stored.delete(key); },
+    };
+    expect(readSavedTrafficAlias(storage)).toBeNull();
+    expect(saveTrafficAlias('  Ghost  ', storage)).toBe(true);
+    expect(stored.get(TRAFFIC_ALIAS_STORAGE_KEY)).toBe('Ghost');
+    expect(readSavedTrafficAlias(storage)).toBe('Ghost');
+    expect(saveTrafficAlias('Élodie Test', storage)).toBe(true);
+    expect(readSavedTrafficAlias(storage)).toBe('Élodie Test');
+    clearTrafficAlias(storage);
+    expect(readSavedTrafficAlias(storage)).toBeNull();
+    expect(stored.has(TRAFFIC_ALIAS_STORAGE_KEY)).toBe(false);
+  });
+
+  it('ignores invalid or inaccessible persisted aliases', () => {
+    const stored = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => { stored.set(key, value); },
+      removeItem: (key: string) => { stored.delete(key); },
+    };
+    expect(saveTrafficAlias('User123', storage)).toBe(false);
+    expect(readSavedTrafficAlias(storage)).toBeNull();
+    for (const invalid of ['A', 'A'.repeat(25), 'No_Thanks', '12345', 'Double  Space']) {
+      stored.set(TRAFFIC_ALIAS_STORAGE_KEY, invalid);
+      expect(readSavedTrafficAlias(storage)).toBeNull();
+    }
+    const restricted = {
+      getItem: (_key: string): string | null => { throw new Error('Storage blocked'); },
+      setItem: (_key: string, _value: string): void => { throw new Error('Storage blocked'); },
+      removeItem: (_key: string): void => { throw new Error('Storage blocked'); },
+    };
+    expect(readSavedTrafficAlias(restricted)).toBeNull();
+    expect(saveTrafficAlias('Ghost', restricted)).toBe(false);
+    expect(() => clearTrafficAlias(restricted)).not.toThrow();
   });
 
   it('filters digits, emoji and symbols from hacker names', () => {
@@ -52,6 +93,8 @@ describe('Traffic Storm setup', () => {
     expect(TRAFFIC_TUTORIAL_STEPS[0].target).toBe('controls');
     expect(TRAFFIC_TUTORIAL_STEPS[0].title).toBe('Start and pause');
     expect(TRAFFIC_TUTORIAL_STEPS.some(step => step.text.includes('Start Simulation'))).toBe(true);
+    expect(TRAFFIC_TUTORIAL_STEPS[0].text).toContain('Reset Alias');
+    expect(TRAFFIC_TUTORIAL_STEPS[0].text).not.toContain('New scenario');
     expect(TRAFFIC_TUTORIAL_STEPS.some(step => step.target === 'graph')).toBe(true);
     expect(new Set(TRAFFIC_TUTORIAL_STEPS.map(step => step.title)).size).toBe(12);
     expect(new Set(TRAFFIC_TUTORIAL_STEPS.map(step => step.target)).size).toBe(12);
