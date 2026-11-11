@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, HIGH_TRAFFIC_THRESHOLD_GBPS, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
+import { TrafficStorm, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -173,6 +173,17 @@ describe('Traffic Storm setup', () => {
     expect(effectiveProxyFilterRatio(240000, 1)).toBeLessThan(proxyFilterRatio(1));
     expect(effectiveProxyFilterRatio(240000, 4)).toBeCloseTo(proxyFilterRatio(4));
     expect(forwardedRequests(240000, 1)).toBeGreaterThan(forwardedRequests(240000, 4));
+  });
+
+  it('raises simulation effect loudness while capping each oscillator gain', () => {
+    expect(EFFECT_GAIN_MULTIPLIER).toBe(3);
+    expect(EFFECT_GAIN_CAP).toBe(0.18);
+    expect(FAN_NOISE_GAIN_MULTIPLIER).toBeGreaterThan(1);
+    expect(effectGain(0.016)).toBeCloseTo(0.048);
+    expect(effectGain(0.045)).toBeCloseTo(0.135);
+    expect(effectGain(0.082)).toBeCloseTo(EFFECT_GAIN_CAP);
+    expect(effectGain(100)).toBe(EFFECT_GAIN_CAP);
+    expect(effectGain(-5)).toBe(0);
   });
 
   it('starts the fan immediately at an audible and visible idle speed before heavy load', () => {
