@@ -3,7 +3,7 @@ import { ArrowLeft, CircleHelp, Fan, Pause, Play, RotateCcw, Server, Settings2, 
 import { SoundButton } from '../app/components/SoundToggle';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
-import { soundEnabled } from '../app/sound';
+import { onSoundChange, soundEnabled } from '../app/sound';
 import { loadSettings, saveSettings } from '../storage/settings';
 import './traffic-storm.css';
 
@@ -37,7 +37,8 @@ export function formatTraffic(rps: number): string {
 
 type Scenario = { hacker: string; bots: number; ip: string };
 type Mode = 'setup' | 'running' | 'paused' | 'offline';
-type EffectName = 'start' | 'fan' | 'warning' | 'shutdown' | 'packet';
+type EffectName = 'start' | 'warning' | 'shutdown' | 'packet';
+type CoolingAudio = { source: AudioBufferSourceNode; filter: BiquadFilterNode; gain: GainNode; hum: OscillatorNode; humGain: GainNode };
 
 function validIPv4(value: string): boolean {
   const octets = value.split('.');
@@ -61,18 +62,38 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const [showHelp, setShowHelp] = useState(false);
   const [themeId, setThemeId] = useState(() => loadSettings().theme);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState(soundEnabled);
+  const [pageVisible, setPageVisible] = useState(() => typeof document === 'undefined' || !document.hidden);
   const theme = getTheme(themeId);
   const audioRef = useRef<AudioContext | null>(null);
-  const fanPlayed = useRef(false);
+  const coolingRef = useRef<CoolingAudio | null>(null);
   const warningPlayed = useRef(false);
   const lastFrame = useRef(0);
+  const arriving = forwardedRequests(stats.rps, proxyEnabled);
+  const pressure = arriving / SERVER_CAPACITY;
+  const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
 
   useEffect(() => {
     for (const [key, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(key, value);
     document.documentElement.style.colorScheme = theme.appearance;
   }, [theme]);
 
-  useEffect(() => () => { if (audioRef.current) void audioRef.current.close(); }, []);
+  useEffect(() => onSoundChange(setSoundOn), []);
+
+  useEffect(() => {
+    const handleVisibility = () => setPageVisible(!document.hidden);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
+  useEffect(() => () => {
+    const fan = coolingRef.current;
+    if (fan) {
+      try { fan.source.stop(); fan.hum.stop(); } catch { /* Already stopped. */ }
+      coolingRef.current = null;
+    }
+    if (audioRef.current) void audioRef.current.close();
+  }, []);
 
   function playEffect(name: EffectName) {
     if (!soundEnabled() || typeof window.AudioContext === 'undefined') return;
@@ -102,9 +123,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       } else if (name === 'start') {
         tone(220, 480, 0.23, 0.035);
         tone(380, 660, 0.25, 0.028, 0.12);
-      } else if (name === 'fan') {
-        tone(56, 175, 1.5, 0.045, 0, 'sawtooth');
-        tone(110, 205, 1.25, 0.018, 0.22, 'triangle');
       } else if (name === 'warning') {
         tone(600, 420, 0.2, 0.045);
         tone(600, 420, 0.2, 0.045, 0.32);
@@ -123,7 +141,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     if (!validIPv4(ipDraft.trim())) { setError('Enter an IPv4 address with four numbers between 0 and 255.'); return; }
     setScenario({ hacker: hacker.trim().slice(0, 32), bots, ip: ipDraft.trim() });
     setStats(initialStats());
-    fanPlayed.current = false;
     warningPlayed.current = false;
     lastFrame.current = performance.now();
     setError('');
@@ -189,7 +206,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   function restart() {
     setStats(initialStats());
-    fanPlayed.current = false;
     warningPlayed.current = false;
     lastFrame.current = performance.now();
     setMode('running');
