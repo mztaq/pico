@@ -243,6 +243,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const fanMotion = useRef({ angle: 0, speed: 0 });
   const fanTarget = useRef(0);
   const arriving = forwardedRequests(stats.rps, proxyCount);
+  const deliveredRps = deliveredTrafficRps(stats.rps, proxyCount, mode === 'offline');
   const pressure = arriving / (SERVER_CAPACITY * serverCount);
   const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
 
@@ -471,6 +472,18 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     return () => window.clearInterval(id);
   }, [mode, packetAudioStep]);
 
+  // Audible confirmation for successful *visible groups* of delivered requests.
+  // Actual modeled RPS is much higher, so a bounded rate avoids stacked audio.
+  const deliveryAudioInterval = deliverySoundIntervalMs(Math.min(deliveredRps, SERVER_CAPACITY * serverCount));
+  useEffect(() => {
+    if (mode !== 'running' || !soundOn || !pageVisible || deliveryAudioInterval === null) return;
+    const timer = window.setInterval(() => {
+      if (document.hidden || !soundEnabled()) return;
+      playEffect('delivered');
+    }, deliveryAudioInterval);
+    return () => window.clearInterval(timer);
+  }, [mode, soundOn, pageVisible, deliveryAudioInterval]);
+
   useEffect(() => {
     if (mode !== 'running') return;
     if (stats.health <= 35 && !warningPlayed.current) {
@@ -506,7 +519,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   const trafficLabel = formatTraffic(stats.rps);
-  const deliveredRps = deliveredTrafficRps(stats.rps, proxyCount, mode === 'offline');
   const serverTrafficLabel = formatTraffic(deliveredRps);
   const trafficWarning = isHighTraffic(stats.rps) && mode !== 'setup';
   const points = stats.history.map((value, index) => {
