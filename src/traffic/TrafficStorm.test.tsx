@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, proxyFilterRatio, proxyLoadRatio, serverPressure, trafficRamp } from './TrafficStorm';
+import { TrafficStorm, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, httpOutcomes, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, serverPressure, trafficRamp } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -79,6 +79,34 @@ describe('Traffic Storm setup', () => {
     expect(modeledPing('203.0.113.10', 43)).toContain('43 ms (simulation)');
     expect(modeledPing('203.0.113.10', 520)).toContain('520 ms (simulation)');
     expect(modeledPing('203.0.113.10', null)).toContain('Request timed out');
+  });
+
+  it('shows separate loads for every web server and proxy node', () => {
+    const serverLoads = [0, 1, 2, 3].map(index => nodeLoadRatio(16000, 4, index, 3200));
+    const proxyLoads = [0, 1, 2, 3].map(index => nodeLoadRatio(240000, 4, index, 100000));
+    expect(serverLoads.reduce((total, load) => total + load, 0)).toBeCloseTo(5);
+    expect(proxyLoads.reduce((total, load) => total + load, 0)).toBeCloseTo(2.4);
+    expect(new Set(serverLoads.map(load => load.toFixed(4))).size).toBeGreaterThan(1);
+    expect(nodeLoadRatio(100, 4, 4, 100)).toBe(0);
+  });
+
+  it('distinguishes 200, 429, 404, 503 and 504 rather than treating 404 as overload', () => {
+    const healthy = httpOutcomes(1000, 1, 1, false);
+    expect(healthy.ok).toBeGreaterThan(0);
+    expect(healthy.rateLimited).toBeGreaterThan(0);
+    expect(healthy.notFound).toBe(1);
+    expect(healthy.unavailable).toBe(0);
+    expect(healthy.timeout).toBe(0);
+
+    const overloaded = httpOutcomes(50000, 0, 1, false);
+    expect(overloaded.unavailable).toBeGreaterThan(0);
+    expect(overloaded.timeout).toBeGreaterThan(0);
+    expect(overloaded.notFound).toBe(1);
+
+    const offline = httpOutcomes(50000, 0, 1, true);
+    expect(offline.ok).toBe(0);
+    expect(offline.notFound).toBe(0);
+    expect(offline.unavailable).toBe(50000);
   });
 
 });
