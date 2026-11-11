@@ -103,9 +103,9 @@ export function nodeLoadRatio(rps: number, count: number, index: number, capacit
 
 const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
 
-/** Reach full attack speed in eight seconds without instantly jumping to peak. */
+/** Reach full traffic speed in five seconds without an instant jump. */
 export function trafficRamp(seconds: number): number {
-  const progress = Math.max(0, Math.min(1, seconds / 8));
+  const progress = Math.max(0, Math.min(1, seconds / 5));
   return 0.003 + 0.997 * progress * progress * (3 - 2 * progress);
 }
 
@@ -186,7 +186,7 @@ export function serverPressure(rps: number, proxies: number, servers: number): n
 export function serverHealthDrainPerSecond(pressure: number): number {
   if (!Number.isFinite(pressure) || pressure <= 0) return -5;
   if (pressure <= 1) return -5;
-  return Math.min(13, 1 + 2.15 * Math.log2(pressure));
+  return Math.min(18, 1.5 + 2.8 * Math.log2(pressure));
 }
 
 export function formatTraffic(rps: number): string {
