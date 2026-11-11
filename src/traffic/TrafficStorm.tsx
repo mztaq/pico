@@ -10,7 +10,7 @@ import './traffic-storm.css';
 const SERVER_CAPACITY = 3200;
 const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measured bandwidth.
 const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
-const PROXY_CAPACITY = 100_000; // Synthetic requests per second handled by each edge node.
+const PROXY_CAPACITY = 60_000; // Illustrative requests/sec per defensive proxy, not real hardware throughput.
 
 /** RFC 5737 reserved addresses, used only as simulated server labels. */
 export function generateDemoIp(random: () => number = Math.random): string {
@@ -82,13 +82,17 @@ export function trafficRamp(seconds: number): number {
   return 0.003 + 0.997 * progress * progress * (3 - 2 * progress);
 }
 
-/** Illustrative clean-traffic filtering before capacity constraints. */
+/** A visible idle spin starts as soon as the simulation runs, before heavy CPU load. */
+export function coolingFanDemand(cpu: number, running: boolean): number {
+  return running ? Math.max(0.34, Math.min(1, Math.max(0, cpu) / 100)) : 0;
+}
+
 /** Smooth physical spin-up and spin-down, with a slower wind-down. */
 export function nextFanSpeed(current: number, target: number, dt: number): number {
   const currentSpeed = Math.max(0, Math.min(1, current));
   const targetSpeed = Math.max(0, Math.min(1, target));
   const delta = Math.max(0, Math.min(0.065, dt));
-  const tau = targetSpeed > currentSpeed ? 2.7 : 3.9;
+  const tau = targetSpeed > currentSpeed ? 1.15 : 3.9;
   const speed = currentSpeed + (targetSpeed - currentSpeed) * (1 - Math.exp(-delta / tau));
   return targetSpeed === 0 && speed < 0.003 ? 0 : speed;
 }
@@ -300,7 +304,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       }
       const fan = coolingRef.current;
       const now = ctx.currentTime;
-      const load = cpu / 100;
+      const load = coolingFanDemand(cpu, true);
       fan.filter.frequency.setTargetAtTime(160 + load * 1100, now, 0.55);
       fan.source.playbackRate.setTargetAtTime(0.65 + load * 0.9, now, 0.55);
       fan.gain.gain.setTargetAtTime(0.002 + Math.pow(load, 1.6) * 0.18, now, 0.6);
@@ -312,7 +316,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   // Keep fan blades rotating continuously and ease their actual angular speed.
   // Setting a new CSS animation duration each frame made the rotation jump.
   useEffect(() => {
-    fanTarget.current = mode === 'running' ? cpu / 100 : 0;
+    fanTarget.current = coolingFanDemand(cpu, mode === 'running');
   }, [mode, cpu]);
 
   useEffect(() => {
