@@ -48,7 +48,7 @@ describe('Custom 404 for invalid app routes',()=>{
     }
   });
   it('keeps direct workspaces and information pages working through the catch-all',async()=>{
-    for(const route of ['/app/flowchart','/app/logic','/app/python','/app/team','/app/report']){
+    for(const route of ['/app/flowchart','/app/logic','/app/python','/app/traffic','/app/traffic/','/app/team','/app/report']){
       const {ctx,fetch}=context(route);
       const response=await nestedRoute(ctx);
       expect(response.status).toBe(200);
