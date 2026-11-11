@@ -34,6 +34,18 @@ const SERVER_IN_X = 990;
 const networkPositions = (count: number): number[] =>
   Array.from({ length: count }, (_, i) => 60 + 405 * (i + 1) / (count + 1));
 
+/** Keep tall server chassis at least 26 units apart in the four-server layout. */
+export function webserverPositions(count: number): number[] {
+  const total = Math.max(1, Math.min(4, Math.floor(count)));
+  return Array.from({ length: total }, (_, i) => 232.5 + (i - (total - 1) / 2) * 100);
+}
+
+/** The command pulses use the same exact path as the visible hacker-to-bot links. */
+export function hackerCommandPath(bot: number): string {
+  const y = BOT_Y[bot % BOT_Y.length];
+  return 'M 215 251 C 275 251 300 ' + y + ' 350 ' + y;
+}
+
 /** Keep stage headings 18 SVG units above the first corresponding chassis. */
 const headingAboveNode = (centerY: number, halfHeight: number): number => centerY - halfHeight - 18;
 
@@ -47,7 +59,7 @@ export function proxyHeadingY(count: number): number {
 }
 
 export function webserverHeadingY(count: number): number {
-  const firstServerY = networkPositions(Math.max(1, Math.min(4, Math.floor(count))))[0];
+  const firstServerY = webserverPositions(count)[0];
   return headingAboveNode(firstServerY, 37);
 }
 
@@ -474,7 +486,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   // Each dot represents a group of requests; cap animations for smooth rendering.
   const visiblePacketCount = Math.max(1, Math.round(16 * trafficRamp(stats.seconds)));
   const visibleSurvivorCount = proxyEnabled ? visualSurvivorCount(visiblePacketCount, effectiveProxyFilterRatio(stats.rps, proxyCount)) : 0;
-  const serverYs = networkPositions(serverCount);
+  const serverYs = webserverPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
   const serverLoads = serverYs.map((_, index) =>
     nodeLoadRatio(arriving, serverCount, index, SERVER_CAPACITY));
@@ -561,7 +573,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 <text x="1075" y={webserverHeadingY(serverCount)}>{deviceHeading('WEBSERVER', 'WEBSERVERS', serverCount)}</text>
               </g>
               <g className="storm-diagram-routes">
-                {BOT_Y.map(y => <path key={'control-' + y} d={'M 215 251 C 275 251 300 ' + y + ' 350 ' + y} className="storm-controller-line"/>)}
+                {BOT_Y.map((_, index) => <path key={'command-' + index} id={'storm-command-link-' + index} d={hackerCommandPath(index)} className="storm-command-link"/>)}
                 {BOT_Y.map((_, index) => <path key={'attack-link-' + index} id={'storm-attack-link-' + index}
                   d={botLanePath(index, serverYs[index % serverCount], proxyEnabled ? proxyYs[index % proxyCount] : null)}
                   className="storm-network-link storm-network-link--attack"/>)}
@@ -628,6 +640,13 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 <circle cx="1158" cy={y + 33} r="1.4" className="storm-rack-screw"/>
               </g>)}
 
+              {mode === 'running' && BOT_Y.map((_, index) =>
+                <circle key={'command-pulse-' + index} className="storm-command-pulse" r="2.8">
+                  <animateMotion dur={(1.25 + index * 0.12) + 's'} begin={(-index * 0.23) + 's'} repeatCount="indefinite">
+                    <mpath href={'#storm-command-link-' + index}/>
+                  </animateMotion>
+                </circle>
+              )}
               {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) =>
                 <circle key={'attack-' + index} className="storm-packet-attack" r={index % 4 === 0 ? 3.5 : 2.6}>
                   <animateMotion dur={(0.42 + index % 5 * 0.055) + 's'} begin={(-index * 0.075) + 's'} repeatCount="indefinite">
