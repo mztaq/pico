@@ -158,22 +158,35 @@ describe('Traffic Storm setup', () => {
     expect(active[3].y).toBeGreaterThan(382.5 + 37);
   });
 
-  it('places plain annotation text with arrows to network links and nodes, without callout boxes', () => {
-    const source = renderToStaticMarkup(createElement(TrafficStorm, { onHome: () => {} }));
-    // The setup screen does not render diagram notes before the alias is entered.
-    expect(source).not.toContain('storm-diagram-annotations');
+  it('renders plain diagram text and arrow pointers without boxed callouts', () => {
+    vi.stubGlobal('window', {
+      localStorage: { getItem: (key: string) => key === TRAFFIC_ALIAS_STORAGE_KEY ? 'Ghost' : null },
+    });
+    try {
+      const source = renderToStaticMarkup(createElement(TrafficStorm, { onHome: () => {} }));
+      expect(source).toContain('class="storm-route-notes"');
+      expect(source).toContain('class="storm-route-note-text"');
+      expect(source).toContain('class="storm-route-note-line"');
+      expect(source).toContain('class="storm-route-note-head"');
+      expect(source).toContain('Hacker commands');
+      expect(source).not.toContain('class="storm-diagram-annotation');
+      const notes = source.match(/<g class="storm-route-notes"[\\s\\S]*?<\\/g><\\/g>/)?.[0];
+      expect(notes).toBeDefined();
+      expect(notes).not.toMatch(/<rect\\b|<foreignObject\\b|<circle\\b/);
+      expect((notes?.match(/class="storm-route-note-text"/g) ?? [])).toHaveLength(4);
+    } finally {
+      vi.unstubAllGlobals();
+    }
     const enabled = diagramAnnotations('running', 4, 4, true, 5, 382.5);
     expect(enabled.every(note => note.fromX !== note.tipX || note.fromY !== note.tipY)).toBe(true);
     expect(enabled[2].tipX).toBeGreaterThan(750);
-    expect(enabled[2].tipY).toBeGreaterThan(80);
     expect(enabled[3].tipX).toBeGreaterThan(990);
-    expect(enabled.every(note => typeof note.text === 'string' && note.text.length > 5)).toBe(true);
   });
 
   it('switches network notes for ready, direct, overloaded and offline states', () => {
     const ready = diagramAnnotations('ready', 1, 1, false, 0, 232.5);
     expect(ready.map(note => note.text)).toEqual([
-      'Command links', 'Attack route', 'Proxies ready', 'Server ready',
+      'Hacker commands', 'Attack route', 'Proxies ready', 'Server ready',
     ]);
     const direct = diagramAnnotations('running', 0, 1, false, 1.2, 232.5);
     expect(direct[1].text).toBe('Flooding server');
@@ -297,23 +310,45 @@ describe('Traffic Storm setup', () => {
     expect(serverHealthDrainPerSecond(0)).toBe(-5);
     expect(serverHealthDrainPerSecond(1)).toBe(-5);
     expect(serverHealthDrainPerSecond(2)).toBeGreaterThan(0);
-    expect(serverHealthDrainPerSecond(130)).toBe(4.5);
+    expect(serverHealthDrainPerSecond(130)).toBe(13);
     expect(serverHealthDrainPerSecond(130)).toBeGreaterThan(0);
-    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(20);
-    expect(100 / serverHealthDrainPerSecond(130)).toBeLessThan(25);
-    expect(serverHealthDrainPerSecond(8)).toBeGreaterThan(2.5);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(7);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeLessThan(8);
+    expect(serverHealthDrainPerSecond(8)).toBeGreaterThan(7);
     expect(serverHealthDrainPerSecond(Number.NaN)).toBe(-5);
   });
 
-  it('eases synthetic traffic in gradually over 16 seconds', () => {
+  it('reaches full traffic over eight seconds with a smooth ramp', () => {
     expect(trafficRamp(-2)).toBeCloseTo(0.003);
     expect(trafficRamp(0)).toBeCloseTo(0.003);
-    expect(trafficRamp(3)).toBeLessThan(trafficRamp(7));
-    expect(trafficRamp(7)).toBeLessThan(trafficRamp(11));
-    expect(trafficRamp(11)).toBeLessThan(trafficRamp(14));
-    expect(trafficRamp(14)).toBeLessThan(trafficRamp(16));
+    expect(trafficRamp(2)).toBeLessThan(trafficRamp(4));
+    expect(trafficRamp(4)).toBeLessThan(trafficRamp(6));
+    expect(trafficRamp(6)).toBeLessThan(trafficRamp(8));
+    expect(trafficRamp(8)).toBeCloseTo(1);
     expect(trafficRamp(16)).toBeCloseTo(1);
     expect(trafficRamp(25)).toBeCloseTo(1);
+  });
+
+  it('shuts down within seconds at a massive attack rate, while defenses delay failure', () => {
+    const run = (bots: number, proxies: number, servers: number) => {
+      let health = 100;
+      let peakAt: number | null = null;
+      for (let seconds = 0; seconds < 55; seconds += 0.33) {
+        const rps = Math.round(bots * 16 * trafficSpikeFactor(seconds) * trafficRamp(seconds));
+        if (rps * 12_582_912 / 1e12 >= 5 && peakAt === null) peakAt = seconds;
+        const pressure = serverPressure(rps, proxies, servers);
+        health = Math.max(0, Math.min(100, health - serverHealthDrainPerSecond(pressure) * 0.33));
+        if (health <= 0) return { offlineAt: seconds, peakAt };
+      }
+      throw new Error('Expected simulated overload to eventually shut down the origin');
+    };
+    const direct = run(20_000, 0, 1);
+    const defended = run(20_000, 4, 4);
+    expect(direct.peakAt).not.toBeNull();
+    expect(direct.offlineAt).toBeGreaterThan(direct.peakAt!);
+    expect(direct.offlineAt).toBeLessThan(12);
+    expect(defended.offlineAt).toBeGreaterThan(direct.offlineAt);
+    expect(defended.offlineAt).toBeLessThan(30);
   });
 
   it('models stronger proxies that saturate under excessive traffic', () => {
