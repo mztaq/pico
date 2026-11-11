@@ -1,11 +1,11 @@
 import type { CompilerLanguage } from '../storage/projects';
 
-export type PicoWorkspace = CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary';
+export type PicoWorkspace = CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic';
 
-const workspaces: readonly PicoWorkspace[] = ['pseudocode', 'python', 'flowchart', 'logic', 'cpu', 'binary'];
+const workspaces: readonly PicoWorkspace[] = ['pseudocode', 'python', 'flowchart', 'logic', 'cpu', 'binary', 'traffic'];
 
 export function workspaceFromPath(pathname: string): PicoWorkspace | null {
-  const match = /^\/app\/(pseudocode|python|flowchart|logic|cpu|binary)\/?$/.exec(pathname);
+  const match = /^\/app\/(pseudocode|python|flowchart|logic|cpu|binary|traffic)\/?$/.exec(pathname);
   return match ? match[1] as PicoWorkspace : null;
 }
 
