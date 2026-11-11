@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, FAN_BLADE_ANGLES, botLanePath, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, isTrafficSurge, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount } from './TrafficStorm';
+import { TrafficStorm, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, isTrafficSurge, nextTrafficWarningFloor, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -57,6 +57,22 @@ describe('Traffic Storm setup', () => {
     expect(isTrafficSurge(1000, 900)).toBe(false);
     expect(isTrafficSurge(0, 3000)).toBe(false);
     expect(isTrafficSurge(Number.NaN, 3000)).toBe(false);
+  });
+
+  it('persists the first sharp-rise warning until traffic meaningfully falls', () => {
+    const started = nextTrafficWarningFloor(null, 1000, 1300);
+    expect(started).toBeCloseTo(780);
+    expect(nextTrafficWarningFloor(started, 1300, 1100)).toBe(started);
+    expect(nextTrafficWarningFloor(started, 1100, 800)).toBe(started);
+    expect(nextTrafficWarningFloor(started, 800, 779)).toBeNull();
+    expect(nextTrafficWarningFloor(null, 1000, 1090)).toBeNull();
+    expect(nextTrafficWarningFloor(null, 1000, Number.NaN)).toBeNull();
+  });
+
+  it('positions the webserver fans above the bay region', () => {
+    expect(SERVER_FAN_Y_OFFSET).toBeLessThan(SERVER_RACK_Y_OFFSET);
+    expect(SERVER_FAN_Y_OFFSET + 11.5).toBeLessThan(SERVER_RACK_Y_OFFSET);
+    expect(FAN_BLADE_ANGLES).toHaveLength(5);
   });
 
   it('uses five evenly-spaced blades for each webserver fan', () => {
