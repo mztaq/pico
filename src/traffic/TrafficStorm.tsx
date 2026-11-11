@@ -218,6 +218,35 @@ export function validateHackerName(input: string): string | null {
   return null;
 }
 
+/** Alias stays on this browser so the entry step is only required once. */
+export const TRAFFIC_ALIAS_STORAGE_KEY = 'pico.trafficStorm.alias.v1';
+
+export function readSavedTrafficAlias(storage?: Pick<Storage, 'getItem'>): string | null {
+  try {
+    const source = storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
+    const name = source?.getItem(TRAFFIC_ALIAS_STORAGE_KEY)?.trim().normalize('NFC');
+    return name && validateHackerName(name) === null ? name : null;
+  } catch { return null; }
+}
+
+export function saveTrafficAlias(name: string, storage?: Pick<Storage, 'setItem'>): boolean {
+  const clean = name.trim().normalize('NFC');
+  if (validateHackerName(clean)) return false;
+  try {
+    const target = storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
+    if (!target) return false;
+    target.setItem(TRAFFIC_ALIAS_STORAGE_KEY, clean);
+    return true;
+  } catch { return false; }
+}
+
+export function clearTrafficAlias(storage?: Pick<Storage, 'removeItem'>): void {
+  try {
+    const target = storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
+    target?.removeItem(TRAFFIC_ALIAS_STORAGE_KEY);
+  } catch { /* In restricted browsers, the current session still resets. */ }
+}
+
 /** Short, state-aware notes placed beside the actual network routes and racks. */
 export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: number, proxiesOverloaded: boolean, pressure: number, lastServerY: number) {
   const active = mode === 'running' || mode === 'offline';
@@ -234,7 +263,7 @@ export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: 
 }
 
 export const TRAFFIC_TUTORIAL_STEPS = [
-  { target: 'controls', title: 'Start and pause', text: 'Start Simulation begins the traffic. Use Pause, Resume or Restart to control the run. New scenario lets you choose another hacker name.' },
+  { target: 'controls', title: 'Start and pause', text: 'Start Simulation begins the traffic. Use Pause, Resume or Restart to control the run. Reset Alias lets you choose a different hacker name.' },
   { target: 'bots', title: 'Bot army', text: 'Set your bot army from 100 to 20,000 devices. More bots create more traffic. Adjust it at any time.' },
   { target: 'servers', title: 'Webservers', text: 'Add up to four webservers to share the incoming requests. Each has its own load meter and spinning fans.' },
   { target: 'proxies', title: 'Proxies', text: 'Add up to four defensive proxies to filter requests. Heavy traffic can overwhelm them.' },
@@ -250,15 +279,18 @@ export const TRAFFIC_TUTORIAL_STEPS = [
 
 export function TrafficStorm({ onHome }: { onHome: () => void }) {
   // Nothing is sent to this address. The IP is a label in a browser-only model.
-  const [hacker, setHacker] = useState('');
+  const [initialAlias] = useState(readSavedTrafficAlias);
+  const [hacker, setHacker] = useState(initialAlias ?? '');
   const [botsDraft, setBotsDraft] = useState('3000');
   const [ipDraft, setIpDraft] = useState(() => generateDemoIp());
   const [proxyCount, setProxyCount] = useState(0);
   const [serverCount, setServerCount] = useState(1);
   const proxyEnabled = proxyCount > 0;
   const [error, setError] = useState('');
-  const [scenario, setScenario] = useState<Scenario | null>(null);
-  const [mode, setMode] = useState<Mode>('setup');
+  const [scenario, setScenario] = useState<Scenario | null>(
+    () => initialAlias ? { hacker: initialAlias, bots: 3000, ip: ipDraft } : null,
+  );
+  const [mode, setMode] = useState<Mode>(initialAlias ? 'ready' : 'setup');
   const [stats, setStats] = useState(initialStats);
   const [showHelp, setShowHelp] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -463,6 +495,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     event.preventDefault();
     const nameError = validateHackerName(hacker);
     if (nameError) { setError(nameError); return; }
+    saveTrafficAlias(hacker);
     setScenario({ hacker: hacker.trim(), bots: normalizeBotArmy(Number(botsDraft)), ip: ipDraft });
     setStats(initialStats());
     warningPlayed.current = false;
@@ -540,7 +573,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     playEffect('start');
   }
 
-  function newScenario() {
+  function resetAlias() {
+    clearTrafficAlias();
     setMode('setup');
     setScenario(null);
     setError('');
@@ -627,7 +661,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               ? <button type="button" className="storm-primary" onClick={restart}><RotateCcw size={15}/> Restart</button>
               : <button type="button" className="storm-primary" onClick={() => setMode(value => value === 'paused' ? 'running' : 'paused')}>{mode === 'paused' ? <Play size={15}/> : <Pause size={15}/>} {mode === 'paused' ? 'Resume' : 'Pause'}</button>}
           {mode === 'ready' && <button type="button" className="storm-secondary" onClick={() => { setTutorialStep(0); setShowHelp(true); }}><CircleHelp size={15}/> Tutorial</button>}
-          <button type="button" className="storm-secondary" onClick={newScenario}>New scenario</button>
+          <button type="button" className="storm-secondary" onClick={resetAlias}>Reset Alias</button>
         </div>
       </div>
       <div className="storm-infra-bar">
