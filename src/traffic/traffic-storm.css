@@ -160,7 +160,14 @@
 .storm-terminal-muted{color:var(--ds-muted);display:inline-block;min-width:64px}
 .storm-operator-message{padding-top:7px;margin-top:4px;border-top:1px solid var(--ds-line);color:var(--ds-muted)}
 .storm-operator-message strong{color:var(--accent)}
-.storm-controller-line{fill:none;stroke:var(--ds-muted);stroke-width:1.2;stroke-dasharray:4 7;opacity:.45}
+.storm-network-svg .storm-command-link{
+ fill:none;stroke:var(--ds-danger);stroke-width:1.85;
+ stroke-dasharray:5 8;stroke-linecap:round;stroke-opacity:.78
+}
+.storm-network-svg .storm-command-pulse{
+ fill:var(--ds-danger);opacity:.98;
+ stroke:var(--ds-panel);stroke-width:.55
+}
 .storm-hacker-node>rect{fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:2}
 .storm-hacker-node>path:first-of-type{fill:color-mix(in srgb,var(--accent) 29%,var(--ds-sunken))}
 .storm-hacker-node>path:nth-of-type(2){fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round}
@@ -466,7 +473,7 @@
  .storm-in-session .storm-network-svg{min-height:220px}
 }
 @media(prefers-reduced-motion:reduce){
- .storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,.storm-network-svg .storm-packet-user{display:none}
+ .storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,.storm-network-svg .storm-packet-user,.storm-network-svg .storm-command-pulse{display:none}
 }
 
 /* Network cleanup: flat canvas, clear post-proxy lines, no staged decorative grid. */
