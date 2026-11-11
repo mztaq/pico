@@ -133,6 +133,67 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     } catch { /* Sound is optional and never blocks the model. */ }
   }
 
+  // Continuous synthesized fan: filtered motor noise and low hum that follow CPU load.
+  // Keep one fan pair alive per run, rather than making a new oscillator per frame.
+  useEffect(() => {
+    const active = mode === 'running' && soundOn && pageVisible;
+    if (!active) {
+      const fan = coolingRef.current;
+      if (fan && audioRef.current) {
+        coolingRef.current = null;
+        const at = audioRef.current.currentTime;
+        fan.gain.gain.setTargetAtTime(0.0001, at, 0.04);
+        fan.humGain.gain.setTargetAtTime(0.0001, at, 0.04);
+        try { fan.source.stop(at + 0.25); fan.hum.stop(at + 0.25); }
+        catch { /* Already stopped. */ }
+      }
+      return;
+    }
+    if (typeof window.AudioContext === 'undefined') return;
+    try {
+      const ctx = audioRef.current ?? new window.AudioContext();
+      audioRef.current = ctx;
+      if (ctx.state === 'suspended') void ctx.resume();
+      if (!coolingRef.current) {
+        const buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+        const samples = buffer.getChannelData(0);
+        let lowNoise = 0;
+        for (let i = 0; i < samples.length; i += 1) {
+          const white = Math.random() * 2 - 1;
+          lowNoise = lowNoise * 0.96 + white * 0.04;
+          samples[i] = lowNoise * 1.2 + white * 0.23;
+        }
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 300;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.0001;
+        source.connect(filter).connect(gain).connect(ctx.destination);
+
+        const hum = ctx.createOscillator();
+        hum.type = 'triangle';
+        hum.frequency.value = 75;
+        const humGain = ctx.createGain();
+        humGain.gain.value = 0.0001;
+        hum.connect(humGain).connect(ctx.destination);
+        source.start();
+        hum.start();
+        coolingRef.current = { source, filter, gain, hum, humGain };
+      }
+      const fan = coolingRef.current;
+      const now = ctx.currentTime;
+      const load = cpu / 100;
+      fan.filter.frequency.setTargetAtTime(240 + load * 1050, now, 0.25);
+      fan.source.playbackRate.setTargetAtTime(0.8 + load * 0.65, now, 0.25);
+      fan.gain.gain.setTargetAtTime(0.035 + load * 0.16, now, 0.32);
+      fan.hum.frequency.setTargetAtTime(72 + load * 96, now, 0.3);
+      fan.humGain.gain.setTargetAtTime(0.009 + load * 0.014, now, 0.3);
+    } catch { /* Unsupported audio never blocks the simulation. */ }
+  }, [mode, soundOn, pageVisible, cpu]);
+
   function start(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const bots = Number(botsDraft);
@@ -190,10 +251,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   useEffect(() => {
     if (mode !== 'running') return;
-    if (forwardedRequests(stats.rps, proxyEnabled) > SERVER_CAPACITY && !fanPlayed.current) {
-      fanPlayed.current = true;
-      playEffect('fan');
-    }
     if (stats.health <= 35 && !warningPlayed.current) {
       warningPlayed.current = true;
       playEffect('warning');
@@ -220,11 +277,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setShowHelp(false);
   }
 
-  const arriving = forwardedRequests(stats.rps, proxyEnabled);
-  const pressure = arriving / SERVER_CAPACITY;
   const status = mode === 'offline' ? 'OFFLINE' : pressure >= 1 ? 'OVERLOADED' : stats.health < 65 ? 'DEGRADED' : 'ONLINE';
-  const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
-  const fanRpm = mode === 'offline' ? 0 : Math.round(800 + cpu * 49);
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(arriving);
@@ -329,7 +382,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             <div className="storm-system-health">
               <div className={'storm-server-icon' + (mode === 'offline' ? ' is-offline' : '')}><Server size={32}/></div>
               <div><span>WEBSITE STATUS</span><strong className={mode === 'offline' ? 'storm-danger' : ''}>{status}</strong><small>{mode === 'offline' ? 'Connection lost' : 'Response: ' + responseMs + ' ms'}</small></div>
-              <div className={'storm-fan' + (fanRpm === 0 ? ' stopped' : '')} style={{ '--storm-fan-duration': fanRpm ? Math.max(0.18, 2.8 - fanRpm / 1700).toFixed(2) + 's' : '1s' } as CSSProperties}><Fan size={31}/><strong>{compact(fanRpm)} RPM</strong><small>FAN SPEED</small></div>
+              <div className={'storm-fan' + (mode !== 'running' ? ' stopped' : '')} style={{ '--storm-fan-duration': Math.max(0.22, 2.6 - cpu / 42).toFixed(2) + 's' } as CSSProperties}><Fan size={31}/><small>{mode === 'offline' ? 'FAN STOPPED' : mode === 'paused' ? 'FAN PAUSED' : 'COOLING FAN'}</small></div>
             </div>
             <div className="storm-cpu-row"><span>CPU load</span><strong>{cpu}%</strong></div>
             <div className="storm-meter"><i style={{width:cpu+'%'}}/></div>
