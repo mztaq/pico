@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, appendPingHistory, botLanePath, coolingFanDemand, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, visualSurvivorCount, type PingEntry } from './TrafficStorm';
+import { TrafficStorm, botLanePath, coolingFanDemand, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -33,6 +33,21 @@ describe('Traffic Storm setup', () => {
       const ip = generateDemoIp(() => sample);
       expect(/^(192\.0\.2|198\.51\.100|203\.0\.113)\.(?:[1-9]|[1-9]\d|1\d\d|2[0-4]\d|25[0-4])$/.test(ip)).toBe(true);
     }
+  });
+
+  it('uses singular and plural headings without counts for network nodes', () => {
+    expect(deviceHeading('WEBSERVER', 'WEBSERVERS', 1)).toBe('WEBSERVER');
+    expect(deviceHeading('WEBSERVER', 'WEBSERVERS', 4)).toBe('WEBSERVERS');
+    expect(deviceHeading('PROXY', 'PROXIES', 1)).toBe('PROXY');
+    expect(deviceHeading('PROXY', 'PROXIES', 2)).toBe('PROXIES');
+  });
+
+  it('creates irregular traffic bursts rather than a constant or smooth line', () => {
+    expect(trafficSpikeFactor(-2)).toBeCloseTo(0.9);
+    expect(trafficSpikeFactor(0)).toBeCloseTo(0.9);
+    expect(trafficSpikeFactor(0.25)).toBeGreaterThan(trafficSpikeFactor(0.5));
+    expect(trafficSpikeFactor(1.3)).toBeGreaterThanOrEqual(0.9);
+    expect(trafficSpikeFactor(2)).toBeLessThanOrEqual(1.35);
   });
 
   it('formats modeled bandwidth in Gbps and Tbps', () => {
@@ -113,12 +128,6 @@ describe('Traffic Storm setup', () => {
     expect(serverPressure(48_000, 4, 5)).toBe(serverPressure(48_000, 4, 4));
   });
 
-  it('reports synthetic ping latency or timeout without contacting any address', () => {
-    expect(modeledPing('203.0.113.10', 43)).toContain('43 ms (simulation)');
-    expect(modeledPing('203.0.113.10', 520)).toContain('520 ms (simulation)');
-    expect(modeledPing('203.0.113.10', null)).toContain('Request timed out');
-  });
-
   it('shows separate loads for every web server and proxy node', () => {
     const serverLoads = [0, 1, 2, 3].map(index => nodeLoadRatio(16000, 4, index, 3200));
     const proxyLoads = [0, 1, 2, 3].map(index => nodeLoadRatio(240000, 4, index, 60000));
@@ -167,19 +176,5 @@ describe('Traffic Storm setup', () => {
     });
   });
 
-  it('keeps unique rolling ping replies so the latest response animates as a new row', () => {
-    let entries: PingEntry[] = [];
-    for (let id = 1; id <= 14; id += 1) {
-      entries = appendPingHistory(entries, { id, latency: id * 10, text: 'Reply ' + id });
-    }
-    expect(entries).toHaveLength(10);
-    expect(entries[0]).toEqual({ id: 5, latency: 50, text: 'Reply 5' });
-    expect(entries[9]).toEqual({ id: 14, latency: 140, text: 'Reply 14' });
-    expect(new Set(entries.map(entry => entry.id)).size).toBe(10);
-    const timeouts = appendPingHistory(entries, { id: 15, latency: null, text: 'Request timed out.' });
-    expect(timeouts[timeouts.length - 1].latency).toBeNull();
-    expect(timeouts).toHaveLength(10);
-    expect(appendPingHistory(entries, { id: 16, latency: 55, text: 'One reply' }, 1)).toHaveLength(1);
-  });
 
 });
