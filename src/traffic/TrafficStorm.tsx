@@ -13,8 +13,8 @@ const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const PROXY_CAPACITY = 100_000; // Synthetic requests per second handled by each edge node.
 // All visible network links and animated packets share the same SVG path IDs.
 // Keeping the connection coordinates here prevents packet/path drift.
-const BOT_Y = [115, 207, 299, 391] as const;
-const REAL_USER_Y = 470;
+const BOT_Y = [88, 166, 244, 322] as const;
+const REAL_USER_Y = 407;
 const LEGITIMATE_RPS = 125;
 const BOT_EXIT_X = 450;
 const PROXY_IN_X = 710;
@@ -35,6 +35,17 @@ export function botLanePath(bot: number, serverY: number, proxyY: number | null)
 export function relayLanePath(proxyY: number, serverY: number): string {
   return 'M ' + PROXY_OUT_X + ' ' + proxyY + ' C 876 ' + proxyY + ' 908 ' + serverY
     + ' ' + SERVER_IN_X + ' ' + serverY;
+}
+
+/** Packet dots represent traffic groups, not individual requests.
+ * Keep every active outgoing lane visible without changing filtered bandwidth.
+ */
+export function visualSurvivorCount(incomingDots: number, filteredFraction: number, activeLanes = 4): number {
+  const incoming = Math.max(0, Math.floor(incomingDots));
+  const lanes = Math.max(0, Math.min(4, Math.floor(activeLanes)));
+  if (incoming === 0 || lanes === 0) return 0;
+  const passed = Math.round(incoming * (1 - Math.max(0, Math.min(1, filteredFraction))) * 2);
+  return Math.min(8, Math.max(Math.min(lanes, incoming), passed));
 }
 
 export function realUserLanePath(serverY: number, proxyY: number | null): string {
@@ -446,6 +457,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   // Keep SVG animation independent of the synthetic request count.
   // Each dot represents a group of requests; cap animations for smooth rendering.
   const visiblePacketCount = Math.max(1, Math.round(16 * trafficRamp(stats.seconds)));
+  const visibleSurvivorCount = proxyEnabled ? visualSurvivorCount(visiblePacketCount, effectiveProxyFilterRatio(stats.rps, proxyCount)) : 0;
   const serverYs = networkPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
   const effectiveFilter = effectiveProxyFilterRatio(stats.rps, proxyCount);
@@ -517,7 +529,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <div className="storm-left-stack">
           <section className="storm-panel storm-network" aria-label="Animated network traffic">
             <div className="storm-panel-heading"><h2>Network traffic</h2></div>
-            <svg ref={networkRef} viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
+            <svg ref={networkRef} viewBox="0 0 1200 450" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
               <g className="storm-stage-titles">
                 <text x="140" y="30">HACKER</text>
                 <text x="370" y="30">BOTNET · {compact(scenario?.bots ?? 0)}</text>
@@ -599,9 +611,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   </animateMotion>
                 </circle>
               )}
-              {mode === 'running' && proxyEnabled && Array.from({length:Math.max(1, Math.round(visiblePacketCount * (1 - effectiveFilter)))}, (_, index) =>
+              {mode === 'running' && proxyEnabled && Array.from({length:visibleSurvivorCount}, (_, index) =>
                 <circle key={'approved-' + index} className="storm-packet-survivor" r="3">
-                  <animateMotion dur={(1.2 + index % 4 * 0.14) + 's'} begin={(-index * 0.29) + 's'} repeatCount="indefinite">
+                  <animateMotion dur={(1.35 + index % 4 * 0.13) + 's'} begin={(-index * 0.31) + 's'} repeatCount="indefinite">
                     <mpath href={'#storm-survivor-link-' + (index % 4)}/>
                   </animateMotion>
                 </circle>
