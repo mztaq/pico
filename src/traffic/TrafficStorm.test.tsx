@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { TrafficStorm, TRAFFIC_ALIAS_STORAGE_KEY, TRAFFIC_TUTORIAL_STEPS, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, clearTrafficAlias, coolingFanDemand, deliveredTrafficRps, deviceHeading, diagramAnnotations, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, readSavedTrafficAlias, relayLanePath, sanitizeHackerName, saveTrafficAlias, serverHealthDrainPerSecond, serverPressure, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
@@ -42,6 +42,24 @@ describe('Traffic Storm setup', () => {
     clearTrafficAlias(storage);
     expect(readSavedTrafficAlias(storage)).toBeNull();
     expect(stored.has(TRAFFIC_ALIAS_STORAGE_KEY)).toBe(false);
+  });
+
+  it('skips alias setup on return visits and shows Reset Alias instead', () => {
+    const stored = new Map([[TRAFFIC_ALIAS_STORAGE_KEY, 'Ghost']]);
+    vi.stubGlobal('window', {
+      localStorage: { getItem: (key: string) => stored.get(key) ?? null },
+    });
+    try {
+      const html = renderToStaticMarkup(createElement(TrafficStorm, { onHome: () => {} }));
+      expect(html).toContain('Start Simulation');
+      expect(html).toContain('Reset Alias');
+      expect(html).toContain('Ghost');
+      expect(html).not.toContain('Choose your alias');
+      expect(html).not.toContain('storm-hacker-name');
+      expect(html).not.toContain('New scenario');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('ignores invalid or inaccessible persisted aliases', () => {
