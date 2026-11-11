@@ -55,6 +55,10 @@ describe('Traffic Storm setup', () => {
     expect(TRAFFIC_TUTORIAL_STEPS.some(step => step.target === 'graph')).toBe(true);
     expect(new Set(TRAFFIC_TUTORIAL_STEPS.map(step => step.title)).size).toBe(12);
     expect(new Set(TRAFFIC_TUTORIAL_STEPS.map(step => step.target)).size).toBe(12);
+    const tourText = TRAFFIC_TUTORIAL_STEPS.map(step => step.text).join(' ');
+    expect(tourText).not.toMatch(/100\s*Gbps|5\s*Tbps|exclamation|flashes/i);
+    expect(TRAFFIC_TUTORIAL_STEPS.find(step => step.target === 'incoming')?.text).toContain('bot army');
+    expect(TRAFFIC_TUTORIAL_STEPS.find(step => step.target === 'health')?.text).toContain('offline');
     TRAFFIC_TUTORIAL_STEPS.forEach(step => {
       expect(step.text.length).toBeGreaterThan(25);
       expect(step.target.length).toBeGreaterThan(3);
@@ -184,13 +188,14 @@ describe('Traffic Storm setup', () => {
     expect(formatTraffic(20_000 * 16 * 1.35)).toBe('5.44 Tbps');
   });
 
-  it('slows webserver health loss enough to survive intense 5 Tbps traffic', () => {
+  it('gradually drains health under sustained overload without immediate failure', () => {
     expect(serverHealthDrainPerSecond(0)).toBe(-5);
     expect(serverHealthDrainPerSecond(1)).toBe(-5);
     expect(serverHealthDrainPerSecond(2)).toBeGreaterThan(0);
-    expect(serverHealthDrainPerSecond(130)).toBeLessThanOrEqual(2.3);
+    expect(serverHealthDrainPerSecond(130)).toBe(2.6);
     expect(serverHealthDrainPerSecond(130)).toBeGreaterThan(0);
-    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(40);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(35);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeLessThan(40);
     expect(serverHealthDrainPerSecond(Number.NaN)).toBe(-5);
   });
 
