@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, appendPingHistory, botLanePath, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, visualSurvivorCount, type PingEntry } from './TrafficStorm';
+import { TrafficStorm, appendPingHistory, botLanePath, coolingFanDemand, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyLoadRatio, realUserLanePath, relayLanePath, serverPressure, trafficRamp, visualSurvivorCount, type PingEntry } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -63,11 +63,35 @@ describe('Traffic Storm setup', () => {
     expect(forwardedRequests(5000, 2)).toBe(400);
     expect(forwardedRequests(5000, 4)).toBe(150);
     expect(forwardedRequests(0, 4)).toBe(0);
-    expect(proxyLoadRatio(240000, 1)).toBeCloseTo(2.4);
-    expect(proxyLoadRatio(240000, 4)).toBeCloseTo(0.6);
+    expect(proxyLoadRatio(240000, 1)).toBeCloseTo(4);
+    expect(proxyLoadRatio(240000, 4)).toBeCloseTo(1);
     expect(effectiveProxyFilterRatio(240000, 1)).toBeLessThan(proxyFilterRatio(1));
     expect(effectiveProxyFilterRatio(240000, 4)).toBeCloseTo(proxyFilterRatio(4));
     expect(forwardedRequests(240000, 1)).toBeGreaterThan(forwardedRequests(240000, 4));
+  });
+
+  it('starts the fan immediately at an audible and visible idle speed before heavy load', () => {
+    expect(coolingFanDemand(0, true)).toBeCloseTo(0.34);
+    expect(coolingFanDemand(14, true)).toBeCloseTo(0.34);
+    expect(coolingFanDemand(70, true)).toBeCloseTo(0.7);
+    expect(coolingFanDemand(100, true)).toBe(1);
+    expect(coolingFanDemand(100, false)).toBe(0);
+    const startup = nextFanSpeed(0, coolingFanDemand(14, true), 0.05);
+    expect(startup).toBeGreaterThan(0.01);
+    expect(startup).toBeLessThan(0.1);
+  });
+
+  it('max 20,000-bot scenario overwhelms all four proxy servers and four web servers', () => {
+    const peakRps = 20_000 * 16;
+    const totalWebServerCapacity = 4 * 3200;
+    expect(proxyLoadRatio(peakRps, 4)).toBeGreaterThan(1);
+    expect(effectiveProxyFilterRatio(peakRps, 4)).toBeLessThan(proxyFilterRatio(4));
+    expect(forwardedRequests(peakRps, 4)).toBeGreaterThan(totalWebServerCapacity);
+    expect(serverPressure(peakRps, 4, 4)).toBeGreaterThan(2);
+    // The overload is robust to the model's small peak traffic variation.
+    expect(serverPressure(peakRps * 0.9, 4, 4)).toBeGreaterThan(1);
+    // A smaller botnet may still be protected by all four edges.
+    expect(serverPressure(10_000 * 16, 4, 4)).toBeLessThan(1);
   });
 
   it('starts fans slowly and winds them down rather than stopping instantly', () => {
@@ -97,9 +121,9 @@ describe('Traffic Storm setup', () => {
 
   it('shows separate loads for every web server and proxy node', () => {
     const serverLoads = [0, 1, 2, 3].map(index => nodeLoadRatio(16000, 4, index, 3200));
-    const proxyLoads = [0, 1, 2, 3].map(index => nodeLoadRatio(240000, 4, index, 100000));
+    const proxyLoads = [0, 1, 2, 3].map(index => nodeLoadRatio(240000, 4, index, 60000));
     expect(serverLoads.reduce((total, load) => total + load, 0)).toBeCloseTo(5);
-    expect(proxyLoads.reduce((total, load) => total + load, 0)).toBeCloseTo(2.4);
+    expect(proxyLoads.reduce((total, load) => total + load, 0)).toBeCloseTo(4);
     expect(new Set(serverLoads.map(load => load.toFixed(4))).size).toBeGreaterThan(1);
     expect(nodeLoadRatio(100, 4, 4, 100)).toBe(0);
   });
