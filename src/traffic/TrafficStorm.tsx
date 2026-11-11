@@ -305,10 +305,21 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       fanMotion.current.speed = 0;
       return;
     }
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const rotors = Array.from(networkRef.current.querySelectorAll<SVGGElement>('.storm-fan-rotor'));
     let frame = 0;
     let previous = performance.now();
     const tick = (now: number) => {
+      // 30 FPS is sufficient for the small fans. Hidden tabs do no drawing.
+      if (document.hidden) {
+        previous = now;
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      if (now - previous < 30) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
       const dt = Math.min(0.065, Math.max(0, (now - previous) / 1000));
       previous = now;
       const target = fanTarget.current;
@@ -451,7 +462,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     return String(x) + ',' + String(y);
   }).join(' ');
   const safeName = scenario?.hacker ?? 'Operator';
-  const visiblePacketCount = Math.max(1, Math.round(30 * trafficRamp(stats.seconds)));
+  // Keep SVG animation independent of the synthetic request count.
+  // Each dot represents a group of requests; cap animations for smooth rendering.
+  const visiblePacketCount = Math.max(1, Math.round(16 * trafficRamp(stats.seconds)));
   const serverYs = networkPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
   const proxyLoad = proxyLoadRatio(stats.rps, proxyCount);
@@ -613,7 +626,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   </animateMotion>
                 </circle>
               )}
-              {mode === 'running' && proxyEnabled && Array.from({length:Math.max(0, Math.round(visiblePacketCount * (1 - effectiveFilter)))}, (_, index) =>
+              {mode === 'running' && proxyEnabled && Array.from({length:Math.max(1, Math.round(visiblePacketCount * (1 - effectiveFilter)))}, (_, index) =>
                 <circle key={'approved-' + index} className="storm-packet-survivor" r="3">
                   <animateMotion dur={(1.2 + index % 4 * 0.14) + 's'} begin={(-index * 0.29) + 's'} repeatCount="indefinite">
                     <mpath href={'#storm-survivor-link-' + (index % 4)}/>
