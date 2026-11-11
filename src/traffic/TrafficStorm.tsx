@@ -98,7 +98,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         osc.stop(start + delay + length + 0.02);
       };
       if (name === 'packet') {
-        tone(430, 350, 0.038, 0.008, 0, 'triangle');
+        tone(430, 350, 0.038, 0.016, 0, 'triangle');
       } else if (name === 'start') {
         tone(220, 480, 0.23, 0.035);
         tone(380, 660, 0.25, 0.028, 0.12);
