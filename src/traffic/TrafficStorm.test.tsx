@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, HIGH_TRAFFIC_THRESHOLD_GBPS, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
+import { TrafficStorm, HIGH_TRAFFIC_THRESHOLD_GBPS, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, serverPressure, trafficRamp, trafficSpikeFactor, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -121,6 +121,23 @@ describe('Traffic Storm setup', () => {
   it('uses five evenly-spaced blades for each webserver fan', () => {
     expect(FAN_BLADE_ANGLES).toEqual([0, 72, 144, 216, 288]);
     expect(new Set(FAN_BLADE_ANGLES).size).toBe(5);
+  });
+
+  it('clamps and rounds live bot army slider values to valid 100-bot steps', () => {
+    expect(normalizeBotArmy(-20)).toBe(100);
+    expect(normalizeBotArmy(100)).toBe(100);
+    expect(normalizeBotArmy(1000)).toBe(1000);
+    expect(normalizeBotArmy(2999)).toBe(3000);
+    expect(normalizeBotArmy(19999)).toBe(20000);
+    expect(normalizeBotArmy(20001)).toBe(20000);
+    expect(normalizeBotArmy(Number.NaN)).toBe(100);
+  });
+
+  it('links the visible army slider to the same synthetic count used for traffic', () => {
+    const lowRps = normalizeBotArmy(2000) * 16;
+    const highRps = normalizeBotArmy(10000) * 16;
+    expect(highRps).toBeGreaterThan(lowRps);
+    expect(serverPressure(highRps, 0, 1)).toBeGreaterThan(serverPressure(lowRps, 0, 1));
   });
 
   it('formats modeled bandwidth in Gbps and Tbps', () => {
