@@ -563,7 +563,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 <text x="140" y="357" className="storm-hacker-name">{safeName.slice(0, 14)}</text>
               </g>
 
-              {BOT_Y.map((y, index) => <g key={y} className="storm-bot-node">
+              {BOT_Y.map(y => <g key={y} className="storm-bot-node">
                 <rect x="350" y={y - 29} width="100" height="58" rx="11" className="storm-device-shell"/>
                 <g transform={'translate(400 ' + y + ')'} className="storm-bot-emblem">
                   <circle r="21" className="storm-bot-emblem-bg"/>
