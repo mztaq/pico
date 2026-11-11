@@ -11,10 +11,20 @@ const SERVER_CAPACITY = 3200;
 const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measured bandwidth.
 const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const PROXY_CAPACITY = 100_000; // Synthetic requests per second handled by each edge node.
+
+/** RFC 5737 reserved addresses, used only as simulated server labels. */
+export function generateDemoIp(random: () => number = Math.random): string {
+  const ranges = ['192.0.2', '198.51.100', '203.0.113'] as const;
+  const bounded = (value: number) => Math.max(0, Math.min(0.999999999, Number.isFinite(value) ? value : 0));
+  const range = ranges[Math.floor(bounded(random()) * ranges.length)];
+  const host = 1 + Math.floor(bounded(random()) * 254);
+  return range + '.' + host;
+}
+
 // All visible network links and animated packets share the same SVG path IDs.
 // Keeping the connection coordinates here prevents packet/path drift.
-const BOT_Y = [88, 162, 236, 310] as const;
-const REAL_USER_Y = 407;
+const BOT_Y = [92, 190, 288, 386] as const;
+const REAL_USER_Y = 470;
 const LEGITIMATE_RPS = 125;
 const BOT_EXIT_X = 450;
 const PROXY_IN_X = 710;
@@ -145,7 +155,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   // Nothing is sent to this address. The IP is a label in a browser-only model.
   const [hacker, setHacker] = useState('');
   const [botsDraft, setBotsDraft] = useState('3000');
-  const [ipDraft, setIpDraft] = useState('203.0.113.10');
+  const [ipDraft, setIpDraft] = useState(() => generateDemoIp());
   const [proxyCount, setProxyCount] = useState(0);
   const [serverCount, setServerCount] = useState(1);
   const [pingLines, setPingLines] = useState<PingEntry[]>([]);
@@ -426,6 +436,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setStats(initialStats());
     setShowHelp(false);
     setPingLines([]);
+    setIpDraft(generateDemoIp());
   }
 
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
@@ -455,7 +466,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     if (!pingScrollRef.current) return;
     pingScrollRef.current.scrollTop = pingScrollRef.current.scrollHeight;
   }, [pingLines]);
-  const latestPing = pingLines[pingLines.length - 1];
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(arriving);
   const points = stats.history.map((value, index) => {
@@ -502,7 +512,16 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       <form onSubmit={start} className="storm-setup-form">
         <label>Hacker name<input autoFocus type="text" maxLength={32} value={hacker} placeholder="Enter hacker name" onChange={event => setHacker(event.target.value)}/></label>
         <label>Botnet army size<div className="storm-bot-field"><input type="number" min={100} max={20000} step={100} value={botsDraft} onChange={event => setBotsDraft(event.target.value)}/><Users size={17}/></div><input aria-label="Botnet army size slider" type="range" min={100} max={20000} step={100} value={Math.min(20000, Math.max(100, Number(botsDraft) || 100))} onChange={event => setBotsDraft(event.target.value)}/></label>
-        <label>Server IP address<input type="text" inputMode="decimal" placeholder="203.0.113.10" value={ipDraft} onChange={event => setIpDraft(event.target.value)}/></label>
+        <div className="storm-ip-field">
+          <label htmlFor="storm-generated-ip">Generated server IP</label>
+          <div className="storm-ip-generator">
+            <input id="storm-generated-ip" type="text" readOnly value={ipDraft} aria-label="Generated server IP" />
+            <button type="button" className="storm-secondary" onClick={() => setIpDraft(previous => {
+              const next = generateDemoIp();
+              return next === previous ? generateDemoIp(() => 0.5) : next;
+            })}>Generate IP</button>
+          </div>
+        </div>
         <div className="storm-config-pair">
           <div className="storm-stepper"><span>Web servers</span><div><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={15}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={15}/></button></div></div>
           <div className="storm-stepper"><span>Defensive proxies</span><div><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={15}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={15}/></button></div></div>
@@ -538,7 +557,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <div className="storm-left-stack">
           <section className={'storm-panel storm-network' + (mode === 'running' ? ' is-active' : '')} aria-label="Animated network traffic">
             <div className="storm-panel-heading"><h2>Network traffic</h2></div>
-            <svg ref={networkRef} viewBox="0 0 1200 450" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
+            <svg ref={networkRef} viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
               <g className="storm-stage-titles">
                 <text x="140" y="30">HACKER</text>
                 <text x="370" y="30">BOTNET · {compact(scenario?.bots ?? 0)}</text>
@@ -687,12 +706,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </div>}
             </div>
             <div className="storm-live-ping" aria-label="Simulated ping replies">
-              <div className="storm-ping-activity">
-                <span><i className={'storm-ping-indicator' + (mode === 'offline' ? ' is-offline' : mode === 'paused' ? ' is-paused' : ' is-active')}/>{scenario?.ip}</span>
-                <strong key={latestPing?.id} className={'storm-ping-latest' + (latestPing?.latency === null ? ' is-timeout' : '')}>
-                  {latestPing ? (latestPing.latency === null ? 'Timeout' : latestPing.latency + ' ms') : '…'}
-                </strong>
-              </div>
               <div ref={pingScrollRef} className="storm-ping-terminal-lines" role="log" aria-live="off">
                 {pingLines.map((entry, index) => <div key={entry.id} className={'storm-ping-entry' + (index === pingLines.length - 1 ? ' is-latest' : '') + (entry.latency === null ? ' is-timeout' : '')}>{entry.text}</div>)}
               </div>
