@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { ArrowLeft, CircleHelp, Minus, Pause, Play, Plus, RotateCcw, Server, ServerCog, Settings2, Shield, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CircleHelp, Minus, Pause, Play, Plus, RotateCcw, Server, ServerCog, Settings2, UserRound, X } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
@@ -186,7 +186,7 @@ export function formatTraffic(rps: number): string {
 
 type Scenario = { hacker: string; bots: number; ip: string };
 type Mode = 'setup' | 'running' | 'paused' | 'offline';
-type EffectName = 'start' | 'warning' | 'shutdown' | 'packet';
+type EffectName = 'start' | 'warning' | 'shutdown' | 'packet' | 'delivered';
 /** More audible effects at typical listening volume, with an upper gain cap. */
 export const EFFECT_GAIN_MULTIPLIER = 3;
 export const EFFECT_GAIN_CAP = 0.18;
@@ -197,9 +197,24 @@ export function effectGain(base: number): number {
 
 type CoolingAudio = { source: AudioBufferSourceNode; filter: BiquadFilterNode; gain: GainNode; hum: OscillatorNode; humGain: GainNode };
 
-function validIPv4(value: string): boolean {
-  const octets = value.split('.');
-  return octets.length === 4 && octets.every(part => /^\d{1,3}$/.test(part) && Number(part) <= 255);
+/** Only letters and single spaces are accepted for the operator's display name. */
+export function sanitizeHackerName(input: string): string {
+  return input.normalize('NFC').replace(/[^\p{L}\p{M} ]/gu, '').replace(/ {2,}/g, ' ').replace(/^ /, '').slice(0, 24);
+}
+
+export function validateHackerName(input: string): string | null {
+  const name = input.trim();
+  if (name.length < 2) return 'Use at least 2 letters for your name.';
+  if (name.length > 24) return 'Keep your name within 24 characters.';
+  if (!/^[\p{L}\p{M}]+(?: [\p{L}\p{M}]+)*$/u.test(name)) return 'Use letters and spaces only. No numbers or symbols.';
+  return null;
+}
+
+/** A sound plays for each represented successful delivery group, never per raw modeled request. */
+export function deliverySoundIntervalMs(rps: number): number | null {
+  if (!Number.isFinite(rps) || rps <= 0) return null;
+  const intensity = Math.min(4, Math.floor(rps / 2500));
+  return 760 - intensity * 110;
 }
 
 export function TrafficStorm({ onHome }: { onHome: () => void }) {
@@ -278,6 +293,10 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       };
       if (name === 'packet') {
         tone(430, 350, 0.038, 0.016, 0, 'triangle');
+      } else if (name === 'delivered') {
+        // Two brief, light notes signal a grouped packet reaching a live origin.
+        tone(790, 1210, 0.13, 0.019, 0, 'sine');
+        tone(1150, 1540, 0.085, 0.011, 0.048, 'triangle');
       } else if (name === 'start') {
         tone(220, 480, 0.23, 0.035);
         tone(380, 660, 0.25, 0.028, 0.12);
@@ -398,11 +417,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   function start(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const bots = Number(botsDraft);
-    if (!hacker.trim()) { setError('Give the operator a name.'); return; }
-    if (!Number.isInteger(bots) || bots < 100 || bots > 20000) { setError('Choose between 100 and 20,000 fictional bots.'); return; }
-    if (!validIPv4(ipDraft.trim())) { setError('Enter an IPv4 address with four numbers between 0 and 255.'); return; }
-    setScenario({ hacker: hacker.trim().slice(0, 32), bots, ip: ipDraft.trim() });
+    const nameError = validateHackerName(hacker);
+    if (nameError) { setError(nameError); return; }
+    setScenario({ hacker: hacker.trim(), bots: normalizeBotArmy(Number(botsDraft)), ip: ipDraft });
     setStats(initialStats());
     warningPlayed.current = false;
     lastFrame.current = performance.now();
@@ -481,6 +498,10 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setStats(initialStats());
     setShowHelp(false);
     setIpDraft(generateDemoIp());
+    setHacker('');
+    setBotsDraft('3000');
+    setServerCount(1);
+    setProxyCount(0);
   }
 
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
@@ -523,33 +544,43 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </div>
     </header>
 
-    {mode === 'setup' ? <section className="storm-setup" aria-labelledby="storm-setup-title">
-      <div className="storm-setup-mark" aria-hidden="true"><Server size={35}/></div>
-      <div className="storm-setup-title">
-        <h1 id="storm-setup-title">Traffic Storm<span>.</span></h1>
-        <p>See how a botnet floods a server, and what changes when a defensive reverse proxy filters traffic.</p>
+    {mode === 'setup' ? <section className="storm-setup storm-identity-setup" aria-labelledby="storm-setup-title">
+      <div className="storm-identity-emblem" aria-hidden="true">
+        <span className="storm-identity-orbit storm-identity-orbit-outer"/>
+        <span className="storm-identity-orbit storm-identity-orbit-inner"/>
+        <span className="storm-identity-avatar"><UserRound size={38} strokeWidth={1.5}/></span>
+        <span className="storm-identity-dot storm-identity-dot-one"/>
+        <span className="storm-identity-dot storm-identity-dot-two"/>
       </div>
-      <form onSubmit={start} className="storm-setup-form">
-        <label>Hacker name<input autoFocus type="text" maxLength={32} value={hacker} placeholder="Enter hacker name" onChange={event => setHacker(event.target.value)}/></label>
-        <label>Botnet army size<div className="storm-bot-field"><input type="number" min={100} max={20000} step={100} value={botsDraft} onChange={event => setBotsDraft(event.target.value)}/><Users size={17}/></div><input aria-label="Botnet army size slider" type="range" min={100} max={20000} step={100} value={Math.min(20000, Math.max(100, Number(botsDraft) || 100))} onChange={event => setBotsDraft(event.target.value)}/></label>
-        <div className="storm-ip-field">
-          <label htmlFor="storm-generated-ip">Generated server IP</label>
-          <div className="storm-ip-generator">
-            <input id="storm-generated-ip" type="text" readOnly value={ipDraft} aria-label="Generated server IP" />
-            <button type="button" className="storm-secondary" onClick={() => setIpDraft(previous => {
-              const next = generateDemoIp();
-              return next === previous ? (previous === '203.0.113.254' ? '198.51.100.254' : '203.0.113.254') : next;
-            })}>Generate IP</button>
-          </div>
+      <div className="storm-setup-title storm-identity-title">
+        <span className="storm-identity-eyebrow">TRAFFIC STORM</span>
+        <h1 id="storm-setup-title">Who's in control<span>?</span></h1>
+        <p>Enter your hacker name to begin.</p>
+      </div>
+      <form onSubmit={start} className="storm-setup-form storm-identity-form" noValidate>
+        <label htmlFor="storm-hacker-name">Hacker name</label>
+        <div className={'storm-identity-input' + (error ? ' is-invalid' : '')}>
+          <UserRound size={19} aria-hidden="true"/>
+          <input id="storm-hacker-name" autoFocus type="text" autoComplete="off" autoCapitalize="words"
+            spellCheck={false} maxLength={24} value={hacker} placeholder="Enter your name"
+            aria-invalid={Boolean(error)} aria-describedby={error ? 'storm-hacker-help storm-hacker-error' : 'storm-hacker-help'}
+            onChange={event => {
+              const raw = event.target.value;
+              const filtered = sanitizeHackerName(raw);
+              setHacker(filtered);
+              setError(filtered !== raw ? 'Letters and spaces only. No numbers or symbols.' : '');
+            }}/>
         </div>
-        <div className="storm-config-pair">
-          <div className="storm-stepper"><span>Web servers</span><div><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={15}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={15}/></button></div></div>
-          <div className="storm-stepper"><span>Defensive proxies</span><div><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={15}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={15}/></button></div></div>
+        <div className="storm-identity-hint">
+          <span id="storm-hacker-help">Letters and spaces only, 2–24 characters</span>
+          <span>{hacker.length}/24</span>
         </div>
-        {error && <p className="storm-error" role="alert">{error}</p>}
-        <button type="submit" className="storm-primary"><Play size={16} fill="currentColor"/> Start simulation</button>
-        <p className="storm-disclaimer"><Shield size={14}/> Browser-only model. No requests are sent to the IP.</p>
+        {error && <p className="storm-error" id="storm-hacker-error" role="alert">{error}</p>}
+        <button type="submit" className="storm-primary storm-identity-submit">
+          Enter simulation <ArrowRight size={17} aria-hidden="true"/>
+        </button>
       </form>
+      <p className="storm-identity-note">Browser-only simulation. No real traffic is sent.</p>
     </section> : <div className="storm-session">
       <div className="storm-intro">
         <div className="storm-titleline"><h1>Traffic Storm<span>.</span></h1></div>
