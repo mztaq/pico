@@ -36,6 +36,10 @@
           !new URLSearchParams(location.search).has('tool') && !location.hash) {
         document.documentElement.classList.add('pico-initial-home-route');
       }
+      if (/^\/app\/traffic\/?$/.test(location.pathname) ||
+          (/^\/app\/?$/.test(location.pathname) && new URLSearchParams(location.search).get('tool') === 'traffic')) {
+        document.documentElement.classList.add('pico-initial-traffic-route');
+      }
       // Resolve the saved workspace theme before React and its CSS load.
       if (document.documentElement.classList.contains('pico-app-route')) {
         const backgrounds = {"high-contrast-red":"#000000","high-contrast-blue":"#000000","high-contrast-yellow":"#000000","high-contrast-spectrum":"#000000","high-contrast-sunset":"#000000","high-contrast-violet":"#000000","high-contrast-ocean":"#000000","high-contrast-ink":"#ffffff","high-contrast-forest":"#ffffff","high-contrast-dark":"#000000","high-contrast-light":"#ffffff","dark-plus":"#1e1e1e","light-plus":"#ffffff","dracula":"#282a36","monokai":"#272822","one-dark":"#282c34","one-light":"#fafafa","nord":"#2e3440","tokyo-night":"#1a1b26","catppuccin-mocha":"#1e1e2e","catppuccin-latte":"#eff1f5","gruvbox-dark":"#282828","solarized-dark":"#002b36","solarized-light":"#fdf6e3","github-dark":"#0d1117","github-light":"#ffffff","ayu-mirage":"#1f2430","night-owl":"#011627","palenight":"#292d3e","rose-pine":"#191724","synthwave-84":"#262335","cobalt2":"#193549","everforest":"#2d353b","kanagawa":"#1f1f28"};
@@ -50,7 +54,13 @@
             }
           }
         } catch { /* Private browsing or disabled storage uses Pico's default. */ }
-        document.documentElement.style.setProperty('--pico-boot-bg', backgrounds[selected] || backgrounds['catppuccin-mocha']);
+        const accents = {"high-contrast-red":"#ff9999","high-contrast-blue":"#82baff","high-contrast-yellow":"#ffe45e","high-contrast-spectrum":"#ff99ff","high-contrast-sunset":"#ff9999","high-contrast-violet":"#ff99ff","high-contrast-ocean":"#00ffff","high-contrast-ink":"#660066","high-contrast-forest":"#005500","high-contrast-dark":"#ffffff","high-contrast-light":"#000000","dark-plus":"#0e7ad3","light-plus":"#0066b8","dracula":"#bd93f9","monokai":"#a6e22e","one-dark":"#61afef","one-light":"#4078f2","nord":"#88c0d0","tokyo-night":"#7aa2f7","catppuccin-mocha":"#cba6f7","catppuccin-latte":"#8839ef","gruvbox-dark":"#83a598","solarized-dark":"#268bd2","solarized-light":"#1f7fb8","github-dark":"#58a6ff","github-light":"#0969da","ayu-mirage":"#ffcc66","night-owl":"#82aaff","palenight":"#82aaff","rose-pine":"#c4a7e7","synthwave-84":"#f92aad","cobalt2":"#ffc600","everforest":"#a7c080","kanagawa":"#7e9cd8"};
+        const bootBg = backgrounds[selected] || backgrounds['catppuccin-mocha'];
+        const rgb = bootBg.slice(1).match(/.{2}/g).map(channel => parseInt(channel, 16));
+        const lightBg = rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722 > 148;
+        document.documentElement.style.setProperty('--pico-boot-bg', bootBg);
+        document.documentElement.style.setProperty('--pico-boot-accent', accents[selected] || accents['catppuccin-mocha']);
+        document.documentElement.style.setProperty('--pico-boot-foreground', lightBg ? '#15151b' : '#ffffff');
       }
     </script>
     <style>
