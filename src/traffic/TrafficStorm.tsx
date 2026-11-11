@@ -123,7 +123,8 @@ export function formatTraffic(rps: number): string {
 export type PingEntry = { id: number; text: string; latency: number | null };
 
 export function appendPingHistory(previous: PingEntry[], entry: PingEntry, limit = 10): PingEntry[] {
-  return [...previous.slice(-Math.max(0, limit - 1)), entry];
+  const count = Math.max(1, Math.floor(limit) || 1);
+  return [...previous, entry].slice(-count);
 }
 
 type Scenario = { hacker: string; bots: number; ip: string };
@@ -693,7 +694,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 </strong>
               </div>
               <div ref={pingScrollRef} className="storm-ping-terminal-lines" role="log" aria-live="off">
-                {pingLines.map((entry, index) => <div key={entry.id} className={'storm-ping-entry' + (index === pingLines.length - 1 ? ' is-latest' : '')}>{entry.text}</div>)}
+                {pingLines.map((entry, index) => <div key={entry.id} className={'storm-ping-entry' + (index === pingLines.length - 1 ? ' is-latest' : '') + (entry.latency === null ? ' is-timeout' : '')}>{entry.text}</div>)}
               </div>
             </div>
           </section>
