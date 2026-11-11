@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, formatTraffic, forwardedRequests, modeledPing, proxyFilterRatio, serverPressure, trafficRamp } from './TrafficStorm';
+import { TrafficStorm, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, modeledPing, nextFanSpeed, proxyFilterRatio, proxyLoadRatio, serverPressure, trafficRamp } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -38,17 +38,34 @@ describe('Traffic Storm setup', () => {
     expect(trafficRamp(25)).toBeCloseTo(1);
   });
 
-  it('uses diminishing fictional proxy filtering with an explicit zero-proxy state', () => {
+  it('models stronger proxies that saturate under excessive traffic', () => {
     expect(proxyFilterRatio(0)).toBe(0);
-    expect(proxyFilterRatio(1)).toBeCloseTo(0.4);
-    expect(proxyFilterRatio(2)).toBeCloseTo(0.64);
-    expect(proxyFilterRatio(3)).toBeCloseTo(0.784);
-    expect(proxyFilterRatio(4)).toBeCloseTo(0.8704);
+    expect(proxyFilterRatio(1)).toBeCloseTo(0.86);
+    expect(proxyFilterRatio(2)).toBeCloseTo(0.92);
+    expect(proxyFilterRatio(3)).toBeCloseTo(0.95);
+    expect(proxyFilterRatio(4)).toBeCloseTo(0.97);
     expect(forwardedRequests(5000, 0)).toBe(5000);
-    expect(forwardedRequests(5000, 1)).toBe(3000);
-    expect(forwardedRequests(5000, 2)).toBe(1800);
-    expect(forwardedRequests(5000, 4)).toBe(648);
+    expect(forwardedRequests(5000, 1)).toBe(700);
+    expect(forwardedRequests(5000, 2)).toBe(400);
+    expect(forwardedRequests(5000, 4)).toBe(150);
     expect(forwardedRequests(0, 4)).toBe(0);
+    expect(proxyLoadRatio(240000, 1)).toBeCloseTo(2.4);
+    expect(proxyLoadRatio(240000, 4)).toBeCloseTo(0.6);
+    expect(effectiveProxyFilterRatio(240000, 1)).toBeLessThan(proxyFilterRatio(1));
+    expect(effectiveProxyFilterRatio(240000, 4)).toBeCloseTo(proxyFilterRatio(4));
+    expect(forwardedRequests(240000, 1)).toBeGreaterThan(forwardedRequests(240000, 4));
+  });
+
+  it('starts fans slowly and winds them down rather than stopping instantly', () => {
+    const startup = nextFanSpeed(0, 1, 0.05);
+    expect(startup).toBeGreaterThan(0);
+    expect(startup).toBeLessThan(0.1);
+    const deceleration = nextFanSpeed(1, 0, 0.05);
+    expect(deceleration).toBeGreaterThan(0.9);
+    expect(deceleration).toBeLessThan(1);
+    let slow = 1;
+    for (let i = 0; i < 1000; i += 1) slow = nextFanSpeed(slow, 0, 0.05);
+    expect(slow).toBe(0);
   });
 
   it('shares traffic across 1–4 fictional web servers', () => {
