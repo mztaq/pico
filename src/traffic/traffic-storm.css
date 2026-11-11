@@ -195,7 +195,7 @@
 .storm-in-session .storm-side{min-width:0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.1fr) minmax(0,.9fr);gap:11px;align-content:stretch}
 .storm-in-session .storm-side>.storm-panel{margin:0;min-height:0;overflow:hidden;padding:15px 16px}
 .storm-server-details{display:flex;flex-direction:column;gap:11px}
-.storm-system-health{display:grid;grid-template-columns:52px minmax(0,1fr) 86px;align-items:center;gap:11px;padding:10px;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-sunken)}
+.storm-system-health{display:grid;grid-template-columns:52px minmax(0,1fr) 69px;align-items:center;gap:11px;padding:10px;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-sunken)}
 .storm-server-icon{width:51px;height:51px;display:grid;place-items:center;color:var(--accent);background:var(--ds-accent-soft);border-radius:9px}
 .storm-server-icon.is-offline{color:var(--ds-danger);background:color-mix(in srgb,var(--ds-danger) 10%,var(--ds-sunken))}
 .storm-system-health>div:nth-child(2){min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -206,8 +206,7 @@
 .storm-fan{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--accent)}
 .storm-fan svg{animation:storm-fan-rotate var(--storm-fan-duration,1.5s) linear infinite}
 .storm-fan.stopped svg{animation-play-state:paused}
-.storm-fan strong{font:700 10px var(--ds-font-code);color:var(--ds-text);white-space:nowrap}
-.storm-fan small{font:700 9px var(--ds-font-code);color:var(--ds-muted);white-space:nowrap}
+.storm-fan small{font:700 9px var(--ds-font-code);color:var(--ds-muted);white-space:nowrap;text-align:center}
 @keyframes storm-fan-rotate{to{transform:rotate(360deg)}}
 .storm-cpu-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--ds-muted)}
 .storm-cpu-row strong{font:700 12px var(--ds-font-code);color:var(--ds-text)}
