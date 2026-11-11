@@ -220,3 +220,71 @@
  .pico-load-storm-heading{height:35px;margin-bottom:26px;width:86%}
  .pico-load-storm-input{height:49px}
 }
+/* Returning Traffic Storm visitors load the network dashboard, never alias entry. */
+.pico-load-storm-dashboard{
+  flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;
+  display:flex;flex-direction:column;gap:13px;padding:17px 22px 22px;
+}
+.pico-load-storm-dashboard-heading{
+  display:flex;justify-content:space-between;align-items:center;gap:18px;min-height:37px;
+}
+.pico-load-storm-dashboard-title{width:min(220px,40vw);height:27px}
+.pico-load-storm-dashboard-actions{display:flex;gap:11px}
+.pico-load-storm-dashboard-action{width:112px;height:31px}
+.pico-load-storm-dashboard-toolbar{
+  display:flex;align-items:center;gap:17px;min-height:47px;
+  border:1px solid var(--pico-load-border);border-radius:10px;
+  padding:10px 15px;background:var(--pico-load-surface);
+}
+.pico-load-storm-dashboard-control{width:92px;height:18px}
+.pico-load-storm-dashboard-slider{width:min(230px,38%);height:16px;margin-left:auto}
+.pico-load-storm-dashboard-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.pico-load-storm-dashboard-metric{
+  display:flex;flex-direction:column;gap:12px;min-width:0;
+  padding:15px 17px;min-height:83px;
+  border:1px solid var(--pico-load-border);border-radius:10px;background:var(--pico-load-surface);
+}
+.pico-load-storm-dashboard-metric-label{height:12px;width:68%}
+.pico-load-storm-dashboard-metric-value{height:25px;width:52%}
+.pico-load-storm-dashboard-main{
+  flex:1 1 auto;display:grid;grid-template-columns:minmax(0,1.72fr) minmax(260px,.8fr);
+  gap:13px;min-height:290px;
+}
+.pico-load-storm-dashboard-panel{
+  min-width:0;min-height:0;padding:16px;
+  border:1px solid var(--pico-load-border);
+  border-radius:11px;background:var(--pico-load-surface);
+}
+.pico-load-storm-dashboard-section-title{width:145px;height:16px}
+.pico-load-storm-dashboard-network{display:flex;flex-direction:column}
+.pico-load-storm-dashboard-svg{flex:1;width:100%;min-height:205px;margin:auto}
+.pico-load-storm-skeleton-route{
+  fill:none;stroke:var(--pico-load-border);stroke-width:2;stroke-dasharray:6 9;
+}
+.pico-load-storm-skeleton-node{
+  fill:var(--pico-load-shimmer-a);
+  stroke:var(--pico-load-border);stroke-width:2;
+}
+.pico-load-storm-skeleton-node-core{fill:var(--pico-load-shimmer-b);opacity:.8}
+.pico-load-storm-dashboard-side{display:flex;flex-direction:column;gap:15px}
+.pico-load-storm-dashboard-side-line{height:15px;width:80%}
+.pico-load-storm-dashboard-side-short{width:55%}
+.pico-load-storm-dashboard-side-meter{height:31px;width:100%;margin:6px 0}
+.pico-load-storm-dashboard-side-chart{height:125px;width:100%;margin-top:auto}
+@media(max-width:810px){
+ .pico-load-storm-dashboard{padding:13px;gap:10px}
+ .pico-load-storm-dashboard-main{grid-template-columns:minmax(0,1fr);min-height:0}
+ .pico-load-storm-dashboard-panel{min-height:215px}
+ .pico-load-storm-dashboard-side{min-height:165px}
+ .pico-load-storm-dashboard-side-chart{height:75px}
+}
+@media(max-width:540px){
+ .pico-load-storm-dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pico-load-storm-dashboard-action{width:68px}
+ .pico-load-storm-dashboard-control{width:57px}
+ .pico-load-storm-dashboard-heading{min-height:30px}
+ .pico-load-storm-dashboard-title{height:23px;width:150px}
+ .pico-load-storm-dashboard-metric{padding:11px;min-height:71px}
+ .pico-load-storm-dashboard-metric-value{height:20px}
+}
+
