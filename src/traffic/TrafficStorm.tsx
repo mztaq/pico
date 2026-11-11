@@ -181,9 +181,13 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       if (fan && audioRef.current) {
         coolingRef.current = null;
         const at = audioRef.current.currentTime;
-        fan.gain.gain.setTargetAtTime(0.0001, at, 0.04);
-        fan.humGain.gain.setTargetAtTime(0.0001, at, 0.04);
-        try { fan.source.stop(at + 0.25); fan.hum.stop(at + 0.25); }
+        const windDown = mode === 'offline' && soundOn && pageVisible;
+        fan.gain.gain.setTargetAtTime(0.0001, at, windDown ? 1.4 : 0.08);
+        fan.humGain.gain.setTargetAtTime(0.0001, at, windDown ? 1.4 : 0.08);
+        fan.filter.frequency.setTargetAtTime(120, at, windDown ? 1.6 : 0.08);
+        fan.source.playbackRate.setTargetAtTime(0.35, at, windDown ? 1.5 : 0.08);
+        fan.hum.frequency.setTargetAtTime(40, at, windDown ? 1.6 : 0.08);
+        try { fan.source.stop(at + (windDown ? 8 : 0.8)); fan.hum.stop(at + (windDown ? 8 : 0.8)); }
         catch { /* Already stopped. */ }
       }
       return;
@@ -232,6 +236,37 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       fan.humGain.gain.setTargetAtTime(0.001 + Math.pow(load, 1.5) * 0.022, now, 0.6);
     } catch { /* Unsupported audio never blocks the simulation. */ }
   }, [mode, soundOn, pageVisible, cpu]);
+
+  // Keep fan blades rotating continuously and ease their actual angular speed.
+  // Setting a new CSS animation duration each frame made the rotation jump.
+  useEffect(() => {
+    fanTarget.current = mode === 'running' ? cpu / 100 : 0;
+  }, [mode, cpu]);
+
+  useEffect(() => {
+    if (mode === 'setup' || !networkRef.current) {
+      fanMotion.current.speed = 0;
+      return;
+    }
+    const rotors = Array.from(networkRef.current.querySelectorAll<SVGGElement>('.storm-fan-rotor'));
+    let frame = 0;
+    let previous = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.065, Math.max(0, (now - previous) / 1000));
+      previous = now;
+      const target = fanTarget.current;
+      const motion = fanMotion.current;
+      const tau = target > motion.speed ? 2.7 : 3.9;
+      motion.speed += (target - motion.speed) * (1 - Math.exp(-dt / tau));
+      if (target === 0 && motion.speed < 0.003) motion.speed = 0;
+      motion.angle = (motion.angle + motion.speed * 790 * dt) % 360;
+      const angle = motion.angle.toFixed(1);
+      for (const rotor of rotors) rotor.setAttribute('transform', 'rotate(' + angle + ')');
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [mode, serverCount]);
 
   function start(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -323,6 +358,22 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   const status = mode === 'offline' ? 'OFFLINE' : pressure >= 1 ? 'OVERLOADED' : stats.health < 65 ? 'DEGRADED' : 'ONLINE';
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
+  // Auto-ping uses only this local synthetic latency, never ICMP or network fetch.
+  useEffect(() => {
+    pingTarget.current = { ip: scenario?.ip ?? '0.0.0.0', latency: mode === 'offline' ? null : responseMs };
+  }, [scenario?.ip, responseMs, mode]);
+
+  useEffect(() => {
+    if (mode === 'setup') return;
+    const tick = () => {
+      const target = pingTarget.current;
+      setPingOutput(modeledPing(target.ip, target.latency));
+    };
+    tick();
+    if (mode !== 'running') return;
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [mode, scenario?.ip]);
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(arriving);
   const points = stats.history.map((value, index) => {
