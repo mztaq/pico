@@ -1273,28 +1273,35 @@
   .storm-identity-input{transition:none!important}
 }
 
-/* Plain leader labels keep command, proxy and server paths visible. */
-.storm-network-svg .storm-diagram-annotations{pointer-events:none}
-.storm-network-svg .storm-diagram-annotation{color:var(--ds-muted)}
-.storm-network-svg .storm-diagram-annotation text{
+/* Route annotations are bare text and arrows, never filled badges. */
+.storm-network-svg .storm-route-notes{pointer-events:none}
+.storm-network-svg .storm-route-note{
+  fill:none;
+  color:var(--ds-muted);
+}
+.storm-network-svg .storm-route-note-text{
   fill:currentColor;
   font:650 12px var(--ds-font-ui);
   letter-spacing:0;
   text-anchor:start;
   paint-order:stroke;
   stroke:var(--ds-panel);
-  stroke-width:3.5;
+  stroke-width:2.6px;
   stroke-linejoin:round;
+  background:none;
 }
-.storm-network-svg .storm-diagram-annotation .storm-annotation-leader,
-.storm-network-svg .storm-diagram-annotation .storm-annotation-arrow{
-  fill:none;stroke:currentColor;stroke-width:1.65;
-  stroke-linecap:round;stroke-linejoin:round;
-  opacity:.82;
+.storm-network-svg .storm-route-note-line,
+.storm-network-svg .storm-route-note-head{
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.6px;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.8;
 }
-.storm-network-svg .storm-diagram-annotation--accent{color:var(--accent)}
-.storm-network-svg .storm-diagram-annotation--danger{color:var(--ds-danger)}
-.storm-network-svg .storm-diagram-annotation--success{color:var(--ds-success)}
+.storm-network-svg .storm-route-note--accent{color:var(--accent)}
+.storm-network-svg .storm-route-note--danger{color:var(--ds-danger)}
+.storm-network-svg .storm-route-note--success{color:var(--ds-success)}
 @media(max-width:700px){
-  .storm-network-svg .storm-diagram-annotation text{font-size:13px;stroke-width:4}
+  .storm-network-svg .storm-route-note-text{font-size:13px}
 }
