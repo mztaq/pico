@@ -175,7 +175,7 @@
 /* Traffic Storm starts with one hacker-name field, not CPU registers or controls.
    Use the selected theme during React.lazy loading and the HTML boot phase. */
 .pico-load-stage[data-loading-workspace="Traffic Storm"]{
-  --pico-load-surface:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 88%,var(--pico-boot-foreground,#fff) 5%);
+  --pico-load-surface:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 88%,var(--pico-boot-foreground,#fff) 12%);
   --pico-load-border:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 78%,var(--pico-boot-foreground,#fff) 22%);
   --pico-load-shimmer-a:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 92%,var(--pico-boot-foreground,#fff) 8%);
   --pico-load-shimmer-b:color-mix(in srgb,var(--accent,var(--pico-boot-accent,#cba6f7)) 25%,var(--pico-load-shimmer-a));
