@@ -219,6 +219,12 @@ export const TRAFFIC_TUTORIAL_STEPS = [
   { title: 'Recover and retry', text: 'Excess load drains health and increases response time. At zero health the webserver goes offline. Use Restart to retry or New scenario to enter a new hacker name.', hint: 'All traffic, packets and bandwidth values are simulated in your browser.' },
 ] as const;
 
+/** Only a fraction of packets is served when the fictional origin exceeds capacity. */
+export function successfulDeliveryFraction(deliveredRps: number, serverCapacity: number): number {
+  if (!Number.isFinite(deliveredRps) || deliveredRps <= 0 || !Number.isFinite(serverCapacity) || serverCapacity <= 0) return 0;
+  return Math.min(1, serverCapacity / deliveredRps);
+}
+
 /** A sound plays for each represented successful delivery group, never per raw modeled request. */
 export function deliverySoundIntervalMs(rps: number): number | null {
   if (!Number.isFinite(rps) || rps <= 0) return null;
@@ -249,12 +255,15 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const coolingRef = useRef<CoolingAudio | null>(null);
   const warningPlayed = useRef(false);
   const lastDeliverySoundAt = useRef(-Infinity);
+  const deliveryAudioState = useRef({ intervalMs: null as number | null, fraction: 0 });
   const lastFrame = useRef(0);
   const networkRef = useRef<SVGSVGElement | null>(null);
   const fanMotion = useRef({ angle: 0, speed: 0 });
   const fanTarget = useRef(0);
   const arriving = forwardedRequests(stats.rps, proxyCount);
   const deliveredRps = deliveredTrafficRps(stats.rps, proxyCount, mode === 'offline');
+  const visiblePacketCount = Math.max(1, Math.round(16 * trafficRamp(stats.seconds)));
+  const visibleSurvivorCount = proxyEnabled ? visualSurvivorCount(visiblePacketCount, effectiveProxyFilterRatio(stats.rps, proxyCount)) : 0;
   const pressure = arriving / (SERVER_CAPACITY * serverCount);
   const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
 
@@ -490,17 +499,30 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     return () => window.clearInterval(id);
   }, [mode, packetAudioStep]);
 
-  // Audible confirmation for successful *visible groups* of delivered requests.
-  // Actual modeled RPS is much higher, so a bounded rate avoids stacked audio.
-  const deliveryAudioInterval = stats.health > 0 ? deliverySoundIntervalMs(Math.min(deliveredRps, SERVER_CAPACITY * serverCount)) : null;
+  // Successful confirmation sound is tied to an actual rendered SVG packet reaching
+  // the webserver. SMIL repeatEvent fires at the end of each motion-path traversal.
+  // Audio is rate-limited because each circle represents a large request group.
+  deliveryAudioState.current = {
+    intervalMs: stats.health > 0 ? deliverySoundIntervalMs(Math.min(deliveredRps, SERVER_CAPACITY * serverCount)) : null,
+    fraction: successfulDeliveryFraction(deliveredRps, SERVER_CAPACITY * serverCount),
+  };
   useEffect(() => {
-    if (mode !== 'running' || !soundOn || !pageVisible || deliveryAudioInterval === null) return;
-    const timer = window.setInterval(() => {
+    if (mode !== 'running' || !soundOn || !pageVisible) return;
+    const motions = Array.from(networkRef.current?.querySelectorAll('animateMotion[data-storm-delivery]') ?? []);
+    const onArrival = () => {
       if (document.hidden || !soundEnabled()) return;
+      const { intervalMs, fraction } = deliveryAudioState.current;
+      if (intervalMs === null || Math.random() > fraction) return;
+      const now = performance.now();
+      if (now - lastDeliverySoundAt.current < intervalMs) return;
+      lastDeliverySoundAt.current = now;
       playEffect('delivered');
-    }, deliveryAudioInterval);
-    return () => window.clearInterval(timer);
-  }, [mode, soundOn, pageVisible, deliveryAudioInterval]);
+    };
+    for (const motion of motions) motion.addEventListener('repeatEvent', onArrival);
+    return () => {
+      for (const motion of motions) motion.removeEventListener('repeatEvent', onArrival);
+    };
+  }, [mode, soundOn, pageVisible, proxyEnabled, visiblePacketCount, visibleSurvivorCount]);
 
   useEffect(() => {
     if (mode !== 'running') return;
@@ -549,8 +571,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const safeName = scenario?.hacker ?? 'Operator';
   // Keep SVG animation independent of the synthetic request count.
   // Each dot represents a group of requests; cap animations for smooth rendering.
-  const visiblePacketCount = Math.max(1, Math.round(16 * trafficRamp(stats.seconds)));
-  const visibleSurvivorCount = proxyEnabled ? visualSurvivorCount(visiblePacketCount, effectiveProxyFilterRatio(stats.rps, proxyCount)) : 0;
   const serverYs = webserverPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
   const serverLoads = serverYs.map((_, index) =>
@@ -738,14 +758,14 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               )}
               {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) =>
                 <circle key={'attack-' + index} className="storm-packet-attack" r={index % 4 === 0 ? 3.5 : 2.6}>
-                  <animateMotion dur={(0.42 + index % 5 * 0.055) + 's'} begin={(-index * 0.075) + 's'} repeatCount="indefinite">
+                  <animateMotion data-storm-delivery={!proxyEnabled ? 'true' : undefined} dur={(0.42 + index % 5 * 0.055) + 's'} begin={(-index * 0.075) + 's'} repeatCount="indefinite">
                     <mpath href={'#storm-attack-link-' + (index % 4)}/>
                   </animateMotion>
                 </circle>
               )}
               {mode === 'running' && proxyEnabled && Array.from({length:visibleSurvivorCount}, (_, index) =>
                 <circle key={'approved-' + index} className="storm-packet-survivor" r="3">
-                  <animateMotion dur={(1.35 + index % 4 * 0.13) + 's'} begin={(-index * 0.31) + 's'} repeatCount="indefinite">
+                  <animateMotion data-storm-delivery="true" dur={(1.35 + index % 4 * 0.13) + 's'} begin={(-index * 0.31) + 's'} repeatCount="indefinite">
                     <mpath href={'#storm-survivor-link-' + (index % 4)}/>
                   </animateMotion>
                 </circle>
