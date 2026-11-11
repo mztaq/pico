@@ -160,3 +160,145 @@
 @media(max-width:940px){.storm-main-grid{align-items:stretch}.storm-side{align-items:start}}
 @media(max-width:600px){.storm-main-grid{grid-template-columns:1fr}.storm-network{min-height:280px}.storm-chatter{gap:7px}.storm-console{font-size:10.5px}.storm-console-line{padding-inline:9px}}
 @media(prefers-reduced-motion:reduce){.storm-console-line,.storm-chat-line,.storm-console-caret,.storm-chatter-typing i,.storm-server-graphic.is-critical>rect:first-child{animation:none!important}}
+
+/* Traffic Storm v2: compact, single-viewport desktop dashboard. */
+.storm-app.storm-in-session{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.storm-session{width:100%;max-width:1700px;margin:0 auto;padding:14px clamp(14px,2vw,30px) 11px;min-height:0;flex:1;display:flex;flex-direction:column;gap:11px;overflow:hidden}
+.storm-in-session .storm-intro{width:100%;max-width:none;min-height:48px;margin:0;padding:0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex:0 0 auto}
+.storm-in-session .storm-titleline{display:flex;align-items:center;flex-wrap:wrap;column-gap:19px;row-gap:2px;min-width:0}
+.storm-in-session .storm-intro h1{margin:0;font-size:clamp(24px,2.2vw,31px);letter-spacing:-.04em;line-height:1.15;white-space:nowrap}
+.storm-in-session .storm-intro p{margin:1px 0 0;font-size:12px;color:var(--ds-muted)}
+.storm-in-session .storm-controls{margin:0;display:flex;align-items:center;gap:8px}
+.storm-in-session .storm-controls button{min-height:35px;padding:7px 11px;white-space:nowrap}
+.storm-proxy-switch{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ds-line-strong);border-radius:9px;background:var(--ds-panel);color:var(--ds-muted);font-weight:650;font-size:12px;cursor:pointer}
+.storm-proxy-switch.is-on{color:var(--ds-success);border-color:color-mix(in srgb,var(--ds-success) 45%,var(--ds-line))}
+.storm-toggle-track{display:flex;align-items:center;width:28px;height:16px;border-radius:12px;padding:2px;background:var(--ds-line-strong)}
+.storm-toggle-track i{width:12px;height:12px;border-radius:50%;background:var(--ds-panel);transition:transform .18s ease}
+.storm-proxy-switch.is-on .storm-toggle-track{background:var(--ds-success)}
+.storm-proxy-switch.is-on .storm-toggle-track i{transform:translateX(12px);background:var(--ds-bg)}
+.storm-in-session .storm-metrics{padding:0;width:100%;max-width:none;flex:0 0 auto;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.storm-in-session .storm-metric{padding:13px 17px;min-height:90px;gap:3px;border-radius:11px}
+.storm-in-session .storm-metric>span{letter-spacing:.045em;font-size:10px}
+.storm-in-session .storm-metric>strong{margin:4px 0 1px;letter-spacing:-.04em;font-size:clamp(19px,2.15vw,29px)}
+.storm-in-session .storm-metric small{font-size:10px}
+.storm-in-session .storm-metric .storm-meter{margin-top:auto}
+.storm-in-session .storm-main-grid{width:100%;max-width:none;margin:0;padding:0;flex:1 1 0;min-height:0;display:grid;grid-template-columns:minmax(0,1.85fr) minmax(350px,.9fr);gap:11px;align-items:stretch}
+.storm-left-stack{min-height:0;min-width:0;display:flex;flex-direction:column;gap:11px}
+.storm-in-session .storm-network{display:flex;flex-direction:column;flex:1 1 0;min-height:0;padding:15px 17px 10px;overflow:hidden}
+.storm-in-session .storm-network-svg{width:100%;max-width:none;min-height:0;min-width:0;height:100%;flex:1 1 0;margin:4px auto;object-fit:contain}
+.storm-in-session .storm-network-foot{margin-top:auto;flex:0 0 auto;display:flex;gap:13px;font-size:10px;flex-wrap:wrap;justify-content:space-between}
+.storm-in-session .storm-network-foot span:last-child{margin-left:auto}
+.storm-in-session .storm-chart-panel{padding:10px 15px 8px;margin:0;flex:0 0 113px;min-height:0;max-width:none;display:flex;flex-direction:column}
+.storm-chart-top{display:flex;align-items:center;justify-content:space-between;color:var(--ds-muted);gap:10px;font-size:12px}
+.storm-chart-top strong{font:700 12px var(--ds-font-code);color:var(--accent)}
+.storm-in-session .storm-chart-panel svg{width:100%;height:auto;min-height:0;flex:1;margin:6px 0 0;overflow:hidden}
+.storm-in-session .storm-side{min-width:0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.1fr) minmax(0,.9fr);gap:11px;align-content:stretch}
+.storm-in-session .storm-side>.storm-panel{margin:0;min-height:0;overflow:hidden;padding:15px 16px}
+.storm-server-details{display:flex;flex-direction:column;gap:11px}
+.storm-system-health{display:grid;grid-template-columns:52px minmax(0,1fr) 86px;align-items:center;gap:11px;padding:10px;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-sunken)}
+.storm-server-icon{width:51px;height:51px;display:grid;place-items:center;color:var(--accent);background:var(--ds-accent-soft);border-radius:9px}
+.storm-server-icon.is-offline{color:var(--ds-danger);background:color-mix(in srgb,var(--ds-danger) 10%,var(--ds-sunken))}
+.storm-system-health>div:nth-child(2){min-width:0;display:flex;flex-direction:column;gap:2px}
+.storm-system-health>div:nth-child(2)>span{font:700 9px var(--ds-font-code);color:var(--ds-muted);letter-spacing:.06em}
+.storm-system-health>div:nth-child(2)>strong{font-size:15px;font-weight:750;color:var(--ds-text);overflow-wrap:anywhere}
+.storm-system-health>div:nth-child(2)>strong.storm-danger{color:var(--ds-danger)}
+.storm-system-health>div:nth-child(2)>small{font-size:10px;color:var(--ds-muted)}
+.storm-fan{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--accent)}
+.storm-fan svg{animation:storm-fan-rotate var(--storm-fan-duration,1.5s) linear infinite}
+.storm-fan.stopped svg{animation-play-state:paused}
+.storm-fan strong{font:700 10px var(--ds-font-code);color:var(--ds-text);white-space:nowrap}
+.storm-fan small{font:700 9px var(--ds-font-code);color:var(--ds-muted);white-space:nowrap}
+@keyframes storm-fan-rotate{to{transform:rotate(360deg)}}
+.storm-cpu-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--ds-muted)}
+.storm-cpu-row strong{font:700 12px var(--ds-font-code);color:var(--ds-text)}
+.storm-server-details>.storm-meter{width:100%;margin:-5px 0 0}
+.storm-site-preview{margin-top:auto;overflow:hidden;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-sunken)}
+.storm-site-head{display:flex;align-items:center;gap:9px;height:29px;padding:0 11px;background:var(--ds-panel-raised);border-bottom:1px solid var(--ds-line);font:600 10px var(--ds-font-code);color:var(--ds-muted)}
+.storm-site-head strong{margin-left:auto;font-weight:750;color:var(--ds-success)}
+.storm-site-led{width:7px;height:7px;background:var(--ds-success);border-radius:50%}
+.storm-site-preview p{margin:0;padding:11px 13px;color:var(--ds-text);font-size:12px;font-weight:650}
+.storm-site-preview.is-offline .storm-site-head strong,.storm-site-preview.is-offline .storm-site-led{background:var(--ds-danger);color:var(--ds-danger)}
+.storm-site-preview.is-offline p{color:var(--ds-danger)}
+.storm-edge-caption{font-size:10px;line-height:1.45;color:var(--ds-muted)}
+.storm-in-session .storm-console-panel{display:flex;flex-direction:column;gap:9px;min-height:0}
+.storm-in-session .storm-console{margin:0;flex:1 1 0;min-height:0;padding:12px 13px;display:flex;flex-direction:column;justify-content:space-around;gap:3px;overflow:hidden;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-sunken);font:clamp(10px,.85vw,11.5px)/1.35 var(--ds-font-code)}
+.storm-in-session .storm-console>div{white-space:normal;overflow-wrap:anywhere;min-width:0}
+.storm-terminal-prompt{color:var(--accent);font-weight:700}
+.storm-terminal-muted{color:var(--ds-muted);display:inline-block;min-width:64px}
+.storm-operator-message{padding-top:7px;margin-top:4px;border-top:1px solid var(--ds-line);color:var(--ds-muted)}
+.storm-operator-message strong{color:var(--accent)}
+.storm-in-session .storm-console-prompt{display:flex;align-items:center;gap:8px;margin:0;padding:0;color:var(--accent);font-size:11px}
+.storm-session-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:17px;flex:0 0 17px;color:var(--ds-muted);font-size:10px}
+.storm-controller-line{fill:none;stroke:var(--ds-muted);stroke-width:1.2;stroke-dasharray:4 7;opacity:.45}
+.storm-hacker-node>rect{fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:2}
+.storm-hacker-node>path:first-of-type{fill:color-mix(in srgb,var(--accent) 29%,var(--ds-sunken))}
+.storm-hacker-node>path:nth-of-type(2){fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round}
+.storm-hacker-node>rect:nth-of-type(2){fill:var(--ds-sunken);stroke:var(--accent);stroke-width:1.3}
+.storm-hacker-node text{fill:var(--ds-muted);font:700 12px var(--ds-font-code);text-anchor:middle}
+.storm-in-session .storm-diagram-label{font:700 11px var(--ds-font-code)}
+.storm-in-session .storm-diagram-count{font:10px var(--ds-font-code)}
+.storm-in-session .storm-bot-node rect{fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:1.5}
+.storm-in-session .storm-bot-node circle{fill:var(--accent)}
+.storm-in-session .storm-bot-node text{fill:var(--ds-muted);font:700 10px var(--ds-font-code);letter-spacing:.07em;text-anchor:middle}
+.storm-proxy-edge rect{fill:color-mix(in srgb,var(--ds-success) 10%,var(--ds-panel-raised));stroke:var(--ds-success);stroke-width:2}
+.storm-proxy-edge path:first-of-type{fill:color-mix(in srgb,var(--ds-success) 18%,var(--ds-panel));stroke:var(--ds-success);stroke-width:1.8}
+.storm-proxy-edge path:nth-of-type(2){fill:none;stroke:var(--ds-success);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.storm-proxy-edge text{fill:var(--ds-success);font:700 10px var(--ds-font-code);text-anchor:middle}
+.storm-in-session .storm-server-graphic>rect:first-child{fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:2}
+.storm-in-session .storm-server-graphic text{fill:var(--accent);font:700 12px var(--ds-font-code);text-anchor:middle}
+.storm-accepted-path{stroke:var(--ds-success)}
+.storm-packet.is-filtered{fill:var(--ds-danger);opacity:.72}
+.storm-in-session .storm-network-svg .storm-packet{filter:url(#storm-glow)}
+.storm-setup{justify-content:center;min-height:calc(100dvh - var(--ds-appbar-h));padding:24px 18px 26px;gap:0}
+.storm-setup-mark{width:65px;height:65px;margin:0 auto 15px;display:grid;place-items:center;border-radius:17px;border:1px solid color-mix(in srgb,var(--accent) 39%,var(--ds-line));background:var(--ds-accent-soft);color:var(--accent)}
+.storm-setup-title h1{font-size:clamp(30px,4vw,46px);margin:0}
+.storm-setup-title p{max-width:480px;font-size:13px;margin:9px auto 0;line-height:1.45}
+.storm-setup .storm-setup-form{margin-top:18px;padding:18px 22px;gap:14px;box-shadow:none}
+.storm-setup .storm-setup-form>label{gap:6px}
+.storm-setup .storm-setup-form input:not([type="range"]){height:39px}
+.storm-proxy-setup{display:flex!important;flex-direction:row!important;align-items:center;gap:10px!important;padding:12px;border:1px solid var(--ds-line);border-radius:9px;background:var(--ds-sunken);cursor:pointer}
+.storm-proxy-setup input[type="checkbox"]{width:18px!important;height:18px!important;flex:0 0 18px;accent-color:var(--accent)}
+.storm-proxy-setup span{display:flex;flex-direction:column;gap:4px}
+.storm-proxy-setup strong{font-size:12px}
+.storm-proxy-setup small{font-size:10px;font-weight:400;color:var(--ds-muted);line-height:1.4}
+.storm-setup .storm-setup-form .storm-primary{min-height:42px}
+@media (max-width:1080px){
+ .storm-app.storm-in-session{height:auto;min-height:100dvh;overflow:auto;display:block}
+ .storm-session{height:auto;min-height:0;display:flex;flex-direction:column;overflow:visible}
+ .storm-in-session .storm-intro{align-items:flex-start;flex-wrap:wrap}
+ .storm-in-session .storm-main-grid{display:flex;flex-direction:column;flex:auto}
+ .storm-left-stack{display:flex;flex-direction:column}
+ .storm-in-session .storm-network{min-height:340px;flex:auto}
+ .storm-in-session .storm-network-svg{min-height:235px;height:auto}
+ .storm-in-session .storm-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}
+ .storm-in-session .storm-side>.storm-panel{min-height:270px}
+ .storm-in-session .storm-console{min-height:215px}
+}
+@media (max-width:700px){
+ .storm-in-session .storm-intro{display:block}
+ .storm-in-session .storm-controls{margin-top:11px;flex-wrap:wrap}
+ .storm-in-session .storm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .storm-in-session .storm-metric{padding:12px 13px;min-height:83px}
+ .storm-in-session .storm-metric>strong{font-size:20px}
+ .storm-in-session .storm-side{grid-template-columns:minmax(0,1fr)}
+ .storm-in-session .storm-side>.storm-panel{min-height:0}
+ .storm-in-session .storm-console{font-size:11px}
+ .storm-session-footer{align-items:flex-start;flex-direction:column;height:auto;gap:4px;margin:5px 0}
+ .storm-in-session .storm-network{min-height:270px}
+ .storm-in-session .storm-network-svg{min-height:190px}
+ .storm-network-foot span:nth-child(2){display:none}
+}
+@media (max-height:740px) and (min-width:1081px){
+ .storm-session{gap:7px;padding-top:8px;padding-bottom:6px}
+ .storm-in-session .storm-intro{min-height:40px}
+ .storm-in-session .storm-metric{min-height:74px;padding:8px 12px}
+ .storm-in-session .storm-metric>strong{font-size:21px}
+ .storm-in-session .storm-chart-panel{flex-basis:85px}
+ .storm-in-session .storm-side>.storm-panel{padding:10px 12px}
+ .storm-in-session .storm-console{padding:7px 9px;font-size:10px}
+ .storm-system-health{padding:7px}
+ .storm-server-details{gap:7px}
+}
+@media (prefers-reduced-motion:reduce){
+ .storm-fan svg,.storm-toggle-track i{animation:none!important;transition:none!important}
+}
