@@ -120,7 +120,7 @@ export function formatTraffic(rps: number): string {
   return gbps >= 1000 ? (gbps / 1000).toFixed(2) + ' Tbps' : gbps.toFixed(2) + ' Gbps';
 }
 
-type PingEntry = { id: number; text: string; latency: number | null };
+export type PingEntry = { id: number; text: string; latency: number | null };
 
 export function appendPingHistory(previous: PingEntry[], entry: PingEntry, limit = 10): PingEntry[] {
   return [...previous.slice(-Math.max(0, limit - 1)), entry];
@@ -535,7 +535,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
       <div className="storm-main-grid">
         <div className="storm-left-stack">
-          <section className="storm-panel storm-network" aria-label="Animated network traffic">
+          <section className={'storm-panel storm-network' + (mode === 'running' ? ' is-active' : '')} aria-label="Animated network traffic">
             <div className="storm-panel-heading"><h2>Network traffic</h2></div>
             <svg ref={networkRef} viewBox="0 0 1200 450" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
               <g className="storm-stage-titles">
