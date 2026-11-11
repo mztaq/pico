@@ -37,6 +37,7 @@
 .storm-setup-form .storm-disclaimer{margin:0;text-align:center}
 .storm-disclaimer svg{flex-shrink:0}
 .storm-error{color:var(--ds-danger);font-size:12px;margin:0}
+.storm-intro,.storm-metrics,.storm-main-grid,.storm-chart-panel,.storm-bottom-note{max-width:1400px;margin-left:auto;margin-right:auto}
 .storm-intro{padding:30px 24px 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
 .storm-intro h1{font-size:34px}
 .storm-intro p{margin:10px 0 0;color:var(--ds-muted);font-size:13px;line-height:1.7}
