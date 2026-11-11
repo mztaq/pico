@@ -175,15 +175,26 @@
 /* Traffic Storm starts with one hacker-name field, not CPU registers or controls.
    Use the selected theme during React.lazy loading and the HTML boot phase. */
 .pico-load-stage[data-loading-workspace="Traffic Storm"]{
-  --pico-load-surface:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 88%,var(--pico-boot-foreground,#fff) 12%);
-  --pico-load-border:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 78%,var(--pico-boot-foreground,#fff) 22%);
-  --pico-load-shimmer-a:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 92%,var(--pico-boot-foreground,#fff) 8%);
-  --pico-load-shimmer-b:color-mix(in srgb,var(--accent,var(--pico-boot-accent,#cba6f7)) 25%,var(--pico-load-shimmer-a));
-  background:var(--bg,var(--pico-boot-bg,#1e1e2e));
+  /* The outer Suspense fallback sits outside .pico-app. Its inherited :root
+     --accent is Pico's default blue, not the visitor's saved theme. */
+  --pico-storm-load-bg:var(--pico-boot-bg,#1e1e2e);
+  --pico-storm-load-accent:var(--pico-boot-accent,#cba6f7);
+  --pico-storm-load-fg:var(--pico-boot-foreground,#fff);
+  --pico-load-surface:color-mix(in srgb,var(--pico-storm-load-bg) 88%,var(--pico-storm-load-fg) 12%);
+  --pico-load-border:color-mix(in srgb,var(--pico-storm-load-bg) 78%,var(--pico-storm-load-fg) 22%);
+  --pico-load-shimmer-a:color-mix(in srgb,var(--pico-storm-load-bg) 92%,var(--pico-storm-load-fg) 8%);
+  --pico-load-shimmer-b:color-mix(in srgb,var(--pico-storm-load-accent) 25%,var(--pico-load-shimmer-a));
+  background:var(--pico-storm-load-bg);
+}
+/* The inner workspace Suspense fallback inherits the current live theme. */
+.pico-app .pico-load-stage[data-loading-workspace="Traffic Storm"]{
+  --pico-storm-load-bg:var(--bg);
+  --pico-storm-load-accent:var(--accent);
+  --pico-storm-load-fg:var(--text);
 }
 .pico-load-stage[data-loading-workspace="Traffic Storm"] .pico-load-topbar{
   min-height:52px;flex-basis:52px;
-  background:color-mix(in srgb,var(--bg,var(--pico-boot-bg,#1e1e2e)) 90%,#000 10%);
+  background:color-mix(in srgb,var(--pico-storm-load-bg) 90%,#000 10%);
 }
 .pico-load-storm-content{
   flex:1 1 auto;min-height:0;display:grid;place-items:center;
