@@ -685,18 +685,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   className="storm-network-link storm-network-link--approved"/>)}
               </g>
 
-              <g className="storm-diagram-annotations" aria-hidden="true">
-                {diagramAnnotations(mode, proxyCount, serverCount, proxyLoads.some(load => load > 1), pressure, serverYs[serverYs.length - 1]).map(note => {
-                  const angle = Math.atan2(note.tipY - note.fromY, note.tipX - note.fromX) * 180 / Math.PI;
-                  return <g key={note.id} className={'storm-diagram-annotation storm-diagram-annotation--' + note.tone}>
-                    <text x={note.x} y={note.y}>{note.text}</text>
-                    <path className="storm-annotation-leader" d={'M ' + note.fromX + ' ' + note.fromY + ' L ' + note.tipX + ' ' + note.tipY}/>
-                    <path className="storm-annotation-arrow" d="M -7 -4 L 0 0 L -7 4"
-                      transform={'translate(' + note.tipX + ' ' + note.tipY + ') rotate(' + angle + ')'}/>
-                  </g>;
-                })}
-              </g>
-
               <g className="storm-hacker-node">
                 <rect x="63" y="187" width="154" height="145" rx="18" className="storm-hacker-shell"/>
                 <circle cx="140" cy="260" r="55" className="storm-hacker-emblem-bg"/>
@@ -754,6 +742,18 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 <circle cx="992" cy={y + 33} r="1.4" className="storm-rack-screw"/>
                 <circle cx="1158" cy={y + 33} r="1.4" className="storm-rack-screw"/>
               </g>)}
+
+              <g className="storm-diagram-annotations" aria-hidden="true">
+                {diagramAnnotations(mode, proxyCount, serverCount, proxyLoads.some(load => load > 1), pressure, serverYs[serverYs.length - 1]).map(note => {
+                  const angle = Math.atan2(note.tipY - note.fromY, note.tipX - note.fromX) * 180 / Math.PI;
+                  return <g key={note.id} className={'storm-diagram-annotation storm-diagram-annotation--' + note.tone}>
+                    <text x={note.x} y={note.y}>{note.text}</text>
+                    <path className="storm-annotation-leader" d={'M ' + note.fromX + ' ' + note.fromY + ' L ' + note.tipX + ' ' + note.tipY}/>
+                    <path className="storm-annotation-arrow" d="M -7 -4 L 0 0 L -7 4"
+                      transform={'translate(' + note.tipX + ' ' + note.tipY + ') rotate(' + angle + ')'}/>
+                  </g>;
+                })}
+              </g>
 
               {mode === 'running' && BOT_Y.map((_, index) =>
                 <circle key={'command-pulse-' + index} className="storm-command-pulse" r="2.8">
