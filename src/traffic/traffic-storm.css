@@ -1017,21 +1017,21 @@
   .storm-traffic-chart svg{min-height:140px}
 }
 
-/* Live spike detection is restrained, brief and disabled for reduced motion. */
-.storm-metric-incoming,.storm-traffic-chart{position:relative;isolation:isolate}
-.storm-metric-incoming{overflow:hidden}
-.storm-metric-incoming>span,.storm-metric-incoming>strong,
-.storm-traffic-chart-heading,.storm-traffic-chart>svg{position:relative;z-index:1}
-.storm-surge-flash,.storm-chart-surge-flash{
-  position:absolute;inset:0;z-index:0;pointer-events:none;
-  border-radius:inherit;
-  animation:storm-traffic-surge .65s ease-out both;
-}
-.storm-chart-surge-flash{border-radius:8px}
-@keyframes storm-traffic-surge{
-  0%{background:color-mix(in srgb,var(--accent) 23%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 50%,transparent)}
-  35%{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 28%,transparent)}
-  100%{background:transparent;box-shadow:inset 0 0 0 1px transparent}
+/* Persistent, non-flashing indication of a sharp increase in incoming traffic. */
+.storm-metric-incoming{position:relative}
+.storm-metric-incoming .storm-traffic-warning{
+  position:absolute;
+  top:15px;right:16px;
+  display:grid;place-items:center;
+  width:23px;height:23px;min-width:23px;
+  padding:0;
+  border:1px solid color-mix(in srgb,#ffbc72 64%,var(--ds-line));
+  border-radius:50%;
+  background:color-mix(in srgb,#ffbc72 14%,var(--ds-sunken));
+  color:#ffbc72;
+  font:800 16px/1 var(--ds-font-ui);
+  letter-spacing:0;
+  animation:none;
 }
 /* Functional webserver front panels: independent removable bays and guarded fans. */
 .storm-network-svg .storm-server-graphic .storm-server-shell{
@@ -1079,4 +1079,69 @@
 .storm-network-foot .storm-legend-attack i{background:var(--ds-danger)}
 @media(prefers-reduced-motion:reduce){
   .storm-surge-flash,.storm-chart-surge-flash{animation:none;display:none}
+}
+
+/* One top/bottom edge for both major desktop panels. */
+@media(min-width:1081px){
+  .storm-in-session .storm-main-grid{
+    align-items:stretch;
+    grid-template-columns:minmax(0,1.7fr) minmax(330px,.9fr);
+    gap:12px;
+    min-height:clamp(485px,55dvh,680px);
+  }
+  .storm-in-session .storm-left-stack,
+  .storm-in-session .storm-side{
+    display:flex;flex-direction:column;
+    align-self:stretch;
+    min-width:0;
+    min-height:0;
+  }
+  .storm-in-session .storm-left-stack>.storm-network,
+  .storm-in-session .storm-side>.storm-server-details{
+    height:100%;
+    flex:1 1 auto;
+    min-height:clamp(485px,55dvh,680px);
+    margin:0;
+  }
+  .storm-in-session .storm-side>.storm-server-details{overflow:hidden}
+  .storm-in-session .storm-network-svg{min-height:380px}
+}
+@media(max-width:1080px){
+  .storm-in-session .storm-main-grid{gap:12px}
+  .storm-in-session .storm-side{width:100%;min-width:0}
+  .storm-in-session .storm-side>.storm-server-details{min-height:430px}
+}
+/* Align centered circular proxy logos with the racks, paths, and chassis. */
+.storm-network-svg .storm-proxy-edge .storm-proxy-ring{
+  stroke-width:2.1;
+}
+.storm-network-svg .storm-server-graphic .storm-fan-deck{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-line-strong);
+  stroke-width:1.15;
+}
+.storm-network-svg .storm-server-graphic .storm-fan-ring{
+  fill:var(--ds-panel-raised);
+  stroke:var(--ds-muted);
+  stroke-width:1.3;
+}
+.storm-network-svg .storm-server-graphic .storm-server-rack{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-line-strong);
+  stroke-width:1.2;
+}
+/* Slightly larger labels without adding a second row of copy. */
+.storm-network-svg .storm-stage-titles text{font-size:17.5px}
+.storm-node-heading{font-size:11.5px;letter-spacing:.035em}
+.storm-node-load>div:first-child{font-size:11.5px}
+.storm-node-load strong{font-size:12px}
+.storm-metric>span{font-size:11.5px}
+.storm-infra-label{font-size:12.5px}
+.storm-infra-bar .storm-live-steppers span{font-size:15px}
+.storm-in-session .storm-panel-heading h2{font-size:16px}
+@media(max-width:700px){
+  .storm-network-svg .storm-stage-titles text{font-size:15px}
+  .storm-node-heading{font-size:10.5px}
+  .storm-metric>span{font-size:10.5px}
+  .storm-metric-incoming .storm-traffic-warning{top:9px;right:10px;width:20px;height:20px;min-width:20px;font-size:14px}
 }
