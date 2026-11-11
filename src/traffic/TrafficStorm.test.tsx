@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deliverySoundIntervalMs, deviceHeading, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, sanitizeHackerName, serverPressure, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
+import { TrafficStorm, TRAFFIC_TUTORIAL_STEPS, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deliverySoundIntervalMs, deviceHeading, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, sanitizeHackerName, serverPressure, successfulDeliveryFraction, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -57,6 +57,28 @@ describe('Traffic Storm setup', () => {
     expect(deliverySoundIntervalMs(10000000)).toBe(320);
     expect(deliveredTrafficRps(5000, 2, true)).toBe(0);
     expect(deliveredTrafficRps(5000, 2, false)).toBeGreaterThan(0);
+  });
+
+  it('has a complete progressive tutorial for setup, controls, and recovery', () => {
+    expect(TRAFFIC_TUTORIAL_STEPS).toHaveLength(6);
+    expect(TRAFFIC_TUTORIAL_STEPS[0].title).toBe('Your network');
+    expect(TRAFFIC_TUTORIAL_STEPS.some(step => step.text.includes('Start Simulation'))).toBe(true);
+    expect(TRAFFIC_TUTORIAL_STEPS.some(step => step.text.includes('confirmation chime'))).toBe(true);
+    expect(new Set(TRAFFIC_TUTORIAL_STEPS.map(step => step.title)).size).toBe(6);
+    TRAFFIC_TUTORIAL_STEPS.forEach(step => {
+      expect(step.text.length).toBeGreaterThan(30);
+      expect(step.hint.length).toBeGreaterThan(20);
+    });
+  });
+
+  it('only sounds a successful packet when an online origin has free capacity', () => {
+    expect(successfulDeliveryFraction(0, 3200)).toBe(0);
+    expect(successfulDeliveryFraction(1800, 3200)).toBe(1);
+    expect(successfulDeliveryFraction(3200, 3200)).toBe(1);
+    expect(successfulDeliveryFraction(6400, 3200)).toBe(0.5);
+    expect(successfulDeliveryFraction(16000, 3200)).toBe(0.2);
+    expect(successfulDeliveryFraction(16000, 0)).toBe(0);
+    expect(successfulDeliveryFraction(Number.NaN, 3200)).toBe(0);
   });
 
   it('generates only reserved documentation IP addresses without manual entry', () => {
