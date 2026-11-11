@@ -423,7 +423,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setPingLines([]);
   }
 
-  const status = mode === 'offline' ? 'OFFLINE' : pressure >= 1 ? 'OVERLOADED' : stats.health < 65 ? 'DEGRADED' : 'ONLINE';
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   // Auto-ping uses only this local synthetic latency, never ICMP or network fetch.
   useEffect(() => {
@@ -438,11 +437,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       const line = latency === null
         ? 'Request timed out.'
         : 'Reply from ' + ip + ': bytes=32 time=' + latency + 'ms TTL=55';
-      setPingLines(previous => {
-        const header = 'Pinging ' + ip + ' with 32 bytes of data:';
-        const oldLines = previous[0] === header ? previous.slice(1) : [];
-        return [header, ...oldLines.slice(-11), line];
-      });
+      setPingLines(previous => [...previous.slice(-4), line]);
     };
     tick();
     if (mode === 'paused') return;
@@ -467,15 +462,11 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const visiblePacketCount = Math.max(1, Math.round(16 * trafficRamp(stats.seconds)));
   const serverYs = networkPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
-  const proxyLoad = proxyLoadRatio(stats.rps, proxyCount);
   const effectiveFilter = effectiveProxyFilterRatio(stats.rps, proxyCount);
-  const responseCodes = httpOutcomes(stats.rps, proxyCount, serverCount, mode === 'offline');
   const serverLoads = serverYs.map((_, index) =>
     nodeLoadRatio(arriving, serverCount, index, SERVER_CAPACITY));
   const proxyLoads = proxyYs.map((_, index) =>
     nodeLoadRatio(stats.rps, proxyCount, index, PROXY_CAPACITY));
-  const maximumProxyLoad = Math.max(0, ...proxyLoads);
-  const proxyState = proxyCount === 0 ? 'OFF' : maximumProxyLoad > 1 ? 'OVERLOADED' : maximumProxyLoad > 0.8 ? 'BUSY' : 'FILTERING';
 
   return <main className={'storm-app' + (mode === 'setup' ? ' storm-start' : ' storm-in-session')} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
     <header className="storm-header pico-appbar">
@@ -527,12 +518,11 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
           <div><span>Servers</span><button type="button" aria-label="Remove web server" disabled={serverCount <= 1} onClick={() => setServerCount(value => Math.max(1, value - 1))}><Minus size={13}/></button><strong>{serverCount}</strong><button type="button" aria-label="Add web server" disabled={serverCount >= 4} onClick={() => setServerCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
           <div><span>Proxies</span><button type="button" aria-label="Remove defensive proxy" disabled={proxyCount <= 0} onClick={() => setProxyCount(value => Math.max(0, value - 1))}><Minus size={13}/></button><strong>{proxyCount}</strong><button type="button" aria-label="Add defensive proxy" disabled={proxyCount >= 4} onClick={() => setProxyCount(value => Math.min(4, value + 1))}><Plus size={13}/></button></div>
         </div>
-        {proxyEnabled && <span className={'storm-infra-state' + (maximumProxyLoad > 1 ? ' is-overloaded' : '')}><span className="storm-infra-dot"/>{proxyState} · {Math.round(proxyLoad * 100)}% load</span>}
       </div>
 
       <section className="storm-metrics" aria-label="Simulation metrics">
         <div className="storm-metric"><span>INCOMING TRAFFIC</span><strong>{trafficLabel}</strong></div>
-        <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong><small>{proxyEnabled ? Math.round(effectiveFilter * 100) + '% filtered' : 'Unfiltered'}</small></div>
+        <div className="storm-metric"><span>DELIVERED TRAFFIC</span><strong>{serverTrafficLabel}</strong></div>
         <div className="storm-metric"><span>SERVER HEALTH</span><strong className={stats.health < 35 ? 'storm-danger' : ''}>{Math.ceil(stats.health)}%</strong><div className="storm-meter"><i className="storm-health" style={{ width: stats.health + '%' }}/></div></div>
         <div className="storm-metric"><span>RESPONSE TIME</span><strong>{responseMs === null ? 'OFFLINE' : responseMs + ' ms'}</strong></div>
       </section>
@@ -540,7 +530,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       <div className="storm-main-grid">
         <div className="storm-left-stack">
           <section className="storm-panel storm-network" aria-label="Animated network traffic">
-            <div className="storm-panel-heading"><div><h2>Network traffic</h2></div><span className={'storm-status storm-status--' + status.toLowerCase()}><i/>{status}</span></div>
+            <div className="storm-panel-heading"><h2>Network traffic</h2></div>
             <svg ref={networkRef} viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
               <g className="storm-stage-titles">
                 <text x="140" y="30">HACKER</text>
@@ -657,10 +647,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <aside className="storm-side">
           <section className="storm-panel storm-server-details">
             <div className="storm-panel-heading"><div><h2>Server response</h2><p>{scenario?.ip}</p></div><Server size={18}/></div>
-            <div className="storm-system-health">
-              <div className={'storm-server-icon' + (mode === 'offline' ? ' is-offline' : '')}><Server size={32}/></div>
-              <div><span>WEBSITE STATUS</span><strong className={mode === 'offline' ? 'storm-danger' : ''}>{status}</strong><small>{mode === 'offline' ? 'Unreachable' : responseMs + ' ms · ' + serverCount + ' servers'}</small></div>
-            </div>
             <div className="storm-node-usage">
               <div className="storm-node-group">
                 <div className="storm-node-heading"><Server size={13}/> SERVER CPU</div>
@@ -684,23 +670,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 </div>
               </div>}
             </div>
-            <div className="storm-http">
-              <div className="storm-node-heading">HTTP RESPONSES <span>req/s</span></div>
-              <div className="storm-http-grid">
-                {[
-                  { code: '200', label: 'OK', value: responseCodes.ok },
-                  { code: '429', label: 'Limited', value: responseCodes.rateLimited },
-                  { code: '404', label: 'Not found', value: responseCodes.notFound },
-                  { code: '503', label: 'Unavailable', value: responseCodes.unavailable },
-                  { code: '504', label: 'Timeout', value: responseCodes.timeout },
-                ].map(item => <div className={'storm-http-code storm-http-code--' + item.code} key={item.code}>
-                  <span>{item.code}</span><strong>{compact(item.value)}</strong><small>{item.label}</small>
-                </div>)}
-              </div>
-            </div>
-            <div className="storm-live-ping">
-              <div className="storm-ping-terminal-header"><span><i className={'storm-ping-dot' + (mode === 'offline' ? ' is-offline' : '')}/> AUTO PING</span><span>32 bytes · 1s</span></div>
-              <div ref={pingScrollRef} className="storm-ping-terminal-lines" role="log" aria-live="off" aria-label="Simulated Windows-style ping history">
+            <div className="storm-live-ping" aria-label="Simulated ping replies">
+              <div ref={pingScrollRef} className="storm-ping-terminal-lines" role="log" aria-live="off">
                 {pingLines.map((line,index) => <div key={index}>{line}</div>)}
               </div>
             </div>
@@ -709,6 +680,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       </div>
       <footer className="storm-session-footer"><span>Browser-only simulation. No packets sent.</span><span>{stats.seconds.toFixed(1)}s</span></footer>
     </div>}
-    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>A hacker controls fictional botnet nodes sending simulated traffic. The modeled website becomes slower or goes offline if incoming requests exceed server capacity.</p><p>Choose 1–4 web servers to share the simulated load, and 0–4 defensive proxies to filter it. This model illustrates diminishing returns across proxy layers. Real DDoS protection varies and is not guaranteed by adding proxies or servers.</p><p>Traffic uses fictional units of 512 KiB and 16 requests per bot per second. Proxy capacity is also fictional: excessive incoming requests overload the proxies and reduce filtering. The rolling Windows-style ping log reports fictional latency without contacting the address. HTTP 404 represents a separate missing-route check. Other HTTP codes represent simulated overload, rate limiting or unavailability.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
+    {showHelp && <div className="storm-dialog-backdrop" role="presentation" onClick={() => setShowHelp(false)}><section role="dialog" aria-modal="true" aria-labelledby="storm-help-heading" className="storm-dialog" onClick={event => event.stopPropagation()}><button type="button" aria-label="Close help" className="storm-dialog-close" onClick={() => setShowHelp(false)}><X size={17}/></button><h2 id="storm-help-heading">How Traffic Storm works</h2><p>A hacker controls fictional botnet nodes sending simulated traffic. The modeled website becomes slower or goes offline if incoming requests exceed server capacity.</p><p>Choose 1–4 web servers to share the simulated load, and 0–4 defensive proxies to filter it. This model illustrates diminishing returns across proxy layers. Real DDoS protection varies and is not guaranteed by adding proxies or servers.</p><p>Traffic uses fictional units of 512 KiB and 16 requests per bot per second. Proxy capacity is also fictional: excessive incoming requests overload the proxies and reduce filtering. Ping replies report fictional latency without contacting the address.</p><button type="button" className="storm-primary" onClick={() => setShowHelp(false)}>Got it</button></section></div>}
   </main>;
 }
