@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 
 import { ArrowLeft, ArrowRight, CircleHelp, Minus, Pause, Play, Plus, RotateCcw, Server, ServerCog, Settings2 } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
 import { StormGuidedTour } from './StormGuidedTour';
+import { clearTrafficAlias, readSavedTrafficAlias, sanitizeHackerName, saveTrafficAlias, validateHackerName } from './traffic-alias';
+export { TRAFFIC_ALIAS_STORAGE_KEY, clearTrafficAlias, readSavedTrafficAlias, sanitizeHackerName, saveTrafficAlias, validateHackerName } from './traffic-alias';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
 import { onSoundChange, soundEnabled } from '../app/sound';
@@ -184,7 +186,7 @@ export function serverPressure(rps: number, proxies: number, servers: number): n
 export function serverHealthDrainPerSecond(pressure: number): number {
   if (!Number.isFinite(pressure) || pressure <= 0) return -5;
   if (pressure <= 1) return -5;
-  return Math.min(2.6, 0.48 + 0.46 * Math.log2(pressure));
+  return Math.min(4.5, 0.85 + 0.68 * Math.log2(pressure));
 }
 
 export function formatTraffic(rps: number): string {
@@ -204,48 +206,6 @@ export function effectGain(base: number): number {
 }
 
 type CoolingAudio = { source: AudioBufferSourceNode; filter: BiquadFilterNode; gain: GainNode; hum: OscillatorNode; humGain: GainNode };
-
-/** Only letters and single spaces are accepted for the operator's display name. */
-export function sanitizeHackerName(input: string): string {
-  return input.normalize('NFC').replace(/[^\p{L}\p{M} ]/gu, '').replace(/ {2,}/g, ' ').replace(/^ /, '').slice(0, 24);
-}
-
-export function validateHackerName(input: string): string | null {
-  const name = input.trim();
-  if (name.length < 2) return 'Use at least 2 letters for your name.';
-  if (name.length > 24) return 'Keep your name within 24 characters.';
-  if (!/^[\p{L}\p{M}]+(?: [\p{L}\p{M}]+)*$/u.test(name)) return 'Use letters and spaces only. No numbers or symbols.';
-  return null;
-}
-
-/** Alias stays on this browser so the entry step is only required once. */
-export const TRAFFIC_ALIAS_STORAGE_KEY = 'pico.trafficStorm.alias.v1';
-
-export function readSavedTrafficAlias(storage?: Pick<Storage, 'getItem'>): string | null {
-  try {
-    const source = storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
-    const name = source?.getItem(TRAFFIC_ALIAS_STORAGE_KEY)?.trim().normalize('NFC');
-    return name && validateHackerName(name) === null ? name : null;
-  } catch { return null; }
-}
-
-export function saveTrafficAlias(name: string, storage?: Pick<Storage, 'setItem'>): boolean {
-  const clean = name.trim().normalize('NFC');
-  if (validateHackerName(clean)) return false;
-  try {
-    const target = storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
-    if (!target) return false;
-    target.setItem(TRAFFIC_ALIAS_STORAGE_KEY, clean);
-    return true;
-  } catch { return false; }
-}
-
-export function clearTrafficAlias(storage?: Pick<Storage, 'removeItem'>): void {
-  try {
-    const target = storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
-    target?.removeItem(TRAFFIC_ALIAS_STORAGE_KEY);
-  } catch { /* In restricted browsers, the current session still resets. */ }
-}
 
 /** Short, state-aware notes placed beside the actual network routes and racks. */
 export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: number, proxiesOverloaded: boolean, pressure: number, lastServerY: number) {
