@@ -315,22 +315,23 @@ describe('Traffic Storm setup', () => {
     expect(serverHealthDrainPerSecond(0)).toBe(-5);
     expect(serverHealthDrainPerSecond(1)).toBe(-5);
     expect(serverHealthDrainPerSecond(2)).toBeGreaterThan(0);
-    expect(serverHealthDrainPerSecond(130)).toBe(13);
+    expect(serverHealthDrainPerSecond(130)).toBe(18);
     expect(serverHealthDrainPerSecond(130)).toBeGreaterThan(0);
-    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(7);
-    expect(100 / serverHealthDrainPerSecond(130)).toBeLessThan(8);
-    expect(serverHealthDrainPerSecond(8)).toBeGreaterThan(7);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeGreaterThan(5);
+    expect(100 / serverHealthDrainPerSecond(130)).toBeLessThan(6);
+    expect(serverHealthDrainPerSecond(8)).toBeGreaterThan(9);
     expect(serverHealthDrainPerSecond(Number.NaN)).toBe(-5);
   });
 
-  it('reaches full traffic over eight seconds with a smooth ramp', () => {
+  it('reaches full traffic over five seconds with a smooth ramp', () => {
     expect(trafficRamp(-2)).toBeCloseTo(0.003);
     expect(trafficRamp(0)).toBeCloseTo(0.003);
-    expect(trafficRamp(2)).toBeLessThan(trafficRamp(4));
-    expect(trafficRamp(4)).toBeLessThan(trafficRamp(6));
-    expect(trafficRamp(6)).toBeLessThan(trafficRamp(8));
+    expect(trafficRamp(1)).toBeLessThan(trafficRamp(2));
+    expect(trafficRamp(2)).toBeLessThan(trafficRamp(3));
+    expect(trafficRamp(3)).toBeLessThan(trafficRamp(4));
+    expect(trafficRamp(4)).toBeLessThan(trafficRamp(5));
+    expect(trafficRamp(5)).toBeCloseTo(1);
     expect(trafficRamp(8)).toBeCloseTo(1);
-    expect(trafficRamp(16)).toBeCloseTo(1);
     expect(trafficRamp(25)).toBeCloseTo(1);
   });
 
@@ -351,9 +352,10 @@ describe('Traffic Storm setup', () => {
     const defended = run(20_000, 4, 4);
     expect(direct.peakAt).not.toBeNull();
     expect(direct.offlineAt).toBeGreaterThan(direct.peakAt!);
-    expect(direct.offlineAt).toBeLessThan(12);
+    expect(direct.offlineAt).toBeLessThan(8);
     expect(defended.offlineAt).toBeGreaterThan(direct.offlineAt);
-    expect(defended.offlineAt).toBeLessThan(30);
+    expect(defended.offlineAt).toBeGreaterThan(12);
+    expect(defended.offlineAt).toBeLessThan(20);
   });
 
   it('models stronger proxies that saturate under excessive traffic', () => {
