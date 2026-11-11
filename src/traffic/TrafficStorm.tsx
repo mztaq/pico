@@ -460,7 +460,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const visibleSurvivorCount = proxyEnabled ? visualSurvivorCount(visiblePacketCount, effectiveProxyFilterRatio(stats.rps, proxyCount)) : 0;
   const serverYs = networkPositions(serverCount);
   const proxyYs = networkPositions(proxyCount);
-  const effectiveFilter = effectiveProxyFilterRatio(stats.rps, proxyCount);
   const serverLoads = serverYs.map((_, index) =>
     nodeLoadRatio(arriving, serverCount, index, SERVER_CAPACITY));
   const proxyLoads = proxyYs.map((_, index) =>
