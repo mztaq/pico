@@ -207,18 +207,33 @@ export function effectGain(base: number): number {
 
 type CoolingAudio = { source: AudioBufferSourceNode; filter: BiquadFilterNode; gain: GainNode; hum: OscillatorNode; humGain: GainNode };
 
-/** Short, state-aware notes placed beside the actual network routes and racks. */
+/** Brief captions with leader arrows that point to real paths and nodes. */
 export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: number, proxiesOverloaded: boolean, pressure: number, lastServerY: number) {
   const active = mode === 'running' || mode === 'offline';
+  const firstProxyY = proxyCount > 0 ? networkPositions(proxyCount)[0] : null;
+  const proxyTextY = firstProxyY === null ? 118 : Math.max(51, firstProxyY - 90);
   return [
-    { id: 'commands', text: active ? 'Sending commands' : mode === 'paused' ? 'Commands paused' : 'Command links',
-      x: 222, y: 130, width: 131, tone: 'accent' },
-    { id: 'flood', text: active ? serverCount === 1 ? 'Flooding server' : 'Flooding servers' : mode === 'paused' ? 'Traffic paused' : 'Attack route',
-      x: 493, y: 130, width: 132, tone: 'danger' },
-    { id: 'proxies', text: proxyCount === 0 ? 'Direct to server' : mode === 'ready' ? 'Proxies ready' : proxiesOverloaded ? 'Proxies overloaded' : 'Filtering traffic',
-      x: 816, y: 130, width: 151, tone: proxyCount === 0 ? 'muted' : proxiesOverloaded ? 'danger' : 'success' },
-    { id: 'server', text: mode === 'offline' ? 'Server offline' : mode === 'ready' ? 'Server ready' : mode === 'paused' ? 'Server paused' : pressure > 1 ? 'Server overloaded' : 'Serving requests',
-      x: 998, y: Math.min(438, lastServerY + 47), width: 154, tone: mode === 'offline' || (mode === 'running' && pressure > 1) ? 'danger' : 'accent' },
+    {
+      id: 'commands', text: active ? 'Sending commands' : mode === 'paused' ? 'Commands paused' : 'Command links',
+      x: 190, y: 109, fromX: 292, fromY: 114, tipX: 300, tipY: 154, tone: 'accent',
+    },
+    {
+      id: 'flood', text: active ? serverCount === 1 ? 'Flooding server' : 'Flooding servers' : mode === 'paused' ? 'Traffic paused' : 'Attack route',
+      x: 488, y: 102, fromX: 585, fromY: 108, tipX: 591, tipY: 158, tone: 'danger',
+    },
+    {
+      id: 'proxies', text: proxyCount === 0 ? 'Direct to server' : mode === 'ready' ? 'Proxies ready' : proxiesOverloaded ? 'Proxies overloaded' : 'Filtering traffic',
+      x: 807, y: proxyTextY,
+      fromX: firstProxyY === null ? 889 : 812, fromY: proxyTextY + 8,
+      tipX: firstProxyY === null ? 920 : 789, tipY: firstProxyY === null ? 187 : firstProxyY - 8,
+      tone: proxyCount === 0 ? 'muted' : proxiesOverloaded ? 'danger' : 'success',
+    },
+    {
+      id: 'server', text: mode === 'offline' ? 'Server offline' : mode === 'ready' ? 'Server ready' : mode === 'paused' ? 'Server paused' : pressure > 1 ? 'Server overloaded' : 'Serving requests',
+      x: 966, y: Math.min(454, lastServerY + 68),
+      fromX: 1085, fromY: Math.min(443, lastServerY + 52), tipX: 1099, tipY: lastServerY + 29,
+      tone: mode === 'offline' || (mode === 'running' && pressure > 1) ? 'danger' : 'accent',
+    },
   ] as const;
 }
 
@@ -671,13 +686,15 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>
 
               <g className="storm-diagram-annotations" aria-hidden="true">
-                {diagramAnnotations(mode, proxyCount, serverCount, proxyLoads.some(load => load > 1), pressure, serverYs[serverYs.length - 1]).map(note =>
-                  <g key={note.id} className={'storm-diagram-annotation storm-diagram-annotation--' + note.tone}
-                    transform={'translate(' + note.x + ' ' + note.y + ')'}>
-                    <rect width={note.width} height="22" rx="6"/>
-                    <text x={note.width / 2} y="15">{note.text}</text>
-                  </g>
-                )}
+                {diagramAnnotations(mode, proxyCount, serverCount, proxyLoads.some(load => load > 1), pressure, serverYs[serverYs.length - 1]).map(note => {
+                  const angle = Math.atan2(note.tipY - note.fromY, note.tipX - note.fromX) * 180 / Math.PI;
+                  return <g key={note.id} className={'storm-diagram-annotation storm-diagram-annotation--' + note.tone}>
+                    <text x={note.x} y={note.y}>{note.text}</text>
+                    <path className="storm-annotation-leader" d={'M ' + note.fromX + ' ' + note.fromY + ' L ' + note.tipX + ' ' + note.tipY}/>
+                    <path className="storm-annotation-arrow" d="M -7 -4 L 0 0 L -7 4"
+                      transform={'translate(' + note.tipX + ' ' + note.tipY + ') rotate(' + angle + ')'}/>
+                  </g>;
+                })}
               </g>
 
               <g className="storm-hacker-node">
