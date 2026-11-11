@@ -61,7 +61,7 @@ export function StormGuidedTour({ steps, step, onStep, onClose }: {
   useLayoutEffect(() => {
     if (!current) return;
     const element = document.querySelector<HTMLElement>('[data-storm-tour="' + current.target + '"]');
-    element?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+    element?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
     let frame = 0;
     function measure() {
       const rect = element?.getBoundingClientRect();
