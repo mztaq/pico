@@ -12,6 +12,8 @@ const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measu
 const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const PROXY_CAPACITY = 60_000; // Illustrative requests/sec per defensive proxy, not real hardware throughput.
 export const FAN_BLADE_ANGLES = [0, 72, 144, 216, 288] as const;
+export const SERVER_FAN_Y_OFFSET = -20;
+export const SERVER_RACK_Y_OFFSET = -2;
 
 /** RFC 5737 reserved addresses, used only as simulated server labels. */
 export function generateDemoIp(random: () => number = Math.random): string {
@@ -90,12 +92,12 @@ export function isTrafficSurge(previous: number, current: number): boolean {
 }
 
 /** Preserve the first surge warning while modeled traffic stays elevated.
- * A 70% threshold prevents the icon flickering as burst levels fluctuate.
+ * A 60% threshold prevents the icon flickering as burst levels fluctuate.
  */
 export function nextTrafficWarningFloor(floor: number | null, previousRps: number, currentRps: number): number | null {
   if (!Number.isFinite(currentRps) || currentRps < 0) return null;
   if (floor !== null && currentRps >= floor) return floor;
-  if (isTrafficSurge(previousRps, currentRps)) return currentRps * 0.70;
+  if (isTrafficSurge(previousRps, currentRps)) return currentRps * 0.60;
   return null;
 }
 
@@ -591,7 +593,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               {serverYs.map((y, index) => <g key={'server-' + index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : serverLoads[index] > 1 ? ' is-critical' : '')}>
                 <rect x="990" y={y - 37} width="170" height="74" rx="9" className="storm-server-shell"/>
                 <rect x="1004" y={y - 34} width="142" height="28" rx="5" className="storm-fan-deck"/>
-                {[1050, 1100].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + (y - 20) + ')'} className="storm-rack-fan">
+                {[1050, 1100].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + (y + SERVER_FAN_Y_OFFSET) + ')'} className="storm-rack-fan">
                   <circle r="11.5" className="storm-fan-ring"/>
                   <circle r="9.7" className="storm-fan-shroud"/>
                   <g className="storm-fan-rotor">
@@ -600,7 +602,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   <circle r="2.8" className="storm-fan-hub"/>
                   <path d="M -8 -8 L 8 8 M -8 8 L 8 -8" className="storm-fan-grille"/>
                 </g>)}
-                <rect x="1004" y={y - 2} width="142" height="35" rx="5" className="storm-server-rack"/>
+                <rect x="1004" y={y + SERVER_RACK_Y_OFFSET} width="142" height="35" rx="5" className="storm-server-rack"/>
                 {[0, 12, 24].map((offset, bay) => <g key={'bay-' + bay} className="storm-rack-unit">
                   <rect x="1010" y={y + offset} width="130" height="9" rx="2.3" className="storm-server-slot"/>
                   <circle cx="1018" cy={y + offset + 4.5} r="2" className="storm-led"/>
