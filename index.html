@@ -39,6 +39,13 @@
       if (/^\/app\/traffic\/?$/.test(location.pathname) ||
           (/^\/app\/?$/.test(location.pathname) && new URLSearchParams(location.search).get('tool') === 'traffic')) {
         document.documentElement.classList.add('pico-initial-traffic-route');
+        try {
+          const name = localStorage.getItem('pico.trafficStorm.alias.v1')?.trim().normalize('NFC');
+          if (name && name.length >= 2 && name.length <= 24 &&
+              /^[\p{L}\p{M}]+(?: [\p{L}\p{M}]+)*$/u.test(name)) {
+            document.documentElement.classList.add('pico-initial-traffic-saved-alias');
+          }
+        } catch { /* Name entry is the fallback when storage is disabled. */ }
       }
       // Resolve the saved workspace theme before React and its CSS load.
       if (document.documentElement.classList.contains('pico-app-route')) {
@@ -90,6 +97,58 @@
       .pico-initial-traffic-entry .button{width:100%;height:46px;margin-top:23px;border-radius:9px}
       @media(max-width:600px){.pico-initial-traffic-entry .title{height:35px;width:86%}}
       @media(prefers-reduced-motion:reduce){.pico-initial-traffic-shimmer{animation:none}}
+      /* Saved aliases use the network dashboard as the first-paint placeholder. */
+      .pico-initial-traffic-saved-alias .pico-initial-traffic-entry{display:none}
+      .pico-initial-traffic-dashboard{display:none}
+      .pico-initial-traffic-saved-alias .pico-initial-traffic-dashboard{
+        display:flex;flex-direction:column;gap:12px;height:calc(100dvh - 52px);
+        padding:18px 22px 22px;overflow-y:auto
+      }
+      .pico-initial-traffic-dash-heading,.pico-initial-traffic-dash-toolbar{
+        display:flex;align-items:center;justify-content:space-between;gap:14px
+      }
+      .pico-initial-traffic-dash-heading{height:34px;flex-shrink:0}
+      .pico-initial-traffic-dash-heading .pico-initial-traffic-shimmer:first-child{height:27px;width:220px}
+      .pico-initial-traffic-dash-heading .pico-initial-traffic-shimmer:last-child{height:30px;width:225px}
+      .pico-initial-traffic-dash-toolbar{padding:12px 15px;min-height:46px;flex-shrink:0;
+        background:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 88%,var(--pico-boot-foreground,#fff) 12%);
+        border:1px solid color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 76%,var(--pico-boot-foreground,#fff) 24%);border-radius:10px}
+      .pico-initial-traffic-dash-toolbar .pico-initial-traffic-shimmer{height:17px;width:90px}
+      .pico-initial-traffic-dash-toolbar .pico-initial-traffic-shimmer:last-child{width:225px;margin-left:auto}
+      .pico-initial-traffic-dash-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;flex-shrink:0}
+      .pico-initial-traffic-dash-metric,.pico-initial-traffic-dash-panel{
+        border:1px solid color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 76%,var(--pico-boot-foreground,#fff) 24%);
+        background:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 88%,var(--pico-boot-foreground,#fff) 12%);
+        border-radius:10px;padding:16px
+      }
+      .pico-initial-traffic-dash-metric{height:83px;display:flex;flex-direction:column;gap:13px}
+      .pico-initial-traffic-dash-metric .pico-initial-traffic-shimmer:first-child{width:70%;height:12px}
+      .pico-initial-traffic-dash-metric .pico-initial-traffic-shimmer:last-child{width:53%;height:24px}
+      .pico-initial-traffic-dash-main{flex:1;display:grid;grid-template-columns:minmax(0,1.72fr) minmax(260px,.8fr);gap:13px;min-height:270px}
+      .pico-initial-traffic-dash-panel{min-height:0;display:flex;flex-direction:column}
+      .pico-initial-traffic-dash-panel>.pico-initial-traffic-shimmer:first-child{width:145px;height:16px}
+      .pico-initial-traffic-dash-network{width:100%;min-height:200px;flex:1}
+      .pico-initial-traffic-dash-route{fill:none;stroke:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 75%,var(--pico-boot-foreground,#fff) 25%);stroke-width:2;stroke-dasharray:6 9}
+      .pico-initial-traffic-dash-node{fill:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 91%,var(--pico-boot-foreground,#fff) 9%);
+        stroke:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 70%,var(--pico-boot-accent,#cba6f7) 30%);stroke-width:2}
+      .pico-initial-traffic-dash-rack{fill:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 81%,var(--pico-boot-accent,#cba6f7) 19%)}
+      .pico-initial-traffic-dash-side{gap:16px}
+      .pico-initial-traffic-dash-side .pico-initial-traffic-shimmer{width:80%;height:16px}
+      .pico-initial-traffic-dash-side .pico-initial-traffic-shimmer:nth-child(3){width:57%}
+      .pico-initial-traffic-dash-side .pico-initial-traffic-shimmer:last-child{height:116px;width:100%;margin-top:auto}
+      @media(max-width:810px){
+        .pico-initial-traffic-saved-alias .pico-initial-traffic-dashboard{padding:13px}
+        .pico-initial-traffic-dash-main{grid-template-columns:1fr;min-height:0}
+        .pico-initial-traffic-dash-panel{min-height:220px}
+        .pico-initial-traffic-dash-side{min-height:160px}
+      }
+      @media(max-width:540px){
+        .pico-initial-traffic-dash-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .pico-initial-traffic-dash-heading .pico-initial-traffic-shimmer:first-child{width:140px}
+        .pico-initial-traffic-dash-heading .pico-initial-traffic-shimmer:last-child{width:100px}
+        .pico-initial-traffic-dash-toolbar .pico-initial-traffic-shimmer{width:45px}
+        .pico-initial-traffic-dash-toolbar .pico-initial-traffic-shimmer:last-child{width:90px}
+      }
       .pico-app-route .pico-loading{display:none}
       html, body { margin: 0; min-height: 100%; background: #15131e; }
       .pico-app-route, .pico-app-route body { background: var(--pico-boot-bg, #1e1e2e); }
@@ -182,6 +241,40 @@
         <div class="pico-initial-traffic-shimmer field"></div>
         <div class="pico-initial-traffic-help"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
         <div class="pico-initial-traffic-shimmer button"></div>
+      </div>
+      <div class="pico-initial-traffic-dashboard" aria-hidden="true">
+        <div class="pico-initial-traffic-dash-heading"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+        <div class="pico-initial-traffic-dash-toolbar"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+        <div class="pico-initial-traffic-dash-metrics">
+          <div class="pico-initial-traffic-dash-metric"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+          <div class="pico-initial-traffic-dash-metric"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+          <div class="pico-initial-traffic-dash-metric"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+          <div class="pico-initial-traffic-dash-metric"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+        </div>
+        <div class="pico-initial-traffic-dash-main">
+          <div class="pico-initial-traffic-dash-panel"><div class="pico-initial-traffic-shimmer"></div>
+            <svg class="pico-initial-traffic-dash-network" viewBox="0 0 1200 405" preserveAspectRatio="xMidYMid meet">
+          <path class="pico-initial-traffic-dash-route" d="M 220 215 C 285 215 303 88 348 88"/><path class="pico-initial-traffic-dash-route" d="M 456 88 C 620 88 760 206 974 206"/>
+          <path class="pico-initial-traffic-dash-route" d="M 220 215 C 285 215 303 165 348 165"/><path class="pico-initial-traffic-dash-route" d="M 456 165 C 620 165 760 206 974 206"/>
+          <path class="pico-initial-traffic-dash-route" d="M 220 215 C 285 215 303 242 348 242"/><path class="pico-initial-traffic-dash-route" d="M 456 242 C 620 242 760 206 974 206"/>
+          <path class="pico-initial-traffic-dash-route" d="M 220 215 C 285 215 303 319 348 319"/><path class="pico-initial-traffic-dash-route" d="M 456 319 C 620 319 760 206 974 206"/>
+            <rect class="pico-initial-traffic-dash-node" x="67" y="153" width="150" height="124" rx="15"/>
+            <circle class="pico-initial-traffic-dash-rack" cx="142" cy="215" r="35"/>
+          <rect class="pico-initial-traffic-dash-node" x="348" y="62" width="108" height="52" rx="10"/>
+          <rect class="pico-initial-traffic-dash-node" x="348" y="139" width="108" height="52" rx="10"/>
+          <rect class="pico-initial-traffic-dash-node" x="348" y="216" width="108" height="52" rx="10"/>
+          <rect class="pico-initial-traffic-dash-node" x="348" y="293" width="108" height="52" rx="10"/>
+            <rect class="pico-initial-traffic-dash-node" x="974" y="165" width="170" height="82" rx="11"/>
+            <rect class="pico-initial-traffic-dash-rack" x="995" y="180" width="130" height="12" rx="4"/>
+            <rect class="pico-initial-traffic-dash-rack" x="995" y="201" width="130" height="12" rx="4"/>
+            <rect class="pico-initial-traffic-dash-rack" x="995" y="222" width="130" height="12" rx="4"/>
+            </svg>
+          </div>
+          <div class="pico-initial-traffic-dash-panel pico-initial-traffic-dash-side">
+            <div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div>
+            <div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div>
+          </div>
+        </div>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
