@@ -196,7 +196,7 @@ export function formatTraffic(rps: number): string {
 
 type Scenario = { hacker: string; bots: number; ip: string };
 type Mode = 'setup' | 'ready' | 'running' | 'paused' | 'offline';
-type EffectName = 'start' | 'warning' | 'shutdown' | 'packet' | 'delivered';
+type EffectName = 'start' | 'warning' | 'shutdown' | 'packet';
 /** More audible effects at typical listening volume, with an upper gain cap. */
 export const EFFECT_GAIN_MULTIPLIER = 3;
 export const EFFECT_GAIN_CAP = 0.18;
@@ -232,21 +232,8 @@ export const TRAFFIC_TUTORIAL_STEPS = [
   { target: 'latency', title: 'Response time', text: 'Response time rises as server pressure increases. When the website goes offline, the indicator changes to OFFLINE.' },
   { target: 'server-panel', title: 'Server and proxy load', text: 'Each server CPU and proxy load appears here. Add or remove nodes to compare how the network behaves.' },
   { target: 'graph', title: 'Traffic graph', text: 'Follow traffic changes over time. Sharp spikes show sudden increases.' },
-  { target: 'sound', title: 'Sound controls', text: 'Use the sound button to mute packet and fan audio. Successful request-group arrivals play a short confirmation chime.' },
+  { target: 'sound', title: 'Sound controls', text: 'Use the sound button to mute packet effects, alerts and fan noise.' },
 ] as const;
-
-/** Only a fraction of packets is served when the fictional origin exceeds capacity. */
-export function successfulDeliveryFraction(deliveredRps: number, serverCapacity: number): number {
-  if (!Number.isFinite(deliveredRps) || deliveredRps <= 0 || !Number.isFinite(serverCapacity) || serverCapacity <= 0) return 0;
-  return Math.min(1, serverCapacity / deliveredRps);
-}
-
-/** A sound plays for each represented successful delivery group, never per raw modeled request. */
-export function deliverySoundIntervalMs(rps: number): number | null {
-  if (!Number.isFinite(rps) || rps <= 0) return null;
-  const intensity = Math.min(4, Math.floor(rps / 2500));
-  return 760 - intensity * 110;
-}
 
 export function TrafficStorm({ onHome }: { onHome: () => void }) {
   // Nothing is sent to this address. The IP is a label in a browser-only model.
@@ -271,8 +258,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const audioRef = useRef<AudioContext | null>(null);
   const coolingRef = useRef<CoolingAudio | null>(null);
   const warningPlayed = useRef(false);
-  const lastDeliverySoundAt = useRef(-Infinity);
-  const deliveryAudioState = useRef({ intervalMs: null as number | null, fraction: 0 });
   const lastFrame = useRef(0);
   const networkRef = useRef<SVGSVGElement | null>(null);
   const fanMotion = useRef({ angle: 0, speed: 0 });
@@ -343,10 +328,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       };
       if (name === 'packet') {
         tone(430, 350, 0.038, 0.016, 0, 'triangle');
-      } else if (name === 'delivered') {
-        // Two brief, light notes signal a grouped packet reaching a live origin.
-        tone(790, 1210, 0.13, 0.019, 0, 'sine');
-        tone(1150, 1540, 0.085, 0.011, 0.048, 'triangle');
       } else if (name === 'start') {
         tone(220, 480, 0.23, 0.035);
         tone(380, 660, 0.25, 0.028, 0.12);
@@ -474,12 +455,10 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     warningPlayed.current = false;
     lastFrame.current = performance.now();
     setError('');
-    lastDeliverySoundAt.current = -Infinity;
     setMode('ready');
   }
 
   function beginSimulation() {
-    lastDeliverySoundAt.current = -Infinity;
     lastFrame.current = performance.now();
     setMode('running');
     playEffect('start');
@@ -528,31 +507,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     return () => window.clearInterval(id);
   }, [mode, packetAudioStep]);
 
-  // Successful confirmation sound is tied to an actual rendered SVG packet reaching
-  // the webserver. SMIL repeatEvent fires at the end of each motion-path traversal.
-  // Audio is rate-limited because each circle represents a large request group.
-  deliveryAudioState.current = {
-    intervalMs: stats.health > 0 ? deliverySoundIntervalMs(Math.min(deliveredRps, SERVER_CAPACITY * serverCount)) : null,
-    fraction: successfulDeliveryFraction(deliveredRps, SERVER_CAPACITY * serverCount),
-  };
-  useEffect(() => {
-    if (mode !== 'running' || !soundOn || !pageVisible) return;
-    const motions = Array.from(networkRef.current?.querySelectorAll('animateMotion[data-storm-delivery]') ?? []);
-    const onArrival = () => {
-      if (document.hidden || !soundEnabled()) return;
-      const { intervalMs, fraction } = deliveryAudioState.current;
-      if (intervalMs === null || Math.random() > fraction) return;
-      const now = performance.now();
-      if (now - lastDeliverySoundAt.current < intervalMs) return;
-      lastDeliverySoundAt.current = now;
-      playEffect('delivered');
-    };
-    for (const motion of motions) motion.addEventListener('repeatEvent', onArrival);
-    return () => {
-      for (const motion of motions) motion.removeEventListener('repeatEvent', onArrival);
-    };
-  }, [mode, soundOn, pageVisible, proxyEnabled, visiblePacketCount, visibleSurvivorCount]);
-
   useEffect(() => {
     if (mode !== 'running') return;
     if (stats.health <= 35 && !warningPlayed.current) {
@@ -568,7 +522,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   function restart() {
     setStats(initialStats());
     warningPlayed.current = false;
-    lastDeliverySoundAt.current = -Infinity;
     lastFrame.current = performance.now();
     setMode('running');
     playEffect('start');
@@ -777,14 +730,14 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               )}
               {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) =>
                 <circle key={'attack-' + index} className="storm-packet-attack" r={index % 4 === 0 ? 3.5 : 2.6}>
-                  <animateMotion data-storm-delivery={!proxyEnabled ? 'true' : undefined} dur={(0.42 + index % 5 * 0.055) + 's'} begin={(-index * 0.075) + 's'} repeatCount="indefinite">
+                  <animateMotion dur={(0.42 + index % 5 * 0.055) + 's'} begin={(-index * 0.075) + 's'} repeatCount="indefinite">
                     <mpath href={'#storm-attack-link-' + (index % 4)}/>
                   </animateMotion>
                 </circle>
               )}
               {mode === 'running' && proxyEnabled && Array.from({length:visibleSurvivorCount}, (_, index) =>
                 <circle key={'approved-' + index} className="storm-packet-survivor" r="3">
-                  <animateMotion data-storm-delivery="true" dur={(1.35 + index % 4 * 0.13) + 's'} begin={(-index * 0.31) + 's'} repeatCount="indefinite">
+                  <animateMotion dur={(1.35 + index % 4 * 0.13) + 's'} begin={(-index * 0.31) + 's'} repeatCount="indefinite">
                     <mpath href={'#storm-survivor-link-' + (index % 4)}/>
                   </animateMotion>
                 </circle>
