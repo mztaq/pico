@@ -597,7 +597,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 <circle cx="733" cy={y + 12} r="3" className="storm-proxy-led"/>
                 <path d={'M 744 ' + (y - 9) + ' h 22 M 744 ' + (y + 12) + ' h 22'} className="storm-proxy-slot"/>
                 <text x="750" y={y + 45} className="storm-proxy-number">PROXY {index + 1}</text>
-                {proxyLoads[index] > 1 && <text x="750" y={y + 58} className="storm-proxy-overload">OVERLOADED</text>}
+                {proxyLoads[index] > 1 && <text x="780" y={y - 16} className="storm-proxy-overload">!</text>}
               </g>)}
 
               {serverYs.map((y, index) => <g key={'server-' + index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : serverLoads[index] > 1 ? ' is-critical' : '')}>
@@ -615,7 +615,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   <circle r="2.4" className="storm-fan-hub"/>
                 </g>)}
                 <text x="1049" y={y - 41} className="storm-server-name">SERVER 0{index + 1}</text>
-                <text x="1073" y={y + 51} className="storm-server-caption">{mode === 'offline' ? 'OFFLINE' : serverLoads[index] > 1 ? 'HIGH LOAD' : 'RESPONDING'}</text>
+                <text x="1073" y={y + 30} className="storm-server-caption">{mode === 'offline' ? 'OFFLINE' : serverLoads[index] > 1 ? 'HIGH LOAD' : 'RESPONDING'}</text>
               </g>)}
 
               {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) =>
