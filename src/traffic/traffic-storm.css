@@ -720,46 +720,6 @@
   border:1px solid var(--ds-line);
   border-radius:10px;
 }
-.storm-ping-activity{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  flex:0 0 auto;
-  gap:10px;
-  padding-bottom:9px;
-  border-bottom:1px solid var(--ds-line);
-  font:600 11px var(--ds-font-code);
-  min-width:0;
-}
-.storm-ping-activity>span{
-  display:inline-flex;
-  align-items:center;
-  min-width:0;
-  gap:9px;
-  color:var(--ds-muted);
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.storm-ping-indicator{
-  display:inline-block;
-  width:8px;
-  height:8px;
-  flex:0 0 8px;
-  border-radius:50%;
-  background:var(--ds-success);
-}
-.storm-ping-indicator.is-active{
-  animation:storm-ping-beacon 1s ease-in-out infinite;
-}
-.storm-ping-indicator.is-paused{background:var(--ds-muted);opacity:.5}
-.storm-ping-indicator.is-offline{background:var(--ds-danger)}
-.storm-ping-latest{
-  color:var(--accent);
-  white-space:nowrap;
-  font:700 12px var(--ds-font-code);
-  animation:storm-ping-number .38s ease-out both;
-}
-.storm-ping-latest.is-timeout{color:var(--ds-danger)}
 .storm-ping-entry.is-timeout{color:var(--ds-danger)}
 .storm-ping-entry.is-latest.is-timeout{border-left-color:var(--ds-danger);background:color-mix(in srgb,var(--ds-danger) 9%,var(--ds-sunken))}
 .storm-in-session .storm-ping-terminal-lines{
