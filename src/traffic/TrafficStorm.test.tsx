@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { TrafficStorm, TRAFFIC_TUTORIAL_STEPS, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, sanitizeHackerName, serverHealthDrainPerSecond, serverPressure, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
+import { TrafficStorm, TRAFFIC_TUTORIAL_STEPS, HIGH_TRAFFIC_THRESHOLD_GBPS, EFFECT_GAIN_MULTIPLIER, EFFECT_GAIN_CAP, FAN_NOISE_GAIN_MULTIPLIER, FAN_BLADE_ANGLES, SERVER_FAN_Y_OFFSET, SERVER_RACK_Y_OFFSET, botLanePath, botnetHeadingY, coolingFanDemand, deliveredTrafficRps, deviceHeading, diagramAnnotations, effectGain, generateDemoIp, effectiveProxyFilterRatio, formatTraffic, forwardedRequests, hackerCommandPath, isHighTraffic, nextFanSpeed, nodeLoadRatio, normalizeBotArmy, proxyFilterRatio, proxyHeadingY, proxyLoadRatio, relayLanePath, sanitizeHackerName, serverHealthDrainPerSecond, serverPressure, trafficRamp, trafficSpikeFactor, validateHackerName, visualSurvivorCount, webserverHeadingY, webserverPositions } from './TrafficStorm';
 
 describe('Traffic Storm setup', () => {
   it('asks for a scenario on each new mount without displaying the old labels', () => {
@@ -81,6 +81,36 @@ describe('Traffic Storm setup', () => {
     expect(deviceHeading('WEBSERVER', 'WEBSERVERS', 4)).toBe('WEBSERVERS');
     expect(deviceHeading('PROXY', 'PROXIES', 1)).toBe('PROXY');
     expect(deviceHeading('PROXY', 'PROXIES', 2)).toBe('PROXIES');
+  });
+
+  it('annotates command links, server flooding, proxies and live webserver status', () => {
+    const active = diagramAnnotations('running', 3, 4, false, 1.5, 382.5);
+    expect(active.map(note => note.id)).toEqual(['commands', 'flood', 'proxies', 'server']);
+    expect(active.map(note => note.text)).toEqual([
+      'Sending commands', 'Flooding servers', 'Filtering traffic', 'Server overloaded',
+    ]);
+    expect(active.map(note => note.tone)).toEqual(['accent', 'danger', 'success', 'danger']);
+    expect(active.every(note => note.x >= 0 && note.x + note.width < 1200)).toBe(true);
+    expect(active.every(note => note.y >= 0 && note.y + 22 <= 465)).toBe(true);
+    expect(active[3].y).toBeGreaterThan(382.5 + 37);
+  });
+
+  it('switches network notes for ready, direct, overloaded and offline states', () => {
+    const ready = diagramAnnotations('ready', 1, 1, false, 0, 232.5);
+    expect(ready.map(note => note.text)).toEqual([
+      'Command links', 'Attack route', 'Proxies ready', 'Server ready',
+    ]);
+    const direct = diagramAnnotations('running', 0, 1, false, 1.2, 232.5);
+    expect(direct[1].text).toBe('Flooding server');
+    expect(direct[2].text).toBe('Direct to server');
+    const overloaded = diagramAnnotations('running', 4, 4, true, 3, 382.5);
+    expect(overloaded[2].text).toBe('Proxies overloaded');
+    expect(overloaded[2].tone).toBe('danger');
+    const offline = diagramAnnotations('offline', 4, 4, true, 3, 382.5);
+    expect(offline[3].text).toBe('Server offline');
+    const paused = diagramAnnotations('paused', 0, 1, false, 0, 232.5);
+    expect(paused[0].text).toBe('Commands paused');
+    expect(paused[1].text).toBe('Traffic paused');
   });
 
   it('places BOTNET above the first bot icon without an excessive gap', () => {
