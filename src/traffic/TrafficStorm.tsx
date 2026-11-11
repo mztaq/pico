@@ -615,9 +615,6 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   <circle r="2.4" className="storm-fan-hub"/>
                 </g>)}
               </g>)}
-                <text x="1049" y={y - 41} className="storm-server-name">SERVER 0{index + 1}</text>
-                <text x="1073" y={y + 30} className="storm-server-caption">{mode === 'offline' ? 'OFFLINE' : serverLoads[index] > 1 ? 'HIGH LOAD' : 'RESPONDING'}</text>
-              </g>)}
 
               {mode === 'running' && Array.from({length:visiblePacketCount}, (_, index) =>
                 <circle key={'attack-' + index} className="storm-packet-attack" r={index % 4 === 0 ? 3.5 : 2.6}>
