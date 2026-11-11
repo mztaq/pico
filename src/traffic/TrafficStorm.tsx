@@ -26,6 +26,10 @@ const TO_EDGE_PATHS = [
 const THROUGH_EDGE_PATHS = TO_EDGE_PATHS.map(path => path + ' L 645 185 C 740 185 780 185 825 185');
 const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
 
+export function forwardedRequests(rps: number, protectedByProxy: boolean): number {
+  return Math.round(Math.max(0, rps) * (protectedByProxy ? 1 - PROXY_FILTER_RATIO : 1));
+}
+
 export function formatTraffic(rps: number): string {
   const gbps = Math.max(0, rps) * BITS_PER_REQUEST / 1e9;
   return gbps >= 1000 ? (gbps / 1000).toFixed(2) + ' Tbps' : gbps.toFixed(2) + ' Gbps';
@@ -140,7 +144,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         const ramp = Math.min(1, 0.18 + previous.seconds / 4);
         const variation = 0.96 + 0.045 * Math.sin(now / 330) + 0.035 * Math.sin(now / 860);
         const rps = Math.round(scenario.bots * 1.65 * variation * ramp);
-        const forwarded = Math.round(rps * (proxyEnabled ? 1 - PROXY_FILTER_RATIO : 1));
+        const forwarded = forwardedRequests(rps, proxyEnabled);
         const overload = forwarded / SERVER_CAPACITY;
         const health = Math.max(0, Math.min(100, previous.health - (overload > 1 ? (overload - 1) * 12 : -5) * dt));
         return {
@@ -169,7 +173,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   useEffect(() => {
     if (mode !== 'running') return;
-    if (stats.rps > SERVER_CAPACITY && !fanPlayed.current) {
+    if (forwardedRequests(stats.rps, proxyEnabled) > SERVER_CAPACITY && !fanPlayed.current) {
       fanPlayed.current = true;
       playEffect('fan');
     }
@@ -181,7 +185,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       setMode('offline');
       playEffect('shutdown');
     }
-  }, [mode, stats.rps, stats.health]);
+  }, [mode, stats.rps, stats.health, proxyEnabled]);
 
   function restart() {
     setStats(initialStats());
@@ -200,7 +204,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setShowHelp(false);
   }
 
-  const arriving = stats.rps * (proxyEnabled ? 1 - PROXY_FILTER_RATIO : 1);
+  const arriving = forwardedRequests(stats.rps, proxyEnabled);
   const pressure = arriving / SERVER_CAPACITY;
   const status = mode === 'offline' ? 'OFFLINE' : pressure >= 1 ? 'OVERLOADED' : stats.health < 65 ? 'DEGRADED' : 'ONLINE';
   const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
@@ -309,7 +313,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             <div className="storm-system-health">
               <div className={'storm-server-icon' + (mode === 'offline' ? ' is-offline' : '')}><Server size={32}/></div>
               <div><span>WEBSITE STATUS</span><strong className={mode === 'offline' ? 'storm-danger' : ''}>{status}</strong><small>{mode === 'offline' ? 'Connection lost' : 'Response: ' + responseMs + ' ms'}</small></div>
-              <div className={'storm-fan' + (fanRpm === 0 ? ' stopped' : '')} style={{ '--storm-fan-duration': fanRpm ? (60 / fanRpm).toFixed(3) + 's' : '1s' } as CSSProperties}><Fan size={31}/><strong>{compact(fanRpm)} RPM</strong><small>FAN SPEED</small></div>
+              <div className={'storm-fan' + (fanRpm === 0 ? ' stopped' : '')} style={{ '--storm-fan-duration': fanRpm ? Math.max(0.18, 2.8 - fanRpm / 1700).toFixed(2) + 's' : '1s' } as CSSProperties}><Fan size={31}/><strong>{compact(fanRpm)} RPM</strong><small>FAN SPEED</small></div>
             </div>
             <div className="storm-cpu-row"><span>CPU load</span><strong>{cpu}%</strong></div>
             <div className="storm-meter"><i style={{width:cpu+'%'}}/></div>
