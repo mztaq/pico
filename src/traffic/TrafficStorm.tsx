@@ -13,7 +13,7 @@ const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const PROXY_CAPACITY = 100_000; // Synthetic requests per second handled by each edge node.
 // All visible network links and animated packets share the same SVG path IDs.
 // Keeping the connection coordinates here prevents packet/path drift.
-const BOT_Y = [88, 166, 244, 322] as const;
+const BOT_Y = [88, 162, 236, 310] as const;
 const REAL_USER_Y = 407;
 const LEGITIMATE_RPS = 125;
 const BOT_EXIT_X = 450;
