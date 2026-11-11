@@ -218,6 +218,21 @@ export function validateHackerName(input: string): string | null {
   return null;
 }
 
+/** Short, state-aware notes placed beside the actual network routes and racks. */
+export function diagramAnnotations(mode: Mode, proxyCount: number, proxiesOverloaded: boolean, pressure: number, lastServerY: number) {
+  const active = mode === 'running' || mode === 'offline';
+  return [
+    { id: 'commands', text: active ? 'Sending commands' : mode === 'paused' ? 'Commands paused' : 'Command links',
+      x: 222, y: 130, width: 131, tone: 'accent' },
+    { id: 'flood', text: active ? 'Flooding traffic' : mode === 'paused' ? 'Traffic paused' : 'Attack route',
+      x: 493, y: 130, width: 132, tone: 'danger' },
+    { id: 'proxies', text: proxyCount === 0 ? 'Direct to server' : proxiesOverloaded ? 'Proxies overloaded' : 'Filtering traffic',
+      x: 816, y: 130, width: 151, tone: proxyCount === 0 ? 'muted' : proxiesOverloaded ? 'danger' : 'success' },
+    { id: 'server', text: mode === 'offline' ? 'Server offline' : mode === 'ready' ? 'Server ready' : mode === 'paused' ? 'Server paused' : pressure > 1 ? 'Server overloaded' : 'Serving requests',
+      x: 998, y: Math.min(438, lastServerY + 47), width: 154, tone: mode === 'offline' || (mode === 'running' && pressure > 1) ? 'danger' : 'accent' },
+  ] as const;
+}
+
 export const TRAFFIC_TUTORIAL_STEPS = [
   { target: 'controls', title: 'Start and pause', text: 'Start Simulation begins the traffic. Use Pause, Resume or Restart to control the run. New scenario lets you choose another hacker name.' },
   { target: 'bots', title: 'Bot army', text: 'Set your bot army from 100 to 20,000 devices. More bots create more traffic. Adjust it at any time.' },
@@ -659,6 +674,16 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                 {proxyEnabled && BOT_Y.map((_, index) => <path key={'survivor-link-' + index} id={'storm-survivor-link-' + index}
                   d={relayLanePath(proxyYs[index % proxyCount], serverYs[index % serverCount])}
                   className="storm-network-link storm-network-link--approved"/>)}
+              </g>
+
+              <g className="storm-diagram-annotations" aria-hidden="true">
+                {diagramAnnotations(mode, proxyCount, proxyLoads.some(load => load > 1), pressure, serverYs[serverYs.length - 1]).map(note =>
+                  <g key={note.id} className={'storm-diagram-annotation storm-diagram-annotation--' + note.tone}
+                    transform={'translate(' + note.x + ' ' + note.y + ')'}>
+                    <rect width={note.width} height="22" rx="6"/>
+                    <text x={note.width / 2} y="15">{note.text}</text>
+                  </g>
+                )}
               </g>
 
               <g className="storm-hacker-node">
