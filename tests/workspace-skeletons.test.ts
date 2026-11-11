@@ -7,7 +7,7 @@ import { WorkspaceLoading, type VisualWorkspace } from '../src/app/components/Wo
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Visual workspace loading skeletons',()=>{
-  const workspaces: VisualWorkspace[]=['Flowchart Builder','Logic Sim','Binary Lab','CPU Studio'];
+  const workspaces: VisualWorkspace[]=['Flowchart Builder','Logic Sim','Binary Lab','CPU Studio','Traffic Storm'];
 
   it.each(workspaces)('provides an accessible, noninteractive skeleton for %s',(workspace)=>{
     const html=renderToStaticMarkup(createElement(WorkspaceLoading,{workspace}));
@@ -45,6 +45,32 @@ describe('Visual workspace loading skeletons',()=>{
     for(const name of ['pico-load-cpu-controls','pico-load-cpu-registers','pico-load-cpu-memory','pico-load-cpu-info']){
       expect(html).toContain(name);
     }
+  });
+
+  it('matches the minimal Traffic Storm alias entry instead of CPU registers',()=> {
+    const html=renderToStaticMarkup(createElement(WorkspaceLoading,{workspace:'Traffic Storm'}));
+    for (const part of ['pico-load-storm-content','pico-load-storm-heading','pico-load-storm-label',
+      'pico-load-storm-input','pico-load-storm-hint','pico-load-storm-counter','pico-load-storm-button']) {
+      expect(html).toContain(part);
+    }
+    expect(html).not.toContain('pico-load-cpu-controls');
+    expect(html).not.toContain('pico-load-cpu-registers');
+    expect(html).not.toContain('pico-load-cpu-memory');
+    const css=read('src/app/components/workspace-loading.css');
+    expect(css).toContain('var(--accent,var(--pico-boot-accent,#cba6f7))');
+    expect(css).toContain('data-loading-workspace="Traffic Storm"');
+  });
+
+  it('uses the saved theme for the first Traffic Storm skeleton before React starts',()=> {
+    const html=read('index.html');
+    const main=read('src/main.tsx');
+    expect(html).toContain('pico-initial-traffic-route');
+    expect(html).toContain('pico-initial-traffic-loading');
+    expect(html).toContain('pico-initial-traffic-entry');
+    expect(html).toContain("get('tool') === 'traffic'");
+    expect(html).toContain("'--pico-boot-accent'");
+    expect(html).toContain("'--pico-boot-foreground'");
+    expect(main).toContain("document.querySelector('.pico-initial-traffic-loading')?.remove()");
   });
 
   it('uses Suspense for the real lazy workspace imports and deep-link startup',()=>{
