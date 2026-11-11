@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { ArrowLeft, CircleHelp, MessageSquareText, Pause, Play, RotateCcw, Route, Server, Settings2, Shield, ShieldAlert, Terminal, Users, X } from 'lucide-react';
+import { ArrowLeft, CircleHelp, MessageSquareText, Pause, Play, RotateCcw, Server, Settings2, Shield, ShieldAlert, Terminal, Users, X } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
@@ -262,7 +262,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             <text x="563" y="105" className="storm-diagram-count">{compact(proxyCount)} virtual</text>
             {[145, 185, 225].map((y, index) => <g key={y} className="storm-proxy-node"><rect x="532" y={y - 16} width="63" height="32" rx="8"/><circle cx="549" cy={y} r="5"/><text x="568" y={y + 3.5}>R{index + 1}</text></g>)}
             {mode === 'running' && Array.from({ length: 28 }, (_, index) => <circle key={index} className="storm-packet" r={index % 5 === 0 ? 4 : 2.8}><animateMotion path={PACKET_PATHS[index % 4]} dur={(1.5 + index % 5 * 0.24) + 's'} begin={(-index * 0.18) + 's'} repeatCount="indefinite"/></circle>)}
-            <g className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : '')}>
+            <g className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : stats.health <= 35 ? ' is-critical' : '')}>
               <rect x="804" y="115" width="110" height="144" rx="16"/>
               <rect x="825" y="140" width="69" height="27" rx="5"/><rect x="825" y="179" width="69" height="27" rx="5"/><rect x="825" y="218" width="69" height="20" rx="5"/>
               {[152, 191, 228].map(y => <circle key={y} cx="839" cy={y} r="4" className="storm-led"/>)}
