@@ -857,6 +857,8 @@
   animation:storm-ping-number .38s ease-out both;
 }
 .storm-ping-latest.is-timeout{color:var(--ds-danger)}
+.storm-ping-entry.is-timeout{color:var(--ds-danger)}
+.storm-ping-entry.is-latest.is-timeout{border-left-color:var(--ds-danger);background:color-mix(in srgb,var(--ds-danger) 9%,var(--ds-sunken))}
 .storm-in-session .storm-ping-terminal-lines{
   display:flex;
   flex:1 1 auto;
