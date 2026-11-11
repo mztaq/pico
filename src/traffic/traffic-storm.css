@@ -646,3 +646,61 @@
     flex-basis:78px;
   }
 }
+
+/* More room for the network itself, instead of shrinking hardware to fit the chart.
+   Short desktop viewports scroll rather than clipping the visualization. */
+@media (min-width:1081px){
+  .storm-app.storm-in-session{height:auto;min-height:100dvh;overflow:visible}
+  .storm-in-session .storm-session{min-height:calc(100dvh - 52px);overflow:visible}
+  .storm-in-session .storm-main-grid{flex:1 1 auto}
+  .storm-in-session .storm-network{
+    flex:1 1 auto;
+    min-height:clamp(450px,53dvh,620px);
+    overflow:hidden;
+  }
+  .storm-in-session .storm-network-svg{
+    flex:1 1 auto;
+    min-height:365px;
+    height:100%;
+    overflow:hidden;
+  }
+  .storm-in-session .storm-chart-panel{flex:0 0 76px}
+}
+.storm-network-svg .storm-stage-titles text{
+  font:750 16px var(--ds-font-code);
+  letter-spacing:.02em;
+}
+.storm-network-svg .storm-bot-node .storm-device-name{
+  font:750 13px var(--ds-font-code);
+  letter-spacing:.03em;
+}
+.storm-network-svg .storm-real-node text{
+  font:750 13px var(--ds-font-code);
+  letter-spacing:0;
+}
+.storm-network-svg .storm-hacker-node .storm-hacker-name{
+  font:750 15px var(--ds-font-code);
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-number{
+  font:750 12px var(--ds-font-code);
+}
+.storm-network-svg .storm-server-graphic .storm-server-name{
+  font:750 13px var(--ds-font-code);
+}
+.storm-network-svg .storm-diagram-routes .storm-network-link--approved{
+  stroke-width:3.2;
+  stroke-opacity:1;
+}
+.storm-network-svg .storm-packet-survivor{
+  fill:var(--accent);
+  opacity:1;
+}
+@media (min-width:701px) and (max-width:1080px){
+  .storm-in-session .storm-network{min-height:430px}
+  .storm-in-session .storm-network-svg{min-height:345px}
+  .storm-in-session .storm-chart-panel{flex-basis:76px}
+}
+@media (max-width:700px){
+  .storm-in-session .storm-network{min-height:330px}
+  .storm-in-session .storm-network-svg{min-height:265px}
+}
