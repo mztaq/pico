@@ -582,3 +582,39 @@
 @media(prefers-reduced-motion:reduce){
  .storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,.storm-network-svg .storm-packet-user{display:none}
 }
+
+/* Network cleanup: flat canvas, clear post-proxy lines, no staged decorative grid. */
+.storm-in-session .storm-network{background:var(--ds-panel)}
+.storm-in-session .storm-network-svg{background:transparent}
+.storm-network-svg .storm-diagram-routes .storm-network-link--attack{
+  stroke:var(--ds-danger);stroke-opacity:.54;stroke-width:1.9;
+  stroke-dasharray:4 8;fill:none
+}
+.storm-network-svg .storm-diagram-routes .storm-network-link--approved{
+  stroke:var(--accent);stroke-opacity:.9;stroke-width:2.6;
+  stroke-dasharray:none;fill:none
+}
+.storm-network-svg .storm-diagram-routes .storm-network-link--legitimate{
+  stroke:var(--ds-success);stroke-opacity:.83;stroke-width:2.3;
+  stroke-dasharray:5 8;fill:none
+}
+.storm-network-svg .storm-stage-titles text{
+  font:750 14px var(--ds-font-code);
+  fill:var(--ds-text);letter-spacing:.025em
+}
+.storm-network-svg .storm-server-graphic .storm-server-name{
+  font:750 12px var(--ds-font-code);fill:var(--ds-text);
+  text-anchor:middle;letter-spacing:.04em
+}
+.storm-network-svg .storm-server-graphic .storm-server-shell{
+  stroke-width:1.8
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-number{
+  font:700 11px var(--ds-font-code);letter-spacing:.03em
+}
+.storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,
+.storm-network-svg .storm-packet-user{stroke:none;filter:none}
+.storm-in-session .storm-network-svg{object-fit:contain}
+@media(max-width:1080px){
+  .storm-in-session .storm-network-svg{min-height:300px}
+}
