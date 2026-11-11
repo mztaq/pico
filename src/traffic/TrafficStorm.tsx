@@ -589,14 +589,14 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>
 
               {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoads[index] > 1 ? ' is-overloaded' : proxyLoads[index] > 0.8 ? ' is-busy' : '')}>
-                <rect x="710" y={y - 31} width="80" height="62" rx="13" className="storm-proxy-shell"/>
-                <rect x="723" y={y - 18} width="54" height="17" rx="4" className="storm-proxy-rack"/>
-                <rect x="723" y={y + 4} width="54" height="17" rx="4" className="storm-proxy-rack"/>
-                <circle cx="733" cy={y - 9} r="3" className="storm-proxy-led"/>
-                <circle cx="733" cy={y + 12} r="3" className="storm-proxy-led"/>
-                <path d={'M 744 ' + (y - 9) + ' h 22 M 744 ' + (y + 12) + ' h 22'} className="storm-proxy-slot"/>
-                <text x="750" y={y + 45} className="storm-proxy-number">PROXY {index + 1}</text>
-                {proxyLoads[index] > 1 && <text x="780" y={y - 16} className="storm-proxy-overload">!</text>}
+                <rect x="710" y={y - 31} width="80" height="62" rx="11" className="storm-proxy-shell"/>
+                <text x="750" y={y - 17} className="storm-proxy-number">PROXY {index + 1}</text>
+                <rect x="723" y={y - 11} width="54" height="14" rx="3" className="storm-proxy-rack"/>
+                <rect x="723" y={y + 8} width="54" height="13" rx="3" className="storm-proxy-rack"/>
+                <circle cx="732" cy={y - 4} r="2.5" className="storm-proxy-led"/>
+                <circle cx="732" cy={y + 14.5} r="2.5" className="storm-proxy-led"/>
+                <path d={'M 743 ' + (y - 4) + ' h 25 M 743 ' + (y + 14.5) + ' h 25'} className="storm-proxy-slot"/>
+                {proxyLoads[index] > 1 && <text x="779" y={y - 17} className="storm-proxy-overload">!</text>}
               </g>)}
 
               {serverYs.map((y, index) => <g key={'server-' + index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : serverLoads[index] > 1 ? ' is-critical' : '')}>
