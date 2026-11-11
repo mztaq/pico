@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { ArrowLeft, CircleHelp, Fan, Pause, Play, RotateCcw, Server, Settings2, Shield, Terminal, Users, X } from 'lucide-react';
+import { ArrowLeft, CircleHelp, Fan, Minus, Pause, Play, Plus, RotateCcw, Server, Settings2, Shield, Users, X } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
@@ -8,32 +8,45 @@ import { loadSettings, saveSettings } from '../storage/settings';
 import './traffic-storm.css';
 
 const SERVER_CAPACITY = 3200;
-const BITS_PER_REQUEST = 256000; // Explicit synthetic 32 kB average request size.
-const PROXY_FILTER_RATIO = 0.82; // Simplified defensive reverse-proxy scenario, not a guarantee.
+const BITS_PER_REQUEST = 4_194_304; // Fictional 512 KiB traffic unit; not measured bandwidth.
+const BOT_REQUEST_RATE = 16; // Fictional average requests per bot per second.
 const BOT_Y = [70, 145, 225, 300] as const;
-const DIRECT_PATHS = [
-  'M 334 70 C 505 70 675 176 825 185',
-  'M 334 145 C 545 145 690 180 825 185',
-  'M 334 225 C 545 225 690 190 825 185',
-  'M 334 300 C 505 300 675 194 825 185',
-];
-const TO_EDGE_PATHS = [
-  'M 334 70 C 445 70 506 185 591 185',
-  'M 334 145 C 440 145 510 185 591 185',
-  'M 334 225 C 440 225 510 185 591 185',
-  'M 334 300 C 445 300 506 185 591 185',
-];
-const THROUGH_EDGE_PATHS = TO_EDGE_PATHS.map(path => path + ' L 645 185 C 740 185 780 185 825 185');
+const networkPositions = (count: number): number[] =>
+  Array.from({length:count}, (_, i) => 370 * (i + 1) / (count + 1));
+
+function packetPath(bot: number, serverY: number, proxyY: number | null, blocked = false): string {
+  const y = BOT_Y[bot % BOT_Y.length];
+  if (proxyY === null) return 'M 334 ' + y + ' C 545 ' + y + ' 670 ' + serverY + ' 825 ' + serverY;
+  const incoming = 'M 334 ' + y + ' C 465 ' + y + ' 518 ' + proxyY + ' 591 ' + proxyY;
+  return blocked ? incoming : incoming + ' L 645 ' + proxyY + ' C 733 ' + proxyY + ' 759 ' + serverY + ' 825 ' + serverY;
+}
 const initialStats = () => ({ seconds: 0, health: 100, rps: 0, total: 0, blocked: 0, dropped: 0, history: [] as number[] });
 
-/** Gradual 14-second rise, with an eased start and finish. Never affects real traffic. */
+/** Slow 16-second startup, easing at both ends. */
 export function trafficRamp(seconds: number): number {
-  const progress = Math.max(0, Math.min(1, seconds / 14));
-  return 0.02 + 0.98 * progress * progress * (3 - 2 * progress);
+  const progress = Math.max(0, Math.min(1, seconds / 16));
+  return 0.003 + 0.997 * progress * progress * (3 - 2 * progress);
 }
 
-export function forwardedRequests(rps: number, protectedByProxy: boolean): number {
-  return Math.round(Math.max(0, rps) * (protectedByProxy ? 1 - PROXY_FILTER_RATIO : 1));
+/** Simplified defensive filter with diminishing returns, not a guaranteed protection rate. */
+export function proxyFilterRatio(count: number): number {
+  const n = Math.max(0, Math.min(4, Math.floor(count) || 0));
+  return 1 - Math.pow(0.6, n);
+}
+
+export function forwardedRequests(rps: number, proxies: number): number {
+  return Math.round(Math.max(0, rps) * (1 - proxyFilterRatio(proxies)));
+}
+
+export function serverPressure(rps: number, proxies: number, servers: number): number {
+  const count = Math.max(1, Math.min(4, Math.floor(servers) || 1));
+  return forwardedRequests(rps, proxies) / (SERVER_CAPACITY * count);
+}
+
+export function modeledPing(ip: string, responseMs: number | null): string {
+  return responseMs === null
+    ? 'Request timed out (simulation)'
+    : 'Reply from ' + ip + ': ' + responseMs + ' ms (simulation)';
 }
 
 export function formatTraffic(rps: number): string {
@@ -60,7 +73,11 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const [hacker, setHacker] = useState('');
   const [botsDraft, setBotsDraft] = useState('3000');
   const [ipDraft, setIpDraft] = useState('203.0.113.10');
-  const [proxyEnabled, setProxyEnabled] = useState(false);
+  const [proxyCount, setProxyCount] = useState(0);
+  const [serverCount, setServerCount] = useState(1);
+  const [pingCommand, setPingCommand] = useState('ping');
+  const [pingOutput, setPingOutput] = useState<string | null>(null);
+  const proxyEnabled = proxyCount > 0;
   const [error, setError] = useState('');
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [mode, setMode] = useState<Mode>('setup');
@@ -75,8 +92,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const coolingRef = useRef<CoolingAudio | null>(null);
   const warningPlayed = useRef(false);
   const lastFrame = useRef(0);
-  const arriving = forwardedRequests(stats.rps, proxyEnabled);
-  const pressure = arriving / SERVER_CAPACITY;
+  const arriving = forwardedRequests(stats.rps, proxyCount);
+  const pressure = arriving / (SERVER_CAPACITY * serverCount);
   const cpu = mode === 'offline' ? 0 : Math.round(Math.min(100, 14 + pressure * 72));
 
   useEffect(() => {
@@ -202,6 +219,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   function start(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setPingOutput(null);
     const bots = Number(botsDraft);
     if (!hacker.trim()) { setError('Give the operator a name.'); return; }
     if (!Number.isInteger(bots) || bots < 100 || bots > 20000) { setError('Choose between 100 and 20,000 fictional bots.'); return; }
@@ -227,9 +245,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         // No real traffic. Each displayed packet and number is a browser-only model.
         const ramp = trafficRamp(previous.seconds);
         const variation = 0.96 + 0.045 * Math.sin(now / 330) + 0.035 * Math.sin(now / 860);
-        const rps = Math.round(scenario.bots * 1.65 * variation * ramp);
-        const forwarded = forwardedRequests(rps, proxyEnabled);
-        const overload = forwarded / SERVER_CAPACITY;
+        const rps = Math.round(scenario.bots * BOT_REQUEST_RATE * variation * ramp);
+        const forwarded = forwardedRequests(rps, proxyCount);
+        const overload = forwarded / (SERVER_CAPACITY * serverCount);
         const health = Math.max(0, Math.min(100, previous.health - (overload > 1 ? (overload - 1) * 12 : -5) * dt));
         return {
           seconds: previous.seconds + dt,
@@ -242,7 +260,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       });
     }, 160);
     return () => window.clearInterval(id);
-  }, [mode, scenario, proxyEnabled]);
+  }, [mode, scenario, proxyCount, serverCount]);
 
   // Throttle packet sounds and increase their frequency across the gradual ramp.
   // These represent visible packet groups, never individual real requests.
@@ -271,6 +289,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
   function restart() {
     setStats(initialStats());
+    setPingOutput(null);
     warningPlayed.current = false;
     lastFrame.current = performance.now();
     setMode('running');
@@ -283,13 +302,23 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     setError('');
     setStats(initialStats());
     setShowHelp(false);
+    setPingOutput(null);
+  }
+
+  function runPing(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const value = pingCommand.trim();
+    if (value !== 'ping' && value !== 'ping ' + scenario?.ip) {
+      setPingOutput('Use ping or ping ' + scenario?.ip + ' (simulated target only)');
+      return;
+    }
+    setPingOutput(modeledPing(scenario?.ip ?? '0.0.0.0', mode === 'offline' ? null : responseMs));
   }
 
   const status = mode === 'offline' ? 'OFFLINE' : pressure >= 1 ? 'OVERLOADED' : stats.health < 65 ? 'DEGRADED' : 'ONLINE';
   const responseMs = mode === 'offline' ? null : Math.round(38 + Math.pow(pressure, 2) * 165);
   const trafficLabel = formatTraffic(stats.rps);
   const serverTrafficLabel = formatTraffic(arriving);
-  const lastMessage = mode === 'offline' ? 'Target offline.' : proxyEnabled && pressure < 1 ? 'Protection is absorbing the flood.' : stats.health < 40 ? 'Target struggling to respond.' : stats.rps > 0 ? 'Traffic climbing.' : 'Botnet standing by.';
   const points = stats.history.map((value, index) => {
     const x = stats.history.length <= 1 ? 0 : index / (stats.history.length - 1) * 600;
     const y = 82 - Math.min(1, value / Math.max(6000, (scenario?.bots ?? 3000) * 1.9)) * 74;
@@ -297,6 +326,10 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   }).join(' ');
   const safeName = scenario?.hacker ?? 'Operator';
   const visiblePacketCount = Math.max(1, Math.round(30 * trafficRamp(stats.seconds)));
+  const serverYs = networkPositions(serverCount);
+  const proxyYs = networkPositions(proxyCount);
+  const filterRatio = proxyFilterRatio(proxyCount);
+  const fanDuration = Math.max(0.26, 3.1 - cpu / 39).toFixed(2) + 's';
 
   return <main className={'storm-app' + (mode === 'setup' ? ' storm-start' : ' storm-in-session')} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
     <header className="storm-header pico-appbar">
