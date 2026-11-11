@@ -170,9 +170,14 @@ describe('Traffic Storm setup', () => {
       expect(source).toContain('class="storm-route-note-head"');
       expect(source).toContain('Hacker commands');
       expect(source).not.toContain('class="storm-diagram-annotation');
-      const notes = source.match(/<g class="storm-route-notes"[\\s\\S]*?<\\/g><\\/g>/)?.[0];
-      expect(notes).toBeDefined();
-      expect(notes).not.toMatch(/<rect\\b|<foreignObject\\b|<circle\\b/);
+      const notesStart = source.indexOf('<g class="storm-route-notes"');
+      const notesEnd = source.indexOf('</g></g>', notesStart);
+      const notes = source.slice(notesStart, notesEnd + 8);
+      expect(notesStart).toBeGreaterThan(-1);
+      expect(notesEnd).toBeGreaterThan(notesStart);
+      expect(notes).not.toContain('<rect');
+      expect(notes).not.toContain('<circle');
+      expect(notes).not.toContain('<foreignObject');
       expect((notes?.match(/class="storm-route-note-text"/g) ?? [])).toHaveLength(4);
     } finally {
       vi.unstubAllGlobals();
