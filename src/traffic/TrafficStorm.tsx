@@ -580,13 +580,13 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
     {mode === 'setup' ? <section className="storm-setup storm-identity-setup" aria-labelledby="storm-setup-title">
       <div className="storm-setup-title storm-identity-title">
-        <h1 id="storm-setup-title">Enter hacker name<span>.</span></h1>
+        <h1 id="storm-setup-title">Choose your alias<span>.</span></h1>
       </div>
       <form onSubmit={start} className="storm-setup-form storm-identity-form" noValidate>
         <label htmlFor="storm-hacker-name">Hacker name</label>
         <div className={'storm-identity-input' + (error ? ' is-invalid' : '')}>
           <input id="storm-hacker-name" autoFocus type="text" autoComplete="off" autoCapitalize="words"
-            spellCheck={false} maxLength={24} value={hacker} placeholder="Enter hacker name"
+            spellCheck={false} maxLength={24} value={hacker} placeholder="e.g. Ghost"
             aria-invalid={Boolean(error)} aria-describedby={error ? 'storm-hacker-help storm-hacker-error' : 'storm-hacker-help'}
             onChange={event => {
               const raw = event.target.value;
