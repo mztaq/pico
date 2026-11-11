@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
@@ -21,7 +21,7 @@ const HOME_AMBIENT_CURVES = [
   { d: 'M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304', width: 1.3, opacity: .28 },
 ] as const;
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic') => void }) {
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
@@ -147,6 +147,14 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
           <rect x="273" y="15" width="71" height="45" rx="5"/>
           <text x="308.5" y="42">RAM</text>
         </svg>
+          </WorkspaceChoice>
+          <WorkspaceChoice icon={<Network size={18}/>} title="Traffic Storm" description="Watch simulated request floods and server overload." onClick={() => onChoose('traffic')}>
+            <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 76" aria-hidden="true">
+              <path className="home-chart-link" d="M 57 12 C 126 12 131 38 192 38 H 259 M 57 38 H 259 M 57 64 C 126 64 131 38 192 38 H 259"/>
+              {[12,38,64].map(y => <g key={y}><rect x="7" y={y-10} width="50" height="20" rx="5"/><circle cx="21" cy={y} r="4"/><path d={`M 33 ${y} h 14`} className="home-chart-link"/></g>)}
+              <rect x="259" y="10" width="71" height="56" rx="7"/><rect x="269" y="21" width="51" height="12" rx="3"/><rect x="269" y="41" width="51" height="12" rx="3"/><circle cx="278" cy="27" r="2.5"/><circle cx="278" cy="47" r="2.5"/>
+              <circle cx="164" cy="38" r="5" className="home-traffic-packet"/><circle cx="220" cy="38" r="3" className="home-traffic-packet"/>
+            </svg>
           </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">
