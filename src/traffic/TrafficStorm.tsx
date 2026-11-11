@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
-import { Activity, ArrowLeft, Bot, CircleHelp, Pause, Play, RotateCcw, Server, Settings2, Shield, ShieldAlert, Users, Waves, X } from 'lucide-react';
+import { Activity, ArrowLeft, CircleHelp, Pause, Play, RotateCcw, Server, Settings2, Shield, ShieldAlert, Users, Waves, X } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { cssVariables, getTheme } from '../app/themes';
