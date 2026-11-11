@@ -580,30 +580,27 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
               <g className="storm-hacker-node">
                 <rect x="63" y="187" width="154" height="145" rx="18" className="storm-hacker-shell"/>
-                <rect x="78" y="201" width="124" height="111" rx="11" className="storm-workstation-panel"/>
-                <rect x="87" y="213" width="106" height="68" rx="6" className="storm-workstation-monitor"/>
-                <rect x="94" y="220" width="92" height="54" rx="3" className="storm-workstation-screen"/>
-                <path d="M 104 233 l 5 5 -5 5 M 117 238 h 38" className="storm-workstation-prompt"/>
-                <path d="M 104 253 h 66 M 104 263 h 46" className="storm-workstation-readout"/>
-                <circle cx="180" cy="226" r="2.4" className="storm-hacker-status"/>
-                <path d="M 140 281 v 8 M 119 289 h 42" className="storm-workstation-stand"/>
-                <path d="M 96 296 h 88 l 9 10 h -106 Z" className="storm-workstation-keyboard"/>
-                <path d="M 102 300 h 76 M 106 303 h 68" className="storm-workstation-keys"/>
+                <circle cx="140" cy="260" r="55" className="storm-hacker-emblem-bg"/>
+                <path d="M 140 210 C 110 210 91 239 91 267 C 91 286 101 302 116 310 L 125 297 C 115 290 110 278 111 264 C 112 245 125 231 140 231 C 155 231 168 245 169 264 C 170 278 165 290 155 297 L 164 310 C 180 302 189 285 189 267 C 189 239 170 210 140 210 Z" className="storm-hacker-hood"/>
+                <path d="M 111 267 Q 124 259 140 260 Q 156 259 169 267 L 161 286 L 147 290 L 140 283 L 133 290 L 119 286 Z" className="storm-hacker-mask"/>
+                <path d="M 119 270 l 13 4 M 148 274 l 13 -4" className="storm-hacker-eyes"/>
+                <path d="M 133 283 l 7 7 l 7 -7 M 128 292 l 12 11 l 12 -11" className="storm-hacker-beard"/>
                 <text x="140" y="357" className="storm-hacker-name">{safeName.slice(0, 14)}</text>
               </g>
 
               {BOT_Y.map((y, index) => <g key={y} className="storm-bot-node">
                 <rect x="292" y={y - 29} width="158" height="58" rx="11" className="storm-device-shell"/>
-                <rect x="306" y={y - 17} width="37" height="28" rx="4" className="storm-client-monitor"/>
-                <rect x="311" y={y - 12} width="27" height="16" rx="2" className="storm-client-screen"/>
-                <path d={'M 324 ' + (y + 11) + ' v 4 M 316 ' + (y + 15) + ' h 16'} className="storm-client-stand"/>
-                <path d={'M 316 ' + (y - 5) + ' h 12 M 316 ' + y + ' h 8'} className="storm-client-screen-lines"/>
-                <rect x="350" y={y - 17} width="19" height="33" rx="3" className="storm-client-tower"/>
-                <circle cx="359" cy={y - 10} r="2" className="storm-client-power"/>
-                <path d={'M 356 ' + (y - 1) + ' h 7 M 356 ' + (y + 4) + ' h 7'} className="storm-client-vents"/>
-                <path d={'M 378 ' + (y - 10) + ' h 53 M 378 ' + (y + 4) + ' h 37'} className="storm-client-details"/>
+                <g transform={'translate(324 ' + y + ')'} className="storm-bot-emblem">
+                  <circle r="21" className="storm-bot-emblem-bg"/>
+                  <path d="M 0 -13 V -18" className="storm-bot-antenna"/>
+                  <circle cy="-19" r="3.2" className="storm-bot-antenna-light"/>
+                  <rect x="-13" y="-12" width="26" height="23" rx="6" className="storm-bot-faceplate"/>
+                  <path d="M -9 -3 L -3 0 L -5 4 L -11 0 Z M 9 -3 L 3 0 L 5 4 L 11 0 Z" className="storm-bot-eyes"/>
+                  <path d="M -6 8 H 6" className="storm-bot-mouth"/>
+                </g>
+                <path d={'M 355 ' + (y - 11) + ' h 74 M 355 ' + (y + 6) + ' h 53'} className="storm-bot-vents"/>
                 <text x="372" y={y - 39} className="storm-device-name">BOT 0{index + 1}</text>
-                <circle cx="432" cy={y + 15} r="2.5" className="storm-bot-led"/>
+                <circle cx="431" cy={y + 15} r="2.5" className="storm-bot-led"/>
               </g>)}
               <g className="storm-real-node">
                 <rect x="292" y={REAL_USER_Y - 27} width="158" height="54" rx="11"/>
@@ -615,29 +612,32 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
 
               {proxyYs.map((y, index) => <g key={'proxy-' + index} className={'storm-proxy-edge' + (proxyLoads[index] > 1 ? ' is-overloaded' : proxyLoads[index] > 0.8 ? ' is-busy' : '')}>
                 <rect x="710" y={y - 31} width="80" height="62" rx="11" className="storm-proxy-shell"/>
-                <text x="750" y={y - 17} className="storm-proxy-number">PROXY {index + 1}</text>
-                <rect x="723" y={y - 11} width="54" height="14" rx="3" className="storm-proxy-rack"/>
-                <rect x="723" y={y + 8} width="54" height="13" rx="3" className="storm-proxy-rack"/>
-                <circle cx="732" cy={y - 4} r="2.5" className="storm-proxy-led"/>
-                <circle cx="732" cy={y + 14.5} r="2.5" className="storm-proxy-led"/>
-                <path d={'M 743 ' + (y - 4) + ' h 25 M 743 ' + (y + 14.5) + ' h 25'} className="storm-proxy-slot"/>
+                <text x="750" y={y - 18} className="storm-proxy-number">PROXY {index + 1}</text>
+                <circle cx="750" cy={y + 9} r="20" className="storm-proxy-ring"/>
+                <rect x="736" y={y - 5} width="28" height="12" rx="3" className="storm-proxy-rack"/>
+                <rect x="736" y={y + 11} width="28" height="12" rx="3" className="storm-proxy-rack"/>
+                <circle cx="742" cy={y + 1} r="2.5" className="storm-proxy-led"/>
+                <circle cx="742" cy={y + 17} r="2.5" className="storm-proxy-led"/>
+                <path d={'M 750 ' + (y + 1) + ' h 8 M 750 ' + (y + 17) + ' h 8'} className="storm-proxy-slot"/>
                 {proxyLoads[index] > 1 && <text x="779" y={y - 17} className="storm-proxy-overload">!</text>}
               </g>)}
 
               {serverYs.map((y, index) => <g key={'server-' + index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : serverLoads[index] > 1 ? ' is-critical' : '')}>
-                <rect x="990" y={y - 34} width="170" height="68" rx="11" className="storm-server-shell"/>
-                <text x="1047" y={y - 18} className="storm-server-name">SERVER 0{index + 1}</text>
-                <rect x="1004" y={y - 11} width="87" height="33" rx="6" className="storm-server-rack"/>
-                <rect x="1011" y={y - 5} width="73" height="9" rx="2" className="storm-server-slot"/>
-                <rect x="1011" y={y + 9} width="73" height="8" rx="2" className="storm-server-slot"/>
-                {[y - 1, y + 13].map(ledY => <circle key={ledY} cx="1020" cy={ledY} r="2.7" className="storm-led"/>)}
-                {[1115, 1140].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + (y + 3) + ')'} className="storm-rack-fan">
-                  <circle r="12" className="storm-fan-ring"/>
-                  <circle r="9" className="storm-fan-shroud"/>
+                <rect x="990" y={y - 36} width="170" height="72" rx="10" className="storm-server-shell"/>
+                <text x="1048" y={y - 21} className="storm-server-name">SERVER 0{index + 1}</text>
+                <rect x="1002" y={y - 12} width="92" height="37" rx="5" className="storm-server-rack"/>
+                <rect x="1010" y={y - 6} width="76" height="10" rx="2" className="storm-server-slot"/>
+                <rect x="1010" y={y + 10} width="76" height="8" rx="2" className="storm-server-slot"/>
+                <circle cx="1020" cy={y - 1} r="2.5" className="storm-led"/>
+                <circle cx="1020" cy={y + 14} r="2.5" className="storm-led"/>
+                <path d={'M 1099 ' + (y - 9) + ' v 29 M 1106 ' + (y - 9) + ' v 29'} className="storm-server-handle"/>
+                {[1121, 1145].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + (y + 5) + ')'} className="storm-rack-fan">
+                  <circle r="11.5" className="storm-fan-ring"/>
+                  <circle r="8.5" className="storm-fan-shroud"/>
                   <g className="storm-fan-rotor">
                     {[0,90,180,270].map(angle => <path key={angle} transform={'rotate(' + angle + ')'} d="M -1 -1 Q -11 -12 1 -9 Q 8 -7 3 -1 Z" className="storm-fan-blade"/>)}
                   </g>
-                  <circle r="2.4" className="storm-fan-hub"/>
+                  <circle r="2.2" className="storm-fan-hub"/>
                 </g>)}
               </g>)}
 
