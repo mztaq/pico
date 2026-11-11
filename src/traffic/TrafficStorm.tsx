@@ -187,6 +187,14 @@ export function formatTraffic(rps: number): string {
 type Scenario = { hacker: string; bots: number; ip: string };
 type Mode = 'setup' | 'running' | 'paused' | 'offline';
 type EffectName = 'start' | 'warning' | 'shutdown' | 'packet';
+/** More audible effects at typical listening volume, with an upper gain cap. */
+export const EFFECT_GAIN_MULTIPLIER = 3;
+export const EFFECT_GAIN_CAP = 0.18;
+export const FAN_NOISE_GAIN_MULTIPLIER = 1.55;
+export function effectGain(base: number): number {
+  return Math.min(EFFECT_GAIN_CAP, Math.max(0, base) * EFFECT_GAIN_MULTIPLIER);
+}
+
 type CoolingAudio = { source: AudioBufferSourceNode; filter: BiquadFilterNode; gain: GainNode; hum: OscillatorNode; humGain: GainNode };
 
 function validIPv4(value: string): boolean {
@@ -260,9 +268,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         osc.frequency.setValueAtTime(from, start + delay);
         osc.frequency.exponentialRampToValueAtTime(to, start + delay + length);
         filter.type = 'lowpass';
-        filter.frequency.value = 480;
+        filter.frequency.value = 860;
         gain.gain.setValueAtTime(0.0001, start + delay);
-        gain.gain.exponentialRampToValueAtTime(volume, start + delay + 0.035);
+        gain.gain.exponentialRampToValueAtTime(effectGain(volume), start + delay + 0.035);
         gain.gain.exponentialRampToValueAtTime(0.0001, start + delay + length);
         osc.connect(filter).connect(gain).connect(ctx.destination);
         osc.start(start + delay);
@@ -342,9 +350,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
       const load = coolingFanDemand(cpu, true);
       fan.filter.frequency.setTargetAtTime(160 + load * 1100, now, 0.55);
       fan.source.playbackRate.setTargetAtTime(0.65 + load * 0.9, now, 0.55);
-      fan.gain.gain.setTargetAtTime(0.002 + Math.pow(load, 1.6) * 0.18, now, 0.6);
+      fan.gain.gain.setTargetAtTime((0.002 + Math.pow(load, 1.6) * 0.18) * FAN_NOISE_GAIN_MULTIPLIER, now, 0.6);
       fan.hum.frequency.setTargetAtTime(48 + load * 135, now, 0.55);
-      fan.humGain.gain.setTargetAtTime(0.001 + Math.pow(load, 1.5) * 0.022, now, 0.6);
+      fan.humGain.gain.setTargetAtTime((0.001 + Math.pow(load, 1.5) * 0.022) * FAN_NOISE_GAIN_MULTIPLIER, now, 0.6);
     } catch { /* Unsupported audio never blocks the simulation. */ }
   }, [mode, soundOn, pageVisible, cpu]);
 
