@@ -518,7 +518,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
             <input id="storm-generated-ip" type="text" readOnly value={ipDraft} aria-label="Generated server IP" />
             <button type="button" className="storm-secondary" onClick={() => setIpDraft(previous => {
               const next = generateDemoIp();
-              return next === previous ? generateDemoIp(() => 0.5) : next;
+              return next === previous ? (previous === '203.0.113.254' ? '198.51.100.254' : '203.0.113.254') : next;
             })}>Generate IP</button>
           </div>
         </div>
