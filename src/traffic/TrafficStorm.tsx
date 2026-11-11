@@ -344,8 +344,9 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     lastFrame.current = performance.now();
     const id = window.setInterval(() => {
       const now = performance.now();
-      const dt = Math.min(0.4, Math.max(0, (now - lastFrame.current) / 1000));
+      const dt = Math.min(0.55, Math.max(0, (now - lastFrame.current) / 1000));
       lastFrame.current = now;
+      if (document.hidden) return;
       setStats(previous => {
         if (previous.health <= 0) return previous;
         // No real traffic. Each displayed packet and number is a browser-only model.
@@ -364,7 +365,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
           history: [...previous.history.slice(-65), rps],
         };
       });
-    }, 160);
+    }, 330);
     return () => window.clearInterval(id);
   }, [mode, scenario, proxyCount, serverCount]);
 
@@ -373,7 +374,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const packetAudioStep = Math.floor(trafficRamp(stats.seconds) * 6);
   useEffect(() => {
     if (mode !== 'running') return;
-    const intervalMs = Math.max(140, 630 - packetAudioStep * 80);
+    const intervalMs = Math.max(260, 740 - packetAudioStep * 80);
     const id = window.setInterval(() => {
       if (document.hidden || !audioRef.current) return;
       playEffect('packet');
@@ -528,27 +529,12 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
           <section className="storm-panel storm-network" aria-label="Animated network traffic">
             <div className="storm-panel-heading"><div><h2>Network traffic</h2></div><span className={'storm-status storm-status--' + status.toLowerCase()}><i/>{status}</span></div>
             <svg ref={networkRef} viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" className="storm-network-svg" role="img" aria-label={'Fictional network with a hacker, four groups of bots, legitimate users, ' + proxyCount + ' proxy servers, and ' + serverCount + ' web servers. Every packet follows a drawn connection.'}>
-              <defs>
-                <pattern id="storm-network-dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="var(--ds-line-strong)" opacity=".35"/></pattern>
-                <linearGradient id="storm-attack-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--ds-danger)" stopOpacity=".24"/><stop offset="1" stopColor="var(--ds-danger)" stopOpacity=".8"/></linearGradient>
-                <linearGradient id="storm-approved-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--accent)" stopOpacity=".4"/><stop offset="1" stopColor="var(--accent)" stopOpacity=".9"/></linearGradient>
-              </defs>
-              <rect x="0" y="0" width="1200" height="520" className="storm-diagram-ground"/>
-              <rect x="0" y="0" width="1200" height="520" fill="url(#storm-network-dots)" opacity=".37"/>
-              <path d="M 255 58 V 505 M 675 58 V 505 M 952 58 V 505" className="storm-stage-separator"/>
               <g className="storm-stage-titles">
-                <text x="135" y="30">ATTACK SOURCE</text>
+                <text x="140" y="30">HACKER</text>
                 <text x="370" y="30">BOTNET · {compact(scenario?.bots ?? 0)}</text>
-                <text x="750" y="30">{proxyEnabled ? 'PROXY SERVERS · ' + proxyCount : 'DIRECT TRAFFIC'}</text>
-                <text x="1075" y="30">WEB SERVERS · {serverCount}</text>
+                <text x="750" y="30">{proxyEnabled ? 'PROXIES · ' + proxyCount : 'NO PROXIES'}</text>
+                <text x="1075" y="30">SERVERS · {serverCount}</text>
               </g>
-              <g className="storm-stage-subtitles">
-                <text x="135" y="49">CONTROLLER</text>
-                <text x="370" y="49">4 SIMULATED GROUPS</text>
-                <text x="750" y="49">{proxyEnabled ? proxyState + ' · ' + Math.round(effectiveFilter * 100) + '% FILTERED' : 'NO FILTERING'}</text>
-                <text x="1075" y="49">{mode === 'offline' ? 'UNAVAILABLE' : 'LIVE MONITORING'}</text>
-              </g>
-
               <g className="storm-diagram-routes">
                 {BOT_Y.map(y => <path key={'control-' + y} d={'M 215 251 C 253 251 255 ' + y + ' 292 ' + y} className="storm-controller-line"/>)}
                 {BOT_Y.map((_, index) => <path key={'attack-link-' + index} id={'storm-attack-link-' + index}
@@ -601,12 +587,13 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
               </g>)}
 
               {serverYs.map((y, index) => <g key={'server-' + index} className={'storm-server-graphic' + (mode === 'offline' ? ' is-offline' : serverLoads[index] > 1 ? ' is-critical' : '')}>
-                <rect x="990" y={y - 36} width="170" height="72" rx="13" className="storm-server-shell"/>
-                <rect x="1003" y={y - 24} width="89" height="48" rx="7" className="storm-server-rack"/>
-                <rect x="1010" y={y - 17} width="76" height="14" rx="3" className="storm-server-slot"/>
-                <rect x="1010" y={y + 6} width="76" height="13" rx="3" className="storm-server-slot"/>
-                {[y - 10, y + 12].map(ledY => <circle key={ledY} cx="1019" cy={ledY} r="3" className="storm-led"/>)}
-                {[1115, 1140].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + y + ')'} className="storm-rack-fan">
+                <rect x="990" y={y - 34} width="170" height="68" rx="11" className="storm-server-shell"/>
+                <text x="1047" y={y - 18} className="storm-server-name">SERVER 0{index + 1}</text>
+                <rect x="1004" y={y - 11} width="87" height="33" rx="6" className="storm-server-rack"/>
+                <rect x="1011" y={y - 5} width="73" height="9" rx="2" className="storm-server-slot"/>
+                <rect x="1011" y={y + 9} width="73" height="8" rx="2" className="storm-server-slot"/>
+                {[y - 1, y + 13].map(ledY => <circle key={ledY} cx="1020" cy={ledY} r="2.7" className="storm-led"/>)}
+                {[1115, 1140].map((x, rotorIndex) => <g key={'fan-' + rotorIndex} transform={'translate(' + x + ' ' + (y + 3) + ')'} className="storm-rack-fan">
                   <circle r="12" className="storm-fan-ring"/>
                   <circle r="9" className="storm-fan-shroud"/>
                   <g className="storm-fan-rotor">
@@ -614,6 +601,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
                   </g>
                   <circle r="2.4" className="storm-fan-hub"/>
                 </g>)}
+              </g>)}
                 <text x="1049" y={y - 41} className="storm-server-name">SERVER 0{index + 1}</text>
                 <text x="1073" y={y + 30} className="storm-server-caption">{mode === 'offline' ? 'OFFLINE' : serverLoads[index] > 1 ? 'HIGH LOAD' : 'RESPONDING'}</text>
               </g>)}
