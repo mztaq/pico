@@ -8,7 +8,10 @@ const vite = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
 describe('Blackout Protocol 3D', () => {
   it('parses the TypeScript game module as JavaScript and bundles the graphics engine locally', () => {
     expect(game).toContain("import * as THREE from 'three'");
-    expect(() => new Function(game.replace("import * as THREE from 'three';", 'const THREE = {};'))).not.toThrow();
+    expect(game).toContain("import { createTrafficFeed } from './traffic-model'");
+    expect(() => new Function(game
+      .replace("import * as THREE from 'three';", 'const THREE = {};')
+      .replace("import { createTrafficFeed } from './traffic-model';", 'const createTrafficFeed = () => ({});'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
@@ -21,6 +24,9 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('function bpWalkable(x,z)');
     expect(game).toContain('const bpFanRotors=[]');
     expect(game).toContain('function bpPatrolStep(p,dt)');
+    expect(game).toContain("bpHackerState='fleeing'");
+    expect(game).toContain("bpHackerState='hiding'");
+    expect(game).toContain('function bpGuardCanSee(');
     expect(game).toContain('function bpWorldEvents()');
     expect(game).toContain("if(bp?.active)return;");
   });
@@ -29,6 +35,11 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('function bpWallGraph(t)');
     expect(game).toContain('const bpWallHistory=[]');
     expect(game).toContain('const bpWallDisplay=new THREE.Mesh(');
+    expect(game).toContain('const latest=(g?.requestFeed?.recent??[]).slice(-3).reverse();');
+    expect(game).toContain('bpSmoothedRpm');
+    expect(html).toContain('bp-skeleton-main');
+    expect(html).not.toContain('INITIALIZING 3D ENVIRONMENT');
+    expect(html).not.toContain('id="feed"');
     expect(game).toContain("const gpuCores=Number(navigator.hardwareConcurrency)||4");
     expect(html).toContain('id="quality"');
     expect(html).not.toContain('FICTIONAL NETWORK SIMULATION');
