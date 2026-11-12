@@ -7,14 +7,15 @@ export const WORKSPACE_COLUMNS: Record<string,string> = {
   pseudocode:'pseudocode_seconds',
   flowchart:'flowchart_seconds',
   cpu:'cpu_studio_seconds',
-  binary:'binary_lab_seconds'
+  binary:'binary_lab_seconds',
+  traffic:'traffic_storm_seconds'
 };
 type Entry = {workspace:string,seconds:number};
 
 export function validateBatch(input: Record<string,unknown> | null): {id:string,entries:Entry[]} | null {
   if (!input || typeof input.batchId !== 'string' ||
       !/^[0-9a-f]{8}-[0-9a-f-]{27,36}$/i.test(input.batchId) ||
-      !Array.isArray(input.entries) || input.entries.length < 1 || input.entries.length > 6) return null;
+      !Array.isArray(input.entries) || input.entries.length < 1 || input.entries.length > 7) return null;
   const seen = new Set<string>();
   let total = 0;
   const entries: Entry[] = [];
@@ -61,7 +62,7 @@ export const onRequestPost = async (ctx: Context) => {
   const applied=(results[2]?.meta?.changes ?? 0)>0;
   if(applied) {
     const usage=await ctx.env.DB.prepare(
-      'SELECT logic_sim_seconds,python_seconds,pseudocode_seconds,flowchart_seconds,cpu_studio_seconds,binary_lab_seconds FROM pico_usage WHERE visitor_id=?'
+      'SELECT logic_sim_seconds,python_seconds,pseudocode_seconds,flowchart_seconds,cpu_studio_seconds,binary_lab_seconds,traffic_storm_seconds FROM pico_usage WHERE visitor_id=?'
     ).bind(id).first<Record<string,number>>();
     const mostUsed=Object.entries(WORKSPACE_COLUMNS).sort((a,b)=>
       (usage?.[b[1]] ?? 0)-(usage?.[a[1]] ?? 0))[0]![0];
