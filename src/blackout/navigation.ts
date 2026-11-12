@@ -7,7 +7,7 @@ export interface NavBounds { minX:number; maxX:number; minZ:number; maxZ:number 
 export type Walkable = (x:number,z:number)=>boolean;
 export function routeTo(
   start:NavPoint,end:NavPoint,passable:Walkable,
-  bounds:NavBounds={minX:-23,maxX:31,minZ:-12.5,maxZ:12.5},
+  bounds:NavBounds={minX:-44.3,maxX:31,minZ:-12.5,maxZ:12.5},
   cellSize=1,
 ):NavPoint[] {
   const width=Math.floor((bounds.maxX-bounds.minX)/cellSize)+1;
