@@ -134,15 +134,16 @@ function fixture(x,z) {
   bpFixtureLights.push(light(x,5.78,z,0xb6eeff,3,10));
 }
 // Real-scale server room: raised floor, walls, cable conduits, cooling lanes.
-box(-4.5,-.19,0,39,.35,29,concrete);
+box(-14.5,-.19,0,60,.35,29,concrete);
+box(-14.5,3.15,13.78,60,6.5,.35,mat('#202c37',{metal:.22,rough:.82}));
 box(23,-.19,0,17,.35,24,concrete);
-for(let x=-23;x<=31;x+=(lowQuality?3.9:2)) for(let z=-13;z<=13;z+=(lowQuality?3.5:2)){
+for(let x=-43;x<=31;x+=(lowQuality?4.2:2)) for(let z=-13;z<=13;z+=(lowQuality?3.5:2)){
   box(x,.015,z,lowQuality?3.88:1.96,.025,lowQuality?3.47:1.96,floor);
   // Tiny metallic seams make the floor read as modular raised flooring.
   if(!lowQuality&&Math.abs(x)<13) box(x+.97,.032,z,.018,.01,1.92,darkMetal);
 }
-box(-4.5,3.15,-14.35,39,6.5,.42,mat('#1d2b36',{metal:.3,rough:.81}));
-box(-23.9,3.15,0,.45,6.5,29,mat('#202e3a',{metal:.28,rough:.88}));
+box(-14.5,3.15,-14.35,60,6.5,.42,mat('#1d2b36',{metal:.3,rough:.81}));
+box(-44.7,3.15,0,.45,6.5,29,mat('#202e3a',{metal:.28,rough:.88}));
 const bpOfficeWall=mat('#223644',{metal:.34,rough:.35});
 box(14.7,3.15,-7.85,.40,6.5,12.8,bpOfficeWall);
 box(14.7,3.15,8.1,.40,6.5,12.5,bpOfficeWall);
@@ -170,15 +171,15 @@ box(24,3.42,11.7,6.1,2.1,.13,darkMetal);
 label('SECURITY CONTROL ROOM',24,3.65,11.78,5.5,.7);
 for(let x of [20,22,24,26,28])box(x,2.62,11.76,.5,.10,.025,mint);
 
-box(-4.5,6.45,-13.5,39,.4,1.0,edgeMetal);
-for(let x=-21;x<=30;x+=4){box(x,6.25,0,.16,.15,29,darkMetal); for(let z=-10;z<=10;z+=6)box(x,6.1,z,.22,.13,2.5,metal);}
-for(let x of (lowQuality?[-19,0,21]:[-19,-9,0,9,21,28]))for(let z of (lowQuality?[-8,8]:[-9,0,9]))fixture(x,z);
-for(let x of [-12.2,12.2])for(let z of [-10,0,10]){
+box(-14.5,6.45,-13.5,60,.4,1.0,edgeMetal);
+for(let x=-43;x<=30;x+=4){box(x,6.25,0,.16,.15,29,darkMetal); for(let z=-10;z<=10;z+=6)box(x,6.1,z,.22,.13,2.5,metal);}
+for(let x of (lowQuality?[-40,-26,-9,9,24]:[-41,-33,-25,-19,-9,0,9,21,28]))for(let z of (lowQuality?[-8,8]:[-9,0,9]))fixture(x,z);
+for(let x of [-39,-26,-12.2,12.2])for(let z of [-10,0,10]){
   cyl(x,4.3,z,.11,8.4,edgeMetal);
   light(x,4.5,z,0x6da4e0,1.2,7);
 }
 // Overhead cooling pipeline and duct fans.
-for(let x of [-4,4]){
+for(let x of [-39,-30,-4,4]){
   line([x,5.4,-13],[x,5.4,12],.19,edgeMetal);
   for(let z of [-11,-5,1,7]){
     cyl(x,5.65,z,.45,.12,metal);
@@ -220,8 +221,31 @@ function rack(x,z,index){
   for(let j=0;j<4;j++)torus(x-.915,1.15+j*.78,z,.21,.028,edgeMetal).rotation.y=Math.PI/2;
   return g;
 }
-const rackCoords=[[2.3,-8],[5.9,-8],[2.3,-3],[5.9,-3],[2.3,2],[5.9,2],[2.3,7],[5.9,7],[-18,-8],[-18,-3],[-18,3],[-18,8]];
+const rackCoords=[
+  [2.3,-8],[5.9,-8],[2.3,-3],[5.9,-3],[2.3,2],[5.9,2],[2.3,7],[5.9,7],
+  [-18,-8],[-18,-3],[-18,3],[-18,8],
+  [-30,-8],[-30,-3],[-30,3],[-30,8],[-37,-8],[-37,-3],[-37,3],[-37,8],
+];
 rackCoords.forEach(([x,z],i)=>rack(x,z,i+1));
+
+// Additional west-hall structure, access markings and cold-aisle containment.
+const bpAnnexTrim=mat('#475769',{metal:.75,rough:.42});
+for(const x of [-40,-34,-28,-22]){
+  box(x,.075,11.2,1.6,.02,.10,bpAnnexTrim);
+  box(x,.075,-11.2,1.6,.02,.10,bpAnnexTrim);
+  box(x,5.78,-12.65,.14,.16,2.1,edgeMetal);
+}
+for(const z of [-11.4,-5.7,0,5.7,11.4]){
+  box(-26.1,.055,z,.085,.018,1.9,mat('#5f8590',{metal:.45,rough:.75}));
+  box(-41.4,.055,z,.085,.018,1.9,mat('#5f8590',{metal:.45,rough:.75}));
+}
+label('WEST SERVER HALL / COLD AISLE',-35.4,4.15,-14.04,11,.66);
+label('ZONE W',-42.8,3.75,-14.02,2.4,.55);
+for(const z of [-8,0,8]){
+  box(-43.6,5.6,z,.25,.75,1.55,metal);
+  box(-43.35,5.55,z,.10,.58,1.26,darkMetal);
+}
+
 
 /* Batched equipment details: hundreds of perforated vent marks in one draw. */
 const bpRackDetail=new THREE.Group();world.add(bpRackDetail);
@@ -254,8 +278,8 @@ for(const z of [-10.55,-5.6,-.55,4.5,9.5]){
 }
 // Ventilation louvres on the west wall.
 for(const z of [-10.2,-6.4,-2.6,1.2,5.0,8.8]){
-  box(-23.52,3.75,z,.11,1.65,1.9,edgeMetal,bpRackDetail);
-  for(let j=0;j<8;j++)box(-23.43,3.1+j*.185,z,.07,.055,1.60,black,bpRackDetail);
+  box(-44.42,3.75,z,.11,1.65,1.9,edgeMetal,bpRackDetail);
+  for(let j=0;j<8;j++)box(-44.33,3.1+j*.185,z,.07,.055,1.60,black,bpRackDetail);
 }
 
 for(let x of [1.1,7.1]){
@@ -1515,7 +1539,7 @@ renderer.domElement.addEventListener('click',event=>{
     void renderer.domElement.requestPointerLock?.();
 });
 function bpWalkable(x,z){
-  if(x < -23.35 || x > 31.1 || z < -12.8 || z > 12.8)return false;
+  if(x < -44.2 || x > 31.1 || z < -12.8 || z > 12.8)return false;
   if(x>14.2&&x<15.1&&!(z>-1.0&&z<1.7))return false;
   if(x>15.1&&(z < -11.4 || z > 11.4))return false;
   for(const [rx,rz] of rackCoords)
@@ -1598,7 +1622,7 @@ function bpRandom(g){
 }
 function bpRandomSearchTarget(g){
   for(let attempt=0;attempt<35;attempt++){
-    const x=-21+bpRandom(g)*33,z=-10.8+bpRandom(g)*21.6;
+    const x=-42+bpRandom(g)*54,z=-10.8+bpRandom(g)*21.6;
     if(bpWalkable(x,z))return [x,z];
   }
   return [-4,9];
