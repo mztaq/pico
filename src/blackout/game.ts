@@ -884,7 +884,7 @@ startGame=function(mode){
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
   bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;attacker.scale.y=1;
-  for(const p of patrols){p.index=0;p.phase=0;p.emergency=false;}
+  for(const p of patrols){p.index=0;p.phase=0;p.emergency=false;p.chaseUntil=0;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   attacker.visible=mode==='defend';attacker.position.set(-8.8,0,4.5);attacker.rotation.y=Math.PI;
   security.position.set(10.9,0,-3);
@@ -1061,22 +1061,30 @@ function bpGuardEmergency(g){
 function bpPatrolStep(p,dt){
   if(!game)return;
   const emergency=game.securityResponseUntil>game.elapsed;
-  const points=emergency?p.response:p.route;
+  const suspect=game.mode==='attack'?bp.player:attacker.position;
+  if(emergency&&p.agent.position.x<0&&bpGuardCanSee(p.agent,suspect,7.4)){
+    p.chaseUntil=game.elapsed+3.8;
+  }
+  const chasing=emergency&&p.agent.position.x<0&&(p.chaseUntil||0)>game.elapsed&&bpDistance(p.agent,suspect)<10;
+  const points=chasing?[[suspect.x,suspect.z]]:emergency?p.response:p.route;
   if(p.emergency!==emergency){p.emergency=emergency;p.phase=0;p.index=0;}
-  const idx=emergency?p.phase:p.index;
+  const idx=chasing?0:emergency?p.phase:p.index;
   const goal=points[idx];
   const dx=goal[0]-p.agent.position.x,dz=goal[1]-p.agent.position.z;
   const distance=Math.hypot(dx,dz);
   if(distance<.27){
-    if(emergency)p.phase=(p.phase+1)%points.length;
-    else p.index=(p.index+1)%points.length;
+    if(!chasing&&emergency)p.phase=(p.phase+1)%points.length;
+    else if(!chasing)p.index=(p.index+1)%points.length;
   }else{
-    const velocity=Math.min(distance,p.speed*(emergency?2.22:1)*dt);
+    const velocity=Math.min(distance,p.speed*(chasing?2.65:emergency?2.22:1)*dt);
     p.agent.position.x+=dx/distance*velocity;
     p.agent.position.z+=dz/distance*velocity;
     const wanted=Math.atan2(dx,dz);
     const diff=Math.atan2(Math.sin(wanted-p.agent.rotation.y),Math.cos(wanted-p.agent.rotation.y));
     p.agent.rotation.y+=diff*Math.min(1,dt*(emergency?10:4));
+  }
+  if(chasing&&game.mode==='attack'&&distance<1.4&&!game.ended){
+    endGame(false,'SECURITY INTERCEPTED YOU','Security guards reached the intruder before the web cluster went offline.');
   }
   const phase=game.elapsed*(emergency?15:8.2)+(p.agent.id%7);
   p.agent.position.y=Math.sin(phase)*.028;
