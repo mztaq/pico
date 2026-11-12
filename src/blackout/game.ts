@@ -1437,6 +1437,7 @@ startGame=function(mode){
   bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;bpHackerSortieCount=0;bpHackerSortieVisited.clear();
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;p.evidenceId='';}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
+  for(const terminal of bpEvidenceTerminals)terminal.led.material=blue;
   bpResetLaptop();
   attacker.visible=mode==='defend';attacker.position.set(-8.5,0,4.18);attacker.rotation.y=Math.PI;
   security.position.set(patrols[0].home[0],0,patrols[0].home[1]);
@@ -1671,6 +1672,16 @@ for(const p of patrols){
   box(-.31,.28,.33,.09,.31,.08,uniform,guard);
   box(.31,.28,.33,.09,.31,.08,uniform,guard);
 }
+// Evidence is gathered at real audit terminals, not invisible trigger points.
+const bpEvidenceTerminals=[];
+for(const station of EVIDENCE_STATIONS){
+  const x=station.x,z=station.z;
+  box(x,.70,z,.095,1.33,.12,edgeMetal);
+  box(x,1.44,z,.62,.68,.13,darkMetal);
+  box(x,1.44,z+.077,.53,.55,.015,screen);
+  const led=ball(x+.22,1.75,z+.095,.048,blue);
+  bpEvidenceTerminals.push({id:station.id,led});
+}
 const bpWorkPosition=V(-8.5,0,4.18);
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
 let bpHackerState='working',bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0,bpHackerSafeSince=-1;
@@ -1826,11 +1837,16 @@ function bpAssignSecurityDispatch(g){
 }
 function bpMoveGuard(p,dt,g){
   if(p.state==='collecting'){
+    // Visible audit interaction at the rack terminal.
+    if(p.agent.children[5])p.agent.children[5].rotation.z=-.48+Math.sin(g.elapsed*12)*.12;
+    if(p.agent.children[6])p.agent.children[6].rotation.z=.31;
     p.wait-=dt;
     if(p.wait<=0){
       const station=EVIDENCE_STATIONS.find(v=>v.id===p.evidenceId);
       if(station&&collectGuardEvidence(g,station)){
         log('Officer secured '+station.description+' (+'+station.value+' evidence).','good');
+        const terminal=bpEvidenceTerminals.find(v=>v.id===station.id);
+        if(terminal)terminal.led.material=mint;
         bpShowIncident('CASE EVIDENCE / '+Math.round(g.trace)+'% VERIFIED');
         sfx.scan();
         if(g.trace>=100&&!g.caseEvidenceComplete){
