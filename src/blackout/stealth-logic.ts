@@ -39,3 +39,24 @@ export function chooseHackerPhase(input: HackerDecisionInput): HackerPhase {
   if (input.phase === 'returning' && input.reachedWaypoint) return 'working';
   return input.phase;
 }
+
+/** Guards elsewhere in the data center should not keep the hacker hidden.
+ * Both the current hiding spot and the original laptop station need clearance.
+ */
+export function hackerAreaIsClear(
+  guards: readonly PointXZ[],
+  defender: PointXZ,
+  hacker: PointXZ,
+  workstation: PointXZ,
+  guardDistance = 11,
+  playerDistance = 8,
+): boolean {
+  const distance = (a:PointXZ,b:PointXZ) => Math.hypot(a.x-b.x,a.z-b.z);
+  if(distance(defender,hacker)<playerDistance ||
+     distance(defender,workstation)<playerDistance) return false;
+  for(const guard of guards){
+    if(distance(guard,hacker)<guardDistance ||
+       distance(guard,workstation)<guardDistance) return false;
+  }
+  return true;
+}
