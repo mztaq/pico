@@ -33,6 +33,13 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("p.role==='search'");
     expect(game).toContain("bpHackerState=chooseHackerPhase({phase:'working'");
     expect(game).toContain("bpHackerState=chooseHackerPhase({phase:'escaping'");
+    expect(game).toContain("if(bpHackerState==='escaping')");
+    expect(game).not.toContain("bpHackerState==='fleeing'");
+    expect(game).toContain('const bpHackerEscape=[');
+    expect(game).toContain('bpGuardCanSee(guard,attacker.position');
+    expect(game).toContain("p.state='returning'");
+    expect(game).toContain("p.state='idle'");
+    expect(game).toContain('const bpWorkPosition=V(-9.4,0,4.18)');
     expect(game).toContain("endGame(false,'CAUGHT BY SECURITY'");
     expect(game).toContain('new THREE.PerspectiveCamera(84, 1, .07, 120)');
     expect(game).toContain('if(!bp.active || !game || game.ended){');
