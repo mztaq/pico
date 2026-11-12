@@ -1111,7 +1111,7 @@ function bpWallGraph(t){
     ctx.beginPath();
     history.forEach((v,i)=>{
       const x=plot.x+(i/119)*plot.w;
-      const y=plot.y+plot.h-(v.traffic/scaleMax)*plot.h;
+      const y=plot.y+plot.h-((v.bitsPerSecond??estimatedBitsPerSecond(v.traffic,avgBytes))/scaleMax)*plot.h;
       if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
     });
     ctx.strokeStyle=redMode?'#f38ba8':'#cba6f7';ctx.lineWidth=4;ctx.stroke();
