@@ -13,6 +13,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic'");
     expect(game).toContain("import { drawTerminalScreen, terminalHitTest } from './terminal-screen'");
     expect(game).toContain("import { routeTo } from './navigation'");
+    expect(game).toContain("import { moveGuardWithAvoidance } from './guard-movement'");
     expect(game).toContain("import { renderOfficeFeed } from './office-monitor'");
     expect(game).toContain("import { rankedCoverSpots, formationPosition } from './ai-coordination'");
     expect(game).toContain("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth'");
@@ -35,6 +36,7 @@ describe('Blackout Protocol 3D', () => {
       .replace("import { drawTerminalScreen, terminalHitTest } from './terminal-screen';", 'const drawTerminalScreen = () => {}; const terminalHitTest = () => -1;')
       .replace("import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working"; const hackerAreaIsClear = () => true;')
       .replace("import { routeTo } from './navigation';", 'const routeTo = () => [];')
+      .replace("import { moveGuardWithAvoidance } from './guard-movement';", "const moveGuardWithAvoidance = () => ({point:{x:0,z:0},arrived:false,moved:0});")
       .replace("import { renderOfficeFeed } from './office-monitor';", 'const renderOfficeFeed = () => {};')
       .replace("import { rankedCoverSpots, formationPosition } from './ai-coordination';", 'const rankedCoverSpots = () => []; const formationPosition = () => ({x:0,z:0});')
       .replace("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
@@ -81,6 +83,15 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("phase:'escaping',guardVisible:false,nearbyGuard:false");
     expect(game).toContain("if(bpHackerState==='escaping')");
     expect(game).toContain('function bpGuardRoute(from,to)');
+    expect(game).toContain('function bpGuardWalkable(x,z)');
+    expect(game).toContain('function bpRecoverGuard(p,g)');
+    expect(game).toContain('p.stalledFor=(p.stalledFor||0)+dt');
+    expect(game).toContain('if(p.stalledFor>1.15)bpRecoverGuard(p,g)');
+    expect(game).toContain('moveGuardWithAvoidance(');
+    expect(game).toContain('bpFollowHackerRoute(dt,4.15)');
+    expect(game).toContain('bpFollowHackerRoute(dt,2.85)');
+    expect(game).toContain('bpFollowHackerRoute(dt,3.0)');
+    expect(game).toContain('Math.pow(saturation-1,1.14)*2.9');
     expect(game).toContain("p.state='chasing'");
     expect(game).toContain('p.repathAt=g.elapsed+');
     expect(game).toContain("p.path=bpGuardRoute(p.agent.position,destination)");
