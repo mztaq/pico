@@ -514,6 +514,9 @@ function createGame(mode){
   };
 }
 function startGame(mode){
+  // Ignore any stale mode-card click, keypress or delayed UI action during a mission.
+  if(game&&!game.ended)return;
+  if(mode!=='attack'&&mode!=='defend')return;
   sfx.init();sfx.tap();game=createGame(mode);
   $('home').classList.add('hidden');$('home').hidden=true;$('home').inert=true;
   $('game').classList.add('active');$('ending').classList.remove('visible');
