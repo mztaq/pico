@@ -574,13 +574,13 @@ class Soundscape {
       const noise=a.createBuffer(2,size,a.sampleRate);
       for(let ch=0;ch<2;ch++){let d=noise.getChannelData(ch);for(let i=0;i<size;i++)d[i]=(Math.random()*2-1)*.49;}
       const source=a.createBufferSource();source.buffer=noise;source.loop=true;
-      const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=530;this.fanFilter=lp;
+      const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=290;this.fanFilter=lp;
       const low=a.createBiquadFilter();low.type='highpass';low.frequency.value=70;
-      this.fan=a.createGain();this.fan.gain.value=.19;
+      this.fan=a.createGain();this.fan.gain.value=.038;
       source.connect(low);low.connect(lp);lp.connect(this.fan);this.fan.connect(this.master);source.start();
       const hum=a.createOscillator();hum.type='sine';hum.frequency.value=56;
       const hum2=a.createOscillator();hum2.type='triangle';hum2.frequency.value=113.5;this.fanWhine=hum2;
-      this.vent=a.createGain();this.vent.gain.value=.07;
+      this.vent=a.createGain();this.vent.gain.value=.026;
       hum.connect(this.vent);hum2.connect(this.vent);this.vent.connect(this.master);hum.start();hum2.start();
       const siren=a.createOscillator();siren.type='sine';siren.frequency.value=390;
       this.alarmGain=a.createGain();this.alarmGain.gain.value=0;
@@ -614,13 +614,13 @@ class Soundscape {
   win(){this.sample('confirmation_001',.47);[480,620,790,1040].forEach((f,i)=>setTimeout(()=>this.tone(f,.45,'sine',.09),i*170))}
   lose(){this.sample('error_001',.47);[350,285,210,140].forEach((f,i)=>setTimeout(()=>this.tone(f,.4,'sawtooth',.065),i*230))}
   metal(){this.sample('bong_001',.7);this.noise(.63,.24,145);this.tone(145,.58,'sawtooth',.19,50);setTimeout(()=>this.tone(60,.9,'triangle',.14,34),145)}
-  update(time,health,active,traffic=0){
+  update(time,health,active,traffic=0,fanLoad=0){
     if(!this.ctx||!this.master)return;
     const t=this.ctx.currentTime;
-    if(this.fan)this.fan.gain.setTargetAtTime(active?.17+Math.min(.41,traffic/65000)+Math.max(0,100-health)*.0018:.13,t,.35);
-    if(this.fanFilter)this.fanFilter.frequency.setTargetAtTime(active?380+Math.min(2300,traffic/14)+Math.max(0,100-health)*6:480,t,.4);
-    if(this.fanWhine)this.fanWhine.frequency.setTargetAtTime(active?92+Math.min(160,traffic/220)+Math.max(0,100-health)*.65:92,t,.25);
-    if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&(health<55||traffic>13000)?.084:0,t,.2);}
+    if(this.fan)this.fan.gain.setTargetAtTime(active?.04+Math.min(1,fanLoad)*(.22+Math.min(.18,traffic/120000)):.03,t,1.2);
+    if(this.fanFilter)this.fanFilter.frequency.setTargetAtTime(active?300+fanLoad*(600+Math.min(1700,traffic/24)):280,t,1.0);
+    if(this.fanWhine)this.fanWhine.frequency.setTargetAtTime(active?72+fanLoad*(35+Math.min(140,traffic/380)):72,t,.8);
+    if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&fanLoad>.6&&(health<55||traffic>13000)?.065:0,t,.3);}
   }
 }
 const sfx=new Soundscape();
@@ -629,7 +629,7 @@ $('audio').onclick=()=>{$('audio').textContent=sfx.toggle()?'♫ ON':'♫ OFF';s
 // --------------------------------------------------------------------------
 // Fictional gameplay model. There are no fetch(), WebSocket or live IP calls.
 // --------------------------------------------------------------------------
-const GAME_SECONDS=720;
+const GAME_SECONDS=1080;
 let game=null,uiTick=0,toastTimer=0,visualTime=0,flashAlpha=0,endingDelay=0,alarmCooldown=0;
 const ACTIONS={
   attack:[
@@ -652,9 +652,9 @@ function log(message,tone=''){if(!game)return;game.logs.unshift({at:timestamp(),
 function notify(message,alert=false){if(alert)bpShowIncident(message);clearTimeout(toastTimer);$('toast').textContent=message;$('toast').style.borderColor=alert?'#f28a7c':'#7ae9d49e';$('toast').classList.add('visible');toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2900);}
 function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
-    risk:mode==='attack'?0:8,trace:mode==='defend'?0:0,
+    risk:mode==='attack'?0:8,trace:0,fanLoad:0,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
-    nextDefenderProxy:18,nextAttackerWave:13,nextSabotageAt:28,nextCoolingIncident:46,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,proxySabotage:null,coolingNeedsRepair:false,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),patrolSeed:(Math.random()*0xffffffff)>>>0,
+    nextDefenderProxy:18,nextAttackerWave:13,nextSabotageAt:28,nextCoolingIncident:46,nextAutoProxyAt:13,nextEvidenceDispatch:17,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,proxySabotage:null,coolingNeedsRepair:false,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),collectedEvidence:{},suspectHeld:false,suspectHoldGuard:null,patrolSeed:(Math.random()*0xffffffff)>>>0,
   };
 }
 function startGame(mode){
@@ -778,8 +778,8 @@ function stepGame(dt){
     const blockedRatio=Math.min(.89,g.proxies*.13+(g.limit>0?.34:0));
     g.delivered=g.traffic*(1-blockedRatio);
   }
-  const saturation=g.delivered/(g.mode==='attack'?7700:9000);
-  if(saturation>1){g.health=Math.max(0,g.health-dt*Math.pow(saturation-1,1.14)*2.9);}else{g.health=Math.min(100,g.health+dt*.10);}
+  const saturation=g.delivered/(g.mode==='attack'?10200:12500);
+  if(saturation>1){g.health=Math.max(0,g.health-dt*Math.pow(saturation-1,1.14)*1.35);}else{g.health=Math.min(100,g.health+dt*.23);}
   if(g.coolingNeedsRepair&&g.coolingEventUntil>g.elapsed)
     g.health=Math.max(0,g.health-dt*.16);
   if(g.health<50 && alarmCooldown<=0){sfx.alert();alarmCooldown=5;log('Server health warning: high application pressure.','warn');}
@@ -863,7 +863,7 @@ function animateScene(t,dt){
   if(jail.visible){sirenRed.intensity=2.5+2*Math.max(0,Math.sin(t*6));sirenBlue.intensity=2.5+2*Math.max(0,Math.sin(t*6+Math.PI));}
   flashAlpha+=(0-flashAlpha)*Math.min(1,dt*2.4);
   $('flash').style.opacity=String(Math.max(0,flashAlpha));
-  sfx.update(t,g?.health??100,Boolean(active),g?.traffic??0);
+  sfx.update(t,g?.health??100,Boolean(active),g?.traffic??0,g?.fanLoad??0);
 }
 
 // --------------------------------------------------------------------------
@@ -1925,6 +1925,10 @@ function bpNpcUpdate(dt){
   }
   const activeAlarm=bpGuardEmergency(g);
   observeSecurityAlarm(g,activeAlarm);
+  // Cooling stays in quiet standby until security notices a sustained spike.
+  const fanSurge=g.securityDispatchActive &&
+    (g.burst>0||g.attackerWave>0||g.traffic>14000||g.health<65);
+  g.fanLoad+=(Number(fanSurge)-g.fanLoad)*Math.min(1,dt*(fanSurge?.55:.3));
   // A second attack is a new incident even if the previous crew is still
   // walking back to security. Redirect that returning crew immediately.
   const respondersReturning=g.securityDispatchActive&&patrols.every(p=>
@@ -2234,8 +2238,8 @@ animateScene=function(t,dt){
       bpDrawStandbyScreen(bpSecurityCtx,bpSecurityTexture);
     }
   }
-  const targetRpm=game?Math.min(6100,950+Math.min(1,game.traffic/18500)*3500+(100-game.health)*16+(game.burst>0||game.attackerWave>0?800:0)):940;
-  bpSmoothedRpm+=(targetRpm-bpSmoothedRpm)*Math.min(1,dt*(game?.burst>0||game?.attackerWave>0?3:1.25));
+  const targetRpm=game?850+(game.fanLoad||0)*Math.min(5200,1650+Math.min(1,game.traffic/21000)*2700+(100-game.health)*12):850;
+  bpSmoothedRpm+=(targetRpm-bpSmoothedRpm)*Math.min(1,dt*.85);
   // Perceptual fan blur avoids the stroboscopic illusion of stationary blades.
   // Physically inspired fan RPM is retained for the wall readout and motor sound.
   const visibleTurns=(1.2+bpSmoothedRpm/5500*10)*Math.PI*2*dt;
