@@ -7,6 +7,16 @@ const vite = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
 const css = readFileSync(new URL('../src/blackout/game.css', import.meta.url), 'utf8');
 
 describe('Blackout Protocol 3D', () => {
+  it('enters the playable camera for both modes and survives isolated frame faults', () => {
+    expect(game).toContain("bp.active=true;bp.terminal=false;bp.third=false");
+    expect(game).toContain("bpOfficeConsoleZ+2.45");
+    expect(game).toContain("try{moveCamera(0);renderer.render(scene,camera);}");
+    expect(game).toContain("try{moveCamera(dt);}catch(error){bpReportFrameError('camera',error);}");
+    expect(game).toContain("try{bpNpcUpdate(dt);}catch(error){bpReportFrameError('security AI',error);}");
+    expect(game).toContain("bpCctvDisabled=true");
+    expect(game).toContain("bpFrameErrors.clear()");
+  });
+
   it('parses the TypeScript game module as JavaScript and bundles the graphics engine locally', () => {
     expect(game).toContain("import * as THREE from 'three'");
     expect(game).toContain("import { createTrafficFeed } from './traffic-model'");
@@ -145,7 +155,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("const bpMaxChaseSeconds=8");
     expect(game).not.toContain('const bpDispatchRestSeconds=100');
     expect(game).toContain("bpLaptopRig.visible=!(game?.mode==='attack'&&bpAttackLaptopCarried&&!bp.third)");
-    expect(game).toContain("bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(23.0,0,-3.55))");
+    expect(game).toContain("bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(bpOfficeConsoleX,0,bpOfficeConsoleZ+2.45))");
     expect(game).toContain('const bpOfficeConsoleX=23.15');
     expect(game).not.toContain("bpHackerState==='fleeing'");
     expect(game).not.toContain('const bpHackerEscape=[');
