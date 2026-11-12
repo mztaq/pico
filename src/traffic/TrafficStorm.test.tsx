@@ -203,27 +203,30 @@ describe('Traffic Storm setup', () => {
         const firstAttackMidY = (92 + (firstProxyY ?? firstServerY)) / 2;
         const attack = notes[1];
         expect(attack.fromY).toBeLessThan(attack.tipY);
-        expect(firstAttackMidY - attack.tipY).toBe(8);
+        expect(firstAttackMidY - attack.tipY).toBe(12);
         expect(attack.tipX).toBe(584);
 
         const edge = notes[2];
         if (firstProxyY === null) {
           const directY = 92 * 0.15625 + firstServerY * 0.84375;
-          expect(directY - edge.tipY).toBe(8);
+          expect(directY - edge.tipY).toBe(12);
           expect(edge.fromY).toBeLessThan(edge.tipY);
         } else {
-          // Proxy chassis top is firstProxyY - 34; stop 5 px outside.
-          expect(firstProxyY - 34 - edge.tipY).toBe(5);
+          // Proxy chassis top is firstProxyY - 34; stop 12 px outside.
+          expect(firstProxyY - 34 - edge.tipY).toBe(12);
           expect(edge.fromY).toBeLessThan(edge.tipY);
           expect(edge.tipX).toBeGreaterThan(790);
         }
 
         const server = notes[3];
-        // The rack's lower edge is lastServerY + 37; point from below, 7 px away.
-        expect(server.tipY - (lastServerY + 37)).toBe(7);
+        // The rack's lower edge is lastServerY + 37; point from below, 12 px away.
+        expect(server.tipY - (lastServerY + 37)).toBe(12);
         expect(server.fromY).toBeGreaterThan(server.tipY);
         expect(server.y).toBeGreaterThan(server.fromY);
         for (const note of notes) {
+          // Match the consistent spacing of the original proxy-overload annotation.
+          expect(Math.abs(note.tipY - note.y)).toBe(28);
+          expect(Math.abs(note.fromY - note.y)).toBe(13);
           expect(Math.hypot(note.tipX - note.fromX, note.tipY - note.fromY)).toBeGreaterThan(9);
           expect(note.y).toBeGreaterThan(0);
           expect(note.y).toBeLessThan(465);
