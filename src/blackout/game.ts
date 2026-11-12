@@ -18,7 +18,8 @@ const camera = new THREE.PerspectiveCamera(84, 1, .07, 120);
 const gpuMemory=Number(navigator.deviceMemory)||4;
 const gpuCores=Number(navigator.hardwareConcurrency)||4;
 const autoLow=gpuMemory<=4||gpuCores<=4||Math.min(innerWidth,innerHeight)<680;
-let preferredQuality=localStorage.getItem('pico.blackout.graphics')||'auto';
+let preferredQuality='auto';
+try {preferredQuality=localStorage.getItem('pico.blackout.graphics')||'auto';}catch { /* Storage is disabled on some classroom browsers. */ }
 if(!['auto','low','high'].includes(preferredQuality))preferredQuality='auto';
 let lowQuality=preferredQuality==='low'||(preferredQuality==='auto'&&autoLow);
 const renderer = new THREE.WebGLRenderer({ antialias: !lowQuality, powerPreference: 'low-power', alpha: false });
@@ -28,13 +29,19 @@ function updateQuality(setting) {
   const mode=['auto','low','high'].includes(setting)?setting:'auto';
   preferredQuality=mode;qualitySelect.value=mode;
   lowQuality=mode==='low'||(mode==='auto'&&autoLow);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lowQuality?.9:1.35));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lowQuality?.72:1.5));
   renderer.shadowMap.enabled=!lowQuality;
+  renderer.shadowMap.autoUpdate=!lowQuality;
+  renderer.toneMappingExposure=lowQuality?1.95:1.72;
   renderer.setSize(innerWidth,innerHeight);
-  localStorage.setItem('pico.blackout.graphics',mode);
+  bpApplyQuality();
+  try {localStorage.setItem('pico.blackout.graphics',mode);}catch{}
+  if(game)notify('GRAPHICS / '+mode.toUpperCase()+(lowQuality?' / PERFORMANCE':' / DETAIL'));
 }
-qualitySelect.addEventListener('change',event=>updateQuality(event.target.value));
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lowQuality?.9:1.35));
+qualitySelect.addEventListener('pointerdown',event=>event.stopPropagation());
+qualitySelect.addEventListener('click',event=>event.stopPropagation());
+qualitySelect.addEventListener('change',event=>{event.stopPropagation();updateQuality(event.target.value);});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lowQuality?.72:1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.85;
@@ -109,10 +116,11 @@ function sign(text, w=512, h=128, fg='#bcefe2', bg='#071b26') {
 function label(text,x,y,z,w,h,rotationY=0,fg='#bcefe2',parent=world){
   const plane=mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({map:sign(text),side:THREE.DoubleSide,transparent:false}),[x,y,z],parent,false);plane.rotation.y=rotationY;return plane;
 }
+const bpFixtureLights=[];
 function fixture(x,z) {
   box(x,6.16,z,2.8,.12,.5,edgeMetal);
   box(x,6.06,z,2.42,.05,.28,ice);
-  light(x,5.78,z,0xb6eeff,3,10);
+  bpFixtureLights.push(light(x,5.78,z,0xb6eeff,3,10));
 }
 // Real-scale server room: raised floor, walls, cable conduits, cooling lanes.
 box(-4.5,-.19,0,39,.35,29,concrete);
@@ -742,7 +750,8 @@ function frame(now=0){
   const dt=Math.min(clock.getDelta(),.05);visualTime+=dt;alarmCooldown=Math.max(0,alarmCooldown-dt);
   stepGame(dt);moveCamera(dt);animateScene(visualTime,dt);
   uiTick+=dt;if(game&&(uiTick>.18)){updateUI();uiTick=0;}
-  if(!lowQuality || now-lastDraw>=1000/36){renderer.render(scene,camera);lastDraw=now;}
+  const targetFps=lowQuality?27:60;
+  if(now-lastDraw>=1000/targetFps){renderer.render(scene,camera);lastDraw=now;}
 }
 
 /* Blackout Protocol: embodied first-person missions and cinematic incident AI.
@@ -768,6 +777,20 @@ const bpPlayerAvatar=character(10.7,-2.1,'engineer');
 bpPlayerAvatar.visible=false;
 let bpSmoothedRpm=940;
 const bpFanRotors=[];
+
+function bpApplyQuality(){
+  // Runtime switching changes actual GPU work, not only the dropdown label.
+  // Fewer active point lights, smaller render targets, lower DPR and 27 fps on Low.
+  for(let i=0;i<bpFixtureLights.length;i++)
+    bpFixtureLights[i].intensity=lowQuality?(i%3===0?2.8:0):3.0;
+  for(let i=0;i<bpFanRotors.length;i++)
+    bpFanRotors[i].visible=!lowQuality||(i%3===0);
+  if(typeof bpWallCanvas!=='undefined'){
+    const w=lowQuality?512:1024,h=lowQuality?288:576;
+    if(bpWallCanvas.width!==w){bpWallCanvas.width=w;bpWallCanvas.height=h;bpWallGraph(visualTime);}
+  }
+}
+
 const bpFanSpeedLeds=[];
 const bpFanBlurMaterial=new THREE.MeshBasicMaterial({
   color:0xa1c5ea,transparent:true,opacity:.028,depthWrite:false,
@@ -1690,6 +1713,7 @@ endGame=function(win,title,description){
 renderer.domElement.setAttribute('aria-label','First-person 3D data center game. WASD to move, mouse to look, E to use nearby laptop, C to crouch, V for third-person view.');
 
 bpWallGraph(0);
+bpApplyQuality();
 resize();focus('overview');moveCamera(10);renderer.render(scene,camera);
 frame();
 $('loading').remove();
