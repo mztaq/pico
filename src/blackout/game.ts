@@ -1393,7 +1393,7 @@ function bpNpcUpdate(dt){
     bpShowIncident('SECURITY CHECK / WEST AISLE');
     sfx.scan();
   }
-  if(bpHackerState==='fleeing'){
+  if(bpHackerState==='escaping'){
     if(bpMoveHackerTowards(bpHackerEscape[bpHackerWaypoint],dt,3.2)){
       bpHackerWaypoint++;
       if(bpHackerWaypoint>=bpHackerEscape.length){
@@ -1576,7 +1576,7 @@ animateScene=function(t,dt){
     const motion=bp.npcTyping?Math.sin(t*11)*.012:Math.sin(t*7)*.04;
     attacker.position.y=motion;
     const working=bpHackerState==='working';
-    const fleeing=bpHackerState==='fleeing'||bpHackerState==='returning';
+    const fleeing=bpHackerState==='escaping'||bpHackerState==='returning';
     if(attacker.children[5])attacker.children[5].rotation.x=working?-.23+Math.sin(t*15)*.14:fleeing?Math.sin(t*11)*.4:.16;
     if(attacker.children[6])attacker.children[6].rotation.x=working?-.18+Math.cos(t*17)*.12:fleeing?-Math.sin(t*11)*.4:.16;
   }
