@@ -1622,7 +1622,14 @@ function bpAssignSecurityDispatch(g){
       p.path=bpGuardRoute(p.agent.position,[position.x+.85,position.z+.66]);
       p.state='deploying';
     }else{
-      p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));
+      // On an attacker-triggered surge, the first sweep covers the wired
+      // laptop's server rack. Search paths themselves remain obstacle-aware,
+      // with randomized patrol targets after the first sweep.
+      const firstSweep=g.mode==='attack'
+        ? [bpAttackerDesk.x+(i===1?-2.1:2.0),
+           bpAttackerDesk.z+(i===1?2.1:1.6)]
+        : bpRandomSearchTarget(g);
+      p.path=bpGuardRoute(p.agent.position,firstSweep);
       p.state='searching';
     }
   }
