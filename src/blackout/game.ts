@@ -1150,42 +1150,19 @@ function bpWallGraph(t){
 }
 
 let bpMonitorTick=0;
-function bpDrawScreen(ctx,texture,title,redMode,t){
+function bpDrawStandbyScreen(ctx,texture){
   if(!ctx)return;
-  const w=512,h=288;
-  // Draw across the entire texture. Previously the 512×288 idle screen
-  // covered only the top-left of the larger 1024×720 interactive canvas.
-  ctx.setTransform(ctx.canvas.width/w,0,0,ctx.canvas.height/h,0,0);
+  ctx.setTransform(1,0,0,1,0,0);
+  const w=ctx.canvas.width,h=ctx.canvas.height;
   ctx.clearRect(0,0,w,h);
-  ctx.fillStyle='#101522';ctx.fillRect(0,0,w,h);
-  ctx.fillStyle='#212b39';for(let i=0;i<5;i++)ctx.fillRect(14,60+i*42,484,1);
-  ctx.fillStyle=redMode?'#f38ba8':'#a6e3a1';ctx.fillRect(0,0,w,6);
-  ctx.font='bold 22px monospace';ctx.fillText(title,21,39);
-  ctx.font='15px monospace';ctx.fillStyle='#bac2de';
-  ctx.fillText('PICO DATACENTER / SERVER ROOM A',21,76);
-  ctx.fillText('203.0.113.24 / INCIDENT '+(game&&game.mode==='attack'?'A':'B'),21,104);
-  const rate=game?game.traffic:0;
-  ctx.fillStyle='#cdd6f4';ctx.font='bold 24px monospace';
-  const avgBytes=game?.requestFeed?.averageBytesPerRequest??DEFAULT_BYTES_PER_REQUEST;
-  ctx.fillText('EST. LOAD  '+throughputLabel(rate,avgBytes),20,147);
-  ctx.fillStyle='#a6adc8';ctx.font='12px monospace';
-  ctx.fillText(Math.round(rate).toLocaleString('en-US')+' RPS',21,170);
-  ctx.fillStyle='#45475a';ctx.fillRect(22,178,465,31);
-  const fraction=Math.min(1,rate/72000);
-  ctx.fillStyle=redMode?'#f38ba8':'#cba6f7';ctx.fillRect(22,178,465*fraction,31);
-  ctx.strokeStyle=redMode?'#f38ba8':'#89b4fa';ctx.lineWidth=3;ctx.beginPath();
-  for(let x=22;x<=487;x+=5){
-    const wave=Math.sin(x*.11+t*3)*.32+Math.sin(x*.037+t*1.3)*.35+Math.sin(x*.29+t*5)*.15;
-    const y=239-wave*27-fraction*16;
-    if(x===22)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-  }
-  ctx.stroke();
-  ctx.font='14px monospace';ctx.fillStyle='#a6adc8';
-  ctx.fillText('CORE TELEMETRY  /  NORTH WING',20,277);
+  ctx.fillStyle='#111324';ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#cba6f7';ctx.fillRect(0,0,w,7);
+  ctx.fillStyle='#dce2f7';ctx.font='bold 44px sans-serif';
+  ctx.fillText('Pico.',45,Math.min(h*.31,180));
+  ctx.font='22px sans-serif';ctx.fillStyle='#aeb7cf';
+  ctx.fillText('Select a mission to begin',45,Math.min(h*.43,250));
   texture.needsUpdate=true;
 }
-
-
 
 let bpAttackLaptopCarried=false;
 function bpResetLaptop(){
@@ -1241,11 +1218,11 @@ function bpActiveTerminalDisplay(){
     : {mesh:bpSecurityPlane,ctx:bpSecurityCtx,texture:bpSecurityTexture,canvas:bpSecurityCanvas};
 }
 function bpPaintTerminal(){
-  if(!bp.terminal||!game)return;
+  if(!game||game.ended)return;
   const {ctx,texture}=bpActiveTerminalDisplay();if(!ctx)return;
   const actions=ACTIONS[game.mode].map(a=>{
     const cooldown=Math.max(0,game.cooldowns[a.id]||0);
-    const blocked=a.id==='proxy'&&game.proxies>=6||a.id==='trace'&&game.trace<22;
+    const blocked=a.id==='proxy'&&game.proxies>=6||a.id==='trace'&&game.trace<22||game.mode==='attack'&&bpAttackLaptopCarried;
     return {id:a.id,title:a.title,description:a.description,cooldown,available:!blocked&&cooldown===0&&!game.ended};
   });
   drawTerminalScreen(ctx,{
@@ -1254,23 +1231,36 @@ function bpPaintTerminal(){
     health:game.health,proxies:game.proxies,
     progress:game.mode==='attack'?game.risk:game.trace,
     elapsed:game.elapsed,hovered:bpTerminalHover,
+    focused:bp.terminal,connected:game.mode!=='attack'||!bpAttackLaptopCarried,
   });
   texture.needsUpdate=true;
 }
+function bpCanUseTerminal(){
+  if(!bp.active||!game||game.ended)return false;
+  if(game.mode==='attack'&&bpAttackLaptopCarried)return false;
+  const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
+  return bp.terminal||bpDistance(bp.player,desk)<3.9;
+}
 function bpTerminalActionAt(x,y){
-  if(!bp.terminal||!game)return -1;
+  if(!bpCanUseTerminal())return -1;
   const bounds=renderer.domElement.getBoundingClientRect();
   if(bounds.width<=0||bounds.height<=0)return -1;
-  bpTerminalNdc.set((x-bounds.left)/bounds.width*2-1,-((y-bounds.top)/bounds.height*2-1));
+  const locked=document.pointerLockElement===renderer.domElement&&!bp.terminal;
+  const px=locked?bounds.left+bounds.width/2:x;
+  const py=locked?bounds.top+bounds.height/2:y;
+  bpTerminalNdc.set((px-bounds.left)/bounds.width*2-1,-((py-bounds.top)/bounds.height*2-1));
+  camera.updateMatrixWorld();
   bpTerminalRaycaster.setFromCamera(bpTerminalNdc,camera);
   const {mesh,canvas}=bpActiveTerminalDisplay();
+  mesh.updateWorldMatrix(true,false);
   const hit=bpTerminalRaycaster.intersectObject(mesh,false)[0];
-  if(!hit?.uv)return -1;
+  // Never activate a distant screen through racks or other room geometry.
+  if(!hit?.uv||(!bp.terminal&&hit.distance>4.8))return -1;
   return terminalHitTest(hit.uv.x*canvas.width,(1-hit.uv.y)*canvas.height,
     canvas.width,canvas.height,ACTIONS[game.mode].length);
 }
 function bpTerminalSelect(index){
-  if(!bp.terminal||!game||game.ended)return;
+  if(!bpCanUseTerminal())return;
   const action=ACTIONS[game.mode][index];if(!action)return;
   const disabled=game.cooldowns[action.id]>0||
     action.id==='proxy'&&game.proxies>=6||
@@ -1280,9 +1270,10 @@ function bpTerminalSelect(index){
   bpPaintTerminal();
 }
 renderer.domElement.addEventListener('pointermove',e=>{
-  if(!bp.terminal||!game)return;
+  if(!bpCanUseTerminal())return;
   const hovered=bpTerminalActionAt(e.clientX,e.clientY);
-  renderer.domElement.style.cursor=hovered>=0?'pointer':'default';
+  if(document.pointerLockElement!==renderer.domElement)
+    renderer.domElement.style.cursor=hovered>=0?'pointer':'crosshair';
   if(hovered!==bpTerminalHover){bpTerminalHover=hovered;bpPaintTerminal();}
 });
 
@@ -1380,7 +1371,7 @@ window.__bpEscape=()=>{
 window.__bpIsFPS=()=>Boolean(bp.active);
 const bpOriginalAct=act;
 act=function(id){
-  if(!bp.terminal){notify('ACCESS YOUR WORKSTATION WITH E');return;}
+  if(!bpCanUseTerminal()){notify('GET CLOSER TO YOUR WORKSTATION');return;}
   if(id==='arrest'){notify('LEAVE THE CONSOLE AND LOCATE THE SUSPECT');return;}
   bpOriginalAct(id);
 };
@@ -1420,7 +1411,13 @@ document.addEventListener('keydown',e=>{
   if(bpReservedKeys.has(e.code))e.preventDefault();
   bp.keys.add(e.code);
   if(e.repeat)return;
-  if(bp.terminal&&/^Digit[1-4]$/.test(e.code)){bpTerminalSelect(Number(e.code.slice(-1))-1);return;}
+  if(/^Digit[1-4]$/.test(e.code)){
+    const box=renderer.domElement.getBoundingClientRect();
+    if(bpCanUseTerminal()&&(bp.terminal||
+       bpTerminalActionAt(box.left+box.width/2,box.top+box.height/2)>=0))
+      bpTerminalSelect(Number(e.code.slice(-1))-1);
+    return;
+  }
   if(e.code==='KeyF'&&game.mode==='attack'){bpToggleAttackLaptop();return;}
   if(e.code==='KeyE')bpTryInteract();
   if(e.code==='KeyV'&&!bp.terminal){bp.third=!bp.third;sfx.tap();notify(bp.third?'SHOULDER CAMERA':'FIRST-PERSON CAMERA');}
@@ -1446,12 +1443,10 @@ document.addEventListener('mousemove',e=>{
   bp.pitch=bpClamp(bp.pitch-bpClamp(e.movementY,-110,110)*.0019,-1.3,1.3);
 });
 renderer.domElement.addEventListener('click',event=>{
-  if(bp.terminal){
-    const index=bpTerminalActionAt(event.clientX,event.clientY);
-    if(index>=0)bpTerminalSelect(index);
-    return;
-  }
-  if(bp.active&&game&&!game.ended)
+  if(!bp.active||!game||game.ended)return;
+  const index=bpTerminalActionAt(event.clientX,event.clientY);
+  if(index>=0){bpTerminalSelect(index);return;}
+  if(!bp.terminal&&document.pointerLockElement!==renderer.domElement)
     void renderer.domElement.requestPointerLock?.();
 });
 function bpWalkable(x,z){
@@ -1960,14 +1955,14 @@ updateUI=function(force=false){
       'Laptop secured. Evade security, then return to the rack and press F to reconnect.':
       g.securityDispatchActive?
       'Security is searching the hall. Press F near the laptop to unplug it before sprinting.':
-      g.proxies===0?'Use E to operate the laptop. F unplugs it when you need to escape.':
-      g.proxies<3?'Edge proxies are switching on. Check the laptop and watch for the guards.':
+      g.proxies===0?'Click the actions on the laptop screen or aim and press 1–4. F unplugs it.':
+      g.proxies<3?'Choose actions directly on the laptop. Watch for responding security guards.':
       'More proxies are active. Keep the network under pressure while avoiding arrest.';
   }else{
     if(g.coolingEventUntil>g.elapsed){
       $('mission-step').textContent='Cooling pressure rising. Find the coolant reset panel by the east server racks. Press E to stabilize.';
     } else {
-    $('mission-step').textContent=g.trace<22?'Deploy proxies and inspect traffic at the security desk.':
+    $('mission-step').textContent=g.trace<22?'Choose protective actions on the office console screen.':
       g.trace<100?'Build the case with verified logs, then search the racks for the moving intruder.':
       'Case verified. Leave the console, find the hooded suspect and press E nearby to detain.';
     }
@@ -2001,12 +1996,12 @@ animateScene=function(t,dt){
     bpOfficeMonitorTick=0;bpPaintOfficeMonitor();
   }
   bpMonitorTick+=dt;
-  if(bpMonitorTick>(bp.terminal?.09:lowQuality?.45:.18)){
+  if(bpMonitorTick>(bp.terminal?.09:lowQuality?.46:.24)){
     bpMonitorTick=0;
-    if(bp.terminal)bpPaintTerminal();
+    if(game&&!game.ended)bpPaintTerminal();
     else{
-      bpDrawScreen(bpDisplayContext,bpDisplayTexture,'NETWORK ACTIVITY',Boolean(game&&game.burst>0),t);
-      bpDrawScreen(bpSecurityCtx,bpSecurityTexture,'SECURITY OPERATIONS',Boolean(game&&game.health<55),t);
+      bpDrawStandbyScreen(bpDisplayContext,bpDisplayTexture);
+      bpDrawStandbyScreen(bpSecurityCtx,bpSecurityTexture);
     }
   }
   const targetRpm=game?Math.min(6100,950+Math.min(1,game.traffic/18500)*3500+(100-game.health)*16+(game.burst>0||game.attackerWave>0?800:0)):940;
