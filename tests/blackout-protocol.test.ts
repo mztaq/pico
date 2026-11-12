@@ -45,6 +45,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('if(!bp.active || !game || game.ended){');
     expect(game).not.toContain('if(!bp.active || !game || game.ended || bp.terminal){');
     expect(game).toContain("if(game || $('home').hidden || $('home').classList.contains('hidden'))return;");
+    expect(game).toContain('if(game&&!game.ended)return;');
     expect(game).toContain("if(mode!=='attack'&&mode!=='defend')return;");
     expect(game).toContain("$('home').hidden=true;$('home').inert=true;");
     expect(game).toContain("$('home').hidden=false;$('home').inert=false;");
