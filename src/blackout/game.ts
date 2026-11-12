@@ -625,11 +625,11 @@ class Soundscape {
       const source=a.createBufferSource();source.buffer=noise;source.loop=true;
       const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=290;this.fanFilter=lp;
       const low=a.createBiquadFilter();low.type='highpass';low.frequency.value=70;
-      this.fan=a.createGain();this.fan.gain.value=.038;
+      this.fan=a.createGain();this.fan.gain.value=.042;
       source.connect(low);low.connect(lp);lp.connect(this.fan);this.fan.connect(this.master);source.start();
       const hum=a.createOscillator();hum.type='sine';hum.frequency.value=56;
       const hum2=a.createOscillator();hum2.type='triangle';hum2.frequency.value=113.5;this.fanWhine=hum2;
-      this.vent=a.createGain();this.vent.gain.value=.026;
+      this.vent=a.createGain();this.vent.gain.value=.033;
       hum.connect(this.vent);hum2.connect(this.vent);this.vent.connect(this.master);hum.start();hum2.start();
       const siren=a.createOscillator();siren.type='sine';siren.frequency.value=390;
       this.alarmGain=a.createGain();this.alarmGain.gain.value=0;
@@ -665,11 +665,16 @@ class Soundscape {
   metal(){this.sample('bong_001',.7);this.noise(.63,.24,145);this.tone(145,.58,'sawtooth',.19,50);setTimeout(()=>this.tone(60,.9,'triangle',.14,34),145)}
   update(time,health,active,traffic=0,fanLoad=0){
     if(!this.ctx||!this.master)return;
+    // Web Audio rejects non-finite targets. Keep the entire scene running if
+    // any upstream simulation state becomes invalid.
+    const safeLoad=Number.isFinite(fanLoad)?Math.max(0,Math.min(1,fanLoad)):0;
+    const safeTraffic=Number.isFinite(traffic)?Math.max(0,traffic):0;
     const t=this.ctx.currentTime;
-    if(this.fan)this.fan.gain.setTargetAtTime(active?.04+Math.min(1,fanLoad)*(.22+Math.min(.18,traffic/120000)):.03,t,1.2);
-    if(this.fanFilter)this.fanFilter.frequency.setTargetAtTime(active?300+fanLoad*(600+Math.min(1700,traffic/24)):280,t,1.0);
-    if(this.fanWhine)this.fanWhine.frequency.setTargetAtTime(active?72+fanLoad*(35+Math.min(140,traffic/380)):72,t,.8);
-    if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&fanLoad>.6&&(health<55||traffic>13000)?.065:0,t,.3);}
+    if(this.fan)this.fan.gain.setTargetAtTime(active?.052+safeLoad*(.20+Math.min(.16,safeTraffic/120000)):.042,t,1.2);
+    if(this.vent)this.vent.gain.setTargetAtTime(active?.036+safeLoad*.018:.033,t,1.1);
+    if(this.fanFilter)this.fanFilter.frequency.setTargetAtTime(active?310+safeLoad*(650+Math.min(1600,safeTraffic/24)):290,t,1.0);
+    if(this.fanWhine)this.fanWhine.frequency.setTargetAtTime(active?72+safeLoad*(35+Math.min(140,safeTraffic/380)):72,t,.8);
+    if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&safeLoad>.6&&(health<55||safeTraffic>13000)?.065:0,t,.3);}
   }
 }
 const sfx=new Soundscape();
@@ -701,7 +706,7 @@ function log(message,tone=''){if(!game)return;game.logs.unshift({at:timestamp(),
 function notify(message,alert=false){if(alert)bpShowIncident(message);clearTimeout(toastTimer);$('toast').textContent=message;$('toast').style.borderColor=alert?'#f28a7c':'#7ae9d49e';$('toast').classList.add('visible');toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2900);}
 function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
-    risk:mode==='attack'?0:8,trace:0,fanLoad:0,
+    risk:mode==='attack'?0:8,trace:0,fanLoad:0,securityDispatchActive:false,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
     nextDefenderProxy:18,nextAttackerWave:13,nextSabotageAt:28,nextCoolingIncident:46,nextAutoProxyAt:13,nextEvidenceDispatch:17,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,proxySabotage:null,coolingNeedsRepair:false,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),collectedEvidence:{},suspectHeld:false,caseEvidenceComplete:false,patrolSeed:(Math.random()*0xffffffff)>>>0,
   };
@@ -1042,7 +1047,8 @@ for(const [rx,rz] of rackCoords){
 // Visual RPM is downscaled to avoid stroboscopic stationary blades.
 function bpAnimateFans(dt){
   const g=game&&!game.ended?game:null;
-  const targetRpm=850+(g?.fanLoad||0)*Math.min(5200,
+  const coolingLoad=Number.isFinite(g?.fanLoad)?Math.max(0,Math.min(1,g.fanLoad)):0;
+  const targetRpm=850+coolingLoad*Math.min(5200,
     1650+Math.min(1,(g?.traffic||0)/21000)*2700+(100-(g?.health??100))*12);
   bpSmoothedRpm+=(targetRpm-bpSmoothedRpm)*Math.min(1,dt*.85);
   const visibleRps=1.12+Math.min(1,Math.max(0,(bpSmoothedRpm-850)/4500))*2.5;
@@ -2145,8 +2151,11 @@ function bpNpcUpdate(dt){
   const activeAlarm=bpGuardEmergency(g);
   observeSecurityAlarm(g,activeAlarm);
   // Cooling stays in quiet standby until security notices a sustained spike.
-  const fanSurge=g.securityDispatchActive &&
-    (g.burst>0||g.attackerWave>0||g.traffic>18000||g.health<65);
+  // The initial security dispatch is inactive. Coerce the whole expression to
+  // a boolean so Number(fanSurge) is never NaN on the first mission frame.
+  const fanSurge=Boolean(g.securityDispatchActive &&
+    (g.burst>0||g.attackerWave>0||g.traffic>18000||g.health<65));
+  if(!Number.isFinite(g.fanLoad))g.fanLoad=0;
   g.fanLoad+=(Number(fanSurge)-g.fanLoad)*Math.min(1,dt*(fanSurge?.55:.3));
   // A second attack is a new incident even if the previous crew is still
   // walking back to security. Redirect that returning crew immediately.
