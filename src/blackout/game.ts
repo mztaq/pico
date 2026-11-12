@@ -185,6 +185,7 @@ for(let x of [-11,11]){
   for(let j=0;j<9;j++)box(x-1.75+j*.43,2.38,-13.91,.24,.075,.04,j%4===0?mint:mat('#406e77',{glow:.8}));
 }
 
+const bpRackDecor=[];
 function rack(x,z,index){
   const g=new THREE.Group();g.position.set(x,0,z);world.add(g);
   box(0,2.2,0,1.82,4.42,2.04,darkMetal,g);
@@ -197,11 +198,11 @@ function rack(x,z,index){
   for(let j=0;j<11;j++){
     if(lowQuality&&j%2===1)continue;
     const y=.42+j*.336;
-    box(0,y,1.036,1.57,.275,.09,metal,g);
-    box(-.22,y,1.101,.88,.022,.011,black,g);
+    bpRackDecor.push(box(0,y,1.036,1.57,.275,.09,metal,g));
+    bpRackDecor.push(box(-.22,y,1.101,.88,.022,.011,black,g));
     if(!lowQuality)for(let k=0;k<4;k++)box(-.59+k*.13,y+.069,1.11,.075,.035,.014,darkMetal,g);
     const led=box(.63,y,1.107,.065,.055,.017,j%4===0?orange:mint,g);serverLeds.push(led);
-    box(0,y,-1.05,1.5,.26,.04,panel,g);
+    bpRackDecor.push(box(0,y,-1.05,1.5,.26,.04,panel,g));
   }
   box(0,3.97,1.109,1.3,.11,.02,mat('#344855',{glow:.35}),g);
   label('SRV-' + String(index).padStart(2,'0'),x,4.08,z+1.13,1.2,.25);
@@ -792,7 +793,8 @@ function animateScene(t,dt){
   // Subtle server and warning indicators.
   const offline=g&&g.health<35;
   for(let i=0;i<serverLeds.length;i++){
-    const led=serverLeds[i];led.material=offline&&i%3===0?red:i%11===0&&Math.sin(t*2+i)>0?orange:mint;
+    const led=serverLeds[i];if(lowQuality&&i%3!==0)continue;
+    led.material=offline&&i%3===0?red:i%11===0&&Math.sin(t*2+i)>0?orange:mint;
     led.scale.y=.04+(Math.sin(t*7+i*.51)>0?.02:0);
   }
   const active=g&&!g.ended;
@@ -894,6 +896,8 @@ function bpApplyQuality(){
     bpFanRotors[i].visible=!lowQuality||(i%3===0);
   bpRackDetail.visible=!lowQuality;
   bpCourtDetail.visible=!lowQuality;
+  for(let i=0;i<bpRackDecor.length;i++)
+    bpRackDecor[i].visible=!lowQuality||(i%4===0);
   if(typeof bpWallCanvas!=='undefined'){
     const w=lowQuality?512:1024,h=lowQuality?288:576;
     if(bpWallCanvas.width!==w){bpWallCanvas.width=w;bpWallCanvas.height=h;bpWallGraph(visualTime);}
