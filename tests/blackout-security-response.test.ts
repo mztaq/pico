@@ -22,18 +22,38 @@ describe('repeat security dispatch after attacker reconnects laptop',()=>{
     g.securityDispatchActive=true;
     g.elapsed=28;
     securityOfficersReturned(g);
-    expect(g.nextDispatchAllowed).toBe(28+SECURITY_OFFICE_REST_SECONDS);
+    expect(SECURITY_OFFICE_REST_SECONDS).toBe(0);
+    expect(g.nextDispatchAllowed).toBe(28);
     expect(shouldDispatchSecurity(g)).toBe(false);
 
     // Hacker re-plugs the laptop and launches another traffic surge.
     g.elapsed=30;
     flagSecurityIncident(g);
-    expect(shouldDispatchSecurity(g)).toBe(false);
-    g.elapsed=38;
     expect(shouldDispatchSecurity(g)).toBe(true);
     acknowledgeSecurityDispatch(g);
     g.securityDispatchActive=true;
     expect(shouldDispatchSecurity(g)).toBe(false);
+  });
+
+  it('restarts searches immediately if guards are walking back to the office',()=>{
+    const g=state();
+    flagSecurityIncident(g);acknowledgeSecurityDispatch(g);
+    g.securityDispatchActive=true;
+    // Patrol's search has finished, but they have not arrived back at base.
+    g.elapsed=34;
+    flagSecurityIncident(g);
+    expect(shouldDispatchSecurity(g)).toBe(false);
+    expect(shouldDispatchSecurity(g,true)).toBe(true);
+    acknowledgeSecurityDispatch(g);
+    expect(shouldDispatchSecurity(g,true)).toBe(false);
+  });
+
+  it('does not restart while the same incident is already being handled',()=>{
+    const g=state();
+    flagSecurityIncident(g);acknowledgeSecurityDispatch(g);
+    g.securityDispatchActive=true;
+    g.elapsed=19;
+    expect(shouldDispatchSecurity(g,true)).toBe(false);
   });
 
   it('tracks new attack actions even when the server stays overloaded',()=>{
@@ -51,7 +71,7 @@ describe('repeat security dispatch after attacker reconnects laptop',()=>{
     expect(shouldDispatchSecurity(g)).toBe(true);
   });
 
-  it('queues surges occurring while the guards are already searching',()=>{
+  it('responds to surges immediately after guards finish searching',()=>{
     const g=state();
     flagSecurityIncident(g);
     acknowledgeSecurityDispatch(g);
