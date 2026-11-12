@@ -59,7 +59,15 @@ function offlineAssetManifest(): Plugin {
 }
 export default defineConfig({
   plugins: [react(), pythonRuntime(), offlineAssetManifest()],
-  build: { emptyOutDir: true },
+  build: {
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(process.cwd(), 'index.html'),
+        blackout: resolve(process.cwd(), 'blackout-protocol/index.html'),
+      },
+    },
+  },
   server: { host: '0.0.0.0', port: 3000, strictPort: true, allowedHosts: true, headers },
   preview: { host: '0.0.0.0', port: 3000, strictPort: true, allowedHosts: true, headers },
 });
