@@ -156,6 +156,14 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
               <circle cx="164" cy="38" r="5" className="home-traffic-packet"/><circle cx="220" cy="38" r="3" className="home-traffic-packet"/>
             </svg>
           </WorkspaceChoice>
+          <WorkspaceChoice icon={<Network size={18}/>} title="Blackout Protocol 3D" description="Play an interactive 3D attack-or-defend server security mission." onClick={() => { window.location.href = '/blackout-protocol.html'; }}>
+            <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 76" aria-hidden="true">
+              <path className="home-chart-link" d="M35 54 L92 30 L152 50 L220 22 L300 38 M92 30 L92 10 M220 22 L220 7"/>
+              <rect x="7" y="32" width="46" height="36" rx="5"/><rect x="144" y="27" width="44" height="39" rx="5"/><rect x="284" y="20" width="51" height="47" rx="5"/>
+              <path d="M17 43 H42 M17 51 H42 M154 40 H178 M154 49 H178 M296 34 H322 M296 44 H322 M296 54 H322"/>
+              <circle cx="92" cy="30" r="5" className="home-traffic-packet"/><circle cx="220" cy="22" r="5" className="home-traffic-packet"/>
+            </svg>
+          </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">
           <WorkspaceChoice icon={<Calculator size={18} />} title="Binary Lab" description="Explore bits, hexadecimal, logical shifts, overflow and two’s complement." onClick={() => onChoose('binary')}>
