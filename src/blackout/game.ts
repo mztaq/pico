@@ -1337,6 +1337,7 @@ startGame=function(mode){
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
   bpHackerState='working';bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;bpHackerSafeSince=-1;attacker.scale.y=1;
   bpHackerRoute=[];bpHackerRouteIndex=0;bpHackerCoverDestination=null;bpHackerRepathAt=0;
+  bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
@@ -1569,6 +1570,7 @@ for(const p of patrols){
 const bpWorkPosition=V(-8.5,0,4.18);
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
 let bpHackerState='working',bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0,bpHackerSafeSince=-1;
+let bpHackerTargetProxy=-1,bpHackerSabotageUntil=0;
 let bpHackerRoute=[],bpHackerRouteIndex=0,bpHackerCoverDestination=null,bpHackerRepathAt=0;
 /* Search points are generated from the floor plan. All movement routes
    are resolved through the collision grid instead of scripted corridors. */
@@ -1850,6 +1852,32 @@ function bpPlanHackerReturn(){
   bpHackerRouteIndex=0;
   return true;
 }
+function bpPlanHackerProxySabotage(g){
+  if(g.mode!=='defend'||!g.proxies)return false;
+  const preferred=nearestPoweredProxy(proxyObjects,attacker.position);
+  const indices=proxyObjects.map((_,i)=>i).sort((a,b)=>
+    (a===preferred?-1000:bpDistance(attacker.position,proxyObjects[a].position))-
+    (b===preferred?-1000:bpDistance(attacker.position,proxyObjects[b].position)));
+  for(const i of indices){
+    const proxy=proxyObjects[i];
+    if(!proxy.userData.powered)continue;
+    const p=proxy.position;
+    const path=bpGuardRoute(attacker.position,[p.x+.8,p.z+.72]);
+    if(!path.length)continue;
+    const last=path[path.length-1];
+    if(Math.hypot(last[0]-p.x,last[1]-p.z)>2)return false;
+    bpHackerTargetProxy=i;
+    bpHackerRoute=path;bpHackerRouteIndex=0;
+    bpHackerSabotageUntil=0;
+    g.nextSabotageAt=g.elapsed+34+bpRandom(g)*9;
+    bpHackerState='sabotaging';
+    bpHackerStateTime=g.elapsed;
+    bpShowIncident('SECURITY / SUSPICIOUS ACTIVITY NEAR EDGE CABINET');
+    return true;
+  }
+  g.nextSabotageAt=g.elapsed+9;
+  return false;
+}
 function bpMoveHackerTowards(target,dt,speed=2.6){
   const dx=target.x-attacker.position.x,dz=target.z-attacker.position.z;
   const distance=Math.hypot(dx,dz);
@@ -1887,11 +1915,14 @@ function bpNpcUpdate(dt){
   technician.rotation.y=Math.PI;
   if(g.mode==='attack')return;
   const guardsInHall=patrols.some(p=>p.state!=='idle'&&p.agent.position.x<14);
-  const nearest=Math.min(...patrols.filter(p=>p.state==='searching'||p.state==='chasing').map(p=>bpDistance(p.agent,attacker.position)),99);
+  const nearest=Math.min(...patrols.filter(p=>p.state!=='idle').map(p=>bpDistance(p.agent,attacker.position)),99);
   const visible=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&bpGuardCanSee(p.agent,attacker.position,13));
   const playerClose=bpDistance(bp.player,attacker.position)<7.2;
   const threatened=playerClose||guardsInHall&&(nearest<11||visible);
 
+  if(bpHackerState==='working'&&!threatened&&g.elapsed>=g.nextSabotageAt&&g.proxies>0){
+    bpPlanHackerProxySabotage(g);
+  }
   if(bpHackerState==='working'&&threatened){
     bpHackerState='packing';
     bpHackerPackUntil=g.elapsed+.72;
@@ -1909,7 +1940,26 @@ function bpNpcUpdate(dt){
       bpHackerPackUntil=g.elapsed+1.5;
     }
   }
-  if(bpHackerState==='escaping'){
+  if(bpHackerState==='sabotaging'){
+    if(threatened){
+      bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;
+      g.nextSabotageAt=Math.max(g.nextSabotageAt,g.elapsed+14);
+      if(bpPlanHackerCover(g)){
+        bpHackerState='escaping';bpHackerStateTime=g.elapsed;
+      }else{
+        bpPlanHackerReturn();bpHackerState='returning';
+      }
+    }else if(bpHackerTargetProxy<0||!proxyObjects[bpHackerTargetProxy]?.userData.powered){
+      bpPlanHackerReturn();bpHackerState='returning';
+    }else if(bpFollowHackerRoute(dt,2.45)){
+      if(!bpHackerSabotageUntil)bpHackerSabotageUntil=g.elapsed+2.4;
+      if(g.elapsed>=bpHackerSabotageUntil){
+        bpDisableProxy(bpHackerTargetProxy,'the hooded suspect');
+        bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;
+        bpPlanHackerReturn();bpHackerState='returning';
+      }
+    }
+  }else if(bpHackerState==='escaping'){
     const pursuers=bpHackerThreats();
     const close=pursuers.some(p=>bpDistance(p,attacker.position)<4.2);
     if(close&&g.elapsed>=bpHackerRepathAt)bpPlanHackerCover(g);
@@ -2062,7 +2112,7 @@ stepGame=function(dt){
   }
   if(game&&!game.ended){
     if(game.mode==='attack'&&bpAttackLaptopCarried)bpSetLaptopCarrier(bp.player,bp.yaw,dt);
-    else if(game.mode==='defend'&&(bpHackerState==='escaping'||bpHackerState==='hiding'||bpHackerState==='returning'||bpHackerState==='packing'&&game.elapsed>=bpHackerPackUntil-.33))bpSetLaptopCarrier(attacker.position,attacker.rotation.y,dt);
+    else if(game.mode==='defend'&&(bpHackerState==='escaping'||bpHackerState==='hiding'||bpHackerState==='returning'||bpHackerState==='sabotaging'||bpHackerState==='packing'&&game.elapsed>=bpHackerPackUntil-.33))bpSetLaptopCarrier(attacker.position,attacker.rotation.y,dt);
     else if(bpLaptopRig.position.distanceToSquared(bpLaptopDock)>.0001)bpResetLaptop();
   }
   bpWorldEvents();
@@ -2166,7 +2216,7 @@ animateScene=function(t,dt){
     const motion=bp.npcTyping?Math.sin(t*11)*.012:Math.sin(t*7)*.04;
     attacker.position.y=motion;
     const working=bpHackerState==='working';
-    const fleeing=bpHackerState==='escaping'||bpHackerState==='returning';
+    const fleeing=bpHackerState==='escaping'||bpHackerState==='returning'||bpHackerState==='sabotaging';
     if(attacker.children[5])attacker.children[5].rotation.x=working?-.23+Math.sin(t*15)*.14:fleeing?Math.sin(t*11)*.4:.16;
     if(attacker.children[6])attacker.children[6].rotation.x=working?-.18+Math.cos(t*17)*.12:fleeing?-Math.sin(t*11)*.4:.16;
   }
