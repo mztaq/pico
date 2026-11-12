@@ -763,6 +763,7 @@ function stepGame(dt){
     }
     const targetRps=(750+g.bots*185+(g.burst>0?14500:0))*ATTACK_TRAFFIC_SCALE;
     g.traffic=g.requestFeed.step({targetRps,elapsed:g.elapsed,health:g.health,proxies:g.proxies,burst:g.burst>0},dt);
+    if(g.elapsed>=g.nextCoolingIncident&&g.traffic>16000)bpTriggerCoolingIssue(g);
     const blockedRatio=Math.min(.88,Math.max(0,g.proxies*.13+(g.proxies>=3?.11:0)-(g.reroute>0?.24:0)));
     g.delivered=g.traffic*(1-blockedRatio);
     g.risk=Math.min(100,g.risk+dt*(g.traffic>15000?.15:.055)+dt*(g.burst>0?.18:0)+dt*g.proxies*.065);
@@ -778,6 +779,8 @@ function stepGame(dt){
   }
   const saturation=g.delivered/(g.mode==='attack'?7700:9000);
   if(saturation>1){g.health=Math.max(0,g.health-dt*Math.pow(saturation-1,1.14)*3.1);}else{g.health=Math.min(100,g.health+dt*.10);}
+  if(g.coolingNeedsRepair&&g.coolingEventUntil>g.elapsed)
+    g.health=Math.max(0,g.health-dt*.16);
   if(g.health<50 && alarmCooldown<=0){sfx.alert();alarmCooldown=5;log('Server health warning: high application pressure.','warn');}
   if(g.health<=0){
     if(g.mode==='attack')endGame(true,'SERVER OFFLINE','The web cluster stopped responding after sustained overload.');
@@ -1865,7 +1868,7 @@ function bpPlanHackerProxySabotage(g){
     const path=bpGuardRoute(attacker.position,[p.x+.8,p.z+.72]);
     if(!path.length)continue;
     const last=path[path.length-1];
-    if(Math.hypot(last[0]-p.x,last[1]-p.z)>2)return false;
+    if(Math.hypot(last[0]-p.x,last[1]-p.z)>2)continue;
     bpHackerTargetProxy=i;
     bpHackerRoute=path;bpHackerRouteIndex=0;
     bpHackerSabotageUntil=0;
@@ -1893,7 +1896,10 @@ function bpMoveHackerTowards(target,dt,speed=2.6){
 function bpNpcUpdate(dt){
   if(!game||game.ended)return;
   const g=game;
-  if(g.coolingNeedsRepair&&g.coolingEventUntil<=g.elapsed)g.coolingNeedsRepair=false;
+  if(g.coolingNeedsRepair&&g.coolingEventUntil<=g.elapsed){
+    g.coolingNeedsRepair=false;
+    bpCoolingIndicator.material=mint;
+  }
   const activeAlarm=bpGuardEmergency(g);
   observeSecurityAlarm(g,activeAlarm);
   // A second attack is a new incident even if the previous crew is still
@@ -2073,6 +2079,18 @@ function bpShowIncident(message){
   banner.textContent=message;banner.classList.add('visible');
   incidentVisibleUntil=performance.now()+3900;
 }
+function bpTriggerCoolingIssue(g){
+  if(g.coolingNeedsRepair||g.ended)return;
+  g.coolingNeedsRepair=true;
+  g.coolingEventUntil=g.elapsed+52;
+  g.nextCoolingIncident=g.elapsed+113;
+  g.health=Math.max(5,g.health-4);
+  bpCoolingIndicator.material=red;
+  flagSecurityIncident(g);
+  bpShowIncident('COOLING FAILURE / OFFICER DISPATCHED');
+  log('Cooling alarm raised at server-room maintenance panel.','warn');
+  sfx.alert();
+}
 function bpWorldEvents(){
   if(!game||game.ended)return;
   const g=game;
@@ -2084,11 +2102,7 @@ function bpWorldEvents(){
   bpShowIncident(event.label);
   log(event.label.toLowerCase().replace(' / ',' - '),'warn');
   if(event.kind==='surge'&&g.mode==='defend')g.attackerWave=Math.max(g.attackerWave,15);
-  if(event.kind==='cooling'){
-    g.coolingEventUntil=g.elapsed+52;g.coolingNeedsRepair=true;
-    g.health=Math.max(5,g.health-4);bpCoolingIndicator.material=red;
-    flagSecurityIncident(g);
-  }
+  if(event.kind==='cooling')bpTriggerCoolingIssue(g);
   if(event.kind==='power'){g.powerEventUntil=g.elapsed+12;g.health=Math.max(5,g.health-3);}
   if(event.kind==='patrol'&&g.mode==='attack')g.risk=Math.min(100,g.risk+4);
   if(event.kind==='uplink'&&g.mode==='defend')g.limit=Math.max(g.limit,4);
