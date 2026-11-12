@@ -21,6 +21,7 @@ export interface TerminalView {
   elapsed: number;
   hovered: number;
   focused?: boolean;
+  connected?: boolean;
 }
 export interface HitBox { x: number; y: number; width: number; height: number }
 export function terminalActionBoxes(width: number, height: number, count: number): HitBox[] {
@@ -60,7 +61,7 @@ export function drawTerminalScreen(ctx: CanvasRenderingContext2D, view: Terminal
   ctx.textAlign = 'right';
   ctx.font = '700 18px "JetBrains Mono",monospace';
   ctx.fillStyle = '#a6e3a1';
-  ctx.fillText('ONLINE', w - 44, 44);
+  ctx.fillText(view.connected===false?'UNPLUGGED':'ONLINE', w - 44, 44);
   ctx.textAlign = 'left';
 
   const boxes = terminalActionBoxes(w, h, view.actions.length);
@@ -82,7 +83,7 @@ export function drawTerminalScreen(ctx: CanvasRenderingContext2D, view: Terminal
     ctx.font = '700 15px "JetBrains Mono",monospace';
     ctx.textAlign = 'right';
     ctx.fillStyle = action.available ? '#a6e3a1' : '#f9e2af';
-    ctx.fillText(action.cooldown > 0 ? Math.ceil(action.cooldown) + 's' : action.available ? 'READY' : 'LOCKED',
+    ctx.fillText(action.cooldown > 0 ? Math.ceil(action.cooldown) + 's' : action.available ? 'READY' : 'UNAVAILABLE',
       rect.x + rect.width - 21, rect.y + 34);
     ctx.textAlign = 'left';
   });
