@@ -386,7 +386,7 @@ const RECORDED_SFX = Object.freeze({
   'bong_001': 'data:audio/ogg;base64,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'
 });
 class Soundscape {
-  constructor(){this.ctx=null;this.master=null;this.enabled=true;this.fan=null;this.alarm=null;this.alarmGain=null;this.vent=null;}
+  constructor(){this.ctx=null;this.master=null;this.enabled=true;this.fan=null;this.fanFilter=null;this.fanWhine=null;this.alarm=null;this.alarmGain=null;this.vent=null;}
   init(){
     if(!this.enabled)return;
     if(this.ctx){void this.ctx.resume();return;}
@@ -399,12 +399,12 @@ class Soundscape {
       const noise=a.createBuffer(2,size,a.sampleRate);
       for(let ch=0;ch<2;ch++){let d=noise.getChannelData(ch);for(let i=0;i<size;i++)d[i]=(Math.random()*2-1)*.49;}
       const source=a.createBufferSource();source.buffer=noise;source.loop=true;
-      const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=530;
+      const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=530;this.fanFilter=lp;
       const low=a.createBiquadFilter();low.type='highpass';low.frequency.value=70;
       this.fan=a.createGain();this.fan.gain.value=.19;
       source.connect(low);low.connect(lp);lp.connect(this.fan);this.fan.connect(this.master);source.start();
       const hum=a.createOscillator();hum.type='sine';hum.frequency.value=56;
-      const hum2=a.createOscillator();hum2.type='triangle';hum2.frequency.value=113.5;
+      const hum2=a.createOscillator();hum2.type='triangle';hum2.frequency.value=113.5;this.fanWhine=hum2;
       this.vent=a.createGain();this.vent.gain.value=.07;
       hum.connect(this.vent);hum2.connect(this.vent);this.vent.connect(this.master);hum.start();hum2.start();
       const siren=a.createOscillator();siren.type='sine';siren.frequency.value=390;
@@ -442,7 +442,9 @@ class Soundscape {
   update(time,health,active,traffic=0){
     if(!this.ctx||!this.master)return;
     const t=this.ctx.currentTime;
-    if(this.fan)this.fan.gain.setTargetAtTime(active?.16+Math.min(.35,traffic/105000)+Math.max(0,100-health)*.0014:.14,t,.5);
+    if(this.fan)this.fan.gain.setTargetAtTime(active?.17+Math.min(.41,traffic/65000)+Math.max(0,100-health)*.0018:.13,t,.35);
+    if(this.fanFilter)this.fanFilter.frequency.setTargetAtTime(active?380+Math.min(2300,traffic/14)+Math.max(0,100-health)*6:480,t,.4);
+    if(this.fanWhine)this.fanWhine.frequency.setTargetAtTime(active?92+Math.min(160,traffic/220)+Math.max(0,100-health)*.65:92,t,.25);
     if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&(health<55||traffic>13000)?.084:0,t,.2);}
   }
 }
@@ -701,6 +703,12 @@ const bpPlayerAvatar=character(10.7,-2.1,'engineer');
 bpPlayerAvatar.visible=false;
 let bpSmoothedRpm=940;
 const bpFanRotors=[];
+const bpFanSpeedLeds=[];
+const bpFanBlurMaterial=new THREE.MeshBasicMaterial({
+  color:0xa1c5ea,transparent:true,opacity:.028,depthWrite:false,
+  side:THREE.DoubleSide,blending:THREE.AdditiveBlending,
+});
+const bpFanBlurGeometry=new THREE.RingGeometry(.10,.275,24);
 for(const [rx,rz] of rackCoords){
   for(let j=0;j<4;j++){
     if(lowQuality&&j%2===1)continue;
@@ -714,6 +722,11 @@ for(const [rx,rz] of rackCoords){
       blade.rotation.z=angle;
     }
     ball(0,0,0,.075,edgeMetal,rotor);
+    const motionBlur=new THREE.Mesh(bpFanBlurGeometry,bpFanBlurMaterial);
+    motionBlur.position.z=.025;
+    motionBlur.renderOrder=3;
+    rotor.add(motionBlur);
+    bpFanSpeedLeds.push(ball(rx-1.02,1.41+j*.78,rz,.042,mint,world));
     bpFanRotors.push(rotor);
   }
 }
@@ -1535,10 +1548,15 @@ animateScene=function(t,dt){
     }
     bpPaintAuxScreens(t);
   }
-  const targetRpm=game?Math.min(5500,900+Math.min(1,game.traffic/23000)*3200+(100-game.health)*13+(game.burst>0||game.attackerWave>0?580:0)):940;
+  const targetRpm=game?Math.min(6100,950+Math.min(1,game.traffic/18500)*3500+(100-game.health)*16+(game.burst>0||game.attackerWave>0?800:0)):940;
   bpSmoothedRpm+=(targetRpm-bpSmoothedRpm)*Math.min(1,dt*(game?.burst>0||game?.attackerWave>0?3:1.25));
-  const turns=bpSmoothedRpm/60*Math.PI*2*dt;
-  for(const rotor of bpFanRotors)rotor.rotation.z+=turns;
+  // Perceptual fan blur avoids the stroboscopic illusion of stationary blades.
+  // Physically inspired fan RPM is retained for the wall readout and motor sound.
+  const visibleTurns=(1.2+bpSmoothedRpm/5500*10)*Math.PI*2*dt;
+  for(const rotor of bpFanRotors)rotor.rotation.z+=visibleTurns;
+  bpFanBlurMaterial.opacity=.035+Math.min(.36,bpSmoothedRpm/5500*.34);
+  const fanLedMaterial=bpSmoothedRpm>4250?red:bpSmoothedRpm>2800?orange:mint;
+  for(const led of bpFanSpeedLeds)led.material=fanLedMaterial;
   const emergency=game&&!game.ended&&(bpGuardEmergency(game)||(game.mode==='attack'&&game.risk>83));
   for(let i=0;i<bpEmergencyLights.length;i++)
     bpEmergencyLights[i].intensity=emergency?(2+9*Math.max(0,Math.sin(t*7+i*.5))):0;
