@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { terminalActionBoxes, terminalHitTest } from '../src/blackout/terminal-screen';
-import { isSightBlocked, chooseHackerPhase } from '../src/blackout/stealth-logic';
+import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from '../src/blackout/stealth-logic';
 
 describe('In-world interactive screen', () => {
   it('maps click coordinates onto four distinct action targets', () => {
@@ -32,5 +32,21 @@ describe('Guard search and hacker cover', () => {
     expect(chooseHackerPhase({...common,phase:'hiding',now:34})).toBe('returning');
     expect(chooseHackerPhase({...common,phase:'returning',reachedWaypoint:true})).toBe('working');
     expect(chooseHackerPhase({...common,phase:'returning',guardVisible:true})).toBe('escaping');
+  });
+  it('returns to the original laptop when guards move far away, even if still searching', () => {
+    const hiding={x:-18,z:8}, workstation={x:-8.5,z:4.18}, defender={x:23,z:-3.55};
+    const guardsFar=[{x:8,z:9},{x:7,z:-10}];
+    expect(hackerAreaIsClear(guardsFar,defender,hiding,workstation)).toBe(true);
+    expect(chooseHackerPhase({
+      phase:'hiding',guardVisible:false,nearbyGuard:false,
+      reachedWaypoint:false,now:24,hidingUntil:23,
+    })).toBe('returning');
+  });
+  it('stays hidden if a guard approaches the hiding spot or laptop station', () => {
+    const hiding={x:-18,z:8}, workstation={x:-8.5,z:4.18},defender={x:23,z:-3.55};
+    expect(hackerAreaIsClear([{x:-15,z:8}],defender,hiding,workstation)).toBe(false);
+    expect(hackerAreaIsClear([{x:-7,z:7}],defender,hiding,workstation)).toBe(false);
+    expect(hackerAreaIsClear([], {x:-8,z:4}, hiding, workstation)).toBe(false);
+    expect(hackerAreaIsClear([], {x:-19,z:8}, hiding, workstation)).toBe(false);
   });
 });
