@@ -1,7 +1,7 @@
 /** Browser-only game balancing for the simulated network incident. */
 export interface ProxyStatus { userData: { powered: boolean } }
-export const ATTACK_TRAFFIC_SCALE = 1.35;
-export const DEFENSE_WAVE_SCALE = 1.6;
+export const ATTACK_TRAFFIC_SCALE = 1.25;
+export const DEFENSE_WAVE_SCALE = 1.45;
 export function poweredProxyCount(proxies: readonly ProxyStatus[]): number {
   return proxies.filter(proxy => proxy.userData.powered).length;
 }
