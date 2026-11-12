@@ -255,8 +255,8 @@ const bpCableGeometry=new THREE.CatmullRomCurve3([
   V(-9.95,1.32,3.1),V(-10.25,1.06,3.5),V(-10.9,1.03,3.65),V(-10.85,1.48,3.34),V(-10.28,1.57,3.29)
 ]);
 const bpCable=mesh(new THREE.TubeGeometry(bpCableGeometry,24,.028,5,false),
-  mat('#131c26',{metal:.08,rough:.8}),[0,0,0],world,false);
-const bpCableLight=ball(-10.30,1.57,3.35,.042,mint);
+  mat('#d8a968',{metal:.09,rough:.76}),[0,0,0],world,false);
+const bpCableLight=ball(-10.30,1.57,3.35,.065,mint);
 light(-9.55,2.51,3.1,0x90c6e9,2.7,4);
 // Portable laptop is wired to the rack; the hooded character leaves it to flee.
 // Defensive edge appliances and control desks.
@@ -1043,7 +1043,7 @@ startGame=function(mode){
   bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;attacker.scale.y=1;
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
-  attacker.visible=mode==='defend';attacker.position.set(-9.15,0,4.72);attacker.rotation.y=Math.PI;
+  attacker.visible=mode==='defend';attacker.position.set(-9.4,0,4.18);attacker.rotation.y=Math.PI;
   security.position.set(patrols[0].home[0],0,patrols[0].home[1]);
   bpPlayerAvatar.visible=false;
   document.body.classList.remove('terminal-open');
@@ -1228,7 +1228,7 @@ for(const p of patrols){
   box(-.31,.28,.33,.09,.31,.08,uniform,guard);
   box(.31,.28,.33,.09,.31,.08,uniform,guard);
 }
-const bpWorkPosition=V(-9.15,0,4.72);
+const bpWorkPosition=V(-9.4,0,4.18);
 const bpHackerEscape=[V(-10.15,0,6.62),V(-14.2,0,9.78),V(-21.1,0,9.8)];
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
 let bpHackerState='working',bpHackerWaypoint=0,bpHackerHoldUntil=0,bpHackerStateTime=0;
@@ -1573,8 +1573,12 @@ animateScene=function(t,dt){
   model.visible=bp.third && !bp.terminal && !game.ended;
   if(game.mode==='defend'){
     attacker.visible=!jail.visible;
-    const motion=bp.npcTyping?Math.sin(t*12)*.022:Math.sin(t*6)*.055;
+    const motion=bp.npcTyping?Math.sin(t*11)*.012:Math.sin(t*7)*.04;
     attacker.position.y=motion;
+    const working=bpHackerState==='working';
+    const fleeing=bpHackerState==='fleeing'||bpHackerState==='returning';
+    if(attacker.children[5])attacker.children[5].rotation.x=working?-.23+Math.sin(t*15)*.14:fleeing?Math.sin(t*11)*.4:.16;
+    if(attacker.children[6])attacker.children[6].rotation.x=working?-.18+Math.cos(t*17)*.12:fleeing?-Math.sin(t*11)*.4:.16;
   }
 };
 const bpOriginalEnd=endGame;
