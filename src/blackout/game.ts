@@ -5,6 +5,7 @@ import { createTrafficFeed } from './traffic-model';
 import { drawTerminalScreen, terminalHitTest } from './terminal-screen';
 import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic';
 import { routeTo } from './navigation';
+import { moveGuardWithAvoidance } from './guard-movement';
 import { renderOfficeFeed } from './office-monitor';
 import { rankedCoverSpots, formationPosition } from './ai-coordination';
 import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
@@ -1341,7 +1342,7 @@ startGame=function(mode){
   bpHackerState='working';bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;bpHackerSafeSince=-1;attacker.scale.y=1;
   bpHackerRoute=[];bpHackerRouteIndex=0;bpHackerCoverDestination=null;bpHackerRepathAt=0;
   bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;
-  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;}
+  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
   attacker.visible=mode==='defend';attacker.position.set(-8.5,0,4.18);attacker.rotation.y=Math.PI;
@@ -1518,6 +1519,11 @@ function bpWalkable(x,z){
     if(x>ox-1.3&&x<ox+1.3&&z>oz-.72&&z<oz+.72)return false;
   return true;
 }
+function bpGuardWalkable(x,z){
+  // Guards need clearance for their shoulders, not only a collision-free center.
+  return bpWalkable(x,z)&&bpWalkable(x+.22,z)&&bpWalkable(x-.22,z)&&
+    bpWalkable(x,z+.22)&&bpWalkable(x,z-.22);
+}
 function bpMovePlayer(dt){
   if(bp.terminal || !game || game.ended)return;
   const x=(bp.keys.has('KeyD')?1:0)-(bp.keys.has('KeyA')?1:0);
@@ -1590,10 +1596,10 @@ function bpRandomSearchTarget(g){
 }
 function bpGuardRoute(from,to){
   const target={x:to[0],z:to[1]};
-  const result=routeTo({x:from.x,z:from.z},target,bpWalkable);
+  const result=routeTo({x:from.x,z:from.z},target,bpGuardWalkable);
   if(result.length)return result.map(p=>[p.x,p.z]);
   // Do not move directly through a server cabinet when no route exists.
-  return bpWalkable(target.x,target.z)&&
+  return bpGuardWalkable(target.x,target.z)&&
     Math.hypot(from.x-target.x,from.z-target.z)<.5
       ? [[target.x,target.z]] : [];
 }
@@ -1620,38 +1626,49 @@ function bpGuardCanSee(guard,position,distanceLimit=7){
   return (dx*fx+dz*fz)/Math.max(.1,distance)>.2;
 }
 function bpWalkGuard(p,target,dt,urgent=true){
-  const dx=target[0]-p.agent.position.x,dz=target[1]-p.agent.position.z;
-  const distance=Math.hypot(dx,dz);
-  if(distance<.28)return true;
-  const speed=p.speed*(urgent?2.44:1);
-  let moveX=dx/Math.max(.01,distance),moveZ=dz/Math.max(.01,distance);
-  // Physical separation: guards yield or steer beside one another, rather
-  // than occupying the same position while chasing the laptop carrier.
-  for(const other of patrols){
-    if(other===p)continue;
-    const deltaX=p.agent.position.x-other.agent.position.x;
-    const deltaZ=p.agent.position.z-other.agent.position.z;
-    const gap=Math.hypot(deltaX,deltaZ);
-    if(gap>.08&&gap<1.75){
-      const push=(1.75-gap)/1.75;
-      moveX+=deltaX/gap*push*1.4;
-      moveZ+=deltaZ/gap*push*1.4;
+  const oldX=p.agent.position.x,oldZ=p.agent.position.z;
+  const others=patrols.filter(other=>other!==p).map(other=>other.agent.position);
+  const movement=moveGuardWithAvoidance(
+    {x:oldX,z:oldZ},{x:target[0],z:target[1]},others,bpGuardWalkable,
+    p.speed*(urgent?2.44:1),dt
+  );
+  p.agent.position.set(movement.point.x,0,movement.point.z);
+  if(movement.moved>.002){
+    const angle=Math.atan2(movement.point.x-oldX,movement.point.z-oldZ);
+    const delta=Math.atan2(Math.sin(angle-p.agent.rotation.y),Math.cos(angle-p.agent.rotation.y));
+    p.agent.rotation.y+=delta*Math.min(1,dt*8);
+  }
+  return movement.arrived;
+}
+function bpRecoverGuard(p,g){
+  // A patrol reroutes when crowding, a cabinet edge or a wall blocks progress.
+  // If older geometry left the officer inside a collision volume, move only
+  // the minimum necessary distance to the closest navigable floor position.
+  if(!bpGuardWalkable(p.agent.position.x,p.agent.position.z)){
+    let nearest=null,best=Infinity;
+    for(let radius=.25;radius<=1.75;radius+=.25){
+      for(let n=0;n<16;n++){
+        const theta=n*Math.PI/8;
+        const x=p.agent.position.x+Math.cos(theta)*radius;
+        const z=p.agent.position.z+Math.sin(theta)*radius;
+        if(bpGuardWalkable(x,z)&&radius<best){nearest={x,z};best=radius;}
+      }
+      if(nearest)break;
     }
+    if(nearest)p.agent.position.set(nearest.x,0,nearest.z);
   }
-  const magnitude=Math.max(.01,Math.hypot(moveX,moveZ));
-  moveX/=magnitude;moveZ/=magnitude;
-  const step=Math.min(distance,speed*dt);
-  const px=p.agent.position.x+moveX*step,pz=p.agent.position.z+moveZ*step;
-  if(bpWalkable(px,pz)){
-    p.agent.position.x=px;p.agent.position.z=pz;
-  }else{
-    if(bpWalkable(px,p.agent.position.z))p.agent.position.x=px;
-    if(bpWalkable(p.agent.position.x,pz))p.agent.position.z=pz;
+  const destination=p.path[p.path.length-1]||p.home;
+  let route=bpGuardRoute(p.agent.position,destination);
+  if(!route.length&&(p.state==='searching'||p.state==='chasing'))
+    route=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));
+  if(route.length){
+    p.path=route;p.index=0;
+  }else if(p.state==='returning'&&bpDistance(p.agent,{x:p.home[0],z:p.home[1]})<1){
+    p.agent.position.set(p.home[0],0,p.home[1]);p.state='idle';
+  }else if(p.state==='searching'||p.state==='chasing'){
+    p.state='returning';p.path=bpGuardRoute(p.agent.position,p.home);p.index=0;
   }
-  const angle=Math.atan2(moveX,moveZ);
-  const delta=Math.atan2(Math.sin(angle-p.agent.rotation.y),Math.cos(angle-p.agent.rotation.y));
-  p.agent.rotation.y+=delta*Math.min(1,dt*8);
-  return false;
+  p.stalledFor=0;
 }
 function bpGuardSetReturn(p){
   p.state='returning';p.index=0;
@@ -1670,7 +1687,7 @@ function bpAssignSecurityDispatch(g){
   bpShowIncident('SECURITY ALERT / OFFICERS RESPONDING');
   sfx.alert();
   for(let i=0;i<patrols.length;i++){
-    const p=patrols[i];p.index=0;p.wait=0;p.lastSeen=null;p.repathAt=0;p.chaseUntil=0;
+    const p=patrols[i];p.index=0;p.wait=0;p.lastSeen=null;p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;
     if(p.role==='proxy'&&g.coolingNeedsRepair&&g.coolingEventUntil>g.elapsed){
       p.proxyIndex=-1;p.path=bpGuardRoute(p.agent.position,[bpCoolingStation.x+.3,bpCoolingStation.z+.6]);
       p.state=p.path.length?'coolingTravel':'returning';
@@ -1806,8 +1823,14 @@ function bpMoveGuard(p,dt,g){
     else if(p.state==='searching'){p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));p.index=0;}
     return;
   }
+  const beforeX=p.agent.position.x,beforeZ=p.agent.position.z;
   const arrived=bpWalkGuard(p,destination,dt,p.state!=='returning');
-  if(arrived)p.index++;
+  const moved=Math.hypot(p.agent.position.x-beforeX,p.agent.position.z-beforeZ);
+  if(arrived){p.index++;p.stalledFor=0;}
+  else if(moved<Math.min(.022,p.speed*dt*.18)){
+    p.stalledFor=(p.stalledFor||0)+dt;
+    if(p.stalledFor>1.15)bpRecoverGuard(p,g);
+  }else p.stalledFor=0;
   const motion=g.elapsed*13+p.agent.id*.25;
   p.agent.position.y=Math.sin(motion)*.027;
   if(p.agent.children[5])p.agent.children[5].rotation.z=-.27+Math.sin(motion)*.21;
