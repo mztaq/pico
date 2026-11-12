@@ -97,3 +97,10 @@ body.terminal-open #mission-step,body.terminal-open #interaction-hint{display:no
 .bp-sk-description{height:16px;width:88%;margin-top:20px}.bp-sk-smaller{width:73%;margin-top:10px}
 .bp-sk-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:42px}.bp-sk-card{height:168px;border-radius:16px}
 @media(max-width:600px){.bp-skeleton-top{padding:0 14px}.bp-sk-brand{width:140px}.bp-skeleton-main{margin-top:92px}.bp-sk-heading{height:39px}.bp-sk-cards{grid-template-columns:1fr}.bp-sk-card{height:130px}}
+
+/* All controls now live on the rendered laptop and NOC display textures.
+   Keep the old DOM action hosts mounted solely for game state updates. */
+#controls,body.terminal-open #controls,#terminal-backdrop,body.terminal-open #terminal-backdrop{display:none!important;pointer-events:none!important}
+body.terminal-open #game.active #mission-step{display:none!important}
+body.terminal-open #control-help{bottom:17px;right:17px;z-index:9;background:#181825da;border:1px solid #585b70}
+body.terminal-open #game.active #crosshair{display:none!important}
