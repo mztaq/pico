@@ -109,3 +109,9 @@ body.terminal-open #game.active #crosshair{display:none!important}
    pointer events elsewhere, so opacity/pointer-events on the parent were unsafe. */
 #home.hidden,#home[hidden],#home[inert]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #home.hidden *,#home[inert] *{pointer-events:none!important}
+
+/* Select menus are not buttons; the parent game shell disables pointer events.
+   Re-enable the entire quality control for keyboard, mouse and touch input. */
+.topbar,.top-right,.quality-control,#quality,#app select{pointer-events:auto!important}
+#quality{position:relative;z-index:28;cursor:pointer;touch-action:manipulation}
+#quality:focus-visible{outline:2px solid #cba6f7;outline-offset:3px}
