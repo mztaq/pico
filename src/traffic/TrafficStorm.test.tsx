@@ -183,7 +183,7 @@ describe('Traffic Storm setup', () => {
       vi.unstubAllGlobals();
     }
     const enabled = diagramAnnotations('running', 4, 4, true, 5, 382.5);
-    expect(enabled.every(note => note.fromX !== note.tipX || note.fromY !== note.tipY)).toBe(true);
+    expect(enabled.every(note => Math.hypot(note.tipX - note.fromX, note.tipY - note.fromY) > 0)).toBe(true);
     expect(enabled[2].tipX).toBeGreaterThan(750);
     expect(enabled[3].tipX).toBeGreaterThan(990);
   });
