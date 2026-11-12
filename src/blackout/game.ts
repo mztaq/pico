@@ -1341,7 +1341,7 @@ startGame=function(mode){
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
   bpHackerState='working';bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;bpHackerSafeSince=-1;attacker.scale.y=1;
   bpHackerRoute=[];bpHackerRouteIndex=0;bpHackerCoverDestination=null;bpHackerRepathAt=0;
-  bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;
+  bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;bpHackerSortieCount=0;bpHackerSortieVisited.clear();
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
@@ -1579,7 +1579,7 @@ for(const p of patrols){
 const bpWorkPosition=V(-8.5,0,4.18);
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
 let bpHackerState='working',bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0,bpHackerSafeSince=-1;
-let bpHackerTargetProxy=-1,bpHackerSabotageUntil=0;
+let bpHackerTargetProxy=-1,bpHackerSabotageUntil=0,bpHackerSortieCount=0,bpHackerSortieVisited=new Set();
 let bpHackerRoute=[],bpHackerRouteIndex=0,bpHackerCoverDestination=null,bpHackerRepathAt=0;
 /* Search points are generated from the floor plan. All movement routes
    are resolved through the collision grid instead of scripted corridors. */
@@ -1878,15 +1878,17 @@ function bpPlanHackerReturn(){
   bpHackerRouteIndex=0;
   return true;
 }
-function bpPlanHackerProxySabotage(g){
+function bpPlanHackerProxySabotage(g,continueSortie=false){
   if(g.mode!=='defend'||!g.proxies)return false;
+  if(!continueSortie){bpHackerSortieCount=0;bpHackerSortieVisited.clear();}
+  if(bpHackerSortieCount>=3)return false;
   const preferred=nearestPoweredProxy(proxyObjects,attacker.position);
   const indices=proxyObjects.map((_,i)=>i).sort((a,b)=>
     (a===preferred?-1000:bpDistance(attacker.position,proxyObjects[a].position))-
     (b===preferred?-1000:bpDistance(attacker.position,proxyObjects[b].position)));
   for(const i of indices){
     const proxy=proxyObjects[i];
-    if(!proxy.userData.powered)continue;
+    if(!proxy.userData.powered||bpHackerSortieVisited.has(i))continue;
     const p=proxy.position;
     const path=bpGuardRoute(attacker.position,[p.x+.8,p.z+.72]);
     if(!path.length)continue;
@@ -1895,13 +1897,13 @@ function bpPlanHackerProxySabotage(g){
     bpHackerTargetProxy=i;
     bpHackerRoute=path;bpHackerRouteIndex=0;
     bpHackerSabotageUntil=0;
-    g.nextSabotageAt=g.elapsed+34+bpRandom(g)*9;
+    if(!continueSortie)g.nextSabotageAt=g.elapsed+41+bpRandom(g)*12;
     bpHackerState='sabotaging';
     bpHackerStateTime=g.elapsed;
     bpShowIncident('SECURITY / SUSPICIOUS ACTIVITY NEAR EDGE CABINET');
     return true;
   }
-  g.nextSabotageAt=g.elapsed+9;
+  if(!continueSortie)g.nextSabotageAt=g.elapsed+12;
   return false;
 }
 function bpMoveHackerTowards(target,dt,speed=3.15){
@@ -1990,10 +1992,20 @@ function bpNpcUpdate(dt){
     }else if(bpFollowHackerRoute(dt,3.0)){
       if(!bpHackerSabotageUntil)bpHackerSabotageUntil=g.elapsed+2.4;
       if(g.elapsed>=bpHackerSabotageUntil){
-        bpDisableProxy(bpHackerTargetProxy,'the hooded suspect');
+        const disabled=bpHackerTargetProxy;
+        if(bpDisableProxy(disabled,'the hooded suspect')){
+          bpHackerSortieCount++;
+          bpHackerSortieVisited.add(disabled);
+        }
         bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;
-        if(bpPlanHackerReturn())bpHackerState='returning';
-        else {bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+3;}
+        // A single Defense sortie can disable up to three distinct cabinets.
+        // Each shutdown requires reaching its physical switch in the hall.
+        const canContinue=bpHackerSortieCount<3&&!threatened&&
+          bpPlanHackerProxySabotage(g,true);
+        if(!canContinue){
+          if(bpPlanHackerReturn())bpHackerState='returning';
+          else {bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+3;}
+        }
       }
     }
   }else if(bpHackerState==='escaping'){
