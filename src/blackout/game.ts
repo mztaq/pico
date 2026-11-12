@@ -393,7 +393,7 @@ const ACTIONS={
     {id:'proxy',title:'Deploy protective proxy',description:'Add an edge appliance to absorb malicious requests.',cd:6,kind:'primary'},
     {id:'limit',title:'Enable emergency rate limits',description:'Briefly reduce the pressure on the application servers.',cd:19},
     {id:'analyze',title:'Analyze traffic fingerprints',description:'Collect case evidence from telemetry.',cd:9},
-    {id:'trace',title:'Trace suspicious relay hops',description:'Follow fictional records to locate the suspect.',cd:12},
+    {id:'trace',title:'Trace suspicious relay hops',description:'Review recorded relay hops to locate the suspect.',cd:12},
   ]
 };
 let actionButtons=new Map();
@@ -427,7 +427,7 @@ function startGame(mode){
     b.append(strong,small);b.onclick=()=>act(a.id);$('actions').append(b);actionButtons.set(a.id,{button:b,cd});
   }
   log(mode==='attack'?'Remote terminal established. Target: 203.0.113.24':'Alert: anomalous requests hit the public edge.',mode==='attack'?'warn':'good');
-  log('LOCAL simulation. No packets leave this browser.');
+  log('LINK ESTABLISHED. INCIDENT CLOCK ACTIVE.');
   notify(mode==='attack'?'OBJECTIVE: BRING THE SERVER TO ZERO INTEGRITY':'OBJECTIVE: PROTECT THE NETWORK AND ARREST THE SUSPECT');
   focus(mode==='attack'?'hacker':'servers');
   updateUI(true);
@@ -438,7 +438,7 @@ function act(id){
   const g=game;
   if(g.mode==='attack'){
     switch(id){
-      case'bots':g.bots=Math.min(340,g.bots+22);g.risk+=3;log('Device cluster simulated. Nodes: '+g.bots,'warn');sfx.keyboard();break;
+      case'bots':g.bots=Math.min(340,g.bots+22);g.risk+=3;log('Device group expanded. Nodes: '+g.bots,'warn');sfx.keyboard();break;
       case'burst':g.burst=8;g.risk+=9;log('Traffic surge initiated.','warn');sfx.burst();flashAlpha=.1;break;
       case'reroute':g.reroute=11;g.risk+=5;log('Routing variation detected by edge security.','warn');sfx.scan();break;
       case'hide':g.risk=Math.max(0,g.risk-19);log('Signal exposure temporarily reduced.','good');sfx.keyboard();break;
@@ -450,7 +450,7 @@ function act(id){
       case'limit':g.limit=13;log('Emergency rate limiting enabled.','good');notify('RATE LIMITS ACTIVE');sfx.deploy();break;
       case'analyze':g.trace=Math.min(100,g.trace+15);log('Matching traffic fingerprint filed as evidence.','good');sfx.scan();break;
       case'trace':if(g.trace<22)return;g.trace=Math.min(100,g.trace+19);log('Relay trail correlated with security cameras.','good');sfx.scan();focus('hacker');break;
-      case'arrest':if(g.trace<100)return;g.arrested=true;endGame(true,'SUSPECT ARRESTED','The response team stabilized the web servers, verified the simulated evidence, and secured the hooded attacker in a detention cell.');return;
+      case'arrest':if(g.trace<100)return;g.arrested=true;endGame(true,'SUSPECT ARRESTED','The response team stabilized the web servers, verified the incident evidence, and secured the hooded attacker in a detention cell.');return;
     }
     const a=ACTIONS.defend.find(v=>v.id===id);g.cooldowns[id]=a.cd;
   }
@@ -526,7 +526,7 @@ function updateUI(force=false){
   const seconds=Math.max(0,Math.ceil(GAME_SECONDS-g.elapsed));
   $('timer').textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
   const phase=g.phase;
-  const phases=g.mode==='attack'?[['PHASE 01 / BUILD THE SWARM','Establish simulated traffic.','Recruit devices, then launch a burst before defenders recover.'],['PHASE 02 / EDGE DEFENSES','Proxy servers are online.','The blue team is absorbing requests. Reroute to increase pressure.'],['PHASE 03 / FINAL PUSH','Overwhelm the cluster.','Balance traffic intensity against your growing trace exposure.']]:[['PHASE 01 / RESPONSE','Protect the live service.','Deploy proxies before traffic exceeds application capacity.'],['PHASE 02 / FORENSICS','Analyze the traffic signature.','Collect synthetic evidence to narrow down the source.'],['PHASE 03 / INVESTIGATION','Locate the hooded attacker.','Follow the relay trail and complete the security case.'],['PHASE 04 / APPREHENSION','Suspect identified.','Order a lawful arrest to complete the investigation.']];
+  const phases=g.mode==='attack'?[['PHASE 01 / BUILD THE SWARM','Establish traffic flow.','Recruit devices, then launch a burst before defenders recover.'],['PHASE 02 / EDGE DEFENSES','Proxy servers are online.','The blue team is absorbing requests. Reroute to increase pressure.'],['PHASE 03 / FINAL PUSH','Overwhelm the cluster.','Balance traffic intensity against your growing trace exposure.']]:[['PHASE 01 / RESPONSE','Protect the live service.','Deploy proxies before traffic exceeds application capacity.'],['PHASE 02 / FORENSICS','Analyze the traffic signature.','Collect evidence to narrow down the source.'],['PHASE 03 / INVESTIGATION','Locate the hooded attacker.','Follow the relay trail and complete the security case.'],['PHASE 04 / APPREHENSION','Suspect identified.','Order a lawful arrest to complete the investigation.']];
   const p=phases[Math.min(phase,phases.length-1)];$('stage').textContent=p[0];$('stage').classList.toggle('attack',g.mode==='attack');$('objective').textContent=p[1];$('mission').textContent=p[2];
   for(const a of ACTIONS[g.mode]){
     const o=actionButtons.get(a.id);if(!o)continue;
@@ -608,6 +608,12 @@ const bpDistance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const bpAttackerDesk=V(-8.8,0,4.15);
 const bpDefenseDesk=V(10.7,0,-4.25);
 const bpHideSpot=V(-4.15,0,8.8);
+const bpCoolingStation=V(8.4,0,4.4);
+const bpCoolingFrame=box(8.27,1.35,4.4,.19,2.02,1.05,edgeMetal);
+const bpCoolingPanel=box(8.42,1.62,4.4,.035,.79,.70,mat('#172a39',{metal:.3,rough:.25,glow:.7}));
+const bpCoolingIndicator=ball(8.47,2.2,4.4,.09,mint);
+label('COOLANT / RESET',8.48,1.73,4.4,.57,.16,Math.PI/2);
+
 const bpPlayerAvatar=character(10.7,-2.1,'engineer');
 bpPlayerAvatar.visible=false;
 const bpFanRotors=[];
@@ -648,7 +654,7 @@ box(0,2.85,.16,.54,.1,.30,bpHoodCloth,attacker);
 const bpLaptopBottom=box(-8.8,1.24,3.34,1.36,.073,.91,darkMetal);
 const bpLaptopLid=box(-8.8,1.79,2.92,1.40,1.06,.07,darkMetal);
 const bpLaptopScreen=box(-8.8,1.79,2.964,1.26,.89,.018,mat('#122b36',{metal:.15,rough:.25,glow:1.8}));
-label('LOCAL SIMULATION // READY',-8.8,1.87,2.979,1.16,.25);
+label('ACCESS PANEL // READY',-8.8,1.87,2.979,1.16,.25);
 for(let i=0;i<5;i++)box(-9.31,1.61+i*.08,2.986,.95-i*.1,.018,.018,i%2?mint:blue);
 const bpLaptopBeacon=light(-8.8,2.45,3.07,0x8de4d4,1.7,4);
 const bpConsoleBeacon=light(10.7,2.62,-5.25,0x9e8ceb,2.1,4);
@@ -884,6 +890,13 @@ function bpTryInteract(){
   if(!game || game.ended)return;
   if(bp.terminal){bpCloseTerminal();return;}
   const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
+  if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4){
+    game.coolingEventUntil=0;
+    game.health=Math.min(100,game.health+13);
+    bpShowIncident('COOLING STABILIZED / RACK TEMPERATURE NORMAL');
+    log('Manual cooling reset completed.','good');
+    sfx.deploy();return;
+  }
   if(bpDistance(bp.player,desk)<3.15){bpOpenTerminal();return;}
   if(game.mode==='defend' && game.trace>=100 && bpDistance(bp.player,attacker.position)<2.65){
     log('Responding officer detained the suspect.','good');
@@ -1011,8 +1024,10 @@ function bpInteractionStatus(){
   }
   const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
   let message='';
-  if(bpDistance(bp.player,desk)<3.15)
-    message=game.mode==='attack'?'OPEN THE LAPTOP AND CONTROL SIMULATED TRAFFIC':'OPEN THE SECURITY CONSOLE AND DEFEND';
+  if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4)
+    message='RESET SERVER ROOM COOLING';
+  else if(bpDistance(bp.player,desk)<3.15)
+    message=game.mode==='attack'?'ACCESS THE LAPTOP AND CONTROL TRAFFIC':'OPEN THE SECURITY CONSOLE AND DEFEND';
   else if(game.mode==='defend'&&bpDistance(bp.player,attacker.position)<2.65)
     message=game.trace>=100?'DETAIN THE IDENTIFIED SUSPECT':'OBSERVE SUSPECT / MORE EVIDENCE NEEDED';
   $('interaction-hint').classList.toggle('visible',Boolean(message));
@@ -1043,8 +1058,8 @@ function bpWorldEvents(){
   bpShowIncident(event.label);
   log(event.label.toLowerCase().replace(' / ',' - '),'warn');
   if(event.kind==='surge'&&g.mode==='defend')g.attackerWave=Math.max(g.attackerWave,15);
-  if(event.kind==='cooling')g.coolingEventUntil=g.elapsed+18;
-  if(event.kind==='power')g.powerEventUntil=g.elapsed+9;
+  if(event.kind==='cooling'){g.coolingEventUntil=g.elapsed+52;g.health=Math.max(5,g.health-4);}
+  if(event.kind==='power'){g.powerEventUntil=g.elapsed+12;g.health=Math.max(5,g.health-3);}
   if(event.kind==='patrol'&&g.mode==='attack')g.risk=Math.min(100,g.risk+4);
   if(event.kind==='uplink'&&g.mode==='defend')g.limit=Math.max(g.limit,4);
   sfx.alert();
@@ -1082,17 +1097,21 @@ updateUI=function(force=false){
   $('health').parentElement.querySelector('.sub').textContent='COOLING FANS '+rpm.toLocaleString()+' RPM';
   if(g.mode==='attack'){
     $('mission-step').textContent=g.proxies===0?
-      'Use the laptop to build simulated traffic. Watch your exposure and avoid security patrols.':
-      g.proxies<3?'New proxies absorb traffic. Return to the laptop and adjust the simulation.':
+      'Use the laptop to build traffic. Watch exposure and avoid security patrols.':
+      g.proxies<3?'New proxies absorb traffic. Return to the laptop and adjust your approach.':
       'Heavy mitigation active. Reach zero integrity without reaching 100% exposure.';
   }else{
+    if(g.coolingEventUntil>g.elapsed){
+      $('mission-step').textContent='Cooling pressure rising. Find the coolant reset panel by the east server racks. Press E to stabilize.';
+    } else {
     $('mission-step').textContent=g.trace<22?'Deploy proxies and inspect traffic at the security desk.':
       g.trace<100?'Build the case with verified logs, then search the racks for the moving intruder.':
       'Case verified. Leave the console, find the hooded suspect and press E nearby to detain.';
+    }
   }
-  const urgent=g.health<55 || (g.mode==='attack'&&g.risk>83);
+  const urgent=g.health<55 || g.coolingEventUntil>g.elapsed || (g.mode==='attack'&&g.risk>83);
   $('red-alert').classList.toggle('visible',urgent);
-  $('red-alert').textContent=urgent?(g.mode==='attack'&&g.risk>83?'⚠ RED ALERT / INTRUDER DETECTED':'⚠ RED ALERT / HIGH SERVER LOAD'):'';
+  $('red-alert').textContent=urgent?(g.coolingEventUntil>g.elapsed?'⚠ COOLANT PRESSURE / CHECK EAST RACKS':g.mode==='attack'&&g.risk>83?'⚠ RED ALERT / INTRUDER DETECTED':'⚠ RED ALERT / HIGH SERVER LOAD'):'';
 };
 const bpOriginalAnimate=animateScene;
 animateScene=function(t,dt){
@@ -1125,6 +1144,7 @@ animateScene=function(t,dt){
   const emergency=game&&!game.ended&&(game.health<55||(game.mode==='attack'&&game.risk>83));
   for(let i=0;i<bpEmergencyLights.length;i++)
     bpEmergencyLights[i].intensity=emergency?(2+9*Math.max(0,Math.sin(t*7+i*.5))):0;
+  bpCoolingIndicator.material=game&&game.coolingEventUntil>game.elapsed?red:mint;
   bpLaptopBeacon.intensity=game&&game.mode==='attack'&&!game.ended?3.2:1.7;
   bpConsoleBeacon.intensity=game&&game.mode==='defend'&&!game.ended?3.8:2.1;
   if(!bp.active || !game)return;
