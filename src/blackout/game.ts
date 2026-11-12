@@ -1131,9 +1131,9 @@ function bpDrawScreen(ctx,texture,title,redMode,t){
 
 
 
-const bpCarryOffset=V(-.36,1.12,.53);
 let bpAttackLaptopCarried=false;
 function bpResetLaptop(){
+  bpLaptopRig.visible=true;
   bpLaptopRig.position.copy(bpLaptopDock);
   bpLaptopRig.rotation.y=0;
   bpLaptopRig.rotation.z=0;
@@ -1142,12 +1142,17 @@ function bpResetLaptop(){
   bpAttackLaptopCarried=false;
 }
 function bpSetLaptopCarrier(position,heading,dt=1){
-  const dx=Math.sin(heading)*.5+Math.cos(heading)*bpCarryOffset.x;
-  const dz=Math.cos(heading)*.5-Math.sin(heading)*bpCarryOffset.x;
-  const goal=V(position.x+dx,1.23,position.z+dz);
-  bpLaptopRig.position.lerp(goal,Math.min(1,dt*11));
+  // Put the carried laptop beside and behind the actor, never directly in
+  // the sight line. First-person attackers do not render their own carried
+  // geometry, avoiding clipping even when walking backward into a rack.
+  const right=1.12,behind=.77;
+  const dx=Math.cos(heading)*right+Math.sin(heading)*behind;
+  const dz=-Math.sin(heading)*right+Math.cos(heading)*behind;
+  const goal=V(position.x+dx,.88,position.z+dz);
+  bpLaptopRig.position.lerp(goal,Math.min(1,dt*15));
   const yawDelta=Math.atan2(Math.sin(heading-bpLaptopRig.rotation.y),Math.cos(heading-bpLaptopRig.rotation.y));
-  bpLaptopRig.rotation.y+=yawDelta*Math.min(1,dt*10);
+  bpLaptopRig.rotation.y+=yawDelta*Math.min(1,dt*12);
+  bpLaptopRig.visible=!(game?.mode==='attack'&&bpAttackLaptopCarried&&!bp.third);
   bpCable.visible=false;
 }
 function bpToggleAttackLaptop(){
@@ -1163,6 +1168,7 @@ function bpToggleAttackLaptop(){
     bpResetLaptop();sfx.tap();notify('LAPTOP RECONNECTED TO SERVER');
   }else{
     bpAttackLaptopCarried=true;bpCable.visible=false;
+    bpLaptopRig.visible=bp.third;
     sfx.scan();notify('LAPTOP UNPLUGGED / KEEP MOVING');
   }
 }
