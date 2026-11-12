@@ -9,9 +9,13 @@ describe('Blackout Protocol 3D', () => {
   it('parses the TypeScript game module as JavaScript and bundles the graphics engine locally', () => {
     expect(game).toContain("import * as THREE from 'three'");
     expect(game).toContain("import { createTrafficFeed } from './traffic-model'");
+    expect(game).toContain("import { isSightBlocked, chooseHackerPhase } from './stealth-logic'");
+    expect(game).toContain("import { drawTerminalScreen, terminalHitTest } from './terminal-screen'");
     expect(() => new Function(game
       .replace("import * as THREE from 'three';", 'const THREE = {};')
-      .replace("import { createTrafficFeed } from './traffic-model';", 'const createTrafficFeed = () => ({});'))).not.toThrow();
+      .replace("import { createTrafficFeed } from './traffic-model';", 'const createTrafficFeed = () => ({});')
+      .replace("import { drawTerminalScreen, terminalHitTest } from './terminal-screen';", 'const drawTerminalScreen = () => {}; const terminalHitTest = () => -1;')
+      .replace("import { isSightBlocked, chooseHackerPhase } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working";'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
@@ -24,14 +28,23 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('function bpWalkable(x,z)');
     expect(game).toContain('const bpFanRotors=[]');
     expect(game).toContain('function bpPatrolStep(p,dt)');
-    expect(game).toContain("bpHackerState='fleeing'");
-    expect(game).toContain("bpHackerState='hiding'");
-    expect(game).toContain('const chasing=emergency');
-    expect(game).toContain("endGame(false,'SECURITY INTERCEPTED YOU'");
+    expect(game).toContain('function bpAssignSecurityDispatch(g)');
+    expect(game).toContain("p.state='switching'");
+    expect(game).toContain("p.role==='search'");
+    expect(game).toContain("bpHackerState=chooseHackerPhase({phase:'working'");
+    expect(game).toContain("bpHackerState=chooseHackerPhase({phase:'escaping'");
+    expect(game).toContain("endGame(false,'CAUGHT BY SECURITY'");
     expect(game).toContain('new THREE.PerspectiveCamera(84, 1, .07, 120)');
     expect(game).toContain('if(!bp.active || !game || game.ended){');
     expect(game).not.toContain('if(!bp.active || !game || game.ended || bp.terminal){');
-    expect(game).toContain("p.chaseUntil=game.elapsed+3.8");
+    expect(game).toContain('const bpOfficePassage=');
+    expect(game).toContain("box(23,-.19,0,17,.35,24,concrete)");
+    expect(game).toContain('function bpPowerProxy(index)');
+    expect(game).toContain("g.proxies++");
+    expect(game).toContain('bpGuardSetReturn(p)');
+    expect(game).not.toContain('DEFENDERS ARE DEPLOYING PROXY SERVERS');
+    expect(game).toContain('function bpTerminalActionAt(x,y)');
+    expect(game).toContain('bpTerminalRaycaster.intersectObject(mesh,false)');
     expect(game).toContain('function bpGuardCanSee(');
     expect(game).toContain('function bpWorldEvents()');
     expect(game).toContain("if(bp?.active)return;");
@@ -43,6 +56,9 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('const bpWallDisplay=new THREE.Mesh(');
     expect(game).toContain('const latest=(g?.requestFeed?.recent??[]).slice(-3).reverse();');
     expect(game).toContain('bpSmoothedRpm');
+    expect(game).toContain('bpFanBlurMaterial.opacity');
+    expect(game).toContain('this.fanWhine.frequency.setTargetAtTime');
+    expect(game).toContain("box(-10.55,2.20,2.2,1.65,4.35,1.88,darkMetal)");
     expect(html).toContain('bp-skeleton-main');
     expect(html).not.toContain('INITIALIZING 3D ENVIRONMENT');
     expect(html).not.toContain('id="feed"');
