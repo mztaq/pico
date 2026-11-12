@@ -2,6 +2,7 @@
 // Bundled by Vite as an application module. Network operations exist only in memory.
 import * as THREE from 'three';
 import { createTrafficFeed } from './traffic-model';
+import { drawTerminalScreen, terminalHitTest } from './terminal-screen';
 
 /* Everything in the incident model stays inside browser memory. */
 const $ = id => document.getElementById(id);
@@ -704,14 +705,14 @@ function bpPaintAuxScreens(t){
   }
 }
 const bpDisplayCanvas=document.createElement('canvas');
-bpDisplayCanvas.width=512;bpDisplayCanvas.height=288;
+bpDisplayCanvas.width=1024;bpDisplayCanvas.height=720;
 const bpDisplayContext=bpDisplayCanvas.getContext('2d');
 const bpDisplayTexture=new THREE.CanvasTexture(bpDisplayCanvas);
 bpDisplayTexture.colorSpace=THREE.SRGBColorSpace;
 const bpDisplayPlane=new THREE.Mesh(new THREE.PlaneGeometry(1.26,.89),new THREE.MeshBasicMaterial({map:bpDisplayTexture,side:THREE.DoubleSide}));
 bpDisplayPlane.position.set(-8.8,1.79,3.014);world.add(bpDisplayPlane);
 const bpSecurityCanvas=document.createElement('canvas');
-bpSecurityCanvas.width=512;bpSecurityCanvas.height=288;
+bpSecurityCanvas.width=1024;bpSecurityCanvas.height=620;
 const bpSecurityCtx=bpSecurityCanvas.getContext('2d');
 const bpSecurityTexture=new THREE.CanvasTexture(bpSecurityCanvas);
 bpSecurityTexture.colorSpace=THREE.SRGBColorSpace;
@@ -858,10 +859,73 @@ function bpDrawScreen(ctx,texture,title,redMode,t){
   texture.needsUpdate=true;
 }
 
+
+const bpTerminalAttackEye=V(-8.8,1.78,4.0);
+const bpTerminalDefenseEye=V(10.7,1.82,-3.91);
+const bpTerminalRaycaster=new THREE.Raycaster();
+const bpTerminalNdc=new THREE.Vector2();
+let bpTerminalHover=-1;
+function bpActiveTerminalDisplay(){
+  const attack=game?.mode==='attack';
+  return attack
+    ? {mesh:bpDisplayPlane,ctx:bpDisplayContext,texture:bpDisplayTexture,canvas:bpDisplayCanvas}
+    : {mesh:bpSecurityPlane,ctx:bpSecurityCtx,texture:bpSecurityTexture,canvas:bpSecurityCanvas};
+}
+function bpPaintTerminal(){
+  if(!bp.terminal||!game)return;
+  const {ctx,texture}=bpActiveTerminalDisplay();if(!ctx)return;
+  const actions=ACTIONS[game.mode].map(a=>{
+    const cooldown=Math.max(0,game.cooldowns[a.id]||0);
+    const blocked=a.id==='proxy'&&game.proxies>=6||a.id==='trace'&&game.trace<22;
+    return {id:a.id,title:a.title,description:a.description,cooldown,available:!blocked&&cooldown===0&&!game.ended};
+  });
+  drawTerminalScreen(ctx,{
+    mode:game.mode,actions,traffic:game.traffic,
+    health:game.health,proxies:game.proxies,
+    progress:game.mode==='attack'?game.risk:game.trace,
+    elapsed:game.elapsed,hovered:bpTerminalHover,
+  });
+  texture.needsUpdate=true;
+}
+function bpTerminalActionAt(x,y){
+  if(!bp.terminal||!game)return -1;
+  const bounds=renderer.domElement.getBoundingClientRect();
+  if(bounds.width<=0||bounds.height<=0)return -1;
+  bpTerminalNdc.set((x-bounds.left)/bounds.width*2-1,-((y-bounds.top)/bounds.height*2-1));
+  bpTerminalRaycaster.setFromCamera(bpTerminalNdc,camera);
+  const {mesh,canvas}=bpActiveTerminalDisplay();
+  const hit=bpTerminalRaycaster.intersectObject(mesh,false)[0];
+  if(!hit?.uv)return -1;
+  return terminalHitTest(hit.uv.x*canvas.width,(1-hit.uv.y)*canvas.height,
+    canvas.width,canvas.height,ACTIONS[game.mode].length);
+}
+function bpTerminalSelect(index){
+  if(!bp.terminal||!game||game.ended)return;
+  const action=ACTIONS[game.mode][index];if(!action)return;
+  const disabled=game.cooldowns[action.id]>0||
+    action.id==='proxy'&&game.proxies>=6||
+    action.id==='trace'&&game.trace<22;
+  if(disabled){sfx.tap();return;}
+  act(action.id);
+  bpPaintTerminal();
+}
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(!bp.terminal||!game)return;
+  const hovered=bpTerminalActionAt(e.clientX,e.clientY);
+  renderer.domElement.style.cursor=hovered>=0?'pointer':'default';
+  if(hovered!==bpTerminalHover){bpTerminalHover=hovered;bpPaintTerminal();}
+});
+
 const bpOriginalCamera=moveCamera;
 moveCamera=function(dt){
   if(!bp.active || !game || game.ended){
     bpOriginalCamera(dt);return;
+  }
+  if(bp.terminal){
+    const attack=game.mode==='attack';
+    camera.position.copy(attack?bpTerminalAttackEye:bpTerminalDefenseEye);
+    camera.lookAt(attack?bpDisplayPlane.position:bpSecurityPlane.position);
+    return;
   }
   const eyeHeight=bp.crouching?1.15:1.74;
   if(bp.third){
@@ -910,19 +974,27 @@ menu=function(){
 };
 function bpOpenTerminal(){
   if(!game||game.ended)return;
-  bp.terminal=true;
+  bp.terminal=true;bpTerminalHover=-1;
+  camera.fov=game.mode==='attack'?56:60;
+  camera.updateProjectionMatrix();
   document.body.classList.add('terminal-open');
   if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
   bp.dragging=false;view.drag=false;
   $('panelname').textContent=game.mode==='attack'?'LAPTOP / LOCAL TRAFFIC SIM':'SECURITY CONSOLE / INCIDENT RESPONSE';
   $('panelmeta').textContent='PRESS ESC TO RETURN TO THE ROOM';
   $('interaction-hint').classList.remove('visible');
+  $('control-help').innerHTML='<kbd>1–4</kbd> Select action  ·  <kbd>ESC</kbd> Leave laptop';
+  bpPaintTerminal();
   sfx.keyboard();
 }
 function bpCloseTerminal(){
   if(!bp.terminal)return false;
-  bp.terminal=false;
+  bp.terminal=false;bpTerminalHover=-1;
+  camera.fov=84;
+  camera.updateProjectionMatrix();
   document.body.classList.remove('terminal-open');
+  $('control-help').innerHTML='<kbd>W A S D</kbd> Move · <kbd>SHIFT</kbd> Sprint<br><kbd>MOUSE</kbd> Look · <kbd>E</kbd> Interact<br><kbd>C</kbd> Crouch · <kbd>V</kbd> Camera';
+  renderer.domElement.style.cursor='crosshair';
   sfx.tap();
   return true;
 }
@@ -964,12 +1036,13 @@ function bpTryInteract(){
   }
   notify('MOVE CLOSER TO A CONSOLE OR SUSPECT');
 }
-const bpReservedKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyC','KeyV','KeyE','ShiftLeft','ShiftRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown']);
+const bpReservedKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyC','KeyV','KeyE','ShiftLeft','ShiftRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Digit1','Digit2','Digit3','Digit4']);
 document.addEventListener('keydown',e=>{
   if(!bp.active || !game || game.ended)return;
   if(bpReservedKeys.has(e.code))e.preventDefault();
   bp.keys.add(e.code);
   if(e.repeat)return;
+  if(bp.terminal&&/^Digit[1-4]$/.test(e.code)){bpTerminalSelect(Number(e.code.slice(-1))-1);return;}
   if(e.code==='KeyE')bpTryInteract();
   if(e.code==='KeyV'&&!bp.terminal){bp.third=!bp.third;sfx.tap();notify(bp.third?'SHOULDER CAMERA':'FIRST-PERSON CAMERA');}
 });
@@ -993,8 +1066,13 @@ document.addEventListener('mousemove',e=>{
   bp.yaw-=bpClamp(e.movementX,-110,110)*.0023;
   bp.pitch=bpClamp(bp.pitch-bpClamp(e.movementY,-110,110)*.0019,-1.3,1.3);
 });
-renderer.domElement.addEventListener('click',()=>{
-  if(bp.active && game && !game.ended && !bp.terminal)
+renderer.domElement.addEventListener('click',event=>{
+  if(bp.terminal){
+    const index=bpTerminalActionAt(event.clientX,event.clientY);
+    if(index>=0)bpTerminalSelect(index);
+    return;
+  }
+  if(bp.active&&game&&!game.ended)
     void renderer.domElement.requestPointerLock?.();
 });
 function bpWalkable(x,z){
@@ -1290,10 +1368,13 @@ animateScene=function(t,dt){
   bpWallPaintTimer+=dt;
   if(bpWallPaintTimer>(lowQuality?.75:.25)){bpWallPaintTimer=0;bpWallGraph(t);}
   bpMonitorTick+=dt;
-  if(bpMonitorTick>(lowQuality?.45:.18)){
+  if(bpMonitorTick>(bp.terminal?.09:lowQuality?.45:.18)){
     bpMonitorTick=0;
-    bpDrawScreen(bpDisplayContext,bpDisplayTexture,'ATTACKER LAPTOP',Boolean(game&&game.burst>0),t);
-    bpDrawScreen(bpSecurityCtx,bpSecurityTexture,'SECURITY CONSOLE',Boolean(game&&game.health<55),t);
+    if(bp.terminal)bpPaintTerminal();
+    else{
+      bpDrawScreen(bpDisplayContext,bpDisplayTexture,'ATTACKER LAPTOP',Boolean(game&&game.burst>0),t);
+      bpDrawScreen(bpSecurityCtx,bpSecurityTexture,'SECURITY CONSOLE',Boolean(game&&game.health<55),t);
+    }
     bpPaintAuxScreens(t);
   }
   const targetRpm=game?Math.min(5500,900+Math.min(1,game.traffic/23000)*3200+(100-game.health)*13+(game.burst>0||game.attackerWave>0?580:0)):940;
