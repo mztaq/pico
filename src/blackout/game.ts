@@ -1710,7 +1710,7 @@ function bpGuardRoute(from,to){
       ? [[target.x,target.z]] : [];
 }
 function bpGuardEmergency(g){
-  return Boolean(g&&!g.ended&&(g.burst>0||g.attackerWave>0||g.traffic>12500||g.health<75||g.coolingEventUntil>g.elapsed));
+  return Boolean(g&&!g.ended&&(g.burst>0||g.attackerWave>0||g.traffic>18000||g.health<75||g.coolingEventUntil>g.elapsed));
 }
 function bpGuardCanSee(guard,position,distanceLimit=7){
   const distance=bpDistance(guard.position,position);
@@ -2091,7 +2091,7 @@ function bpNpcUpdate(dt){
   observeSecurityAlarm(g,activeAlarm);
   // Cooling stays in quiet standby until security notices a sustained spike.
   const fanSurge=g.securityDispatchActive &&
-    (g.burst>0||g.attackerWave>0||g.traffic>14000||g.health<65);
+    (g.burst>0||g.attackerWave>0||g.traffic>18000||g.health<65);
   g.fanLoad+=(Number(fanSurge)-g.fanLoad)*Math.min(1,dt*(fanSurge?.55:.3));
   // A second attack is a new incident even if the previous crew is still
   // walking back to security. Redirect that returning crew immediately.
