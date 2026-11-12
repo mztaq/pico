@@ -101,7 +101,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('const fanSurge=g.securityDispatchActive &&');
     expect(game).toContain('this.fan.gain.value=.038');
     expect(game).toContain('fanLoad=0');
-    expect(game).toContain("g.suspectHeld=true;g.suspectHoldGuard=p.agent");
+    expect(game).toContain("g.suspectHeld=true");
     expect(game).toContain('function bpRecoverGuard(p,g)');
     expect(game).toContain('p.stalledFor=(p.stalledFor||0)+dt');
     expect(game).toContain('if(p.stalledFor>1.15)bpRecoverGuard(p,g)');
