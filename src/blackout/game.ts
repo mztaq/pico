@@ -414,7 +414,7 @@ const requestCurve=new THREE.CatmullRomCurve3([V(-8.5,2.5,2.1),V(-5.8,4.1,-.3),V
 const outgoingCurve=new THREE.CatmullRomCurve3([V(4.2,3.3,-3),V(7.2,4.8,-1),V(9.5,2.8,-4)]);
 const reqTube=mesh(new THREE.TubeGeometry(requestCurve,72,.015,4,false),mat('#58aebe',{glow:1.7,transparent:true,opacity:.48}),[0,0,0],dynamic,false);
 reqTube.visible=false;
-const particleGeo=new THREE.OctahedronGeometry(.072,0);
+const particleGeo=new THREE.OctahedronGeometry(.11,0);
 const packets=[];
 for(let i=0;i<100;i++){
   const p=new THREE.Mesh(particleGeo,i%6===0?mint:i%8===0?orange:red);
@@ -423,6 +423,30 @@ for(let i=0;i<100;i++){
 const blocked=[];
 for(let i=0;i<24;i++){
   const p=new THREE.Mesh(particleGeo,blue);p.castShadow=false;p.visible=false;dynamic.add(p);blocked.push(p);
+}
+// Visual particles correspond to simulated request rates, not real network IO.
+function bpAnimateRequestPackets(t){
+  const g=game;
+  const active=Boolean(g&&!g.ended&&g.traffic>0&&world.visible&&!courtroom.visible&&!jail.visible);
+  const count=active?Math.min(lowQuality?28:70,Math.max(4,Math.round(Math.sqrt(g.traffic)*.53))):0;
+  const speed=active?.13+Math.min(.24,g.traffic/95000):0;
+  for(let i=0;i<packets.length;i++){
+    const p=packets[i];p.visible=i<count;
+    if(!p.visible)continue;
+    const progress=(t*speed+i/count)%1;
+    p.position.copy(requestCurve.getPointAt(progress));
+    p.position.y+=Math.sin(t*4+i*.7)*.045;
+    p.scale.setScalar(.85+.22*Math.sin(t*5+i));
+    p.material=g.mode==='attack'?(i%5===0?orange:red):(i%5===0?orange:mint);
+  }
+  const filtered=active&&g.proxies>0
+    ?Math.min(lowQuality?6:16,Math.round(count*Math.min(.45,g.proxies*.09))):0;
+  for(let i=0;i<blocked.length;i++){
+    const p=blocked[i];p.visible=i<filtered;
+    if(!p.visible)continue;
+    p.position.copy(outgoingCurve.getPointAt((t*.12+i/Math.max(filtered,1))%1));
+    p.scale.setScalar(.7);
+  }
 }
 
 // Arrest ending: separate cinematic set, shown only when the defender traces the suspect.
@@ -866,21 +890,6 @@ function animateScene(t,dt){
     led.scale.y=.04+(Math.sin(t*7+i*.51)>0?.02:0);
   }
   const active=g&&!g.ended;
-  const count=active?Math.min(lowQuality?35:100,Math.max(10,Math.floor(Math.sqrt(g.traffic)*.69))):0;
-  for(let i=0;i<packets.length;i++){
-    const p=packets[i];p.visible=false;
-    if(!p.visible)continue;
-    const progress=(t*(.18+(g.traffic/120000))+i*.071)%1;
-    p.position.copy(requestCurve.getPointAt(progress));
-    p.position.y+=Math.sin(t*3+i)*.07;
-    p.scale.setScalar(.7+Math.random()*.65);
-    p.material=active&&g.mode==='attack'?i%6===0?orange:red:i%5===0?orange:red;
-  }
-  const blockedCount=active?Math.min(blocked.length,Math.floor(g.proxies*3.5)):0;
-  for(let i=0;i<blocked.length;i++){
-    blocked[i].visible=false;
-    if(blocked[i].visible)blocked[i].position.copy(outgoingCurve.getPointAt((t*.15+i*.13)%1));
-  }
   proxyObjects.forEach((o,i)=>{
     if(!o.userData.powered)return;
     o.userData.ring.rotation.z=t*.52+(i%2)*.4;
@@ -938,6 +947,9 @@ function frame(now=0){
   try{stepGame(dt);}catch(error){bpReportFrameError('simulation',error);}
   // Always restore the active player's camera, even after a simulation fault.
   try{moveCamera(dt);}catch(error){bpReportFrameError('camera',error);}
+  // Essential animations run even if the CCTV or monitor update fails.
+  try{bpAnimateRequestPackets(visualTime);}catch(error){bpReportFrameError('traffic visuals',error);}
+  try{bpAnimateFans(dt);}catch(error){bpReportFrameError('cooling fans',error);}
   try{animateScene(visualTime,dt);}catch(error){bpReportFrameError('scene',error);}
   uiTick+=dt;
   if(game&&uiTick>.18){
@@ -972,7 +984,7 @@ label('COOLANT / RESET',8.48,1.73,4.4,.57,.16,Math.PI/2);
 
 const bpPlayerAvatar=character(23.0,-3.55,'engineer');
 bpPlayerAvatar.visible=false;
-let bpSmoothedRpm=940;
+let bpSmoothedRpm=850;
 const bpFanRotors=[];
 
 function bpApplyQuality(){
@@ -981,7 +993,7 @@ function bpApplyQuality(){
   for(let i=0;i<bpFixtureLights.length;i++)
     bpFixtureLights[i].intensity=lowQuality?(i%3===0?2.8:0):3.0;
   for(let i=0;i<bpFanRotors.length;i++)
-    bpFanRotors[i].visible=!lowQuality||(i%3===0);
+    bpFanRotors[i].visible=true; // Low mode already builds fewer rotors per rack.
   bpRackDetail.visible=!lowQuality;
   bpCourtDetail.visible=!lowQuality;
   for(const target of bpCctvTargets)target.setSize(lowQuality?256:448,lowQuality?144:252);
@@ -1025,6 +1037,19 @@ for(const [rx,rz] of rackCoords){
     bpFanSpeedLeds.push(ball(rx-1.02,1.41+j*.78,rz,.042,mint,world));
     bpFanRotors.push(rotor);
   }
+}
+// Fans rotate at idle; security-detected pressure gradually increases their speed.
+// Visual RPM is downscaled to avoid stroboscopic stationary blades.
+function bpAnimateFans(dt){
+  const g=game&&!game.ended?game:null;
+  const targetRpm=850+(g?.fanLoad||0)*Math.min(5200,
+    1650+Math.min(1,(g?.traffic||0)/21000)*2700+(100-(g?.health??100))*12);
+  bpSmoothedRpm+=(targetRpm-bpSmoothedRpm)*Math.min(1,dt*.85);
+  const visibleRps=1.12+Math.min(1,Math.max(0,(bpSmoothedRpm-850)/4500))*2.5;
+  for(const rotor of bpFanRotors)rotor.rotation.z+=visibleRps*Math.PI*2*dt;
+  bpFanBlurMaterial.opacity=.035+Math.min(.36,bpSmoothedRpm/5500*.34);
+  const fanLedMaterial=bpSmoothedRpm>4250?red:bpSmoothedRpm>2800?orange:mint;
+  for(const led of bpFanSpeedLeds)led.material=fanLedMaterial;
 }
 const bpEmergencyLights=[
   light(-11,5.8,-1,0xff2b4e,0,13),
@@ -1449,7 +1474,8 @@ const bpOriginalStartGame=startGame;
 startGame=function(mode){
   bpOriginalStartGame(mode);
   document.body.classList.remove('bp-mission-finished');
-  bpFrameErrors.clear();
+  bpFrameErrors.clear();bpCctvDisabled=false;
+  bpSmoothedRpm=850;
   bp.active=true;bp.terminal=false;bp.third=false;bp.crouching=false;bp.guardAlert=false;
   bp.yaw=mode==='attack'?.24:0;bp.pitch=-.06;
   // The defender must spawn within console selection and E-interaction range.
@@ -2356,7 +2382,10 @@ function bpWorldEvents(){
 
 const bpOriginalStep=stepGame;
 stepGame=function(dt){
-  bpMovePlayer(dt);
+  // Advance the authoritative traffic and clock before fallible NPC work.
+  bpOriginalStep(dt);
+  if(!game||game.ended){bpInteractionStatus();return;}
+  try{bpMovePlayer(dt);}catch(error){bpReportFrameError('player movement',error);}
   try{bpNpcUpdate(dt);}catch(error){bpReportFrameError('security AI',error);}
   if(game?.mode==='attack'&&!game.ended&&game.proxySabotage){
     const task=game.proxySabotage,proxy=proxyObjects[task.index];
@@ -2374,8 +2403,7 @@ stepGame=function(dt){
     else if(game.mode==='defend'&&(bpHackerState==='escaping'||bpHackerState==='hiding'||bpHackerState==='returning'||bpHackerState==='sabotaging'||bpHackerState==='packing'&&game.elapsed>=bpHackerPackUntil-.33))bpSetLaptopCarrier(attacker.position,attacker.rotation.y,dt);
     else if(bpLaptopRig.position.distanceToSquared(bpLaptopDock)>.0001)bpResetLaptop();
   }
-  bpWorldEvents();
-  bpOriginalStep(dt);
+  try{bpWorldEvents();}catch(error){bpReportFrameError('world events',error);}
   if(!game || game.ended){bpInteractionStatus();return;}
   if(game.mode==='attack'&&!bp.terminal){
     const seen=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&bpGuardCanSee(p.agent,bp.player,bp.crouching?5.2:12));
@@ -2453,15 +2481,7 @@ animateScene=function(t,dt){
       bpDrawStandbyScreen(bpSecurityCtx,bpSecurityTexture);
     }
   }
-  const targetRpm=game?850+(game.fanLoad||0)*Math.min(5200,1650+Math.min(1,game.traffic/21000)*2700+(100-game.health)*12):850;
-  bpSmoothedRpm+=(targetRpm-bpSmoothedRpm)*Math.min(1,dt*.85);
-  // Perceptual fan blur avoids the stroboscopic illusion of stationary blades.
-  // Physically inspired fan RPM is retained for the wall readout and motor sound.
-  const visibleTurns=(1.2+bpSmoothedRpm/5500*10)*Math.PI*2*dt;
-  for(const rotor of bpFanRotors)rotor.rotation.z+=visibleTurns;
-  bpFanBlurMaterial.opacity=.035+Math.min(.36,bpSmoothedRpm/5500*.34);
-  const fanLedMaterial=bpSmoothedRpm>4250?red:bpSmoothedRpm>2800?orange:mint;
-  for(const led of bpFanSpeedLeds)led.material=fanLedMaterial;
+  // Essential fan and traffic animations run independently in frame().
   const emergency=game&&!game.ended&&(bpGuardEmergency(game)||(game.mode==='attack'&&game.risk>83));
   for(let i=0;i<bpEmergencyLights.length;i++)
     bpEmergencyLights[i].intensity=emergency?(2+9*Math.max(0,Math.sin(t*7+i*.5))):0;
