@@ -12,6 +12,8 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("import { isSightBlocked, chooseHackerPhase } from './stealth-logic'");
     expect(game).toContain("import { drawTerminalScreen, terminalHitTest } from './terminal-screen'");
     expect(game).toContain("import { routeTo } from './navigation'");
+    expect(game).toContain("import { renderOfficeFeed } from './office-monitor'");
+    expect(game).toContain("import { rankedCoverSpots, formationPosition } from './ai-coordination'");
     expect(game).toContain("function bpApplyQuality()");
     expect(game).toContain("qualitySelect.addEventListener('change'");
     expect(() => new Function(game
@@ -19,7 +21,9 @@ describe('Blackout Protocol 3D', () => {
       .replace("import { createTrafficFeed } from './traffic-model';", 'const createTrafficFeed = () => ({});')
       .replace("import { drawTerminalScreen, terminalHitTest } from './terminal-screen';", 'const drawTerminalScreen = () => {}; const terminalHitTest = () => -1;')
       .replace("import { isSightBlocked, chooseHackerPhase } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working";')
-      .replace("import { routeTo } from './navigation';", 'const routeTo = () => [];'))).not.toThrow();
+      .replace("import { routeTo } from './navigation';", 'const routeTo = () => [];')
+      .replace("import { renderOfficeFeed } from './office-monitor';", 'const renderOfficeFeed = () => {};')
+      .replace("import { rankedCoverSpots, formationPosition } from './ai-coordination';", 'const rankedCoverSpots = () => []; const formationPosition = () => ({x:0,z:0});'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
@@ -35,17 +39,28 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('function bpAssignSecurityDispatch(g)');
     expect(game).toContain("p.state='switching'");
     expect(game).toContain("p.role==='search'");
-    expect(game).toContain("bpHackerState=chooseHackerPhase({phase:'working'");
-    expect(game).toContain("bpHackerState=chooseHackerPhase({phase:'escaping'");
+    expect(game).toContain("bpHackerState=chooseHackerPhase({");
+    expect(game).toContain("phase:'working',guardVisible:visible,nearbyGuard:true");
+    expect(game).toContain("phase:'escaping',guardVisible:false,nearbyGuard:false");
     expect(game).toContain("if(bpHackerState==='escaping')");
     expect(game).toContain('function bpGuardRoute(from,to)');
     expect(game).toContain("p.state='chasing'");
     expect(game).toContain('p.repathAt=g.elapsed+');
-    expect(game).toContain("p.path=bpGuardRoute(p.agent.position,[p.lastSeen.x,p.lastSeen.z])");
+    expect(game).toContain("p.path=bpGuardRoute(p.agent.position,destination)");
+    expect(game).toContain("const slot=formationPosition(p.lastSeen,attacker.rotation.y,p.approachIndex??0)");
+    expect(game).toContain("function bpHackerThreats()");
+    expect(game).toContain("function bpPlanHackerCover(g)");
+    expect(game).toContain("const points=rankedCoverSpots(");
+    expect(game).toContain("function bpFollowHackerRoute(dt,speed)");
+    expect(game).toContain("function bpPaintOfficeMonitor()");
+    expect(game).toContain("const bpSearchWindowSeconds=43");
+    expect(game).toContain("const bpMaxChaseSeconds=16");
+    expect(game).toContain("const bpDispatchRestSeconds=100");
+    expect(game).toContain("bpLaptopRig.visible=!(game?.mode==='attack'&&bpAttackLaptopCarried&&!bp.third)");
     expect(game).toContain("bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(23.0,0,-3.55))");
     expect(game).toContain('const bpOfficeConsoleX=23.15');
     expect(game).not.toContain("bpHackerState==='fleeing'");
-    expect(game).toContain('const bpHackerEscape=[');
+    expect(game).not.toContain('const bpHackerEscape=[');
     expect(game).toContain('bpGuardCanSee(p.agent,attacker.position,13)');
     expect(game).toContain("p.state='returning'");
     expect(game).toContain("p.state='idle'");
