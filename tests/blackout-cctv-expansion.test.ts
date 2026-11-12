@@ -26,6 +26,27 @@ describe('Live in-world CCTV system and expanded data center',()=>{
     expect(nav).toContain('minX:-44.3,maxX:31');
     expect(game).toContain("label('WEST SERVER HALL / COLD AISLE'");
   });
+  it('shows simulated request packets and keeps the traffic clock ahead of NPC updates',()=>{
+    expect(game).toContain('function bpAnimateRequestPackets(t)');
+    expect(game).toContain('const count=active?Math.min(lowQuality?28:70');
+    expect(game).toContain('const p=packets[i];p.visible=i<count');
+    expect(game).toContain('p.position.copy(requestCurve.getPointAt(progress))');
+    expect(game).not.toContain('const p=packets[i];p.visible=false;');
+    expect(game).toContain('try{bpAnimateRequestPackets(visualTime);}');
+    const firstNetworkTick=game.indexOf('bpOriginalStep(dt);',game.indexOf('stepGame=function(dt)'));
+    const firstNpcTick=game.indexOf('bpNpcUpdate(dt);',game.indexOf('stepGame=function(dt)'));
+    expect(firstNetworkTick).toBeGreaterThan(0);
+    expect(firstNetworkTick).toBeLessThan(firstNpcTick);
+  });
+  it('spins every built fan at idle and isolates cooling animation from display updates',()=>{
+    expect(game).toContain('let bpSmoothedRpm=850');
+    expect(game).toContain('function bpAnimateFans(dt)');
+    expect(game).toContain('const targetRpm=850+(g?.fanLoad||0)');
+    expect(game).toContain('for(const rotor of bpFanRotors)rotor.rotation.z+=visibleRps*Math.PI*2*dt');
+    expect(game).toContain('bpFanRotors[i].visible=true');
+    expect(game).toContain('try{bpAnimateFans(dt);}');
+    expect(game.indexOf('try{bpAnimateFans(dt);}')).toBeLessThan(game.indexOf('try{animateScene(visualTime,dt);}'));
+  });
   it('starts fan motors at normal idle levels and only ramps after response',()=>{
     expect(game).toContain('this.fan.gain.value=.038');
     expect(game).toContain('this.vent.gain.value=.026');
