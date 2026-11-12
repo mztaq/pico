@@ -240,17 +240,7 @@ for(let y=.6;y<4.2;y+=.35){
 }
 box(-10.53,1.58,3.23,.74,.18,.09,mat('#182b37',{metal:.75,rough:.25}));
 const bpNetworkPort=ball(-10.28,1.57,3.29,.075,mint);
-box(-8.5,1.3,3.09,1.68,.065,.91,mat('#2a303a',{metal:.72,rough:.35}));
-box(-8.5,1.28,3.58,1.05,.045,.41,black);
-for(let k=0;k<12;k++)for(let row=0;row<3;row++)
-  box(-9.07+k*.104,1.316,3.43+row*.09,.073,.012,.066,mat('#51606e',{metal:.28,rough:.8}));
-box(-9.4,1.82,2.67,1.76,1.12,.09,darkMetal);
-box(-9.4,1.81,2.721,1.59,.98,.02,mat('#172934',{metal:.16,rough:.3,glow:.9}));
-box(-8.49,1.41,3.1,.16,.045,.17,mat('#3d4153',{metal:.5,rough:.4}));
-const bpLaptopHarness=box(-8.5,.98,3.55,1.45,.12,.18,darkMetal);
-for(const xx of [-9,-8]){
-  box(xx,1.1,3.61,.16,.24,.26,edgeMetal);
-}
+// The portable laptop is built as one movable group below. The rack stays put.
 const bpCableGeometry=new THREE.CatmullRomCurve3([
   V(-9.38,1.32,3.1),V(-9.75,1.03,3.6),V(-10.9,1.03,3.65),V(-10.85,1.48,3.34),V(-10.28,1.57,3.29)
 ]);
@@ -820,10 +810,18 @@ for(const side of [-1,1]){
   box(side*.29,2.4,.43,.065,.38,.05,bpHoodCloth,attacker);
 }
 box(0,2.85,.16,.54,.1,.30,bpHoodCloth,attacker);
-const bpLaptopBottom=box(-8.5,1.33,3.09,1.69,.06,.91,darkMetal);
-const bpLaptopLid=box(-8.5,1.82,2.62,1.84,1.19,.09,darkMetal);
-// The CanvasTexture below is the only illuminated laptop screen surface.
-
+const bpLaptopRig=new THREE.Group();world.add(bpLaptopRig);
+const bpLaptopDock=V(-8.5,1.3,3.09);
+bpLaptopRig.position.copy(bpLaptopDock);
+const bpLaptopBottom=box(0,.03,0,1.69,.06,.91,darkMetal,bpLaptopRig);
+box(0,.065,.25,1.43,.035,.39,black,bpLaptopRig);
+for(let k=0;k<12;k++)for(let row=0;row<3;row++){
+  box(-.69+k*.124,.09,-.05+row*.103,.103,.012,.075,mat('#536378',{metal:.22,rough:.7}),bpLaptopRig);
+}
+box(0,.084,.31,.39,.012,.16,mat('#343c4e',{metal:.31,rough:.41}),bpLaptopRig);
+const bpLaptopLid=box(0,.52,-.47,1.84,1.19,.09,darkMetal,bpLaptopRig);
+box(0,.51,-.418,1.74,1.08,.015,black,bpLaptopRig);
+for(const x of [-.62,.62])box(x,.12,-.46,.08,.17,.08,edgeMetal,bpLaptopRig);
 
 const bpLaptopBeacon=light(-8.5,2.49,2.79,0x8de4d4,1.35,4);
 const bpConsoleBeacon=light(10.7,2.62,-5.25,0x9e8ceb,2.1,4);
@@ -837,9 +835,9 @@ const bpDisplayPlane=new THREE.Mesh(
   new THREE.PlaneGeometry(1.68,1.045),
   new THREE.MeshBasicMaterial({map:bpDisplayTexture,side:THREE.FrontSide,toneMapped:false})
 );
-bpDisplayPlane.position.set(-8.5,1.82,2.684);
+bpDisplayPlane.position.set(0,.52,-.405);
 bpDisplayPlane.renderOrder=2;
-world.add(bpDisplayPlane);
+bpLaptopRig.add(bpDisplayPlane);
 const bpSecurityCanvas=document.createElement('canvas');
 bpSecurityCanvas.width=1024;bpSecurityCanvas.height=620;
 const bpSecurityCtx=bpSecurityCanvas.getContext('2d');
@@ -989,6 +987,43 @@ function bpDrawScreen(ctx,texture,title,redMode,t){
 }
 
 
+
+const bpCarryOffset=V(-.36,1.12,.53);
+let bpAttackLaptopCarried=false;
+function bpResetLaptop(){
+  bpLaptopRig.position.copy(bpLaptopDock);
+  bpLaptopRig.rotation.y=0;
+  bpLaptopRig.rotation.z=0;
+  bpCable.visible=true;
+  bpCableLight.material=mint;
+  bpAttackLaptopCarried=false;
+}
+function bpSetLaptopCarrier(position,heading,dt=1){
+  const dx=Math.sin(heading)*.5+Math.cos(heading)*bpCarryOffset.x;
+  const dz=Math.cos(heading)*.5-Math.sin(heading)*bpCarryOffset.x;
+  const goal=V(position.x+dx,1.23,position.z+dz);
+  bpLaptopRig.position.lerp(goal,Math.min(1,dt*11));
+  const yawDelta=Math.atan2(Math.sin(heading-bpLaptopRig.rotation.y),Math.cos(heading-bpLaptopRig.rotation.y));
+  bpLaptopRig.rotation.y+=yawDelta*Math.min(1,dt*10);
+  bpCable.visible=false;
+}
+function bpToggleAttackLaptop(){
+  if(!game||game.ended||game.mode!=='attack')return;
+  if(bp.terminal)bpCloseTerminal();
+  if(!bpAttackLaptopCarried&&bpDistance(bp.player,bpAttackerDesk)>3.2){
+    notify('GET CLOSER TO THE LAPTOP');return;
+  }
+  if(bpAttackLaptopCarried){
+    if(bpDistance(bp.player,bpAttackerDesk)>3.2){
+      notify('RETURN TO THE SERVER RACK TO RECONNECT');return;
+    }
+    bpResetLaptop();sfx.tap();notify('LAPTOP RECONNECTED TO SERVER');
+  }else{
+    bpAttackLaptopCarried=true;bpCable.visible=false;
+    sfx.scan();notify('LAPTOP UNPLUGGED / KEEP MOVING');
+  }
+}
+
 const bpTerminalAttackEye=V(-8.5,1.82,3.92);
 const bpTerminalDefenseEye=V(10.7,1.82,-3.91);
 const bpTerminalRaycaster=new THREE.Raycaster();
@@ -1053,7 +1088,7 @@ moveCamera=function(dt){
   if(bp.terminal){
     const attack=game.mode==='attack';
     camera.position.copy(attack?bpTerminalAttackEye:bpTerminalDefenseEye);
-    camera.lookAt(attack?bpDisplayPlane.position:bpSecurityPlane.position);
+    camera.lookAt(attack?bpDisplayPlane.getWorldPosition(new THREE.Vector3()):bpSecurityPlane.position);
     return;
   }
   const eyeHeight=bp.crouching?1.15:1.74;
@@ -1079,6 +1114,7 @@ startGame=function(mode){
   bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;attacker.scale.y=1;
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
+  bpResetLaptop();
   attacker.visible=mode==='defend';attacker.position.set(-8.5,0,4.18);attacker.rotation.y=Math.PI;
   security.position.set(patrols[0].home[0],0,patrols[0].home[1]);
   bpPlayerAvatar.visible=false;
@@ -1122,7 +1158,7 @@ function bpCloseTerminal(){
   camera.fov=84;
   camera.updateProjectionMatrix();
   document.body.classList.remove('terminal-open');
-  $('control-help').innerHTML='<kbd>W A S D</kbd> Move · <kbd>SHIFT</kbd> Sprint<br><kbd>MOUSE</kbd> Look · <kbd>E</kbd> Interact<br><kbd>C</kbd> Crouch · <kbd>V</kbd> Camera';
+  $('control-help').innerHTML='<kbd>W A S D</kbd> Move · <kbd>SHIFT</kbd> Sprint<br><kbd>MOUSE</kbd> Look · <kbd>E</kbd> Interact<br><kbd>F</kbd> Take laptop · <kbd>C</kbd> Crouch · <kbd>V</kbd> Camera';
   renderer.domElement.style.cursor='crosshair';
   sfx.tap();
   return true;
@@ -1152,6 +1188,9 @@ function bpTryInteract(){
     log('Manual cooling reset completed.','good');
     sfx.deploy();return;
   }
+  if(game.mode==='attack'&&bpAttackLaptopCarried){
+    notify('PRESS F NEAR THE SERVER RACK TO RECONNECT THE LAPTOP');return;
+  }
   if(bpDistance(bp.player,desk)<3.15){bpOpenTerminal();return;}
   if(game.mode==='defend' && game.trace>=100 && bpDistance(bp.player,attacker.position)<2.65){
     log('Responding officer detained the suspect.','good');
@@ -1165,13 +1204,14 @@ function bpTryInteract(){
   }
   notify('MOVE CLOSER TO A CONSOLE OR SUSPECT');
 }
-const bpReservedKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyC','KeyV','KeyE','ShiftLeft','ShiftRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Digit1','Digit2','Digit3','Digit4']);
+const bpReservedKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyC','KeyV','KeyE','KeyF','ShiftLeft','ShiftRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Digit1','Digit2','Digit3','Digit4']);
 document.addEventListener('keydown',e=>{
   if(!bp.active || !game || game.ended)return;
   if(bpReservedKeys.has(e.code))e.preventDefault();
   bp.keys.add(e.code);
   if(e.repeat)return;
   if(bp.terminal&&/^Digit[1-4]$/.test(e.code)){bpTerminalSelect(Number(e.code.slice(-1))-1);return;}
+  if(e.code==='KeyF'&&game.mode==='attack'){bpToggleAttackLaptop();return;}
   if(e.code==='KeyE')bpTryInteract();
   if(e.code==='KeyV'&&!bp.terminal){bp.third=!bp.third;sfx.tap();notify(bp.third?'SHOULDER CAMERA':'FIRST-PERSON CAMERA');}
 });
@@ -1224,7 +1264,9 @@ function bpMovePlayer(dt){
   if(bp.keys.has('ArrowUp'))bp.pitch=bpClamp(bp.pitch+dt*.95,-1.05,1.05);
   if(bp.keys.has('ArrowDown'))bp.pitch=bpClamp(bp.pitch-dt*.95,-1.05,1.05);
   if(!x&&!z)return;
-  const speed=(bp.crouching?1.8:(bp.keys.has('ShiftLeft')||bp.keys.has('ShiftRight'))?5.4:3.3)*Math.min(1,1/Math.hypot(x,z));
+  const wantsSprint=bp.keys.has('ShiftLeft')||bp.keys.has('ShiftRight');
+  const sprintAllowed=game.mode!=='attack'||bpAttackLaptopCarried||!game.securityDispatchActive;
+  const speed=(bp.crouching?1.8:wantsSprint&&sprintAllowed?5.4:3.3)*Math.min(1,1/Math.hypot(x,z));
   const dx=(Math.cos(bp.yaw)*x+Math.sin(bp.yaw)*z)*speed*dt;
   const dz=(-Math.sin(bp.yaw)*x+Math.cos(bp.yaw)*z)*speed*dt;
   if(bpWalkable(bp.player.x+dx,bp.player.z))bp.player.x+=dx;
@@ -1480,7 +1522,9 @@ function bpInteractionStatus(){
   if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4)
     message='RESET SERVER ROOM COOLING';
   else if(bpDistance(bp.player,desk)<3.15)
-    message=game.mode==='attack'?'ACCESS THE LAPTOP AND CONTROL TRAFFIC':'OPEN THE SECURITY CONSOLE AND DEFEND';
+    message=game.mode==='attack'?(bpAttackLaptopCarried?'RECONNECT LAPTOP WITH F':'ACCESS LAPTOP WITH E · UNPLUG AND TAKE WITH F'):'OPEN THE SECURITY CONSOLE AND DEFEND';
+  else if(game.mode==='attack'&&bpAttackLaptopCarried)
+    message='LAPTOP SECURED · RECONNECT AT SERVER RACK USING F';
   else if(game.mode==='defend'&&bpDistance(bp.player,attacker.position)<2.65)
     message=game.trace>=100?'DETAIN THE IDENTIFIED SUSPECT':'OBSERVE SUSPECT / MORE EVIDENCE NEEDED';
   $('interaction-hint').classList.toggle('visible',Boolean(message));
@@ -1522,6 +1566,11 @@ const bpOriginalStep=stepGame;
 stepGame=function(dt){
   bpMovePlayer(dt);
   bpNpcUpdate(dt);
+  if(game&&!game.ended){
+    if(game.mode==='attack'&&bpAttackLaptopCarried)bpSetLaptopCarrier(bp.player,bp.yaw,dt);
+    else if(game.mode==='defend'&&bpHackerState!=='working')bpSetLaptopCarrier(attacker.position,attacker.rotation.y,dt);
+    else if(bpLaptopRig.position.distanceToSquared(bpLaptopDock)>.0001)bpResetLaptop();
+  }
   bpWorldEvents();
   bpOriginalStep(dt);
   if(!game || game.ended){bpInteractionStatus();return;}
