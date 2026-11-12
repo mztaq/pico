@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 const game = readFileSync(new URL('../src/blackout/game.ts', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../blackout-protocol/index.html', import.meta.url), 'utf8');
 const vite = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8');
+const css = readFileSync(new URL('../src/blackout/game.css', import.meta.url), 'utf8');
 
 describe('Blackout Protocol 3D', () => {
   it('parses the TypeScript game module as JavaScript and bundles the graphics engine locally', () => {
@@ -37,6 +38,27 @@ describe('Blackout Protocol 3D', () => {
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
+  });
+
+  it('clears high-load warnings on attack success, failure, court hearings and jail', () => {
+    expect(game).toContain("const liveMission=bp.active&&!g.ended&&!courtroom.visible&&!jail.visible&&");
+    expect(game).toContain("const urgent=liveMission&&");
+    expect(game).toContain("document.body.classList.add('bp-mission-finished')");
+    expect(game).toContain("document.body.classList.remove('bp-mission-finished')");
+    expect(game).toContain("bpOriginalEnd(win,title,description)");
+    expect(game).toContain("$('red-alert').textContent=''");
+    expect(css).toContain('body.bp-mission-finished #red-alert.visible{display:none!important;animation:none!important}');
+  });
+
+  it('displays the laptop controls directly without a separate traffic panel or E interaction', () => {
+    expect(game).toContain("if(game&&!game.ended)bpPaintTerminal()");
+    expect(game).toContain("function bpCanUseTerminal()");
+    expect(game).toContain("const index=bpTerminalActionAt(event.clientX,event.clientY)");
+    expect(game).toContain("if(index>=0){bpTerminalSelect(index);return;}");
+    expect(game).toContain("function bpDrawStandbyScreen(ctx,texture)");
+    expect(game).not.toContain("NETWORK ACTIVITY");
+    expect(game).not.toContain("bpDrawScreen(bpDisplayContext");
+    expect(game).toContain("const liveMission=bp.active&&!g.ended");
   });
 
   it('supports an extended first-person mission with independent patrols', () => {
