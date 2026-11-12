@@ -1321,8 +1321,8 @@ startGame=function(mode){
   $('interaction-hint').classList.remove('visible');
   $('red-alert').classList.remove('visible');
   $('mission-step').textContent=mode==='attack'
-    ? 'Press E to use the laptop. Press F to unplug and carry it when the guards arrive.'
-    : 'You are in security operations. Use E at the office console, then search the server hall with the guards.';
+    ? 'Click the laptop screen controls, or aim and press 1–4. Press F to take the laptop when escaping.'
+    : 'Click the security console controls, or aim and press 1–4. Investigate the server hall with your guards.';
   $('control-help').style.display='block';
   updateUI(true);
 };
@@ -2054,7 +2054,7 @@ endGame=function(win,title,description){
   // Covers success, failure, courtroom hearing, sentencing and jail.
   $('red-alert').classList.remove('visible');
 };
-renderer.domElement.setAttribute('aria-label','First-person 3D data center game. WASD to move, mouse to look, E to use nearby laptop, C to crouch, V for third-person view.');
+renderer.domElement.setAttribute('aria-label','First-person 3D data center game. WASD to move, mouse to look. Click laptop actions directly or use number keys 1 through 4 while aiming at the screen. F picks up the laptop, E zooms in, C crouches and V changes camera.');
 
 bpWallGraph(0);
 bpPaintOfficeMonitor();
