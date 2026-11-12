@@ -6,6 +6,7 @@ export interface TrafficRequest {
   path: string;
   status: 200 | 201 | 429 | 503;
   latency: number;
+  bytes: number;
 }
 
 export interface TrafficSnapshot {
@@ -42,6 +43,7 @@ export function createTrafficFeed(seed = 0x19860614) {
   let rateClock = 0;
   let rate = 0;
   let drift = 0;
+  let averageBytesPerRequest = 3 * 1024 * 1024;
   const recent: TrafficRequest[] = [];
   function random() {
     state ^= state << 13; state ^= state >>> 17; state ^= state << 5;
@@ -69,6 +71,18 @@ export function createTrafficFeed(seed = 0x19860614) {
         const status: TrafficRequest['status'] = chance < (overloaded ? 0.18 : 0.025)
           ? 503 : chance < (snapshot.proxies > 0 ? 0.30 : 0.04)
             ? 429 : route.method === 'POST' ? 201 : 200;
+        // Variable representative transfer sizes: heavier content requests carry
+        // more data than status checks. Estimate total network bit rate from
+        // this stream, never by treating requests as bits.
+        const baseBytes = route.path === '/dashboard' || route.path === '/api/catalog'
+          ? 2_000_000 + random() * 6_000_000
+          : route.path === '/api/search'
+            ? 700_000 + random() * 2_500_000
+            : route.path === '/assets/ui.css'
+              ? 50_000 + random() * 500_000
+              : 120_000 + random() * 1_500_000;
+        const bytes = Math.round(baseBytes * (status === 503 ? 0.10 : status === 429 ? 0.02 : 1));
+        averageBytesPerRequest = averageBytesPerRequest * 0.965 + bytes * 0.035;
         const request: TrafficRequest = {
           id: (sequence++).toString(36).toUpperCase().padStart(7, '0'),
           at: snapshot.elapsed,
@@ -77,6 +91,7 @@ export function createTrafficFeed(seed = 0x19860614) {
           path: route.path,
           status,
           latency: Math.round(17 + random() * 170 + (overloaded ? random() * 560 : 0)),
+          bytes,
         };
         recent.push(request);
         if (recent.length > 18) recent.shift();
@@ -84,5 +99,5 @@ export function createTrafficFeed(seed = 0x19860614) {
     }
     return rate;
   }
-  return {step, recent};
+  return {step, recent, get averageBytesPerRequest(){return averageBytesPerRequest;}};
 }
