@@ -10,7 +10,7 @@ import { rankedCoverSpots, formationPosition } from './ai-coordination';
 import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
 import {
   flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,
-  acknowledgeSecurityDispatch, securityOfficersReturned, SECURITY_OFFICE_REST_SECONDS,
+  acknowledgeSecurityDispatch, securityOfficersReturned,
 } from './security-response';
 
 /* Everything in the incident model stays inside browser memory. */
@@ -1607,7 +1607,6 @@ function bpGuardSetReturn(p){
 }
 const bpSearchWindowSeconds=24;
 const bpMaxChaseSeconds=8;
-const bpDispatchRestSeconds=SECURITY_OFFICE_REST_SECONDS;
 function bpAssignSecurityDispatch(g){
   acknowledgeSecurityDispatch(g);
   g.securityDispatchActive=true;
