@@ -30,7 +30,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("endGame(false,'SECURITY INTERCEPTED YOU'");
     expect(game).toContain('new THREE.PerspectiveCamera(84, 1, .07, 120)');
     expect(game).toContain('if(!bp.active || !game || game.ended){');
-    expect(game).not.toContain('game.ended || bp.terminal){');
+    expect(game).not.toContain('if(!bp.active || !game || game.ended || bp.terminal){');
     expect(game).toContain("p.chaseUntil=game.elapsed+3.8");
     expect(game).toContain('function bpGuardCanSee(');
     expect(game).toContain('function bpWorldEvents()');
