@@ -1319,8 +1319,8 @@ const bpOriginalEnd=endGame;
 endGame=function(win,title,description){
   bpCloseTerminal();
   if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
-  bpOriginalEnd(win,title,description);
   bp.active=false;
+  bpOriginalEnd(win,title,description);
   bpPlayerAvatar.visible=false;
   $('interaction-hint').classList.remove('visible');
 };
