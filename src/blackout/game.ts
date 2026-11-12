@@ -8,6 +8,7 @@ import { routeTo } from './navigation';
 import { renderOfficeFeed } from './office-monitor';
 import { rankedCoverSpots, formationPosition } from './ai-coordination';
 import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
+import {ATTACK_TRAFFIC_SCALE,DEFENSE_WAVE_SCALE,poweredProxyCount,firstUnpoweredProxy,nearestPoweredProxy} from './proxy-mechanics';
 import {
   flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,
   acknowledgeSecurityDispatch, securityOfficersReturned,
@@ -345,12 +346,36 @@ function bpPowerProxy(index){
   proxy.userData.switchLever.rotation.x=-.5;
   for(const light of proxy.userData.statusIndicators)light.material=mint;
   sfx.deploy();
+  proxy.userData.glow.color.setHex(0x54e8c6);
+  proxy.userData.repairAt=0;
+  if(game)game.proxies=poweredProxyCount(proxyObjects);
   bpShowIncident('EDGE APPLIANCE '+String(index+1).padStart(2,'0')+' / POWER ON');
+  return true;
+}
+function bpDisableProxy(index,who='intruder'){
+  if(!game||game.ended)return false;
+  const proxy=proxyObjects[index];
+  if(!proxy||!proxy.userData.powered)return false;
+  proxy.userData.powered=false;
+  proxy.userData.repairAt=game.elapsed+14;
+  proxy.userData.ring.material=mat('#703846',{metal:.35,rough:.55});
+  proxy.userData.cap.material=mat('#493744',{metal:.28,rough:.54});
+  proxy.userData.glow.color.setHex(0xff5467);
+  proxy.userData.glow.intensity=.7;
+  proxy.userData.switchLever.rotation.x=.58;
+  for(const led of proxy.userData.statusIndicators)led.material=red;
+  game.proxies=poweredProxyCount(proxyObjects);
+  game.proxyOrders=Math.min(6-game.proxies,Math.max(1,game.proxyOrders||0));
+  flagSecurityIncident(game);
+  game.nextDefenderProxy=Math.min(game.nextDefenderProxy||game.elapsed+12,game.elapsed+12);
+  sfx.metal();bpShowIncident('EDGE PROXY '+String(index+1).padStart(2,'0')+' / POWER LOST');
+  log('Proxy '+(index+1)+' shut down by '+who+'.','warn');
   return true;
 }
 function bpResetProxies(){
   for(const proxy of proxyObjects){
-    proxy.visible=true;proxy.userData.powered=false;
+    proxy.visible=true;proxy.userData.powered=false;proxy.userData.repairAt=0;
+    proxy.userData.glow.color.setHex(0x54e8c6);
     proxy.userData.ring.material=mat('#323c4a',{metal:.51,rough:.48});
     proxy.userData.cap.material=mat('#263b43',{metal:.31,rough:.42});
     proxy.userData.glow.intensity=0;proxy.userData.switchLever.rotation.x=0;
@@ -628,7 +653,7 @@ function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
     risk:mode==='attack'?0:8,trace:mode==='defend'?0:0,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
-    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),patrolSeed:(Math.random()*0xffffffff)>>>0,
+    nextDefenderProxy:18,nextAttackerWave:13,nextSabotageAt:28,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,proxySabotage:null,coolingNeedsRepair:false,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),patrolSeed:(Math.random()*0xffffffff)>>>0,
   };
 }
 function startGame(mode){
@@ -735,7 +760,7 @@ function stepGame(dt){
       g.proxyOrders=(g.proxyOrders||0)+1;
       g.nextDefenderProxy=g.elapsed+49;
     }
-    const targetRps=750+g.bots*185+(g.burst>0?14500:0);
+    const targetRps=(750+g.bots*185+(g.burst>0?14500:0))*ATTACK_TRAFFIC_SCALE;
     g.traffic=g.requestFeed.step({targetRps,elapsed:g.elapsed,health:g.health,proxies:g.proxies,burst:g.burst>0},dt);
     const blockedRatio=Math.min(.88,Math.max(0,g.proxies*.13+(g.proxies>=3?.11:0)-(g.reroute>0?.24:0)));
     g.delivered=g.traffic*(1-blockedRatio);
@@ -745,13 +770,13 @@ function stepGame(dt){
     if(g.elapsed>=g.nextAttackerWave){g.attackerWave=9;g.nextAttackerWave+=24;flagSecurityIncident(g);log('Intruder launched another traffic wave.','warn');notify('INCOMING TRAFFIC SURGE',true);sfx.burst();}
     g.attackerWave=Math.max(0,g.attackerWave-dt);
     g.bots+=dt*.42;
-    const targetRps=3800+g.bots*118+(g.attackerWave>0?4700:0);
+    const targetRps=(3800+g.bots*118+(g.attackerWave>0?4700:0))*DEFENSE_WAVE_SCALE;
     g.traffic=g.requestFeed.step({targetRps,elapsed:g.elapsed,health:g.health,proxies:g.proxies,burst:g.attackerWave>0},dt);
     const blockedRatio=Math.min(.89,g.proxies*.13+(g.limit>0?.34:0));
     g.delivered=g.traffic*(1-blockedRatio);
   }
   const saturation=g.delivered/(g.mode==='attack'?7700:9000);
-  if(saturation>1){g.health=Math.max(0,g.health-dt*Math.pow(saturation-1,1.14)*2.8);}else{g.health=Math.min(100,g.health+dt*.10);}
+  if(saturation>1){g.health=Math.max(0,g.health-dt*Math.pow(saturation-1,1.14)*3.1);}else{g.health=Math.min(100,g.health+dt*.10);}
   if(g.health<50 && alarmCooldown<=0){sfx.alert();alarmCooldown=5;log('Server health warning: high application pressure.','warn');}
   if(g.health<=0){
     if(g.mode==='attack')endGame(true,'SERVER OFFLINE','The web cluster stopped responding after sustained overload.');
