@@ -16,6 +16,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("import { renderOfficeFeed } from './office-monitor'");
     expect(game).toContain("import { rankedCoverSpots, formationPosition } from './ai-coordination'");
     expect(game).toContain("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth'");
+    expect(game).toContain("import {ATTACK_TRAFFIC_SCALE,DEFENSE_WAVE_SCALE,poweredProxyCount,firstUnpoweredProxy,nearestPoweredProxy} from './proxy-mechanics'");
     expect(game).toContain("import {");
     expect(game).toContain("} from './security-response'");
     expect(game).toContain('observeSecurityAlarm(g,activeAlarm)');
@@ -37,6 +38,7 @@ describe('Blackout Protocol 3D', () => {
       .replace("import { renderOfficeFeed } from './office-monitor';", 'const renderOfficeFeed = () => {};')
       .replace("import { rankedCoverSpots, formationPosition } from './ai-coordination';", 'const rankedCoverSpots = () => []; const formationPosition = () => ({x:0,z:0});')
       .replace("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
+      .replace("import {ATTACK_TRAFFIC_SCALE,DEFENSE_WAVE_SCALE,poweredProxyCount,firstUnpoweredProxy,nearestPoweredProxy} from './proxy-mechanics';", "const ATTACK_TRAFFIC_SCALE=1;const DEFENSE_WAVE_SCALE=1;const poweredProxyCount=()=>0;const firstUnpoweredProxy=()=>0;const nearestPoweredProxy=()=>-1;")
       .replace(/import \{\s*flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,\s*acknowledgeSecurityDispatch, securityOfficersReturned,\s*\} from '\.\/security-response';/, 'const flagSecurityIncident = () => {};const observeSecurityAlarm = () => {};const shouldDispatchSecurity = () => false;const acknowledgeSecurityDispatch = () => {};const securityOfficersReturned = () => {};const SECURITY_OFFICE_REST_SECONDS = 10;'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
@@ -145,7 +147,23 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('bpRandomSearchTarget(g)');
     expect(game).toContain("box(23,-.19,0,17,.35,24,concrete)");
     expect(game).toContain('function bpPowerProxy(index)');
-    expect(game).toContain("g.proxies++");
+    expect(game).toContain("function bpDisableProxy(index,who='intruder')");
+    expect(game).toContain('function bpNearbyProxy(position,range=2.55,poweredOnly=false)');
+    expect(game).toContain("game.proxySabotage={index:proxyIndex,until:game.elapsed+2.2}");
+    expect(game).toContain("bpDisableProxy(task.index,'intruder')");
+    expect(game).toContain("if(game.mode==='defend'&&!proxy.userData.powered)");
+    expect(game).toContain('function bpPlanHackerProxySabotage(g)');
+    expect(game).toContain("bpHackerState='sabotaging'");
+    expect(game).toContain("bpDisableProxy(bpHackerTargetProxy,'the hooded suspect')");
+    expect(game).toContain("const targetRps=(750+g.bots*185+(g.burst>0?14500:0))*ATTACK_TRAFFIC_SCALE");
+    expect(game).toContain("const targetRps=(3800+g.bots*118+(g.attackerWave>0?4700:0))*DEFENSE_WAVE_SCALE");
+    expect(game).toContain("p.state='coolingTravel'");
+    expect(game).toContain("p.state='coolingFix'");
+    expect(game).toContain("function bpTriggerCoolingIssue(g)");
+    expect(game).toContain("bpTriggerCoolingIssue(g)");
+    expect(game).toContain("COOLING RESTORED / OFFICER COMPLETED REPAIR");
+    expect(game).toContain("bpCoolingIndicator.material=red");
+    expect(game).toContain('game.proxies=poweredProxyCount(proxyObjects)');
     expect(game).toContain('bpGuardSetReturn(p)');
     expect(game).not.toContain('DEFENDERS ARE DEPLOYING PROXY SERVERS');
     expect(game).toContain('function bpTerminalActionAt(x,y)');
