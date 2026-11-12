@@ -6,6 +6,7 @@ import { drawTerminalScreen, terminalHitTest } from './terminal-screen';
 import { isSightBlocked, chooseHackerPhase } from './stealth-logic';
 import { routeTo } from './navigation';
 import { renderOfficeFeed } from './office-monitor';
+import { rankedCoverSpots, formationPosition } from './ai-coordination';
 
 /* Everything in the incident model stays inside browser memory. */
 const $ = id => document.getElementById(id);
@@ -1481,8 +1482,8 @@ function bpMovePlayer(dt){
    Dispatches end with a physical return to base. No teleporting NPCs. */
 const patrols=[
   {agent:security,role:'proxy',home:[21.2,-.6],index:0,speed:1.70,state:'idle',path:[],wait:0,proxyIndex:-1},
-  {agent:character(23.4,4.1,'guard'),role:'search',home:[23.4,4.1],index:0,speed:1.58,state:'idle',path:[],wait:0,proxyIndex:-1},
-  {agent:character(25.8,-4.5,'guard'),role:'search',home:[25.8,-4.5],index:0,speed:1.52,state:'idle',path:[],wait:0,proxyIndex:-1},
+  {agent:character(23.4,4.1,'guard'),role:'search',home:[23.4,4.1],index:0,speed:1.58,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0},
+  {agent:character(25.8,-4.5,'guard'),role:'search',home:[25.8,-4.5],index:0,speed:1.52,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:1},
 ];
 const bpGuards=patrols.map(p=>p.agent);
 for(const p of patrols){
@@ -1547,10 +1548,31 @@ function bpWalkGuard(p,target,dt,urgent=true){
   const distance=Math.hypot(dx,dz);
   if(distance<.28)return true;
   const speed=p.speed*(urgent?2.44:1);
+  let moveX=dx/Math.max(.01,distance),moveZ=dz/Math.max(.01,distance);
+  // Physical separation: guards yield or steer beside one another, rather
+  // than occupying the same position while chasing the laptop carrier.
+  for(const other of patrols){
+    if(other===p)continue;
+    const deltaX=p.agent.position.x-other.agent.position.x;
+    const deltaZ=p.agent.position.z-other.agent.position.z;
+    const gap=Math.hypot(deltaX,deltaZ);
+    if(gap>.08&&gap<1.75){
+      const push=(1.75-gap)/1.75;
+      moveX+=deltaX/gap*push*1.4;
+      moveZ+=deltaZ/gap*push*1.4;
+    }
+  }
+  const magnitude=Math.max(.01,Math.hypot(moveX,moveZ));
+  moveX/=magnitude;moveZ/=magnitude;
   const step=Math.min(distance,speed*dt);
-  p.agent.position.x+=dx/distance*step;
-  p.agent.position.z+=dz/distance*step;
-  const angle=Math.atan2(dx,dz);
+  const px=p.agent.position.x+moveX*step,pz=p.agent.position.z+moveZ*step;
+  if(bpWalkable(px,pz)){
+    p.agent.position.x=px;p.agent.position.z=pz;
+  }else{
+    if(bpWalkable(px,p.agent.position.z))p.agent.position.x=px;
+    if(bpWalkable(p.agent.position.x,pz))p.agent.position.z=pz;
+  }
+  const angle=Math.atan2(moveX,moveZ);
   const delta=Math.atan2(Math.sin(angle-p.agent.rotation.y),Math.cos(angle-p.agent.rotation.y));
   p.agent.rotation.y+=delta*Math.min(1,dt*8);
   return false;
@@ -1642,7 +1664,14 @@ function bpMoveGuard(p,dt,g){
       if(g.elapsed>=(p.repathAt||0)){
         // Recalculate toward the last observed location, so turns and
         // changing player routes cause credible pursuit around server racks.
-        p.path=bpGuardRoute(p.agent.position,[p.lastSeen.x,p.lastSeen.z]);
+        let destination=[p.lastSeen.x,p.lastSeen.z];
+        if(g.mode==='defend'){
+          // Each responding officer has a different approach angle, avoiding
+          // the two officers stacking on the same suspected intruder position.
+          const slot=formationPosition(p.lastSeen,attacker.rotation.y,p.approachIndex??0);
+          if(bpWalkable(slot.x,slot.z))destination=[slot.x,slot.z];
+        }
+        p.path=bpGuardRoute(p.agent.position,destination);
         p.index=0;p.repathAt=g.elapsed+(lowQuality?1.3:.75);
       }
       if(g.mode==='attack'&&bpDistance(p.agent,bp.player)<1.72&&
