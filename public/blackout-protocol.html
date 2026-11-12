@@ -1314,7 +1314,6 @@ const ACTIONS={
     {id:'limit',title:'Enable emergency rate limits',description:'Briefly reduce the pressure on the application servers.',cd:19},
     {id:'analyze',title:'Analyze traffic fingerprints',description:'Collect case evidence from synthetic telemetry.',cd:9},
     {id:'trace',title:'Trace suspicious relay hops',description:'Follow fictional records to locate the suspect.',cd:12},
-    {id:'arrest',title:'Dispatch police / make arrest',description:'Requires 100% verified evidence.',cd:0,kind:'primary'},
   ]
 };
 let actionButtons=new Map();
@@ -1404,7 +1403,7 @@ function stepGame(dt){
     g.traffic=750+g.bots*185+(g.burst>0?14500:0);
     const blockedRatio=Math.min(.88,Math.max(0,g.proxies*.13+(g.proxies>=3?.11:0)-(g.reroute>0?.24:0)));
     g.delivered=g.traffic*(1-blockedRatio);
-    g.risk=Math.min(100,g.risk+dt*(g.traffic>15000?.3:.11)+dt*(g.burst>0?.42:0)+dt*g.proxies*.1);
+    g.risk=Math.min(100,g.risk+dt*(g.traffic>15000?.15:.055)+dt*(g.burst>0?.18:0)+dt*g.proxies*.065);
     if(g.risk>=100){endGame(false,'YOU WERE TRACED','The security team correlated fictional network evidence and identified your workstation before the service went offline.');return;}
   } else {
     if(g.elapsed>=g.nextAttackerWave){g.attackerWave=9;g.nextAttackerWave+=24;log('Intruder launched another synthetic traffic wave.','warn');notify('INCOMING TRAFFIC SURGE',true);sfx.burst();}
@@ -1514,6 +1513,317 @@ function frame(){
   uiTick+=dt;if(game&&(uiTick>.18)){updateUI();uiTick=0;}
   renderer.render(scene,camera);
 }
+
+/* Blackout Protocol: embodied first-person missions and cinematic incident AI.
+   Every "attack", trace, proxy and request is in-memory gameplay only. */
+const bp = {
+  player: V(-8.8, 0, 5.6), yaw:0, pitch:-.06, keys:new Set(),
+  terminal:false, active:false, third:false, crouching:false,
+  stepClock:0, npcTyping:true, npcHiding:false,
+  targetDesk: V(-8.8,0,4.0), guardAlert:false,
+};
+const bpClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+const bpDistance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+const bpAttackerDesk=V(-8.8,0,4.15);
+const bpDefenseDesk=V(10.7,0,-4.25);
+const bpHideSpot=V(-4.15,0,8.8);
+const bpPlayerAvatar=character(10.7,-2.1,'engineer');
+bpPlayerAvatar.visible=false;
+const bpFanRotors=[];
+for(const [rx,rz] of rackCoords){
+  for(let j=0;j<4;j++){
+    const rotor=new THREE.Group();
+    rotor.position.set(rx-.973,1.15+j*.78,rz);
+    rotor.rotation.y=Math.PI/2;
+    world.add(rotor);
+    for(let bladeIndex=0;bladeIndex<5;bladeIndex++){
+      const angle=bladeIndex*Math.PI*2/5;
+      const blade=box(Math.cos(angle)*.125,Math.sin(angle)*.125,0,.23,.078,.028,mat('#b6d5df',{metal:.8,rough:.28}),rotor);
+      blade.rotation.z=angle;
+    }
+    ball(0,0,0,.075,edgeMetal,rotor);
+    bpFanRotors.push(rotor);
+  }
+}
+const bpEmergencyLights=[
+  light(-11,5.8,-1,0xff2b4e,0,13),
+  light(11,5.8,4,0xff2b4e,0,13),
+  light(1,5.8,-9,0xff2b4e,0,12)
+];
+for(const l of bpEmergencyLights){
+  ball(l.position.x,6.0,l.position.z,.16,red);
+}
+const bpHoodCloth=mat('#242330',{metal:0,rough:1});
+const bpStitch=mat('#5d5465',{metal:0,rough:.85});
+box(0,1.40,-.52,.75,.76,.24,bpHoodCloth,attacker);
+box(0,1.58,-.661,.56,.12,.035,bpStitch,attacker);
+for(const side of [-1,1]){
+  box(side*.37,1.51,.18,.055,.52,.04,bpStitch,attacker);
+  box(side*.35,.77,.16,.15,.14,.21,bpHoodCloth,attacker);
+  box(side*.29,2.4,.43,.065,.38,.05,bpHoodCloth,attacker);
+}
+box(0,2.85,.16,.54,.1,.30,bpHoodCloth,attacker);
+const bpLaptopBottom=box(-8.8,1.24,3.34,1.36,.073,.91,darkMetal);
+const bpLaptopLid=box(-8.8,1.79,2.92,1.40,1.06,.07,darkMetal);
+const bpLaptopScreen=box(-8.8,1.79,2.964,1.26,.89,.018,mat('#122b36',{metal:.15,rough:.25,glow:1.8}));
+label('LOCAL SIMULATION // READY',-8.8,1.87,2.979,1.16,.25);
+for(let i=0;i<5;i++)box(-9.31,1.61+i*.08,2.986,.95-i*.1,.018,.018,i%2?mint:blue);
+const bpLaptopBeacon=light(-8.8,2.45,3.07,0x8de4d4,1.7,4);
+const bpConsoleBeacon=light(10.7,2.62,-5.25,0x9e8ceb,2.1,4);
+const bpOriginalCamera=moveCamera;
+moveCamera=function(dt){
+  if(!bp.active || !game || game.ended || bp.terminal){
+    bpOriginalCamera(dt);return;
+  }
+  const eyeHeight=bp.crouching?1.15:1.74;
+  if(bp.third){
+    const behind=V(Math.sin(bp.yaw)*3.5,2.15,Math.cos(bp.yaw)*3.5);
+    camera.position.copy(bp.player).add(behind);
+    camera.lookAt(bp.player.x-Math.sin(bp.yaw)*4,eyeHeight+bp.pitch*2,bp.player.z-Math.cos(bp.yaw)*4);
+  } else {
+    camera.position.set(bp.player.x,eyeHeight,bp.player.z);
+    camera.rotation.order='YXZ';
+    camera.rotation.set(bp.pitch,bp.yaw,0);
+  }
+};
+const bpOriginalStartGame=startGame;
+startGame=function(mode){
+  bpOriginalStartGame(mode);
+  bp.active=true;bp.terminal=false;bp.third=false;
+  bp.yaw=mode==='attack'?0:0;bp.pitch=-.06;
+  bp.player.copy(mode==='attack'?V(-8.8,0,5.6):V(10.7,0,-2.15));
+  bp.keys.clear();
+  bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
+  attacker.visible=mode==='defend';attacker.position.set(-8.8,0,4.5);attacker.rotation.y=Math.PI;
+  security.position.set(10.9,0,-3);
+  bpPlayerAvatar.visible=false;
+  document.body.classList.remove('terminal-open');
+  $('interaction-hint').classList.remove('visible');
+  $('red-alert').classList.remove('visible');
+  $('mission-step').textContent=mode==='attack'
+    ? 'Approach the attacker laptop and press E. Work from its screen while avoiding security patrols.'
+    : 'Walk to the security control desk and press E. Deploy defenses, collect evidence, then find the suspect.';
+  $('control-help').style.display='block';
+  updateUI(true);
+};
+const bpOriginalMenu=menu;
+menu=function(){
+  bpCloseTerminal();bp.active=false;bp.keys.clear();
+  if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
+  bpOriginalMenu();
+  attacker.visible=true;attacker.position.set(-8.8,0,4.5);
+  bpPlayerAvatar.visible=false;
+  $('interaction-hint').classList.remove('visible');
+  $('red-alert').classList.remove('visible');
+};
+function bpOpenTerminal(){
+  if(!game||game.ended)return;
+  bp.terminal=true;
+  document.body.classList.add('terminal-open');
+  if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
+  focus(game.mode==='attack'?'hacker':'servers');
+  $('panelname').textContent=game.mode==='attack'?'LAPTOP / LOCAL TRAFFIC SIM':'SECURITY CONSOLE / INCIDENT RESPONSE';
+  $('panelmeta').textContent='PRESS ESC TO RETURN TO THE ROOM';
+  $('interaction-hint').classList.remove('visible');
+  sfx.keyboard();
+}
+function bpCloseTerminal(){
+  if(!bp.terminal)return false;
+  bp.terminal=false;
+  document.body.classList.remove('terminal-open');
+  sfx.tap();
+  return true;
+}
+$('terminal-close').addEventListener('click',()=>bpCloseTerminal());
+$('terminal-backdrop').addEventListener('click',()=>bpCloseTerminal());
+window.__bpEscape=()=>{
+  if(bpCloseTerminal())return true;
+  if(document.pointerLockElement===renderer.domElement){void document.exitPointerLock?.();return true;}
+  return false;
+};
+window.__bpIsFPS=()=>Boolean(bp.active);
+const bpOriginalAct=act;
+act=function(id){
+  if(!bp.terminal){notify('ACCESS YOUR WORKSTATION WITH E');return;}
+  if(id==='arrest'){notify('LEAVE THE CONSOLE AND LOCATE THE SUSPECT');return;}
+  bpOriginalAct(id);
+};
+function bpTryInteract(){
+  if(!game || game.ended)return;
+  if(bp.terminal){bpCloseTerminal();return;}
+  const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
+  if(bpDistance(bp.player,desk)<3.15){bpOpenTerminal();return;}
+  if(game.mode==='defend' && game.trace>=100 && bpDistance(bp.player,attacker.position)<2.65){
+    log('Responding officer detained the suspect.','good');
+    bpOriginalAct('arrest');
+    return;
+  }
+  if(game.mode==='defend' && bpDistance(bp.player,attacker.position)<2.65){
+    notify('SUSPECT SIGHTED. COLLECT VERIFIED EVIDENCE FIRST.');
+    game.trace=Math.min(100,game.trace+5);
+    sfx.scan();return;
+  }
+  notify('MOVE CLOSER TO A CONSOLE OR SUSPECT');
+}
+const bpReservedKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyC','KeyV','KeyE','ShiftLeft','ShiftRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown']);
+document.addEventListener('keydown',e=>{
+  if(!bp.active || !game || game.ended)return;
+  if(bpReservedKeys.has(e.code))e.preventDefault();
+  bp.keys.add(e.code);
+  if(e.repeat)return;
+  if(e.code==='KeyE')bpTryInteract();
+  if(e.code==='KeyV'&&!bp.terminal){bp.third=!bp.third;sfx.tap();notify(bp.third?'SHOULDER CAMERA':'FIRST-PERSON CAMERA');}
+});
+document.addEventListener('keyup',e=>{bp.keys.delete(e.code);});
+window.addEventListener('blur',()=>{bp.keys.clear();});
+document.addEventListener('mousemove',e=>{
+  if(!bp.active || bp.terminal || document.pointerLockElement!==renderer.domElement)return;
+  bp.yaw-=e.movementX*.0023;
+  bp.pitch=bpClamp(bp.pitch-e.movementY*.0019,-1.05,1.05);
+});
+renderer.domElement.addEventListener('click',()=>{
+  if(bp.active && game && !game.ended && !bp.terminal)
+    void renderer.domElement.requestPointerLock?.();
+});
+function bpWalkable(x,z){
+  if(x < -13.65 || x > 13.65 || z < -12.8 || z > 12.8)return false;
+  for(const [rx,rz] of rackCoords)
+    if(Math.abs(x-rx)<1.26 && Math.abs(z-rz)<1.38)return false;
+  if(x>-11.25 && x<-6.4 && z>1.62 && z<3.86)return false;
+  if(x>8.75 && x<12.65 && z>-6.05 && z<-4.38)return false;
+  return true;
+}
+function bpMovePlayer(dt){
+  if(bp.terminal || !game || game.ended)return;
+  const x=(bp.keys.has('KeyD')?1:0)-(bp.keys.has('KeyA')?1:0);
+  const z=(bp.keys.has('KeyS')?1:0)-(bp.keys.has('KeyW')?1:0);
+  bp.crouching=bp.keys.has('KeyC');
+  if(bp.keys.has('ArrowLeft'))bp.yaw+=dt*1.45;
+  if(bp.keys.has('ArrowRight'))bp.yaw-=dt*1.45;
+  if(bp.keys.has('ArrowUp'))bp.pitch=bpClamp(bp.pitch+dt*.95,-1.05,1.05);
+  if(bp.keys.has('ArrowDown'))bp.pitch=bpClamp(bp.pitch-dt*.95,-1.05,1.05);
+  if(!x&&!z)return;
+  const speed=(bp.crouching?1.8:(bp.keys.has('ShiftLeft')||bp.keys.has('ShiftRight'))?5.4:3.3)*Math.min(1,1/Math.hypot(x,z));
+  const dx=(Math.cos(bp.yaw)*x+Math.sin(bp.yaw)*z)*speed*dt;
+  const dz=(-Math.sin(bp.yaw)*x+Math.cos(bp.yaw)*z)*speed*dt;
+  if(bpWalkable(bp.player.x+dx,bp.player.z))bp.player.x+=dx;
+  if(bpWalkable(bp.player.x,bp.player.z+dz))bp.player.z+=dz;
+  bp.stepClock+=dt;
+  if(bp.stepClock>(bp.crouching?.65:.39)){
+    bp.stepClock=0;
+    sfx.noise(bp.crouching?.055:.075,bp.crouching?.015:.038,380);
+  }
+  const avatar=game.mode==='attack'?attacker:bpPlayerAvatar;
+  avatar.position.set(bp.player.x,0,bp.player.z);
+  avatar.rotation.y=bp.yaw+Math.PI;
+  avatar.visible=bp.third;
+}
+function bpNpcUpdate(dt){
+  if(!game || game.ended || game.mode!=='defend'){
+    if(game&&game.mode==='attack'){
+      const patrolT=game.elapsed*.023;
+      security.position.set(1.4+9.6*Math.sin(patrolT),0,9.7+1.5*Math.cos(patrolT));
+      security.rotation.y=-Math.PI/2*Math.sign(Math.cos(patrolT)||1);
+    }
+    return;
+  }
+  const cycle=game.elapsed%94;
+  const hiding=cycle>=22 && cycle<60;
+  bp.npcHiding=hiding;bp.npcTyping=!hiding;
+  const goal=hiding?bpHideSpot:V(-8.8,0,4.5);
+  const old=attacker.position.clone();
+  attacker.position.lerp(goal,1-Math.exp(-dt*(hiding?.82:.7)));
+  if(bpDistance(attacker.position,goal)>.2){
+    attacker.rotation.y=Math.atan2(goal.x-old.x,goal.z-old.z);
+  }else{attacker.rotation.y=hiding?-.7:Math.PI;}
+  attacker.visible=true;
+  security.position.set(1+9*Math.sin(game.elapsed*.036),0,9+1.8*Math.cos(game.elapsed*.036));
+  security.rotation.y=-Math.PI/2*Math.sign(Math.cos(game.elapsed*.036)||1);
+  if(hiding && game.nextAttackerWave<=game.elapsed+dt){
+    game.nextAttackerWave+=dt;
+  }
+}
+function bpInteractionStatus(){
+  if(!game || game.ended || bp.terminal){
+    $('interaction-hint').classList.remove('visible');return;
+  }
+  const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
+  let message='';
+  if(bpDistance(bp.player,desk)<3.15)
+    message=game.mode==='attack'?'OPEN THE LAPTOP AND CONTROL SIMULATED TRAFFIC':'OPEN THE SECURITY CONSOLE AND DEFEND';
+  else if(game.mode==='defend'&&bpDistance(bp.player,attacker.position)<2.65)
+    message=game.trace>=100?'DETAIN THE IDENTIFIED SUSPECT':'OBSERVE SUSPECT / MORE EVIDENCE NEEDED';
+  $('interaction-hint').classList.toggle('visible',Boolean(message));
+  if(message)$('interaction-hint').innerHTML='<kbd>E</kbd>'+message;
+}
+const bpOriginalStep=stepGame;
+stepGame=function(dt){
+  bpMovePlayer(dt);
+  bpNpcUpdate(dt);
+  bpOriginalStep(dt);
+  if(!game || game.ended){bpInteractionStatus();return;}
+  if(game.mode==='attack'&&!bp.terminal){
+    const guardRange=bpDistance(bp.player,security.position);
+    if(guardRange<5.4 && !bp.crouching){
+      game.risk=Math.min(100,game.risk+dt*(5.4-guardRange)*.85);
+      if(!bp.guardAlert && guardRange<4.0){notify('SECURITY GUARD SPOTTED YOU',true);sfx.alert();}
+      bp.guardAlert=guardRange<4.0;
+    }else bp.guardAlert=false;
+  }
+  bpInteractionStatus();
+};
+const bpOriginalUpdateUI=updateUI;
+updateUI=function(force=false){
+  bpOriginalUpdateUI(force);
+  if(!game || !bp.active)return;
+  const g=game;
+  const rpm=Math.round(850+Math.min(2.4,g.traffic/35000)*1950+(100-g.health)*22);
+  $('health').parentElement.querySelector('.sub').textContent='COOLING FANS '+rpm.toLocaleString()+' RPM';
+  if(g.mode==='attack'){
+    $('mission-step').textContent=g.proxies===0?
+      'Use the laptop to build simulated traffic. Watch your exposure and avoid security patrols.':
+      g.proxies<3?'New proxies absorb traffic. Return to the laptop and adjust the simulation.':
+      'Heavy mitigation active. Reach zero integrity without reaching 100% exposure.';
+  }else{
+    $('mission-step').textContent=g.trace<22?'Deploy proxies and inspect traffic at the security desk.':
+      g.trace<100?'Build the case with verified logs, then search the racks for the moving intruder.':
+      'Case verified. Leave the console, find the hooded suspect and press E nearby to detain.';
+  }
+  const urgent=g.health<55 || (g.mode==='attack'&&g.risk>83);
+  $('red-alert').classList.toggle('visible',urgent);
+  $('red-alert').textContent=urgent?(g.mode==='attack'&&g.risk>83?'⚠ RED ALERT / INTRUDER DETECTED':'⚠ RED ALERT / HIGH SERVER LOAD'):'';
+};
+const bpOriginalAnimate=animateScene;
+animateScene=function(t,dt){
+  bpOriginalAnimate(t,dt);
+  const rpm=game?850+Math.min(2.4,game.traffic/35000)*1950+(100-game.health)*22:850;
+  const turns=(rpm/60)*Math.PI*2*dt;
+  for(const rotor of bpFanRotors)rotor.rotation.z+=turns;
+  const emergency=game&&!game.ended&&(game.health<55||(game.mode==='attack'&&game.risk>83));
+  for(let i=0;i<bpEmergencyLights.length;i++)
+    bpEmergencyLights[i].intensity=emergency?(2+9*Math.max(0,Math.sin(t*7+i*.5))):0;
+  bpLaptopBeacon.intensity=game&&game.mode==='attack'&&!game.ended?3.2:1.7;
+  bpConsoleBeacon.intensity=game&&game.mode==='defend'&&!game.ended?3.8:2.1;
+  if(!bp.active || !game)return;
+  const model=game.mode==='attack'?attacker:bpPlayerAvatar;
+  model.visible=bp.third && !bp.terminal && !game.ended;
+  if(game.mode==='defend'){
+    attacker.visible=!jail.visible;
+    const motion=bp.npcTyping?Math.sin(t*12)*.022:Math.sin(t*6)*.055;
+    attacker.position.y=motion;
+  }
+};
+const bpOriginalEnd=endGame;
+endGame=function(win,title,description){
+  bpCloseTerminal();
+  if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
+  bpOriginalEnd(win,title,description);
+  bp.active=false;
+  bpPlayerAvatar.visible=false;
+  $('interaction-hint').classList.remove('visible');
+};
+renderer.domElement.setAttribute('aria-label','First-person 3D data center game. WASD to move, mouse to look, E to use nearby laptop, C to crouch, V for third-person view.');
+
 resize();focus('overview');moveCamera(10);renderer.render(scene,camera);
 frame();
 $('loading').remove();
