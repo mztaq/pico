@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { createTrafficFeed } from './traffic-model';
 import { drawTerminalScreen, terminalHitTest } from './terminal-screen';
-import { isSightBlocked, chooseHackerPhase } from './stealth-logic';
+import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic';
 import { routeTo } from './navigation';
 import { renderOfficeFeed } from './office-monitor';
 import { rankedCoverSpots, formationPosition } from './ai-coordination';
@@ -1309,7 +1309,7 @@ startGame=function(mode){
   view.drag=false;
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
-  bpHackerState='working';bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;attacker.scale.y=1;
+  bpHackerState='working';bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;bpHackerSafeSince=-1;attacker.scale.y=1;
   bpHackerRoute=[];bpHackerRouteIndex=0;bpHackerCoverDestination=null;bpHackerRepathAt=0;
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
@@ -1517,7 +1517,7 @@ for(const p of patrols){
 }
 const bpWorkPosition=V(-8.5,0,4.18);
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
-let bpHackerState='working',bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0;
+let bpHackerState='working',bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0,bpHackerSafeSince=-1;
 let bpHackerRoute=[],bpHackerRouteIndex=0,bpHackerCoverDestination=null,bpHackerRepathAt=0;
 /* Search points are generated from the floor plan. All movement routes
    are resolved through the collision grid instead of scripted corridors. */
@@ -1759,8 +1759,13 @@ function bpFollowHackerRoute(dt,speed){
   return bpHackerRouteIndex>=bpHackerRoute.length;
 }
 function bpPlanHackerReturn(){
-  bpHackerRoute=bpGuardRoute(attacker.position,[bpWorkPosition.x,bpWorkPosition.z]);
+  const route=bpGuardRoute(attacker.position,[bpWorkPosition.x,bpWorkPosition.z]);
+  const last=route[route.length-1];
+  // Never teleport to the old workstation when the path is blocked.
+  if(!last||Math.hypot(last[0]-bpWorkPosition.x,last[1]-bpWorkPosition.z)>.75)return false;
+  bpHackerRoute=route;
   bpHackerRouteIndex=0;
+  return true;
 }
 function bpMoveHackerTowards(target,dt,speed=2.6){
   const dx=target.x-attacker.position.x,dz=target.z-attacker.position.z;
@@ -1825,34 +1830,49 @@ function bpNpcUpdate(dt){
         phase:'escaping',guardVisible:false,nearbyGuard:false,
         reachedWaypoint:true,now:g.elapsed,hidingUntil:0,
       });
-      bpHackerHoldUntil=g.elapsed+7+bpRandom(g)*6;
+      bpHackerHoldUntil=g.elapsed+3+bpRandom(g)*2;
+      bpHackerSafeSince=-1;
       bpHackerStateTime=g.elapsed;
     }
   }else if(bpHackerState==='hiding'){
     const pursuers=bpHackerThreats();
+    const guardPositions=patrols.filter(p=>p.state!=='idle'&&p.agent.position.x<14)
+      .map(p=>({x:p.agent.position.x,z:p.agent.position.z}));
     const discovered=pursuers.some(p=>bpDistance(p,attacker.position)<4.6);
+    const clear=hackerAreaIsClear(guardPositions,bp.player,attacker.position,bpWorkPosition);
     if(discovered&&g.elapsed>=bpHackerRepathAt&&bpPlanHackerCover(g)){
       bpHackerState='escaping';
+      bpHackerSafeSince=-1;
       bpHackerStateTime=g.elapsed;
     }else{
-      if(discovered)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+4);
-      const safe=!guardsInHall&&!playerClose;
-      if(g.elapsed>bpHackerHoldUntil&&safe){
+      // Return once nearby guards move away, even if others are still in the
+      // server hall. Require a brief clear period to avoid constant oscillation.
+      if(!clear){
+        bpHackerSafeSince=-1;
+        if(discovered)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+2);
+      }else if(bpHackerSafeSince<0){
+        bpHackerSafeSince=g.elapsed;
+      }
+      if(clear&&bpHackerSafeSince>=0&&
+          g.elapsed>=Math.max(bpHackerHoldUntil,bpHackerSafeSince+2.5)&&
+          bpPlanHackerReturn()){
         bpHackerState=chooseHackerPhase({
           phase:'hiding',guardVisible:false,nearbyGuard:false,
           reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil,
         });
-        bpPlanHackerReturn();
         bpHackerStateTime=g.elapsed;
       }
     }
   }else if(bpHackerState==='returning'){
-    if(threatened){
+    const guardPositions=patrols.filter(p=>p.state!=='idle'&&p.agent.position.x<14)
+      .map(p=>({x:p.agent.position.x,z:p.agent.position.z}));
+    if(threatened||!hackerAreaIsClear(guardPositions,bp.player,attacker.position,bpWorkPosition)){
       if(bpPlanHackerCover(g)){
         bpHackerState=chooseHackerPhase({
           phase:'returning',guardVisible:visible,nearbyGuard:true,
           reachedWaypoint:false,now:g.elapsed,hidingUntil:0,
         });
+        bpHackerSafeSince=-1;
         bpHackerStateTime=g.elapsed;
       }
     }else if(bpFollowHackerRoute(dt,2.18)){
