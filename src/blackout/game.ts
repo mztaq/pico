@@ -779,7 +779,7 @@ function stepGame(dt){
     g.delivered=g.traffic*(1-blockedRatio);
   }
   const saturation=g.delivered/(g.mode==='attack'?7700:9000);
-  if(saturation>1){g.health=Math.max(0,g.health-dt*Math.pow(saturation-1,1.14)*3.1);}else{g.health=Math.min(100,g.health+dt*.10);}
+  if(saturation>1){g.health=Math.max(0,g.health-dt*Math.pow(saturation-1,1.14)*2.9);}else{g.health=Math.min(100,g.health+dt*.10);}
   if(g.coolingNeedsRepair&&g.coolingEventUntil>g.elapsed)
     g.health=Math.max(0,g.health-dt*.16);
   if(g.health<50 && alarmCooldown<=0){sfx.alert();alarmCooldown=5;log('Server health warning: high application pressure.','warn');}
@@ -1536,7 +1536,7 @@ function bpMovePlayer(dt){
   if(!x&&!z)return;
   const wantsSprint=bp.keys.has('ShiftLeft')||bp.keys.has('ShiftRight');
   const sprintAllowed=game.mode!=='attack'||bpAttackLaptopCarried||!game.securityDispatchActive;
-  const speed=(bp.crouching?1.8:wantsSprint&&sprintAllowed?5.4:3.3)*Math.min(1,1/Math.hypot(x,z));
+  const speed=(bp.crouching?2.0:wantsSprint&&sprintAllowed?5.9:3.6)*Math.min(1,1/Math.hypot(x,z));
   const dx=(Math.cos(bp.yaw)*x+Math.sin(bp.yaw)*z)*speed*dt;
   const dz=(-Math.sin(bp.yaw)*x+Math.cos(bp.yaw)*z)*speed*dt;
   if(bpWalkable(bp.player.x+dx,bp.player.z))bp.player.x+=dx;
@@ -1904,7 +1904,7 @@ function bpPlanHackerProxySabotage(g){
   g.nextSabotageAt=g.elapsed+9;
   return false;
 }
-function bpMoveHackerTowards(target,dt,speed=2.6){
+function bpMoveHackerTowards(target,dt,speed=3.15){
   const dx=target.x-attacker.position.x,dz=target.z-attacker.position.z;
   const distance=Math.hypot(dx,dz);
   if(distance<.19)return true;
@@ -1983,7 +1983,7 @@ function bpNpcUpdate(dt){
     }else if(bpHackerTargetProxy<0||!proxyObjects[bpHackerTargetProxy]?.userData.powered){
       if(bpPlanHackerReturn())bpHackerState='returning';
       else {bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+3;}
-    }else if(bpFollowHackerRoute(dt,2.45)){
+    }else if(bpFollowHackerRoute(dt,3.0)){
       if(!bpHackerSabotageUntil)bpHackerSabotageUntil=g.elapsed+2.4;
       if(g.elapsed>=bpHackerSabotageUntil){
         bpDisableProxy(bpHackerTargetProxy,'the hooded suspect');
@@ -1996,7 +1996,7 @@ function bpNpcUpdate(dt){
     const pursuers=bpHackerThreats();
     const close=pursuers.some(p=>bpDistance(p,attacker.position)<4.2);
     if(close&&g.elapsed>=bpHackerRepathAt)bpPlanHackerCover(g);
-    if(bpFollowHackerRoute(dt,3.15)){
+    if(bpFollowHackerRoute(dt,4.15)){
       bpHackerState=chooseHackerPhase({
         phase:'escaping',guardVisible:false,nearbyGuard:false,
         reachedWaypoint:true,now:g.elapsed,hidingUntil:0,
@@ -2046,7 +2046,7 @@ function bpNpcUpdate(dt){
         bpHackerSafeSince=-1;
         bpHackerStateTime=g.elapsed;
       }
-    }else if(bpFollowHackerRoute(dt,2.18)){
+    }else if(bpFollowHackerRoute(dt,2.85)){
       bpHackerState=chooseHackerPhase({
         phase:'returning',guardVisible:false,nearbyGuard:false,
         reachedWaypoint:true,now:g.elapsed,hidingUntil:0,
@@ -2258,8 +2258,8 @@ animateScene=function(t,dt){
     attacker.position.y=motion;
     const working=bpHackerState==='working';
     const fleeing=bpHackerState==='escaping'||bpHackerState==='returning'||bpHackerState==='sabotaging';
-    if(attacker.children[5])attacker.children[5].rotation.x=working?-.23+Math.sin(t*15)*.14:fleeing?Math.sin(t*11)*.4:.16;
-    if(attacker.children[6])attacker.children[6].rotation.x=working?-.18+Math.cos(t*17)*.12:fleeing?-Math.sin(t*11)*.4:.16;
+    if(attacker.children[5])attacker.children[5].rotation.x=working?-.23+Math.sin(t*15)*.14:fleeing?Math.sin(t*13)*.4:.16;
+    if(attacker.children[6])attacker.children[6].rotation.x=working?-.18+Math.cos(t*17)*.12:fleeing?-Math.sin(t*13)*.4:.16;
   }
 };
 const bpOriginalEnd=endGame;
