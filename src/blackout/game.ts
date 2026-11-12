@@ -7,6 +7,7 @@ import { isSightBlocked, chooseHackerPhase } from './stealth-logic';
 import { routeTo } from './navigation';
 import { renderOfficeFeed } from './office-monitor';
 import { rankedCoverSpots, formationPosition } from './ai-coordination';
+import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
 
 /* Everything in the incident model stays inside browser memory. */
 const $ = id => document.getElementById(id);
@@ -1020,6 +1021,7 @@ function bpPaintOfficeMonitor(){
   const alert=Boolean(g&&!g.ended&&bpGuardEmergency(g));
   renderOfficeFeed(ctx,{
     traffic:g?.traffic??0,health:g?.health??100,proxies:g?.proxies??0,
+    bytesPerRequest:g?.requestFeed?.averageBytesPerRequest,
     dispatchActive:Boolean(g?.securityDispatchActive),alert,
     history:bpWallHistory,
     requests:g?.requestFeed?.recent??[],
@@ -1069,11 +1071,13 @@ function bpWallGraph(t){
   ctx.fillText(redMode?'ALERT':'ONLINE',918,43);
   ctx.textAlign='left';
   ctx.fillStyle='#bac2de';ctx.font='18px monospace';
-  ctx.fillText('REQUEST RATE / RPS',35,127);
+  const avgBytes=g?.requestFeed?.averageBytesPerRequest??DEFAULT_BYTES_PER_REQUEST;
+  const bits=estimatedBitsPerSecond(req,avgBytes);
+  ctx.fillText('ESTIMATED NETWORK THROUGHPUT',35,127);
   ctx.fillStyle='#f2f4ff';ctx.font='bold 42px monospace';
-  ctx.fillText(Math.round(req).toLocaleString('en-US'),35,177);
+  ctx.fillText(formatBandwidth(bits),35,177);
   ctx.font='15px monospace';ctx.fillStyle='#8997b3';
-  ctx.fillText('LAST 120 SECONDS',35,208);
+  ctx.fillText(Math.round(req).toLocaleString('en-US')+' RPS  /  LAST 120 SECONDS',35,208);
   const plot={x:34,y:235,w:685,h:274};
   ctx.strokeStyle='#314057';ctx.lineWidth=1;
   for(let i=0;i<=5;i++){
@@ -1085,9 +1089,10 @@ function bpWallGraph(t){
     ctx.beginPath();ctx.moveTo(x,plot.y);ctx.lineTo(x,plot.y+plot.h);ctx.stroke();
   }
   const history=bpWallHistory.slice(-120);
-  const scaleMax=Math.max(18000,...history.map(v=>v.traffic*1.12));
+  const scaleMax=Math.max(estimatedBitsPerSecond(18000,avgBytes),
+    ...history.map(v=>(v.bitsPerSecond??estimatedBitsPerSecond(v.traffic,avgBytes))*1.12));
   ctx.strokeStyle='#e8c18c';ctx.setLineDash([8,8]);ctx.lineWidth=2;
-  const baseline=plot.y+plot.h-(9000/scaleMax)*plot.h;
+  const baseline=plot.y+plot.h-(estimatedBitsPerSecond(9000,avgBytes)/scaleMax)*plot.h;
   ctx.beginPath();ctx.moveTo(plot.x,baseline);ctx.lineTo(plot.x+plot.w,baseline);ctx.stroke();ctx.setLineDash([]);
   const gradient=ctx.createLinearGradient(0,plot.y,0,plot.y+plot.h);
   gradient.addColorStop(0,'#cba6f74f');gradient.addColorStop(1,'#cba6f700');
@@ -1096,11 +1101,11 @@ function bpWallGraph(t){
     ctx.beginPath();
     history.forEach((v,i)=>{
       const x=plot.x+(i/119)*plot.w;
-      const y=plot.y+plot.h-(v.traffic/scaleMax)*plot.h;
+      const y=plot.y+plot.h-((v.bitsPerSecond??estimatedBitsPerSecond(v.traffic,avgBytes))/scaleMax)*plot.h;
       if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
     });
     const last=history[history.length-1],endX=plot.x+((history.length-1)/119)*plot.w;
-    const endY=plot.y+plot.h-(last.traffic/scaleMax)*plot.h;
+    const endY=plot.y+plot.h-((last.bitsPerSecond??estimatedBitsPerSecond(last.traffic,avgBytes))/scaleMax)*plot.h;
     ctx.lineTo(endX,plot.y+plot.h);ctx.lineTo(plot.x,plot.y+plot.h);
     ctx.closePath();ctx.fillStyle=gradient;ctx.fill();
     ctx.beginPath();
@@ -1157,7 +1162,10 @@ function bpDrawScreen(ctx,texture,title,redMode,t){
   ctx.fillText('203.0.113.24 / INCIDENT '+(game&&game.mode==='attack'?'A':'B'),21,104);
   const rate=game?game.traffic:0;
   ctx.fillStyle='#cdd6f4';ctx.font='bold 24px monospace';
-  ctx.fillText('RATE  '+Math.floor(rate).toLocaleString()+' RPS',20,148);
+  const avgBytes=game?.requestFeed?.averageBytesPerRequest??DEFAULT_BYTES_PER_REQUEST;
+  ctx.fillText('EST. LOAD  '+throughputLabel(rate,avgBytes),20,147);
+  ctx.fillStyle='#a6adc8';ctx.font='12px monospace';
+  ctx.fillText(Math.round(rate).toLocaleString('en-US')+' RPS',21,170);
   ctx.fillStyle='#45475a';ctx.fillRect(22,178,465,31);
   const fraction=Math.min(1,rate/72000);
   ctx.fillStyle=redMode?'#f38ba8':'#cba6f7';ctx.fillRect(22,178,465*fraction,31);
@@ -1238,6 +1246,7 @@ function bpPaintTerminal(){
   });
   drawTerminalScreen(ctx,{
     mode:game.mode,actions,traffic:game.traffic,
+    bytesPerRequest:game.requestFeed?.averageBytesPerRequest,
     health:game.health,proxies:game.proxies,
     progress:game.mode==='attack'?game.risk:game.trace,
     elapsed:game.elapsed,hovered:bpTerminalHover,
@@ -1592,8 +1601,8 @@ function bpGuardSetReturn(p){
   p.path=bpGuardRoute(p.agent.position,p.home);
   p.lastSeen=null;p.repathAt=0;
 }
-const bpSearchWindowSeconds=43;
-const bpMaxChaseSeconds=16;
+const bpSearchWindowSeconds=24;
+const bpMaxChaseSeconds=8;
 const bpDispatchRestSeconds=100;
 function bpAssignSecurityDispatch(g){
   g.securityDispatchActive=true;
@@ -1978,7 +1987,8 @@ animateScene=function(t,dt){
     bpWallSampleTimer+=dt;
     if(bpWallSampleTimer>=1){
       bpWallSampleTimer-=1;
-      bpWallHistory.push({traffic:game.traffic,health:game.health,proxies:game.proxies});
+      bpWallHistory.push({traffic:game.traffic,health:game.health,proxies:game.proxies,
+        bitsPerSecond:estimatedBitsPerSecond(game.traffic,game.requestFeed?.averageBytesPerRequest??DEFAULT_BYTES_PER_REQUEST)});
       if(bpWallHistory.length>120)bpWallHistory.shift();
     }
   }
