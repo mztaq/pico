@@ -27,7 +27,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("e.code==='KeyE'");
     expect(game).toContain('function bpWalkable(x,z)');
     expect(game).toContain('const bpFanRotors=[]');
-    expect(game).toContain('function bpPatrolStep(p,dt)');
+    expect(game).toContain('function bpMoveGuard(p,dt,g)');
     expect(game).toContain('function bpAssignSecurityDispatch(g)');
     expect(game).toContain("p.state='switching'");
     expect(game).toContain("p.role==='search'");
