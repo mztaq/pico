@@ -14,6 +14,8 @@ describe('Blackout Protocol proxy sabotage and incident intensity',()=>{
     expect(DEFENSE_WAVE_SCALE).toBeGreaterThan(1);
     expect(ATTACK_TRAFFIC_SCALE).toBeLessThan(2);
     expect(DEFENSE_WAVE_SCALE).toBeLessThan(2);
+    expect(ATTACK_TRAFFIC_SCALE).toBeCloseTo(1.25);
+    expect(DEFENSE_WAVE_SCALE).toBeCloseTo(1.45);
   });
   it('counts only powered edge proxy cabinets',()=>{
     const proxies=[proxy(2,1,true),proxy(5,1,false),proxy(8,1,true)];
