@@ -1298,7 +1298,8 @@ startGame=function(mode){
   view.drag=false;
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
-  bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;attacker.scale.y=1;
+  bpHackerState='working';bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;attacker.scale.y=1;
+  bpHackerRoute=[];bpHackerRouteIndex=0;bpHackerCoverDestination=null;bpHackerRepathAt=0;
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
@@ -1499,9 +1500,9 @@ for(const p of patrols){
   box(.31,.28,.33,.09,.31,.08,uniform,guard);
 }
 const bpWorkPosition=V(-8.5,0,4.18);
-const bpHackerEscape=[V(-10.15,0,6.62),V(-14.2,0,10.1),V(-20.5,0,10.1),V(-21.2,0,8.0)];
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
-let bpHackerState='working',bpHackerWaypoint=0,bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0;
+let bpHackerState='working',bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0;
+let bpHackerRoute=[],bpHackerRouteIndex=0,bpHackerCoverDestination=null,bpHackerRepathAt=0;
 /* Search points are generated from the floor plan. All movement routes
    are resolved through the collision grid instead of scripted corridors. */
 function bpRandom(g){
@@ -1706,6 +1707,43 @@ function bpMoveGuard(p,dt,g){
   if(p.agent.children[5])p.agent.children[5].rotation.z=-.27+Math.sin(motion)*.21;
   if(p.agent.children[6])p.agent.children[6].rotation.z=.18+Math.sin(motion+2)*.16;
 }
+
+function bpHackerThreats(){
+  const guards=patrols.filter(p=>p.state==='searching'||p.state==='chasing')
+    .map(p=>({x:p.agent.position.x,z:p.agent.position.z}));
+  if(game?.mode==='defend')guards.push({x:bp.player.x,z:bp.player.z});
+  return guards;
+}
+function bpPlanHackerCover(g){
+  const pursuers=bpHackerThreats();
+  if(!pursuers.length)pursuers.push({x:23,z:0});
+  const points=rankedCoverSpots(
+    attacker.position,pursuers,rackCoords,bpWalkable,isSightBlocked,
+    ()=>bpRandom(g),bpHackerCoverDestination
+  );
+  for(const point of points.slice(0,10)){
+    const route=bpGuardRoute(attacker.position,[point.x,point.z]);
+    if(!route.length)continue;
+    const final=route[route.length-1];
+    if(Math.hypot(final[0]-point.x,final[1]-point.z)>2)continue;
+    bpHackerRoute=route;bpHackerRouteIndex=0;
+    bpHackerCoverDestination=point;
+    bpHackerRepathAt=g.elapsed+4;
+    return true;
+  }
+  return false;
+}
+function bpFollowHackerRoute(dt,speed){
+  const destination=bpHackerRoute[bpHackerRouteIndex];
+  if(!destination)return true;
+  const reached=bpMoveHackerTowards(V(destination[0],0,destination[1]),dt,speed);
+  if(reached)bpHackerRouteIndex++;
+  return bpHackerRouteIndex>=bpHackerRoute.length;
+}
+function bpPlanHackerReturn(){
+  bpHackerRoute=bpGuardRoute(attacker.position,[bpWorkPosition.x,bpWorkPosition.z]);
+  bpHackerRouteIndex=0;
+}
 function bpMoveHackerTowards(target,dt,speed=2.6){
   const dx=target.x-attacker.position.x,dz=target.z-attacker.position.z;
   const distance=Math.hypot(dx,dz);
@@ -1743,46 +1781,71 @@ function bpNpcUpdate(dt){
   const visible=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&bpGuardCanSee(p.agent,attacker.position,13));
   const playerClose=bpDistance(bp.player,attacker.position)<7.2;
   const threatened=playerClose||guardsInHall&&(nearest<11||visible);
+
   if(bpHackerState==='working'&&threatened){
-    bpHackerState='packing';bpHackerPackUntil=g.elapsed+.72;
-    bpHackerWaypoint=0;bpHackerStateTime=g.elapsed;
+    bpHackerState='packing';
+    bpHackerPackUntil=g.elapsed+.72;
+    bpHackerStateTime=g.elapsed;
     bpShowIncident(playerClose?'SUSPECT ALERT / LAPTOP BEING REMOVED':'SECURITY CHECK / WEST AISLE');
     sfx.scan();
   }
   if(bpHackerState==='packing'&&g.elapsed>=bpHackerPackUntil){
-    bpHackerState=chooseHackerPhase({phase:'working',guardVisible:visible,nearbyGuard:true,reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil});
+    if(bpPlanHackerCover(g)){
+      bpHackerState=chooseHackerPhase({
+        phase:'working',guardVisible:visible,nearbyGuard:true,
+        reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil,
+      });
+    }else{
+      bpHackerPackUntil=g.elapsed+1.5;
+    }
   }
   if(bpHackerState==='escaping'){
-    if(bpMoveHackerTowards(bpHackerEscape[bpHackerWaypoint],dt,3.2)){
-      bpHackerWaypoint++;
-      if(bpHackerWaypoint>=bpHackerEscape.length){
-        bpHackerState=chooseHackerPhase({phase:'escaping',guardVisible:false,nearbyGuard:false,reachedWaypoint:true,now:g.elapsed,hidingUntil:0});
-        bpHackerHoldUntil=g.elapsed+10;bpHackerStateTime=g.elapsed;
-      }
+    const pursuers=bpHackerThreats();
+    const close=pursuers.some(p=>bpDistance(p,attacker.position)<4.2);
+    if(close&&g.elapsed>=bpHackerRepathAt)bpPlanHackerCover(g);
+    if(bpFollowHackerRoute(dt,3.15)){
+      bpHackerState=chooseHackerPhase({
+        phase:'escaping',guardVisible:false,nearbyGuard:false,
+        reachedWaypoint:true,now:g.elapsed,hidingUntil:0,
+      });
+      bpHackerHoldUntil=g.elapsed+7+bpRandom(g)*6;
+      bpHackerStateTime=g.elapsed;
     }
   }else if(bpHackerState==='hiding'){
-    if((guardsInHall&&nearest<13)||playerClose)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+4);
-    const safe=(!guardsInHall||nearest>14)&&!playerClose;
-    if(g.elapsed>bpHackerHoldUntil&&safe){
-      bpHackerState=chooseHackerPhase({phase:'hiding',guardVisible:false,nearbyGuard:false,reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil});
-      bpHackerWaypoint=bpHackerEscape.length-2;
+    const pursuers=bpHackerThreats();
+    const discovered=pursuers.some(p=>bpDistance(p,attacker.position)<4.6);
+    if(discovered&&g.elapsed>=bpHackerRepathAt&&bpPlanHackerCover(g)){
+      bpHackerState='escaping';
       bpHackerStateTime=g.elapsed;
+    }else{
+      if(discovered)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+4);
+      const safe=!guardsInHall&&!playerClose;
+      if(g.elapsed>bpHackerHoldUntil&&safe){
+        bpHackerState=chooseHackerPhase({
+          phase:'hiding',guardVisible:false,nearbyGuard:false,
+          reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil,
+        });
+        bpPlanHackerReturn();
+        bpHackerStateTime=g.elapsed;
+      }
     }
   }else if(bpHackerState==='returning'){
     if(threatened){
-      bpHackerState=chooseHackerPhase({phase:'returning',guardVisible:visible,nearbyGuard:threatened,reachedWaypoint:false,now:g.elapsed,hidingUntil:0});
-      bpHackerWaypoint=1;bpHackerStateTime=g.elapsed;
-    }else{
-      const point=bpHackerWaypoint>=0?bpHackerEscape[bpHackerWaypoint]:bpWorkPosition;
-      if(bpMoveHackerTowards(point,dt,2.15)){
-        bpHackerWaypoint--;
-        if(bpHackerWaypoint < -1){
-          bpHackerState=chooseHackerPhase({phase:'returning',guardVisible:false,nearbyGuard:false,reachedWaypoint:true,now:g.elapsed,hidingUntil:0});
-          bpHackerStateTime=g.elapsed;
-        }
+      if(bpPlanHackerCover(g)){
+        bpHackerState=chooseHackerPhase({
+          phase:'returning',guardVisible:visible,nearbyGuard:true,
+          reachedWaypoint:false,now:g.elapsed,hidingUntil:0,
+        });
+        bpHackerStateTime=g.elapsed;
       }
+    }else if(bpFollowHackerRoute(dt,2.18)){
+      bpHackerState=chooseHackerPhase({
+        phase:'returning',guardVisible:false,nearbyGuard:false,
+        reachedWaypoint:true,now:g.elapsed,hidingUntil:0,
+      });
+      bpHackerStateTime=g.elapsed;
     }
-  }else{
+  }else if(bpHackerState==='working'){
     attacker.position.x=bpWorkPosition.x;
     attacker.position.z=bpWorkPosition.z;
     attacker.rotation.y=Math.PI;
