@@ -1725,7 +1725,7 @@ function bpWalkGuard(p,target,dt,urgent=true){
   const others=patrols.filter(other=>other!==p).map(other=>other.agent.position);
   const movement=moveGuardWithAvoidance(
     {x:oldX,z:oldZ},{x:target[0],z:target[1]},others,bpGuardWalkable,
-    p.speed*(urgent?2.44:1),dt
+    p.speed*(urgent?(p.state==='chasing'&&game?.mode==='defend'&&game.trace>=100?3.3:2.44):1),dt
   );
   p.agent.position.set(movement.point.x,0,movement.point.z);
   if(movement.moved>.002){
@@ -1931,7 +1931,7 @@ function bpMoveGuard(p,dt,g){
         if(g.mode==='defend'){
           // Each responding officer has a different approach angle, avoiding
           // the two officers stacking on the same suspected intruder position.
-          const slot=formationPosition(p.lastSeen,attacker.rotation.y,p.approachIndex??0);
+          const slot=formationPosition(p.lastSeen,attacker.rotation.y,p.approachIndex??0,g.trace>=100?1.35:2.35);
           if(bpWalkable(slot.x,slot.z))destination=[slot.x,slot.z];
         }
         p.path=bpGuardRoute(p.agent.position,destination);
@@ -2100,6 +2100,11 @@ function bpNpcUpdate(dt){
   technician.position.set(26+Math.sin(g.elapsed*.13)*.5,0,1.8+Math.sin(g.elapsed*.11)*1.1);
   technician.rotation.y=Math.PI;
   if(g.mode==='attack')return;
+  if(g.trace>=100&&!g.caseEvidenceComplete){
+    g.caseEvidenceComplete=true;
+    flagSecurityIncident(g);
+    bpShowIncident('CASE VERIFIED / SECURITY ARREST AUTHORIZED');
+  }
   if(g.suspectHeld){attacker.position.y=0;return;}
   const guardsInHall=patrols.some(p=>p.state!=='idle'&&p.agent.position.x<14);
   const nearest=Math.min(...patrols.filter(p=>p.state!=='idle').map(p=>bpDistance(p.agent,attacker.position)),99);
