@@ -10,7 +10,7 @@ describe('Blackout Protocol 3D', () => {
   it('parses the TypeScript game module as JavaScript and bundles the graphics engine locally', () => {
     expect(game).toContain("import * as THREE from 'three'");
     expect(game).toContain("import { createTrafficFeed } from './traffic-model'");
-    expect(game).toContain("import { isSightBlocked, chooseHackerPhase } from './stealth-logic'");
+    expect(game).toContain("import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic'");
     expect(game).toContain("import { drawTerminalScreen, terminalHitTest } from './terminal-screen'");
     expect(game).toContain("import { routeTo } from './navigation'");
     expect(game).toContain("import { renderOfficeFeed } from './office-monitor'");
@@ -29,11 +29,11 @@ describe('Blackout Protocol 3D', () => {
       .replace("import * as THREE from 'three';", 'const THREE = {};')
       .replace("import { createTrafficFeed } from './traffic-model';", 'const createTrafficFeed = () => ({});')
       .replace("import { drawTerminalScreen, terminalHitTest } from './terminal-screen';", 'const drawTerminalScreen = () => {}; const terminalHitTest = () => -1;')
-      .replace("import { isSightBlocked, chooseHackerPhase } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working";')
+      .replace("import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working"; const hackerAreaIsClear = () => true;')
       .replace("import { routeTo } from './navigation';", 'const routeTo = () => [];')
       .replace("import { renderOfficeFeed } from './office-monitor';", 'const renderOfficeFeed = () => {};')
       .replace("import { rankedCoverSpots, formationPosition } from './ai-coordination';", 'const rankedCoverSpots = () => []; const formationPosition = () => ({x:0,z:0});')
-      .replace("import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
+      .replace("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
       .replace(/import \{\s*flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,\s*acknowledgeSecurityDispatch, securityOfficersReturned,\s*\} from '\.\/security-response';/, 'const flagSecurityIncident = () => {};const observeSecurityAlarm = () => {};const shouldDispatchSecurity = () => false;const acknowledgeSecurityDispatch = () => {};const securityOfficersReturned = () => {};const SECURITY_OFFICE_REST_SECONDS = 10;'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
@@ -81,6 +81,12 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("p.path=bpGuardRoute(p.agent.position,destination)");
     expect(game).toContain("const slot=formationPosition(p.lastSeen,attacker.rotation.y,p.approachIndex??0)");
     expect(game).toContain("function bpHackerThreats()");
+    expect(game).toContain("const clear=hackerAreaIsClear(guardPositions,bp.player,attacker.position,bpWorkPosition)");
+    expect(game).toContain("bpHackerSafeSince+2.5");
+    expect(game).toContain("bpPlanHackerReturn()");
+    expect(game).toContain("const bpWorkPosition=V(-8.5,0,4.18)");
+    expect(game).toContain("bpHackerHoldUntil=g.elapsed+3+bpRandom(g)*2");
+    expect(game).not.toContain("const safe=!guardsInHall&&!playerClose");
     expect(game).toContain("function bpPlanHackerCover(g)");
     expect(game).toContain("const points=rankedCoverSpots(");
     expect(game).toContain("function bpFollowHackerRoute(dt,speed)");
