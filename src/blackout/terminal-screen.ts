@@ -1,3 +1,4 @@
+import {throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
 /** Painted directly onto the in-world laptop/operations display.
  * Pure layout and hit-testing are shared by mouse input and rendering.
  * No HTML menu is positioned over the 3D scene.
@@ -14,6 +15,7 @@ export interface TerminalView {
   mode: TerminalMode;
   actions: TerminalActionView[];
   traffic: number;
+  bytesPerRequest?: number;
   health: number;
   proxies: number;
   progress: number;
@@ -95,7 +97,8 @@ export function drawTerminalScreen(ctx: CanvasRenderingContext2D, view: Terminal
   ctx.fillRect(44, footer + 28, (w - 88) * Math.min(1, Math.max(0, view.progress / 100)), 12);
   ctx.fillStyle = '#a6adc8'; ctx.font = '16px "JetBrains Mono",monospace';
   const rate = Math.round(view.traffic).toLocaleString('en-US');
-  ctx.fillText('REQUESTS / SEC  ' + rate, 44, h - 26);
+  const throughput=throughputLabel(view.traffic,view.bytesPerRequest??DEFAULT_BYTES_PER_REQUEST);
+  ctx.fillText('EST. BANDWIDTH  '+throughput+'  /  '+rate+' RPS', 44, h - 26);
   ctx.textAlign = 'right'; ctx.fillText('PRESS ESC TO RETURN', w - 44, h - 26);
   ctx.textAlign = 'left';
 }
