@@ -36,7 +36,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("if(bpHackerState==='escaping')");
     expect(game).not.toContain("bpHackerState==='fleeing'");
     expect(game).toContain('const bpHackerEscape=[');
-    expect(game).toContain('bpGuardCanSee(guard,attacker.position');
+    expect(game).toContain('bpGuardCanSee(p.agent,attacker.position,10)');
     expect(game).toContain("p.state='returning'");
     expect(game).toContain("p.state='idle'");
     expect(game).toContain('const bpWorkPosition=V(-9.4,0,4.18)');
