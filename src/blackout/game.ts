@@ -922,13 +922,33 @@ window.addEventListener('resize',resize);
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();if(game)notify('GRAPHICS CONTEXT LOST. RELOAD THE PAGE.',true);});
 const clock=new THREE.Clock();
 let lastDraw=0;
+// A failed AI, UI, or CCTV update must never lock the view at the menu camera.
+// Report each failing subsystem once while keeping movement and rendering alive.
+const bpFrameErrors=new Set();
+function bpReportFrameError(stage,error){
+  if(bpFrameErrors.has(stage))return;
+  bpFrameErrors.add(stage);
+  console.error('[Blackout Protocol] '+stage+' failed',error);
+  if(game)notify(stage==='CCTV'?'CCTV FEED UNAVAILABLE / MISSION CONTINUES':'MISSION SUBSYSTEM ERROR / '+stage.toUpperCase(),true);
+}
 function frame(now=0){
   requestAnimationFrame(frame);
-  const dt=Math.min(clock.getDelta(),.05);visualTime+=dt;alarmCooldown=Math.max(0,alarmCooldown-dt);
-  stepGame(dt);moveCamera(dt);animateScene(visualTime,dt);
-  uiTick+=dt;if(game&&(uiTick>.18)){updateUI();uiTick=0;}
+  const dt=Math.min(clock.getDelta(),.05);
+  visualTime+=dt;alarmCooldown=Math.max(0,alarmCooldown-dt);
+  try{stepGame(dt);}catch(error){bpReportFrameError('simulation',error);}
+  // Always restore the active player's camera, even after a simulation fault.
+  try{moveCamera(dt);}catch(error){bpReportFrameError('camera',error);}
+  try{animateScene(visualTime,dt);}catch(error){bpReportFrameError('scene',error);}
+  uiTick+=dt;
+  if(game&&uiTick>.18){
+    uiTick=0;
+    try{updateUI();}catch(error){bpReportFrameError('HUD',error);}
+  }
   const targetFps=lowQuality?27:60;
-  if(now-lastDraw>=1000/targetFps){renderer.render(scene,camera);lastDraw=now;}
+  if(now-lastDraw>=1000/targetFps){
+    try{renderer.render(scene,camera);lastDraw=now;}
+    catch(error){bpReportFrameError('renderer',error);}
+  }
 }
 
 /* Blackout Protocol: embodied first-person missions and cinematic incident AI.
@@ -1090,7 +1110,7 @@ const bpCctvModels=[
   {label:'CAM 04 / ACCESS',at:[-1,5.55,11.5],toward:[-9.5,1.7,1]},
 ];
 const bpCctvFeeds=[],bpCctvPlanes=[],bpCctvTargets=[];
-let bpCctvTick=0,bpCctvIndex=0;
+let bpCctvTick=0,bpCctvIndex=0,bpCctvDisabled=false;
 const bpCctvMetal=mat('#34475a',{metal:.88,rough:.35});
 box(19.4,3.55,-11.69,5.82,4.25,.14,darkMetal);
 for(let i=0;i<bpCctvModels.length;i++){
@@ -1122,7 +1142,7 @@ for(let i=0;i<bpCctvModels.length;i++){
   bpCctvFeeds.push({cam,target,lens});
 }
 function bpRenderCctv(dt){
-  if(!game||game.ended||!world.visible||courtroom.visible||jail.visible)return;
+  if(bpCctvDisabled||!game||game.ended||!world.visible||courtroom.visible||jail.visible)return;
   bpCctvTick+=dt;
   if(bpCctvTick<(lowQuality?.31:.055))return;
   bpCctvTick=0;
@@ -1134,6 +1154,9 @@ function bpRenderCctv(dt){
     renderer.setRenderTarget(feed.target);
     renderer.clear(true,true,true);
     renderer.render(scene,feed.cam);
+  }catch(error){
+    bpCctvDisabled=true;
+    bpReportFrameError('CCTV',error);
   }finally{
     renderer.setRenderTarget(original);
     for(const plane of bpCctvPlanes)plane.visible=true;
@@ -1426,9 +1449,11 @@ const bpOriginalStartGame=startGame;
 startGame=function(mode){
   bpOriginalStartGame(mode);
   document.body.classList.remove('bp-mission-finished');
-  bp.active=true;bp.terminal=false;bp.third=false;
+  bpFrameErrors.clear();
+  bp.active=true;bp.terminal=false;bp.third=false;bp.crouching=false;bp.guardAlert=false;
   bp.yaw=mode==='attack'?.24:0;bp.pitch=-.06;
-  bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(23.0,0,-3.55));
+  // The defender must spawn within console selection and E-interaction range.
+  bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(bpOfficeConsoleX,0,bpOfficeConsoleZ+2.45));
   view.drag=false;
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
@@ -1449,6 +1474,10 @@ startGame=function(mode){
     ? 'Click the laptop screen controls, or aim and press 1–4. Press F to take the laptop when escaping.'
     : 'Click the security console controls, or aim and press 1–4. Investigate the server hall with your guards.';
   $('control-help').style.display='block';
+  // Snap from the menu orbit into the playable view during the click itself,
+  // rather than waiting for a later animation frame that might fail.
+  try{moveCamera(0);renderer.render(scene,camera);}
+  catch(error){bpReportFrameError('mission camera',error);}
   updateUI(true);
 };
 const bpOriginalMenu=menu;
@@ -2328,7 +2357,7 @@ function bpWorldEvents(){
 const bpOriginalStep=stepGame;
 stepGame=function(dt){
   bpMovePlayer(dt);
-  bpNpcUpdate(dt);
+  try{bpNpcUpdate(dt);}catch(error){bpReportFrameError('security AI',error);}
   if(game?.mode==='attack'&&!game.ended&&game.proxySabotage){
     const task=game.proxySabotage,proxy=proxyObjects[task.index];
     if(!proxy?.userData.powered||bpDistance(bp.player,proxy.position)>2.85){
