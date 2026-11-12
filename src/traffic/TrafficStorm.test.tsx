@@ -188,6 +188,52 @@ describe('Traffic Storm setup', () => {
     expect(enabled[3].tipX).toBeGreaterThan(990);
   });
 
+  it('points to command and attack routes without crossing their actual Bezier paths', () => {
+    // First command link is near y=138.8 at x=303.
+    const command = diagramAnnotations('running', 4, 4, false, 2, 382.5)[0];
+    expect(command.fromY).toBeLessThan(command.tipY);
+    expect(138.76 - command.tipY).toBeGreaterThanOrEqual(7);
+
+    for (let proxies = 0; proxies <= 4; proxies++) {
+      for (let servers = 1; servers <= 4; servers++) {
+        const lastServerY = webserverPositions(servers).at(-1)!;
+        const notes = diagramAnnotations('running', proxies, servers, proxies > 2, 2, lastServerY);
+        const firstProxyY = proxies ? 60 + 405 / (proxies + 1) : null;
+        const firstServerY = webserverPositions(servers)[0];
+        const firstAttackMidY = (92 + (firstProxyY ?? firstServerY)) / 2;
+        const attack = notes[1];
+        expect(attack.fromY).toBeLessThan(attack.tipY);
+        expect(firstAttackMidY - attack.tipY).toBe(8);
+        expect(attack.tipX).toBe(584);
+
+        const edge = notes[2];
+        if (firstProxyY === null) {
+          const directY = 92 * 0.15625 + firstServerY * 0.84375;
+          expect(directY - edge.tipY).toBe(8);
+          expect(edge.fromY).toBeLessThan(edge.tipY);
+        } else {
+          // Proxy chassis top is firstProxyY - 34; stop 5 px outside.
+          expect(firstProxyY - 34 - edge.tipY).toBe(5);
+          expect(edge.fromY).toBeLessThan(edge.tipY);
+          expect(edge.tipX).toBeGreaterThan(790);
+        }
+
+        const server = notes[3];
+        // The rack's lower edge is lastServerY + 37; point from below, 7 px away.
+        expect(server.tipY - (lastServerY + 37)).toBe(7);
+        expect(server.fromY).toBeGreaterThan(server.tipY);
+        expect(server.y).toBeGreaterThan(server.fromY);
+        for (const note of notes) {
+          expect(Math.hypot(note.tipX - note.fromX, note.tipY - note.fromY)).toBeGreaterThan(9);
+          expect(note.y).toBeGreaterThan(0);
+          expect(note.y).toBeLessThan(465);
+          expect(note.tipY).toBeGreaterThan(0);
+          expect(note.tipY).toBeLessThan(465);
+        }
+      }
+    }
+  });
+
   it('switches network notes for ready, direct, overloaded and offline states', () => {
     const ready = diagramAnnotations('ready', 1, 1, false, 0, 232.5);
     expect(ready.map(note => note.text)).toEqual([
