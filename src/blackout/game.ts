@@ -257,12 +257,15 @@ const bpCable=mesh(new THREE.TubeGeometry(bpCableGeometry,24,.028,5,false),
 const bpCableLight=ball(-10.30,1.57,3.35,.065,mint);
 light(-8.55,2.51,3.1,0x90c6e9,2.1,4);
 // Portable laptop is wired to the rack; the hooded character leaves it to flee.
-// Defensive edge appliances and control desks.
-box(10.7,1.01,-5.2,3.4,.12,1.3,edgeMetal);
-for(let x of [9.35,12.0])box(x,.5,-5.2,.12,1,.12,edgeMetal);
-box(10.7,1.81,-5.52,2.1,1.35,.1,darkMetal);
-label('SECURITY  /  TELEMETRY',10.7,1.91,-5.45,1.92,.31);
-light(10.7,2.2,-5,0x539fed,2,6);
+// Security operations workstation, inside the office with the guard team.
+const bpOfficeConsoleX=23.15, bpOfficeConsoleZ=-8.15;
+box(bpOfficeConsoleX,1.03,bpOfficeConsoleZ,2.65,.13,1.08,edgeMetal);
+for(const xx of [bpOfficeConsoleX-1.14,bpOfficeConsoleX+1.14])
+  box(xx,.54,bpOfficeConsoleZ,.10,.96,.12,edgeMetal);
+box(bpOfficeConsoleX,1.75,bpOfficeConsoleZ-.46,2.0,1.24,.11,darkMetal);
+box(bpOfficeConsoleX,1.11,bpOfficeConsoleZ+.30,1.60,.035,.34,black);
+box(bpOfficeConsoleX,1.1,bpOfficeConsoleZ-.18,.24,.12,.24,edgeMetal);
+light(bpOfficeConsoleX,2.38,bpOfficeConsoleZ,0x539fed,1.8,5);
 // Defense proxy pylons appear as network layers under load.
 function createProxy(index){
   const g=new THREE.Group();
@@ -765,7 +768,7 @@ const bp = {
 const bpClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const bpDistance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const bpAttackerDesk=V(-8.5,0,3.97);
-const bpDefenseDesk=V(10.7,0,-4.25);
+const bpDefenseDesk=V(bpOfficeConsoleX,0,bpOfficeConsoleZ+1.05);
 const bpHideSpot=V(-4.15,0,8.8);
 const bpCoolingStation=V(8.4,0,4.4);
 const bpCoolingFrame=box(8.27,1.35,4.4,.19,2.02,1.05,edgeMetal);
@@ -773,7 +776,7 @@ const bpCoolingPanel=box(8.42,1.62,4.4,.035,.79,.70,mat('#172a39',{metal:.3,roug
 const bpCoolingIndicator=ball(8.47,2.2,4.4,.09,mint);
 label('COOLANT / RESET',8.48,1.73,4.4,.57,.16,Math.PI/2);
 
-const bpPlayerAvatar=character(10.7,-2.1,'engineer');
+const bpPlayerAvatar=character(23.0,-3.55,'engineer');
 bpPlayerAvatar.visible=false;
 let bpSmoothedRpm=940;
 const bpFanRotors=[];
@@ -850,7 +853,7 @@ box(0,.51,-.418,1.74,1.08,.015,black,bpLaptopRig);
 for(const x of [-.62,.62])box(x,.12,-.46,.08,.17,.08,edgeMetal,bpLaptopRig);
 
 const bpLaptopBeacon=light(-8.5,2.49,2.79,0x8de4d4,1.35,4);
-const bpConsoleBeacon=light(10.7,2.62,-5.25,0x9e8ceb,2.1,4);
+const bpConsoleBeacon=light(bpOfficeConsoleX,2.62,bpOfficeConsoleZ,0x9e8ceb,1.7,4);
 
 const bpDisplayCanvas=document.createElement('canvas');
 bpDisplayCanvas.width=1024;bpDisplayCanvas.height=720;
@@ -870,7 +873,7 @@ const bpSecurityCtx=bpSecurityCanvas.getContext('2d');
 const bpSecurityTexture=new THREE.CanvasTexture(bpSecurityCanvas);
 bpSecurityTexture.colorSpace=THREE.SRGBColorSpace;
 const bpSecurityPlane=new THREE.Mesh(new THREE.PlaneGeometry(1.98,1.2),new THREE.MeshBasicMaterial({map:bpSecurityTexture,side:THREE.DoubleSide}));
-bpSecurityPlane.position.set(10.7,1.82,-5.438);world.add(bpSecurityPlane);
+bpSecurityPlane.position.set(bpOfficeConsoleX,1.75,bpOfficeConsoleZ-.396);world.add(bpSecurityPlane);
 
 /* Main network operations wall. The timeline is generated from the in-game
    counters, not from a live server or any external endpoint. */
@@ -987,6 +990,10 @@ let bpMonitorTick=0;
 function bpDrawScreen(ctx,texture,title,redMode,t){
   if(!ctx)return;
   const w=512,h=288;
+  // Draw across the entire texture. Previously the 512×288 idle screen
+  // covered only the top-left of the larger 1024×720 interactive canvas.
+  ctx.setTransform(ctx.canvas.width/w,0,0,ctx.canvas.height/h,0,0);
+  ctx.clearRect(0,0,w,h);
   ctx.fillStyle='#101522';ctx.fillRect(0,0,w,h);
   ctx.fillStyle='#212b39';for(let i=0;i<5;i++)ctx.fillRect(14,60+i*42,484,1);
   ctx.fillStyle=redMode?'#f38ba8':'#a6e3a1';ctx.fillRect(0,0,w,6);
@@ -1051,7 +1058,7 @@ function bpToggleAttackLaptop(){
 }
 
 const bpTerminalAttackEye=V(-8.5,1.82,3.92);
-const bpTerminalDefenseEye=V(10.7,1.82,-3.91);
+const bpTerminalDefenseEye=V(bpOfficeConsoleX,1.76,bpOfficeConsoleZ+1.05);
 const bpTerminalRaycaster=new THREE.Raycaster();
 const bpTerminalNdc=new THREE.Vector2();
 let bpTerminalHover=-1;
@@ -1133,7 +1140,7 @@ startGame=function(mode){
   bpOriginalStartGame(mode);
   bp.active=true;bp.terminal=false;bp.third=false;
   bp.yaw=mode==='attack'?.24:0;bp.pitch=-.06;
-  bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(10.7,0,-2.15));
+  bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(23.0,0,-3.55));
   view.drag=false;
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
@@ -1149,7 +1156,7 @@ startGame=function(mode){
   $('red-alert').classList.remove('visible');
   $('mission-step').textContent=mode==='attack'
     ? 'Press E to use the laptop. Press F to unplug and carry it when the guards arrive.'
-    : 'Walk to the security control desk and press E. Deploy defenses, collect evidence, then find the suspect.';
+    : 'You are in security operations. Use E at the office console, then search the server hall with the guards.';
   $('control-help').style.display='block';
   updateUI(true);
 };
@@ -1280,7 +1287,9 @@ function bpWalkable(x,z){
   for(const [rx,rz] of rackCoords)
     if(Math.abs(x-rx)<1.26 && Math.abs(z-rz)<1.38)return false;
   if(x>-11.55 && x<-7.55 && z>1.55 && z<3.80)return false;
-  if(x>8.75 && x<12.65 && z>-6.05 && z<-4.38)return false;
+  if(x>21.7&&x<24.62&&z>-8.85&&z<-7.47)return false;
+  for(const [ox,oz] of [[20.5,-7],[26.8,-7],[20.5,6],[27.1,6]])
+    if(x>ox-1.3&&x<ox+1.3&&z>oz-.72&&z<oz+.72)return false;
   return true;
 }
 function bpMovePlayer(dt){
@@ -1669,8 +1678,8 @@ animateScene=function(t,dt){
     bpMonitorTick=0;
     if(bp.terminal)bpPaintTerminal();
     else{
-      bpDrawScreen(bpDisplayContext,bpDisplayTexture,'ATTACKER LAPTOP',Boolean(game&&game.burst>0),t);
-      bpDrawScreen(bpSecurityCtx,bpSecurityTexture,'SECURITY CONSOLE',Boolean(game&&game.health<55),t);
+      bpDrawScreen(bpDisplayContext,bpDisplayTexture,'NETWORK ACTIVITY',Boolean(game&&game.burst>0),t);
+      bpDrawScreen(bpSecurityCtx,bpSecurityTexture,'SECURITY OPERATIONS',Boolean(game&&game.health<55),t);
     }
   }
   const targetRpm=game?Math.min(6100,950+Math.min(1,game.traffic/18500)*3500+(100-game.health)*16+(game.burst>0||game.attackerWave>0?800:0)):940;
