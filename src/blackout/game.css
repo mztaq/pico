@@ -79,3 +79,21 @@ body.terminal-open #mission-step,body.terminal-open #interaction-hint{display:no
 #incident-banner.visible{display:block;animation:pulse-alert .8s 3 alternate}
 .game-hud{overflow-x:auto}
 @media(max-width:750px){.brandname{font-size:12px}.quality-control{font-size:0}.quality-control select{font-size:11px;padding:0 4px}.topbar{padding:8px 12px}.homebox{padding-inline:20px}.homefoot{gap:10px}}
+
+/* Scene-first UI. Live statistics and requests are visible on the actual wall monitor. */
+#game.active .game-hud,#game.active #game-title,#feed{display:none!important}
+#game.active #mission-step{top:80px;left:20px;max-width:375px;background:#181825dd;border:1px solid #45475a;border-left:3px solid #cba6f7;padding:11px 15px;line-height:1.5}
+#game.active #red-alert{top:83px;right:20px}
+#game.active #incident-banner{top:62px}
+@media(max-width:750px){#game.active #mission-step{top:71px;left:10px;max-width:280px;font-size:11px}#game.active #red-alert{top:71px;right:8px}}
+#loading{z-index:30;display:block;position:fixed;inset:0;background:linear-gradient(115deg,#1e1e2e,#242438);padding:0;text-align:initial;letter-spacing:normal;color:inherit;font:inherit;overflow:hidden}
+.bp-skeleton{display:block;position:relative;overflow:hidden;background:#3a3a52;border:1px solid #454560;border-radius:9px}
+.bp-skeleton::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,#a6adc81b,transparent);animation:bp-shimmer 1.35s ease-in-out infinite}
+@keyframes bp-shimmer{100%{transform:translateX(100%)}}
+.bp-skeleton-top{height:64px;padding:0 26px;display:flex;align-items:center;gap:12px;background:#181825;border-bottom:1px solid #37374c}
+.bp-sk-logo{width:31px;height:31px;border-radius:10px}.bp-sk-brand{height:17px;width:185px}.bp-sk-control{height:28px;width:106px;margin-left:auto}
+.bp-skeleton-main{width:min(750px,calc(100vw - 48px));margin:clamp(80px,13vh,180px) auto 0}
+.bp-sk-heading{height:54px;width:67%;margin-bottom:16px}.bp-sk-short{width:48%}
+.bp-sk-description{height:16px;width:88%;margin-top:20px}.bp-sk-smaller{width:73%;margin-top:10px}
+.bp-sk-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:42px}.bp-sk-card{height:168px;border-radius:16px}
+@media(max-width:600px){.bp-skeleton-top{padding:0 14px}.bp-sk-brand{width:140px}.bp-skeleton-main{margin-top:92px}.bp-sk-heading{height:39px}.bp-sk-cards{grid-template-columns:1fr}.bp-sk-card{height:130px}}
