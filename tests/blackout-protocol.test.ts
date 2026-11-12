@@ -14,7 +14,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("import { routeTo } from './navigation'");
     expect(game).toContain("import { renderOfficeFeed } from './office-monitor'");
     expect(game).toContain("import { rankedCoverSpots, formationPosition } from './ai-coordination'");
-    expect(game).toContain("import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth'");
+    expect(game).toContain("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth'");
     expect(game).toContain("import {");
     expect(game).toContain("} from './security-response'");
     expect(game).toContain('observeSecurityAlarm(g,activeAlarm)');
@@ -32,7 +32,7 @@ describe('Blackout Protocol 3D', () => {
       .replace("import { routeTo } from './navigation';", 'const routeTo = () => [];')
       .replace("import { renderOfficeFeed } from './office-monitor';", 'const renderOfficeFeed = () => {};')
       .replace("import { rankedCoverSpots, formationPosition } from './ai-coordination';", 'const rankedCoverSpots = () => []; const formationPosition = () => ({x:0,z:0});')
-      .replace("import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const throughputLabel = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
+      .replace("import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
       .replace(/import \{\s*flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,\s*acknowledgeSecurityDispatch, securityOfficersReturned,\s*\} from '\.\/security-response';/, 'const flagSecurityIncident = () => {};const observeSecurityAlarm = () => {};const shouldDispatchSecurity = () => false;const acknowledgeSecurityDispatch = () => {};const securityOfficersReturned = () => {};const SECURITY_OFFICE_REST_SECONDS = 10;'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
@@ -65,7 +65,18 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("function bpPaintOfficeMonitor()");
     expect(game).toContain("ctx.fillText('ESTIMATED NETWORK THROUGHPUT',35,127)");
     expect(game).toContain("ctx.fillText(formatBandwidth(bits),35,177)");
-    expect(game).toContain("throughputLabel(rate,avgBytes)");
+    expect(game).not.toContain("bpDrawScreen(bpDisplayContext");
+    expect(game).not.toContain("NETWORK ACTIVITY");
+    expect(game).toContain("if(game&&!game.ended)bpPaintTerminal()");
+    expect(game).toContain("const hovered=bpTerminalActionAt(e.clientX,e.clientY)");
+    expect(game).toContain("function bpCanUseTerminal()");
+    expect(game).toContain("const index=bpTerminalActionAt(event.clientX,event.clientY)");
+    expect(game).toContain("if(index>=0){bpTerminalSelect(index);return;}");
+    expect(game).toContain("bpTerminalRaycaster.intersectObject(mesh,false)");
+    expect(game).toContain("function bpDrawStandbyScreen(ctx,texture)");
+    expect(game).toContain("const locked=document.pointerLockElement===renderer.domElement&&!bp.terminal");
+    expect(game).toContain("if(!bpCanUseTerminal())return;");
+    expect(game).toContain("connected:game.mode!=='attack'||!bpAttackLaptopCarried");
     expect(game).toContain("bytesPerRequest:game.requestFeed?.averageBytesPerRequest");
     expect(game).toContain("bitsPerSecond:estimatedBitsPerSecond(game.traffic");
     expect(game).toContain("const bpSearchWindowSeconds=24");
@@ -124,7 +135,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('const bpRackDetail=new THREE.Group()');
     expect(game).toContain('new THREE.InstancedMesh(');
     expect(game).toContain('bpRackDetail.visible=!lowQuality');
-    expect(game).toContain("ctx.setTransform(ctx.canvas.width/w,0,0,ctx.canvas.height/h,0,0)");
+    expect(game).toContain("ctx.setTransform(1,0,0,1,0,0)");
     expect(game).toContain('this.fanWhine.frequency.setTargetAtTime');
     expect(game).toContain("box(-10.55,2.20,2.2,1.65,4.35,1.88,darkMetal)");
     expect(html).toContain('bp-skeleton-main');
