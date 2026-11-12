@@ -104,3 +104,8 @@ body.terminal-open #mission-step,body.terminal-open #interaction-hint{display:no
 body.terminal-open #game.active #mission-step{display:none!important}
 body.terminal-open #control-help{bottom:17px;right:17px;z-index:9;background:#181825da;border:1px solid #585b70}
 body.terminal-open #game.active #crosshair{display:none!important}
+
+/* A faded menu must never remain hit-testable. Child buttons explicitly enable
+   pointer events elsewhere, so opacity/pointer-events on the parent were unsafe. */
+#home.hidden,#home[hidden],#home[inert]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#home.hidden *,#home[inert] *{pointer-events:none!important}
