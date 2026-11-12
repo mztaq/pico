@@ -1526,7 +1526,10 @@ function bpGuardRoute(from,to){
   const target={x:to[0],z:to[1]};
   const result=routeTo({x:from.x,z:from.z},target,bpWalkable);
   if(result.length)return result.map(p=>[p.x,p.z]);
-  return bpWalkable(target.x,target.z)?[[target.x,target.z]]:[];
+  // Do not move directly through a server cabinet when no route exists.
+  return bpWalkable(target.x,target.z)&&
+    Math.hypot(from.x-target.x,from.z-target.z)<.5
+      ? [[target.x,target.z]] : [];
 }
 function bpGuardEmergency(g){
   return Boolean(g&&!g.ended&&(g.burst>0||g.attackerWave>0||g.traffic>12500||g.health<75||g.coolingEventUntil>g.elapsed));
@@ -1715,7 +1718,7 @@ function bpMoveGuard(p,dt,g){
 }
 
 function bpHackerThreats(){
-  const guards=patrols.filter(p=>p.state==='searching'||p.state==='chasing')
+  const guards=patrols.filter(p=>p.state!=='idle'&&p.agent.position.x<14)
     .map(p=>({x:p.agent.position.x,z:p.agent.position.z}));
   if(game?.mode==='defend')guards.push({x:bp.player.x,z:bp.player.z});
   return guards;
@@ -1782,7 +1785,7 @@ function bpNpcUpdate(dt){
   technician.position.set(26+Math.sin(g.elapsed*.13)*.5,0,1.8+Math.sin(g.elapsed*.11)*1.1);
   technician.rotation.y=Math.PI;
   if(g.mode==='attack')return;
-  const guardsInHall=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&p.agent.position.x<14);
+  const guardsInHall=patrols.some(p=>p.state!=='idle'&&p.agent.position.x<14);
   const nearest=Math.min(...patrols.filter(p=>p.state==='searching'||p.state==='chasing').map(p=>bpDistance(p.agent,attacker.position)),99);
   const visible=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&bpGuardCanSee(p.agent,attacker.position,13));
   const playerClose=bpDistance(bp.player,attacker.position)<7.2;
