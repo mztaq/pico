@@ -653,7 +653,7 @@ function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
     risk:mode==='attack'?0:8,trace:mode==='defend'?0:0,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
-    nextDefenderProxy:18,nextAttackerWave:13,nextSabotageAt:28,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,proxySabotage:null,coolingNeedsRepair:false,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),patrolSeed:(Math.random()*0xffffffff)>>>0,
+    nextDefenderProxy:18,nextAttackerWave:13,nextSabotageAt:28,nextCoolingIncident:46,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,proxySabotage:null,coolingNeedsRepair:false,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),patrolSeed:(Math.random()*0xffffffff)>>>0,
   };
 }
 function startGame(mode){
@@ -1407,8 +1407,8 @@ function bpTryInteract(){
   if(bp.terminal){bpCloseTerminal();return;}
   const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
   if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4){
-    game.coolingEventUntil=0;
-    game.health=Math.min(100,game.health+13);
+    game.coolingEventUntil=0;game.coolingNeedsRepair=false;
+    game.health=Math.min(100,game.health+13);bpCoolingIndicator.material=mint;
     bpShowIncident('COOLING STABILIZED / RACK TEMPERATURE NORMAL');
     log('Manual cooling reset completed.','good');
     sfx.deploy();return;
@@ -1640,12 +1640,16 @@ function bpAssignSecurityDispatch(g){
   sfx.alert();
   for(let i=0;i<patrols.length;i++){
     const p=patrols[i];p.index=0;p.wait=0;p.lastSeen=null;p.repathAt=0;p.chaseUntil=0;
-    if(p.role==='proxy'&&g.proxies<6){
-      p.proxyIndex=g.proxies;
-      const unit=proxyObjects[p.proxyIndex];
-      const position=unit.position;
+    if(p.role==='proxy'&&g.coolingNeedsRepair&&g.coolingEventUntil>g.elapsed){
+      p.proxyIndex=-1;p.path=bpGuardRoute(p.agent.position,[bpCoolingStation.x+.3,bpCoolingStation.z+.6]);
+      p.state=p.path.length?'coolingTravel':'returning';
+      if(!p.path.length)bpGuardSetReturn(p);
+    }else if(p.role==='proxy'&&(g.proxyOrders||0)>0&&firstUnpoweredProxy(proxyObjects)>=0){
+      p.proxyIndex=firstUnpoweredProxy(proxyObjects);
+      const position=proxyObjects[p.proxyIndex].position;
       p.path=bpGuardRoute(p.agent.position,[position.x+.85,position.z+.66]);
-      p.state='deploying';
+      p.state=p.path.length?'deploying':'returning';
+      if(!p.path.length)bpGuardSetReturn(p);
     }else{
       // On an attacker-triggered surge, the first sweep covers the wired
       // laptop's server rack. Search paths themselves remain obstacle-aware,
@@ -1672,19 +1676,39 @@ function bpMoveGuard(p,dt,g){
       -.11+Math.sin(g.elapsed*.8+p.agent.id)*.12;
     return;
   }
+  if(p.state==='coolingFix'){
+    p.wait-=dt;
+    const turn=Math.atan2(bpCoolingStation.x-p.agent.position.x,bpCoolingStation.z-p.agent.position.z);
+    p.agent.rotation.y+=Math.atan2(Math.sin(turn-p.agent.rotation.y),Math.cos(turn-p.agent.rotation.y))*Math.min(1,dt*8);
+    if(p.wait<=0){
+      if(g.coolingNeedsRepair&&g.coolingEventUntil>g.elapsed){
+        g.coolingNeedsRepair=false;
+        g.coolingEventUntil=0;g.health=Math.min(100,g.health+11);
+        bpCoolingIndicator.material=mint;sfx.deploy();
+        bpShowIncident('COOLING RESTORED / OFFICER COMPLETED REPAIR');
+        log('On-site technician restored the cooling panel.','good');
+      }
+      bpGuardSetReturn(p);
+    }
+    return;
+  }
   if(p.state==='switching'){
     p.wait-=dt;
     const station=proxyObjects[p.proxyIndex];
     if(station){
       const targetAngle=Math.atan2(station.position.x-p.agent.position.x,station.position.z-p.agent.position.z);
-      const angleDiff=Math.atan2(Math.sin(targetAngle-p.agent.rotation.y),Math.cos(targetAngle-p.agent.rotation.y));
-      p.agent.rotation.y+=angleDiff*Math.min(1,dt*9);
+      p.agent.rotation.y+=Math.atan2(Math.sin(targetAngle-p.agent.rotation.y),Math.cos(targetAngle-p.agent.rotation.y))*Math.min(1,dt*9);
     }
     if(p.wait<=0){
-      if(g.proxies<6 && p.proxyIndex===g.proxies && bpPowerProxy(p.proxyIndex)){
-        g.proxies++;
-        g.proxyOrders=Math.max(0,(g.proxyOrders||0)-1);
-        log('Edge appliance '+g.proxies+' activated by security officer.','good');
+      if(station&&!station.userData.powered){
+        if(g.elapsed<(station.userData.repairAt||0)){
+          p.wait=Math.min(1,station.userData.repairAt-g.elapsed);
+          return;
+        }
+        if(bpPowerProxy(p.proxyIndex)){
+          g.proxyOrders=Math.max(0,(g.proxyOrders||0)-1);
+          log('Officer restored edge proxy '+(p.proxyIndex+1)+'.','good');
+        }
       }
       bpGuardSetReturn(p);
     }
@@ -1746,6 +1770,7 @@ function bpMoveGuard(p,dt,g){
   const destination=p.path[p.index];
   if(!destination){
     if(p.state==='deploying'){p.state='switching';p.wait=2.1;sfx.scan();}
+    else if(p.state==='coolingTravel'){p.state='coolingFix';p.wait=2.9;sfx.scan();}
     else if(p.state==='returning'){p.state='idle';p.agent.position.set(p.home[0],0,p.home[1]);}
     else if(p.state==='searching'){p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));p.index=0;}
     return;
@@ -1814,6 +1839,7 @@ function bpMoveHackerTowards(target,dt,speed=2.6){
 function bpNpcUpdate(dt){
   if(!game||game.ended)return;
   const g=game;
+  if(g.coolingNeedsRepair&&g.coolingEventUntil<=g.elapsed)g.coolingNeedsRepair=false;
   const activeAlarm=bpGuardEmergency(g);
   observeSecurityAlarm(g,activeAlarm);
   // A second attack is a new incident even if the previous crew is still
@@ -1974,7 +2000,11 @@ function bpWorldEvents(){
   bpShowIncident(event.label);
   log(event.label.toLowerCase().replace(' / ',' - '),'warn');
   if(event.kind==='surge'&&g.mode==='defend')g.attackerWave=Math.max(g.attackerWave,15);
-  if(event.kind==='cooling'){g.coolingEventUntil=g.elapsed+52;g.health=Math.max(5,g.health-4);}
+  if(event.kind==='cooling'){
+    g.coolingEventUntil=g.elapsed+52;g.coolingNeedsRepair=true;
+    g.health=Math.max(5,g.health-4);bpCoolingIndicator.material=red;
+    flagSecurityIncident(g);
+  }
   if(event.kind==='power'){g.powerEventUntil=g.elapsed+12;g.health=Math.max(5,g.health-3);}
   if(event.kind==='patrol'&&g.mode==='attack')g.risk=Math.min(100,g.risk+4);
   if(event.kind==='uplink'&&g.mode==='defend')g.limit=Math.max(g.limit,4);
