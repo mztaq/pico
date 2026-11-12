@@ -1608,8 +1608,8 @@ function bpAssignSecurityDispatch(g){
   acknowledgeSecurityDispatch(g);
   g.securityDispatchActive=true;
   g.securityResponseUntil=g.elapsed+bpSearchWindowSeconds;
-  // The 10-second cooldown begins once the team actually returns to base.
-  // New attack waves remain queued while officers are still in the hall.
+  // A new attack wave restarts the response even if guards are returning.
+  // Responders follow a new path from their current physical positions.
   g.guardResponseStarted=true;
   bpShowIncident('SECURITY ALERT / OFFICERS RESPONDING');
   sfx.alert();
@@ -1784,7 +1784,11 @@ function bpNpcUpdate(dt){
   const g=game;
   const activeAlarm=bpGuardEmergency(g);
   observeSecurityAlarm(g,activeAlarm);
-  if(shouldDispatchSecurity(g)){
+  // A second attack is a new incident even if the previous crew is still
+  // walking back to security. Redirect that returning crew immediately.
+  const respondersReturning=g.securityDispatchActive&&patrols.every(p=>
+    p.state==='returning'||p.state==='idle');
+  if(shouldDispatchSecurity(g,respondersReturning)){
     bpAssignSecurityDispatch(g);
   }
   for(const p of patrols)bpMoveGuard(p,dt,g);
