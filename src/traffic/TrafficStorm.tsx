@@ -215,38 +215,41 @@ export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: 
 
   // Outgoing bot lane at its exact Bezier midpoint (t = 0.5, x = 583.9).
   const attackMidY = (BOT_Y[0] + (firstProxyY ?? firstServerY)) / 2;
-  const attackLabelY = Math.max(52, attackMidY - 38);
+  // All labels keep a 28-unit text-to-target gap, and arrows stop 12 units short.
+  const arrowClearance = 12;
+  const labelToTarget = 28;
+  const attackLabelY = attackMidY - labelToTarget - arrowClearance;
 
   // The proxy-free lane at t = 0.75 (x = 844.875).
   const directLaneY = BOT_Y[0] * 0.15625 + firstServerY * 0.84375;
   const edgeLabelY = firstProxyY === null
-    ? Math.max(48, directLaneY - 39)
-    : Math.max(68, firstProxyY - 67);
+    ? directLaneY - labelToTarget - arrowClearance
+    : firstProxyY - 34 - labelToTarget - arrowClearance;
 
   return [
     {
       id: 'commands', text: active ? 'Sending commands' : mode === 'paused' ? 'Commands paused' : 'Hacker commands',
-      x: 182, y: 96, fromX: 303, fromY: 107, tipX: 303, tipY: 130,
+      x: 182, y: 98, fromX: 303, fromY: 111, tipX: 303, tipY: 126,
       tone: 'accent',
     },
     {
       id: 'flood', text: active ? serverCount === 1 ? 'Flooding server' : 'Flooding servers' : mode === 'paused' ? 'Traffic paused' : 'Attack route',
-      x: 482, y: attackLabelY, fromX: 584, fromY: attackLabelY + 9,
-      tipX: 584, tipY: attackMidY - 8, tone: 'danger',
+      x: 482, y: attackLabelY, fromX: 584, fromY: attackLabelY + 13,
+      tipX: 584, tipY: attackMidY - arrowClearance, tone: 'danger',
     },
     {
       id: 'proxies', text: proxyCount === 0 ? 'Direct to server' : mode === 'ready' ? 'Proxies ready' : proxiesOverloaded ? 'Proxies overloaded' : 'Filtering traffic',
       x: 814, y: edgeLabelY,
-      fromX: firstProxyY === null ? 871 : 807, fromY: edgeLabelY + 9,
+      fromX: firstProxyY === null ? 871 : 807, fromY: edgeLabelY + 13,
       tipX: firstProxyY === null ? 845 : 796,
-      tipY: firstProxyY === null ? directLaneY - 8 : firstProxyY - 39,
+      tipY: firstProxyY === null ? directLaneY - arrowClearance : firstProxyY - 34 - arrowClearance,
       tone: proxyCount === 0 ? 'muted' : proxiesOverloaded ? 'danger' : 'success',
     },
     {
       id: 'server', text: mode === 'offline' ? 'Server offline' : mode === 'ready' ? 'Server ready' : mode === 'paused' ? 'Server paused' : pressure > 1 ? 'Server overloaded' : 'Serving requests',
-      x: 998, y: Math.min(456, lastServerY + 73),
-      fromX: 1120, fromY: Math.min(441, lastServerY + 58),
-      tipX: 1120, tipY: lastServerY + 44,
+      x: 998, y: lastServerY + 37 + arrowClearance + labelToTarget,
+      fromX: 1120, fromY: lastServerY + 37 + arrowClearance + 15,
+      tipX: 1120, tipY: lastServerY + 37 + arrowClearance,
       tone: mode === 'offline' || (mode === 'running' && pressure > 1) ? 'danger' : 'accent',
     },
   ] as const;
