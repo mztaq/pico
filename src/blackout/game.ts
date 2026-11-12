@@ -854,29 +854,59 @@ function bpMovePlayer(dt){
   avatar.rotation.y=bp.yaw+Math.PI;
   avatar.visible=bp.third;
 }
+
+/* Security guards follow separate patrol routes and inspect the aisles. */
+const patrols=[
+  {agent:security,route:[[10.2,-2.5],[10.1,9.9],[12.5,9.9],[12.5,-10.8],[9.7,-10.8]],index:0,speed:1.55},
+  {agent:character(-1.6,10.1,'guard'),route:[[-1.6,10.3],[-1.4,-10.6],[-8.2,-10.6],[-12.4,-10.6],[-12.4,9.9]],index:0,speed:1.35},
+  {agent:character(-12.3,5,'guard'),route:[[-12.4,7.5],[-5.15,7.5],[-5.15,1.1],[-12.3,1.1]],index:0,speed:1.20},
+];
+const bpGuards=patrols.map(p=>p.agent);
+for(const p of patrols){
+  const guard=p.agent;
+  const badge=mat('#c5bbd3',{metal:.45,rough:.3});
+  const uniform=mat('#304960',{metal:.1,rough:.78});
+  box(0,1.38,.585,.28,.16,.055,badge,guard);
+  box(-.16,1.76,.47,.19,.075,.045,uniform,guard);
+  box(.36,1.65,.22,.14,.25,.21,black,guard);
+  box(-.40,1.65,.24,.16,.22,.22,uniform,guard);
+  box(-.31,.28,.33,.09,.31,.08,uniform,guard);
+  box(.31,.28,.33,.09,.31,.08,uniform,guard);
+}
+function bpPatrolStep(p,dt){
+  const goal=p.route[p.index];
+  const dx=goal[0]-p.agent.position.x,dz=goal[1]-p.agent.position.z;
+  const d=Math.hypot(dx,dz);
+  if(d<.25){p.index=(p.index+1)%p.route.length;return;}
+  const step=Math.min(d,p.speed*dt);
+  p.agent.position.x+=step*dx/d;p.agent.position.z+=step*dz/d;
+  const heading=Math.atan2(dx,dz);
+  let diff=((heading-p.agent.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;
+  p.agent.rotation.y+=diff*Math.min(1,dt*4.3);
+  p.agent.position.y=Math.sin((game?.elapsed??0)*8.3+p.index)*.025;
+}
 function bpNpcUpdate(dt){
-  if(!game || game.ended || game.mode!=='defend'){
-    if(game&&game.mode==='attack'){
-      const patrolT=game.elapsed*.023;
-      security.position.set(1.4+9.6*Math.sin(patrolT),0,9.7+1.5*Math.cos(patrolT));
-      security.rotation.y=-Math.PI/2*Math.sign(Math.cos(patrolT)||1);
-    }
-    return;
-  }
-  const cycle=game.elapsed%94;
-  const hiding=(cycle>=22 && cycle<60)||(bpDistance(attacker.position,security.position)<4.0 && cycle>9);
+  if(!game||game.ended)return;
+  for(const p of patrols)bpPatrolStep(p,dt);
+  technician.position.z=4.5+Math.sin(game.elapsed*.029)*4.7;
+  technician.rotation.y=Math.cos(game.elapsed*.029)>0?Math.PI:0;
+  if(game.mode==='attack')return;
+  const cycle=game.elapsed%106;
+  const nearGuard=bpGuards.some(guard=>bpDistance(guard.position,attacker.position)<5.6);
+  const hiding=(cycle>=27&&cycle<61)||nearGuard;
   bp.npcHiding=hiding;bp.npcTyping=!hiding;
   const goal=hiding?bpHideSpot:V(-8.8,0,4.5);
-  const old=attacker.position.clone();
-  attacker.position.lerp(goal,1-Math.exp(-dt*(hiding?.82:.7)));
-  if(bpDistance(attacker.position,goal)>.2){
-    attacker.rotation.y=Math.atan2(goal.x-old.x,goal.z-old.z);
-  }else{attacker.rotation.y=hiding?-.7:Math.PI;}
+  const dx=goal.x-attacker.position.x,dz=goal.z-attacker.position.z;
+  const dist=Math.hypot(dx,dz);
+  if(dist>.18){
+    const velocity=Math.min(dist,2.15*dt);
+    attacker.position.x+=dx/dist*velocity;
+    attacker.position.z+=dz/dist*velocity;
+    attacker.rotation.y=Math.atan2(dx,dz);
+  } else attacker.rotation.y=hiding?-.7:Math.PI;
   attacker.visible=true;
-  security.position.set(1+9*Math.sin(game.elapsed*.036),0,10.15+.55*Math.cos(game.elapsed*.036));
-  security.rotation.y=-Math.PI/2*Math.sign(Math.cos(game.elapsed*.036)||1);
-  if(hiding && game.nextAttackerWave<=game.elapsed+dt){
-    game.nextAttackerWave+=dt;
+  if(hiding&&game.nextAttackerWave<=game.elapsed+.2){
+    game.nextAttackerWave=game.elapsed+3.5;
   }
 }
 function bpInteractionStatus(){
@@ -892,19 +922,58 @@ function bpInteractionStatus(){
   $('interaction-hint').classList.toggle('visible',Boolean(message));
   if(message)$('interaction-hint').innerHTML='<kbd>E</kbd>'+message;
 }
+
+const bpIncidentPool=[
+  {label:'TRAFFIC SURGE / EDGE LOAD HIGH',kind:'surge'},
+  {label:'COOLING ALERT / RACK TEMPERATURE',kind:'cooling'},
+  {label:'UPLINK CONGESTION / INVESTIGATE',kind:'uplink'},
+  {label:'SECURITY PATROL / AISLE CHECK',kind:'patrol'},
+  {label:'POWER DISTRIBUTION / LOAD SPIKE',kind:'power'},
+];
+let incidentVisibleUntil=0;
+function bpShowIncident(message){
+  const banner=$('incident-banner');if(!banner)return;
+  banner.textContent=message;banner.classList.add('visible');
+  incidentVisibleUntil=performance.now()+3900;
+}
+function bpWorldEvents(){
+  if(!game||game.ended)return;
+  const g=game;
+  if(!g.nextAmbientEvent)g.nextAmbientEvent=42;
+  if(g.elapsed<g.nextAmbientEvent)return;
+  g.nextAmbientEvent+=45+Math.floor((g.elapsed/70)%4)*8;
+  const event=bpIncidentPool[(g.incidentIndex??0)%bpIncidentPool.length];
+  g.incidentIndex=(g.incidentIndex??0)+1;
+  bpShowIncident(event.label);
+  log(event.label.toLowerCase().replace(' / ',' - '),'warn');
+  if(event.kind==='surge'&&g.mode==='defend')g.attackerWave=Math.max(g.attackerWave,15);
+  if(event.kind==='cooling')g.coolingEventUntil=g.elapsed+18;
+  if(event.kind==='power')g.powerEventUntil=g.elapsed+9;
+  if(event.kind==='patrol'&&g.mode==='attack')g.risk=Math.min(100,g.risk+4);
+  if(event.kind==='uplink'&&g.mode==='defend')g.limit=Math.max(g.limit,4);
+  sfx.alert();
+}
+
 const bpOriginalStep=stepGame;
 stepGame=function(dt){
   bpMovePlayer(dt);
   bpNpcUpdate(dt);
+  bpWorldEvents();
   bpOriginalStep(dt);
   if(!game || game.ended){bpInteractionStatus();return;}
   if(game.mode==='attack'&&!bp.terminal){
-    const guardRange=bpDistance(bp.player,security.position);
-    if(guardRange<5.4 && !bp.crouching){
-      game.risk=Math.min(100,game.risk+dt*(5.4-guardRange)*.85);
-      if(!bp.guardAlert && guardRange<4.0){notify('SECURITY GUARD SPOTTED YOU',true);sfx.alert();}
-      bp.guardAlert=guardRange<4.0;
-    }else bp.guardAlert=false;
+    const seen=bpGuards.some(guard=>{
+      const distance=bpDistance(bp.player,guard.position);
+      if(distance>7.5)return false;
+      const forwardX=Math.sin(guard.rotation.y),forwardZ=Math.cos(guard.rotation.y);
+      const facing=((bp.player.x-guard.position.x)*forwardX+(bp.player.z-guard.position.z)*forwardZ)/Math.max(.1,distance);
+      return facing>(bp.crouching?.75:.50)&&distance>(bp.crouching?1.6:.8);
+    });
+    if(seen){
+      game.risk=Math.min(100,game.risk+dt*(bp.crouching?.42:1.9));
+      if(!bp.guardAlert){bpShowIncident('SECURITY / UNAUTHORIZED PERSON SEEN');sfx.alert();}
+      bp.guardAlert=true;
+    } else bp.guardAlert=false;
   }
   bpInteractionStatus();
 };
@@ -932,6 +1001,12 @@ updateUI=function(force=false){
 const bpOriginalAnimate=animateScene;
 animateScene=function(t,dt){
   bpOriginalAnimate(t,dt);
+  if($('incident-banner')&&incidentVisibleUntil&&performance.now()>incidentVisibleUntil)$('incident-banner').classList.remove('visible');
+  if(game&&game.coolingEventUntil>game.elapsed){
+    for(let i=0;i<bpEmergencyLights.length;i++)bpEmergencyLights[i].color.setHex(0xff7e44);
+  }else{
+    for(const light of bpEmergencyLights)light.color.setHex(0xff2b4e);
+  }
   bpMonitorTick+=dt;
   if(bpMonitorTick>(lowQuality?.45:.18)){
     bpMonitorTick=0;
