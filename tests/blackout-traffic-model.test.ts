@@ -23,6 +23,8 @@ describe('Blackout Protocol bounded request simulation', () => {
     expect(sources.size).toBeGreaterThan(15);
     expect(statuses.size).toBeGreaterThanOrEqual(3);
     expect(feed.recent.length).toBeLessThanOrEqual(18);
+    expect(feed.recent.every(v=>v.bytes>0)).toBe(true);
+    expect(feed.averageBytesPerRequest).toBeGreaterThan(0);
   });
   it('updates rates over time rather than returning hardcoded constant traffic', () => {
     const feed = createTrafficFeed(456);
@@ -33,5 +35,6 @@ describe('Blackout Protocol bounded request simulation', () => {
     }
     expect(new Set(rates).size).toBeGreaterThan(15);
     expect(Math.min(...rates)).toBeGreaterThan(1000);
+    expect(Number.isFinite(feed.averageBytesPerRequest)).toBe(true);
   });
 });
