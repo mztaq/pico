@@ -16,13 +16,14 @@ describe('Pico usage validation', () => {
       {workspace:'cpu',seconds:15},
     ]});
   });
-  it('accepts Binary Lab usage alongside the other five workspace counters', () => {
-    const all=['logic','python','pseudocode','flowchart','cpu','binary'];
-    const entries=all.map(workspace=>({workspace,seconds:10}));
+  it('accepts all seven workspace counters including Traffic Storm', () => {
+    const all=['logic','python','pseudocode','flowchart','cpu','binary','traffic'];
+    const entries=all.map(workspace=>({workspace,seconds:8}));
     expect(validateBatch({batchId:id,entries})).toEqual({id,entries});
     expect(Object.keys(WORKSPACE_COLUMNS)).toEqual(all);
     for(const workspace of all) expect(isWorkspace(workspace)).toBe(true);
     expect(WORKSPACE_COLUMNS.binary).toBe('binary_lab_seconds');
+    expect(WORKSPACE_COLUMNS.traffic).toBe('traffic_storm_seconds');
   });
   it('includes the Binary Lab migration and client-side title mapping', () => {
     const migration=readFileSync(new URL('../migrations/0003_binary_lab_usage.sql',import.meta.url),'utf8');
@@ -49,7 +50,28 @@ describe('Pico usage validation', () => {
     expect(migration).toContain('PRAGMA foreign_key_check;');
     expect(migration).not.toContain('ALTER TABLE pico_usage\\n  ADD COLUMN');
     expect(telemetry).toContain("'Pico | Binary Lab': 'binary'");
-    expect(api).toContain('cpu_studio_seconds,binary_lab_seconds FROM pico_usage');
+    expect(api).toContain('cpu_studio_seconds,binary_lab_seconds,traffic_storm_seconds FROM pico_usage');
+  });
+  it('includes Traffic Storm D1 migration, consented time tracking, and the API column', () => {
+    const migration=readFileSync(new URL('../migrations/0004_traffic_storm_usage.sql',import.meta.url),'utf8');
+    const telemetry=readFileSync(new URL('../src/telemetry/PicoTelemetry.tsx',import.meta.url),'utf8');
+    const api=readFileSync(new URL('../functions/api/usage.ts',import.meta.url),'utf8');
+    const title=readFileSync(new URL('../src/app/App.tsx',import.meta.url),'utf8');
+    expect(migration).toContain('ALTER TABLE pico_usage');
+    expect(migration).toContain('traffic_storm_seconds INTEGER NOT NULL DEFAULT 0');
+    expect(migration).not.toContain('DROP TABLE pico_usage;');
+    expect(telemetry).toContain("'Pico | Traffic Storm': 'traffic'");
+    expect(title).toContain("'Pico | Traffic Storm'");
+    expect(api).toContain("traffic:'traffic_storm_seconds'");
+    expect(api).toContain('input.entries.length > 7');
+    expect(telemetry).toContain('if (!choice?.analytics) return;');
+    expect(telemetry).toContain('!document.hidden && document.hasFocus()');
+  });
+  it('rejects eight entries, while allowing seven unique workspace counters', () => {
+    const seven=Object.keys(WORKSPACE_COLUMNS).map(workspace => ({workspace, seconds:1}));
+    expect(validateBatch({batchId:id,entries:seven})).toEqual({id,entries:seven});
+    expect(validateBatch({batchId:id,entries:[...seven,{workspace:'traffic',seconds:1}]})).toBeNull();
+    expect(validateBatch({batchId:id,entries:[{workspace:'traffic',seconds:1},{workspace:'traffic',seconds:1}]})).toBeNull();
   });
   it('rejects duplicate workspaces', () => {
     expect(validateBatch({batchId:id,entries:[
