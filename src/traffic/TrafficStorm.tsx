@@ -229,12 +229,12 @@ export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: 
   return [
     {
       id: 'commands', text: active ? 'Sending commands' : mode === 'paused' ? 'Commands paused' : 'Hacker commands',
-      x: 182, y: 98, fromX: 303, fromY: 111, tipX: 303, tipY: 126,
+      x: 182, y: 98, fromX: 291, fromY: 111, tipX: 303, tipY: 126,
       tone: 'accent',
     },
     {
       id: 'flood', text: active ? serverCount === 1 ? 'Flooding server' : 'Flooding servers' : mode === 'paused' ? 'Traffic paused' : 'Attack route',
-      x: 482, y: attackLabelY, fromX: 584, fromY: attackLabelY + 13,
+      x: 482, y: attackLabelY, fromX: 596, fromY: attackLabelY + 13,
       tipX: 584, tipY: attackMidY - arrowClearance, tone: 'danger',
     },
     {
@@ -248,7 +248,7 @@ export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: 
     {
       id: 'server', text: mode === 'offline' ? 'Server offline' : mode === 'ready' ? 'Server ready' : mode === 'paused' ? 'Server paused' : pressure > 1 ? 'Server overloaded' : 'Serving requests',
       x: 998, y: lastServerY + 37 + arrowClearance + labelToTarget,
-      fromX: 1120, fromY: lastServerY + 37 + arrowClearance + 15,
+      fromX: 1132, fromY: lastServerY + 37 + arrowClearance + 15,
       tipX: 1120, tipY: lastServerY + 37 + arrowClearance,
       tone: mode === 'offline' || (mode === 'running' && pressure > 1) ? 'danger' : 'accent',
     },
