@@ -157,7 +157,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("bpDisableProxy(bpHackerTargetProxy,'the hooded suspect')");
     expect(game).toContain("const targetRps=(750+g.bots*185+(g.burst>0?14500:0))*ATTACK_TRAFFIC_SCALE");
     expect(game).toContain("const targetRps=(3800+g.bots*118+(g.attackerWave>0?4700:0))*DEFENSE_WAVE_SCALE");
-    expect(game).toContain("p.state='coolingTravel'");
+    expect(game).toContain("p.state=p.path.length?'coolingTravel':'returning'");
     expect(game).toContain("p.state='coolingFix'");
     expect(game).toContain("function bpTriggerCoolingIssue(g)");
     expect(game).toContain("bpTriggerCoolingIssue(g)");
