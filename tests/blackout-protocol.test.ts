@@ -19,7 +19,10 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("import {");
     expect(game).toContain("} from './security-response'");
     expect(game).toContain('observeSecurityAlarm(g,activeAlarm)');
-    expect(game).toContain('if(shouldDispatchSecurity(g))');
+    expect(game).toContain("const respondersReturning=g.securityDispatchActive&&patrols.every(p=>");
+    expect(game).toContain('if(shouldDispatchSecurity(g,respondersReturning))');
+    expect(game).toContain("const firstSweep=g.mode==='attack'");
+    expect(game).toContain('p.path=bpGuardRoute(p.agent.position,firstSweep)');
     expect(game).toContain('acknowledgeSecurityDispatch(g)');
     expect(game).toContain('securityOfficersReturned(g)');
     expect(game).toContain("case'burst':g.burst=8;g.risk+=9;flagSecurityIncident(g)");
