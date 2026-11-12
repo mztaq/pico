@@ -609,6 +609,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
         <strong className="pico-appbar-tool">Traffic Storm</strong>
       </div>
       <div className="storm-header-actions">
+        <a href="/blackout-protocol.html" className="storm-secondary storm-3d-shortcut" title="Play the Blackout Protocol 3D game">3D Game <ArrowRight size={14} aria-hidden="true"/></a>
         <button type="button" className="storm-icon-button" aria-label="Traffic Storm tutorial" title="Open tutorial" onClick={() => { setTutorialStep(0); setShowHelp(value => !value); }}><CircleHelp size={17}/></button>
         <span data-storm-tour="sound" className="storm-tour-sound-target"><SoundButton/></span>
         <div className="storm-theme-wrap">
