@@ -679,7 +679,7 @@ function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
     risk:mode==='attack'?0:8,trace:0,fanLoad:0,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
-    nextDefenderProxy:18,nextAttackerWave:13,nextSabotageAt:28,nextCoolingIncident:46,nextAutoProxyAt:13,nextEvidenceDispatch:17,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,proxySabotage:null,coolingNeedsRepair:false,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),collectedEvidence:{},suspectHeld:false,patrolSeed:(Math.random()*0xffffffff)>>>0,
+    nextDefenderProxy:18,nextAttackerWave:13,nextSabotageAt:28,nextCoolingIncident:46,nextAutoProxyAt:13,nextEvidenceDispatch:17,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,proxySabotage:null,coolingNeedsRepair:false,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),collectedEvidence:{},suspectHeld:false,caseEvidenceComplete:false,patrolSeed:(Math.random()*0xffffffff)>>>0,
   };
 }
 function startGame(mode){
@@ -1652,11 +1652,11 @@ function bpMovePlayer(dt){
 /* Guard office: crews remain inside until a genuine alarm or dispatch order.
    Dispatches end with a physical return to base. No teleporting NPCs. */
 const patrols=[
-  {agent:security,role:'proxy',home:[21.2,-.6],index:0,speed:1.70,state:'idle',path:[],wait:0,proxyIndex:-1,evidenceId:null as string|null},
+  {agent:security,role:'proxy',home:[21.2,-.6],index:0,speed:1.70,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:null as string|null},
   {agent:character(23.4,4.1,'guard'),role:'search',home:[23.4,4.1],index:0,speed:1.58,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:null as string|null},
   {agent:character(25.8,-4.5,'guard'),role:'search',home:[25.8,-4.5],index:0,speed:1.52,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:1,evidenceId:null as string|null},
-  {agent:character(19.0,-1.8,'guard'),role:'forensic',home:[19.0,-1.8],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,evidenceId:null as string|null},
-  {agent:character(27.4,2.9,'guard'),role:'forensic',home:[27.4,2.9],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,evidenceId:null as string|null},
+  {agent:character(19.0,-1.8,'guard'),role:'forensic',home:[19.0,-1.8],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:null as string|null},
+  {agent:character(27.4,2.9,'guard'),role:'forensic',home:[27.4,2.9],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:1,evidenceId:null as string|null},
 ];
 const bpGuards=patrols.map(p=>p.agent);
 for(const p of patrols){
