@@ -372,7 +372,7 @@ class Soundscape {
     if(!this.ctx||!this.master)return;
     const t=this.ctx.currentTime;
     if(this.fan)this.fan.gain.setTargetAtTime(active?.16+Math.min(.35,traffic/105000)+Math.max(0,100-health)*.0014:.14,t,.5);
-    if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&health<55?.084:0,t,.2);}
+    if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&(health<55||traffic>13000)?.084:0,t,.2);}
   }
 }
 const sfx=new Soundscape();
@@ -619,6 +619,7 @@ label('COOLANT / RESET',8.48,1.73,4.4,.57,.16,Math.PI/2);
 
 const bpPlayerAvatar=character(10.7,-2.1,'engineer');
 bpPlayerAvatar.visible=false;
+let bpSmoothedRpm=940;
 const bpFanRotors=[];
 for(const [rx,rz] of rackCoords){
   for(let j=0;j<4;j++){
@@ -662,6 +663,46 @@ for(let i=0;i<5;i++)box(-9.31,1.61+i*.08,2.986,.95-i*.1,.018,.018,i%2?mint:blue)
 const bpLaptopBeacon=light(-8.8,2.45,3.07,0x8de4d4,1.7,4);
 const bpConsoleBeacon=light(10.7,2.62,-5.25,0x9e8ceb,2.1,4);
 
+const bpAuxScreenCanvases=[];
+for(const x of [-9.9,-8.25]){
+  const canvas=document.createElement('canvas');canvas.width=320;canvas.height=208;
+  const context=canvas.getContext('2d'),texture=new THREE.CanvasTexture(canvas);
+  texture.colorSpace=THREE.SRGBColorSpace;
+  const plane=new THREE.Mesh(new THREE.PlaneGeometry(1.39,.93),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide}));
+  plane.position.set(x,1.91,2.38);world.add(plane);
+  bpAuxScreenCanvases.push({canvas,context,texture});
+}
+function bpPaintAuxScreens(t){
+  for(let idx=0;idx<bpAuxScreenCanvases.length;idx++){
+    const {context:ctx,texture}=bpAuxScreenCanvases[idx];if(!ctx)continue;
+    ctx.fillStyle='#0a1320';ctx.fillRect(0,0,320,208);
+    ctx.fillStyle=idx===0?'#cba6f7':'#89b4fa';ctx.fillRect(0,0,320,7);
+    ctx.fillStyle='#dce4ff';ctx.font='bold 16px monospace';ctx.fillText(idx===0?'EDGE CONTROL':'REQUEST STREAM',14,29);
+    ctx.fillStyle='#8eacc2';ctx.font='11px monospace';ctx.fillText('DATACENTER / WEST TERMINAL',14,45);
+    const recent=game?.requestFeed?.recent??[];
+    if(idx===0){
+      const rate=game?.traffic??0,scale=Math.min(1,rate/60000);
+      ctx.fillStyle='#cad6ed';ctx.font='bold 23px monospace';ctx.fillText(Math.round(rate).toLocaleString('en-US')+' RPS',14,84);
+      ctx.fillStyle='#273850';ctx.fillRect(14,98,290,16);
+      ctx.fillStyle=game?.burst>0?'#f38ba8':'#a6e3a1';ctx.fillRect(14,98,290*scale,16);
+      ctx.strokeStyle='#89b4fa';ctx.lineWidth=2;ctx.beginPath();
+      for(let i=0;i<60;i++){
+        const y=166-Math.sin(i*.25+t*3)*8-Math.min(26,rate/2200)+Math.sin(i*.1+t)*4;
+        i===0?ctx.moveTo(14,y):ctx.lineTo(14+i*4.85,y);
+      }ctx.stroke();
+    }else{
+      const rows=recent.slice(-5).reverse();
+      ctx.font='12px monospace';
+      for(let i=0;i<rows.length;i++){
+        const entry=rows[i],y=73+i*27;
+        ctx.fillStyle=entry.status>=500?'#f38ba8':entry.status===429?'#f9e2af':'#a6e3a1';
+        ctx.fillText(entry.status+' #'+entry.id,14,y);
+        ctx.fillStyle='#9eb1c9';ctx.fillText(entry.path.slice(0,19),110,y);
+      }
+    }
+    texture.needsUpdate=true;
+  }
+}
 const bpDisplayCanvas=document.createElement('canvas');
 bpDisplayCanvas.width=512;bpDisplayCanvas.height=288;
 const bpDisplayContext=bpDisplayCanvas.getContext('2d');
@@ -772,11 +813,19 @@ function bpWallGraph(t){
     ctx.fillStyle=color;ctx.font='bold 36px monospace';ctx.fillText(String(value),px+18,y+43);
     ctx.fillStyle='#334259';ctx.fillRect(px+18,y+56,205,2);
   };
-  drawMetric('SERVER HEALTH',Math.round(hp)+'%',141,hp<50?'#f38ba8':'#a6e3a1');
-  drawMetric('EDGE PROXIES',g?.proxies??0,251,'#cba6f7');
-  drawMetric(g?.mode==='attack'?'EXPOSURE':'CASE EVIDENCE',Math.round(g?.mode==='attack'?g.risk:g?.trace??0)+'%',361,'#89b4fa');
-  ctx.fillStyle=redMode?'#f38ba8':'#a6e3a1';ctx.font='bold 16px monospace';
-  ctx.fillText(redMode?'CAPACITY ALERT':'SYSTEM NOMINAL',px+18,510);
+  drawMetric('SERVER HEALTH',Math.round(hp)+'%',132,hp<50?'#f38ba8':'#a6e3a1');
+  drawMetric('COOLING FAN RPM',Math.round(bpSmoothedRpm).toLocaleString('en-US'),210,'#89b4fa');
+  drawMetric('EDGE PROXIES',g?.proxies??0,288,'#cba6f7');
+  ctx.fillStyle='#bac2de';ctx.font='bold 17px monospace';ctx.fillText('RECENT REQUESTS',px+18,365);
+  const latest=(g?.requestFeed?.recent??[]).slice(-3).reverse();
+  if(!latest.length){ctx.fillStyle='#7d89a4';ctx.font='15px monospace';ctx.fillText('No requests yet',px+18,403);}
+  for(let i=0;i<latest.length;i++){
+    const entry=latest[i],y=389+i*48;
+    ctx.fillStyle=entry.status>=500?'#f38ba8':entry.status===429?'#f9e2af':'#a6e3a1';
+    ctx.font='bold 15px monospace';ctx.fillText('#'+entry.id+'  '+entry.status,px+18,y);
+    ctx.fillStyle='#a6adc8';ctx.font='14px monospace';
+    ctx.fillText(entry.method+' '+entry.path.slice(0,17),px+18,y+17);
+  }
   bpWallTexture.needsUpdate=true;
 }
 
@@ -1180,7 +1229,7 @@ updateUI=function(force=false){
   bpOriginalUpdateUI(force);
   if(!game || !bp.active)return;
   const g=game;
-  const rpm=Math.round(850+Math.min(2.4,g.traffic/35000)*1950+(100-g.health)*22);
+  const rpm=Math.round(bpSmoothedRpm);
   $('health').parentElement.querySelector('.sub').textContent='COOLING FANS '+rpm.toLocaleString()+' RPM';
   if(g.mode==='attack'){
     $('mission-step').textContent=g.proxies===0?
@@ -1224,11 +1273,13 @@ animateScene=function(t,dt){
     bpMonitorTick=0;
     bpDrawScreen(bpDisplayContext,bpDisplayTexture,'ATTACKER LAPTOP',Boolean(game&&game.burst>0),t);
     bpDrawScreen(bpSecurityCtx,bpSecurityTexture,'SECURITY CONSOLE',Boolean(game&&game.health<55),t);
+    bpPaintAuxScreens(t);
   }
-  const rpm=game?850+Math.min(2.4,game.traffic/35000)*1950+(100-game.health)*22:850;
-  const turns=(rpm/60)*Math.PI*2*dt;
+  const targetRpm=game?Math.min(5500,900+Math.min(1,game.traffic/23000)*3200+(100-game.health)*13+(game.burst>0||game.attackerWave>0?580:0)):940;
+  bpSmoothedRpm+=(targetRpm-bpSmoothedRpm)*Math.min(1,dt*(game?.burst>0||game?.attackerWave>0?3:1.25));
+  const turns=bpSmoothedRpm/60*Math.PI*2*dt;
   for(const rotor of bpFanRotors)rotor.rotation.z+=turns;
-  const emergency=game&&!game.ended&&(game.health<55||(game.mode==='attack'&&game.risk>83));
+  const emergency=game&&!game.ended&&(bpGuardEmergency(game)||(game.mode==='attack'&&game.risk>83));
   for(let i=0;i<bpEmergencyLights.length;i++)
     bpEmergencyLights[i].intensity=emergency?(2+9*Math.max(0,Math.sin(t*7+i*.5))):0;
   bpCoolingIndicator.material=game&&game.coolingEventUntil>game.elapsed?red:mint;
