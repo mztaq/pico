@@ -1,12 +1,13 @@
+import type { ArcadePage } from '../games/Arcade';
 import type { CompilerLanguage } from '../storage/projects';
 
-export type PicoWorkspace = CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic';
+export type PicoWorkspace = CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic' | ArcadePage;
 
-const workspaces: readonly PicoWorkspace[] = ['pseudocode', 'python', 'flowchart', 'logic', 'cpu', 'binary', 'traffic'];
+const workspaces: readonly PicoWorkspace[] = ['pseudocode', 'python', 'flowchart', 'logic', 'cpu', 'binary', 'traffic', 'games', 'games/siege', 'games/defense'];
 
 export function workspaceFromPath(pathname: string): PicoWorkspace | null {
-  const match = /^\/app\/(pseudocode|python|flowchart|logic|cpu|binary|traffic)\/?$/.exec(pathname);
-  return match ? match[1] as PicoWorkspace : null;
+  const path = pathname.replace(/\/$/, '');
+  return workspaces.find(workspace => path === workspaceUrl(workspace)) ?? null;
 }
 
 /** Existing /app?tool= links continue to work for bookmarks. */

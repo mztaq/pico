@@ -1,8 +1,8 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Binary, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
-import type { CompilerLanguage } from '../../storage/projects';
+import type { PicoWorkspace } from '../workspace-deeplink';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
@@ -21,7 +21,7 @@ const HOME_AMBIENT_CURVES = [
   { d: 'M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304', width: 1.3, opacity: .28 },
 ] as const;
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) => void }) {
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
@@ -163,6 +163,16 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
               <div className="home-binary-byte">{'00101010'.split('').map((bit, index) => <span className={bit === '1' ? 'on' : ''} key={index}>{bit}</span>)}</div>
               <div className="home-binary-equation"><code>0010 1010</code><span>=</span><strong>42</strong><span>=</span><code>0x2A</code></div>
             </div>
+          </WorkspaceChoice>
+        </HomeGroup>
+        <HomeGroup label="Games" detail="Play two network strategy games">
+          <WorkspaceChoice icon={<Gamepad2 size={18}/>} title="Games" description="Take down a server or defend it from botnet waves." onClick={() => onChoose('games')}>
+            <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
+              <g fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M54 20h40v36H54zM62 30h9m7 0h9M94 38h78m16 0h68M256 18h41v40h-41zM262 28h28m-28 10h28m-28 10h28"/>
+                <path d="m172 38 8-10 8 10-8 10z"/>
+              </g>
+            </svg>
           </WorkspaceChoice>
         </HomeGroup>
       </div>

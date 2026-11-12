@@ -1,0 +1,84 @@
+.arcade {
+  --arcade-surface: color-mix(in srgb, var(--bg, #11172a) 92%, var(--accent, #56dcbb));
+  --arcade-border: color-mix(in srgb, var(--text, #edf6ff) 23%, transparent);
+  --arcade-signal: var(--accent, #56dcbb);
+  min-height: 100dvh;
+  background: var(--bg, #11172a);
+  color: var(--text, #edf6ff);
+  overflow: auto;
+}
+.arcade-bar, .arcade-bar > div, .arcade-bar span, .arcade button {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+}
+.arcade-bar {
+  justify-content: space-between;
+  border-bottom: 1px solid var(--arcade-border);
+  padding: .65rem clamp(.8rem, 4vw, 3rem);
+  background: var(--arcade-surface);
+}
+.arcade-bar > div { gap: 1rem; }
+.arcade-bar span { font-weight: 700; }
+.arcade-content { max-width: 1280px; padding: clamp(.8rem, 3vw, 2rem); margin: auto; }
+.arcade-title { display: flex; align-items: flex-end; flex-wrap: wrap; justify-content: space-between; gap: .65rem; margin-bottom: 1.25rem; }
+.arcade h1 { font-size: clamp(2rem, 5vw, 3.5rem); margin: 0; letter-spacing: -.045em; line-height: 1.1; }
+.arcade h2 { font-size: 1.16rem; margin: 0 0 .55rem; }
+.arcade p { margin: .5rem 0 .8rem; line-height: 1.45; }
+.arcade-title p { margin-bottom: 0; }
+.arcade-currency, .arcade-telemetry, .arcade-meter strong { font-variant-numeric: tabular-nums; }
+.arcade-currency { border: 1px solid var(--arcade-border); border-radius: 8px; padding: .6rem .8rem; }
+.arcade-layout, .arcade-cards { display: grid; grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); gap: 1rem; align-items: start; }
+.arcade-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.arcade-stack { display: grid; gap: 1rem; }
+.arcade-panel { border: 1px solid var(--arcade-border); border-radius: 12px; background: var(--arcade-surface); padding: clamp(.75rem, 2vw, 1.1rem); min-width: 0; }
+.arcade button {
+  min-height: 40px;
+  justify-content: center;
+  border: 1px solid var(--arcade-border);
+  border-radius: 7px;
+  padding: .4rem .65rem;
+  color: inherit;
+  background: var(--bg, #11172a);
+  font: inherit;
+  font-size: .87rem;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.arcade button:disabled { opacity: .57; cursor: default; }
+.arcade button:not(:disabled):hover, .arcade button[aria-pressed="true"] { border-color: var(--arcade-signal); }
+.arcade button:not(:disabled):active { transform: translateY(1px); }
+.arcade button:focus-visible { outline: 2px solid var(--arcade-signal); outline-offset: 2px; }
+.arcade button.arcade-primary { background: var(--arcade-signal); color: var(--arcade-accent-text, #101723); font-weight: 750; }
+.arcade-arena { display: block; width: 100%; height: auto; border: 1px solid #33506c; border-radius: 8px; background: #111d2c; color: #95c8e6; }
+.arcade-lane { stroke: #486180; stroke-width: 3; stroke-dasharray: 6 6; fill: none; }
+.arcade-lane.active { stroke: #6ee9ec; stroke-width: 4; stroke-dasharray: none; }
+.arcade-map-label { font: 700 19px monospace; fill: #d8efff; }
+.arcade-bot { fill: #c99afa; stroke: #422d6b; stroke-width: 2; }
+.arcade-eyes { fill: #272040; stroke: none; }
+.arcade-proxy rect { fill: #284a65; stroke: #81d7fc; stroke-width: 2; }
+.arcade-proxy path, .arcade-packet { fill: #ffc479; }
+.arcade-rack { fill: #28465e; stroke: #9bb7ce; stroke-width: 2; }
+.arcade-rack .arcade-rack-slot { fill: #152336; stroke: #5e7c9a; }
+.arcade-rack circle { fill: #68edaf; stroke: none; }
+.arcade-rack.offline { stroke: #ff747b; }
+.arcade-rack.offline circle { fill: #ff747b; }
+.arcade[data-game="games/siege"] .arcade-lane.active { stroke: #ffc479; }
+.arcade[data-game="games/defense"] .arcade-proxy path { fill: #6ee9ec; }
+.arcade-meters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-top: 1rem; }
+.arcade-meter div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem; font-size: .82rem; }
+.arcade-meter progress { width: 100%; accent-color: var(--arcade-signal); }
+.arcade-actions { display: flex; flex-wrap: wrap; gap: .45rem; margin: .55rem 0; }
+.arcade-list { display: grid; gap: .4rem; }
+.arcade-list > button, .arcade-shop-row { display: flex; align-items: center; justify-content: space-between; gap: .55rem; text-align: left; }
+.arcade-list > button > span:last-child { flex-shrink: 0; }
+.arcade-list small { display: block; margin-top: .25rem; line-height: 1.35; }
+.arcade-shop-row { flex-wrap: wrap; border-bottom: 1px solid var(--arcade-border); }
+.arcade-shop-row:last-child { border-bottom: 0; }
+.arcade-status { min-height: 2.9em; }
+@media (max-width: 750px) {
+  .arcade-layout, .arcade-cards { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arcade-packet { display: none; }
+}
