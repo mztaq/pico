@@ -30,6 +30,16 @@ function tick() {
 beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.useFakeTimers();
+  const canvas = {
+    setTransform: vi.fn(), createLinearGradient: () => ({ addColorStop: vi.fn() }),
+    fillRect: vi.fn(), clearRect: vi.fn(), fillText: vi.fn(),
+    beginPath: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), closePath: vi.fn(),
+    fill: vi.fn(), stroke: vi.fn(),
+  } as unknown as CanvasRenderingContext2D;
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => canvas);
+  vi.stubGlobal('matchMedia', () => ({
+    matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+  }));
   localStorage.clear();
   localStorage.setItem('pico.sound.v1', 'off');
   container = document.createElement('div');
@@ -40,6 +50,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
+  vi.restoreAllMocks();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -66,6 +77,21 @@ describe('Pico Games UI', () => {
     render('games/siege');
     expect(container.querySelector('h2')?.textContent).toBe('Relay Station');
     expect(container.textContent).toContain('36 coins');
+  });
+
+  it('defaults to Low, pauses during graphics settings, and remembers Standard', () => {
+    render('games/siege');
+    expect(container.querySelector('canvas')?.width).toBe(440);
+    click('Launch mission');
+    click('Settings');
+    tick();
+    expect(container.querySelector('progress[aria-label="Time left"]')?.getAttribute('value')).toBe('24');
+    click('Standard');
+    expect(container.querySelector('canvas')?.width).toBe(880);
+    click('Done');
+    tick();
+    expect(container.querySelector('progress[aria-label="Time left"]')?.getAttribute('value')).toBe('23');
+    expect(localStorage.getItem('pico.games.graphics')).toBe('standard');
   });
 
   it('routes the defense, earns a wave reward, and restores a purchased proxy', () => {

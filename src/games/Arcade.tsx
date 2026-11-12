@@ -1,9 +1,8 @@
-import { useEffect, useId, useState, type ReactNode } from 'react';
-import { ArrowLeft, Gamepad2, Pause, Play, Shield, Zap } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ArrowLeft, Gamepad2, Pause, Play, RotateCcw, Settings2, Shield, X, Zap } from 'lucide-react';
 import { playCue } from '../app/sound';
 import { SoundButton } from '../app/components/SoundToggle';
-import { contrastRatio, cssVariables, getTheme } from '../app/themes';
-import { loadSettings } from '../storage/settings';
+import { Arena3D } from './Arena3D';
 import {
   attackDuration, attackLimit, attackMove, attackReward, attackShop, attackTick, availablePerks,
   defenseReward, defenseShop, defenseTick, freshAttack, freshDefense, lanes, maxEnergy,
@@ -45,47 +44,6 @@ function useProfile<T>(key: string, create: () => T) {
   return [profile, setProfile] as const;
 }
 
-function Arena({ traffic, focus, shielded = -1, defended = false, offline = false }: {
-  traffic: number[]; focus: number; shielded?: number; defended?: boolean; offline?: boolean;
-}) {
-  const grid = useId();
-  return <svg className="arcade-arena" viewBox="0 0 720 270" role="img" aria-label="Three animated traffic lanes between bot squads and a server rack">
-    <defs>
-      <pattern id={grid} width="24" height="24" patternUnits="userSpaceOnUse">
-        <path d="M24 0H0V24" fill="none" stroke="currentColor" opacity=".11" />
-      </pattern>
-    </defs>
-    <rect width="720" height="270" fill={`url(#${grid})`} />
-    {lanes.map((lane, i) => {
-      const y = 66 + i * 68;
-      const path = `M160 ${y}H450Q510 ${y} 558 134H604`;
-      const protectedLane = i === shielded || (defended && i === focus);
-      return <g key={lane}>
-        <path d={path} className={i === focus ? 'arcade-lane active' : 'arcade-lane'} />
-        <text x="173" y={y - 12} className="arcade-map-label">{lane.toUpperCase()}</text>
-        <g transform={`translate(106 ${y - 18})`} className="arcade-bot">
-          <path d="M4 6H16V0H22V6H34V34H4Z" />
-          <path className="arcade-eyes" d="M10 14H16V21H10ZM22 14H28V21H22Z" />
-        </g>
-        {protectedLane && <g transform={`translate(418 ${y - 17})`} className="arcade-proxy">
-          <rect width="35" height="34" rx="4" /><path d="M10 9H25V18L17.5 25 10 18Z" />
-        </g>}
-        {Array.from({ length: Math.min(7, Math.ceil(traffic[i] / 5)) }, (_, n) =>
-          <rect key={n} width="10" height="6" y="-3" rx="1" className="arcade-packet">
-            <animateMotion path={path} dur="1.15s" begin={`-${n * 0.16}s`} repeatCount="indefinite" />
-          </rect>)}
-      </g>;
-    })}
-    <g transform="translate(589 84)" className={offline ? 'arcade-rack offline' : 'arcade-rack'}>
-      <rect width="85" height="102" rx="7" />
-      {[15, 42, 69].map(y => <g key={y}>
-        <rect className="arcade-rack-slot" x="11" y={y} width="63" height="18" rx="3" />
-        <circle cx="20" cy={y + 9} r="3" /><path d={`M47 ${y + 9}H65`} />
-      </g>)}
-    </g>
-  </svg>;
-}
-
 function Meter({ label, value, max = 100, unit = '%' }: { label: string; value: number; max?: number; unit?: string }) {
   return <div className="arcade-meter">
     <div><span>{label}</span><strong>{Math.ceil(value)}{unit}</strong></div>
@@ -94,14 +52,42 @@ function Meter({ label, value, max = 100, unit = '%' }: { label: string; value: 
 }
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="arcade-panel"><h2>{title}</h2>{children}</section>;
+  return <section className="arcade-panel"><h2>{title}</h2><div className="arcade-panel-body">{children}</div></section>;
 }
 
-function PauseButton({ paused, onClick }: { paused: boolean; onClick: () => void }) {
-  return <button type="button" onClick={onClick}>{paused ? <Play size={16} /> : <Pause size={16} />}{paused ? 'Resume' : 'Pause'}</button>;
+function GameDialog({ title, onClose, children }: {
+  title: string; onClose: () => void; children: ReactNode;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => { dialog.current?.showModal?.(); }, []);
+  return <dialog ref={dialog} className="arcade-dialog" aria-label={title} onCancel={event => {
+    event.preventDefault();
+    onClose();
+  }}>
+    <h2>{title}<button className="arcade-close" type="button" aria-label={`Close ${title}`} onClick={onClose}><X size={20} /></button></h2>
+    <div className="arcade-dialog-body">{children}</div>
+  </dialog>;
 }
 
-function Siege() {
+function PauseButton({ paused, onClick, onRestart, onSettings, onGames }: {
+  paused: boolean; onClick: () => void; onRestart: () => void; onSettings: () => void; onGames: () => void;
+}) {
+  return <>
+    <button type="button" onClick={onClick}><Pause size={16} />Pause</button>
+    {paused && <GameDialog title="Paused" onClose={onClick}>
+      <div className="arcade-pause-grid">
+        <button className="arcade-primary" type="button" onClick={onClick}><Play size={21} />Resume</button>
+        <button data-tone="pink" type="button" onClick={onRestart}><RotateCcw size={21} />Restart</button>
+        <button data-tone="mint" type="button" onClick={onSettings}><Settings2 size={21} />Settings</button>
+        <button type="button" onClick={onGames}><Gamepad2 size={21} />Games</button>
+      </div>
+    </GameDialog>}
+  </>;
+}
+
+type GameOptions = { lite: boolean; settingsOpen: boolean; onSettings: () => void; onGames: () => void };
+
+function Siege({ lite, settingsOpen, onSettings, onGames }: GameOptions) {
   const [profile, setProfile] = useProfile(siegeSave, freshAttack);
   const [selected, select] = useState(Math.min(profile.cleared, missions.length - 1));
   const [lane, setLane] = useState(0);
@@ -110,12 +96,12 @@ function Siege() {
   const live = round?.status === 'live';
   const seconds = round?.seconds;
   useEffect(() => {
-    if (!live || paused) return;
+    if (!live || paused || settingsOpen) return;
     const timer = window.setTimeout(() => {
       setRound(current => current ? attackTick(current, profile) : current);
     }, 1000);
     return () => window.clearTimeout(timer);
-  }, [live, paused, profile, seconds]);
+  }, [live, paused, settingsOpen, profile, seconds]);
   useEffect(() => {
     if (round?.status === 'won') {
       setProfile(current => attackReward(round, current));
@@ -124,11 +110,11 @@ function Siege() {
   }, [round, setProfile]);
 
   function fire(move: Move) {
-    if (!paused) setRound(current => current ? attackMove(current, profile, move, lane) : current);
+    if (!paused && !settingsOpen) setRound(current => current ? attackMove(current, profile, move, lane) : current);
   }
   useEffect(() => {
     function shortcut(event: KeyboardEvent) {
-      if (!live || paused || event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+      if (!live || paused || settingsOpen || event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
       const key = event.key.toLowerCase();
       const index = ['1', '2', '3'].indexOf(key);
       if (index >= 0) setLane(index);
@@ -140,7 +126,7 @@ function Siege() {
     }
     window.addEventListener('keydown', shortcut);
     return () => window.removeEventListener('keydown', shortcut);
-  }, [live, paused, profile, lane]);
+  }, [live, paused, settingsOpen, profile, lane]);
 
   function buy(key: AttackUpgrade) {
     setProfile(current => {
@@ -158,7 +144,7 @@ function Siege() {
     <div className="arcade-layout">
       <Panel title={mission.name}>
         <p>{mission.detail} Clear in 12 seconds for bonus coins.</p>
-        <Arena traffic={(paused ? null : round?.traffic) ?? [0, 0, 0]} focus={lane}
+        <Arena3D traffic={round?.traffic ?? [0, 0, 0]} focus={lane} lite={lite} stage={round?.mission ?? selected} animate={Boolean(live && !paused && !settingsOpen)}
           shielded={round ? shieldedLane(round) : -1} offline={round?.integrity === 0} />
         <div className="arcade-meters">
           <Meter label="Target integrity" value={round?.integrity ?? 100} />
@@ -169,12 +155,13 @@ function Siege() {
           {lanes.map((name, i) => <button key={name} type="button" disabled={paused || !live} aria-pressed={lane === i} onClick={() => setLane(i)}>{i + 1} · {name}</button>)}
         </div>
         <div className="arcade-actions">
-          {(Object.keys(moves) as Move[]).map((move, i) => <button key={move} type="button"
+          {(Object.keys(moves) as Move[]).map((move, i) => <button key={move} type="button" data-tone={move === 'burst' ? 'pink' : move === 'split' ? 'mint' : undefined} className={move === 'pulse' ? 'arcade-primary' : undefined}
             disabled={!live || paused || !round || round.energy < moves[move].energy || round.cooldowns[move] > 0}
             onClick={() => fire(move)}>{['Q', 'W', 'E'][i]} · {moves[move].name} {round?.cooldowns[move] ? `(${round.cooldowns[move]}s)` : `(${moves[move].energy} energy)`}</button>)}
         </div>
         <div className="arcade-actions">
-          {live ? <PauseButton paused={paused} onClick={() => setPaused(!paused)} /> :
+          {live ? <PauseButton paused={paused && !settingsOpen} onClick={() => setPaused(!paused)} onSettings={onSettings} onGames={onGames}
+            onRestart={() => { setRound(startAttack(selected, profile)); setPaused(false); }} /> :
             <button className="arcade-primary" type="button" onClick={() => { setRound(startAttack(selected, profile)); setPaused(false); }}>{round ? 'Play again' : 'Launch mission'}</button>}
           {round?.status === 'won' && round.mission < missions.length - 1 &&
             <button type="button" onClick={() => { select(round.mission + 1); setRound(null); }}>Next target</button>}
@@ -218,7 +205,7 @@ function Siege() {
   </>;
 }
 
-function DefenseGame() {
+function DefenseGame({ lite, settingsOpen, onSettings, onGames }: GameOptions) {
   const [profile, setProfile] = useProfile(defenseSave, freshDefense);
   const [round, setRound] = useState<Defense | null>(null);
   const [paused, setPaused] = useState(false);
@@ -227,12 +214,12 @@ function DefenseGame() {
   const live = round?.status === 'live';
   const seconds = round?.seconds;
   useEffect(() => {
-    if (!live || paused) return;
+    if (!live || paused || settingsOpen) return;
     const timer = window.setTimeout(() => {
       setRound(current => current ? defenseTick(current, profile) : current);
     }, 1000);
     return () => window.clearTimeout(timer);
-  }, [live, paused, profile, seconds]);
+  }, [live, paused, settingsOpen, profile, seconds]);
   useEffect(() => {
     if (round?.status === 'won') {
       setProfile(current => defenseReward(round, current));
@@ -272,7 +259,7 @@ function DefenseGame() {
     <div className="arcade-title"><div><h1>Server Defense</h1><p>Keep the server online and serve at least 78% of legitimate requests.</p></div><strong className="arcade-currency">{profile.budget} budget · {profile.cleared}/{waves.length} waves</strong></div>
     <div className="arcade-layout">
       <Panel title={title}>
-        <Arena traffic={(paused ? null : round?.traffic) ?? [0, 0, 0]} focus={round?.route ?? 1}
+        <Arena3D traffic={round?.traffic ?? [0, 0, 0]} focus={round?.route ?? 1} lite={lite} defense stage={profile.upgrades.capacity * 2} animate={Boolean(live && !paused && !settingsOpen)}
           defended={profile.upgrades.proxy > 0} offline={round?.integrity === 0} />
         <div className="arcade-meters">
           <Meter label="Server integrity" value={round?.integrity ?? 100} />
@@ -291,7 +278,8 @@ function DefenseGame() {
             onClick={() => setRound(current => current ? switchBackup(current) : current)}>Failover ({round?.backups ?? profile.upgrades.backup})</button>
         </div>
         <div className="arcade-actions">
-          {live ? <PauseButton paused={paused} onClick={() => setPaused(!paused)} /> :
+          {live ? <PauseButton paused={paused && !settingsOpen} onClick={() => setPaused(!paused)} onSettings={onSettings} onGames={onGames}
+            onRestart={start} /> :
             <button className="arcade-primary" type="button" onClick={start}>
               {round?.status === 'lost' ? 'Retry wave' : !endless && profile.cleared === waves.length ? 'Replay final wave' : round?.status === 'won' ? 'Next wave' : 'Start wave'}
             </button>}
@@ -333,35 +321,50 @@ function DefenseGame() {
 export function Arcade({ page, onChoose, onHome }: {
   page: ArcadePage; onChoose: (page: ArcadePage) => void; onHome: () => void;
 }) {
-  const theme = getTheme(loadSettings().theme);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [lite, setLite] = useState(() => {
+    try { return localStorage.getItem('pico.games.graphics') !== 'standard'; }
+    catch { return true; }
+  });
+  function changeGraphics(next: boolean) {
+    setLite(next);
+    try { localStorage.setItem('pico.games.graphics', next ? 'lite' : 'standard'); } catch { /* Session preference still applies. */ }
+  }
+  const gameOptions = { lite, settingsOpen, onSettings: () => setSettingsOpen(true), onGames: () => onChoose('games') };
   const siegeProgress = page === 'games' ? readProfile(siegeSave, freshAttack()).cleared : 0;
   const defenseProgress = page === 'games' ? readProfile(defenseSave, freshDefense()).cleared : 0;
-  const accentText = contrastRatio(theme.accent, '#101723') >= 4.5 ? '#101723' : '#fff';
-  const style: Record<string, string> = { ...cssVariables(theme), colorScheme: theme.appearance };
-  style['--arcade-accent-text'] = accentText;
-  return <main className="arcade" data-game={page} style={style}>
+  return <main className="arcade" data-game={page}>
     <header className="arcade-bar"><div>
       <button type="button" onClick={page === 'games' ? onHome : () => onChoose('games')}><ArrowLeft size={16} />{page === 'games' ? 'Pico home' : 'Games'}</button>
       <span><Gamepad2 size={19} /> Pico Games</span>
-    </div><SoundButton /></header>
+    </div><button data-tone="mint" type="button" onClick={gameOptions.onSettings}><Settings2 size={16} />Settings</button></header>
+    {settingsOpen && <GameDialog title="Settings" onClose={() => setSettingsOpen(false)}>
+      <div className="arcade-setting"><strong>Sound effects</strong><SoundButton /></div>
+      <div className="arcade-setting"><strong>Graphics</strong><div className="arcade-actions" aria-label="Graphics quality">
+        <button type="button" aria-pressed={lite} onClick={() => changeGraphics(true)}>Low</button>
+        <button type="button" aria-pressed={!lite} onClick={() => changeGraphics(false)}>Standard</button>
+      </div></div>
+      <p>Low draws fewer packets at a lower resolution. Standard makes traffic denser and smoother.</p>
+      <button className="arcade-primary" type="button" onClick={() => setSettingsOpen(false)}>Done</button>
+    </GameDialog>}
     <div className="arcade-content">
       {page === 'games' ? <>
         <div className="arcade-title"><div><h1>Games</h1><p>Take down a server or keep one running through a traffic storm.</p></div></div>
         <div className="arcade-cards">
           <Panel title="Server Siege">
-            <Arena traffic={[10, 0, 12]} focus={0} shielded={1} />
+            <Arena3D traffic={[10, 0, 12]} focus={0} shielded={1} stage={3} lite={lite} />
             <p>Break through stronger defenses, buy upgrades, and rebirth for permanent perks.</p>
             {siegeProgress > 0 && <p>{siegeProgress}/{missions.length} targets cleared</p>}
             <button className="arcade-primary" type="button" onClick={() => onChoose('games/siege')}><Zap size={17} /> {siegeProgress ? 'Continue' : 'Play'} Server Siege</button>
           </Panel>
           <Panel title="Server Defense">
-            <Arena traffic={[0, 13, 6]} focus={1} defended />
+            <Arena3D traffic={[0, 13, 6]} focus={1} defended defense stage={3} lite={lite} />
             <p>Build defenses, reroute traffic, and keep legitimate visitors connected.</p>
             {defenseProgress > 0 && <p>{defenseProgress}/{waves.length} waves cleared</p>}
-            <button className="arcade-primary" type="button" onClick={() => onChoose('games/defense')}><Shield size={17} /> {defenseProgress ? 'Continue' : 'Play'} Server Defense</button>
+            <button className="arcade-primary" data-tone="mint" type="button" onClick={() => onChoose('games/defense')}><Shield size={17} /> {defenseProgress ? 'Continue' : 'Play'} Server Defense</button>
           </Panel>
         </div>
-      </> : page === 'games/siege' ? <Siege /> : <DefenseGame />}
+      </> : page === 'games/siege' ? <Siege {...gameOptions} /> : <DefenseGame {...gameOptions} />}
     </div>
   </main>;
 }
