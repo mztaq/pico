@@ -5,6 +5,7 @@ import { createTrafficFeed } from './traffic-model';
 import { drawTerminalScreen, terminalHitTest } from './terminal-screen';
 import { isSightBlocked, chooseHackerPhase } from './stealth-logic';
 import { routeTo } from './navigation';
+import { renderOfficeFeed } from './office-monitor';
 
 /* Everything in the incident model stays inside browser memory. */
 const $ = id => document.getElementById(id);
@@ -985,6 +986,42 @@ bpSecurityTexture.colorSpace=THREE.SRGBColorSpace;
 const bpSecurityPlane=new THREE.Mesh(new THREE.PlaneGeometry(1.98,1.2),new THREE.MeshBasicMaterial({map:bpSecurityTexture,side:THREE.DoubleSide}));
 bpSecurityPlane.position.set(bpOfficeConsoleX,1.75,bpOfficeConsoleZ-.396);world.add(bpSecurityPlane);
 
+const bpOfficeMonitorCanvas=document.createElement('canvas');
+bpOfficeMonitorCanvas.width=lowQuality?512:768;
+bpOfficeMonitorCanvas.height=lowQuality?288:432;
+const bpOfficeMonitorContext=bpOfficeMonitorCanvas.getContext('2d');
+const bpOfficeMonitorTexture=new THREE.CanvasTexture(bpOfficeMonitorCanvas);
+bpOfficeMonitorTexture.colorSpace=THREE.SRGBColorSpace;
+bpOfficeMonitorTexture.minFilter=THREE.LinearFilter;
+box(25.75,3.52,-11.68,6.35,3.07,.12,darkMetal);
+const bpOfficeMonitorPlane=new THREE.Mesh(
+  new THREE.PlaneGeometry(6.04,2.77),
+  new THREE.MeshBasicMaterial({map:bpOfficeMonitorTexture,toneMapped:false})
+);
+bpOfficeMonitorPlane.position.set(25.75,3.52,-11.597);
+bpOfficeMonitorPlane.renderOrder=3;
+world.add(bpOfficeMonitorPlane);
+const bpOfficeStatusLeds=[
+  ball(22.75,5.02,-11.53,.065,mint),
+  ball(28.75,5.02,-11.53,.065,mint)
+];
+let bpOfficeMonitorTick=0;
+function bpPaintOfficeMonitor(){
+  const ctx=bpOfficeMonitorContext;
+  if(!ctx)return;
+  const g=game;
+  const alert=Boolean(g&&!g.ended&&bpGuardEmergency(g));
+  renderOfficeFeed(ctx,{
+    traffic:g?.traffic??0,health:g?.health??100,proxies:g?.proxies??0,
+    dispatchActive:Boolean(g?.securityDispatchActive),alert,
+    history:bpWallHistory,
+    requests:g?.requestFeed?.recent??[],
+  });
+  bpOfficeMonitorTexture.needsUpdate=true;
+  for(const led of bpOfficeStatusLeds)led.material=alert?red:mint;
+}
+
+
 /* Main network operations wall. The timeline is generated from the in-game
    counters, not from a live server or any external endpoint. */
 const bpWallCanvas=document.createElement('canvas');
@@ -1554,7 +1591,12 @@ function bpMoveGuard(p,dt,g){
     const fx=p.home[0],fz=p.home[1];
     p.agent.position.x+=(fx-p.agent.position.x)*Math.min(1,dt*4);
     p.agent.position.z+=(fz-p.agent.position.z)*Math.min(1,dt*4);
-    p.agent.rotation.y+=Math.sin(g.elapsed*.45+p.agent.id)*dt*.09;
+    const monitorYaw=Math.atan2(25.75-p.agent.position.x,-11.6-p.agent.position.z);
+    const angle=monitorYaw+Math.sin(g.elapsed*.38+p.agent.id)*.06;
+    const diff=Math.atan2(Math.sin(angle-p.agent.rotation.y),Math.cos(angle-p.agent.rotation.y));
+    p.agent.rotation.y+=diff*Math.min(1,dt*2.5);
+    if(p.agent.children[5])p.agent.children[5].rotation.z=
+      -.11+Math.sin(g.elapsed*.8+p.agent.id)*.12;
     return;
   }
   if(p.state==='switching'){
@@ -1841,6 +1883,10 @@ animateScene=function(t,dt){
   }
   bpWallPaintTimer+=dt;
   if(bpWallPaintTimer>(lowQuality?.75:.25)){bpWallPaintTimer=0;bpWallGraph(t);}
+  bpOfficeMonitorTick+=dt;
+  if(bpOfficeMonitorTick>(lowQuality?.85:.34)){
+    bpOfficeMonitorTick=0;bpPaintOfficeMonitor();
+  }
   bpMonitorTick+=dt;
   if(bpMonitorTick>(bp.terminal?.09:lowQuality?.45:.18)){
     bpMonitorTick=0;
@@ -1890,6 +1936,7 @@ endGame=function(win,title,description){
 renderer.domElement.setAttribute('aria-label','First-person 3D data center game. WASD to move, mouse to look, E to use nearby laptop, C to crouch, V for third-person view.');
 
 bpWallGraph(0);
+bpPaintOfficeMonitor();
 bpApplyQuality();
 resize();focus('overview');moveCamera(10);renderer.render(scene,camera);
 frame();
