@@ -838,7 +838,7 @@ function bpDrawScreen(ctx,texture,title,redMode,t){
   ctx.fillStyle=redMode?'#f38ba8':'#a6e3a1';ctx.fillRect(0,0,w,6);
   ctx.font='bold 22px monospace';ctx.fillText(title,21,39);
   ctx.font='15px monospace';ctx.fillStyle='#bac2de';
-  ctx.fillText('LOCAL TEST / DOCUMENTATION NETWORK',21,76);
+  ctx.fillText('PICO DATACENTER / SERVER ROOM A',21,76);
   ctx.fillText('203.0.113.24 / INCIDENT '+(game&&game.mode==='attack'?'A':'B'),21,104);
   const rate=game?game.traffic:0;
   ctx.fillStyle='#cdd6f4';ctx.font='bold 24px monospace';
