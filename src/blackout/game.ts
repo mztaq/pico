@@ -268,20 +268,49 @@ light(10.7,2.2,-5,0x539fed,2,6);
 // Defense proxy pylons appear as network layers under load.
 function createProxy(index){
   const g=new THREE.Group();
-  g.position.set(-.7+index*1.16,0,-7.8+(index%2)*1.1);dynamic.add(g);
+  // Powered-down edge appliances await a physical switch from a responding guard.
+  g.position.set(9.35+(index%2)*2.15,0,-9.45+Math.floor(index/2)*1.55);dynamic.add(g);
   const p=mat('#2a4647',{metal:.76,rough:.3});
   box(0,.17,0,.8,.28,.8,edgeMetal,g);
   box(0,1.15,0,.55,1.78,.55,p,g);
+  const statusIndicators=[];
   for(let y of [.48,.86,1.24,1.62]){
     box(0,y,.3,.43,.14,.024,screen,g);
-    box(.16,y,.322,.04,.036,.02,mint,g);
+    statusIndicators.push(box(.16,y,.322,.04,.036,.02,mat('#303c48',{metal:.3,rough:.68}),g));
   }
   const ring=torus(0,2.25,0,.54,.06,mint,g);ring.rotation.x=Math.PI/2;
   const cap=ball(0,2.3,0,.22,mint,g);
-  const glow=light(0,2.4,0,0x54e8c6,1.4,3,g);
-  g.userData={ring,glow};proxyObjects.push(g);return g;
+  const glow=light(0,2.4,0,0x54e8c6,0,3,g);
+  const switchBox=box(.32,1.12,.33,.09,.2,.12,edgeMetal,g);
+  const switchLever=box(.32,1.15,.41,.045,.11,.045,mat('#efc58c',{metal:.45,rough:.4}),g);
+  ring.material=mat('#323c4a',{metal:.51,rough:.48});
+  cap.material=mat('#263b43',{metal:.31,rough:.42});
+  g.userData={ring,cap,glow,statusIndicators,switchLever,powered:false};
+  proxyObjects.push(g);return g;
 }
-for(let i=0;i<6;i++){let g=createProxy(i);g.visible=false;}
+for(let i=0;i<6;i++){let g=createProxy(i);g.visible=true;}
+function bpPowerProxy(index){
+  const proxy=proxyObjects[index];
+  if(!proxy||proxy.userData.powered)return false;
+  proxy.userData.powered=true;
+  proxy.userData.ring.material=mint;
+  proxy.userData.cap.material=mint;
+  proxy.userData.glow.intensity=2.1;
+  proxy.userData.switchLever.rotation.x=-.5;
+  for(const light of proxy.userData.statusIndicators)light.material=mint;
+  sfx.deploy();
+  bpShowIncident('EDGE APPLIANCE '+String(index+1).padStart(2,'0')+' / POWER ON');
+  return true;
+}
+function bpResetProxies(){
+  for(const proxy of proxyObjects){
+    proxy.visible=true;proxy.userData.powered=false;
+    proxy.userData.ring.material=mat('#323c4a',{metal:.51,rough:.48});
+    proxy.userData.cap.material=mat('#263b43',{metal:.31,rough:.42});
+    proxy.userData.glow.intensity=0;proxy.userData.switchLever.rotation.x=0;
+    for(const led of proxy.userData.statusIndicators)led.material=mat('#303c48',{metal:.3,rough:.68});
+  }
+}
 
 // Flowing request packets. No requests are emitted by this code.
 const requestCurve=new THREE.CatmullRomCurve3([V(-8.5,2.5,2.1),V(-5.8,4.1,-.3),V(-1.3,3.2,-3),V(2,3.8,-3),V(4.3,3.1,-3)]);
@@ -448,7 +477,7 @@ function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
     risk:mode==='attack'?0:8,trace:mode==='defend'?0:0,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
-    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),
+    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,nextDispatchAllowed:0,securityResponseUntil:0,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),
   };
 }
 function startGame(mode){
@@ -459,7 +488,7 @@ function startGame(mode){
   $('trace-label').textContent=mode==='attack'?'TRACE EXPOSURE':'CASE EVIDENCE';
   $('trace-sub').textContent=mode==='attack'?'DETECTION THRESHOLD':'SUSPECT IDENTIFICATION';
   $('progressbar').classList.toggle('alert',mode==='attack');
-  for(let o of proxyObjects)o.visible=false;
+  bpResetProxies();
   reqTube.visible=true;world.visible=true;dynamic.visible=true;jail.visible=false;
   scene.fog.density=.010;scene.background.set('#25313f');
   actionButtons.clear();$('actions').replaceChildren();
@@ -489,7 +518,12 @@ function act(id){
     const a=ACTIONS.attack.find(v=>v.id===id);g.cooldowns[id]=a.cd;
   } else {
     switch(id){
-      case'proxy':if(g.proxies>=6)return;g.proxies++;log('Proxy '+g.proxies+' is intercepting incoming traffic.','good');notify('EDGE PROXY DEPLOYED');sfx.deploy();focus('servers');break;
+      case'proxy':
+        if(g.proxies+(g.proxyOrders||0)>=6)return;
+        g.proxyOrders=(g.proxyOrders||0)+1;
+        g.nextDispatchAllowed=Math.min(g.nextDispatchAllowed??g.elapsed,g.elapsed);
+        notify('SECURITY CREW ASSIGNED TO EDGE CABINET');
+        sfx.scan();break;
       case'limit':g.limit=13;log('Emergency rate limiting enabled.','good');notify('RATE LIMITS ACTIVE');sfx.deploy();break;
       case'analyze':g.trace=Math.min(100,g.trace+15);log('Matching traffic fingerprint filed as evidence.','good');sfx.scan();break;
       case'trace':if(g.trace<22)return;g.trace=Math.min(100,g.trace+19);log('Relay trail correlated with security cameras.','good');sfx.scan();focus('hacker');break;
@@ -519,9 +553,9 @@ function stepGame(dt){
   g.burst=Math.max(0,g.burst-dt);g.reroute=Math.max(0,g.reroute-dt);g.limit=Math.max(0,g.limit-dt);
   if(g.mode==='attack'){
     // Automated defenders gradually bring edge mitigation online.
-    if(g.elapsed>=g.nextDefenderProxy && g.proxies<5){
-      g.proxies++;g.nextDefenderProxy+=17+g.proxies*2;
-      log('Blue team activated proxy '+g.proxies+'.','warn');sfx.alert();notify('DEFENDERS ARE DEPLOYING PROXY SERVERS',true);
+    if(g.elapsed>=g.nextDefenderProxy && (g.burst>0||g.traffic>11000) && g.proxies+(g.proxyOrders||0)<6){
+      g.proxyOrders=(g.proxyOrders||0)+1;
+      g.nextDefenderProxy=g.elapsed+49;
     }
     const targetRps=750+g.bots*185+(g.burst>0?14500:0);
     g.traffic=g.requestFeed.step({targetRps,elapsed:g.elapsed,health:g.health,proxies:g.proxies,burst:g.burst>0},dt);
@@ -607,7 +641,11 @@ function animateScene(t,dt){
     blocked[i].visible=false;
     if(blocked[i].visible)blocked[i].position.copy(outgoingCurve.getPointAt((t*.15+i*.13)%1));
   }
-  proxyObjects.forEach((o,i)=>{o.userData.ring.rotation.z=t*.52+(i%2)*.4;o.userData.glow.intensity=1.2+.45*Math.sin(t*2+i);});
+  proxyObjects.forEach((o,i)=>{
+    if(!o.userData.powered)return;
+    o.userData.ring.rotation.z=t*.52+(i%2)*.4;
+    o.userData.glow.intensity=1.35+.4*Math.sin(t*2+i);
+  });
   if(jail.visible){sirenRed.intensity=2.5+2*Math.max(0,Math.sin(t*6));sirenBlue.intensity=2.5+2*Math.max(0,Math.sin(t*6+Math.PI));}
   flashAlpha+=(0-flashAlpha)*Math.min(1,dt*2.4);
   $('flash').style.opacity=String(Math.max(0,flashAlpha));
