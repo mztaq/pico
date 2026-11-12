@@ -1125,7 +1125,7 @@ startGame=function(mode){
   $('interaction-hint').classList.remove('visible');
   $('red-alert').classList.remove('visible');
   $('mission-step').textContent=mode==='attack'
-    ? 'Approach the attacker laptop and press E. Work from its screen while avoiding security patrols.'
+    ? 'Press E to use the laptop. Press F to unplug and carry it when the guards arrive.'
     : 'Walk to the security control desk and press E. Deploy defenses, collect evidence, then find the suspect.';
   $('control-help').style.display='block';
   updateUI(true);
@@ -1602,10 +1602,13 @@ updateUI=function(force=false){
   const rpm=Math.round(bpSmoothedRpm);
   $('health').parentElement.querySelector('.sub').textContent='COOLING FANS '+rpm.toLocaleString()+' RPM';
   if(g.mode==='attack'){
-    $('mission-step').textContent=g.proxies===0?
-      'Use the laptop to build traffic. Watch exposure and avoid security patrols.':
-      g.proxies<3?'New proxies absorb traffic. Return to the laptop and adjust your approach.':
-      'Heavy mitigation active. Reach zero integrity without reaching 100% exposure.';
+    $('mission-step').textContent=bpAttackLaptopCarried?
+      'Laptop secured. Evade security, then return to the rack and press F to reconnect.':
+      g.securityDispatchActive?
+      'Security is searching the hall. Press F near the laptop to unplug it before sprinting.':
+      g.proxies===0?'Use E to operate the laptop. F unplugs it when you need to escape.':
+      g.proxies<3?'Edge proxies are switching on. Check the laptop and watch for the guards.':
+      'More proxies are active. Keep the network under pressure while avoiding arrest.';
   }else{
     if(g.coolingEventUntil>g.elapsed){
       $('mission-step').textContent='Cooling pressure rising. Find the coolant reset panel by the east server racks. Press E to stabilize.';
