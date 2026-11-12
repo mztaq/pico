@@ -1435,7 +1435,7 @@ startGame=function(mode){
   bpHackerState='working';bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;bpHackerSafeSince=-1;attacker.scale.y=1;
   bpHackerRoute=[];bpHackerRouteIndex=0;bpHackerCoverDestination=null;bpHackerRepathAt=0;
   bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;bpHackerSortieCount=0;bpHackerSortieVisited.clear();
-  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;p.evidenceId=null;}
+  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;p.evidenceId='';}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
   attacker.visible=mode==='defend';attacker.position.set(-8.5,0,4.18);attacker.rotation.y=Math.PI;
@@ -1652,11 +1652,11 @@ function bpMovePlayer(dt){
 /* Guard office: crews remain inside until a genuine alarm or dispatch order.
    Dispatches end with a physical return to base. No teleporting NPCs. */
 const patrols=[
-  {agent:security,role:'proxy',home:[21.2,-.6],index:0,speed:1.70,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:null as string|null},
-  {agent:character(23.4,4.1,'guard'),role:'search',home:[23.4,4.1],index:0,speed:1.58,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:null as string|null},
-  {agent:character(25.8,-4.5,'guard'),role:'search',home:[25.8,-4.5],index:0,speed:1.52,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:1,evidenceId:null as string|null},
-  {agent:character(19.0,-1.8,'guard'),role:'forensic',home:[19.0,-1.8],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:null as string|null},
-  {agent:character(27.4,2.9,'guard'),role:'forensic',home:[27.4,2.9],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:1,evidenceId:null as string|null},
+  {agent:security,role:'proxy',home:[21.2,-.6],index:0,speed:1.70,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:''},
+  {agent:character(23.4,4.1,'guard'),role:'search',home:[23.4,4.1],index:0,speed:1.58,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:''},
+  {agent:character(25.8,-4.5,'guard'),role:'search',home:[25.8,-4.5],index:0,speed:1.52,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:1,evidenceId:''},
+  {agent:character(19.0,-1.8,'guard'),role:'forensic',home:[19.0,-1.8],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0,evidenceId:''},
+  {agent:character(27.4,2.9,'guard'),role:'forensic',home:[27.4,2.9],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:1,evidenceId:''},
 ];
 const bpGuards=patrols.map(p=>p.agent);
 for(const p of patrols){
@@ -1839,7 +1839,7 @@ function bpMoveGuard(p,dt,g){
           bpShowIncident('CASE VERIFIED / ARREST AUTHORIZED');
         }
       }
-      p.evidenceId=null;bpGuardSetReturn(p);
+      p.evidenceId='';bpGuardSetReturn(p);
     }
     return;
   }
