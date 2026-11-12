@@ -14,6 +14,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("import { drawTerminalScreen, terminalHitTest } from './terminal-screen'");
     expect(game).toContain("import { routeTo } from './navigation'");
     expect(game).toContain("import { moveGuardWithAvoidance } from './guard-movement'");
+    expect(game).toContain("import {EVIDENCE_STATIONS,selectGuardEvidence,collectGuardEvidence} from './evidence-coordination'");
     expect(game).toContain("import { renderOfficeFeed } from './office-monitor'");
     expect(game).toContain("import { rankedCoverSpots, formationPosition } from './ai-coordination'");
     expect(game).toContain("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth'");
@@ -21,7 +22,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("import {");
     expect(game).toContain("} from './security-response'");
     expect(game).toContain('observeSecurityAlarm(g,activeAlarm)');
-    expect(game).toContain("const respondersReturning=g.securityDispatchActive&&patrols.every(p=>");
+    expect(game).toContain("const respondersReturning=g.securityDispatchActive&&patrols");
     expect(game).toContain('if(shouldDispatchSecurity(g,respondersReturning))');
     expect(game).toContain("const firstSweep=g.mode==='attack'");
     expect(game).toContain('p.path=bpGuardRoute(p.agent.position,firstSweep)');
@@ -37,6 +38,7 @@ describe('Blackout Protocol 3D', () => {
       .replace("import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working"; const hackerAreaIsClear = () => true;')
       .replace("import { routeTo } from './navigation';", 'const routeTo = () => [];')
       .replace("import { moveGuardWithAvoidance } from './guard-movement';", "const moveGuardWithAvoidance = () => ({point:{x:0,z:0},arrived:false,moved:0});")
+      .replace("import {EVIDENCE_STATIONS,selectGuardEvidence,collectGuardEvidence} from './evidence-coordination';", "const EVIDENCE_STATIONS = []; const selectGuardEvidence = () => null; const collectGuardEvidence = () => false;")
       .replace("import { renderOfficeFeed } from './office-monitor';", 'const renderOfficeFeed = () => {};')
       .replace("import { rankedCoverSpots, formationPosition } from './ai-coordination';", 'const rankedCoverSpots = () => []; const formationPosition = () => ({x:0,z:0});')
       .replace("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
@@ -69,7 +71,7 @@ describe('Blackout Protocol 3D', () => {
   });
 
   it('supports an extended first-person mission with independent patrols', () => {
-    expect(game).toContain('const GAME_SECONDS=720;');
+    expect(game).toContain('const GAME_SECONDS=1080;');
     expect(game).toContain('function bpOpenTerminal()');
     expect(game).toContain("e.code==='KeyE'");
     expect(game).toContain('function bpWalkable(x,z)');
@@ -84,6 +86,22 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("if(bpHackerState==='escaping')");
     expect(game).toContain('function bpGuardRoute(from,to)');
     expect(game).toContain('function bpGuardWalkable(x,z)');
+    expect(game).toContain('function bpDispatchForensicGuards(g)');
+    expect(game).toContain("p.state='investigating'");
+    expect(game).toContain("p.state='collecting'");
+    expect(game).toContain("p.state='detaining'");
+    expect(game).toContain('collectGuardEvidence(g,station)');
+    expect(game).toContain('const bpCctvModels=[');
+    expect(game).toContain('function bpRenderCctv(dt)');
+    expect(game).toContain('renderer.setRenderTarget(feed.target)');
+    expect(game).toContain('bpRenderCctv(dt)');
+    expect(game).toContain('const rackCoords=[');
+    expect(game).toContain('bpHackerSortieCount<3');
+    expect(game).toContain('bpHackerSortieVisited.add(disabled)');
+    expect(game).toContain('const fanSurge=g.securityDispatchActive &&');
+    expect(game).toContain('this.fan.gain.value=.038');
+    expect(game).toContain('fanLoad=0');
+    expect(game).toContain("g.suspectHeld=true;g.suspectHoldGuard=p.agent");
     expect(game).toContain('function bpRecoverGuard(p,g)');
     expect(game).toContain('p.stalledFor=(p.stalledFor||0)+dt');
     expect(game).toContain('if(p.stalledFor>1.15)bpRecoverGuard(p,g)');
@@ -91,11 +109,11 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('bpFollowHackerRoute(dt,4.15)');
     expect(game).toContain('bpFollowHackerRoute(dt,2.85)');
     expect(game).toContain('bpFollowHackerRoute(dt,3.0)');
-    expect(game).toContain('Math.pow(saturation-1,1.14)*2.9');
+    expect(game).toContain('Math.pow(saturation-1,1.14)*1.35');
     expect(game).toContain("p.state='chasing'");
     expect(game).toContain('p.repathAt=g.elapsed+');
     expect(game).toContain("p.path=bpGuardRoute(p.agent.position,destination)");
-    expect(game).toContain("const slot=formationPosition(p.lastSeen,attacker.rotation.y,p.approachIndex??0)");
+    expect(game).toContain("const slot=formationPosition(p.lastSeen,attacker.rotation.y,p.approachIndex??0,g.trace>=100?1.35:2.35)");
     expect(game).toContain("function bpHackerThreats()");
     expect(game).toContain("const clear=hackerAreaIsClear(guardPositions,bp.player,attacker.position,bpWorkPosition)");
     expect(game).toContain("bpHackerSafeSince+2.5");
@@ -163,9 +181,9 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("game.proxySabotage={index:proxyIndex,until:game.elapsed+2.2}");
     expect(game).toContain("bpDisableProxy(task.index,'intruder')");
     expect(game).toContain("if(game.mode==='defend'&&!proxy.userData.powered)");
-    expect(game).toContain('function bpPlanHackerProxySabotage(g)');
+    expect(game).toContain('function bpPlanHackerProxySabotage(g,continueSortie=false)');
     expect(game).toContain("bpHackerState='sabotaging'");
-    expect(game).toContain("bpDisableProxy(bpHackerTargetProxy,'the hooded suspect')");
+    expect(game).toContain("bpDisableProxy(disabled,'the hooded suspect')");
     expect(game).toContain("const targetRps=(750+g.bots*185+(g.burst>0?14500:0))*ATTACK_TRAFFIC_SCALE");
     expect(game).toContain("const targetRps=(3800+g.bots*118+(g.attackerWave>0?4700:0))*DEFENSE_WAVE_SCALE");
     expect(game).toContain("p.state=p.path.length?'coolingTravel':'returning'");
