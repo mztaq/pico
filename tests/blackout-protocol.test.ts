@@ -108,8 +108,8 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('const rackCoords=[');
     expect(game).toContain('bpHackerSortieCount<3');
     expect(game).toContain('bpHackerSortieVisited.add(disabled)');
-    expect(game).toContain('const fanSurge=g.securityDispatchActive &&');
-    expect(game).toContain('this.fan.gain.value=.038');
+    expect(game).toContain('const fanSurge=Boolean(g.securityDispatchActive &&');
+    expect(game).toContain('this.fan.gain.value=.042');
     expect(game).toContain('fanLoad=0');
     expect(game).toContain("g.suspectHeld=true");
     expect(game).toContain('function bpRecoverGuard(p,g)');
