@@ -240,24 +240,24 @@ for(let y=.6;y<4.2;y+=.35){
 }
 box(-10.53,1.58,3.23,.74,.18,.09,mat('#182b37',{metal:.75,rough:.25}));
 const bpNetworkPort=ball(-10.28,1.57,3.29,.075,mint);
-box(-9.40,1.3,3.09,1.68,.065,.91,mat('#2a303a',{metal:.72,rough:.35}));
-box(-9.4,1.28,3.58,1.05,.045,.41,black);
+box(-8.5,1.3,3.09,1.68,.065,.91,mat('#2a303a',{metal:.72,rough:.35}));
+box(-8.5,1.28,3.58,1.05,.045,.41,black);
 for(let k=0;k<12;k++)for(let row=0;row<3;row++)
-  box(-9.97+k*.104,1.316,3.43+row*.09,.073,.012,.066,mat('#51606e',{metal:.28,rough:.8}));
+  box(-9.07+k*.104,1.316,3.43+row*.09,.073,.012,.066,mat('#51606e',{metal:.28,rough:.8}));
 box(-9.4,1.82,2.67,1.76,1.12,.09,darkMetal);
 box(-9.4,1.81,2.721,1.59,.98,.02,mat('#172934',{metal:.16,rough:.3,glow:.9}));
-box(-9.39,1.41,3.1,.16,.045,.17,mat('#3d4153',{metal:.5,rough:.4}));
-const bpLaptopHarness=box(-9.4,.98,3.55,1.45,.12,.18,darkMetal);
-for(const xx of [-9.9,-8.9]){
+box(-8.49,1.41,3.1,.16,.045,.17,mat('#3d4153',{metal:.5,rough:.4}));
+const bpLaptopHarness=box(-8.5,.98,3.55,1.45,.12,.18,darkMetal);
+for(const xx of [-9,-8]){
   box(xx,1.1,3.61,.16,.24,.26,edgeMetal);
 }
 const bpCableGeometry=new THREE.CatmullRomCurve3([
-  V(-9.95,1.32,3.1),V(-10.25,1.06,3.5),V(-10.9,1.03,3.65),V(-10.85,1.48,3.34),V(-10.28,1.57,3.29)
+  V(-9.38,1.32,3.1),V(-9.75,1.03,3.6),V(-10.9,1.03,3.65),V(-10.85,1.48,3.34),V(-10.28,1.57,3.29)
 ]);
 const bpCable=mesh(new THREE.TubeGeometry(bpCableGeometry,24,.028,5,false),
   mat('#d8a968',{metal:.09,rough:.76}),[0,0,0],world,false);
 const bpCableLight=ball(-10.30,1.57,3.35,.065,mint);
-light(-9.55,2.51,3.1,0x90c6e9,2.7,4);
+light(-8.55,2.51,3.1,0x90c6e9,2.1,4);
 // Portable laptop is wired to the rack; the hooded character leaves it to flee.
 // Defensive edge appliances and control desks.
 box(10.7,1.01,-5.2,3.4,.12,1.3,edgeMetal);
@@ -690,7 +690,7 @@ const bp = {
 };
 const bpClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const bpDistance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
-const bpAttackerDesk=V(-9.4,0,3.97);
+const bpAttackerDesk=V(-8.5,0,3.97);
 const bpDefenseDesk=V(10.7,0,-4.25);
 const bpHideSpot=V(-4.15,0,8.8);
 const bpCoolingStation=V(8.4,0,4.4);
@@ -748,62 +748,26 @@ for(const side of [-1,1]){
   box(side*.29,2.4,.43,.065,.38,.05,bpHoodCloth,attacker);
 }
 box(0,2.85,.16,.54,.1,.30,bpHoodCloth,attacker);
-const bpLaptopBottom=box(-9.4,1.33,3.09,1.69,.06,.91,darkMetal);
-const bpLaptopLid=box(-9.4,1.82,2.67,1.76,1.12,.09,darkMetal);
-const bpLaptopScreen=box(-9.4,1.82,2.724,1.61,.98,.018,mat('#122b36',{metal:.15,rough:.25,glow:1.8}));
-label('PICO / CONSOLE',-9.4,1.9,2.743,1.48,.26);
-for(let i=0;i<5;i++)box(-10.02,1.60+i*.09,2.745,1.14-i*.1,.02,.014,i%2?mint:blue);
-const bpLaptopBeacon=light(-9.4,2.51,2.82,0x8de4d4,1.7,4);
+const bpLaptopBottom=box(-8.5,1.33,3.09,1.69,.06,.91,darkMetal);
+const bpLaptopLid=box(-8.5,1.82,2.62,1.84,1.19,.09,darkMetal);
+// The CanvasTexture below is the only illuminated laptop screen surface.
+
+
+const bpLaptopBeacon=light(-8.5,2.49,2.79,0x8de4d4,1.35,4);
 const bpConsoleBeacon=light(10.7,2.62,-5.25,0x9e8ceb,2.1,4);
 
-const bpAuxScreenCanvases=[];
-for(const x of [-9.9,-8.25]){
-  const canvas=document.createElement('canvas');canvas.width=320;canvas.height=208;
-  const context=canvas.getContext('2d'),texture=new THREE.CanvasTexture(canvas);
-  texture.colorSpace=THREE.SRGBColorSpace;
-  const plane=new THREE.Mesh(new THREE.PlaneGeometry(1.39,.93),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide}));
-  plane.position.set(x,1.91,2.38);world.add(plane);
-  bpAuxScreenCanvases.push({canvas,context,texture});
-}
-function bpPaintAuxScreens(t){
-  for(let idx=0;idx<bpAuxScreenCanvases.length;idx++){
-    const {context:ctx,texture}=bpAuxScreenCanvases[idx];if(!ctx)continue;
-    ctx.fillStyle='#0a1320';ctx.fillRect(0,0,320,208);
-    ctx.fillStyle=idx===0?'#cba6f7':'#89b4fa';ctx.fillRect(0,0,320,7);
-    ctx.fillStyle='#dce4ff';ctx.font='bold 16px monospace';ctx.fillText(idx===0?'EDGE CONTROL':'REQUEST STREAM',14,29);
-    ctx.fillStyle='#8eacc2';ctx.font='11px monospace';ctx.fillText('DATACENTER / WEST TERMINAL',14,45);
-    const recent=game?.requestFeed?.recent??[];
-    if(idx===0){
-      const rate=game?.traffic??0,scale=Math.min(1,rate/60000);
-      ctx.fillStyle='#cad6ed';ctx.font='bold 23px monospace';ctx.fillText(Math.round(rate).toLocaleString('en-US')+' RPS',14,84);
-      ctx.fillStyle='#273850';ctx.fillRect(14,98,290,16);
-      ctx.fillStyle=game?.burst>0?'#f38ba8':'#a6e3a1';ctx.fillRect(14,98,290*scale,16);
-      ctx.strokeStyle='#89b4fa';ctx.lineWidth=2;ctx.beginPath();
-      for(let i=0;i<60;i++){
-        const y=166-Math.sin(i*.25+t*3)*8-Math.min(26,rate/2200)+Math.sin(i*.1+t)*4;
-        i===0?ctx.moveTo(14,y):ctx.lineTo(14+i*4.85,y);
-      }ctx.stroke();
-    }else{
-      const rows=recent.slice(-5).reverse();
-      ctx.font='12px monospace';
-      for(let i=0;i<rows.length;i++){
-        const entry=rows[i],y=73+i*27;
-        ctx.fillStyle=entry.status>=500?'#f38ba8':entry.status===429?'#f9e2af':'#a6e3a1';
-        ctx.fillText(entry.status+' #'+entry.id,14,y);
-        ctx.fillStyle='#9eb1c9';ctx.fillText(entry.path.slice(0,19),110,y);
-      }
-    }
-    texture.needsUpdate=true;
-  }
-}
 const bpDisplayCanvas=document.createElement('canvas');
 bpDisplayCanvas.width=1024;bpDisplayCanvas.height=720;
 const bpDisplayContext=bpDisplayCanvas.getContext('2d');
 const bpDisplayTexture=new THREE.CanvasTexture(bpDisplayCanvas);
 bpDisplayTexture.colorSpace=THREE.SRGBColorSpace;
-const bpDisplayPlane=new THREE.Mesh(new THREE.PlaneGeometry(1.26,.89),new THREE.MeshBasicMaterial({map:bpDisplayTexture,side:THREE.DoubleSide}));
-bpDisplayPlane.scale.set(1.28,1.13,1);
-bpDisplayPlane.position.set(-9.4,1.82,2.764);world.add(bpDisplayPlane);
+const bpDisplayPlane=new THREE.Mesh(
+  new THREE.PlaneGeometry(1.68,1.045),
+  new THREE.MeshBasicMaterial({map:bpDisplayTexture,side:THREE.FrontSide,toneMapped:false})
+);
+bpDisplayPlane.position.set(-8.5,1.82,2.684);
+bpDisplayPlane.renderOrder=2;
+world.add(bpDisplayPlane);
 const bpSecurityCanvas=document.createElement('canvas');
 bpSecurityCanvas.width=1024;bpSecurityCanvas.height=620;
 const bpSecurityCtx=bpSecurityCanvas.getContext('2d');
@@ -953,7 +917,7 @@ function bpDrawScreen(ctx,texture,title,redMode,t){
 }
 
 
-const bpTerminalAttackEye=V(-9.4,1.82,3.94);
+const bpTerminalAttackEye=V(-8.5,1.82,3.92);
 const bpTerminalDefenseEye=V(10.7,1.82,-3.91);
 const bpTerminalRaycaster=new THREE.Raycaster();
 const bpTerminalNdc=new THREE.Vector2();
@@ -1043,7 +1007,7 @@ startGame=function(mode){
   bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;attacker.scale.y=1;
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
-  attacker.visible=mode==='defend';attacker.position.set(-9.4,0,4.18);attacker.rotation.y=Math.PI;
+  attacker.visible=mode==='defend';attacker.position.set(-8.5,0,4.18);attacker.rotation.y=Math.PI;
   security.position.set(patrols[0].home[0],0,patrols[0].home[1]);
   bpPlayerAvatar.visible=false;
   document.body.classList.remove('terminal-open');
@@ -1174,7 +1138,7 @@ function bpWalkable(x,z){
   if(x>15.1&&(z < -11.4 || z > 11.4))return false;
   for(const [rx,rz] of rackCoords)
     if(Math.abs(x-rx)<1.26 && Math.abs(z-rz)<1.38)return false;
-  if(x>-11.55 && x<-8.45 && z>1.55 && z<3.85)return false;
+  if(x>-11.55 && x<-7.55 && z>1.55 && z<3.80)return false;
   if(x>8.75 && x<12.65 && z>-6.05 && z<-4.38)return false;
   return true;
 }
@@ -1228,7 +1192,7 @@ for(const p of patrols){
   box(-.31,.28,.33,.09,.31,.08,uniform,guard);
   box(.31,.28,.33,.09,.31,.08,uniform,guard);
 }
-const bpWorkPosition=V(-9.4,0,4.18);
+const bpWorkPosition=V(-8.5,0,4.18);
 const bpHackerEscape=[V(-10.15,0,6.62),V(-14.2,0,10.1),V(-20.5,0,10.1),V(-21.2,0,8.0)];
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
 let bpHackerState='working',bpHackerWaypoint=0,bpHackerHoldUntil=0,bpHackerStateTime=0;
@@ -1551,7 +1515,6 @@ animateScene=function(t,dt){
       bpDrawScreen(bpDisplayContext,bpDisplayTexture,'ATTACKER LAPTOP',Boolean(game&&game.burst>0),t);
       bpDrawScreen(bpSecurityCtx,bpSecurityTexture,'SECURITY CONSOLE',Boolean(game&&game.health<55),t);
     }
-    bpPaintAuxScreens(t);
   }
   const targetRpm=game?Math.min(6100,950+Math.min(1,game.traffic/18500)*3500+(100-game.health)*16+(game.burst>0||game.attackerWave>0?800:0)):940;
   bpSmoothedRpm+=(targetRpm-bpSmoothedRpm)*Math.min(1,dt*(game?.burst>0||game?.attackerWave>0?3:1.25));
