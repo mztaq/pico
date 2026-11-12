@@ -1,18 +1,9 @@
 // @ts-nocheck
 // Bundled by Vite as an application module. Network operations exist only in memory.
-export {};
+import * as THREE from 'three';
 
-/* Pico Blackout Protocol: all addresses, nodes, and traffic exist only in browser memory.
-   No network requests to the simulated target are performed. */
+/* Everything in the incident model stays inside browser memory. */
 const $ = id => document.getElementById(id);
-const threeModuleURL='https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-let THREE;
-try {
-  THREE = await import(/* @vite-ignore */ threeModuleURL);
-} catch (error) {
-  $('loading').innerHTML = '<div style="font-size:32px">⚠</div><div>3D RENDERER UNAVAILABLE</div><small>Connect to the internet to load the graphics engine, then reload the page.</small><button class="endbtn" onclick="location.reload()">RETRY</button>';
-  throw error;
-}
 
 // --------------------------------------------------------------------------
 // 3D scene, physical lighting, materials and reusable geometry.
