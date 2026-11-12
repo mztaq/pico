@@ -520,8 +520,8 @@ function act(id){
     switch(id){
       case'proxy':if(g.proxies>=6)return;g.proxies++;log('Proxy '+g.proxies+' is intercepting incoming traffic.','good');notify('EDGE PROXY DEPLOYED');sfx.deploy();focus('servers');break;
       case'limit':g.limit=13;log('Emergency rate limiting enabled.','good');notify('RATE LIMITS ACTIVE');sfx.deploy();break;
-      case'analyze':g.trace=Math.min(100,g.trace+22);log('Matching traffic fingerprint filed as evidence.','good');sfx.scan();break;
-      case'trace':if(g.trace<22)return;g.trace=Math.min(100,g.trace+28);log('Synthetic relay trail correlated with security cameras.','good');sfx.scan();focus('hacker');break;
+      case'analyze':g.trace=Math.min(100,g.trace+15);log('Matching traffic fingerprint filed as evidence.','good');sfx.scan();break;
+      case'trace':if(g.trace<22)return;g.trace=Math.min(100,g.trace+19);log('Synthetic relay trail correlated with security cameras.','good');sfx.scan();focus('hacker');break;
       case'arrest':if(g.trace<100)return;g.arrested=true;endGame(true,'SUSPECT ARRESTED','The response team stabilized the web servers, verified the simulated evidence, and secured the hooded attacker in a detention cell.');return;
     }
     const a=ACTIONS.defend.find(v=>v.id===id);g.cooldowns[id]=a.cd;
@@ -722,6 +722,50 @@ label('LOCAL SIMULATION // READY',-8.8,1.87,2.979,1.16,.25);
 for(let i=0;i<5;i++)box(-9.31,1.61+i*.08,2.986,.95-i*.1,.018,.018,i%2?mint:blue);
 const bpLaptopBeacon=light(-8.8,2.45,3.07,0x8de4d4,1.7,4);
 const bpConsoleBeacon=light(10.7,2.62,-5.25,0x9e8ceb,2.1,4);
+
+const bpDisplayCanvas=document.createElement('canvas');
+bpDisplayCanvas.width=512;bpDisplayCanvas.height=288;
+const bpDisplayContext=bpDisplayCanvas.getContext('2d');
+const bpDisplayTexture=new THREE.CanvasTexture(bpDisplayCanvas);
+bpDisplayTexture.colorSpace=THREE.SRGBColorSpace;
+const bpDisplayPlane=new THREE.Mesh(new THREE.PlaneGeometry(1.26,.89),new THREE.MeshBasicMaterial({map:bpDisplayTexture,side:THREE.DoubleSide}));
+bpDisplayPlane.position.set(-8.8,1.79,3.014);world.add(bpDisplayPlane);
+const bpSecurityCanvas=document.createElement('canvas');
+bpSecurityCanvas.width=512;bpSecurityCanvas.height=288;
+const bpSecurityCtx=bpSecurityCanvas.getContext('2d');
+const bpSecurityTexture=new THREE.CanvasTexture(bpSecurityCanvas);
+bpSecurityTexture.colorSpace=THREE.SRGBColorSpace;
+const bpSecurityPlane=new THREE.Mesh(new THREE.PlaneGeometry(1.98,1.2),new THREE.MeshBasicMaterial({map:bpSecurityTexture,side:THREE.DoubleSide}));
+bpSecurityPlane.position.set(10.7,1.82,-5.438);world.add(bpSecurityPlane);
+let bpMonitorTick=0;
+function bpDrawScreen(ctx,texture,title,redMode,t){
+  if(!ctx)return;
+  const w=512,h=288;
+  ctx.fillStyle='#101522';ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#212b39';for(let i=0;i<5;i++)ctx.fillRect(14,60+i*42,484,1);
+  ctx.fillStyle=redMode?'#f38ba8':'#a6e3a1';ctx.fillRect(0,0,w,6);
+  ctx.font='bold 22px monospace';ctx.fillText(title,21,39);
+  ctx.font='15px monospace';ctx.fillStyle='#bac2de';
+  ctx.fillText('LOCAL TEST / DOCUMENTATION NETWORK',21,76);
+  ctx.fillText('203.0.113.24 / INCIDENT '+(game&&game.mode==='attack'?'A':'B'),21,104);
+  const rate=game?game.traffic:0;
+  ctx.fillStyle='#cdd6f4';ctx.font='bold 24px monospace';
+  ctx.fillText('RATE  '+Math.floor(rate).toLocaleString()+' RPS',20,148);
+  ctx.fillStyle='#45475a';ctx.fillRect(22,178,465,31);
+  const fraction=Math.min(1,rate/72000);
+  ctx.fillStyle=redMode?'#f38ba8':'#cba6f7';ctx.fillRect(22,178,465*fraction,31);
+  ctx.strokeStyle=redMode?'#f38ba8':'#89b4fa';ctx.lineWidth=3;ctx.beginPath();
+  for(let x=22;x<=487;x+=5){
+    const wave=Math.sin(x*.11+t*3)*.32+Math.sin(x*.037+t*1.3)*.35+Math.sin(x*.29+t*5)*.15;
+    const y=239-wave*27-fraction*16;
+    if(x===22)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.font='14px monospace';ctx.fillStyle='#a6adc8';
+  ctx.fillText('ALL OPERATIONS ARE SIMULATED',20,277);
+  texture.needsUpdate=true;
+}
+
 const bpOriginalCamera=moveCamera;
 moveCamera=function(dt){
   if(!bp.active || !game || game.ended || bp.terminal){
@@ -880,7 +924,7 @@ function bpNpcUpdate(dt){
     return;
   }
   const cycle=game.elapsed%94;
-  const hiding=cycle>=22 && cycle<60;
+  const hiding=(cycle>=22 && cycle<60)||(bpDistance(attacker.position,security.position)<4.0 && cycle>9);
   bp.npcHiding=hiding;bp.npcTyping=!hiding;
   const goal=hiding?bpHideSpot:V(-8.8,0,4.5);
   const old=attacker.position.clone();
@@ -948,6 +992,12 @@ updateUI=function(force=false){
 const bpOriginalAnimate=animateScene;
 animateScene=function(t,dt){
   bpOriginalAnimate(t,dt);
+  bpMonitorTick+=dt;
+  if(bpMonitorTick>.18){
+    bpMonitorTick=0;
+    bpDrawScreen(bpDisplayContext,bpDisplayTexture,'ATTACKER LAPTOP',Boolean(game&&game.burst>0),t);
+    bpDrawScreen(bpSecurityCtx,bpSecurityTexture,'SECURITY CONSOLE',Boolean(game&&game.health<55),t);
+  }
   const rpm=game?850+Math.min(2.4,game.traffic/35000)*1950+(100-game.health)*22:850;
   const turns=(rpm/60)*Math.PI*2*dt;
   for(const rotor of bpFanRotors)rotor.rotation.z+=turns;
