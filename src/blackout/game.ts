@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Bundled by Vite as an application module. Network operations exist only in memory.
 import * as THREE from 'three';
+import { createTrafficFeed } from './traffic-model';
 
 /* Everything in the incident model stays inside browser memory. */
 const $ = id => document.getElementById(id);
@@ -11,7 +12,7 @@ const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#25313f');
 scene.fog = new THREE.FogExp2('#25313f', .010);
-const camera = new THREE.PerspectiveCamera(58, 1, .1, 120);
+const camera = new THREE.PerspectiveCamera(84, 1, .07, 120);
 const gpuMemory=Number(navigator.deviceMemory)||4;
 const gpuCores=Number(navigator.hardwareConcurrency)||4;
 const autoLow=gpuMemory<=4||gpuCores<=4||Math.min(innerWidth,innerHeight)<680;
@@ -367,10 +368,10 @@ class Soundscape {
   win(){this.sample('confirmation_001',.47);[480,620,790,1040].forEach((f,i)=>setTimeout(()=>this.tone(f,.45,'sine',.09),i*170))}
   lose(){this.sample('error_001',.47);[350,285,210,140].forEach((f,i)=>setTimeout(()=>this.tone(f,.4,'sawtooth',.065),i*230))}
   metal(){this.sample('bong_001',.7);this.noise(.63,.24,145);this.tone(145,.58,'sawtooth',.19,50);setTimeout(()=>this.tone(60,.9,'triangle',.14,34),145)}
-  update(time,health,active){
+  update(time,health,active,traffic=0){
     if(!this.ctx||!this.master)return;
     const t=this.ctx.currentTime;
-    if(this.fan)this.fan.gain.setTargetAtTime(active?.21+Math.max(0,100-health)*.0022:.14,t,.35);
+    if(this.fan)this.fan.gain.setTargetAtTime(active?.16+Math.min(.35,traffic/105000)+Math.max(0,100-health)*.0014:.14,t,.5);
     if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&health<55?.084:0,t,.2);}
   }
 }
@@ -399,13 +400,13 @@ const ACTIONS={
 let actionButtons=new Map();
 function formatRate(r){return r>=1e6?(r/1e6).toFixed(2)+'M':r>=1000?(r/1000).toFixed(1)+'K':Math.round(r).toString()}
 function timestamp(){const e=Math.floor(game?.elapsed||0);return String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0')}
-function log(message,tone=''){if(!game)return;game.logs.unshift({at:timestamp(),message,tone});game.logs.length=Math.min(game.logs.length,5);const entries=$('entries');entries.replaceChildren();for(const row of game.logs){const el=document.createElement('div');el.className='feedrow '+row.tone;const time=document.createElement('time');time.textContent=row.at;const msg=document.createElement('span');msg.className='msg';msg.textContent=row.message;el.append(time,msg);entries.append(el);}}
+function log(message,tone=''){if(!game)return;game.logs.unshift({at:timestamp(),message,tone});game.logs.length=Math.min(game.logs.length,18);}
 function notify(message,alert=false){if(alert)bpShowIncident(message);clearTimeout(toastTimer);$('toast').textContent=message;$('toast').style.borderColor=alert?'#f28a7c':'#7ae9d49e';$('toast').classList.add('visible');toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2900);}
 function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
     risk:mode==='attack'?0:8,trace:mode==='defend'?0:0,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
-    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,
+    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),
   };
 }
 function startGame(mode){
@@ -480,7 +481,8 @@ function stepGame(dt){
       g.proxies++;g.nextDefenderProxy+=17+g.proxies*2;
       log('Blue team activated proxy '+g.proxies+'.','warn');sfx.alert();notify('DEFENDERS ARE DEPLOYING PROXY SERVERS',true);
     }
-    g.traffic=750+g.bots*185+(g.burst>0?14500:0);
+    const targetRps=750+g.bots*185+(g.burst>0?14500:0);
+    g.traffic=g.requestFeed.step({targetRps,elapsed:g.elapsed,health:g.health,proxies:g.proxies,burst:g.burst>0},dt);
     const blockedRatio=Math.min(.88,Math.max(0,g.proxies*.13+(g.proxies>=3?.11:0)-(g.reroute>0?.24:0)));
     g.delivered=g.traffic*(1-blockedRatio);
     g.risk=Math.min(100,g.risk+dt*(g.traffic>15000?.15:.055)+dt*(g.burst>0?.18:0)+dt*g.proxies*.065);
@@ -489,7 +491,8 @@ function stepGame(dt){
     if(g.elapsed>=g.nextAttackerWave){g.attackerWave=9;g.nextAttackerWave+=24;log('Intruder launched another traffic wave.','warn');notify('INCOMING TRAFFIC SURGE',true);sfx.burst();}
     g.attackerWave=Math.max(0,g.attackerWave-dt);
     g.bots+=dt*.42;
-    g.traffic=3800+g.bots*118+(g.attackerWave>0?4700:0);
+    const targetRps=3800+g.bots*118+(g.attackerWave>0?4700:0);
+    g.traffic=g.requestFeed.step({targetRps,elapsed:g.elapsed,health:g.health,proxies:g.proxies,burst:g.attackerWave>0},dt);
     const blockedRatio=Math.min(.89,g.proxies*.13+(g.limit>0?.34:0));
     g.delivered=g.traffic*(1-blockedRatio);
   }
@@ -536,7 +539,7 @@ function updateUI(force=false){
     o.cd.textContent=cool>0?Math.ceil(cool)+'s':a.id==='proxy'&&g.proxies>=6?'MAX':a.id==='arrest'&&g.trace<100?'LOCKED':a.id==='trace'&&g.trace<22?'LOCKED':'READY';
   }
   proxyObjects.forEach((o,i)=>o.visible=world.visible&&i<g.proxies);
-  reqTube.visible=world.visible&&g.traffic>0;
+  reqTube.visible=false;
 }
 function animateScene(t,dt){
   const g=game;
@@ -549,7 +552,7 @@ function animateScene(t,dt){
   const active=g&&!g.ended;
   const count=active?Math.min(lowQuality?35:100,Math.max(10,Math.floor(Math.sqrt(g.traffic)*.69))):0;
   for(let i=0;i<packets.length;i++){
-    const p=packets[i];p.visible=active&&i<count;
+    const p=packets[i];p.visible=false;
     if(!p.visible)continue;
     const progress=(t*(.18+(g.traffic/120000))+i*.071)%1;
     p.position.copy(requestCurve.getPointAt(progress));
@@ -559,14 +562,14 @@ function animateScene(t,dt){
   }
   const blockedCount=active?Math.min(blocked.length,Math.floor(g.proxies*3.5)):0;
   for(let i=0;i<blocked.length;i++){
-    blocked[i].visible=i<blockedCount;
+    blocked[i].visible=false;
     if(blocked[i].visible)blocked[i].position.copy(outgoingCurve.getPointAt((t*.15+i*.13)%1));
   }
   proxyObjects.forEach((o,i)=>{o.userData.ring.rotation.z=t*.52+(i%2)*.4;o.userData.glow.intensity=1.2+.45*Math.sin(t*2+i);});
   if(jail.visible){sirenRed.intensity=2.5+2*Math.max(0,Math.sin(t*6));sirenBlue.intensity=2.5+2*Math.max(0,Math.sin(t*6+Math.PI));}
   flashAlpha+=(0-flashAlpha)*Math.min(1,dt*2.4);
   $('flash').style.opacity=String(Math.max(0,flashAlpha));
-  sfx.update(t,g?.health??100,Boolean(active));
+  sfx.update(t,g?.health??100,Boolean(active),g?.traffic??0);
 }
 
 // --------------------------------------------------------------------------
@@ -598,7 +601,7 @@ function frame(now=0){
 /* Blackout Protocol: embodied first-person missions and cinematic incident AI.
    Every "attack", trace, proxy and request is in-memory gameplay only. */
 const bp = {
-  player: V(-8.8, 0, 5.6), yaw:0, pitch:-.06, keys:new Set(),
+  player: V(-7.4, 0, 6.85), yaw:.36, pitch:-.06, keys:new Set(),
   terminal:false, active:false, third:false, crouching:false,
   stepClock:0, npcTyping:true, npcHiding:false,
   targetDesk: V(-8.8,0,4.0), guardAlert:false,
@@ -808,7 +811,7 @@ function bpDrawScreen(ctx,texture,title,redMode,t){
 
 const bpOriginalCamera=moveCamera;
 moveCamera=function(dt){
-  if(!bp.active || !game || game.ended || bp.terminal){
+  if(!bp.active || !game || game.ended){
     bpOriginalCamera(dt);return;
   }
   const eyeHeight=bp.crouching?1.15:1.74;
@@ -826,8 +829,8 @@ const bpOriginalStartGame=startGame;
 startGame=function(mode){
   bpOriginalStartGame(mode);
   bp.active=true;bp.terminal=false;bp.third=false;
-  bp.yaw=mode==='attack'?0:0;bp.pitch=-.06;
-  bp.player.copy(mode==='attack'?V(-8.8,0,5.6):V(10.7,0,-2.15));
+  bp.yaw=mode==='attack'?.36:0;bp.pitch=-.06;
+  bp.player.copy(mode==='attack'?V(-7.4,0,6.85):V(10.7,0,-2.15));
   view.drag=false;
   bp.keys.clear();
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
@@ -923,8 +926,8 @@ document.addEventListener('keyup',e=>{bp.keys.delete(e.code);});
 window.addEventListener('blur',()=>{bp.keys.clear();});
 document.addEventListener('mousemove',e=>{
   if(!bp.active || bp.terminal || document.pointerLockElement!==renderer.domElement)return;
-  bp.yaw-=e.movementX*.0023;
-  bp.pitch=bpClamp(bp.pitch-e.movementY*.0019,-1.05,1.05);
+  bp.yaw-=bpClamp(e.movementX,-110,110)*.0023;
+  bp.pitch=bpClamp(bp.pitch-bpClamp(e.movementY,-110,110)*.0019,-1.3,1.3);
 });
 renderer.domElement.addEventListener('click',()=>{
   if(bp.active && game && !game.ended && !bp.terminal)
