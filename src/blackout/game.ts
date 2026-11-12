@@ -1302,6 +1302,7 @@ moveCamera=function(dt){
 const bpOriginalStartGame=startGame;
 startGame=function(mode){
   bpOriginalStartGame(mode);
+  document.body.classList.remove('bp-mission-finished');
   bp.active=true;bp.terminal=false;bp.third=false;
   bp.yaw=mode==='attack'?.24:0;bp.pitch=-.06;
   bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(23.0,0,-3.55));
@@ -1328,6 +1329,7 @@ startGame=function(mode){
 const bpOriginalMenu=menu;
 menu=function(){
   bpCloseTerminal();bp.active=false;bp.keys.clear();
+  document.body.classList.remove('bp-mission-finished');
   if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
   bpOriginalMenu();
   attacker.visible=true;attacker.position.set(-8.8,0,4.5);
@@ -1969,7 +1971,11 @@ updateUI=function(force=false){
       'Case verified. Leave the console, find the hooded suspect and press E nearby to detain.';
     }
   }
-  const urgent=g.health<55 || g.coolingEventUntil>g.elapsed || (g.mode==='attack'&&g.risk>83);
+  // Alert HUD belongs exclusively to live missions, never court, jail or results.
+  const liveMission=bp.active&&!g.ended&&!courtroom.visible&&!jail.visible&&
+    !$('ending').classList.contains('visible');
+  const urgent=liveMission&&(g.health<55||g.coolingEventUntil>g.elapsed||
+    (g.mode==='attack'&&g.risk>83));
   $('red-alert').classList.toggle('visible',urgent);
   $('red-alert').textContent=urgent?(g.coolingEventUntil>g.elapsed?'⚠ COOLANT PRESSURE / CHECK EAST RACKS':g.mode==='attack'&&g.risk>83?'⚠ RED ALERT / INTRUDER DETECTED':'⚠ RED ALERT / HIGH SERVER LOAD'):'';
 };
@@ -2039,9 +2045,14 @@ endGame=function(win,title,description){
   bpCloseTerminal();
   if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
   bp.active=false;
+  document.body.classList.add('bp-mission-finished');
+  $('red-alert').classList.remove('visible');
+  $('red-alert').textContent='';
   bpOriginalEnd(win,title,description);
   bpPlayerAvatar.visible=false;
   $('interaction-hint').classList.remove('visible');
+  // Covers success, failure, courtroom hearing, sentencing and jail.
+  $('red-alert').classList.remove('visible');
 };
 renderer.domElement.setAttribute('aria-label','First-person 3D data center game. WASD to move, mouse to look, E to use nearby laptop, C to crouch, V for third-person view.');
 
