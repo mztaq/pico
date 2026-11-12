@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { createTrafficFeed } from './traffic-model';
 import { drawTerminalScreen, terminalHitTest } from './terminal-screen';
 import { isSightBlocked, chooseHackerPhase } from './stealth-logic';
+import { routeTo } from './navigation';
 
 /* Everything in the incident model stays inside browser memory. */
 const $ = id => document.getElementById(id);
@@ -1145,7 +1146,7 @@ startGame=function(mode){
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
   bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;attacker.scale.y=1;
-  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);}
+  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
   attacker.visible=mode==='defend';attacker.position.set(-8.5,0,4.18);attacker.rotation.y=Math.PI;
@@ -1348,19 +1349,42 @@ const bpWorkPosition=V(-8.5,0,4.18);
 const bpHackerEscape=[V(-10.15,0,6.62),V(-14.2,0,10.1),V(-20.5,0,10.1),V(-21.2,0,8.0)];
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
 let bpHackerState='working',bpHackerWaypoint=0,bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0;
-const bpOfficePassage=[[18.5,.4],[16.5,.4],[13.7,.4]];
-const bpGuardSearchRoutes=[
-  [[11.8,1.3],[9.4,4.63],[4.2,4.61],[-1,4.62],[-5.9,4.9],[-8.1,6.45],[-12.5,9.75],[-16.1,9.72]],
-  [[12,-1],[9.1,-.35],[7.9,3.8],[4,4.6],[-2,4.55],[-8.4,6.4],[-12.2,9.5],[-15.8,9.63]]
-];
-const bpGuardBackPath=[[13.0,.35],[16.6,.4],[18.7,.4]];
+/* Search points are generated from the floor plan. All movement routes
+   are resolved through the collision grid instead of scripted corridors. */
+function bpRandom(g){
+  g.patrolSeed=(Math.imul((g.patrolSeed||0x5abc9de3),1664525)+1013904223)>>>0;
+  return g.patrolSeed/4294967296;
+}
+function bpRandomSearchTarget(g){
+  for(let attempt=0;attempt<35;attempt++){
+    const x=-21+bpRandom(g)*33,z=-10.8+bpRandom(g)*21.6;
+    if(bpWalkable(x,z))return [x,z];
+  }
+  return [-4,9];
+}
+function bpGuardRoute(from,to){
+  const target={x:to[0],z:to[1]};
+  const result=routeTo({x:from.x,z:from.z},target,bpWalkable);
+  if(result.length)return result.map(p=>[p.x,p.z]);
+  return bpWalkable(target.x,target.z)?[[target.x,target.z]]:[];
+}
 function bpGuardEmergency(g){
   return Boolean(g&&!g.ended&&(g.burst>0||g.attackerWave>0||g.traffic>12500||g.health<75||g.coolingEventUntil>g.elapsed));
 }
 function bpGuardCanSee(guard,position,distanceLimit=7){
   const distance=bpDistance(guard.position,position);
   if(distance>distanceLimit)return false;
+  // Cabinets and the security office wall stop sight lines through solid geometry.
+  for(const [rx,rz] of rackCoords){
+    if(isSightBlocked(guard.position,position,{
+      minX:rx-1.03,maxX:rx+1.03,minZ:rz-1.18,maxZ:rz+1.18,
+    }))return false;
+  }
   if(isSightBlocked(guard.position,position,bpHackerCover))return false;
+  for(const side of [{minX:14.48,maxX:14.98,minZ:-14,maxZ:-1.0},
+                     {minX:14.48,maxX:14.98,minZ:1.7,maxZ:14}]){
+    if(isSightBlocked(guard.position,position,side))return false;
+  }
   if(distance<2.25)return true;
   const dx=position.x-guard.position.x,dz=position.z-guard.position.z;
   const fx=Math.sin(guard.rotation.y),fz=Math.cos(guard.rotation.y);
@@ -1380,11 +1404,9 @@ function bpWalkGuard(p,target,dt,urgent=true){
   return false;
 }
 function bpGuardSetReturn(p){
-  // Retrace actual waypoints, including the office door, to avoid clipping racks.
-  const crossed=p.path.slice(0,p.index).reverse();
   p.state='returning';p.index=0;
-  p.path=[...crossed,p.home];
-  p.lastSeen=null;
+  p.path=bpGuardRoute(p.agent.position,p.home);
+  p.lastSeen=null;p.repathAt=0;
 }
 function bpAssignSecurityDispatch(g){
   g.securityDispatchActive=true;
@@ -1394,16 +1416,15 @@ function bpAssignSecurityDispatch(g){
   bpShowIncident('SECURITY ALERT / OFFICERS RESPONDING');
   sfx.alert();
   for(let i=0;i<patrols.length;i++){
-    const p=patrols[i];p.index=0;p.wait=0;
-    p.agent.position.set(p.home[0],0,p.home[1]);
+    const p=patrols[i];p.index=0;p.wait=0;p.lastSeen=null;p.repathAt=0;
     if(p.role==='proxy'&&g.proxies<6){
       p.proxyIndex=g.proxies;
       const unit=proxyObjects[p.proxyIndex];
       const position=unit.position;
-      p.path=[...bpOfficePassage,[12.7,-2.5],[12.7,position.z],[position.x+.7,position.z+.65]];
+      p.path=bpGuardRoute(p.agent.position,[position.x+.85,position.z+.66]);
       p.state='deploying';
     }else{
-      p.path=[...bpOfficePassage,...bpGuardSearchRoutes[(i+1)%2]];
+      p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));
       p.state='searching';
     }
   }
@@ -1434,34 +1455,56 @@ function bpMoveGuard(p,dt,g){
     }
     return;
   }
+
   const suspect=g.mode==='attack'?bp.player:attacker.position;
-  const searcher=p.role==='search'&&p.state==='searching';
-  const sight=searcher&&p.agent.position.x<13&&bpGuardCanSee(p.agent,suspect,10.2);
-  if(sight){
-    p.lastSeen={x:suspect.x,z:suspect.z,until:g.elapsed+3.0};
-    if(g.mode==='attack'&&!bp.guardAlert){
-      bpShowIncident('SECURITY / UNAUTHORIZED PERSON SEEN');
-      bp.guardAlert=true;sfx.alert();
+  const isHunter=p.role==='search'&&(p.state==='searching'||p.state==='chasing');
+  const seen=isHunter&&p.agent.position.x<14&&bpGuardCanSee(p.agent,suspect,13.2);
+  if(seen){
+    p.lastSeen={x:suspect.x,z:suspect.z,until:g.elapsed+5.5};
+    if(p.state!=='chasing'){
+      p.state='chasing';p.repathAt=0;sfx.alert();
+      bpShowIncident('SECURITY / INTRUDER LOCATED');
     }
     if(g.mode==='defend')g.suspectSpotted=true;
   }
-  let destination=p.path[p.index];
-  if(searcher&&p.lastSeen&&p.lastSeen.until>g.elapsed){
-    destination=[p.lastSeen.x,p.lastSeen.z];
-    if(g.mode==='attack'&&bpDistance(p.agent,bp.player)<1.85){
-      endGame(false,'CAUGHT BY SECURITY','A security officer caught the intruder inside the data center.');
-      return;
+  if(isHunter&&p.state==='chasing'){
+    if(p.lastSeen&&g.elapsed<=p.lastSeen.until){
+      if(g.elapsed>=(p.repathAt||0)){
+        // Recalculate toward the last observed location, so turns and
+        // changing player routes cause credible pursuit around server racks.
+        p.path=bpGuardRoute(p.agent.position,[p.lastSeen.x,p.lastSeen.z]);
+        p.index=0;p.repathAt=g.elapsed+(lowQuality?1.3:.75);
+      }
+      if(g.mode==='attack'&&bpDistance(p.agent,bp.player)<1.72&&
+          bpGuardCanSee(p.agent,bp.player,2.2)){
+        endGame(false,'CAUGHT BY SECURITY','Security caught you during the server-room search.');
+        return;
+      }
+      if(g.mode==='defend'&&bpDistance(p.agent,attacker.position)<1.8){
+        g.suspectPinnedUntil=g.elapsed+5;
+      }
+    }else{
+      p.state='searching';p.lastSeen=null;p.index=0;
+      p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));
     }
   }
+  if(p.state==='searching'&&g.elapsed>g.securityResponseUntil){
+    bpGuardSetReturn(p);
+  }
+  if(p.state==='searching'&&p.index>=p.path.length){
+    // Pick a new location instead of repeating identical patrol paths.
+    p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));
+    p.index=0;
+  }
+  const destination=p.path[p.index];
   if(!destination){
     if(p.state==='deploying'){p.state='switching';p.wait=2.1;sfx.scan();}
     else if(p.state==='returning'){p.state='idle';p.agent.position.set(p.home[0],0,p.home[1]);}
-    else bpGuardSetReturn(p);
+    else if(p.state==='searching'){p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));p.index=0;}
     return;
   }
-  const arrived=bpWalkGuard(p,destination,dt);
-  if(arrived&&!(searcher&&p.lastSeen&&p.lastSeen.until>g.elapsed))p.index++;
-  if(p.state==='searching'&&g.elapsed>g.securityResponseUntil)bpGuardSetReturn(p);
+  const arrived=bpWalkGuard(p,destination,dt,p.state!=='returning');
+  if(arrived)p.index++;
   const motion=g.elapsed*13+p.agent.id*.25;
   p.agent.position.y=Math.sin(motion)*.027;
   if(p.agent.children[5])p.agent.children[5].rotation.z=-.27+Math.sin(motion)*.21;
@@ -1499,9 +1542,9 @@ function bpNpcUpdate(dt){
   technician.position.set(26+Math.sin(g.elapsed*.13)*.5,0,1.8+Math.sin(g.elapsed*.11)*1.1);
   technician.rotation.y=Math.PI;
   if(g.mode==='attack')return;
-  const guardsInHall=patrols.some(p=>p.state==='searching'&&p.agent.position.x<12);
-  const nearest=Math.min(...patrols.filter(p=>p.state==='searching').map(p=>bpDistance(p.agent,attacker.position)),99);
-  const visible=patrols.some(p=>p.state==='searching'&&bpGuardCanSee(p.agent,attacker.position,10));
+  const guardsInHall=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&p.agent.position.x<14);
+  const nearest=Math.min(...patrols.filter(p=>p.state==='searching'||p.state==='chasing').map(p=>bpDistance(p.agent,attacker.position)),99);
+  const visible=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&bpGuardCanSee(p.agent,attacker.position,13));
   const playerClose=bpDistance(bp.player,attacker.position)<7.2;
   const threatened=playerClose||guardsInHall&&(nearest<11||visible);
   if(bpHackerState==='working'&&threatened){
@@ -1617,7 +1660,7 @@ stepGame=function(dt){
   bpOriginalStep(dt);
   if(!game || game.ended){bpInteractionStatus();return;}
   if(game.mode==='attack'&&!bp.terminal){
-    const seen=patrols.some(p=>p.state==='searching'&&bpGuardCanSee(p.agent,bp.player,bp.crouching?4.4:8.2));
+    const seen=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&bpGuardCanSee(p.agent,bp.player,bp.crouching?5.2:12));
     if(seen){
       game.risk=Math.min(100,game.risk+dt*(bp.crouching?.42:1.9));
       if(!bp.guardAlert){bpShowIncident('SECURITY / UNAUTHORIZED PERSON SEEN');sfx.alert();}
