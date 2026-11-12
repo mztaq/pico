@@ -33,7 +33,7 @@ describe('Blackout Protocol 3D', () => {
       .replace("import { renderOfficeFeed } from './office-monitor';", 'const renderOfficeFeed = () => {};')
       .replace("import { rankedCoverSpots, formationPosition } from './ai-coordination';", 'const rankedCoverSpots = () => []; const formationPosition = () => ({x:0,z:0});')
       .replace("import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const throughputLabel = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
-      .replace(/import \{\s*flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,\s*acknowledgeSecurityDispatch, securityOfficersReturned, SECURITY_OFFICE_REST_SECONDS,\s*\} from '\.\/security-response';/, 'const flagSecurityIncident = () => {};const observeSecurityAlarm = () => {};const shouldDispatchSecurity = () => false;const acknowledgeSecurityDispatch = () => {};const securityOfficersReturned = () => {};const SECURITY_OFFICE_REST_SECONDS = 10;'))).not.toThrow();
+      .replace(/import \{\s*flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,\s*acknowledgeSecurityDispatch, securityOfficersReturned,\s*\} from '\.\/security-response';/, 'const flagSecurityIncident = () => {};const observeSecurityAlarm = () => {};const shouldDispatchSecurity = () => false;const acknowledgeSecurityDispatch = () => {};const securityOfficersReturned = () => {};const SECURITY_OFFICE_REST_SECONDS = 10;'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
@@ -70,7 +70,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("bitsPerSecond:estimatedBitsPerSecond(game.traffic");
     expect(game).toContain("const bpSearchWindowSeconds=24");
     expect(game).toContain("const bpMaxChaseSeconds=8");
-    expect(game).toContain("const bpDispatchRestSeconds=SECURITY_OFFICE_REST_SECONDS");
+    expect(game).not.toContain('const bpDispatchRestSeconds=100');
     expect(game).toContain("bpLaptopRig.visible=!(game?.mode==='attack'&&bpAttackLaptopCarried&&!bp.third)");
     expect(game).toContain("bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(23.0,0,-3.55))");
     expect(game).toContain('const bpOfficeConsoleX=23.15');
