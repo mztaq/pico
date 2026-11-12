@@ -49,7 +49,7 @@ const ambient = new THREE.AmbientLight(0x9aabcc, 1.1); scene.add(ambient);
 const keyLight = new THREE.DirectionalLight(0xc8deef, 3.1);
 keyLight.position.set(5, 12, 10); keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(2048,2048);
-keyLight.shadow.camera.left = -23; keyLight.shadow.camera.right = 23;
+keyLight.shadow.camera.left = -32; keyLight.shadow.camera.right = 36;
 keyLight.shadow.camera.top = 23; keyLight.shadow.camera.bottom = -23;
 keyLight.shadow.bias = -.00035;
 scene.add(keyLight);
@@ -117,8 +117,8 @@ function fixture(x,z) {
 // Real-scale server room: raised floor, walls, cable conduits, cooling lanes.
 box(-4.5,-.19,0,39,.35,29,concrete);
 box(23,-.19,0,17,.35,24,concrete);
-for(let x=-23;x<=31;x+=(lowQuality?3.5:2)) for(let z=-13;z<=13;z+=(lowQuality?3.5:2)){
-  box(x,.015,z,lowQuality?3.47:1.96,.025,lowQuality?3.47:1.96,floor);
+for(let x=-23;x<=31;x+=(lowQuality?3.9:2)) for(let z=-13;z<=13;z+=(lowQuality?3.5:2)){
+  box(x,.015,z,lowQuality?3.88:1.96,.025,lowQuality?3.47:1.96,floor);
   // Tiny metallic seams make the floor read as modular raised flooring.
   if(!lowQuality&&Math.abs(x)<13) box(x+.97,.032,z,.018,.01,1.92,darkMetal);
 }
@@ -153,7 +153,7 @@ for(let x of [20,22,24,26,28])box(x,2.62,11.76,.5,.10,.025,mint);
 
 box(-4.5,6.45,-13.5,39,.4,1.0,edgeMetal);
 for(let x=-21;x<=30;x+=4){box(x,6.25,0,.16,.15,29,darkMetal); for(let z=-10;z<=10;z+=6)box(x,6.1,z,.22,.13,2.5,metal);}
-for(let x of [-19,-9,0,9,21,28])for(let z of [-9,0,9])fixture(x,z);
+for(let x of (lowQuality?[-19,0,21]:[-19,-9,0,9,21,28]))for(let z of (lowQuality?[-8,8]:[-9,0,9]))fixture(x,z);
 for(let x of [-12.2,12.2])for(let z of [-10,0,10]){
   cyl(x,4.3,z,.11,8.4,edgeMetal);
   light(x,4.5,z,0x6da4e0,1.2,7);
