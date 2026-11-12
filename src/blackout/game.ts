@@ -1111,7 +1111,7 @@ startGame=function(mode){
   view.drag=false;
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
-  bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;attacker.scale.y=1;
+  bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;attacker.scale.y=1;
   for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
@@ -1191,17 +1191,20 @@ function bpTryInteract(){
   if(game.mode==='attack'&&bpAttackLaptopCarried){
     notify('PRESS F NEAR THE SERVER RACK TO RECONNECT THE LAPTOP');return;
   }
-  if(bpDistance(bp.player,desk)<3.15){bpOpenTerminal();return;}
-  if(game.mode==='defend' && game.trace>=100 && bpDistance(bp.player,attacker.position)<2.65){
-    log('Responding officer detained the suspect.','good');
-    bpOriginalAct('arrest');
+  if(game.mode==='defend'&&bpDistance(bp.player,attacker.position)<2.65){
+    if(game.trace>=100){
+      log('The suspect was detained with the laptop.','good');
+      bpOriginalAct('arrest');
+      return;
+    }
+    notify('SUSPECT SEEN / BUILD EVIDENCE BEFORE ARREST');
+    if(!game.nextObservation||game.elapsed>game.nextObservation){
+      game.trace=Math.min(100,game.trace+5);
+      game.nextObservation=game.elapsed+5;sfx.scan();
+    }
     return;
   }
-  if(game.mode==='defend' && bpDistance(bp.player,attacker.position)<2.65){
-    notify('SUSPECT SIGHTED. COLLECT VERIFIED EVIDENCE FIRST.');
-    game.trace=Math.min(100,game.trace+5);
-    sfx.scan();return;
-  }
+  if(bpDistance(bp.player,desk)<3.15){bpOpenTerminal();return;}
   notify('MOVE CLOSER TO A CONSOLE OR SUSPECT');
 }
 const bpReservedKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyC','KeyV','KeyE','KeyF','ShiftLeft','ShiftRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Digit1','Digit2','Digit3','Digit4']);
@@ -1309,7 +1312,7 @@ for(const p of patrols){
 const bpWorkPosition=V(-8.5,0,4.18);
 const bpHackerEscape=[V(-10.15,0,6.62),V(-14.2,0,10.1),V(-20.5,0,10.1),V(-21.2,0,8.0)];
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
-let bpHackerState='working',bpHackerWaypoint=0,bpHackerHoldUntil=0,bpHackerStateTime=0;
+let bpHackerState='working',bpHackerWaypoint=0,bpHackerHoldUntil=0,bpHackerStateTime=0,bpHackerPackUntil=0;
 const bpOfficePassage=[[18.5,.4],[16.5,.4],[13.7,.4]];
 const bpGuardSearchRoutes=[
   [[11.8,1.3],[9.4,4.63],[4.2,4.61],[-1,4.62],[-5.9,4.9],[-8.1,6.45],[-12.5,9.75],[-16.1,9.72]],
@@ -1332,7 +1335,7 @@ function bpWalkGuard(p,target,dt,urgent=true){
   const dx=target[0]-p.agent.position.x,dz=target[1]-p.agent.position.z;
   const distance=Math.hypot(dx,dz);
   if(distance<.28)return true;
-  const speed=p.speed*(urgent?2.03:1);
+  const speed=p.speed*(urgent?2.44:1);
   const step=Math.min(distance,speed*dt);
   p.agent.position.x+=dx/distance*step;
   p.agent.position.z+=dz/distance*step;
@@ -1398,7 +1401,7 @@ function bpMoveGuard(p,dt,g){
   }
   const suspect=g.mode==='attack'?bp.player:attacker.position;
   const searcher=p.role==='search'&&p.state==='searching';
-  const sight=searcher&&p.agent.position.x<13&&bpGuardCanSee(p.agent,suspect,8.3);
+  const sight=searcher&&p.agent.position.x<13&&bpGuardCanSee(p.agent,suspect,10.2);
   if(sight){
     p.lastSeen={x:suspect.x,z:suspect.z,until:g.elapsed+3.0};
     if(g.mode==='attack'&&!bp.guardAlert){
@@ -1410,7 +1413,7 @@ function bpMoveGuard(p,dt,g){
   let destination=p.path[p.index];
   if(searcher&&p.lastSeen&&p.lastSeen.until>g.elapsed){
     destination=[p.lastSeen.x,p.lastSeen.z];
-    if(g.mode==='attack'&&bpDistance(p.agent,bp.player)<1.4){
+    if(g.mode==='attack'&&bpDistance(p.agent,bp.player)<1.85){
       endGame(false,'CAUGHT BY SECURITY','A security officer caught the intruder inside the data center.');
       return;
     }
@@ -1464,12 +1467,16 @@ function bpNpcUpdate(dt){
   const guardsInHall=patrols.some(p=>p.state==='searching'&&p.agent.position.x<12);
   const nearest=Math.min(...patrols.filter(p=>p.state==='searching').map(p=>bpDistance(p.agent,attacker.position)),99);
   const visible=patrols.some(p=>p.state==='searching'&&bpGuardCanSee(p.agent,attacker.position,10));
-  const threatened=guardsInHall&&(nearest<11||visible);
+  const playerClose=bpDistance(bp.player,attacker.position)<7.2;
+  const threatened=playerClose||guardsInHall&&(nearest<11||visible);
   if(bpHackerState==='working'&&threatened){
-    bpHackerState=chooseHackerPhase({phase:'working',guardVisible:visible,nearbyGuard:threatened,reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil});
+    bpHackerState='packing';bpHackerPackUntil=g.elapsed+.72;
     bpHackerWaypoint=0;bpHackerStateTime=g.elapsed;
-    bpShowIncident('SECURITY CHECK / WEST AISLE');
+    bpShowIncident(playerClose?'SUSPECT ALERT / LAPTOP BEING REMOVED':'SECURITY CHECK / WEST AISLE');
     sfx.scan();
+  }
+  if(bpHackerState==='packing'&&g.elapsed>=bpHackerPackUntil){
+    bpHackerState=chooseHackerPhase({phase:'working',guardVisible:visible,nearbyGuard:true,reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil});
   }
   if(bpHackerState==='escaping'){
     if(bpMoveHackerTowards(bpHackerEscape[bpHackerWaypoint],dt,3.2)){
@@ -1480,8 +1487,8 @@ function bpNpcUpdate(dt){
       }
     }
   }else if(bpHackerState==='hiding'){
-    if(guardsInHall&&nearest<13)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+4);
-    const safe=(!guardsInHall||nearest>14);
+    if((guardsInHall&&nearest<13)||playerClose)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+4);
+    const safe=(!guardsInHall||nearest>14)&&!playerClose;
     if(g.elapsed>bpHackerHoldUntil&&safe){
       bpHackerState=chooseHackerPhase({phase:'hiding',guardVisible:false,nearbyGuard:false,reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil});
       bpHackerWaypoint=bpHackerEscape.length-2;
@@ -1521,12 +1528,12 @@ function bpInteractionStatus(){
   let message='';
   if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4)
     message='RESET SERVER ROOM COOLING';
+  else if(game.mode==='defend'&&bpDistance(bp.player,attacker.position)<2.65)
+    message=game.trace>=100?'DETAIN THE SUSPECT':'SUSPECT SPOTTED / COLLECT EVIDENCE';
   else if(bpDistance(bp.player,desk)<3.15)
     message=game.mode==='attack'?(bpAttackLaptopCarried?'RECONNECT LAPTOP WITH F':'ACCESS LAPTOP WITH E · UNPLUG AND TAKE WITH F'):'OPEN THE SECURITY CONSOLE AND DEFEND';
   else if(game.mode==='attack'&&bpAttackLaptopCarried)
     message='LAPTOP SECURED · RECONNECT AT SERVER RACK USING F';
-  else if(game.mode==='defend'&&bpDistance(bp.player,attacker.position)<2.65)
-    message=game.trace>=100?'DETAIN THE IDENTIFIED SUSPECT':'OBSERVE SUSPECT / MORE EVIDENCE NEEDED';
   $('interaction-hint').classList.toggle('visible',Boolean(message));
   if(message)$('interaction-hint').innerHTML='<kbd>E</kbd>'+message;
 }
@@ -1568,7 +1575,7 @@ stepGame=function(dt){
   bpNpcUpdate(dt);
   if(game&&!game.ended){
     if(game.mode==='attack'&&bpAttackLaptopCarried)bpSetLaptopCarrier(bp.player,bp.yaw,dt);
-    else if(game.mode==='defend'&&bpHackerState!=='working')bpSetLaptopCarrier(attacker.position,attacker.rotation.y,dt);
+    else if(game.mode==='defend'&&(bpHackerState==='escaping'||bpHackerState==='hiding'||bpHackerState==='returning'||bpHackerState==='packing'&&game.elapsed>=bpHackerPackUntil-.33))bpSetLaptopCarrier(attacker.position,attacker.rotation.y,dt);
     else if(bpLaptopRig.position.distanceToSquared(bpLaptopDock)>.0001)bpResetLaptop();
   }
   bpWorldEvents();
