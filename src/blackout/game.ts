@@ -8,6 +8,10 @@ import { routeTo } from './navigation';
 import { renderOfficeFeed } from './office-monitor';
 import { rankedCoverSpots, formationPosition } from './ai-coordination';
 import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
+import {
+  flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,
+  acknowledgeSecurityDispatch, securityOfficersReturned, SECURITY_OFFICE_REST_SECONDS,
+} from './security-response';
 
 /* Everything in the incident model stays inside browser memory. */
 const $ = id => document.getElementById(id);
@@ -624,7 +628,7 @@ function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
     risk:mode==='attack'?0:8,trace:mode==='defend'?0:0,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
-    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,nextDispatchAllowed:0,securityResponseUntil:0,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),patrolSeed:(Math.random()*0xffffffff)>>>0,
+    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,nextDispatchAllowed:0,securityResponseUntil:0,securityIncidentSerial:0,securityDispatchedSerial:0,securityAlarmWasHigh:false,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),patrolSeed:(Math.random()*0xffffffff)>>>0,
   };
 }
 function startGame(mode){
@@ -661,9 +665,9 @@ function act(id){
   const g=game;
   if(g.mode==='attack'){
     switch(id){
-      case'bots':g.bots=Math.min(340,g.bots+22);g.risk+=3;log('Device group expanded. Nodes: '+g.bots,'warn');sfx.keyboard();break;
-      case'burst':g.burst=8;g.risk+=9;log('Traffic surge initiated.','warn');sfx.burst();flashAlpha=.1;break;
-      case'reroute':g.reroute=11;g.risk+=5;log('Routing variation detected by edge security.','warn');sfx.scan();break;
+      case'bots':g.bots=Math.min(340,g.bots+22);g.risk+=3;flagSecurityIncident(g);log('Device group expanded. Nodes: '+g.bots,'warn');sfx.keyboard();break;
+      case'burst':g.burst=8;g.risk+=9;flagSecurityIncident(g);log('Traffic surge initiated.','warn');sfx.burst();flashAlpha=.1;break;
+      case'reroute':g.reroute=11;g.risk+=5;flagSecurityIncident(g);log('Routing variation detected by edge security.','warn');sfx.scan();break;
       case'hide':g.risk=Math.max(0,g.risk-19);log('Signal exposure temporarily reduced.','good');sfx.keyboard();break;
     }
     const a=ACTIONS.attack.find(v=>v.id===id);g.cooldowns[id]=a.cd;
@@ -738,7 +742,7 @@ function stepGame(dt){
     g.risk=Math.min(100,g.risk+dt*(g.traffic>15000?.15:.055)+dt*(g.burst>0?.18:0)+dt*g.proxies*.065);
     if(g.risk>=100){endGame(false,'YOU WERE TRACED','The security team correlated security logs and identified your workstation before the service went offline.');return;}
   } else {
-    if(g.elapsed>=g.nextAttackerWave){g.attackerWave=9;g.nextAttackerWave+=24;log('Intruder launched another traffic wave.','warn');notify('INCOMING TRAFFIC SURGE',true);sfx.burst();}
+    if(g.elapsed>=g.nextAttackerWave){g.attackerWave=9;g.nextAttackerWave+=24;flagSecurityIncident(g);log('Intruder launched another traffic wave.','warn');notify('INCOMING TRAFFIC SURGE',true);sfx.burst();}
     g.attackerWave=Math.max(0,g.attackerWave-dt);
     g.bots+=dt*.42;
     const targetRps=3800+g.bots*118+(g.attackerWave>0?4700:0);
@@ -1603,13 +1607,13 @@ function bpGuardSetReturn(p){
 }
 const bpSearchWindowSeconds=24;
 const bpMaxChaseSeconds=8;
-const bpDispatchRestSeconds=100;
+const bpDispatchRestSeconds=SECURITY_OFFICE_REST_SECONDS;
 function bpAssignSecurityDispatch(g){
+  acknowledgeSecurityDispatch(g);
   g.securityDispatchActive=true;
   g.securityResponseUntil=g.elapsed+bpSearchWindowSeconds;
-  // Sustained high traffic does not trigger an immediate second search.
-  // Guards return to their office, monitor, and rest before a new dispatch.
-  g.nextDispatchAllowed=g.elapsed+bpDispatchRestSeconds;
+  // The 10-second cooldown begins once the team actually returns to base.
+  // New attack waves remain queued while officers are still in the hall.
   g.guardResponseStarted=true;
   bpShowIncident('SECURITY ALERT / OFFICERS RESPONDING');
   sfx.alert();
@@ -1778,16 +1782,15 @@ function bpNpcUpdate(dt){
   if(!game||game.ended)return;
   const g=game;
   const activeAlarm=bpGuardEmergency(g);
-  const queued=(g.proxyOrders||0)>0;
-  if(!g.securityDispatchActive&&g.elapsed>8&&g.elapsed>=(g.nextDispatchAllowed||0)&&(activeAlarm||queued)){
+  observeSecurityAlarm(g,activeAlarm);
+  if(shouldDispatchSecurity(g)){
     bpAssignSecurityDispatch(g);
   }
   for(const p of patrols)bpMoveGuard(p,dt,g);
   if(g.securityDispatchActive&&patrols.every(p=>p.state==='idle')){
-    g.securityDispatchActive=false;
+    securityOfficersReturned(g);
     g.securityResponseUntil=0;
     g.guardResponseStarted=false;
-    g.nextDispatchAllowed=Math.max(g.nextDispatchAllowed,g.elapsed+30);
     bpShowIncident('SECURITY PATROL RETURNED / MONITORING RESUMED');
   }
   // Operators stay inside the actual security office until a threat calls guards out.
