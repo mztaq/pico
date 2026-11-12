@@ -10,10 +10,10 @@ export const EVIDENCE_STATIONS: readonly EvidenceStation[]=[
  {id:'proxy-logs',x:10.2,z:-8.5,value:15,description:'edge appliance access logs'},
  {id:'rack-telemetry',x:9.3,z:4.65,value:14,description:'rack telemetry samples'},
  {id:'uplink',x:0,z:9.6,value:16,description:'uplink trace records'},
- {id:'server-auth',x:-12.5,z:5.8,value:14,description:'server authentication events'},
- {id:'camera',x:-15.3,z:-5,value:15,description:'aisle camera evidence'},
+ {id:'server-auth',x:-24.7,z:5.8,value:14,description:'server authentication events'},
+ {id:'camera',x:-40.2,z:-5,value:15,description:'aisle camera evidence'},
  {id:'switch-ports',x:9.6,z:-.7,value:14,description:'switch port history'},
- {id:'endpoint',x:-12.3,z:-8.4,value:16,description:'endpoint security image'},
+ {id:'endpoint',x:-26.1,z:-8.4,value:16,description:'endpoint security image'},
  {id:'traffic-capture',x:0,z:-9.4,value:14,description:'traffic capture records'},
 ];
 export function selectGuardEvidence(
