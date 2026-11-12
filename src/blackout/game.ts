@@ -1952,17 +1952,21 @@ function bpNpcUpdate(dt){
       g.nextSabotageAt=Math.max(g.nextSabotageAt,g.elapsed+14);
       if(bpPlanHackerCover(g)){
         bpHackerState='escaping';bpHackerStateTime=g.elapsed;
+      }else if(bpPlanHackerReturn()){
+        bpHackerState='returning';
       }else{
-        bpPlanHackerReturn();bpHackerState='returning';
+        bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+3;
       }
     }else if(bpHackerTargetProxy<0||!proxyObjects[bpHackerTargetProxy]?.userData.powered){
-      bpPlanHackerReturn();bpHackerState='returning';
+      if(bpPlanHackerReturn())bpHackerState='returning';
+      else {bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+3;}
     }else if(bpFollowHackerRoute(dt,2.45)){
       if(!bpHackerSabotageUntil)bpHackerSabotageUntil=g.elapsed+2.4;
       if(g.elapsed>=bpHackerSabotageUntil){
         bpDisableProxy(bpHackerTargetProxy,'the hooded suspect');
         bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;
-        bpPlanHackerReturn();bpHackerState='returning';
+        if(bpPlanHackerReturn())bpHackerState='returning';
+        else {bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+3;}
       }
     }
   }else if(bpHackerState==='escaping'){
