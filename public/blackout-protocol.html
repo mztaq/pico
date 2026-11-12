@@ -26,14 +26,61 @@
 @media(max-width:850px){.topbar{padding:14px 17px}.tag{display:none}.game-hud{top:74px;right:12px;left:12px;gap:6px}.metric{padding:8px 9px;min-width:0;flex:1 1 23%}.metric .label{font-size:8px}.metric .value{font-size:16px}.metric .sub{display:none}#game-title{top:158px;left:18px}#game-title h2{font-size:23px}#game-title p{display:none}#controls{top:auto;bottom:12px;right:12px;transform:none;width:min(370px,calc(100% - 24px));max-height:41dvh;padding:12px}.panelheading{margin-bottom:6px}.action{padding:9px 11px;margin-bottom:6px}.action small{display:none}#feed{left:12px;bottom:auto;top:224px;width:min(315px,68vw);padding:9px 12px}.feedrow:nth-of-type(n+4){display:none}.feedrow{font-size:9px;margin-top:4px}#camera-ui{bottom:auto;top:186px;right:12px}.cam-btn{font-size:9px;padding:7px}.draghelp{display:none}.homebox h1{font-size:clamp(42px,8vw,70px)}.modecards{grid-template-columns:1fr}.modecard{min-height:146px;padding:20px}.modecard h2{margin-top:12px}.homefoot{font-size:10px}}
 @media(max-width:500px){#feed{display:none}#camera-ui{top:208px}#game-title{top:157px}.metric .value{font-size:14px}.metric .label{font-size:7px}.metric{padding:9px 6px}#controls{max-height:43dvh}.brandname{font-size:10px}.modecard{min-height:155px}}
 @media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* Pico Mocha game UI: legible overlays, minimal labels and physical laptop controls. */
+:root{--accent:#cba6f7;--warm:#f38ba8;--line:#585b70;--muted:#bac2de;color:#cdd6f4;background:#1e1e2e}
+#viewport{background:#34394c}
+#vignette{background:radial-gradient(ellipse at center,transparent 50%,rgba(12,12,20,.22) 100%)}
+#grain{opacity:.025}
+.topbar{min-height:64px;padding:11px 25px;background:#181825ed;border-bottom:1px solid #45475a;backdrop-filter:blur(16px)}
+.brandname{font-size:13px;letter-spacing:0;line-height:1.2}.brandname small{letter-spacing:0;font-size:10px}.logo{background:#cba6f727;border-color:#cba6f7;color:#cba6f7}
+#home{background:linear-gradient(90deg,rgba(30,30,46,.91),rgba(30,30,46,.78) 57%,rgba(30,30,46,.24))}
+.intro-line,.stage{display:none}
+.homebox h1{font-size:clamp(43px,6vw,84px);line-height:1.04;margin:5px 0 18px}.homebox h1 span{color:#cba6f7}
+.subtitle{color:#cdd6f4;max-width:580px;line-height:1.65}
+.modecards{gap:16px}.modecard,.modecard.attack{background:linear-gradient(135deg,#313244ee,#242437f2);border:1px solid #585b70;padding:23px;min-height:188px}
+.modecard:hover,.modecard.attack:hover{border-color:#cba6f7;background:#383a52}
+.modecard h2{margin:14px 0 6px}.modecard p{font-size:13px;color:#bac2de}.modecard .number{color:#a6adc8}
+.homefoot{color:#a6adc8}.homefoot b{color:#cdd6f4}
+.metric{background:#1e1e2eea;border:1px solid #45475a;min-width:108px;padding:10px 13px}.metric .value{color:#cdd6f4}.metric .label{color:#bac2de}.metric .sub{color:#a6adc8}
+.game-hud{top:80px;gap:8px;left:22px;right:22px;pointer-events:none}
+#game-title{top:176px;left:23px;background:#1e1e2ecf;max-width:440px;padding:13px 17px;border-radius:12px;border:1px solid #45475a;box-shadow:0 10px 25px #0004}
+#game-title h2{font-size:22px;line-height:1.25;margin:0 0 5px}#game-title p{font-size:12px;color:#bac2de}
+#camera-ui,.draghelp{display:none!important}
+#controls{display:none!important}
+body.terminal-open #controls{display:block!important;position:absolute;left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:min(620px,calc(100vw - 30px));max-height:min(77dvh,690px);border:1px solid #a6adc8;background:linear-gradient(145deg,#25263bed,#181825fc);box-shadow:0 30px 100px #000b;border-radius:13px;padding:24px;z-index:12;pointer-events:auto}
+#controls .panelheading strong{font-size:17px}#controls .panelheading small{color:#bac2de}#terminal-close{margin-left:auto;background:#45475a;border:1px solid #6c7086;border-radius:8px;color:#cdd6f4;padding:6px 10px}
+#terminal-backdrop{display:none;position:absolute;inset:0;background:#0a0c15b3;z-index:11;pointer-events:auto}
+body.terminal-open #terminal-backdrop{display:block}
+.action,.action.primary,.action.hot{background:#313244;border:1px solid #585b70;color:#cdd6f4}
+.action:hover:not(:disabled),.action.primary:hover:not(:disabled),.action.hot:hover:not(:disabled){background:#45475a;border-color:#cba6f7}
+.action small,.action.primary small,.action.hot small{color:#bac2de}
+.capbar>div{background:#cba6f7}.capbar.alert>div{background:#f38ba8}
+#feed{bottom:17px;left:23px;background:#1e1e2edb;border-color:#45475a;width:min(375px,35vw)}
+.feedhead{color:#cdd6f4}.feedhead span{color:#a6e3a1}.feedrow .msg{color:#bac2de}
+#crosshair{display:none;position:absolute;top:50%;left:50%;width:7px;height:7px;border:1px solid #cdd6f4;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 2px #111a;z-index:4}
+#game.active #crosshair{display:block}body.terminal-open #crosshair{display:none}
+#interaction-hint{display:none;position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:#1e1e2ef0;border:1px solid #a6adc8;padding:12px 20px;border-radius:12px;color:#e9eafa;font-size:13px;font-weight:700;z-index:6;max-width:90vw;text-align:center}
+#interaction-hint.visible{display:block}#interaction-hint kbd{background:#cba6f7;color:#1e1e2e;padding:5px 8px;border-radius:5px;margin-right:8px;font:800 12px 'JetBrains Mono'}
+#control-help{position:absolute;right:22px;bottom:22px;border:1px solid #45475a;border-radius:12px;background:#1e1e2edc;padding:11px 14px;color:#cdd6f4;font-size:11px;line-height:1.8}
+#control-help kbd{font:700 11px 'JetBrains Mono';background:#45475a;padding:2px 6px;border-radius:4px}
+#red-alert{display:none;position:absolute;top:151px;right:23px;padding:12px 17px;border:1px solid #f38ba8;border-radius:9px;background:#511d31e8;color:#ffd8df;letter-spacing:.055em;font:800 12px 'JetBrains Mono';z-index:6;box-shadow:0 0 32px #f38ba844;animation:pulse-alert 1.1s infinite alternate}
+#red-alert.visible{display:block}@keyframes pulse-alert{from{box-shadow:0 0 6px #f38ba830}to{box-shadow:0 0 38px #f38ba890}}
+#mission-step{position:absolute;left:23px;top:299px;max-width:410px;border-left:3px solid #cba6f7;background:#1e1e2eb7;border-radius:5px 10px 10px 5px;padding:10px 15px;color:#cdd6f4;font-size:12px;line-height:1.55}
+body.terminal-open #mission-step,body.terminal-open #interaction-hint{display:none}
+#toast{top:25%;background:#313244;border-color:#cba6f7;color:#cdd6f4;z-index:15}
+#ending{background:#161624ec}.endingbox{background:#242437;border-color:#585b70}.endbtn{background:#cba6f7;border-color:#cba6f7;color:#181825}
+@media(max-width:850px){#game-title{top:158px}#mission-step{top:266px}#red-alert{top:129px;right:10px}#control-help{right:10px;bottom:10px;padding:7px}#feed{display:none}body.terminal-open #controls{top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);max-height:78dvh;padding:15px}.action{padding:10px}.action small{display:block}}
+@media(max-width:530px){.game-hud{top:72px}.metric{flex:1 1 29%}#game-title{top:176px;left:10px;max-width:310px}#mission-step{top:265px;left:10px;max-width:300px}#control-help{max-width:200px}#red-alert{top:129px;right:8px;font-size:10px}}
+
 </style>
 </head>
 <body>
 <div id="viewport"></div><div id="vignette"></div><div id="grain"></div><div id="flash"></div>
 <div id="app">
 <header class="topbar"><div class="brand"><div class="logo">P</div><div class="brandname">PICO / BLACKOUT PROTOCOL<br><small>NETWORK SIEGE 3D</small></div></div><div class="top-right"><div class="tag"><i></i> FICTIONAL NETWORK SIMULATION</div><button id="audio" class="iconbtn" aria-label="Toggle audio" title="Toggle audio">♫ ON</button><button id="restart" class="iconbtn" aria-label="Return to main menu" title="Main menu">⌂</button></div></header>
-<section id="home"><div class="homebox"><div class="intro-line">A CINEMATIC NETWORK DEFENSE GAME</div><h1>BLACKOUT<br><span>PROTOCOL.</span></h1><p class="subtitle">A server room under siege. An attacker in the shadows. A security team racing against a cascade of traffic. Choose which side of the incident you control.</p><div class="modecards"><button class="modecard attack" data-mode="attack"><span class="number">OPERATION / 01</span><span class="arrow">↗</span><h2>Attack the server</h2><p>Build a simulated device swarm, overwhelm proxy defenses, and stay ahead of the investigation.</p></button><button class="modecard" data-mode="defend"><span class="number">OPERATION / 02</span><span class="arrow">↗</span><h2>Defend the server</h2><p>Deploy proxies, inspect malicious traffic, follow the evidence, and order the suspect's arrest.</p></button></div><div class="homefoot"><span><b>3D ENVIRONMENT</b> / DATA CENTER</span><span><b>REAL-TIME</b> / SIMULATED TRAFFIC</span><span><b>SOUND DESIGN</b> / CC0 AUDIO + SYNTHESIS</span></div></div></section>
-<div id="game"><div class="game-hud"><div class="metric"><div class="label">INCOMING TRAFFIC</div><div class="value" id="traffic">0</div><div class="sub">SIMULATED REQUESTS / SEC</div></div><div class="metric"><div class="label">SERVER INTEGRITY</div><div class="value" id="health">100%</div><div class="sub">CRITICAL BELOW 30%</div></div><div class="metric"><div class="label">ACTIVE PROXIES</div><div class="value" id="proxies">0</div><div class="sub">TRAFFIC FILTERING</div></div><div class="metric"><div class="label" id="trace-label">TRACE EXPOSURE</div><div class="value" id="trace">0%</div><div class="sub" id="trace-sub">INVESTIGATION PROGRESS</div></div><div class="metric"><div class="label">TIME REMAINING</div><div class="value" id="timer">02:30</div><div class="sub">INCIDENT WINDOW</div></div></div><div id="game-title"><div class="stage" id="stage">PHASE 01 / INITIAL ACCESS</div><h2 id="objective">Acquire remote devices.</h2><p id="mission">Generate fictional traffic. The security team responds automatically.</p></div><div id="controls"><div class="panelheading"><strong id="panelname">ATTACK CONSOLE</strong><small id="panelmeta">TACTICAL ACTIONS</small></div><div id="actions"></div><div class="capbar" id="progressbar"><div id="progress"></div></div><p id="trace-description">Detection risk</p></div><div id="feed"><div class="feedhead">INCIDENT LOG <span>● LIVE</span></div><div id="entries"></div></div><div id="camera-ui"><button class="cam-btn selected" data-camera="overview">OVERVIEW</button><button class="cam-btn" data-camera="hacker">ATTACKER</button><button class="cam-btn" data-camera="servers">SERVERS</button></div><div class="draghelp">DRAG TO ORBIT CAMERA · SCROLL TO ZOOM</div><div id="toast"></div></div>
+<section id="home"><div class="homebox"><h1>BLACKOUT<br><span>PROTOCOL.</span></h1><p class="subtitle">Walk through a 3D data center, operate physical workstations, respond to simulated incidents and outsmart the security patrol. Choose your mission.</p><div class="modecards"><button class="modecard attack" data-mode="attack"><span class="number">OPERATION / 01</span><span class="arrow">↗</span><h2>Attack the server</h2><p>Build a simulated device swarm, overwhelm proxy defenses, and stay ahead of the investigation.</p></button><button class="modecard" data-mode="defend"><span class="number">OPERATION / 02</span><span class="arrow">↗</span><h2>Defend the server</h2><p>Deploy proxies, inspect malicious traffic, follow the evidence, and order the suspect's arrest.</p></button></div><div class="homefoot"><span><b>3D ENVIRONMENT</b> / DATA CENTER</span><span><b>REAL-TIME</b> / SIMULATED TRAFFIC</span><span><b>SOUND DESIGN</b> / CC0 AUDIO + SYNTHESIS</span></div></div></section>
+<div id="game"><div class="game-hud"><div class="metric"><div class="label">INCOMING TRAFFIC</div><div class="value" id="traffic">0</div><div class="sub">SIMULATED REQUESTS / SEC</div></div><div class="metric"><div class="label">SERVER INTEGRITY</div><div class="value" id="health">100%</div><div class="sub">CRITICAL BELOW 30%</div></div><div class="metric"><div class="label">ACTIVE PROXIES</div><div class="value" id="proxies">0</div><div class="sub">TRAFFIC FILTERING</div></div><div class="metric"><div class="label" id="trace-label">TRACE EXPOSURE</div><div class="value" id="trace">0%</div><div class="sub" id="trace-sub">INVESTIGATION PROGRESS</div></div><div class="metric"><div class="label">TIME REMAINING</div><div class="value" id="timer">07:00</div><div class="sub">INCIDENT WINDOW</div></div></div><div id="game-title"><div class="stage" id="stage">PHASE 01 / INITIAL ACCESS</div><h2 id="objective">Acquire remote devices.</h2><p id="mission">Generate fictional traffic. The security team responds automatically.</p></div><div id="terminal-backdrop"></div><div id="crosshair"></div><div id="interaction-hint"></div><div id="red-alert">⚠ RED ALERT / SERVER ROOM</div><div id="mission-step">Move with WASD. Walk to the illuminated laptop, then press E to access its controls.</div><div id="control-help"><kbd>W A S D</kbd> Move · <kbd>SHIFT</kbd> Sprint<br><kbd>MOUSE</kbd> Look · <kbd>E</kbd> Interact<br><kbd>C</kbd> Crouch · <kbd>V</kbd> Camera</div><div id="controls"><div class="panelheading"><strong id="panelname">ATTACK CONSOLE</strong><small id="panelmeta">TACTICAL ACTIONS</small><button id="terminal-close" aria-label="Close terminal">Close ✕</button></div><div id="actions"></div><div class="capbar" id="progressbar"><div id="progress"></div></div><p id="trace-description">Detection risk</p></div><div id="feed"><div class="feedhead">INCIDENT LOG <span>● LIVE</span></div><div id="entries"></div></div><div id="camera-ui"><button class="cam-btn selected" data-camera="overview">OVERVIEW</button><button class="cam-btn" data-camera="hacker">ATTACKER</button><button class="cam-btn" data-camera="servers">SERVERS</button></div><div class="draghelp">DRAG TO ORBIT CAMERA · SCROLL TO ZOOM</div><div id="toast"></div></div>
 <div id="ending"><div class="endingbox"><div class="endresult" id="result-type">OPERATION COMPLETE</div><h2 id="result-title">Server secured.</h2><p id="result-text">The network survived.</p><button class="endbtn" id="again">REPLAY MISSION</button><button class="endbtn alt" id="menu">MAIN MENU</button></div></div>
 <div id="loading"><div class="spinner"></div><div>INITIALIZING 3D ENVIRONMENT</div><small>Preparing geometry, server racks, lighting and audio engine.</small></div>
 </div>
@@ -53,23 +100,23 @@ try {
 // 3D scene, physical lighting, materials and reusable geometry.
 // --------------------------------------------------------------------------
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#080e17');
-scene.fog = new THREE.FogExp2('#080e17', .022);
+scene.background = new THREE.Color('#25313f');
+scene.fog = new THREE.FogExp2('#25313f', .010);
 const camera = new THREE.PerspectiveCamera(58, 1, .1, 120);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.3;
+renderer.toneMappingExposure = 1.85;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(innerWidth, innerHeight);
 renderer.domElement.setAttribute('aria-label','Interactive three-dimensional data center. Drag to orbit or use camera buttons.');
 renderer.domElement.style.touchAction = 'none';
 $('viewport').appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0x99b7cc, 0x081019, 1.45));
-const ambient = new THREE.AmbientLight(0x637b8d, .65); scene.add(ambient);
-const keyLight = new THREE.DirectionalLight(0xa4cde0, 2.25);
+scene.add(new THREE.HemisphereLight(0xe1e7ff, 0x1e2335, 2.25));
+const ambient = new THREE.AmbientLight(0x9aabcc, 1.1); scene.add(ambient);
+const keyLight = new THREE.DirectionalLight(0xc8deef, 3.1);
 keyLight.position.set(5, 12, 10); keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(2048,2048);
 keyLight.shadow.camera.left = -23; keyLight.shadow.camera.right = 23;
@@ -1195,18 +1242,18 @@ class Soundscape {
       const C=window.AudioContext||window.webkitAudioContext;
       if(!C)return;
       const a=this.ctx=new C();
-      this.master=a.createGain();this.master.gain.value=.44;this.master.connect(a.destination);
+      this.master=a.createGain();this.master.gain.value=.77;this.master.connect(a.destination);
       const size=a.sampleRate*3;
       const noise=a.createBuffer(2,size,a.sampleRate);
       for(let ch=0;ch<2;ch++){let d=noise.getChannelData(ch);for(let i=0;i<size;i++)d[i]=(Math.random()*2-1)*.49;}
       const source=a.createBufferSource();source.buffer=noise;source.loop=true;
       const lp=a.createBiquadFilter();lp.type='lowpass';lp.frequency.value=530;
       const low=a.createBiquadFilter();low.type='highpass';low.frequency.value=70;
-      this.fan=a.createGain();this.fan.gain.value=.115;
+      this.fan=a.createGain();this.fan.gain.value=.19;
       source.connect(low);low.connect(lp);lp.connect(this.fan);this.fan.connect(this.master);source.start();
       const hum=a.createOscillator();hum.type='sine';hum.frequency.value=56;
       const hum2=a.createOscillator();hum2.type='triangle';hum2.frequency.value=113.5;
-      this.vent=a.createGain();this.vent.gain.value=.039;
+      this.vent=a.createGain();this.vent.gain.value=.07;
       hum.connect(this.vent);hum2.connect(this.vent);this.vent.connect(this.master);hum.start();hum2.start();
       const siren=a.createOscillator();siren.type='sine';siren.frequency.value=390;
       this.alarmGain=a.createGain();this.alarmGain.gain.value=0;
@@ -1218,7 +1265,7 @@ class Soundscape {
     const clip=RECORDED_SFX[name];if(!clip)return;
     try{const audio=new Audio(clip);audio.volume=volume;void audio.play().catch(()=>{});}catch{}
   }
-  toggle(){this.enabled=!this.enabled; if(this.enabled){this.init();this.master?.gain.setTargetAtTime(.44,this.ctx.currentTime,.09);}else if(this.master)this.master.gain.setTargetAtTime(0,this.ctx.currentTime,.05);return this.enabled;}
+  toggle(){this.enabled=!this.enabled; if(this.enabled){this.init();this.master?.gain.setTargetAtTime(.77,this.ctx.currentTime,.09);}else if(this.master)this.master.gain.setTargetAtTime(0,this.ctx.currentTime,.05);return this.enabled;}
   tone(freq,duration=.13,type='sine',gain=.12,endfreq=freq){
     if(!this.enabled||!this.ctx)return;
     const a=this.ctx,t=a.currentTime,o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(Math.max(25,endfreq),t+duration);
@@ -1243,8 +1290,8 @@ class Soundscape {
   update(time,health,active){
     if(!this.ctx||!this.master)return;
     const t=this.ctx.currentTime;
-    if(this.fan)this.fan.gain.setTargetAtTime(active?.12+Math.max(0,100-health)*.0007:.075,t,.35);
-    if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&health<40?.035:0,t,.2);}
+    if(this.fan)this.fan.gain.setTargetAtTime(active?.21+Math.max(0,100-health)*.0022:.14,t,.35);
+    if(this.alarm){this.alarm.frequency.setTargetAtTime(430+210*Math.sin(time*6.7),t,.035);this.alarmGain.gain.setTargetAtTime(active&&health<55?.084:0,t,.2);}
   }
 }
 const sfx=new Soundscape();
@@ -1253,7 +1300,7 @@ $('audio').onclick=()=>{$('audio').textContent=sfx.toggle()?'♫ ON':'♫ OFF';s
 // --------------------------------------------------------------------------
 // Fictional gameplay model. There are no fetch(), WebSocket or live IP calls.
 // --------------------------------------------------------------------------
-const GAME_SECONDS=150;
+const GAME_SECONDS=420;
 let game=null,uiTick=0,toastTimer=0,visualTime=0,flashAlpha=0,endingDelay=0,alarmCooldown=0;
 const ACTIONS={
   attack:[
@@ -1292,7 +1339,7 @@ function startGame(mode){
   $('progressbar').classList.toggle('alert',mode==='attack');
   for(let o of proxyObjects)o.visible=false;
   reqTube.visible=true;world.visible=true;dynamic.visible=true;jail.visible=false;
-  scene.fog.density=.022;scene.background.set('#080e17');
+  scene.fog.density=.010;scene.background.set('#25313f');
   actionButtons.clear();$('actions').replaceChildren();
   for(let a of ACTIONS[mode]){
     const b=document.createElement('button');b.className='action '+(a.kind||'');b.type='button';
@@ -1447,14 +1494,14 @@ function animateScene(t,dt){
 // Input, restart, responsive rendering and fixed-delta loop.
 // --------------------------------------------------------------------------
 for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',()=>startGame(b.dataset.mode));
-function menu(){game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;scene.fog.density=.022;scene.background.set('#080e17');$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
+function menu(){game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
 $('restart').onclick=menu;
 $('again').onclick=()=>{const mode=game?.mode||'defend';startGame(mode);};
 $('menu').onclick=menu;
 document.addEventListener('keydown',e=>{
-  if(e.code==='Escape'&&game){menu();return;}
+  if(e.code==='Escape'&&game){if(window.__bpEscape?.())return;menu();return;}
   if(!game||game.ended)return;
-  if(['Digit1','Digit2','Digit3'].includes(e.code))focus(['overview','hacker','servers'][Number(e.code.slice(-1))-1]);
+  if(!window.__bpIsFPS?.()&&['Digit1','Digit2','Digit3'].includes(e.code))focus(['overview','hacker','servers'][Number(e.code.slice(-1))-1]);
 });
 function resize(){const w=innerWidth,h=innerHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}
 window.addEventListener('resize',resize);
