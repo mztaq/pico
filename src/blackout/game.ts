@@ -1229,7 +1229,7 @@ for(const p of patrols){
   box(.31,.28,.33,.09,.31,.08,uniform,guard);
 }
 const bpWorkPosition=V(-9.4,0,4.18);
-const bpHackerEscape=[V(-10.15,0,6.62),V(-14.2,0,9.78),V(-21.1,0,9.8)];
+const bpHackerEscape=[V(-10.15,0,6.62),V(-14.2,0,10.1),V(-20.5,0,10.1),V(-21.2,0,8.0)];
 const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
 let bpHackerState='working',bpHackerWaypoint=0,bpHackerHoldUntil=0,bpHackerStateTime=0;
 const bpOfficePassage=[[18.5,.4],[16.5,.4],[13.7,.4]];
