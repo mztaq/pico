@@ -207,31 +207,46 @@ export function effectGain(base: number): number {
 
 type CoolingAudio = { source: AudioBufferSourceNode; filter: BiquadFilterNode; gain: GainNode; hum: OscillatorNode; humGain: GainNode };
 
-/** Brief captions with leader arrows that point to real paths and nodes. */
+/** Place each leader entirely in nearby empty space, stopping short of routes/racks. */
 export function diagramAnnotations(mode: Mode, proxyCount: number, serverCount: number, proxiesOverloaded: boolean, pressure: number, lastServerY: number) {
   const active = mode === 'running' || mode === 'offline';
   const firstProxyY = proxyCount > 0 ? networkPositions(proxyCount)[0] : null;
-  const proxyTextY = firstProxyY === null ? 118 : Math.max(51, firstProxyY - 90);
+  const firstServerY = webserverPositions(serverCount)[0];
+
+  // Outgoing bot lane at its exact Bezier midpoint (t = 0.5, x = 583.9).
+  const attackMidY = (BOT_Y[0] + (firstProxyY ?? firstServerY)) / 2;
+  const attackLabelY = Math.max(52, attackMidY - 38);
+
+  // The proxy-free lane at t = 0.75 (x = 844.875).
+  const directLaneY = BOT_Y[0] * 0.15625 + firstServerY * 0.84375;
+  const edgeLabelY = firstProxyY === null
+    ? Math.max(48, directLaneY - 39)
+    : Math.max(68, firstProxyY - 67);
+
   return [
     {
       id: 'commands', text: active ? 'Sending commands' : mode === 'paused' ? 'Commands paused' : 'Hacker commands',
-      x: 190, y: 109, fromX: 292, fromY: 114, tipX: 300, tipY: 154, tone: 'accent',
+      x: 182, y: 96, fromX: 303, fromY: 107, tipX: 303, tipY: 130,
+      tone: 'accent',
     },
     {
       id: 'flood', text: active ? serverCount === 1 ? 'Flooding server' : 'Flooding servers' : mode === 'paused' ? 'Traffic paused' : 'Attack route',
-      x: 488, y: 102, fromX: 585, fromY: 108, tipX: 591, tipY: 158, tone: 'danger',
+      x: 482, y: attackLabelY, fromX: 584, fromY: attackLabelY + 9,
+      tipX: 584, tipY: attackMidY - 8, tone: 'danger',
     },
     {
       id: 'proxies', text: proxyCount === 0 ? 'Direct to server' : mode === 'ready' ? 'Proxies ready' : proxiesOverloaded ? 'Proxies overloaded' : 'Filtering traffic',
-      x: 807, y: proxyTextY,
-      fromX: firstProxyY === null ? 889 : 812, fromY: proxyTextY + 8,
-      tipX: firstProxyY === null ? 920 : 789, tipY: firstProxyY === null ? 187 : firstProxyY - 8,
+      x: 814, y: edgeLabelY,
+      fromX: firstProxyY === null ? 871 : 807, fromY: edgeLabelY + 9,
+      tipX: firstProxyY === null ? 845 : 796,
+      tipY: firstProxyY === null ? directLaneY - 8 : firstProxyY - 39,
       tone: proxyCount === 0 ? 'muted' : proxiesOverloaded ? 'danger' : 'success',
     },
     {
       id: 'server', text: mode === 'offline' ? 'Server offline' : mode === 'ready' ? 'Server ready' : mode === 'paused' ? 'Server paused' : pressure > 1 ? 'Server overloaded' : 'Serving requests',
-      x: 966, y: Math.min(454, lastServerY + 68),
-      fromX: 1085, fromY: Math.min(443, lastServerY + 52), tipX: 1099, tipY: lastServerY + 29,
+      x: 998, y: Math.min(456, lastServerY + 73),
+      fromX: 1120, fromY: Math.min(441, lastServerY + 58),
+      tipX: 1120, tipY: lastServerY + 44,
       tone: mode === 'offline' || (mode === 'running' && pressure > 1) ? 'danger' : 'accent',
     },
   ] as const;
