@@ -1251,7 +1251,11 @@ function bpWalkGuard(p,target,dt,urgent=true){
   return false;
 }
 function bpGuardSetReturn(p){
-  p.state='returning';p.index=0;p.path=[...bpGuardBackPath,p.home];
+  // Retrace actual waypoints, including the office door, to avoid clipping racks.
+  const crossed=p.path.slice(0,p.index).reverse();
+  p.state='returning';p.index=0;
+  p.path=[...crossed,p.home];
+  p.lastSeen=null;
 }
 function bpAssignSecurityDispatch(g){
   g.securityDispatchActive=true;
@@ -1367,7 +1371,7 @@ function bpNpcUpdate(dt){
   technician.rotation.y=Math.PI;
   if(g.mode==='attack')return;
   const guardsInHall=patrols.some(p=>p.state==='searching'&&p.agent.position.x<12);
-  const nearest=Math.min(...patrols.map(p=>bpDistance(p.agent,attacker.position)));
+  const nearest=Math.min(...patrols.filter(p=>p.state==='searching').map(p=>bpDistance(p.agent,attacker.position)),99);
   const visible=patrols.some(p=>p.state==='searching'&&bpGuardCanSee(p.agent,attacker.position,10));
   const threatened=guardsInHall&&(nearest<11||visible);
   if(bpHackerState==='working'&&threatened){
