@@ -602,7 +602,7 @@ function frame(now=0){
    Every "attack", trace, proxy and request is in-memory gameplay only. */
 const bp = {
   player: V(-7.4, 0, 6.85), yaw:.36, pitch:-.06, keys:new Set(),
-  terminal:false, active:false, third:false, crouching:false,
+  terminal:false, active:false, third:false, crouching:false,dragging:false,dragX:0,dragY:0,
   stepClock:0, npcTyping:true, npcHiding:false,
   targetDesk: V(-8.8,0,4.0), guardAlert:false,
 };
@@ -881,7 +881,7 @@ startGame=function(mode){
   bp.yaw=mode==='attack'?.36:0;bp.pitch=-.06;
   bp.player.copy(mode==='attack'?V(-7.4,0,6.85):V(10.7,0,-2.15));
   view.drag=false;
-  bp.keys.clear();
+  bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
   bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;attacker.scale.y=1;
   for(const p of patrols){p.index=0;p.phase=0;p.emergency=false;}
@@ -913,7 +913,7 @@ function bpOpenTerminal(){
   bp.terminal=true;
   document.body.classList.add('terminal-open');
   if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
-  view.drag=false;
+  bp.dragging=false;view.drag=false;
   $('panelname').textContent=game.mode==='attack'?'LAPTOP / LOCAL TRAFFIC SIM':'SECURITY CONSOLE / INCIDENT RESPONSE';
   $('panelmeta').textContent='PRESS ESC TO RETURN TO THE ROOM';
   $('interaction-hint').classList.remove('visible');
@@ -974,7 +974,20 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyV'&&!bp.terminal){bp.third=!bp.third;sfx.tap();notify(bp.third?'SHOULDER CAMERA':'FIRST-PERSON CAMERA');}
 });
 document.addEventListener('keyup',e=>{bp.keys.delete(e.code);});
-window.addEventListener('blur',()=>{bp.keys.clear();});
+window.addEventListener('blur',()=>{bp.keys.clear();bp.dragging=false;});
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===renderer.domElement)bp.dragging=false;});
+renderer.domElement.addEventListener('pointerdown',e=>{
+  if(!bp.active||bp.terminal||e.button!==0||document.pointerLockElement===renderer.domElement)return;
+  bp.dragging=true;bp.dragX=e.clientX;bp.dragY=e.clientY;
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(!bp.active||!bp.dragging||bp.terminal||document.pointerLockElement===renderer.domElement)return;
+  bp.yaw-=bpClamp(e.clientX-bp.dragX,-90,90)*.004;
+  bp.pitch=bpClamp(bp.pitch-bpClamp(e.clientY-bp.dragY,-90,90)*.003,-1.3,1.3);
+  bp.dragX=e.clientX;bp.dragY=e.clientY;
+});
+renderer.domElement.addEventListener('pointerup',()=>{bp.dragging=false;});
+renderer.domElement.addEventListener('pointercancel',()=>{bp.dragging=false;});
 document.addEventListener('mousemove',e=>{
   if(!bp.active || bp.terminal || document.pointerLockElement!==renderer.domElement)return;
   bp.yaw-=bpClamp(e.movementX,-110,110)*.0023;
