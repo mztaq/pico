@@ -8,6 +8,6 @@ import { WorkspaceLoading } from './WorkspaceLoading';
  */
 export function WorkspaceTransition({
   workspace, children,
-}: { workspace: 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab'; children: ReactNode }) {
+}: { workspace: 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab' | 'Traffic Storm'; children: ReactNode }) {
   return <Suspense fallback={<WorkspaceLoading workspace={workspace} />}>{children}</Suspense>;
 }

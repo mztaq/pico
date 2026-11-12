@@ -168,3 +168,122 @@
  .pico-load-home-section--data .pico-load-home-card{flex-direction:column}
  .pico-load-home-section--data .pico-load-home-card-stage{flex:auto;height:112px;min-height:0;border-right:0;border-bottom:1px solid var(--pico-load-border)}
 }
+
+/* Four visual workspaces, two columns for consistent card proportions. */
+.pico-load-home-section--visual .pico-load-home-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:640px){.pico-load-home-section--visual .pico-load-home-grid{grid-template-columns:minmax(0,1fr)}}
+/* Traffic Storm starts with one hacker-name field, not CPU registers or controls.
+   Use the selected theme during React.lazy loading and the HTML boot phase. */
+.pico-load-stage[data-loading-workspace="Traffic Storm"]{
+  /* The outer Suspense fallback sits outside .pico-app. Its inherited :root
+     --accent is Pico's default blue, not the visitor's saved theme. */
+  --pico-storm-load-bg:var(--pico-boot-bg,#1e1e2e);
+  --pico-storm-load-accent:var(--pico-boot-accent,#cba6f7);
+  /* Tint with the current theme accent, not white, which makes the loader gray. */
+  --pico-load-surface:color-mix(in srgb,var(--pico-storm-load-bg) 93%,var(--pico-storm-load-accent) 7%);
+  --pico-load-border:color-mix(in srgb,var(--pico-storm-load-bg) 76%,var(--pico-storm-load-accent) 24%);
+  --pico-load-shimmer-a:color-mix(in srgb,var(--pico-storm-load-bg) 85%,var(--pico-storm-load-accent) 15%);
+  --pico-load-shimmer-b:color-mix(in srgb,var(--pico-storm-load-bg) 62%,var(--pico-storm-load-accent) 38%);
+  background:var(--pico-storm-load-bg);
+}
+/* The inner workspace Suspense fallback inherits the current live theme. */
+.pico-app .pico-load-stage[data-loading-workspace="Traffic Storm"]{
+  --pico-storm-load-bg:var(--bg);
+  --pico-storm-load-accent:var(--accent);
+}
+.pico-load-stage[data-loading-workspace="Traffic Storm"] .pico-load-topbar{
+  min-height:52px;flex-basis:52px;
+  background:color-mix(in srgb,var(--pico-storm-load-bg) 90%,#000 10%);
+}
+.pico-load-storm-content{
+  flex:1 1 auto;min-height:0;display:grid;place-items:center;
+  padding:32px 24px 72px;
+}
+.pico-load-storm-entry{
+  width:min(452px,100%);
+  display:flex;flex-direction:column;align-items:stretch;
+  gap:0;
+}
+.pico-load-storm-heading{height:43px;width:78%;margin-bottom:31px;border-radius:7px}
+.pico-load-storm-label{height:13px;width:95px;margin-bottom:14px;border-radius:4px}
+.pico-load-storm-input{height:52px;width:100%;border-radius:9px}
+.pico-load-storm-helper{
+  display:flex;justify-content:space-between;align-items:center;gap:15px;
+  margin-top:13px;
+}
+.pico-load-storm-hint{height:10px;width:min(230px,65%);border-radius:3px}
+.pico-load-storm-counter{height:10px;width:31px;border-radius:3px}
+.pico-load-storm-button{height:46px;width:100%;margin-top:23px;border-radius:9px}
+@media(max-width:600px){
+ .pico-load-storm-content{padding:25px 19px 55px}
+ .pico-load-storm-heading{height:35px;margin-bottom:26px;width:86%}
+ .pico-load-storm-input{height:49px}
+}
+/* Returning Traffic Storm visitors load the network dashboard, never alias entry. */
+.pico-load-storm-dashboard{
+  flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;
+  display:flex;flex-direction:column;gap:13px;padding:17px 22px 22px;
+}
+.pico-load-storm-dashboard-heading{
+  display:flex;justify-content:space-between;align-items:center;gap:18px;min-height:37px;
+}
+.pico-load-storm-dashboard-title{width:min(220px,40vw);height:27px}
+.pico-load-storm-dashboard-actions{display:flex;gap:11px}
+.pico-load-storm-dashboard-action{width:112px;height:31px}
+.pico-load-storm-dashboard-toolbar{
+  display:flex;align-items:center;gap:17px;min-height:47px;
+  border:1px solid var(--pico-load-border);border-radius:10px;
+  padding:10px 15px;background:var(--pico-load-surface);
+}
+.pico-load-storm-dashboard-control{width:92px;height:18px}
+.pico-load-storm-dashboard-slider{width:min(230px,38%);height:16px;margin-left:auto}
+.pico-load-storm-dashboard-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.pico-load-storm-dashboard-metric{
+  display:flex;flex-direction:column;gap:12px;min-width:0;
+  padding:15px 17px;min-height:83px;
+  border:1px solid var(--pico-load-border);border-radius:10px;background:var(--pico-load-surface);
+}
+.pico-load-storm-dashboard-metric-label{height:12px;width:68%}
+.pico-load-storm-dashboard-metric-value{height:25px;width:52%}
+.pico-load-storm-dashboard-main{
+  flex:1 1 auto;display:grid;grid-template-columns:minmax(0,1.72fr) minmax(260px,.8fr);
+  gap:13px;min-height:290px;
+}
+.pico-load-storm-dashboard-panel{
+  min-width:0;min-height:0;padding:16px;
+  border:1px solid var(--pico-load-border);
+  border-radius:11px;background:var(--pico-load-surface);
+}
+.pico-load-storm-dashboard-section-title{width:145px;height:16px}
+.pico-load-storm-dashboard-network{display:flex;flex-direction:column}
+.pico-load-storm-dashboard-svg{flex:1;width:100%;min-height:205px;margin:auto}
+.pico-load-storm-skeleton-route{
+  fill:none;stroke:var(--pico-load-border);stroke-width:2;stroke-dasharray:6 9;
+}
+.pico-load-storm-skeleton-node{
+  fill:var(--pico-load-shimmer-a);
+  stroke:var(--pico-load-border);stroke-width:2;
+}
+.pico-load-storm-skeleton-node-core{fill:var(--pico-load-shimmer-b);opacity:.8}
+.pico-load-storm-dashboard-side{display:flex;flex-direction:column;gap:15px}
+.pico-load-storm-dashboard-side-line{height:15px;width:80%}
+.pico-load-storm-dashboard-side-short{width:55%}
+.pico-load-storm-dashboard-side-meter{height:31px;width:100%;margin:6px 0}
+.pico-load-storm-dashboard-side-chart{height:125px;width:100%;margin-top:auto}
+@media(max-width:810px){
+ .pico-load-storm-dashboard{padding:13px;gap:10px}
+ .pico-load-storm-dashboard-main{grid-template-columns:minmax(0,1fr);min-height:0}
+ .pico-load-storm-dashboard-panel{min-height:215px}
+ .pico-load-storm-dashboard-side{min-height:165px}
+ .pico-load-storm-dashboard-side-chart{height:75px}
+}
+@media(max-width:540px){
+ .pico-load-storm-dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .pico-load-storm-dashboard-action{width:68px}
+ .pico-load-storm-dashboard-control{width:57px}
+ .pico-load-storm-dashboard-heading{min-height:30px}
+ .pico-load-storm-dashboard-title{height:23px;width:150px}
+ .pico-load-storm-dashboard-metric{padding:11px;min-height:71px}
+ .pico-load-storm-dashboard-metric-value{height:20px}
+}
+

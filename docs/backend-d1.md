@@ -14,7 +14,7 @@ Pico uses an opt-in Cloudflare D1 backend for anonymous workspace usage and opti
 - `GET /api/preferences`: read settings, gated by preference consent.
 - `PUT /api/preferences`: update theme, last workspace, and settings JSON.
 - `DELETE /api/preferences`: delete stored preferences.
-- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to six workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice. The six counters are `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, and `binary_lab_seconds`.
+- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to seven workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice. The seven counters are `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, `binary_lab_seconds`, and `traffic_storm_seconds`.
 
 ## Before new releases
 - Run `pnpm install`, `pnpm check`, `pnpm test`, and `pnpm build`. Review GitHub Actions results and run these checks locally when changing the backend.
@@ -87,6 +87,28 @@ Cloudflare D1/SQLite appends columns with `ALTER TABLE ADD COLUMN`. Migration `m
 5. Migrate Production only after Preview verification, then merge/deploy the API, accept Analytics on a test browser and spend time in Binary Lab. Verify that only `binary_lab_seconds` increments, and the other five workspace counters, Preferences API, and idempotent batch retries still work.
 
 This is a **one-time** table rebuild. If the sixth column already exists, do not re-run this migration. Applying the SQL file in GitHub does not alter the live database.
+
+## Traffic Storm usage counter (migration 0004)
+
+Traffic Storm shares the existing opt-in analytics system. Active foreground time is recorded in `pico_usage.traffic_storm_seconds` only after Analytics consent, with the same inactivity, tab visibility, batching, and revocation behavior as the other six workspaces. No new tracking cookie is created.
+
+The seventh workspace requires the new D1 column **before** deploying the updated usage API. Back up the corresponding Preview or Production database, then in the Cloudflare D1 SQL Console run the following command **once**:
+
+```sql
+ALTER TABLE pico_usage
+ADD COLUMN traffic_storm_seconds INTEGER NOT NULL DEFAULT 0;
+```
+
+Alternatively, run `migrations/0004_traffic_storm_usage.sql` through Wrangler's D1 migrations runner. **Do not run both**, and do not rerun either after the field exists.
+
+Verify the database before and after the change with:
+
+```sql
+PRAGMA table_info(pico_usage);
+SELECT visitor_id, traffic_storm_seconds FROM pico_usage LIMIT 5;
+```
+
+Apply the change to Preview and test a consented Traffic Storm session first, then apply it to Production before merging. Users who decline Analytics must not have their time recorded in D1. An existing consented user who changes workspaces should have time attributed to each workspace separately, rather than accumulating under Traffic Storm.
 
 ## Scheduled retention cleanup
 

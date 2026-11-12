@@ -45,7 +45,7 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Binary Lab']);
+  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Traffic Storm','Binary Lab']);
   expect(container.querySelector('footer')).toBeNull();
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/team"]')?.textContent).toBe('Pico Team');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/privacy"]')?.textContent).toBe('Privacy Policy');
@@ -202,7 +202,7 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
 
 it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
  expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
- expect(container.querySelectorAll('.compiler-choice')).toHaveLength(6);
+ expect(container.querySelectorAll('.compiler-choice')).toHaveLength(7);
 });
 it('offers both CPU simulation modes and a guided tutorial',async()=>{
  const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');

@@ -23,6 +23,7 @@ function LoadingScreen() {
 function AppBootReady() {
   useLayoutEffect(() => {
     document.querySelector('.pico-initial-home-loading')?.remove();
+    document.querySelector('.pico-initial-traffic-loading')?.remove();
   }, []);
   return <App />;
 }
@@ -47,6 +48,7 @@ function directVisualWorkspace(pathname: string, search: string): VisualWorkspac
     case 'logic': return 'Logic Sim';
     case 'cpu': return 'CPU Studio';
     case 'binary': return 'Binary Lab';
+    case 'traffic': return 'Traffic Storm';
     default: return null;
   }
 }

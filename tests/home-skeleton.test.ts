@@ -14,7 +14,7 @@ describe('Pico workspace-selector home skeleton',()=>{
     expect(html).toContain('aria-label="Opening Pico home"');
     expect(html).toContain('role="status"');
     expect(html).toContain('aria-hidden="true"');
-    expect((html.match(/class="pico-load-home-card"/g)??[])).toHaveLength(6);
+    expect((html.match(/class="pico-load-home-card"/g)??[])).toHaveLength(7);
     expect((html.match(/class="pico-load-home-section /g)??[])).toHaveLength(3);
     expect(html).toContain('pico-load-home-section--code');
     expect(html).toContain('pico-load-home-section--visual');
@@ -59,7 +59,7 @@ describe('Pico workspace-selector home skeleton',()=>{
       expect(document.defaultView!.getComputedStyle(landing).display==='none').toBe(path!=='/');
     }
     const home=new JSDOM(initialHtml).window.document.querySelector('.pico-initial-home-loading');
-    expect(home?.querySelectorAll('.pico-initial-home-card')).toHaveLength(6);
+    expect(home?.querySelectorAll('.pico-initial-home-card')).toHaveLength(7);
     expect(home?.querySelectorAll('.pico-initial-home-group')).toHaveLength(3);
   });
 });

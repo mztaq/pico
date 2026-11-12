@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { workspaceFromLocation, workspaceFromPath, workspaceFromSearch, workspaceUrl } from './workspace-deeplink';
 
 describe('Workspace routes', () => {
-  it.each(['pseudocode','python','flowchart','logic','cpu','binary'] as const)('opens %s through a pathname', tool => {
+  it.each(['pseudocode','python','flowchart','logic','cpu','binary','traffic'] as const)('opens %s through a pathname', tool => {
     expect(workspaceFromPath('/app/' + tool)).toBe(tool);
     expect(workspaceFromLocation('/app/' + tool, '')).toBe(tool);
     expect(workspaceUrl(tool)).toBe('/app/' + tool);

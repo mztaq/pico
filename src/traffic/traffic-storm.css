@@ -1,0 +1,1307 @@
+.storm-app{min-height:100dvh;height:100dvh;overflow:auto;background:var(--ds-bg);color:var(--ds-text);font-family:var(--ds-font-ui);position:relative}
+.storm-app *, .storm-app *::before, .storm-app *::after{box-sizing:border-box}
+.storm-app button,.storm-app input{font:inherit}
+.storm-header{position:sticky;top:0;z-index:10;justify-content:space-between}
+.storm-app .brand-mark{width:24px;height:24px;margin-right:7px}
+.storm-app .brand-period{color:var(--accent)}
+.storm-header-actions{display:flex;align-items:center;gap:8px}
+.storm-icon-button{display:grid;place-items:center;height:32px;min-width:32px;padding:0 7px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--ds-muted);cursor:pointer}
+.storm-icon-button:hover{border-color:var(--ds-line);color:var(--ds-text);background:var(--ds-hover)}
+.storm-theme-wrap{position:relative}
+.storm-theme-popover{position:absolute;right:0;top:40px;z-index:30;min-width:275px;max-height:75vh;overflow-y:auto;padding:14px;border:1px solid var(--ds-line);border-radius:12px;background:var(--ds-panel);box-shadow:var(--ds-shadow-float)}
+.storm-setup{max-width:690px;min-height:calc(100dvh - 52px);margin:0 auto;padding:36px 24px 70px;text-align:center;display:flex;align-items:center;flex-direction:column}
+.storm-setup-orbit{width:180px;height:180px;position:relative;margin:0 auto 10px;display:grid;place-items:center}
+.storm-setup-orbit::before,.storm-setup-orbit::after{content:"";position:absolute;inset:20px;border:1px dashed color-mix(in srgb,var(--accent) 35%,transparent);border-radius:50%}
+.storm-setup-orbit::after{inset:47px;border-style:solid;opacity:.35}
+.storm-orbit-core{display:grid;place-items:center;width:75px;height:75px;border:1px solid color-mix(in srgb,var(--accent) 50%,var(--ds-line));border-radius:19px;background:var(--ds-accent-soft);color:var(--accent);box-shadow:0 0 52px color-mix(in srgb,var(--accent) 13%,transparent)}
+.storm-setup-orbit i{width:7px;height:7px;position:absolute;inset:calc(50% - 3px) auto auto calc(50% - 3px);border-radius:50%;background:var(--accent);opacity:.8}
+.storm-setup-orbit i:nth-child(3n){background:var(--ds-text);opacity:.5}
+.storm-setup-title h1,.storm-intro h1{margin:0;letter-spacing:-.05em;font-size:clamp(35px,5vw,52px);font-weight:750;line-height:1.1}
+.storm-setup-title h1 span,.storm-intro h1 span{color:var(--accent)}
+.storm-setup-title p{margin:13px auto 0;color:var(--ds-muted);line-height:1.6}
+.storm-setup-form{display:flex;flex-direction:column;gap:21px;text-align:left;width:100%;max-width:470px;margin-top:29px;padding:27px;background:var(--ds-panel);border:1px solid var(--ds-line);border-radius:16px;box-shadow:0 16px 45px color-mix(in srgb,#000 12%,transparent)}
+.storm-setup-form>label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:650;color:var(--ds-text)}
+.storm-field-sub{font-size:11px;color:var(--ds-muted);font-weight:400}
+.storm-setup input:not([type="range"]){width:100%;height:43px;padding:10px 12px;border:1px solid var(--ds-line-strong);border-radius:8px;color:var(--ds-text);background:var(--ds-sunken);font:500 14px var(--ds-font-ui)}
+.storm-setup input::placeholder{color:var(--ds-muted);opacity:.75}
+.storm-setup input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.storm-bot-field{position:relative}
+.storm-bot-field svg{position:absolute;right:12px;top:13px;color:var(--ds-muted);pointer-events:none}
+.storm-setup input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer}
+.storm-primary,.storm-secondary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:38px;padding:9px 16px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;transition:filter .15s ease,transform .15s ease}
+.storm-primary{color:var(--ds-on-accent);background:var(--ds-accent-fill);border:1px solid transparent}
+.storm-secondary{color:var(--ds-text);background:var(--ds-panel);border:1px solid var(--ds-line-strong)}
+.storm-primary:hover,.storm-secondary:hover{filter:brightness(1.08)}
+.storm-setup-form .storm-primary{min-height:46px;width:100%}
+.storm-disclaimer{display:flex;gap:8px;align-items:center;justify-content:center;color:var(--ds-muted);font-size:11px;font-weight:400;line-height:1.5}
+.storm-setup-form .storm-disclaimer{margin:0;text-align:center}
+.storm-disclaimer svg{flex-shrink:0}
+.storm-error{color:var(--ds-danger);font-size:12px;margin:0}
+.storm-intro,.storm-metrics,.storm-main-grid,.storm-chart-panel,.storm-bottom-note{max-width:1400px;margin-left:auto;margin-right:auto}
+.storm-intro{padding:30px 24px 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+.storm-intro h1{font-size:34px}
+.storm-intro p{margin:10px 0 0;color:var(--ds-muted);font-size:13px;line-height:1.7}
+.storm-controls{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.storm-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0 24px 14px}
+.storm-metric{min-width:0;min-height:112px;display:flex;flex-direction:column;align-items:flex-start;padding:20px;background:var(--ds-panel);border:1px solid var(--ds-line);border-radius:12px}
+.storm-metric>span{color:var(--ds-muted);font:700 10px var(--ds-font-code);letter-spacing:.06em}
+.storm-metric>strong{margin:10px 0 5px;color:var(--ds-text);font:700 clamp(24px,2.5vw,33px) var(--ds-font-code);letter-spacing:-.05em}
+.storm-metric>small{color:var(--ds-muted);font-size:11px}
+.storm-metric .storm-danger{color:var(--ds-danger)}
+.storm-meter{margin-top:auto;width:100%;height:6px;overflow:hidden;border-radius:20px;background:var(--ds-sunken)}
+.storm-meter i{display:block;height:100%;border-radius:20px;background:var(--accent);transition:width .3s ease}
+.storm-meter .storm-health{background:var(--ds-success)}
+.storm-main-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(330px,.9fr);align-items:start;gap:14px;padding:0 24px 14px}
+.storm-panel{min-width:0;padding:20px;border:1px solid var(--ds-line);border-radius:12px;background:var(--ds-panel)}
+.storm-panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.storm-panel-heading h2{margin:0;color:var(--ds-text);font-size:15px;font-weight:700}
+.storm-panel-heading p{color:var(--ds-muted);font-size:11.5px;margin:6px 0 0;line-height:1.5}
+.storm-panel-heading>svg{color:var(--accent)}
+.storm-network{display:flex;flex-direction:column;min-height:435px;overflow:hidden}
+.storm-network-svg{display:block;width:100%;max-width:950px;min-height:230px;flex:1;margin:auto;overflow:visible}
+.storm-path{fill:none;stroke:url(#storm-line);stroke-width:1.7;stroke-dasharray:5 9}
+.storm-bot-node rect{stroke:var(--ds-line-strong);stroke-width:1.2;fill:var(--ds-panel-raised)}
+.storm-bot-node circle{fill:var(--accent);opacity:.85}
+.storm-bot-node path{stroke:var(--accent);stroke-width:2;fill:none;stroke-linecap:round}
+.storm-bot-node text{fill:var(--ds-muted);font:10px var(--ds-font-code);letter-spacing:.1em}
+.storm-packet{fill:var(--accent);filter:url(#storm-glow);opacity:.96}
+.storm-server-graphic>rect:first-child{fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:2}
+.storm-server-graphic>rect:not(:first-child){fill:var(--ds-sunken);stroke:var(--ds-line-strong);stroke-width:1}
+.storm-server-graphic text{fill:var(--ds-text);font:700 11px var(--ds-font-code);text-anchor:middle;letter-spacing:.08em}
+.storm-server-graphic text:last-child{fill:var(--accent)}
+.storm-server-graphic .storm-led{fill:var(--ds-success)}
+.storm-server-graphic.is-offline>rect:first-child{stroke:var(--ds-danger)}
+.storm-server-graphic.is-offline .storm-led{fill:var(--ds-danger);opacity:.5}
+.storm-offline-symbol circle{fill:color-mix(in srgb,var(--ds-danger) 13%,var(--ds-panel));stroke:var(--ds-danger);stroke-width:2;opacity:.85}
+.storm-offline-symbol path{stroke:var(--ds-danger);stroke-width:6;stroke-linecap:round}
+.storm-side{display:grid;gap:14px;align-content:start;min-width:0}
+.storm-chart-panel{margin-left:max(24px,calc((100vw - 1352px)/2));margin-right:max(24px,calc((100vw - 1352px)/2));}
+.storm-chart-panel .storm-panel-heading>strong{font:700 12px var(--ds-font-code);color:var(--accent)}
+.storm-chart-panel svg{margin-top:18px;width:100%;height:112px;overflow:visible}
+.storm-chart-axis{fill:none;stroke:var(--ds-line);stroke-width:.8;stroke-dasharray:4 5}
+.storm-chart-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.storm-chart-footer{display:flex;justify-content:space-between;gap:10px;color:var(--ds-muted);font-size:10px}
+.storm-bottom-note{margin:18px auto 30px;padding:0 24px}
+.storm-dialog-backdrop{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.68)}
+.storm-dialog{position:relative;width:min(100%,480px);padding:28px;border-radius:14px;background:var(--ds-panel);border:1px solid var(--ds-line);box-shadow:var(--ds-shadow-dialog)}
+.storm-dialog h2{margin:0 0 14px;font-size:21px}
+.storm-dialog p{color:var(--ds-muted);font-size:13px;line-height:1.7}
+.storm-dialog .storm-primary{margin-top:8px}
+.storm-dialog-close{position:absolute;top:12px;right:12px;display:grid;place-items:center;border:0;background:transparent;color:var(--ds-muted);cursor:pointer}
+@media(max-width:940px){.storm-main-grid{grid-template-columns:minmax(0,1fr)}.storm-side{grid-template-columns:repeat(2,minmax(0,1fr))}.storm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.storm-header{padding:0 10px}.storm-setup{padding:25px 16px}.storm-setup-form{padding:20px}.storm-intro{padding:22px 16px 16px;display:block}.storm-intro h1{font-size:28px}.storm-controls{margin-top:17px;flex-wrap:wrap}.storm-metrics{padding:0 16px 12px;gap:9px}.storm-metric{padding:13px;min-height:104px}.storm-metric>strong{font-size:23px}.storm-main-grid{padding:0 16px 12px}.storm-side{grid-template-columns:1fr}.storm-panel{padding:14px}.storm-network{min-height:260px}.storm-network-svg{min-height:190px}.storm-chart-panel{margin-left:16px;margin-right:16px}.storm-outcome{margin:12px 16px;align-items:flex-start;flex-wrap:wrap}.storm-outcome button{margin-left:0}.storm-bottom-note{padding:0 16px}.storm-theme-popover{right:-4px}}
+@media(prefers-reduced-motion:reduce){.storm-app *{animation:none!important;transition:none!important}.storm-packet{display:none}}
+
+/* The animated diagram is an educational view of a fictional network. */
+.storm-diagram-label{fill:var(--ds-text);font:700 11px var(--ds-font-code);text-anchor:middle;letter-spacing:.1em}
+.storm-diagram-count{fill:var(--ds-muted);font:10px var(--ds-font-code);text-anchor:middle}
+.storm-proxy-node rect{fill:var(--ds-accent-soft);stroke:var(--accent);stroke-width:1.3}
+.storm-proxy-node circle{fill:var(--accent);opacity:.85}
+.storm-proxy-node text{fill:var(--ds-text);font:700 11px var(--ds-font-code);text-anchor:middle}
+.storm-server-graphic.is-critical>rect:first-child{stroke:var(--ds-danger);animation:storm-server-pulse 1.4s ease-in-out infinite}
+.storm-server-graphic.is-critical .storm-led{fill:var(--ds-danger)}
+@keyframes storm-server-pulse{50%{stroke-width:4;filter:drop-shadow(0 0 10px var(--ds-danger))}}
+/* A read-only imitation terminal. Nothing in this panel is executable. */
+@keyframes storm-caret-blink{50%{opacity:0}}
+@keyframes storm-line-enter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* Progressive operator messages create a replayable visual narrative. */
+.storm-chatter{display:grid;gap:9px;margin-top:15px}
+.storm-chat-avatar{width:26px;height:26px;display:grid;place-items:center;flex:0 0 26px;background:var(--ds-accent-soft);border-radius:8px;color:var(--accent);font:700 12px var(--ds-font-ui)}
+.storm-chatter-typing{display:flex;gap:4px;align-items:center;padding:10px 12px;width:max-content;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-sunken)}
+.storm-chatter-typing i{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:storm-typing 1.2s ease-in-out infinite}
+.storm-chatter-typing i:nth-child(2){animation-delay:.17s}
+.storm-chatter-typing i:nth-child(3){animation-delay:.34s}
+@keyframes storm-typing{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+@media(min-width:941px){.storm-network{min-height:460px}}
+@media(max-width:940px){.storm-main-grid{align-items:stretch}.storm-side{align-items:start}}
+@media(max-width:600px){.storm-main-grid{grid-template-columns:1fr}.storm-network{min-height:280px}.storm-chatter{gap:7px}.storm-console{font-size:10.5px}.storm-console-line{padding-inline:9px}}
+@media(prefers-reduced-motion:reduce){.storm-console-line,.storm-chat-line,.storm-console-caret,.storm-chatter-typing i,.storm-server-graphic.is-critical>rect:first-child{animation:none!important}}
+
+/* Traffic Storm v2: compact, single-viewport desktop dashboard. */
+.storm-app.storm-in-session{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.storm-session{width:100%;max-width:1700px;margin:0 auto;padding:14px clamp(14px,2vw,30px) 11px;min-height:0;flex:1;display:flex;flex-direction:column;gap:11px;overflow:hidden}
+.storm-in-session .storm-intro{width:100%;max-width:none;min-height:48px;margin:0;padding:0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex:0 0 auto}
+.storm-in-session .storm-titleline{display:flex;align-items:center;flex-wrap:wrap;column-gap:19px;row-gap:2px;min-width:0}
+.storm-in-session .storm-intro h1{margin:0;font-size:clamp(24px,2.2vw,31px);letter-spacing:-.04em;line-height:1.15;white-space:nowrap}
+.storm-in-session .storm-controls{margin:0;display:flex;align-items:center;gap:8px}
+.storm-in-session .storm-controls button{min-height:35px;padding:7px 11px;white-space:nowrap}
+.storm-proxy-switch{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--ds-line-strong);border-radius:9px;background:var(--ds-panel);color:var(--ds-muted);font-weight:650;font-size:12px;cursor:pointer}
+.storm-proxy-switch.is-on{color:var(--ds-success);border-color:color-mix(in srgb,var(--ds-success) 45%,var(--ds-line))}
+.storm-toggle-track{display:flex;align-items:center;width:28px;height:16px;border-radius:12px;padding:2px;background:var(--ds-line-strong)}
+.storm-toggle-track i{width:12px;height:12px;border-radius:50%;background:var(--ds-panel);transition:transform .18s ease}
+.storm-proxy-switch.is-on .storm-toggle-track{background:var(--ds-success)}
+.storm-proxy-switch.is-on .storm-toggle-track i{transform:translateX(12px);background:var(--ds-bg)}
+.storm-in-session .storm-metrics{padding:0;width:100%;max-width:none;flex:0 0 auto;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.storm-in-session .storm-metric{padding:13px 17px;min-height:90px;gap:3px;border-radius:11px}
+.storm-in-session .storm-metric>span{letter-spacing:.045em;font-size:10px}
+.storm-in-session .storm-metric>strong{margin:4px 0 1px;letter-spacing:-.04em;font-size:clamp(19px,2.15vw,29px)}
+.storm-in-session .storm-metric small{font-size:10px}
+.storm-in-session .storm-metric .storm-meter{margin-top:auto}
+.storm-in-session .storm-main-grid{width:100%;max-width:none;margin:0;padding:0;flex:1 1 0;min-height:0;display:grid;grid-template-columns:minmax(0,1.85fr) minmax(350px,.9fr);gap:11px;align-items:stretch}
+.storm-left-stack{min-height:0;min-width:0;display:flex;flex-direction:column;gap:11px}
+.storm-in-session .storm-network{display:flex;flex-direction:column;flex:1 1 0;min-height:0;padding:15px 17px 10px;overflow:hidden}
+.storm-in-session .storm-network-svg{width:100%;max-width:none;min-height:0;min-width:0;height:100%;flex:1 1 0;margin:4px auto;object-fit:contain}
+.storm-in-session .storm-chart-panel{padding:10px 15px 8px;margin:0;flex:0 0 113px;min-height:0;max-width:none;display:flex;flex-direction:column}
+.storm-chart-top{display:flex;align-items:center;justify-content:space-between;color:var(--ds-muted);gap:10px;font-size:12px}
+.storm-chart-top strong{font:700 12px var(--ds-font-code);color:var(--accent)}
+.storm-in-session .storm-chart-panel svg{width:100%;height:auto;min-height:0;flex:1;margin:6px 0 0;overflow:hidden}
+.storm-in-session .storm-side{min-width:0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.1fr) minmax(0,.9fr);gap:11px;align-content:stretch}
+.storm-in-session .storm-side>.storm-panel{margin:0;min-height:0;overflow:hidden;padding:15px 16px}
+.storm-server-details{display:flex;flex-direction:column;gap:11px}
+.storm-fan{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--accent)}
+.storm-fan svg{animation:storm-fan-rotate var(--storm-fan-duration,1.5s) linear infinite}
+.storm-fan.stopped svg{animation-play-state:paused}
+.storm-fan small{font:700 9px var(--ds-font-code);color:var(--ds-muted);white-space:nowrap;text-align:center}
+@keyframes storm-fan-rotate{to{transform:rotate(360deg)}}
+.storm-cpu-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--ds-muted)}
+.storm-cpu-row strong{font:700 12px var(--ds-font-code);color:var(--ds-text)}
+.storm-server-details>.storm-meter{width:100%;margin:-5px 0 0}
+.storm-terminal-prompt{color:var(--accent);font-weight:700}
+.storm-terminal-muted{color:var(--ds-muted);display:inline-block;min-width:64px}
+.storm-operator-message{padding-top:7px;margin-top:4px;border-top:1px solid var(--ds-line);color:var(--ds-muted)}
+.storm-operator-message strong{color:var(--accent)}
+.storm-network-svg .storm-command-link{
+ fill:none;stroke:var(--ds-danger);stroke-width:1.85;
+ stroke-dasharray:5 8;stroke-linecap:round;stroke-opacity:.78
+}
+.storm-network-svg .storm-command-pulse{
+ fill:var(--ds-danger);opacity:.98;
+ stroke:var(--ds-panel);stroke-width:.55
+}
+.storm-hacker-node>rect{fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:2}
+.storm-hacker-node>path:first-of-type{fill:color-mix(in srgb,var(--accent) 29%,var(--ds-sunken))}
+.storm-hacker-node>path:nth-of-type(2){fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round}
+.storm-hacker-node>rect:nth-of-type(2){fill:var(--ds-sunken);stroke:var(--accent);stroke-width:1.3}
+.storm-hacker-node text{fill:var(--ds-muted);font:700 12px var(--ds-font-code);text-anchor:middle}
+.storm-in-session .storm-diagram-label{font:700 11px var(--ds-font-code)}
+.storm-in-session .storm-diagram-count{font:10px var(--ds-font-code)}
+.storm-in-session .storm-bot-node rect{fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:1.5}
+.storm-in-session .storm-bot-node circle{fill:var(--accent)}
+.storm-in-session .storm-bot-node text{fill:var(--ds-muted);font:700 10px var(--ds-font-code);letter-spacing:.07em;text-anchor:middle}
+.storm-proxy-edge rect{fill:color-mix(in srgb,var(--ds-success) 10%,var(--ds-panel-raised));stroke:var(--ds-success);stroke-width:2}
+.storm-proxy-edge path:first-of-type{fill:color-mix(in srgb,var(--ds-success) 18%,var(--ds-panel));stroke:var(--ds-success);stroke-width:1.8}
+.storm-proxy-edge path:nth-of-type(2){fill:none;stroke:var(--ds-success);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.storm-proxy-edge text{fill:var(--ds-success);font:700 10px var(--ds-font-code);text-anchor:middle}
+.storm-in-session .storm-server-graphic>rect:first-child{fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:2}
+.storm-in-session .storm-server-graphic text{fill:var(--accent);font:700 12px var(--ds-font-code);text-anchor:middle}
+.storm-accepted-path{stroke:var(--ds-success)}
+.storm-packet.is-filtered{fill:var(--ds-danger);opacity:.72}
+.storm-in-session .storm-network-svg .storm-packet{filter:url(#storm-glow)}
+.storm-setup{justify-content:center;min-height:calc(100dvh - var(--ds-appbar-h));padding:24px 18px 26px;gap:0}
+.storm-setup-mark{width:65px;height:65px;margin:0 auto 15px;display:grid;place-items:center;border-radius:17px;border:1px solid color-mix(in srgb,var(--accent) 39%,var(--ds-line));background:var(--ds-accent-soft);color:var(--accent)}
+.storm-setup-title h1{font-size:clamp(30px,4vw,46px);margin:0}
+.storm-setup-title p{max-width:480px;font-size:13px;margin:9px auto 0;line-height:1.45}
+.storm-setup .storm-setup-form{margin-top:18px;padding:18px 22px;gap:14px;box-shadow:none}
+.storm-setup .storm-setup-form>label{gap:6px}
+.storm-setup .storm-setup-form input:not([type="range"]){height:39px}
+.storm-proxy-setup{display:flex!important;flex-direction:row!important;align-items:center;gap:10px!important;padding:12px;border:1px solid var(--ds-line);border-radius:9px;background:var(--ds-sunken);cursor:pointer}
+.storm-proxy-setup input[type="checkbox"]{width:18px!important;height:18px!important;flex:0 0 18px;accent-color:var(--accent)}
+.storm-proxy-setup span{display:flex;flex-direction:column;gap:4px}
+.storm-proxy-setup strong{font-size:12px}
+.storm-proxy-setup small{font-size:10px;font-weight:400;color:var(--ds-muted);line-height:1.4}
+.storm-setup .storm-setup-form .storm-primary{min-height:42px}
+@media (max-width:1080px){
+ .storm-app.storm-in-session{height:auto;min-height:100dvh;overflow:auto;display:block}
+ .storm-session{height:auto;min-height:0;display:flex;flex-direction:column;overflow:visible}
+ .storm-in-session .storm-intro{align-items:flex-start;flex-wrap:wrap}
+ .storm-in-session .storm-main-grid{display:flex;flex-direction:column;flex:auto}
+ .storm-left-stack{display:flex;flex-direction:column}
+ .storm-in-session .storm-network{min-height:340px;flex:auto}
+ .storm-in-session .storm-network-svg{min-height:235px;height:auto}
+ .storm-in-session .storm-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto}
+ .storm-in-session .storm-side>.storm-panel{min-height:270px}
+}
+@media (max-width:700px){
+ .storm-in-session .storm-intro{display:block}
+ .storm-in-session .storm-controls{margin-top:11px;flex-wrap:wrap}
+ .storm-in-session .storm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .storm-in-session .storm-metric{padding:12px 13px;min-height:83px}
+ .storm-in-session .storm-metric>strong{font-size:20px}
+ .storm-in-session .storm-side{grid-template-columns:minmax(0,1fr)}
+ .storm-in-session .storm-side>.storm-panel{min-height:0}
+ .storm-in-session .storm-network{min-height:270px}
+ .storm-in-session .storm-network-svg{min-height:190px}
+}
+@media (max-height:740px) and (min-width:1081px){
+ .storm-session{gap:7px;padding-top:8px;padding-bottom:6px}
+ .storm-in-session .storm-intro{min-height:40px}
+ .storm-in-session .storm-metric{min-height:74px;padding:8px 12px}
+ .storm-in-session .storm-metric>strong{font-size:21px}
+ .storm-in-session .storm-chart-panel{flex-basis:85px}
+ .storm-in-session .storm-side>.storm-panel{padding:10px 12px}
+ .storm-server-details{gap:7px}
+}
+@media (prefers-reduced-motion:reduce){
+ .storm-fan svg,.storm-toggle-track i{animation:none!important;transition:none!important}
+}
+
+/* Traffic Storm: compact multi-server, multi-proxy controls and enlarged numbers. */
+.storm-setup .storm-setup-form{gap:12px}
+.storm-config-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.storm-stepper{display:flex;flex-direction:column;gap:8px;min-width:0;padding:11px 12px;border:1px solid var(--ds-line);border-radius:9px;background:var(--ds-sunken)}
+.storm-stepper>span{color:var(--ds-text);font-size:12px;font-weight:650}
+.storm-stepper>div{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.storm-stepper button,.storm-live-steppers button{display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border:1px solid var(--ds-line-strong);border-radius:7px;background:var(--ds-panel);color:var(--ds-text);cursor:pointer}
+.storm-stepper button:disabled,.storm-live-steppers button:disabled{opacity:.35;cursor:not-allowed}
+.storm-stepper strong{color:var(--ds-text);font:700 18px var(--ds-font-code)}
+.storm-live-steppers{display:flex;align-items:center;gap:7px}
+.storm-live-steppers>div{display:flex;align-items:center;gap:5px;padding:3px 6px;border:1px solid var(--ds-line);border-radius:9px;color:var(--ds-muted);background:var(--ds-panel)}
+.storm-live-steppers span{font:600 11px var(--ds-font-ui);margin-right:3px}
+.storm-live-steppers strong{min-width:14px;text-align:center;font:700 12px var(--ds-font-code);color:var(--ds-text)}
+.storm-live-steppers button{flex-basis:23px;width:23px;height:24px}
+.storm-in-session .storm-main-grid{grid-template-columns:minmax(0,2fr) minmax(315px,.72fr)}
+.storm-in-session .storm-metric>strong{font-size:clamp(25px,2.6vw,36px);line-height:1.17;margin-top:7px}
+.storm-in-session .storm-metric{min-height:100px}
+.storm-in-session .storm-metric small{margin-top:3px}
+.storm-in-session .storm-side{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.storm-in-session .storm-side>.storm-panel{height:100%;min-height:0}
+.storm-server-details{gap:11px}
+.storm-node-count{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ds-muted);font:600 11px var(--ds-font-ui)}
+.storm-node-count>span{display:inline-flex;align-items:center;gap:6px}
+.storm-node-count svg{color:var(--accent)}
+.storm-ping-form{display:flex;align-items:center;gap:7px;min-width:0;margin-top:auto}
+.storm-ping-command{display:flex;flex:1;align-items:center;gap:8px;min-width:0;height:37px;padding:0 10px;border:1px solid var(--ds-line-strong);border-radius:8px;background:var(--ds-sunken);font-family:var(--ds-font-code);color:var(--accent)}
+.storm-ping-command input{width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--ds-text);font:12px var(--ds-font-code)}
+.storm-ping-form button{height:37px;padding:0 12px;border:1px solid var(--ds-line-strong);border-radius:8px;background:var(--ds-panel-raised);color:var(--ds-text);font:700 11px var(--ds-font-code);cursor:pointer}
+.storm-ping-form button:hover{border-color:var(--accent)}
+.storm-ping-result{min-height:22px;max-height:44px;overflow:hidden;margin:0;color:var(--ds-muted);font:11px/1.5 var(--ds-font-code);overflow-wrap:anywhere}
+.storm-server-graphic .storm-fan-ring{fill:var(--ds-sunken);stroke:var(--ds-line-strong);stroke-width:1.4}
+.storm-server-graphic .storm-fan-rotor{transform-box:fill-box;transform-origin:center;animation:storm-fan-rotate var(--storm-fan-duration,2.8s) linear infinite}
+.storm-server-graphic .storm-fan-rotor path{fill:var(--accent);opacity:.95}
+.storm-server-graphic.is-offline .storm-fan-rotor path{fill:var(--ds-danger);opacity:.5}
+.storm-server-graphic .storm-fan-hub{fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:.7}
+.storm-rack-fan.is-stopped .storm-fan-rotor{animation-play-state:paused}
+.storm-in-session .storm-server-graphic text{font:700 10px var(--ds-font-code);text-anchor:middle}
+.storm-offline-caption{fill:var(--ds-danger);text-anchor:middle;font:700 13px var(--ds-font-code)}
+@media(max-width:1080px){
+  .storm-in-session .storm-main-grid{display:flex;flex-direction:column}
+  .storm-in-session .storm-side{grid-template-columns:minmax(0,1fr);grid-template-rows:auto}
+  .storm-in-session .storm-side>.storm-panel{height:auto}
+  .storm-in-session .storm-metric>strong{font-size:clamp(23px,3vw,32px)}
+}
+@media(max-width:700px){
+  .storm-live-steppers{flex-wrap:wrap}
+  .storm-in-session .storm-metric>strong{font-size:22px}
+}
+@media(max-width:440px){
+  .storm-config-pair{grid-template-columns:1fr}
+  .storm-in-session .storm-controls{gap:6px}
+  .storm-live-steppers>div{gap:3px;padding:3px 4px}
+}
+@media(max-height:740px) and (min-width:1081px){
+  .storm-in-session .storm-metric{min-height:74px}
+  .storm-in-session .storm-metric>strong{font-size:clamp(23px,2.3vw,29px);margin-top:2px}
+  .storm-server-details{gap:7px}
+  .storm-ping-form{min-height:34px}
+}
+@media(prefers-reduced-motion:reduce){
+  .storm-server-graphic .storm-fan-rotor{animation:none!important}
+}
+
+/* Compact second-row controls keep the header buttons aligned at every width. */
+.storm-infra-bar{display:flex;align-items:center;gap:12px;min-width:0;min-height:41px;padding:5px 12px;flex:0 0 auto;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-panel)}
+.storm-infra-label{font:700 10px var(--ds-font-code);letter-spacing:.08em;color:var(--ds-muted);flex:0 0 auto}
+.storm-infra-bar .storm-live-steppers{display:flex;align-items:center;gap:9px;flex:0 0 auto;min-width:0}
+.storm-infra-bar .storm-live-steppers>div{display:grid;grid-template-columns:auto 26px 22px 26px;align-items:center;gap:5px;min-width:0;padding:2px 5px;border:0;border-left:1px solid var(--ds-line);border-radius:0;background:transparent}
+.storm-infra-bar .storm-live-steppers span{min-width:48px;white-space:nowrap;color:var(--ds-text);font-size:11px;margin-right:4px}
+.storm-infra-bar .storm-live-steppers strong{font-size:12px;min-width:22px;text-align:center}
+.storm-infra-bar .storm-live-steppers button{width:26px;min-width:26px;height:26px;border-radius:7px;display:grid;place-items:center}
+.storm-infra-bar .storm-live-steppers button:disabled{opacity:.33}
+.storm-in-session .storm-intro{min-height:40px}
+.storm-in-session .storm-metrics{gap:10px}
+.storm-in-session .storm-metric{min-height:88px;padding:11px 14px}
+.storm-in-session .storm-metric>strong{font-size:clamp(24px,2.45vw,34px)}
+.storm-in-session .storm-main-grid{min-height:0;gap:10px}
+.storm-in-session .storm-side .storm-server-details{gap:9px;overflow:auto}
+.storm-node-count{flex-wrap:wrap}
+.storm-node-count .storm-proxy-danger{color:var(--ds-danger)}
+.storm-live-ping{display:grid;gap:6px;margin-top:auto;padding:10px 11px;border:1px solid var(--ds-line);border-radius:9px;background:var(--ds-sunken)}
+.storm-live-ping>span{display:flex;align-items:center;gap:7px;color:var(--ds-muted);font:700 10px var(--ds-font-code);letter-spacing:.055em}
+.storm-live-ping>strong{color:var(--ds-text);font:500 11px/1.5 var(--ds-font-code);overflow-wrap:anywhere}
+.storm-diagram-count.is-overloaded{fill:var(--ds-danger)}
+.storm-proxy-edge.is-overloaded rect{stroke:var(--ds-danger);fill:color-mix(in srgb,var(--ds-danger) 13%,var(--ds-panel))}
+.storm-proxy-edge.is-overloaded path:first-of-type{stroke:var(--ds-danger);fill:color-mix(in srgb,var(--ds-danger) 15%,var(--ds-panel))}
+.storm-proxy-edge.is-overloaded path:nth-of-type(2){stroke:var(--ds-danger)}
+.storm-proxy-edge.is-busy rect{stroke:var(--accent)}
+.storm-proxy-edge .storm-proxy-overload{font:700 9px var(--ds-font-code);letter-spacing:.03em;fill:var(--ds-danger)}
+.storm-server-graphic .storm-fan-ring{fill:var(--ds-sunken);stroke:var(--ds-line-strong);stroke-width:1.6}
+.storm-server-graphic .storm-fan-shroud{fill:var(--ds-panel-raised);stroke:color-mix(in srgb,var(--accent) 25%,var(--ds-line));stroke-width:.9}
+.storm-server-graphic .storm-fan-rotor{animation:none!important;transform-origin:0 0!important;transform-box:view-box}
+.storm-server-graphic .storm-fan-rotor .storm-fan-blade{fill:var(--accent);stroke:color-mix(in srgb,var(--accent) 40%,var(--ds-text));stroke-width:.35;opacity:.95}
+.storm-server-graphic .storm-fan-hub{fill:var(--ds-panel);stroke:var(--accent);stroke-width:.9}
+.storm-server-graphic.is-offline .storm-fan-blade{fill:var(--ds-muted);stroke:var(--ds-line-strong);opacity:.7}
+@media(max-width:1080px){
+ .storm-infra-bar{overflow-x:auto}
+ .storm-in-session .storm-side .storm-server-details{overflow:visible}
+}
+@media(max-width:700px){
+ .storm-infra-bar{padding:6px 9px;gap:8px;flex-wrap:wrap}
+ .storm-infra-label{display:none}
+ .storm-infra-bar .storm-live-steppers{gap:3px;flex-wrap:wrap}
+ .storm-infra-bar .storm-live-steppers>div{padding:2px 3px;gap:3px}
+}
+@media(max-width:480px){
+ .storm-infra-bar .storm-live-steppers>div{grid-template-columns:auto 23px 19px 23px}
+ .storm-infra-bar .storm-live-steppers button{width:23px;min-width:23px;height:24px}
+ .storm-infra-bar .storm-live-steppers span{min-width:43px}
+}
+@media(max-height:740px) and (min-width:1081px){
+ .storm-in-session .storm-metric{min-height:73px}
+ .storm-in-session .storm-side .storm-server-details{gap:5px}
+ .storm-live-ping{padding:7px 9px;gap:3px}
+}
+
+/* Individual web/proxy loads and meaningful simulated HTTP outcomes. */
+.storm-in-session .storm-side>.storm-server-details{display:flex;flex-direction:column;gap:9px;overflow-y:auto;scrollbar-width:thin}
+.storm-node-usage{display:grid;gap:9px;flex:0 0 auto}
+.storm-node-group{display:grid;gap:5px}
+.storm-node-heading{display:flex;align-items:center;gap:6px;color:var(--ds-muted);font:700 10px var(--ds-font-code);letter-spacing:.04em}
+.storm-node-heading svg{color:var(--accent)}
+.storm-node-heading>span{margin-left:auto;font-weight:500;letter-spacing:0;text-transform:none}
+.storm-node-load-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;row-gap:7px}
+.storm-node-load{min-width:0;display:grid;gap:4px}
+.storm-node-load>div:first-child{display:flex;gap:5px;align-items:center;justify-content:space-between;min-width:0;color:var(--ds-muted);font-size:10px}
+.storm-node-load>div:first-child span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.storm-node-load strong{color:var(--ds-text);font:700 11px var(--ds-font-code);white-space:nowrap}
+.storm-node-load strong.storm-danger{color:var(--ds-danger)}
+.storm-node-load .storm-meter{height:5px;margin:0}
+.storm-node-load .storm-meter.is-overloaded>i{background:var(--ds-danger)}
+.storm-node-load .storm-proxy-load-bar>i{background:var(--ds-success)}
+.storm-node-load .storm-proxy-load-bar.is-overloaded>i{background:var(--ds-danger)}
+.storm-in-session .storm-live-ping{display:flex;flex-direction:column;flex:1 1 130px;min-height:112px;max-height:165px;gap:7px;margin-top:3px;padding:9px 10px;border:1px solid var(--ds-line);border-radius:9px;background:var(--ds-sunken);overflow:hidden}
+.storm-ping-terminal-lines{display:flex;flex-direction:column;min-width:0;min-height:0;flex:1;gap:3px;overflow-y:auto;scrollbar-width:thin;color:var(--ds-text);font:10px/1.35 var(--ds-font-code)}
+.storm-ping-terminal-lines>div{flex:0 0 auto;white-space:nowrap}
+.storm-ping-terminal-lines>div:first-child{color:var(--accent)}
+.storm-in-session .storm-server-details .storm-panel-heading{flex:0 0 auto}
+.storm-network .storm-packet-attack{fill:var(--ds-danger);filter:url(#storm-glow);opacity:.91}
+.storm-network .storm-packet-survivor{fill:var(--accent);opacity:.9;filter:url(#storm-glow)}
+.storm-network .storm-packet-user{fill:var(--ds-success);opacity:.98;filter:url(#storm-glow)}
+.storm-user-path{fill:none;stroke:var(--ds-success);stroke-width:1.8;stroke-dasharray:5 8;opacity:.75}
+.storm-real-users-label{fill:var(--ds-success)!important}
+.storm-real-node rect{fill:var(--ds-panel-raised);stroke:var(--ds-success);stroke-width:1.4}
+.storm-real-node circle{fill:var(--ds-success);opacity:.95}
+.storm-real-node path{fill:none;stroke:var(--ds-success);stroke-width:1.8;stroke-linecap:round}
+.storm-proxy-edge .storm-proxy-rack{fill:var(--ds-sunken);stroke:var(--ds-success);stroke-width:.85}
+.storm-proxy-edge .storm-proxy-led{fill:var(--ds-success)}
+.storm-proxy-edge.is-overloaded .storm-proxy-rack{stroke:var(--ds-danger)}
+.storm-proxy-edge.is-overloaded .storm-proxy-led{fill:var(--ds-danger)}
+@media(max-width:1080px){
+ .storm-in-session .storm-side>.storm-server-details{overflow:visible}
+ .storm-in-session .storm-live-ping{flex-basis:150px;max-height:175px}
+}
+@media(max-width:480px){
+ .storm-node-load-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .storm-ping-terminal-lines{font-size:9.5px}
+}
+@media(max-height:740px) and (min-width:1081px){
+ .storm-in-session .storm-side>.storm-server-details{gap:6px}
+ .storm-node-usage{gap:5px}
+ .storm-node-load-grid{row-gap:4px}
+ .storm-in-session .storm-live-ping{min-height:90px;max-height:125px}
+}
+
+/* Keep full terminal replies readable on narrower server panels. */
+.storm-ping-terminal-lines{font-size:clamp(8.5px,.7vw,10px);overflow-x:auto}
+
+/* Traffic map v3. All animated packets reference the SVG paths drawn underneath. */
+.storm-in-session .storm-network{padding:15px 16px 12px;min-width:0}
+.storm-in-session .storm-network-svg{display:block;width:100%;height:100%;max-width:none;min-width:0;min-height:0;flex:1 1 0;margin:6px 0 4px;overflow:hidden}
+.storm-network-svg .storm-diagram-ground{fill:color-mix(in srgb,var(--ds-sunken) 35%,transparent)}
+.storm-network-svg .storm-stage-separator{fill:none;stroke:var(--ds-line);stroke-width:1.2;stroke-dasharray:3 11;opacity:.75}
+.storm-network-svg .storm-stage-titles text{fill:var(--ds-text);font:800 14px var(--ds-font-code);letter-spacing:.065em;text-anchor:middle}
+.storm-network-svg .storm-stage-subtitles text{fill:var(--ds-muted);font:600 10.5px var(--ds-font-code);letter-spacing:.06em;text-anchor:middle}
+.storm-network-svg .storm-diagram-routes path{fill:none;stroke-linecap:round;stroke-width:2;stroke-dasharray:5 9}
+.storm-network-svg .storm-controller-line{stroke:var(--ds-muted);stroke-width:1.6;opacity:.5}
+.storm-network-svg .storm-network-link--attack{stroke:url(#storm-attack-gradient);opacity:.83}
+.storm-network-svg .storm-network-link--approved{stroke:url(#storm-approved-gradient);opacity:.85}
+.storm-network-svg .storm-network-link--legitimate{stroke:var(--ds-success);stroke-width:2.4;opacity:.84}
+/* Hacker controller */
+.storm-network-svg .storm-hacker-node .storm-hacker-shell{fill:var(--ds-panel-raised);stroke:color-mix(in srgb,var(--accent) 48%,var(--ds-line-strong));stroke-width:2.2}
+.storm-network-svg .storm-hacker-node .storm-hacker-inner{fill:var(--ds-sunken);stroke:var(--ds-line);stroke-width:1.3}
+.storm-network-svg .storm-hacker-node .storm-hacker-hood{fill:color-mix(in srgb,var(--accent) 36%,var(--ds-sunken));stroke:var(--accent);stroke-opacity:.55;stroke-width:1.6}
+.storm-network-svg .storm-hacker-node .storm-hacker-eyes{fill:none;stroke:var(--accent);stroke-width:3.3;stroke-linecap:round}
+.storm-network-svg .storm-hacker-node .storm-hacker-keyboard{fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:1.6}
+.storm-network-svg .storm-hacker-node .storm-hacker-status{fill:var(--ds-success)}
+.storm-network-svg .storm-hacker-node .storm-hacker-name{font:800 13px var(--ds-font-code);fill:var(--accent);letter-spacing:.05em;text-anchor:middle}
+/* More legible bot terminals */
+.storm-network-svg .storm-bot-node .storm-device-shell{fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:2}
+.storm-network-svg .storm-bot-node .storm-bot-avatar{fill:color-mix(in srgb,var(--accent) 23%,var(--ds-sunken));stroke:color-mix(in srgb,var(--accent) 50%,var(--ds-line));stroke-width:1}
+.storm-network-svg .storm-bot-node .storm-bot-face{stroke:var(--accent);stroke-width:1.5;fill:none;stroke-linecap:round}
+.storm-network-svg .storm-bot-node .storm-bot-vents{stroke:var(--accent);stroke-opacity:.85;stroke-width:2;fill:none;stroke-linecap:round}
+.storm-network-svg .storm-bot-node .storm-device-name{font:800 12px var(--ds-font-code);fill:var(--ds-text);text-anchor:middle;letter-spacing:.07em}
+.storm-network-svg .storm-bot-node .storm-bot-led{fill:var(--ds-success)}
+/* Legitimate users are visually distinct from attacker clients. */
+.storm-network-svg .storm-real-node rect{fill:color-mix(in srgb,var(--ds-success) 7%,var(--ds-panel-raised));stroke:var(--ds-success);stroke-width:1.9}
+.storm-network-svg .storm-real-node circle{fill:var(--ds-success)}
+.storm-network-svg .storm-real-node path{fill:none;stroke:var(--ds-success);stroke-width:1.9;stroke-linecap:round}
+.storm-network-svg .storm-real-node text{fill:var(--ds-success);font:800 12px var(--ds-font-code);text-anchor:middle;letter-spacing:.04em}
+/* Stacked proxy servers and network hardware. */
+.storm-network-svg .storm-proxy-edge .storm-proxy-shell{fill:color-mix(in srgb,var(--ds-success) 9%,var(--ds-panel-raised));stroke:var(--ds-success);stroke-width:2.2}
+.storm-network-svg .storm-proxy-edge .storm-proxy-rack{fill:var(--ds-sunken);stroke:var(--ds-success);stroke-opacity:.7;stroke-width:1.2}
+.storm-network-svg .storm-proxy-edge .storm-proxy-led{fill:var(--ds-success)}
+.storm-network-svg .storm-proxy-edge .storm-proxy-slot{fill:none;stroke:var(--ds-success);stroke-opacity:.6;stroke-width:1.4}
+.storm-network-svg .storm-proxy-edge .storm-proxy-number{fill:var(--ds-text);font:800 11px var(--ds-font-code);text-anchor:middle;letter-spacing:.06em}
+.storm-network-svg .storm-proxy-edge .storm-proxy-overload{fill:var(--ds-danger);font:800 10px var(--ds-font-code);text-anchor:middle}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-shell{fill:color-mix(in srgb,var(--ds-danger) 12%,var(--ds-panel-raised));stroke:var(--ds-danger)}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-rack{stroke:var(--ds-danger)}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-led{fill:var(--ds-danger)}
+.storm-network-svg .storm-proxy-edge.is-busy .storm-proxy-shell{stroke:var(--accent)}
+/* Larger web server racks with two separate mechanical fans. */
+.storm-network-svg .storm-server-graphic .storm-server-shell{fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:2.2}
+.storm-network-svg .storm-server-graphic .storm-server-rack{fill:var(--ds-sunken);stroke:var(--ds-line-strong);stroke-width:1.2}
+.storm-network-svg .storm-server-graphic .storm-server-slot{fill:var(--ds-panel);stroke:var(--ds-line-strong);stroke-width:1}
+.storm-network-svg .storm-server-graphic .storm-led{fill:var(--ds-success)}
+.storm-network-svg .storm-server-graphic .storm-server-name{fill:var(--ds-text);font:800 12px var(--ds-font-code);text-anchor:middle;letter-spacing:.06em}
+.storm-network-svg .storm-server-graphic .storm-server-caption{fill:var(--ds-muted);font:700 10.5px var(--ds-font-code);text-anchor:middle;letter-spacing:.04em}
+.storm-network-svg .storm-server-graphic.is-offline .storm-server-shell{stroke:var(--ds-danger)}
+.storm-network-svg .storm-server-graphic.is-offline .storm-server-caption{fill:var(--ds-danger)}
+.storm-network-svg .storm-server-graphic.is-offline .storm-led{fill:var(--ds-danger)}
+.storm-network-svg .storm-server-graphic .storm-fan-ring{fill:var(--ds-sunken);stroke:var(--ds-line-strong)}
+.storm-network-svg .storm-server-graphic .storm-fan-rotor{animation:none!important}
+.storm-network-svg .storm-server-graphic .storm-fan-blade{fill:var(--accent);opacity:.93}
+/* Packets are tied with SVG mpath to exactly the same visible connectors. */
+.storm-network-svg .storm-packet-attack{fill:var(--ds-danger);opacity:.98}
+.storm-network-svg .storm-packet-survivor{fill:var(--accent);opacity:.98}
+.storm-network-svg .storm-packet-user{fill:var(--ds-success);opacity:1}
+.storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,.storm-network-svg .storm-packet-user{filter:none;stroke:var(--ds-panel);stroke-opacity:.25;stroke-width:.4}
+@media(max-width:1080px){
+ .storm-in-session .storm-network{min-height:390px}
+ .storm-in-session .storm-network-svg{min-height:290px}
+}
+@media(max-width:700px){
+ .storm-in-session .storm-network{min-height:315px;padding:12px}
+ .storm-in-session .storm-network-svg{min-height:220px}
+}
+@media(prefers-reduced-motion:reduce){
+ .storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,.storm-network-svg .storm-packet-user,.storm-network-svg .storm-command-pulse{display:none}
+}
+
+/* Network cleanup: flat canvas, clear post-proxy lines, no staged decorative grid. */
+.storm-in-session .storm-network{background:var(--ds-panel)}
+.storm-in-session .storm-network-svg{background:transparent}
+.storm-network-svg .storm-diagram-routes .storm-network-link--attack{
+  stroke:var(--ds-danger);stroke-opacity:.54;stroke-width:1.9;
+  stroke-dasharray:4 8;fill:none
+}
+.storm-network-svg .storm-diagram-routes .storm-network-link--approved{
+  stroke:var(--accent);stroke-opacity:.9;stroke-width:2.6;
+  stroke-dasharray:none;fill:none
+}
+.storm-network-svg .storm-diagram-routes .storm-network-link--legitimate{
+  stroke:var(--ds-success);stroke-opacity:.83;stroke-width:2.3;
+  stroke-dasharray:5 8;fill:none
+}
+.storm-network-svg .storm-stage-titles text{
+  font:750 14px var(--ds-font-code);
+  fill:var(--ds-text);letter-spacing:.025em
+}
+.storm-network-svg .storm-server-graphic .storm-server-name{
+  font:750 12px var(--ds-font-code);fill:var(--ds-text);
+  text-anchor:middle;letter-spacing:.04em
+}
+.storm-network-svg .storm-server-graphic .storm-server-shell{
+  stroke-width:1.8
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-number{
+  font:700 11px var(--ds-font-code);letter-spacing:.03em
+}
+.storm-network-svg .storm-packet-attack,.storm-network-svg .storm-packet-survivor,
+.storm-network-svg .storm-packet-user{stroke:none;filter:none}
+.storm-in-session .storm-network-svg{object-fit:contain}
+@media(max-width:1080px){
+  .storm-in-session .storm-network-svg{min-height:300px}
+}
+
+/* Compact status-free dashboard: substantial, accessible node controls. */
+.storm-infra-bar{
+  min-height:62px;
+  padding:8px 16px;
+  gap:18px;
+}
+.storm-infra-label{
+  font-size:12px;
+  font-weight:750;
+  letter-spacing:.06em;
+}
+.storm-infra-bar .storm-live-steppers{
+  gap:16px;
+  flex-wrap:wrap;
+}
+.storm-infra-bar .storm-live-steppers>div{
+  grid-template-columns:minmax(72px,auto) 36px 28px 36px;
+  gap:8px;
+  padding:0 10px;
+}
+.storm-infra-bar .storm-live-steppers span{
+  font-size:14px;
+  font-weight:700;
+  min-width:72px;
+  margin-right:5px;
+}
+.storm-infra-bar .storm-live-steppers strong{
+  font-size:16px;
+  min-width:28px;
+}
+.storm-infra-bar .storm-live-steppers button{
+  width:36px;
+  min-width:36px;
+  height:36px;
+  border-radius:9px;
+}
+.storm-infra-bar .storm-live-steppers button:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+.storm-in-session .storm-metric{justify-content:center;gap:5px}
+.storm-in-session .storm-metric>strong{margin:5px 0 0}
+.storm-in-session .storm-side>.storm-server-details{
+  gap:14px;
+  padding:17px 16px;
+}
+.storm-in-session .storm-live-ping{
+  display:flex;
+  flex:0 0 84px;
+  height:84px;
+  min-height:84px;
+  max-height:84px;
+  margin-top:auto;
+  padding:10px 11px;
+  overflow:hidden;
+  border:1px solid var(--ds-line);
+  border-radius:9px;
+  background:var(--ds-sunken);
+}
+.storm-in-session .storm-ping-terminal-lines{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:auto;
+  gap:3px;
+  font:10px/1.45 var(--ds-font-code);
+}
+@media (max-width:700px){
+  .storm-infra-bar{
+    padding:8px 10px;
+    gap:8px;
+    min-height:56px;
+  }
+  .storm-infra-bar .storm-live-steppers{
+    gap:6px;
+  }
+  .storm-infra-bar .storm-live-steppers>div{
+    grid-template-columns:auto 31px 22px 31px;
+    gap:5px;
+    padding:3px 6px;
+  }
+  .storm-infra-bar .storm-live-steppers span{
+    font-size:13px;
+    min-width:60px;
+    margin-right:1px;
+  }
+  .storm-infra-bar .storm-live-steppers strong{
+    font-size:14px;
+    min-width:22px;
+  }
+  .storm-infra-bar .storm-live-steppers button{
+    width:31px;
+    min-width:31px;
+    height:31px;
+  }
+}
+@media (max-width:450px){
+  .storm-infra-bar .storm-live-steppers{width:100%}
+  .storm-infra-bar .storm-live-steppers>div{
+    flex:1 1 175px;
+  }
+}
+@media (max-height:740px) and (min-width:1081px){
+  .storm-infra-bar{
+    min-height:54px;
+    padding:5px 13px;
+  }
+  .storm-infra-bar .storm-live-steppers button{
+    width:32px;
+    min-width:32px;
+    height:32px;
+  }
+  .storm-infra-bar .storm-live-steppers>div{
+    grid-template-columns:minmax(72px,auto) 32px 27px 32px;
+  }
+  .storm-in-session .storm-live-ping{
+    height:78px;
+    min-height:78px;
+    max-height:78px;
+    flex-basis:78px;
+  }
+}
+
+/* More room for the network itself, instead of shrinking hardware to fit the chart.
+   Short desktop viewports scroll rather than clipping the visualization. */
+@media (min-width:1081px){
+  .storm-app.storm-in-session{height:auto;min-height:100dvh;overflow:visible}
+  .storm-in-session .storm-session{min-height:calc(100dvh - 52px);overflow:visible}
+  .storm-in-session .storm-main-grid{flex:1 1 auto}
+  .storm-in-session .storm-network{
+    flex:1 1 auto;
+    min-height:clamp(450px,53dvh,620px);
+    overflow:hidden;
+  }
+  .storm-in-session .storm-network-svg{
+    flex:1 1 auto;
+    min-height:365px;
+    height:100%;
+    overflow:hidden;
+  }
+  .storm-in-session .storm-chart-panel{flex:0 0 76px}
+}
+.storm-network-svg .storm-stage-titles text{
+  font:750 16px var(--ds-font-code);
+  letter-spacing:.02em;
+}
+.storm-network-svg .storm-bot-node .storm-device-name{
+  font:750 13px var(--ds-font-code);
+  letter-spacing:.03em;
+}
+.storm-network-svg .storm-real-node text{
+  font:750 13px var(--ds-font-code);
+  letter-spacing:0;
+}
+.storm-network-svg .storm-hacker-node .storm-hacker-name{
+  font:750 15px var(--ds-font-code);
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-number{
+  font:750 12px var(--ds-font-code);
+}
+.storm-network-svg .storm-server-graphic .storm-server-name{
+  font:750 13px var(--ds-font-code);
+}
+.storm-network-svg .storm-diagram-routes .storm-network-link--approved{
+  stroke-width:3.2;
+  stroke-opacity:1;
+}
+.storm-network-svg .storm-packet-survivor{
+  fill:var(--accent);
+  opacity:1;
+}
+@media (min-width:701px) and (max-width:1080px){
+  .storm-in-session .storm-network{min-height:430px}
+  .storm-in-session .storm-network-svg{min-height:345px}
+  .storm-in-session .storm-chart-panel{flex-basis:76px}
+}
+@media (max-width:700px){
+  .storm-in-session .storm-network{min-height:330px}
+  .storm-in-session .storm-network-svg{min-height:265px}
+}
+
+/* Ping: use the otherwise empty server panel for readable, live terminal output. */
+.storm-in-session .storm-live-ping{
+  display:flex;
+  flex:1 1 235px;
+  height:auto;
+  min-height:210px;
+  max-height:none;
+  margin-top:16px;
+  padding:13px 13px 12px;
+  gap:10px;
+  overflow:hidden;
+  background:var(--ds-sunken);
+  border:1px solid var(--ds-line);
+  border-radius:10px;
+}
+.storm-ping-entry.is-timeout{color:var(--ds-danger)}
+.storm-ping-entry.is-latest.is-timeout{border-left-color:var(--ds-danger);background:color-mix(in srgb,var(--ds-danger) 9%,var(--ds-sunken))}
+.storm-in-session .storm-ping-terminal-lines{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:0;
+  gap:3px;
+  overflow-y:auto;
+  overflow-x:auto;
+  scrollbar-width:thin;
+  font:10.5px/1.5 var(--ds-font-code);
+  color:var(--ds-text);
+}
+.storm-ping-entry{
+  flex:0 0 auto;
+  min-width:max-content;
+  padding:4px 7px;
+  border-radius:5px;
+  border-left:2px solid transparent;
+  color:var(--ds-muted);
+  white-space:nowrap;
+}
+.storm-ping-entry.is-latest{
+  color:var(--ds-text);
+  border-left-color:var(--accent);
+  background:var(--ds-accent-soft);
+  animation:storm-ping-arrival .55s ease-out both;
+}
+@keyframes storm-ping-beacon{
+  0%,100%{opacity:.95;box-shadow:0 0 0 0 color-mix(in srgb,var(--ds-success) 25%,transparent)}
+  50%{opacity:.55;box-shadow:0 0 0 5px transparent}
+}
+@keyframes storm-ping-arrival{
+  0%{opacity:.1;transform:translateY(5px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@keyframes storm-ping-number{
+  0%{opacity:.4;transform:translateY(3px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@media(max-width:1080px){
+  .storm-in-session .storm-live-ping{flex-basis:230px;min-height:205px}
+}
+@media(max-width:700px){
+  .storm-in-session .storm-live-ping{min-height:190px;padding:11px;gap:8px}
+  .storm-in-session .storm-ping-terminal-lines{font-size:10px}
+}
+@media(max-height:740px) and (min-width:1081px){
+  .storm-in-session .storm-live-ping{
+    flex-basis:190px;
+    min-height:175px;
+    max-height:none;
+    height:auto;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .storm-ping-indicator,.storm-ping-entry.is-latest,.storm-ping-latest,
+  .storm-network.is-active .storm-bot-led,.storm-network.is-active .storm-hacker-status{
+    animation:none!important;
+  }
+}
+
+/* Generated test address replaces manual IP entry. */
+.storm-ip-field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.storm-ip-field>label{font:650 13px var(--ds-font-ui);color:var(--ds-text)}
+.storm-ip-generator{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center}
+.storm-setup .storm-ip-generator input{
+  width:100%;height:41px;min-width:0;
+  font:600 13px var(--ds-font-code);color:var(--ds-text);
+  background:var(--ds-sunken);
+  cursor:default;
+}
+.storm-ip-generator .storm-secondary{
+  min-height:41px;height:41px;padding:0 12px;
+  border:1px solid var(--ds-line-strong);border-radius:8px;
+  white-space:nowrap;font:700 12px var(--ds-font-ui);
+  background:var(--ds-panel-raised);color:var(--ds-text);
+  cursor:pointer;
+}
+.storm-ip-generator .storm-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.storm-ip-generator .storm-secondary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* SVG icon styles use the current Pico theme. No third-party logo or raster dependencies. */
+.storm-network-svg .storm-hacker-node .storm-hacker-emblem-bg{
+  fill:var(--ds-sunken);
+  stroke:color-mix(in srgb,var(--accent) 26%,var(--ds-line-strong));
+  stroke-width:1.5;
+}
+.storm-network-svg .storm-hacker-node .storm-hacker-hood{
+  fill:color-mix(in srgb,var(--accent) 68%,var(--ds-text));
+  stroke:var(--accent);
+  stroke-opacity:.35;
+  stroke-width:1.5;
+}
+.storm-network-svg .storm-hacker-node .storm-hacker-mask{
+  fill:var(--ds-panel-raised);
+  stroke:var(--accent);
+  stroke-opacity:.5;
+  stroke-width:1.3;
+}
+.storm-network-svg .storm-hacker-node .storm-hacker-eyes{
+  fill:none;stroke:var(--accent);stroke-width:2.8;stroke-linecap:round;
+}
+.storm-network-svg .storm-hacker-node .storm-hacker-beard{
+  fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;
+}
+.storm-network-svg .storm-bot-node .storm-bot-emblem-bg{
+  fill:color-mix(in srgb,var(--accent) 13%,var(--ds-sunken));
+  stroke:color-mix(in srgb,var(--accent) 56%,var(--ds-line));
+  stroke-width:1.3;
+}
+.storm-network-svg .storm-bot-node .storm-bot-faceplate{
+  fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:1.1;
+}
+.storm-network-svg .storm-bot-node .storm-bot-antenna{
+  fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;
+}
+.storm-network-svg .storm-bot-node .storm-bot-antenna-light{
+  fill:var(--ds-danger);stroke:none;
+}
+.storm-network-svg .storm-bot-node .storm-bot-eyes{fill:var(--ds-danger);stroke:none}
+.storm-network-svg .storm-bot-node .storm-bot-mouth{
+  fill:none;stroke:var(--ds-muted);stroke-width:1.3;stroke-linecap:round;
+}
+.storm-network-svg .storm-bot-node .storm-bot-vents{
+  fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;opacity:.85;
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-ring{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-success);stroke-width:1.9;
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-rack{
+  fill:var(--ds-panel-raised);stroke:var(--ds-success);stroke-width:1.1;
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-led{fill:var(--ds-success)}
+.storm-network-svg .storm-proxy-edge .storm-proxy-slot{
+  fill:none;stroke:var(--ds-success);stroke-width:1.1;stroke-linecap:round;opacity:.75;
+}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-ring,
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-rack{stroke:var(--ds-danger)}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-led{fill:var(--ds-danger)}
+.storm-network-svg .storm-server-graphic .storm-server-handle{
+  fill:none;stroke:var(--ds-line-strong);stroke-width:2;stroke-linecap:round;
+}
+.storm-network-svg .storm-server-graphic .storm-server-shell{
+  fill:var(--ds-panel-raised);stroke:var(--accent);stroke-width:1.9;
+}
+.storm-network-svg .storm-server-graphic .storm-server-rack{
+  fill:var(--ds-sunken);stroke:var(--ds-line-strong);stroke-width:1.2;
+}
+.storm-network-svg .storm-server-graphic .storm-server-slot{
+  fill:var(--ds-panel);stroke:var(--ds-line-strong);stroke-width:1;
+}
+.storm-network-svg .storm-server-graphic.is-offline .storm-server-shell{stroke:var(--ds-danger)}
+.storm-network-svg .storm-server-graphic .storm-server-name{
+  font:750 12.5px var(--ds-font-code);fill:var(--ds-text);text-anchor:middle;
+}
+.storm-network-svg .storm-bot-node .storm-device-name{
+  font:750 13px var(--ds-font-code);fill:var(--ds-text);text-anchor:middle;
+}
+.storm-network-svg .storm-hacker-node .storm-hacker-name{
+  fill:var(--accent);font:750 15px var(--ds-font-code);text-anchor:middle;
+}
+.storm-in-session .storm-live-ping{
+  gap:0;padding:12px;flex:1 1 255px;min-height:225px;max-height:none;
+}
+.storm-in-session .storm-live-ping .storm-ping-terminal-lines{
+  flex:1 1 auto;min-height:0;padding:1px 0;
+}
+@media(max-width:700px){
+  .storm-ip-generator{grid-template-columns:minmax(0,1fr) auto}
+  .storm-ip-generator .storm-secondary{padding:0 10px;font-size:11px}
+  .storm-in-session .storm-live-ping{min-height:185px;padding:10px}
+}
+@media(max-width:385px){
+  .storm-ip-generator{grid-template-columns:1fr}
+  .storm-ip-generator .storm-secondary{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .storm-network-svg .storm-bot-node .storm-bot-antenna-light{animation:none!important}
+}
+
+/* Distinct round proxy-server badge, matching the stacked-rack reference. */
+.storm-network-svg .storm-proxy-edge .storm-proxy-ring{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-success);
+  stroke-width:2.35;
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-rack{
+  fill:var(--ds-panel-raised);
+  stroke:var(--ds-success);
+  stroke-width:1.5;
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-led{
+  fill:var(--ds-success);
+}
+.storm-network-svg .storm-proxy-edge .storm-proxy-slot,
+.storm-network-svg .storm-proxy-edge .storm-proxy-link{
+  fill:none;
+  stroke:var(--ds-success);
+  stroke-width:1.5;
+  stroke-linecap:round;
+}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-ring,
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-rack,
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-slot,
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-link{
+  stroke:var(--ds-danger);
+}
+.storm-network-svg .storm-proxy-edge.is-overloaded .storm-proxy-led{fill:var(--ds-danger)}
+
+/* Deep-route scroll fix: scroll inside the page even if the host shell locks body overflow. */
+.storm-app.storm-in-session{
+  height:100dvh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+  scrollbar-width:thin;
+}
+.storm-in-session .storm-session{
+  flex:0 0 auto;
+  height:auto;
+  min-height:calc(100dvh - 52px);
+  overflow:visible;
+}
+.storm-in-session .storm-main-grid{
+  flex:0 0 auto;
+  min-height:0;
+}
+
+/* Spiky traffic history lives in the right panel beneath individual load bars. */
+.storm-in-session .storm-side{
+  display:block;
+  min-height:0;
+  height:auto;
+}
+.storm-in-session .storm-side>.storm-server-details{
+  display:flex;
+  flex-direction:column;
+  height:auto;
+  min-height:clamp(450px,54dvh,680px);
+  gap:16px;
+  overflow:visible;
+}
+.storm-traffic-chart{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 220px;
+  min-height:185px;
+  min-width:0;
+  padding-top:13px;
+  margin-top:7px;
+  border-top:1px solid var(--ds-line);
+}
+.storm-traffic-chart-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  color:var(--ds-muted);
+  font:600 12px var(--ds-font-ui);
+}
+.storm-traffic-chart-heading strong{
+  color:var(--accent);
+  font:750 12px var(--ds-font-code);
+  white-space:nowrap;
+}
+.storm-traffic-chart svg{
+  width:100%;
+  height:100%;
+  min-height:160px;
+  flex:1 1 auto;
+  margin:12px 0 0;
+  display:block;
+  overflow:hidden;
+}
+.storm-traffic-chart .storm-chart-line{
+  stroke:var(--accent);
+  stroke-width:2.3;
+  stroke-linejoin:miter;
+  stroke-linecap:round;
+  vector-effect:non-scaling-stroke;
+}
+@media(max-width:1080px){
+  .storm-in-session .storm-side>.storm-server-details{min-height:400px}
+  .storm-traffic-chart{flex-basis:210px}
+}
+@media(max-width:700px){
+  .storm-in-session .storm-side>.storm-server-details{min-height:380px}
+  .storm-traffic-chart svg{min-height:140px}
+}
+
+/* Persistent, non-flashing indication of a sharp increase in incoming traffic. */
+.storm-metric-incoming{position:relative}
+.storm-in-session .storm-metric-incoming>.storm-traffic-warning{
+  position:absolute;
+  top:10px;right:12px;
+  display:grid;place-items:center;
+  width:38px;height:38px;min-width:38px;
+  padding:0;
+  border:2px solid var(--accent);
+  border-radius:50%;
+  background:color-mix(in srgb,var(--accent) 19%,var(--ds-panel));
+  color:var(--accent);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 11%,transparent);
+  font-size:0;
+  line-height:1;
+  letter-spacing:0;
+  animation:storm-high-traffic-flash .9s ease-in-out infinite;
+}
+@keyframes storm-high-traffic-flash{
+  0%,100%{opacity:1;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent),0 0 18px color-mix(in srgb,var(--accent) 30%,transparent);background:color-mix(in srgb,var(--accent) 26%,var(--ds-panel))}
+  50%{opacity:.28;box-shadow:0 0 0 0 transparent,0 0 0 transparent;background:color-mix(in srgb,var(--accent) 5%,var(--ds-panel))}
+}
+.storm-in-session .storm-metric-incoming>.storm-traffic-warning svg{
+  display:block;
+  width:29px;height:29px;flex-shrink:0;
+  fill:currentColor;
+}
+/* Functional webserver front panels: independent removable bays and guarded fans. */
+.storm-network-svg .storm-server-graphic .storm-server-shell{
+  fill:var(--ds-panel-raised);stroke:var(--ds-line-strong);stroke-width:2.2
+}
+.storm-network-svg .storm-server-graphic .storm-server-rack{
+  fill:var(--ds-sunken);stroke:var(--ds-line-strong);stroke-width:1.15
+}
+.storm-network-svg .storm-server-graphic .storm-server-slot{
+  fill:var(--ds-panel);stroke:var(--ds-line-strong);stroke-width:.85
+}
+.storm-network-svg .storm-server-graphic .storm-server-vents{
+  fill:none;stroke:var(--ds-muted);stroke-width:1.15;stroke-linecap:round;opacity:.65
+}
+.storm-network-svg .storm-server-graphic .storm-server-handle{
+  fill:none;stroke:var(--ds-muted);stroke-width:1.5;stroke-linecap:round;opacity:.8
+}
+.storm-network-svg .storm-server-graphic .storm-rack-screw{
+  fill:var(--ds-muted);opacity:.6
+}
+.storm-network-svg .storm-server-graphic .storm-fan-ring{
+  fill:var(--ds-sunken);stroke:var(--ds-muted);stroke-width:1.4
+}
+.storm-network-svg .storm-server-graphic .storm-fan-shroud{
+  fill:color-mix(in srgb,var(--ds-sunken) 72%,#05070d);
+  stroke:var(--ds-line-strong);stroke-width:.95
+}
+.storm-network-svg .storm-server-graphic .storm-fan-blade{
+  fill:color-mix(in srgb,var(--accent) 43%,var(--ds-text));
+  stroke:var(--ds-line-strong);stroke-width:.45;opacity:.95
+}
+.storm-network-svg .storm-server-graphic .storm-fan-hub{
+  fill:var(--ds-muted);stroke:var(--ds-text);stroke-width:.6
+}
+.storm-network-svg .storm-server-graphic .storm-fan-grille{
+  fill:none;stroke:var(--ds-muted);stroke-width:.72;opacity:.5;pointer-events:none
+}
+.storm-network-svg .storm-server-graphic.is-offline .storm-fan-blade{
+  fill:var(--ds-muted);opacity:.7
+}
+.storm-network-svg .storm-server-graphic.is-critical .storm-server-shell{
+  stroke:var(--ds-danger)
+}
+/* Removal of the legitimate traffic lane leaves attack routing uninterrupted. */
+@media(prefers-reduced-motion:reduce){
+  .storm-surge-flash,.storm-chart-surge-flash{animation:none;display:none}
+}
+
+/* One top/bottom edge for both major desktop panels. */
+@media(min-width:1081px){
+  .storm-in-session .storm-main-grid{
+    align-items:stretch;
+    grid-template-columns:minmax(0,1.7fr) minmax(330px,.9fr);
+    gap:12px;
+    min-height:clamp(485px,55dvh,680px);
+  }
+  .storm-in-session .storm-left-stack,
+  .storm-in-session .storm-side{
+    display:flex;flex-direction:column;
+    align-self:stretch;
+    min-width:0;
+    min-height:0;
+  }
+  .storm-in-session .storm-left-stack>.storm-network,
+  .storm-in-session .storm-side>.storm-server-details{
+    height:100%;
+    flex:1 1 auto;
+    min-height:clamp(485px,55dvh,680px);
+    margin:0;
+  }
+  .storm-in-session .storm-side>.storm-server-details{overflow:hidden}
+  .storm-in-session .storm-network-svg{min-height:380px}
+}
+@media(max-width:1080px){
+  .storm-in-session .storm-main-grid{gap:12px}
+  .storm-in-session .storm-side{width:100%;min-width:0}
+  .storm-in-session .storm-side>.storm-server-details{min-height:430px}
+}
+/* Align centered circular proxy logos with the racks, paths, and chassis. */
+.storm-network-svg .storm-proxy-edge .storm-proxy-ring{
+  stroke-width:2.1;
+}
+.storm-network-svg .storm-server-graphic .storm-fan-deck{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-line-strong);
+  stroke-width:1.15;
+}
+.storm-network-svg .storm-server-graphic .storm-fan-ring{
+  fill:var(--ds-panel-raised);
+  stroke:var(--ds-muted);
+  stroke-width:1.3;
+}
+.storm-network-svg .storm-server-graphic .storm-server-rack{
+  fill:var(--ds-sunken);
+  stroke:var(--ds-line-strong);
+  stroke-width:1.2;
+}
+/* Slightly larger labels without adding a second row of copy. */
+.storm-network-svg .storm-stage-titles text{font-size:17.5px}
+.storm-node-heading{font-size:11.5px;letter-spacing:.035em}
+.storm-node-load>div:first-child{font-size:11.5px}
+.storm-node-load strong{font-size:12px}
+.storm-metric>span{font-size:11.5px}
+.storm-infra-label{font-size:12.5px}
+.storm-infra-bar .storm-live-steppers span{font-size:15px}
+.storm-in-session .storm-panel-heading h2{font-size:16px}
+@media(max-width:700px){
+  .storm-network-svg .storm-stage-titles text{font-size:15px}
+  .storm-node-heading{font-size:10.5px}
+  .storm-metric>span{font-size:10.5px}
+  .storm-in-session .storm-metric-incoming>.storm-traffic-warning{top:8px;right:8px;width:33px;height:33px;min-width:33px}
+  .storm-in-session .storm-metric-incoming>.storm-traffic-warning svg{width:26px;height:26px}
+}
+/* Live botnet sizing sits alongside the server and proxy node controls. */
+.storm-in-session .storm-infra-bar{flex-wrap:wrap;row-gap:9px}
+.storm-in-session .storm-live-bot-army{
+  display:grid;grid-template-columns:auto minmax(110px,1fr) auto;
+  align-items:center;column-gap:12px;
+  flex:1 1 255px;max-width:390px;min-width:235px;
+  margin-left:auto;padding:3px 0 3px 14px;
+  border-left:1px solid var(--ds-line);
+}
+.storm-in-session .storm-live-bot-army label{
+  color:var(--ds-text);font:700 14px var(--ds-font-ui);white-space:nowrap;
+}
+.storm-in-session .storm-live-bot-army input[type="range"]{
+  display:block;width:100%;min-width:0;height:20px;margin:0;
+  accent-color:var(--accent);cursor:pointer;
+}
+.storm-in-session .storm-live-bot-army input:focus-visible{
+  outline:2px solid var(--accent);outline-offset:3px;border-radius:3px;
+}
+.storm-in-session .storm-live-bot-army output{
+  min-width:52px;text-align:right;white-space:nowrap;
+  color:var(--accent);font:700 14px var(--ds-font-code);
+  font-variant-numeric:tabular-nums;
+}
+@media(max-width:1080px){
+  .storm-in-session .storm-live-bot-army{margin-left:0;max-width:none}
+  .storm-in-session .storm-infra-bar{overflow-x:visible}
+}
+@media(max-width:700px){
+  .storm-in-session .storm-live-bot-army{
+    flex:1 1 100%;width:100%;min-width:0;
+    border-left:0;border-top:1px solid var(--ds-line);
+    padding:10px 2px 3px;column-gap:10px;
+  }
+  .storm-in-session .storm-live-bot-army label{font-size:13px}
+  .storm-in-session .storm-live-bot-army output{font-size:13px}
+}
+
+/* Low-motion preference: keep a visible, non-flashing high-traffic indicator. */
+@media(prefers-reduced-motion:reduce){
+  .storm-in-session .storm-metric-incoming>.storm-traffic-warning{
+    animation:none!important;
+    opacity:1!important;
+  }
+}
+
+
+/* Minimal one-field entry, without decorative orbit artwork or oversized cards. */
+.storm-app{
+  background:color-mix(in srgb,var(--ds-bg) 91%,#05070d);
+}
+.storm-app .storm-identity-setup{
+  width:100%;max-width:500px;
+  min-height:calc(100dvh - 54px);
+  margin:0 auto;padding:40px 24px;
+  display:flex;flex-direction:column;
+  align-items:stretch;justify-content:center;
+  text-align:left;
+}
+.storm-identity-setup .storm-identity-title h1{
+  margin:0;color:var(--ds-text);
+  font:750 clamp(32px,4vw,43px)/1.14 var(--ds-font-ui);
+  letter-spacing:-.045em;
+}
+.storm-identity-setup .storm-identity-title h1 span{color:var(--accent)}
+.storm-identity-setup .storm-identity-form{
+  width:100%;max-width:none;
+  margin:27px 0 0;padding:0;
+  display:flex;flex-direction:column;gap:11px;
+  text-align:left;
+  background:transparent;border:0;border-radius:0;box-shadow:none;
+}
+.storm-identity-setup .storm-identity-form>label{
+  display:block;font:700 13px var(--ds-font-ui);color:var(--ds-text);
+}
+.storm-identity-setup .storm-identity-input{
+  display:flex;align-items:center;
+  min-height:51px;padding:0 13px;
+  border:1px solid var(--ds-line-strong);
+  border-radius:9px;background:var(--ds-panel);
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.storm-identity-setup .storm-identity-input:focus-within{
+  border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 14%,transparent);
+}
+.storm-identity-setup .storm-identity-input.is-invalid{border-color:var(--ds-danger)}
+.storm-identity-setup .storm-identity-form .storm-identity-input input:not([type="range"]){
+  width:100%;min-width:0;flex:1 1 auto;
+  height:48px;padding:0;
+  border:0;border-radius:0;
+  outline:0;box-shadow:none;background:transparent;
+  color:var(--ds-text);font:500 16px var(--ds-font-ui);
+}
+.storm-identity-setup .storm-identity-form .storm-identity-input input:focus-visible{
+  outline:0;box-shadow:none;
+}
+.storm-identity-input input::placeholder{color:var(--ds-muted);opacity:.8}
+.storm-identity-hint{
+  display:flex;align-items:start;justify-content:space-between;gap:12px;
+  color:var(--ds-muted);font:500 11px/1.4 var(--ds-font-ui);
+}
+.storm-identity-hint>span:last-child{
+  white-space:nowrap;color:var(--ds-muted);
+  font:600 11px var(--ds-font-code);font-variant-numeric:tabular-nums;
+}
+.storm-identity-setup .storm-identity-form .storm-error{
+  margin:0;color:var(--ds-danger);font:600 12px/1.4 var(--ds-font-ui);
+}
+.storm-identity-setup .storm-identity-form .storm-identity-submit{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  width:100%;min-height:46px;margin-top:9px;
+  border-radius:9px;font:750 14px var(--ds-font-ui);
+}
+.storm-in-session .storm-controls .storm-start-simulation:focus-visible,
+.storm-identity-submit:focus-visible{
+  outline:2px solid var(--accent);outline-offset:3px;
+}
+.storm-tour-sound-target{display:inline-flex;align-items:center}
+@media(max-width:600px){
+  .storm-app .storm-identity-setup{
+    max-width:430px;padding:30px 19px;min-height:calc(100dvh - 52px);
+  }
+  .storm-identity-setup .storm-identity-title h1{font-size:32px}
+  .storm-identity-setup .storm-identity-form{margin-top:23px}
+}
+@media(prefers-reduced-motion:reduce){
+  .storm-identity-input{transition:none!important}
+}
+
+/* Route annotations are bare text and arrows, never filled badges. */
+.storm-network-svg .storm-route-notes{pointer-events:none}
+.storm-network-svg .storm-route-note{
+  fill:none;
+  color:var(--ds-muted);
+}
+.storm-network-svg .storm-route-note-text{
+  fill:currentColor;
+  font:650 12px var(--ds-font-ui);
+  letter-spacing:0;
+  text-anchor:start;
+  paint-order:stroke;
+  stroke:var(--ds-panel);
+  stroke-width:2.6px;
+  stroke-linejoin:round;
+  background:none;
+}
+.storm-network-svg .storm-route-note-line,
+.storm-network-svg .storm-route-note-head{
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.6px;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.8;
+}
+.storm-network-svg .storm-route-note--accent{color:var(--accent)}
+.storm-network-svg .storm-route-note--danger{color:var(--ds-danger)}
+.storm-network-svg .storm-route-note--success{color:var(--ds-success)}
+@media(max-width:700px){
+  .storm-network-svg .storm-route-note-text{font-size:13px}
+}

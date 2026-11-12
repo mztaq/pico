@@ -31,6 +31,7 @@ const FlowchartWorkspace = lazy(() => import('../flowchart/FlowchartWorkspace').
 const LogicWorkspace = lazy(() => import('../logic/LogicWorkspace').then(m => ({ default: m.LogicWorkspace })));
 const CpuStudio = lazy(() => import('../cpu/CpuStudio').then(m => ({ default: m.CpuStudio })));
 const BinaryLab = lazy(() => import('../binary/BinaryLab').then(m => ({ default: m.BinaryLab })));
+const TrafficStorm = lazy(() => import('../traffic/TrafficStorm').then(m => ({ default: m.TrafficStorm })));
 import type { ChartStore } from '../flowchart/storage';
 import { MAX_CONSOLE_LINES } from '../runtime/python/config';
 import { referenceExamples, referenceTerms, type ReferenceExample, type ReferenceKeyword } from './reference';
@@ -86,12 +87,12 @@ export default function App() {
       window.removeEventListener('hashchange', syncInformation);
     };
   }, []);
-  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : 'Pico | Home'; }, [language, informationPage]);
+  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : language === 'traffic' ? 'Pico | Traffic Storm' : 'Pico | Home'; }, [language, informationPage]);
   // Workspace URLs are updated by setLanguage, and popstate restores browser history.
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
-    if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu' && language !== 'binary') snapshots.current[language] = snapshot;
+    if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu' && language !== 'binary' && language !== 'traffic') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
   if (informationPage || !language) return <>
@@ -103,6 +104,7 @@ export default function App() {
   if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><WorkspaceTransition workspace="CPU Studio"><CpuStudio onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'binary') return <WorkspaceLoadBoundary key="binary" workspace="Binary Lab"><WorkspaceTransition workspace="Binary Lab"><BinaryLab onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
+  if (language === 'traffic') return <WorkspaceLoadBoundary key="traffic" workspace="Traffic Storm"><WorkspaceTransition workspace="Traffic Storm"><TrafficStorm onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'flowchart') return <WorkspaceLoadBoundary key="flowchart" workspace="Flowchart Builder"><WorkspaceTransition workspace="Flowchart Builder"><FlowchartWorkspace snapshot={charts.current} onHome={store => { charts.current = store; setLanguage(null); }} onPseudocode={(code, name, store) => {
     charts.current = store;
     const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');

@@ -14,6 +14,7 @@ const workspaces: Record<string,string> = {
   'Pico | Flowchart Builder': 'flowchart',
   'Pico | CPU Studio': 'cpu',
   'Pico | Binary Lab': 'binary',
+  'Pico | Traffic Storm': 'traffic',
 };
 
 async function post(path: string, value: unknown) {

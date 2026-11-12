@@ -36,6 +36,17 @@
           !new URLSearchParams(location.search).has('tool') && !location.hash) {
         document.documentElement.classList.add('pico-initial-home-route');
       }
+      if (/^\/app\/traffic\/?$/.test(location.pathname) ||
+          (/^\/app\/?$/.test(location.pathname) && new URLSearchParams(location.search).get('tool') === 'traffic')) {
+        document.documentElement.classList.add('pico-initial-traffic-route');
+        try {
+          const name = localStorage.getItem('pico.trafficStorm.alias.v1')?.trim().normalize('NFC');
+          if (name && name.length >= 2 && name.length <= 24 &&
+              /^[\p{L}\p{M}]+(?: [\p{L}\p{M}]+)*$/u.test(name)) {
+            document.documentElement.classList.add('pico-initial-traffic-saved-alias');
+          }
+        } catch { /* Name entry is the fallback when storage is disabled. */ }
+      }
       // Resolve the saved workspace theme before React and its CSS load.
       if (document.documentElement.classList.contains('pico-app-route')) {
         const backgrounds = {"high-contrast-red":"#000000","high-contrast-blue":"#000000","high-contrast-yellow":"#000000","high-contrast-spectrum":"#000000","high-contrast-sunset":"#000000","high-contrast-violet":"#000000","high-contrast-ocean":"#000000","high-contrast-ink":"#ffffff","high-contrast-forest":"#ffffff","high-contrast-dark":"#000000","high-contrast-light":"#ffffff","dark-plus":"#1e1e1e","light-plus":"#ffffff","dracula":"#282a36","monokai":"#272822","one-dark":"#282c34","one-light":"#fafafa","nord":"#2e3440","tokyo-night":"#1a1b26","catppuccin-mocha":"#1e1e2e","catppuccin-latte":"#eff1f5","gruvbox-dark":"#282828","solarized-dark":"#002b36","solarized-light":"#fdf6e3","github-dark":"#0d1117","github-light":"#ffffff","ayu-mirage":"#1f2430","night-owl":"#011627","palenight":"#292d3e","rose-pine":"#191724","synthwave-84":"#262335","cobalt2":"#193549","everforest":"#2d353b","kanagawa":"#1f1f28"};
@@ -50,10 +61,94 @@
             }
           }
         } catch { /* Private browsing or disabled storage uses Pico's default. */ }
-        document.documentElement.style.setProperty('--pico-boot-bg', backgrounds[selected] || backgrounds['catppuccin-mocha']);
+        const accents = {"high-contrast-red":"#ff9999","high-contrast-blue":"#82baff","high-contrast-yellow":"#ffe45e","high-contrast-spectrum":"#ff99ff","high-contrast-sunset":"#ff9999","high-contrast-violet":"#ff99ff","high-contrast-ocean":"#00ffff","high-contrast-ink":"#660066","high-contrast-forest":"#005500","high-contrast-dark":"#ffffff","high-contrast-light":"#000000","dark-plus":"#0e7ad3","light-plus":"#0066b8","dracula":"#bd93f9","monokai":"#a6e22e","one-dark":"#61afef","one-light":"#4078f2","nord":"#88c0d0","tokyo-night":"#7aa2f7","catppuccin-mocha":"#cba6f7","catppuccin-latte":"#8839ef","gruvbox-dark":"#83a598","solarized-dark":"#268bd2","solarized-light":"#1f7fb8","github-dark":"#58a6ff","github-light":"#0969da","ayu-mirage":"#ffcc66","night-owl":"#82aaff","palenight":"#82aaff","rose-pine":"#c4a7e7","synthwave-84":"#f92aad","cobalt2":"#ffc600","everforest":"#a7c080","kanagawa":"#7e9cd8"};
+        const bootBg = backgrounds[selected] || backgrounds['catppuccin-mocha'];
+        const rgb = bootBg.slice(1).match(/.{2}/g).map(channel => parseInt(channel, 16));
+        const lightBg = rgb[0] * .2126 + rgb[1] * .7152 + rgb[2] * .0722 > 148;
+        document.documentElement.style.setProperty('--pico-boot-bg', bootBg);
+        document.documentElement.style.setProperty('--pico-boot-accent', accents[selected] || accents['catppuccin-mocha']);
+        document.documentElement.style.setProperty('--pico-boot-foreground', lightBg ? '#15151b' : '#ffffff');
       }
     </script>
     <style>
+      /* Direct Traffic Storm first paint: its actual alias entry, not CPU Studio. */
+      .pico-initial-traffic-loading{display:none;position:fixed;inset:0;z-index:1001;height:100dvh;overflow:hidden;background:var(--pico-boot-bg,#1e1e2e)}
+      .pico-initial-traffic-route .pico-initial-traffic-loading{display:block}
+      .pico-initial-traffic-loading *{box-sizing:border-box}
+      .pico-initial-traffic-shimmer{
+        background:linear-gradient(100deg,color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 85%,var(--pico-boot-accent,#cba6f7) 15%) 15%,
+        color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 62%,var(--pico-boot-accent,#cba6f7) 38%) 45%,
+        color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 85%,var(--pico-boot-accent,#cba6f7) 15%) 75%);
+        background-size:220% 100%;border-radius:6px;animation:pico-shimmer 1.6s ease-in-out infinite
+      }
+      .pico-initial-traffic-topbar{height:52px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 18px;border-bottom:1px solid color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 76%,var(--pico-boot-accent,#cba6f7) 24%)}
+      .pico-initial-traffic-nav,.pico-initial-traffic-actions{display:flex;align-items:center;gap:10px}
+      .pico-initial-traffic-nav .pico-initial-traffic-shimmer:nth-child(1){width:27px;height:27px}
+      .pico-initial-traffic-nav .pico-initial-traffic-shimmer:nth-child(2){width:66px;height:19px}
+      .pico-initial-traffic-nav .pico-initial-traffic-shimmer:nth-child(3){width:120px;height:18px}
+      .pico-initial-traffic-actions .pico-initial-traffic-shimmer{width:28px;height:28px}
+      .pico-initial-traffic-entry{height:calc(100dvh - 52px);display:flex;flex-direction:column;justify-content:center;width:min(452px,calc(100% - 38px));margin:auto;padding-bottom:72px}
+      .pico-initial-traffic-entry .title{width:78%;height:43px;margin-bottom:31px}
+      .pico-initial-traffic-entry .label{width:95px;height:13px;margin-bottom:14px}
+      .pico-initial-traffic-entry .field{width:100%;height:52px;border-radius:9px}
+      .pico-initial-traffic-help{display:flex;justify-content:space-between;gap:15px;margin-top:13px}
+      .pico-initial-traffic-help .pico-initial-traffic-shimmer:first-child{width:51%;height:10px}
+      .pico-initial-traffic-help .pico-initial-traffic-shimmer:last-child{width:31px;height:10px}
+      .pico-initial-traffic-entry .button{width:100%;height:46px;margin-top:23px;border-radius:9px}
+      @media(max-width:600px){.pico-initial-traffic-entry .title{height:35px;width:86%}}
+      @media(prefers-reduced-motion:reduce){.pico-initial-traffic-shimmer{animation:none}}
+      /* Saved aliases use the network dashboard as the first-paint placeholder. */
+      .pico-initial-traffic-saved-alias .pico-initial-traffic-entry{display:none}
+      .pico-initial-traffic-dashboard{display:none}
+      .pico-initial-traffic-saved-alias .pico-initial-traffic-dashboard{
+        display:flex;flex-direction:column;gap:12px;height:calc(100dvh - 52px);
+        padding:18px 22px 22px;overflow-y:auto
+      }
+      .pico-initial-traffic-dash-heading,.pico-initial-traffic-dash-toolbar{
+        display:flex;align-items:center;justify-content:space-between;gap:14px
+      }
+      .pico-initial-traffic-dash-heading{height:34px;flex-shrink:0}
+      .pico-initial-traffic-dash-heading .pico-initial-traffic-shimmer:first-child{height:27px;width:220px}
+      .pico-initial-traffic-dash-heading .pico-initial-traffic-shimmer:last-child{height:30px;width:225px}
+      .pico-initial-traffic-dash-toolbar{padding:12px 15px;min-height:46px;flex-shrink:0;
+        background:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 93%,var(--pico-boot-accent,#cba6f7) 7%);
+        border:1px solid color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 76%,var(--pico-boot-accent,#cba6f7) 24%);border-radius:10px}
+      .pico-initial-traffic-dash-toolbar .pico-initial-traffic-shimmer{height:17px;width:90px}
+      .pico-initial-traffic-dash-toolbar .pico-initial-traffic-shimmer:last-child{width:225px;margin-left:auto}
+      .pico-initial-traffic-dash-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;flex-shrink:0}
+      .pico-initial-traffic-dash-metric,.pico-initial-traffic-dash-panel{
+        border:1px solid color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 76%,var(--pico-boot-accent,#cba6f7) 24%);
+        background:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 93%,var(--pico-boot-accent,#cba6f7) 7%);
+        border-radius:10px;padding:16px
+      }
+      .pico-initial-traffic-dash-metric{height:83px;display:flex;flex-direction:column;gap:13px}
+      .pico-initial-traffic-dash-metric .pico-initial-traffic-shimmer:first-child{width:70%;height:12px}
+      .pico-initial-traffic-dash-metric .pico-initial-traffic-shimmer:last-child{width:53%;height:24px}
+      .pico-initial-traffic-dash-main{flex:1;display:grid;grid-template-columns:minmax(0,1.72fr) minmax(260px,.8fr);gap:13px;min-height:270px}
+      .pico-initial-traffic-dash-panel{min-height:0;display:flex;flex-direction:column}
+      .pico-initial-traffic-dash-panel>.pico-initial-traffic-shimmer:first-child{width:145px;height:16px}
+      .pico-initial-traffic-dash-network{width:100%;min-height:200px;flex:1}
+      .pico-initial-traffic-dash-route{fill:none;stroke:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 66%,var(--pico-boot-accent,#cba6f7) 34%);stroke-width:2;stroke-dasharray:6 9}
+      .pico-initial-traffic-dash-node{fill:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 85%,var(--pico-boot-accent,#cba6f7) 15%);
+        stroke:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 70%,var(--pico-boot-accent,#cba6f7) 30%);stroke-width:2}
+      .pico-initial-traffic-dash-rack{fill:color-mix(in srgb,var(--pico-boot-bg,#1e1e2e) 70%,var(--pico-boot-accent,#cba6f7) 30%)}
+      .pico-initial-traffic-dash-side{gap:16px}
+      .pico-initial-traffic-dash-side .pico-initial-traffic-shimmer{width:80%;height:16px}
+      .pico-initial-traffic-dash-side .pico-initial-traffic-shimmer:nth-child(3){width:57%}
+      .pico-initial-traffic-dash-side .pico-initial-traffic-shimmer:last-child{height:116px;width:100%;margin-top:auto}
+      @media(max-width:810px){
+        .pico-initial-traffic-saved-alias .pico-initial-traffic-dashboard{padding:13px}
+        .pico-initial-traffic-dash-main{grid-template-columns:1fr;min-height:0}
+        .pico-initial-traffic-dash-panel{min-height:220px}
+        .pico-initial-traffic-dash-side{min-height:160px}
+      }
+      @media(max-width:540px){
+        .pico-initial-traffic-dash-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .pico-initial-traffic-dash-heading .pico-initial-traffic-shimmer:first-child{width:140px}
+        .pico-initial-traffic-dash-heading .pico-initial-traffic-shimmer:last-child{width:100px}
+        .pico-initial-traffic-dash-toolbar .pico-initial-traffic-shimmer{width:45px}
+        .pico-initial-traffic-dash-toolbar .pico-initial-traffic-shimmer:last-child{width:90px}
+      }
       .pico-app-route .pico-loading{display:none}
       html, body { margin: 0; min-height: 100%; background: #15131e; }
       .pico-app-route, .pico-app-route body { background: var(--pico-boot-bg, #1e1e2e); }
@@ -84,7 +179,7 @@
       .pico-initial-home-group-head .pico-skeleton:first-child{height:21px;width:100px}
       .pico-initial-home-group-head .pico-skeleton:last-child{height:13px;width:205px}
       .pico-initial-home-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-      .pico-initial-home-visual .pico-initial-home-cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .pico-initial-home-visual .pico-initial-home-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
       .pico-initial-home-data .pico-initial-home-cards{grid-template-columns:1fr}
       .pico-initial-home-card{min-width:0;background:#181825;border:1px solid #39354a;border-radius:12px;overflow:hidden}
       .pico-initial-home-card-art{height:132px;border-bottom:1px solid #39354a;display:grid;place-items:center;padding:18px}
@@ -129,8 +224,56 @@
             <div class="pico-initial-home-card"><div class="pico-initial-home-card-art"><div class="pico-skeleton"></div></div><div class="pico-initial-home-card-copy"><div class="pico-skeleton"></div><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div></div>
             <div class="pico-initial-home-card"><div class="pico-initial-home-card-art"><div class="pico-skeleton"></div></div><div class="pico-initial-home-card-copy"><div class="pico-skeleton"></div><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div></div>
             <div class="pico-initial-home-card"><div class="pico-initial-home-card-art"><div class="pico-skeleton"></div></div><div class="pico-initial-home-card-copy"><div class="pico-skeleton"></div><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div></div>
+            <div class="pico-initial-home-card"><div class="pico-initial-home-card-art"><div class="pico-skeleton"></div></div><div class="pico-initial-home-card-copy"><div class="pico-skeleton"></div><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div></div>
           </div></div>
           <div class="pico-initial-home-group pico-initial-home-data"><div class="pico-initial-home-group-head"><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div><div class="pico-initial-home-cards"><div class="pico-initial-home-card"><div class="pico-initial-home-card-art"><div class="pico-skeleton"></div></div><div class="pico-initial-home-card-copy"><div class="pico-skeleton"></div><div class="pico-skeleton"></div><div class="pico-skeleton"></div></div></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pico-initial-traffic-loading" role="status" aria-label="Opening Traffic Storm">
+      <div class="pico-initial-traffic-topbar" aria-hidden="true">
+        <div class="pico-initial-traffic-nav"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+        <div class="pico-initial-traffic-actions"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+      </div>
+      <div class="pico-initial-traffic-entry" aria-hidden="true">
+        <div class="pico-initial-traffic-shimmer title"></div>
+        <div class="pico-initial-traffic-shimmer label"></div>
+        <div class="pico-initial-traffic-shimmer field"></div>
+        <div class="pico-initial-traffic-help"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+        <div class="pico-initial-traffic-shimmer button"></div>
+      </div>
+      <div class="pico-initial-traffic-dashboard" aria-hidden="true">
+        <div class="pico-initial-traffic-dash-heading"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+        <div class="pico-initial-traffic-dash-toolbar"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+        <div class="pico-initial-traffic-dash-metrics">
+          <div class="pico-initial-traffic-dash-metric"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+          <div class="pico-initial-traffic-dash-metric"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+          <div class="pico-initial-traffic-dash-metric"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+          <div class="pico-initial-traffic-dash-metric"><div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div></div>
+        </div>
+        <div class="pico-initial-traffic-dash-main">
+          <div class="pico-initial-traffic-dash-panel"><div class="pico-initial-traffic-shimmer"></div>
+            <svg class="pico-initial-traffic-dash-network" viewBox="0 0 1200 405" preserveAspectRatio="xMidYMid meet">
+          <path class="pico-initial-traffic-dash-route" d="M 220 215 C 285 215 303 88 348 88"/><path class="pico-initial-traffic-dash-route" d="M 456 88 C 620 88 760 206 974 206"/>
+          <path class="pico-initial-traffic-dash-route" d="M 220 215 C 285 215 303 165 348 165"/><path class="pico-initial-traffic-dash-route" d="M 456 165 C 620 165 760 206 974 206"/>
+          <path class="pico-initial-traffic-dash-route" d="M 220 215 C 285 215 303 242 348 242"/><path class="pico-initial-traffic-dash-route" d="M 456 242 C 620 242 760 206 974 206"/>
+          <path class="pico-initial-traffic-dash-route" d="M 220 215 C 285 215 303 319 348 319"/><path class="pico-initial-traffic-dash-route" d="M 456 319 C 620 319 760 206 974 206"/>
+            <rect class="pico-initial-traffic-dash-node" x="67" y="153" width="150" height="124" rx="15"/>
+            <circle class="pico-initial-traffic-dash-rack" cx="142" cy="215" r="35"/>
+          <rect class="pico-initial-traffic-dash-node" x="348" y="62" width="108" height="52" rx="10"/>
+          <rect class="pico-initial-traffic-dash-node" x="348" y="139" width="108" height="52" rx="10"/>
+          <rect class="pico-initial-traffic-dash-node" x="348" y="216" width="108" height="52" rx="10"/>
+          <rect class="pico-initial-traffic-dash-node" x="348" y="293" width="108" height="52" rx="10"/>
+            <rect class="pico-initial-traffic-dash-node" x="974" y="165" width="170" height="82" rx="11"/>
+            <rect class="pico-initial-traffic-dash-rack" x="995" y="180" width="130" height="12" rx="4"/>
+            <rect class="pico-initial-traffic-dash-rack" x="995" y="201" width="130" height="12" rx="4"/>
+            <rect class="pico-initial-traffic-dash-rack" x="995" y="222" width="130" height="12" rx="4"/>
+            </svg>
+          </div>
+          <div class="pico-initial-traffic-dash-panel pico-initial-traffic-dash-side">
+            <div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div>
+            <div class="pico-initial-traffic-shimmer"></div><div class="pico-initial-traffic-shimmer"></div>
+          </div>
         </div>
       </div>
     </div>
