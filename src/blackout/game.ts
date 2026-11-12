@@ -964,6 +964,7 @@ function bpApplyQuality(){
     bpFanRotors[i].visible=!lowQuality||(i%3===0);
   bpRackDetail.visible=!lowQuality;
   bpCourtDetail.visible=!lowQuality;
+  for(const target of bpCctvTargets)target.setSize(lowQuality?256:448,lowQuality?144:252);
   const officeW=lowQuality?512:768,officeH=lowQuality?288:432;
   if(bpOfficeMonitorCanvas.width!==officeW){
     bpOfficeMonitorCanvas.width=officeW;
@@ -1078,6 +1079,67 @@ const bpOfficeStatusLeds=[
   ball(22.75,5.02,-11.53,.065,mint),
   ball(28.75,5.02,-11.53,.065,mint)
 ];
+
+/* Four physical surveillance cameras render the live 3D scene into the
+ * security-room CCTV wall. Render one camera at a time to protect low-end PCs.
+ * The source is the current in-memory 3D world, not recorded video or an IP. */
+const bpCctvModels=[
+  {label:'CAM 01 / WEST HALL',at:[-41,5.55,-10],toward:[-32,1.6,2]},
+  {label:'CAM 02 / CORE',at:[-13,5.55,-11.7],toward:[-12,1.6,5]},
+  {label:'CAM 03 / EDGE',at:[11.2,5.55,-10],toward:[7,1.6,2.3]},
+  {label:'CAM 04 / ACCESS',at:[-1,5.55,11.5],toward:[-9.5,1.7,1]},
+];
+const bpCctvFeeds=[],bpCctvPlanes=[],bpCctvTargets=[];
+let bpCctvTick=0,bpCctvIndex=0;
+const bpCctvMetal=mat('#34475a',{metal:.88,rough:.35});
+box(19.4,3.55,-11.69,5.82,4.25,.14,darkMetal);
+for(let i=0;i<bpCctvModels.length;i++){
+  const spec=bpCctvModels[i];
+  const [x,y,z]=spec.at;
+  box(x,y,z,.56,.33,.82,bpCctvMetal);
+  box(x,y-.21,z,.16,.27,.16,edgeMetal);
+  const lens=ball(x,y,z+.39,.17,black);
+  ball(x+.18,y+.13,z+.43,.045,red);
+  const cam=new THREE.PerspectiveCamera(69,16/9,.1,110);
+  cam.position.set(x,y,z);
+  cam.lookAt(V(...spec.toward));
+  cam.updateMatrixWorld();
+  const target=new THREE.WebGLRenderTarget(lowQuality?256:448,lowQuality?144:252,{
+    depthBuffer:true,stencilBuffer:false,
+  });
+  target.texture.colorSpace=THREE.SRGBColorSpace;
+  target.texture.minFilter=THREE.LinearFilter;
+  bpCctvTargets.push(target);
+  const dx=i%2,dy=Math.floor(i/2),screenX=18.04+dx*2.73,screenY=4.48-dy*1.83;
+  box(screenX,screenY,-11.575,2.57,1.61,.045,edgeMetal);
+  const plane=new THREE.Mesh(new THREE.PlaneGeometry(2.44,1.37),
+    new THREE.MeshBasicMaterial({map:target.texture,toneMapped:false}));
+  plane.position.set(screenX,screenY,-11.522);
+  plane.renderOrder=3;
+  world.add(plane);
+  bpCctvPlanes.push(plane);
+  label(spec.label,screenX,screenY+.79,-11.504,2.35,.17,0,'#e3ecf6');
+  bpCctvFeeds.push({cam,target,lens});
+}
+function bpRenderCctv(dt){
+  if(!game||game.ended||!world.visible||courtroom.visible||jail.visible)return;
+  bpCctvTick+=dt;
+  if(bpCctvTick<(lowQuality?.31:.055))return;
+  bpCctvTick=0;
+  const feed=bpCctvFeeds[bpCctvIndex++%bpCctvFeeds.length];
+  const original=renderer.getRenderTarget();
+  // Avoid feeding CCTV pictures back into themselves while rendering.
+  for(const plane of bpCctvPlanes)plane.visible=false;
+  try{
+    renderer.setRenderTarget(feed.target);
+    renderer.clear(true,true,true);
+    renderer.render(scene,feed.cam);
+  }finally{
+    renderer.setRenderTarget(original);
+    for(const plane of bpCctvPlanes)plane.visible=true;
+  }
+}
+
 let bpOfficeMonitorTick=0;
 function bpPaintOfficeMonitor(){
   const ctx=bpOfficeMonitorContext;
@@ -2331,6 +2393,7 @@ animateScene=function(t,dt){
   if(bpOfficeMonitorTick>(lowQuality?.85:.34)){
     bpOfficeMonitorTick=0;bpPaintOfficeMonitor();
   }
+  bpRenderCctv(dt);
   bpMonitorTick+=dt;
   if(bpMonitorTick>(bp.terminal?.09:lowQuality?.46:.24)){
     bpMonitorTick=0;
