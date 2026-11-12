@@ -231,7 +231,7 @@ function character(x,z,type='attacker',parent=world) {
 }
 const attacker=character(-8.8,4.5);
 const security=character(10.9,-3,'guard');security.rotation.y=-1.3;
-const technician=character(10.8,5,'engineer');technician.rotation.y=-.7;
+const technician=character(26,1.8,'engineer');technician.rotation.y=Math.PI;
 // The intruder has a portable laptop connected to a server, not a full workstation.
 const bpPortableRack=box(-10.55,2.20,2.2,1.65,4.35,1.88,darkMetal);
 for(let y=.6;y<4.2;y+=.35){
@@ -616,7 +616,7 @@ function updateUI(force=false){
     o.button.disabled=disabled;
     o.cd.textContent=cool>0?Math.ceil(cool)+'s':a.id==='proxy'&&g.proxies>=6?'MAX':a.id==='arrest'&&g.trace<100?'LOCKED':a.id==='trace'&&g.trace<22?'LOCKED':'READY';
   }
-  proxyObjects.forEach((o,i)=>o.visible=world.visible&&i<g.proxies);
+  proxyObjects.forEach(o=>{o.visible=world.visible;});
   reqTube.visible=false;
 }
 function animateScene(t,dt){
@@ -1388,7 +1388,8 @@ function bpNpcUpdate(dt){
   const visible=patrols.some(p=>p.state==='searching'&&bpGuardCanSee(p.agent,attacker.position,10));
   const threatened=guardsInHall&&(nearest<11||visible);
   if(bpHackerState==='working'&&threatened){
-    bpHackerState='fleeing';bpHackerWaypoint=0;bpHackerStateTime=g.elapsed;
+    bpHackerState=chooseHackerPhase({phase:'working',guardVisible:visible,nearbyGuard:threatened,reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil});
+    bpHackerWaypoint=0;bpHackerStateTime=g.elapsed;
     bpShowIncident('SECURITY CHECK / WEST AISLE');
     sfx.scan();
   }
@@ -1396,25 +1397,29 @@ function bpNpcUpdate(dt){
     if(bpMoveHackerTowards(bpHackerEscape[bpHackerWaypoint],dt,3.2)){
       bpHackerWaypoint++;
       if(bpHackerWaypoint>=bpHackerEscape.length){
-        bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+10;bpHackerStateTime=g.elapsed;
+        bpHackerState=chooseHackerPhase({phase:'escaping',guardVisible:false,nearbyGuard:false,reachedWaypoint:true,now:g.elapsed,hidingUntil:0});
+        bpHackerHoldUntil=g.elapsed+10;bpHackerStateTime=g.elapsed;
       }
     }
   }else if(bpHackerState==='hiding'){
     if(guardsInHall&&nearest<13)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+4);
     const safe=(!guardsInHall||nearest>14);
     if(g.elapsed>bpHackerHoldUntil&&safe){
-      bpHackerState='returning';bpHackerWaypoint=bpHackerEscape.length-2;
+      bpHackerState=chooseHackerPhase({phase:'hiding',guardVisible:false,nearbyGuard:false,reachedWaypoint:false,now:g.elapsed,hidingUntil:bpHackerHoldUntil});
+      bpHackerWaypoint=bpHackerEscape.length-2;
       bpHackerStateTime=g.elapsed;
     }
   }else if(bpHackerState==='returning'){
     if(threatened){
-      bpHackerState='fleeing';bpHackerWaypoint=1;bpHackerStateTime=g.elapsed;
+      bpHackerState=chooseHackerPhase({phase:'returning',guardVisible:visible,nearbyGuard:threatened,reachedWaypoint:false,now:g.elapsed,hidingUntil:0});
+      bpHackerWaypoint=1;bpHackerStateTime=g.elapsed;
     }else{
       const point=bpHackerWaypoint>=0?bpHackerEscape[bpHackerWaypoint]:bpWorkPosition;
       if(bpMoveHackerTowards(point,dt,2.15)){
         bpHackerWaypoint--;
         if(bpHackerWaypoint < -1){
-          bpHackerState='working';bpHackerStateTime=g.elapsed;
+          bpHackerState=chooseHackerPhase({phase:'returning',guardVisible:false,nearbyGuard:false,reachedWaypoint:true,now:g.elapsed,hidingUntil:0});
+          bpHackerStateTime=g.elapsed;
         }
       }
     }
