@@ -211,6 +211,42 @@ function rack(x,z,index){
 }
 const rackCoords=[[2.3,-8],[5.9,-8],[2.3,-3],[5.9,-3],[2.3,2],[5.9,2],[2.3,7],[5.9,7],[-18,-8],[-18,-3],[-18,3],[-18,8]];
 rackCoords.forEach(([x,z],i)=>rack(x,z,i+1));
+
+/* Batched equipment details: hundreds of perforated vent marks in one draw. */
+const bpRackDetail=new THREE.Group();world.add(bpRackDetail);
+const bpVentMaterial=mat('#718899',{metal:.72,rough:.31});
+const bpVents=new THREE.InstancedMesh(geoBox,bpVentMaterial,rackCoords.length*30);
+bpVents.castShadow=false;bpVents.receiveShadow=false;
+const bpVentDummy=new THREE.Object3D();
+let bpVentIndex=0;
+for(const [rx,rz] of rackCoords){
+  for(let section=0;section<10;section++)for(let slot=0;slot<3;slot++){
+    bpVentDummy.position.set(rx-.45+slot*.45,.46+section*.342,rz+1.145);
+    bpVentDummy.scale.set(.30,.015,.023);
+    bpVentDummy.updateMatrix();bpVents.setMatrixAt(bpVentIndex++,bpVentDummy.matrix);
+  }
+}
+bpVents.instanceMatrix.needsUpdate=true;
+bpVents.count=bpVentIndex;bpRackDetail.add(bpVents);
+const bpTray=mat('#475b69',{metal:.83,rough:.35});
+for(const x of [-18,-9,2.3,5.9,11.6]){
+  box(x,5.88,0,.24,.13,25.5,bpTray,bpRackDetail);
+  for(const z of [-10,-5,0,5,10]){
+    box(x,5.88,z,1.1,.12,.13,edgeMetal,bpRackDetail);
+  }
+}
+for(const z of [-10.55,-5.6,-.55,4.5,9.5]){
+  box(-6.2,.06,z,29,.035,.11,mat('#54616c',{metal:.77,rough:.34}),bpRackDetail);
+  for(const x of [-20.5,-12,-2,8]){
+    box(x,.075,z,.16,.06,.15,bpVentMaterial,bpRackDetail);
+  }
+}
+// Ventilation louvres on the west wall.
+for(const z of [-10.2,-6.4,-2.6,1.2,5.0,8.8]){
+  box(-23.52,3.75,z,.11,1.65,1.9,edgeMetal,bpRackDetail);
+  for(let j=0;j<8;j++)box(-23.43,3.1+j*.185,z,.07,.055,1.60,black,bpRackDetail);
+}
+
 for(let x of [1.1,7.1]){
   for(let z of [-10.5,-5.5,-.5,4.5,9.5])box(x,.07,z,.06,.08,2.2,mat('#4b6773',{glow:.45}));
 }
@@ -388,6 +424,68 @@ bpCourtClerk.rotation.y=-.15;
 box(4.0,1.08,-3.4,2.35,.15,1.2,courtWood,courtroom);
 for(const x of [-6,6])light(x,5.8,-2.0,0xffe6c5,2.1,11,courtroom);
 light(0,6.0,-3.2,0xffffff,3.6,12,courtroom);
+
+/* Court staging uses pooled box geometry. Optional dressing can be hidden
+   at runtime on slower classroom machines without hiding the core scene. */
+const bpCourtDetail=new THREE.Group();courtroom.add(bpCourtDetail);
+const bpCourtBrass=mat('#c3a974',{metal:.68,rough:.36});
+const bpCourtVelvet=mat('#3b3146',{metal:.02,rough:.95});
+const bpCourtPaper=mat('#e5ddc7',{metal:0,rough:1});
+for(const z of [2.0,5.15]){
+  for(const x of [-5.8,-1.9,1.9,5.8]){
+    box(x,.72,z,2.75,.22,.88,courtWood,bpCourtDetail);
+    box(x,1.14,z+.44,2.75,.81,.19,courtWood,bpCourtDetail);
+    box(x,.85,z,2.51,.065,.70,bpCourtVelvet,bpCourtDetail);
+    for(const dx of [-1.16,1.16]){
+      box(x+dx,.39,z,.10,.6,.11,courtDark,bpCourtDetail);
+    }
+  }
+}
+// Separate advocate tables, witness platform and jury area.
+for(const x of [-3.5,3.5]){
+  box(x,.75,-.50,2.8,.19,1.4,courtWood,bpCourtDetail);
+  for(const dx of [-1.1,1.1])box(x+dx,.37,-.50,.13,.69,.16,courtDark,bpCourtDetail);
+  for(const dx of [-.60,.15]){
+    box(x+dx,.868,-.62,.53,.018,.72,bpCourtPaper,bpCourtDetail);
+    box(x+dx,.887,-.68,.36,.012,.025,mat('#8f8c88',{metal:.08,rough:.7}),bpCourtDetail);
+  }
+}
+box(-6.1,.76,-2.85,2.25,1.37,1.55,courtWood,bpCourtDetail);
+box(-6.1,1.52,-2.34,2.2,.16,.48,bpCourtBrass,bpCourtDetail);
+for(const x of [4.7,6.5]){
+  box(x,.52,-3.0,1.35,.18,1.1,courtWood,bpCourtDetail);
+  box(x,.92,-3.57,1.35,.84,.13,courtWood,bpCourtDetail);
+}
+for(const x of [-7.55,7.55]){
+  box(x,1.62,-.8,.19,3.25,.24,courtWood,bpCourtDetail);
+}
+box(0,1.07,1.12,15,.15,.17,courtWood,bpCourtDetail);
+for(let x=-7;x<=7;x+=1.4)box(x,.6,1.12,.115,.95,.115,bpCourtBrass,bpCourtDetail);
+box(0,1.45,1.12,15,.10,.22,bpCourtBrass,bpCourtDetail);
+// A simple scales-of-justice relief, not an extra interface label.
+torus(0,4.58,-6.105,.62,.055,bpCourtBrass,bpCourtDetail);
+line([0,4.9,-6.03],[0,4.15,-6.03],.04,bpCourtBrass,bpCourtDetail);
+line([-.78,4.62,-6.03],[.78,4.62,-6.03],.045,bpCourtBrass,bpCourtDetail);
+for(const side of [-1,1]){
+  line([side*.67,4.6,-6.04],[side*.67,4.36,-6.04],.016,bpCourtBrass,bpCourtDetail);
+  box(side*.67,4.34,-6.01,.47,.047,.19,bpCourtBrass,bpCourtDetail);
+}
+// Bailiff positions and a few nonanimated gallery silhouettes.
+const bpBailiff=character(5.75,-3.96,'guard',bpCourtDetail);bpBailiff.rotation.y=-.18;
+const bpCourtSpectators=[];
+for(const x of [-5.65,-2.1,2.1,5.8]){
+  const person=character(x,4.8,'engineer',bpCourtDetail);
+  person.scale.setScalar(.78);person.rotation.y=Math.PI;
+  bpCourtSpectators.push(person);
+}
+box(-7.1,3.03,-6.04,.18,2.7,.15,bpCourtBrass,bpCourtDetail);
+box(7.1,3.03,-6.04,.18,2.7,.15,bpCourtBrass,bpCourtDetail);
+const bpClockFrame=torus(6.4,4.6,-6.0,.41,.04,bpCourtBrass,bpCourtDetail);
+for(let n=0;n<12;n++){
+  const a=n*Math.PI/6;
+  box(6.4+Math.sin(a)*.32,4.6+Math.cos(a)*.32,-5.95,.035,.06,.017,bpCourtPaper,bpCourtDetail);
+}
+
 
 
 // --------------------------------------------------------------------------
@@ -718,6 +816,11 @@ function animateScene(t,dt){
     o.userData.ring.rotation.z=t*.52+(i%2)*.4;
     o.userData.glow.intensity=1.35+.4*Math.sin(t*2+i);
   });
+  if(courtroom.visible&&game?.courtPhase==='hearing'){
+    const progress=1-Math.max(0,Math.min(1,game.courtTimer/8));
+    bpGavel.rotation.z=progress>.42&&progress<.55 ? -Math.sin((progress-.42)/.13*Math.PI)*.55 : 0;
+    bpGavel.position.y=1.43+(progress>.42&&progress<.55?Math.sin((progress-.42)/.13*Math.PI)*.12:0);
+  }
   if(jail.visible){sirenRed.intensity=2.5+2*Math.max(0,Math.sin(t*6));sirenBlue.intensity=2.5+2*Math.max(0,Math.sin(t*6+Math.PI));}
   flashAlpha+=(0-flashAlpha)*Math.min(1,dt*2.4);
   $('flash').style.opacity=String(Math.max(0,flashAlpha));
@@ -789,6 +892,8 @@ function bpApplyQuality(){
     bpFixtureLights[i].intensity=lowQuality?(i%3===0?2.8:0):3.0;
   for(let i=0;i<bpFanRotors.length;i++)
     bpFanRotors[i].visible=!lowQuality||(i%3===0);
+  bpRackDetail.visible=!lowQuality;
+  bpCourtDetail.visible=!lowQuality;
   if(typeof bpWallCanvas!=='undefined'){
     const w=lowQuality?512:1024,h=lowQuality?288:576;
     if(bpWallCanvas.width!==w){bpWallCanvas.width=w;bpWallCanvas.height=h;bpWallGraph(visualTime);}
