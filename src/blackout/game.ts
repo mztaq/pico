@@ -676,6 +676,110 @@ const bpSecurityTexture=new THREE.CanvasTexture(bpSecurityCanvas);
 bpSecurityTexture.colorSpace=THREE.SRGBColorSpace;
 const bpSecurityPlane=new THREE.Mesh(new THREE.PlaneGeometry(1.98,1.2),new THREE.MeshBasicMaterial({map:bpSecurityTexture,side:THREE.DoubleSide}));
 bpSecurityPlane.position.set(10.7,1.82,-5.438);world.add(bpSecurityPlane);
+
+/* Main network operations wall. The timeline is generated from the in-game
+   counters, not from a live server or any external endpoint. */
+const bpWallCanvas=document.createElement('canvas');
+bpWallCanvas.width=lowQuality?640:1024;
+bpWallCanvas.height=lowQuality?360:576;
+const bpWallContext=bpWallCanvas.getContext('2d');
+const bpWallTexture=new THREE.CanvasTexture(bpWallCanvas);
+bpWallTexture.colorSpace=THREE.SRGBColorSpace;
+bpWallTexture.minFilter=THREE.LinearFilter;
+const bpWallFrame=box(0,3.32,-13.876,9.62,3.55,.16,darkMetal);
+bpWallFrame.castShadow=false;
+const bpWallDisplay=new THREE.Mesh(
+  new THREE.PlaneGeometry(9.15,3.25),
+  new THREE.MeshBasicMaterial({map:bpWallTexture,side:THREE.DoubleSide,toneMapped:false})
+);
+bpWallDisplay.position.set(0,3.32,-13.774);
+bpWallDisplay.renderOrder=2;world.add(bpWallDisplay);
+for(const x of [-4.7,4.7])ball(x,1.48,-13.72,.055,mint,world);
+const bpWallHistory=[];
+let bpWallSampleTimer=0;
+let bpWallPaintTimer=0;
+function bpWallGraph(t){
+  const ctx=bpWallContext;if(!ctx)return;
+  const w=bpWallCanvas.width,h=bpWallCanvas.height;
+  const sx=w/1024,sy=h/576;
+  ctx.setTransform(sx,0,0,sy,0,0);
+  ctx.fillStyle='#0b1424';ctx.fillRect(0,0,1024,576);
+  ctx.fillStyle='#162237';ctx.fillRect(0,0,1024,86);
+  ctx.fillStyle='#cdd6f4';ctx.font='bold 30px monospace';ctx.fillText('PICO  /  NETWORK OPERATIONS',35,47);
+  ctx.font='16px monospace';ctx.fillStyle='#9eaac5';ctx.fillText('LIVE LOAD MONITOR  •  CORE CLUSTER',36,72);
+  const g=game;
+  const req=g?.traffic??0;
+  const hp=g?.health??100;
+  const redMode=g&&(hp<55||g.burst>0||g.attackerWave>0);
+  ctx.fillStyle=redMode?'#f38ba8':'#a6e3a1';
+  ctx.fillRect(933,26,17,17);
+  ctx.font='bold 18px monospace';ctx.textAlign='right';
+  ctx.fillText(redMode?'ALERT':'ONLINE',918,43);
+  ctx.textAlign='left';
+  ctx.fillStyle='#bac2de';ctx.font='18px monospace';
+  ctx.fillText('REQUEST RATE / RPS',35,127);
+  ctx.fillStyle='#f2f4ff';ctx.font='bold 42px monospace';
+  ctx.fillText(Math.round(req).toLocaleString('en-US'),35,177);
+  ctx.font='15px monospace';ctx.fillStyle='#8997b3';
+  ctx.fillText('LAST 120 SECONDS',35,208);
+  const plot={x:34,y:235,w:685,h:274};
+  ctx.strokeStyle='#314057';ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const y=plot.y+(i/5)*plot.h;
+    ctx.beginPath();ctx.moveTo(plot.x,y);ctx.lineTo(plot.x+plot.w,y);ctx.stroke();
+  }
+  for(let i=0;i<=8;i++){
+    const x=plot.x+(i/8)*plot.w;
+    ctx.beginPath();ctx.moveTo(x,plot.y);ctx.lineTo(x,plot.y+plot.h);ctx.stroke();
+  }
+  const history=bpWallHistory.slice(-120);
+  const scaleMax=Math.max(18000,...history.map(v=>v.traffic*1.12));
+  ctx.strokeStyle='#e8c18c';ctx.setLineDash([8,8]);ctx.lineWidth=2;
+  const baseline=plot.y+plot.h-(9000/scaleMax)*plot.h;
+  ctx.beginPath();ctx.moveTo(plot.x,baseline);ctx.lineTo(plot.x+plot.w,baseline);ctx.stroke();ctx.setLineDash([]);
+  const gradient=ctx.createLinearGradient(0,plot.y,0,plot.y+plot.h);
+  gradient.addColorStop(0,'#cba6f74f');gradient.addColorStop(1,'#cba6f700');
+  ctx.lineJoin='round';ctx.lineCap='round';
+  if(history.length>1){
+    ctx.beginPath();
+    history.forEach((v,i)=>{
+      const x=plot.x+(i/119)*plot.w;
+      const y=plot.y+plot.h-(v.traffic/scaleMax)*plot.h;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    });
+    const last=history[history.length-1],endX=plot.x+((history.length-1)/119)*plot.w;
+    const endY=plot.y+plot.h-(last.traffic/scaleMax)*plot.h;
+    ctx.lineTo(endX,plot.y+plot.h);ctx.lineTo(plot.x,plot.y+plot.h);
+    ctx.closePath();ctx.fillStyle=gradient;ctx.fill();
+    ctx.beginPath();
+    history.forEach((v,i)=>{
+      const x=plot.x+(i/119)*plot.w;
+      const y=plot.y+plot.h-(v.traffic/scaleMax)*plot.h;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle=redMode?'#f38ba8':'#cba6f7';ctx.lineWidth=4;ctx.stroke();
+    ctx.fillStyle=redMode?'#f38ba8':'#cba6f7';ctx.beginPath();ctx.arc(endX,endY,6,0,Math.PI*2);ctx.fill();
+  } else {
+    ctx.fillStyle='#626b86';ctx.font='18px monospace';ctx.fillText('AWAITING TRAFFIC DATA',plot.x+135,plot.y+138);
+  }
+  ctx.fillStyle='#9eaac5';ctx.font='14px monospace';
+  ctx.fillText('02:00 AGO',plot.x,544);ctx.fillText('NOW',plot.x+648,544);
+  const px=752;
+  ctx.fillStyle='#19243a';ctx.fillRect(px,102,241,443);
+  ctx.strokeStyle='#34425e';ctx.strokeRect(px+.5,102.5,240,442);
+  const drawMetric=(label,value,y,color)=>{
+    ctx.fillStyle='#9daac3';ctx.font='17px monospace';ctx.fillText(label,px+18,y);
+    ctx.fillStyle=color;ctx.font='bold 36px monospace';ctx.fillText(String(value),px+18,y+43);
+    ctx.fillStyle='#334259';ctx.fillRect(px+18,y+56,205,2);
+  };
+  drawMetric('SERVER HEALTH',Math.round(hp)+'%',141,hp<50?'#f38ba8':'#a6e3a1');
+  drawMetric('EDGE PROXIES',g?.proxies??0,251,'#cba6f7');
+  drawMetric(g?.mode==='attack'?'EXPOSURE':'CASE EVIDENCE',Math.round(g?.mode==='attack'?g.risk:g?.trace??0)+'%',361,'#89b4fa');
+  ctx.fillStyle=redMode?'#f38ba8':'#a6e3a1';ctx.font='bold 16px monospace';
+  ctx.fillText(redMode?'CAPACITY ALERT':'SYSTEM NOMINAL',px+18,510);
+  bpWallTexture.needsUpdate=true;
+}
+
 let bpMonitorTick=0;
 function bpDrawScreen(ctx,texture,title,redMode,t){
   if(!ctx)return;
@@ -730,6 +834,7 @@ startGame=function(mode){
   view.drag=false;
   bp.keys.clear();
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
+  bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   attacker.visible=mode==='defend';attacker.position.set(-8.8,0,4.5);attacker.rotation.y=Math.PI;
   security.position.set(10.9,0,-3);
   bpPlayerAvatar.visible=false;
@@ -1007,6 +1112,16 @@ animateScene=function(t,dt){
   }else{
     for(const light of bpEmergencyLights)light.color.setHex(0xff2b4e);
   }
+  if(game&&!game.ended){
+    bpWallSampleTimer+=dt;
+    if(bpWallSampleTimer>=1){
+      bpWallSampleTimer-=1;
+      bpWallHistory.push({traffic:game.traffic,health:game.health,proxies:game.proxies});
+      if(bpWallHistory.length>120)bpWallHistory.shift();
+    }
+  }
+  bpWallPaintTimer+=dt;
+  if(bpWallPaintTimer>(lowQuality?.75:.25)){bpWallPaintTimer=0;bpWallGraph(t);}
   bpMonitorTick+=dt;
   if(bpMonitorTick>(lowQuality?.45:.18)){
     bpMonitorTick=0;
@@ -1041,6 +1156,7 @@ endGame=function(win,title,description){
 };
 renderer.domElement.setAttribute('aria-label','First-person 3D data center game. WASD to move, mouse to look, E to use nearby laptop, C to crouch, V for third-person view.');
 
+bpWallGraph(0);
 resize();focus('overview');moveCamera(10);renderer.render(scene,camera);
 frame();
 $('loading').remove();
