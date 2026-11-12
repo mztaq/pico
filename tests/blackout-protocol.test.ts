@@ -11,11 +11,15 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("import { createTrafficFeed } from './traffic-model'");
     expect(game).toContain("import { isSightBlocked, chooseHackerPhase } from './stealth-logic'");
     expect(game).toContain("import { drawTerminalScreen, terminalHitTest } from './terminal-screen'");
+    expect(game).toContain("import { routeTo } from './navigation'");
+    expect(game).toContain("function bpApplyQuality()");
+    expect(game).toContain("qualitySelect.addEventListener('change'");
     expect(() => new Function(game
       .replace("import * as THREE from 'three';", 'const THREE = {};')
       .replace("import { createTrafficFeed } from './traffic-model';", 'const createTrafficFeed = () => ({});')
       .replace("import { drawTerminalScreen, terminalHitTest } from './terminal-screen';", 'const drawTerminalScreen = () => {}; const terminalHitTest = () => -1;')
-      .replace("import { isSightBlocked, chooseHackerPhase } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working";'))).not.toThrow();
+      .replace("import { isSightBlocked, chooseHackerPhase } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working";')
+      .replace("import { routeTo } from './navigation';", 'const routeTo = () => [];'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
@@ -34,9 +38,15 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("bpHackerState=chooseHackerPhase({phase:'working'");
     expect(game).toContain("bpHackerState=chooseHackerPhase({phase:'escaping'");
     expect(game).toContain("if(bpHackerState==='escaping')");
+    expect(game).toContain('function bpGuardRoute(from,to)');
+    expect(game).toContain("p.state='chasing'");
+    expect(game).toContain('p.repathAt=g.elapsed+');
+    expect(game).toContain("p.path=bpGuardRoute(p.agent.position,[p.lastSeen.x,p.lastSeen.z])");
+    expect(game).toContain("bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(23.0,0,-3.55))");
+    expect(game).toContain('const bpOfficeConsoleX=23.15');
     expect(game).not.toContain("bpHackerState==='fleeing'");
     expect(game).toContain('const bpHackerEscape=[');
-    expect(game).toContain('bpGuardCanSee(p.agent,attacker.position,10)');
+    expect(game).toContain('bpGuardCanSee(p.agent,attacker.position,13)');
     expect(game).toContain("p.state='returning'");
     expect(game).toContain("p.state='idle'");
     expect(game).toContain('const bpWorkPosition=V(-8.5,0,4.18)');
@@ -59,7 +69,8 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("g.courtPhase='detention'");
     expect(game).toContain('const bpJudge=character(');
     expect(game).toContain("focus('courtroom')");
-    expect(game).toContain('const bpOfficePassage=');
+    expect(game).toContain('function bpGuardRoute(from,to)');
+    expect(game).toContain('bpRandomSearchTarget(g)');
     expect(game).toContain("box(23,-.19,0,17,.35,24,concrete)");
     expect(game).toContain('function bpPowerProxy(index)');
     expect(game).toContain("g.proxies++");
@@ -79,6 +90,11 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('const latest=(g?.requestFeed?.recent??[]).slice(-3).reverse();');
     expect(game).toContain('bpSmoothedRpm');
     expect(game).toContain('bpFanBlurMaterial.opacity');
+    expect(game).toContain('const bpCourtDetail=new THREE.Group()');
+    expect(game).toContain('const bpRackDetail=new THREE.Group()');
+    expect(game).toContain('new THREE.InstancedMesh(');
+    expect(game).toContain('bpRackDetail.visible=!lowQuality');
+    expect(game).toContain("ctx.setTransform(ctx.canvas.width/w,0,0,ctx.canvas.height/h,0,0)");
     expect(game).toContain('this.fanWhine.frequency.setTargetAtTime');
     expect(game).toContain("box(-10.55,2.20,2.2,1.65,4.35,1.88,darkMetal)");
     expect(html).toContain('bp-skeleton-main');
