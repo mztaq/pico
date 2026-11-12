@@ -348,6 +348,46 @@ box(6.5,2,-4.5,.2,3.4,.2,red,jail);
 const jailSpot=new THREE.SpotLight(0xece8d6,18,26,Math.PI/5,.4,1);jailSpot.position.set(0,7.2,4);jailSpot.target.position.set(0,1,-1);jailSpot.castShadow=!lowQuality;jail.add(jailSpot,jailSpot.target);
 const sirenRed=light(-5,5,0,0xff3849,3,12,jail),sirenBlue=light(5,5,0,0x357cec,3,12,jail);
 
+/* Defense finale: a separate, low-poly court hearing before the jail cinematic. */
+const courtroom=new THREE.Group();courtroom.visible=false;scene.add(courtroom);
+const courtWood=mat('#584638',{metal:.08,rough:.72});
+const courtDark=mat('#2b2b38',{metal:.12,rough:.85});
+const courtCarpet=mat('#333b52',{metal:.04,rough:.95});
+const robe=mat('#161722',{metal:0,rough:.98});
+box(0,-.16,0,18,.27,15,courtCarpet,courtroom);
+box(0,3.4,-6.35,18,7,.42,concrete,courtroom);
+box(-8.8,3.4,0,.34,7,13,concrete,courtroom);
+box(8.8,3.4,0,.34,7,13,concrete,courtroom);
+box(0,6.7,0,17,.26,14,mat('#2d303d',{metal:.14,rough:.82}),courtroom);
+for(let i=-1;i<=1;i++){
+  box(i*4.6,.9,3.4,3.7,.31,1.05,courtWood,courtroom);
+  box(i*4.6,1.38,4.02,3.7,.76,.17,courtWood,courtroom);
+  box(i*4.6,.27,3.65,3.3,.43,.12,courtDark,courtroom);
+}
+box(0,.62,-4.9,6.9,1.16,2.5,courtWood,courtroom);
+box(0,1.25,-4.0,5.6,.22,1.3,courtWood,courtroom);
+box(0,2.02,-4.42,3.5,1.35,.3,courtDark,courtroom);
+label('COURT OF DIGITAL INCIDENTS',0,4.84,-6.09,9.4,.92,0,'#e7d9b9',courtroom);
+label('HEARING IN SESSION',0,1.92,-4.238,3.0,.35,0,'#f4e7cb',courtroom);
+const bpJudge=character(0,-4.83,'judge',courtroom);
+bpJudge.rotation.y=0;
+box(0,1.41,-.36,.8,1.22,.37,robe,bpJudge);
+box(0,1.82,.37,.67,.21,.07,mat('#e8e0d0',{metal:0,rough:.9}),bpJudge);
+box(0,2.96,.05,.75,.15,.8,robe,bpJudge);
+const bpGavel=box(.75,1.43,-3.61,.42,.13,.14,courtWood,courtroom);
+box(.76,1.28,-3.63,.11,.44,.10,courtWood,courtroom);
+const bpAccused=character(-1.75,0.45,'attacker',courtroom);
+bpAccused.rotation.y=Math.PI;
+const bpCourtGuardLeft=character(-3.5,.4,'guard',courtroom);
+const bpCourtGuardRight=character(.1,.4,'guard',courtroom);
+bpCourtGuardLeft.rotation.y=0;bpCourtGuardRight.rotation.y=0;
+const bpCourtClerk=character(4,-3.5,'engineer',courtroom);
+bpCourtClerk.rotation.y=-.15;
+box(4.0,1.08,-3.4,2.35,.15,1.2,courtWood,courtroom);
+for(const x of [-6,6])light(x,5.8,-2.0,0xffe6c5,2.1,11,courtroom);
+light(0,6.0,-3.2,0xffffff,3.6,12,courtroom);
+
+
 // --------------------------------------------------------------------------
 // Camera with smooth cinematic transitions and drag-to-orbit movement.
 // --------------------------------------------------------------------------
@@ -356,6 +396,7 @@ const presets={
   overview:{yaw:.68,pitch:.35,distance:23,target:V(0,2.0,-1)},
   hacker:{yaw:-.32,pitch:.26,distance:9.3,target:V(-8.3,1.95,3)},
   servers:{yaw:.44,pitch:.22,distance:13.5,target:V(4.3,2.1,-2)},
+  courtroom:{yaw:0,pitch:.18,distance:13.1,target:V(0,2,-1.2)},
   jail:{yaw:0,pitch:.12,distance:12,target:V(0,2,-.5)},
 };
 function focus(name){if(bp?.active)return;let p=presets[name]||presets.overview;view.desiredYaw=p.yaw;view.desiredPitch=p.pitch;view.desiredDistance=p.distance;view.desiredTarget.copy(p.target);for(let b of document.querySelectorAll('[data-camera]'))b.classList.toggle('selected',b.dataset.camera===name);}
@@ -492,7 +533,7 @@ function startGame(mode){
   $('trace-sub').textContent=mode==='attack'?'DETECTION THRESHOLD':'SUSPECT IDENTIFICATION';
   $('progressbar').classList.toggle('alert',mode==='attack');
   bpResetProxies();
-  reqTube.visible=true;world.visible=true;dynamic.visible=true;jail.visible=false;
+  reqTube.visible=true;world.visible=true;dynamic.visible=true;jail.visible=false;courtroom.visible=false;
   scene.fog.density=.010;scene.background.set('#25313f');
   actionButtons.clear();$('actions').replaceChildren();
   for(let a of ACTIONS[mode]){
@@ -542,7 +583,14 @@ function endGame(win,title,description){
   g.endTitle=title;g.endDescription=description;
   sfx[win?'win':'lose']();
   log(win?'Operation completed successfully.':'Mission failed. Network incident unresolved.',win?'good':'warn');
-  if(g.arrested){world.visible=false;dynamic.visible=false;jail.visible=true;scene.fog.density=.012;scene.background.set('#14191f');focus('jail');sfx.metal();endingDelay=2.4;}
+  if(g.arrested){
+    world.visible=false;dynamic.visible=false;jail.visible=false;courtroom.visible=true;
+    scene.fog.density=.008;scene.background.set('#242535');
+    focus('courtroom');
+    g.courtPhase='hearing';g.courtTimer=8.0;g.gavelPlayed=false;endingDelay=0;
+    bpShowIncident('COURT / HEARING IN SESSION');
+    sfx.scan();
+  }
   else{endingDelay=.85;}
   updateUI(true);
 }
@@ -550,7 +598,23 @@ function showEnd(){if(!game)return;$('result-type').textContent=game.win?'OPERAT
 function stepGame(dt){
   if(!game)return;
   const g=game;
-  if(g.ended){if(endingDelay>0){endingDelay-=dt;if(endingDelay<=0)showEnd();}return;}
+  if(g.ended){
+    if(g.arrested&&g.courtPhase==='hearing'){
+      g.courtTimer-=dt;
+      if(g.courtTimer<4.5&&!g.gavelPlayed){
+        g.gavelPlayed=true;sfx.metal();
+        bpShowIncident('COURT / SENTENCE DELIVERED');
+      }
+      if(g.courtTimer<=0){
+        courtroom.visible=false;jail.visible=true;
+        scene.background.set('#14191f');scene.fog.density=.012;
+        focus('jail');sfx.metal();g.courtPhase='detention';endingDelay=4.0;
+      }
+      return;
+    }
+    if(endingDelay>0){endingDelay-=dt;if(endingDelay<=0)showEnd();}
+    return;
+  }
   g.elapsed+=dt;
   for(let id of Object.keys(g.cooldowns))g.cooldowns[id]=Math.max(0,g.cooldowns[id]-dt);
   g.burst=Math.max(0,g.burst-dt);g.reroute=Math.max(0,g.reroute-dt);g.limit=Math.max(0,g.limit-dt);
@@ -666,7 +730,7 @@ for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('clic
   if(mode!=='attack'&&mode!=='defend')return;
   startGame(mode);
 });
-function menu(){game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').hidden=false;$('home').inert=false;$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
+function menu(){game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;courtroom.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').hidden=false;$('home').inert=false;$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
 $('restart').onclick=()=>menu();
 $('again').onclick=()=>{const mode=game?.mode||'defend';startGame(mode);};
 $('menu').onclick=()=>menu();
