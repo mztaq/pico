@@ -1,10 +1,12 @@
+import {estimatedBitsPerSecond,formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
 export interface OfficeFeed {
   traffic: number;
+  bytesPerRequest?: number;
   health: number;
   proxies: number;
   dispatchActive: boolean;
   alert: boolean;
-  history: {traffic:number}[];
+  history: {traffic:number;bitsPerSecond?:number}[];
   requests: {status:number;path:string}[];
 }
 export function renderOfficeFeed(ctx:CanvasRenderingContext2D, feed:OfficeFeed):void{
@@ -18,11 +20,15 @@ export function renderOfficeFeed(ctx:CanvasRenderingContext2D, feed:OfficeFeed):
   ctx.fillStyle=feed.alert?'#f38ba8':'#a6e3a1';ctx.fillRect(665,24,15,15);
   ctx.font='bold 14px monospace';ctx.fillText(feed.alert?'ALERT':'ONLINE',687,38);
   ctx.fillStyle='#aebbd3';ctx.font='16px monospace';
-  ctx.fillText('INBOUND REQUESTS / SECOND',22,100);
+  const transferSize=feed.bytesPerRequest??DEFAULT_BYTES_PER_REQUEST;
+  const throughput=estimatedBitsPerSecond(feed.traffic,transferSize);
+  ctx.fillText('ESTIMATED NETWORK THROUGHPUT',22,100);
   ctx.font='bold 44px monospace';ctx.fillStyle='#f2f4fa';
-  ctx.fillText(Math.round(feed.traffic).toLocaleString('en-US'),22,147);
+  ctx.fillText(formatBandwidth(throughput),22,147);
   ctx.font='14px monospace';ctx.fillStyle='#aebbd3';
-  ctx.fillText(feed.dispatchActive?'OFFICERS DEPLOYED':'CONTROL ROOM MONITORING',22,177);
+  ctx.fillText(feed.dispatchActive?'OFFICERS DEPLOYED':'CONTROL ROOM MONITORING',22,174);
+  ctx.font='12px monospace';ctx.fillStyle='#8fa2bc';
+  ctx.fillText(Math.round(feed.traffic).toLocaleString('en-US')+' REQUESTS/SEC',22,192);
   const plotX=22,plotY=204,plotW=493,plotH=160;
   ctx.strokeStyle='#34435c';ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
@@ -30,15 +36,17 @@ export function renderOfficeFeed(ctx:CanvasRenderingContext2D, feed:OfficeFeed):
     ctx.beginPath();ctx.moveTo(plotX,y);ctx.lineTo(plotX+plotW,y);ctx.stroke();
   }
   const history=feed.history.slice(-100);
-  const maxValue=Math.max(8000,feed.traffic*1.25,...history.map(v=>v.traffic*1.18));
+  const maxValue=Math.max(estimatedBitsPerSecond(8000,transferSize),
+    throughput*1.25,...history.map(v=>(v.bitsPerSecond??estimatedBitsPerSecond(v.traffic,transferSize))*1.18));
   ctx.strokeStyle=feed.alert?'#f38ba8':'#89b4fa';ctx.lineWidth=3;
   ctx.beginPath();
   history.forEach((sample,i)=>{
-    const x=plotX+i*plotW/99,y=plotY+plotH-sample.traffic*plotH/maxValue;
+    const x=plotX+i*plotW/99,
+      y=plotY+plotH-(sample.bitsPerSecond??estimatedBitsPerSecond(sample.traffic,transferSize))*plotH/maxValue;
     if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
   });
   ctx.lineTo(plotX+Math.max(0,history.length-1)*plotW/99,
-    plotY+plotH-feed.traffic*plotH/maxValue);
+    plotY+plotH-throughput*plotH/maxValue);
   ctx.stroke();
   ctx.fillStyle='#93a3bf';ctx.font='14px monospace';
   ctx.fillText('SERVER HEALTH',552,113);
