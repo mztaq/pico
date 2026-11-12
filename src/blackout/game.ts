@@ -484,7 +484,8 @@ function createGame(mode){
 }
 function startGame(mode){
   sfx.init();sfx.tap();game=createGame(mode);
-  $('home').classList.add('hidden');$('game').classList.add('active');$('ending').classList.remove('visible');
+  $('home').classList.add('hidden');$('home').hidden=true;$('home').inert=true;
+  $('game').classList.add('active');$('ending').classList.remove('visible');
   $('panelname').textContent=mode==='attack'?'ATTACK TERMINAL':'SECURITY OPERATIONS';
   $('panelmeta').textContent=mode==='attack'?'OFFENSIVE ACTIONS':'RESPONSE ACTIONS';
   $('trace-label').textContent=mode==='attack'?'TRACE EXPOSURE':'CASE EVIDENCE';
@@ -657,8 +658,15 @@ function animateScene(t,dt){
 // --------------------------------------------------------------------------
 // Input, restart, responsive rendering and fixed-delta loop.
 // --------------------------------------------------------------------------
-for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',()=>startGame(b.dataset.mode));
-function menu(){game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
+// Mode selection must never receive clicks behind an active 3D scene.
+for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',event=>{
+  event.stopPropagation();
+  if(game || $('home').hidden || $('home').classList.contains('hidden'))return;
+  const mode=b.dataset.mode;
+  if(mode!=='attack'&&mode!=='defend')return;
+  startGame(mode);
+});
+function menu(){game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').hidden=false;$('home').inert=false;$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
 $('restart').onclick=()=>menu();
 $('again').onclick=()=>{const mode=game?.mode||'defend';startGame(mode);};
 $('menu').onclick=()=>menu();
