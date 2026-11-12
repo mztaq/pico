@@ -156,7 +156,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
               <circle cx="164" cy="38" r="5" className="home-traffic-packet"/><circle cx="220" cy="38" r="3" className="home-traffic-packet"/>
             </svg>
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Network size={18}/>} title="Blackout Protocol 3D" description="Play an interactive 3D attack-or-defend server security mission." onClick={() => { window.location.href = '/blackout-protocol.html'; }}>
+          <WorkspaceChoice icon={<Network size={18}/>} title="Blackout Protocol 3D" description="Play an interactive 3D attack-or-defend server security mission." onClick={() => { window.location.href = '/blackout-protocol/'; }}>
             <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 76" aria-hidden="true">
               <path className="home-chart-link" d="M35 54 L92 30 L152 50 L220 22 L300 38 M92 30 L92 10 M220 22 L220 7"/>
               <rect x="7" y="32" width="46" height="36" rx="5"/><rect x="144" y="27" width="44" height="39" rx="5"/><rect x="284" y="20" width="51" height="47" rx="5"/>
