@@ -7,7 +7,7 @@ import { isSightBlocked, chooseHackerPhase } from './stealth-logic';
 import { routeTo } from './navigation';
 import { renderOfficeFeed } from './office-monitor';
 import { rankedCoverSpots, formationPosition } from './ai-coordination';
-import {estimatedBitsPerSecond, formatBandwidth, throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
+import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
 import {
   flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,
   acknowledgeSecurityDispatch, securityOfficersReturned,
@@ -1356,7 +1356,7 @@ function bpCloseTerminal(){
   camera.fov=84;
   camera.updateProjectionMatrix();
   document.body.classList.remove('terminal-open');
-  $('control-help').innerHTML='<kbd>W A S D</kbd> Move · <kbd>SHIFT</kbd> Sprint<br><kbd>MOUSE</kbd> Look · <kbd>E</kbd> Interact<br><kbd>F</kbd> Take laptop · <kbd>C</kbd> Crouch · <kbd>V</kbd> Camera';
+  $('control-help').innerHTML='<kbd>W A S D</kbd> Move · <kbd>SHIFT</kbd> Sprint<br><kbd>CLICK / 1–4</kbd> Screen actions · <kbd>E</kbd> Zoom<br><kbd>F</kbd> Take laptop · <kbd>C</kbd> Crouch · <kbd>V</kbd> Camera';
   renderer.domElement.style.cursor='crosshair';
   sfx.tap();
   return true;
@@ -1879,15 +1879,17 @@ function bpInteractionStatus(){
   const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
   let message='';
   if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4)
-    message='RESET SERVER ROOM COOLING';
+    message='<kbd>E</kbd> RESET SERVER ROOM COOLING';
   else if(game.mode==='defend'&&bpDistance(bp.player,attacker.position)<2.65)
-    message=game.trace>=100?'DETAIN THE SUSPECT':'SUSPECT SPOTTED / COLLECT EVIDENCE';
-  else if(bpDistance(bp.player,desk)<3.15)
-    message=game.mode==='attack'?(bpAttackLaptopCarried?'RECONNECT LAPTOP WITH F':'ACCESS LAPTOP WITH E · UNPLUG AND TAKE WITH F'):'OPEN THE SECURITY CONSOLE AND DEFEND';
+    message=game.trace>=100?'<kbd>E</kbd> DETAIN SUSPECT':'<kbd>E</kbd> OBSERVE SUSPECT';
   else if(game.mode==='attack'&&bpAttackLaptopCarried)
-    message='LAPTOP SECURED · RECONNECT AT SERVER RACK USING F';
+    message='<kbd>F</kbd> RECONNECT LAPTOP AT SERVER RACK';
+  else if(bpDistance(bp.player,desk)<3.9)
+    message=game.mode==='attack'
+      ? '<kbd>CLICK</kbd> SELECT LAPTOP ACTION · <kbd>F</kbd> PICK UP · <kbd>E</kbd> ZOOM'
+      : '<kbd>CLICK</kbd> SELECT SECURITY ACTION · <kbd>E</kbd> ZOOM';
   $('interaction-hint').classList.toggle('visible',Boolean(message));
-  if(message)$('interaction-hint').innerHTML='<kbd>E</kbd>'+message;
+  if(message)$('interaction-hint').innerHTML=message;
 }
 
 const bpIncidentPool=[
