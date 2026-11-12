@@ -669,6 +669,7 @@ function startGame(mode){
   $('trace-sub').textContent=mode==='attack'?'DETECTION THRESHOLD':'SUSPECT IDENTIFICATION';
   $('progressbar').classList.toggle('alert',mode==='attack');
   bpResetProxies();
+  bpCoolingIndicator.material=mint;
   reqTube.visible=true;world.visible=true;dynamic.visible=true;jail.visible=false;courtroom.visible=false;
   scene.fog.density=.010;scene.background.set('#25313f');
   actionButtons.clear();$('actions').replaceChildren();
@@ -1396,6 +1397,13 @@ window.__bpEscape=()=>{
   return false;
 };
 window.__bpIsFPS=()=>Boolean(bp.active);
+function bpNearbyProxy(position,range=2.55,poweredOnly=false){
+  const list=proxyObjects.map((proxy,index)=>({
+    index,distance:bpDistance(position,proxy.position),powered:proxy.userData.powered,
+  })).filter(v=>v.distance<range&&(!poweredOnly||v.powered));
+  list.sort((a,b)=>a.distance-b.distance);
+  return list[0]?.index??-1;
+}
 const bpOriginalAct=act;
 act=function(id){
   if(!bpCanUseTerminal()){notify('GET CLOSER TO YOUR WORKSTATION');return;}
@@ -1406,6 +1414,24 @@ function bpTryInteract(){
   if(!game || game.ended)return;
   if(bp.terminal){bpCloseTerminal();return;}
   const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
+  const proxyIndex=bpNearbyProxy(bp.player,2.6);
+  if(proxyIndex>=0){
+    const proxy=proxyObjects[proxyIndex];
+    if(game.mode==='attack'){
+      if(!proxy.userData.powered){notify('PROXY ALREADY OFFLINE');return;}
+      if(game.proxySabotage?.index===proxyIndex)return;
+      game.proxySabotage={index:proxyIndex,until:game.elapsed+2.2};
+      sfx.scan();notify('DISCONNECTING EDGE PROXY / STAY CLOSE');
+      return;
+    }
+    if(game.mode==='defend'&&!proxy.userData.powered){
+      if(bpPowerProxy(proxyIndex)){
+        game.proxyOrders=Math.max(0,(game.proxyOrders||0)-1);
+        log('Edge cabinet '+(proxyIndex+1)+' powered on manually.','good');
+      }
+      return;
+    }
+  }
   if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4){
     game.coolingEventUntil=0;game.coolingNeedsRepair=false;
     game.health=Math.min(100,game.health+13);bpCoolingIndicator.material=mint;
@@ -1962,7 +1988,15 @@ function bpInteractionStatus(){
   }
   const desk=game.mode==='attack'?bpAttackerDesk:bpDefenseDesk;
   let message='';
-  if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4)
+  const proxyIndex=bpNearbyProxy(bp.player,2.6);
+  if(proxyIndex>=0&&game.mode==='attack'&&proxyObjects[proxyIndex].userData.powered){
+    const task=game.proxySabotage;
+    message=task?.index===proxyIndex
+      ? 'DISCONNECTING PROXY / '+Math.max(0,task.until-game.elapsed).toFixed(1)+'S'
+      : '<kbd>E</kbd> DISCONNECT ACTIVE EDGE PROXY';
+  }else if(proxyIndex>=0&&game.mode==='defend'&&!proxyObjects[proxyIndex].userData.powered)
+    message='<kbd>E</kbd> RESTORE EDGE PROXY';
+  else if(game.mode==='defend'&&game.coolingEventUntil>game.elapsed&&bpDistance(bp.player,bpCoolingStation)<2.4)
     message='<kbd>E</kbd> RESET SERVER ROOM COOLING';
   else if(game.mode==='defend'&&bpDistance(bp.player,attacker.position)<2.65)
     message=game.trace>=100?'<kbd>E</kbd> DETAIN SUSPECT':'<kbd>E</kbd> OBSERVE SUSPECT';
@@ -2015,6 +2049,17 @@ const bpOriginalStep=stepGame;
 stepGame=function(dt){
   bpMovePlayer(dt);
   bpNpcUpdate(dt);
+  if(game?.mode==='attack'&&!game.ended&&game.proxySabotage){
+    const task=game.proxySabotage,proxy=proxyObjects[task.index];
+    if(!proxy?.userData.powered||bpDistance(bp.player,proxy.position)>2.85){
+      game.proxySabotage=null;
+      notify('PROXY DISCONNECT CANCELLED');
+    }else if(game.elapsed>=task.until){
+      bpDisableProxy(task.index,'intruder');
+      game.risk=Math.min(100,game.risk+3);
+      game.proxySabotage=null;
+    }
+  }
   if(game&&!game.ended){
     if(game.mode==='attack'&&bpAttackLaptopCarried)bpSetLaptopCarrier(bp.player,bp.yaw,dt);
     else if(game.mode==='defend'&&(bpHackerState==='escaping'||bpHackerState==='hiding'||bpHackerState==='returning'||bpHackerState==='packing'&&game.elapsed>=bpHackerPackUntil-.33))bpSetLaptopCarrier(attacker.position,attacker.rotation.y,dt);
