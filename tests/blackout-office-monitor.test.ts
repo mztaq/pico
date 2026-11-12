@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {renderOfficeFeed} from '../src/blackout/office-monitor';
+import {throughputLabel} from '../src/blackout/traffic-bandwidth';
 
 function mockCanvas(width:number,height:number){
   const texts:string[]=[];
@@ -21,7 +22,8 @@ describe('Physical security-office traffic monitor',()=>{
       history:[{traffic:12000},{traffic:18765}],
       requests:[{status:200,path:'/api/search'},{status:429,path:'/api/orders'}],
     });
-    expect(texts).toContain('18,765');
+    expect(texts).toContain(throughputLabel(18765));
+    expect(texts).toContain('18,765 REQUESTS/SEC');
     expect(texts).toContain('42%');
     expect(texts).toContain('3');
     expect(texts).toContain('ALERT');
@@ -38,6 +40,7 @@ describe('Physical security-office traffic monitor',()=>{
     });
     expect(texts).toContain('CONTROL ROOM MONITORING');
     expect(texts).toContain('ONLINE');
-    expect(texts).toContain('2,200');
+    expect(texts).toContain(throughputLabel(2200));
+    expect(texts).toContain('2,200 REQUESTS/SEC');
   });
 });
