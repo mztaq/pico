@@ -6,6 +6,7 @@ import { drawTerminalScreen, terminalHitTest } from './terminal-screen';
 import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic';
 import { routeTo } from './navigation';
 import { moveGuardWithAvoidance } from './guard-movement';
+import {EVIDENCE_STATIONS,selectGuardEvidence,collectGuardEvidence} from './evidence-coordination';
 import { renderOfficeFeed } from './office-monitor';
 import { rankedCoverSpots, formationPosition } from './ai-coordination';
 import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
@@ -770,6 +771,12 @@ function stepGame(dt){
     g.risk=Math.min(100,g.risk+dt*(g.traffic>15000?.15:.055)+dt*(g.burst>0?.18:0)+dt*g.proxies*.065);
     if(g.risk>=100){endGame(false,'YOU WERE TRACED','The security team correlated security logs and identified your workstation before the service went offline.');return;}
   } else {
+    if(g.elapsed>=g.nextAutoProxyAt&&g.traffic>9000&&g.proxies+(g.proxyOrders||0)<4){
+      g.proxyOrders++;
+      flagSecurityIncident(g);
+      g.nextAutoProxyAt=g.elapsed+29;
+      log('Security operations authorized another protective proxy.','good');
+    }
     if(g.elapsed>=g.nextAttackerWave){g.attackerWave=9;g.nextAttackerWave+=24;flagSecurityIncident(g);log('Intruder launched another traffic wave.','warn');notify('INCOMING TRAFFIC SURGE',true);sfx.burst();}
     g.attackerWave=Math.max(0,g.attackerWave-dt);
     g.bots+=dt*.42;
@@ -1342,7 +1349,7 @@ startGame=function(mode){
   bpHackerState='working';bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;bpHackerSafeSince=-1;attacker.scale.y=1;
   bpHackerRoute=[];bpHackerRouteIndex=0;bpHackerCoverDestination=null;bpHackerRepathAt=0;
   bpHackerTargetProxy=-1;bpHackerSabotageUntil=0;bpHackerSortieCount=0;bpHackerSortieVisited.clear();
-  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;}
+  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;p.evidenceId=null;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
   attacker.visible=mode==='defend';attacker.position.set(-8.5,0,4.18);attacker.rotation.y=Math.PI;
@@ -1562,6 +1569,8 @@ const patrols=[
   {agent:security,role:'proxy',home:[21.2,-.6],index:0,speed:1.70,state:'idle',path:[],wait:0,proxyIndex:-1},
   {agent:character(23.4,4.1,'guard'),role:'search',home:[23.4,4.1],index:0,speed:1.58,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:0},
   {agent:character(25.8,-4.5,'guard'),role:'search',home:[25.8,-4.5],index:0,speed:1.52,state:'idle',path:[],wait:0,proxyIndex:-1,approachIndex:1},
+  {agent:character(19.0,-1.8,'guard'),role:'forensic',home:[19.0,-1.8],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,evidenceId:null},
+  {agent:character(27.4,2.9,'guard'),role:'forensic',home:[27.4,2.9],index:0,speed:1.50,state:'idle',path:[],wait:0,proxyIndex:-1,evidenceId:null},
 ];
 const bpGuards=patrols.map(p=>p.agent);
 for(const p of patrols){
@@ -1670,6 +1679,22 @@ function bpRecoverGuard(p,g){
   }
   p.stalledFor=0;
 }
+function bpDispatchForensicGuards(g){
+  if(g.mode!=='defend'||g.ended||g.trace>=100||g.elapsed<g.nextEvidenceDispatch)return;
+  g.nextEvidenceDispatch=g.elapsed+17;
+  const reserved=new Set(patrols.map(p=>p.evidenceId).filter(Boolean));
+  for(const p of patrols){
+    if(p.role!=='forensic'||p.state!=='idle')continue;
+    const station=selectGuardEvidence(EVIDENCE_STATIONS,g.collectedEvidence,reserved,
+      p.agent.position,bpGuardWalkable);
+    if(!station)continue;
+    const path=bpGuardRoute(p.agent.position,[station.x,station.z]);
+    if(!path.length)continue;
+    p.evidenceId=station.id;reserved.add(station.id);
+    p.state='investigating';p.path=path;p.index=0;p.wait=0;p.stalledFor=0;
+    log('Security officer deployed to collect '+station.description+'.','good');
+  }
+}
 function bpGuardSetReturn(p){
   p.state='returning';p.index=0;
   p.path=bpGuardRoute(p.agent.position,p.home);
@@ -1687,7 +1712,9 @@ function bpAssignSecurityDispatch(g){
   bpShowIncident('SECURITY ALERT / OFFICERS RESPONDING');
   sfx.alert();
   for(let i=0;i<patrols.length;i++){
-    const p=patrols[i];p.index=0;p.wait=0;p.lastSeen=null;p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;
+    const p=patrols[i];
+    if(p.role==='forensic')continue;
+    p.index=0;p.wait=0;p.lastSeen=null;p.repathAt=0;p.chaseUntil=0;p.stalledFor=0;
     if(p.role==='proxy'&&g.coolingNeedsRepair&&g.coolingEventUntil>g.elapsed){
       p.proxyIndex=-1;p.path=bpGuardRoute(p.agent.position,[bpCoolingStation.x+.3,bpCoolingStation.z+.6]);
       p.state=p.path.length?'coolingTravel':'returning';
@@ -1712,6 +1739,33 @@ function bpAssignSecurityDispatch(g){
   }
 }
 function bpMoveGuard(p,dt,g){
+  if(p.state==='collecting'){
+    p.wait-=dt;
+    if(p.wait<=0){
+      const station=EVIDENCE_STATIONS.find(v=>v.id===p.evidenceId);
+      if(station&&collectGuardEvidence(g,station)){
+        log('Officer secured '+station.description+' (+'+station.value+' evidence).','good');
+        bpShowIncident('CASE EVIDENCE / '+Math.round(g.trace)+'% VERIFIED');
+        sfx.scan();
+        if(g.trace>=100&&!g.caseEvidenceComplete){
+          g.caseEvidenceComplete=true;
+          flagSecurityIncident(g);
+          bpShowIncident('CASE VERIFIED / ARREST AUTHORIZED');
+        }
+      }
+      p.evidenceId=null;bpGuardSetReturn(p);
+    }
+    return;
+  }
+  if(p.state==='detaining'){
+    p.wait-=dt;
+    if(p.wait<=0&&g.mode==='defend'&&g.trace>=100&&!g.ended){
+      g.arrested=true;
+      endGame(true,'SUSPECT DETAINED',
+        'Security officers collected verified evidence, caught the attacker and transferred the suspect to court.');
+    }
+    return;
+  }
   if(p.state==='idle'){
     const fx=p.home[0],fz=p.home[1];
     p.agent.position.x+=(fx-p.agent.position.x)*Math.min(1,dt*4);
@@ -1802,8 +1856,13 @@ function bpMoveGuard(p,dt,g){
         endGame(false,'CAUGHT BY SECURITY','Security caught you during the server-room search.');
         return;
       }
-      if(g.mode==='defend'&&bpDistance(p.agent,attacker.position)<1.8){
-        g.suspectPinnedUntil=g.elapsed+5;
+      if(g.mode==='defend'&&g.trace>=100&&
+          bpDistance(p.agent,attacker.position)<2.15&&
+          bpGuardCanSee(p.agent,attacker.position,2.5)){
+        p.state='detaining';p.wait=1.65;
+        g.suspectHeld=true;g.suspectHoldGuard=p.agent;
+        bpShowIncident('SECURITY / SUSPECT IN CUSTODY');
+        sfx.metal();return;
       }
     }else{
       p.state='searching';p.lastSeen=null;p.index=0;
@@ -1819,6 +1878,7 @@ function bpMoveGuard(p,dt,g){
   if(!destination){
     if(p.state==='deploying'){p.state='switching';p.wait=2.1;sfx.scan();}
     else if(p.state==='coolingTravel'){p.state='coolingFix';p.wait=2.9;sfx.scan();}
+    else if(p.state==='investigating'){p.state='collecting';p.wait=2.7;sfx.scan();}
     else if(p.state==='returning'){p.state='idle';p.agent.position.set(p.home[0],0,p.home[1]);}
     else if(p.state==='searching'){p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));p.index=0;}
     return;
@@ -1933,13 +1993,18 @@ function bpNpcUpdate(dt){
   g.fanLoad+=(Number(fanSurge)-g.fanLoad)*Math.min(1,dt*(fanSurge?.55:.3));
   // A second attack is a new incident even if the previous crew is still
   // walking back to security. Redirect that returning crew immediately.
-  const respondersReturning=g.securityDispatchActive&&patrols.every(p=>
-    p.state==='returning'||p.state==='idle');
+  const respondersReturning=g.securityDispatchActive&&patrols
+    .filter(p=>p.role!=='forensic').every(p=>p.state==='returning'||p.state==='idle');
   if(shouldDispatchSecurity(g,respondersReturning)){
     bpAssignSecurityDispatch(g);
   }
-  for(const p of patrols)bpMoveGuard(p,dt,g);
-  if(g.securityDispatchActive&&patrols.every(p=>p.state==='idle')){
+  bpDispatchForensicGuards(g);
+  for(const p of patrols){
+    bpMoveGuard(p,dt,g);
+    if(g.ended)return;
+  }
+  if(g.securityDispatchActive&&patrols
+     .filter(p=>p.role!=='forensic').every(p=>p.state==='idle')){
     securityOfficersReturned(g);
     g.securityResponseUntil=0;
     g.guardResponseStarted=false;
@@ -1949,6 +2014,7 @@ function bpNpcUpdate(dt){
   technician.position.set(26+Math.sin(g.elapsed*.13)*.5,0,1.8+Math.sin(g.elapsed*.11)*1.1);
   technician.rotation.y=Math.PI;
   if(g.mode==='attack')return;
+  if(g.suspectHeld){attacker.position.y=0;return;}
   const guardsInHall=patrols.some(p=>p.state!=='idle'&&p.agent.position.x<14);
   const nearest=Math.min(...patrols.filter(p=>p.state!=='idle').map(p=>bpDistance(p.agent,attacker.position)),99);
   const visible=patrols.some(p=>(p.state==='searching'||p.state==='chasing')&&bpGuardCanSee(p.agent,attacker.position,13));
