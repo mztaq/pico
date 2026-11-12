@@ -1,4 +1,3 @@
-import {throughputLabel,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';
 /** Painted directly onto the in-world laptop/operations display.
  * Pure layout and hit-testing are shared by mouse input and rendering.
  * No HTML menu is positioned over the 3D scene.
@@ -21,6 +20,7 @@ export interface TerminalView {
   progress: number;
   elapsed: number;
   hovered: number;
+  focused?: boolean;
 }
 export interface HitBox { x: number; y: number; width: number; height: number }
 export function terminalActionBoxes(width: number, height: number, count: number): HitBox[] {
@@ -53,10 +53,10 @@ export function drawTerminalScreen(ctx: CanvasRenderingContext2D, view: Terminal
   ctx.fillRect(0, 0, 8, h);
   ctx.font = '700 29px "DM Sans",sans-serif';
   ctx.fillStyle = '#e5e7ff';
-  ctx.fillText(view.mode === 'attack' ? 'Pico  /  Operator laptop' : 'Pico  /  Security operations', 44, 44);
+  ctx.fillText(view.mode === 'attack' ? 'Pico  /  Controls' : 'Pico  /  Security controls', 44, 44);
   ctx.font = '16px "JetBrains Mono",monospace';
   ctx.fillStyle = '#afb6cf';
-  ctx.fillText('CLICK A CONTROL OR PRESS 1–4    •    ESC TO LEAVE', 44, 72);
+  ctx.fillText(view.focused ? 'CLICK AN ACTION OR PRESS 1–4    ·    ESC TO LEAVE' : 'SELECT AN ACTION DIRECTLY ON THIS SCREEN', 44, 72);
   ctx.textAlign = 'right';
   ctx.font = '700 18px "JetBrains Mono",monospace';
   ctx.fillStyle = '#a6e3a1';
@@ -96,9 +96,8 @@ export function drawTerminalScreen(ctx: CanvasRenderingContext2D, view: Terminal
   ctx.fillStyle = view.progress >= 75 ? '#f38ba8' : '#cba6f7';
   ctx.fillRect(44, footer + 28, (w - 88) * Math.min(1, Math.max(0, view.progress / 100)), 12);
   ctx.fillStyle = '#a6adc8'; ctx.font = '16px "JetBrains Mono",monospace';
-  const rate = Math.round(view.traffic).toLocaleString('en-US');
-  const throughput=throughputLabel(view.traffic,view.bytesPerRequest??DEFAULT_BYTES_PER_REQUEST);
-  ctx.fillText('EST. BANDWIDTH  '+throughput+'  /  '+rate+' RPS', 44, h - 26);
-  ctx.textAlign = 'right'; ctx.fillText('PRESS ESC TO RETURN', w - 44, h - 26);
+  ctx.fillText(view.mode==='attack'?'F  PICK UP / RECONNECT LAPTOP':'SECURITY ROOM / OPERATIONS',44,h-26);
+  ctx.textAlign = 'right';
+  ctx.fillText(view.focused?'ESC  BACK TO ROOM':'CLICK  SELECT ACTION',w-44,h-26);
   ctx.textAlign = 'left';
 }
