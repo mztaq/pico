@@ -1261,7 +1261,7 @@ startGame=function(mode){
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
   bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;bpHackerPackUntil=0;attacker.scale.y=1;
-  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;}
+  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);p.repathAt=0;p.chaseUntil=0;}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   bpResetLaptop();
   attacker.visible=mode==='defend';attacker.position.set(-8.5,0,4.18);attacker.rotation.y=Math.PI;
@@ -1523,15 +1523,20 @@ function bpGuardSetReturn(p){
   p.path=bpGuardRoute(p.agent.position,p.home);
   p.lastSeen=null;p.repathAt=0;
 }
+const bpSearchWindowSeconds=43;
+const bpMaxChaseSeconds=16;
+const bpDispatchRestSeconds=100;
 function bpAssignSecurityDispatch(g){
   g.securityDispatchActive=true;
-  g.securityResponseUntil=g.elapsed+62;
-  g.nextDispatchAllowed=g.elapsed+48;
+  g.securityResponseUntil=g.elapsed+bpSearchWindowSeconds;
+  // Sustained high traffic does not trigger an immediate second search.
+  // Guards return to their office, monitor, and rest before a new dispatch.
+  g.nextDispatchAllowed=g.elapsed+bpDispatchRestSeconds;
   g.guardResponseStarted=true;
   bpShowIncident('SECURITY ALERT / OFFICERS RESPONDING');
   sfx.alert();
   for(let i=0;i<patrols.length;i++){
-    const p=patrols[i];p.index=0;p.wait=0;p.lastSeen=null;p.repathAt=0;
+    const p=patrols[i];p.index=0;p.wait=0;p.lastSeen=null;p.repathAt=0;p.chaseUntil=0;
     if(p.role==='proxy'&&g.proxies<6){
       p.proxyIndex=g.proxies;
       const unit=proxyObjects[p.proxyIndex];
@@ -1571,14 +1576,22 @@ function bpMoveGuard(p,dt,g){
     return;
   }
 
+  // Hard cutoff prevents an endless chase when the player stays visible.
+  // Once ordered back, a guard will not reacquire until the next dispatch.
+  if((p.state==='searching'||p.state==='chasing')&&
+      (g.elapsed>=g.securityResponseUntil||
+       p.state==='chasing'&&g.elapsed>=(p.chaseUntil||0))){
+    bpGuardSetReturn(p);
+  }
   const suspect=g.mode==='attack'?bp.player:attacker.position;
   const isHunter=p.role==='search'&&(p.state==='searching'||p.state==='chasing');
   const seen=isHunter&&p.agent.position.x<14&&bpGuardCanSee(p.agent,suspect,13.2);
   if(seen){
     p.lastSeen={x:suspect.x,z:suspect.z,until:g.elapsed+5.5};
     if(p.state!=='chasing'){
-      p.state='chasing';p.repathAt=0;sfx.alert();
-      bpShowIncident('SECURITY / INTRUDER LOCATED');
+      p.state='chasing';p.repathAt=0;
+      p.chaseUntil=Math.min(g.securityResponseUntil,g.elapsed+bpMaxChaseSeconds);
+      sfx.alert();bpShowIncident('SECURITY / INTRUDER LOCATED');
     }
     if(g.mode==='defend')g.suspectSpotted=true;
   }
@@ -1602,9 +1615,6 @@ function bpMoveGuard(p,dt,g){
       p.state='searching';p.lastSeen=null;p.index=0;
       p.path=bpGuardRoute(p.agent.position,bpRandomSearchTarget(g));
     }
-  }
-  if(p.state==='searching'&&g.elapsed>g.securityResponseUntil){
-    bpGuardSetReturn(p);
   }
   if(p.state==='searching'&&p.index>=p.path.length){
     // Pick a new location instead of repeating identical patrol paths.
@@ -1650,8 +1660,8 @@ function bpNpcUpdate(dt){
     g.securityDispatchActive=false;
     g.securityResponseUntil=0;
     g.guardResponseStarted=false;
-    g.nextDispatchAllowed=Math.max(g.nextDispatchAllowed,g.elapsed+8);
-    bpShowIncident('SECURITY SEARCH COMPLETE / CREW RETURNED');
+    g.nextDispatchAllowed=Math.max(g.nextDispatchAllowed,g.elapsed+30);
+    bpShowIncident('SECURITY PATROL RETURNED / MONITORING RESUMED');
   }
   // Operators stay inside the actual security office until a threat calls guards out.
   technician.position.set(26+Math.sin(g.elapsed*.13)*.5,0,1.8+Math.sin(g.elapsed*.11)*1.1);
