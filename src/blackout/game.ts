@@ -623,7 +623,7 @@ function createGame(mode){
   return {mode,ended:false,win:false,elapsed:0,health:100,traffic:0,delivered:0,bots:mode==='attack'?12:48,proxies:0,
     risk:mode==='attack'?0:8,trace:mode==='defend'?0:0,
     burst:0,reroute:0,limit:0,logs:[],cooldowns:{},phase:0,
-    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,nextDispatchAllowed:0,securityResponseUntil:0,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),
+    nextDefenderProxy:18,nextAttackerWave:13,attackerWave:0,arrested:false,caseClosed:false,flash:0,proxyOrders:0,nextDispatchAllowed:0,securityResponseUntil:0,requestFeed:createTrafficFeed((Math.random()*0xffffffff)>>>0),patrolSeed:(Math.random()*0xffffffff)>>>0,
   };
 }
 function startGame(mode){
@@ -898,6 +898,12 @@ function bpApplyQuality(){
     bpFanRotors[i].visible=!lowQuality||(i%3===0);
   bpRackDetail.visible=!lowQuality;
   bpCourtDetail.visible=!lowQuality;
+  const officeW=lowQuality?512:768,officeH=lowQuality?288:432;
+  if(bpOfficeMonitorCanvas.width!==officeW){
+    bpOfficeMonitorCanvas.width=officeW;
+    bpOfficeMonitorCanvas.height=officeH;
+    bpPaintOfficeMonitor();
+  }
   for(let i=0;i<bpRackDecor.length;i++)
     bpRackDecor[i].visible=!lowQuality||(i%4===0);
   if(typeof bpWallCanvas!=='undefined'){
