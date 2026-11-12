@@ -115,3 +115,7 @@ body.terminal-open #game.active #crosshair{display:none!important}
 .topbar,.top-right,.quality-control,#quality,#app select{pointer-events:auto!important}
 #quality{position:relative;z-index:28;cursor:pointer;touch-action:manipulation}
 #quality:focus-visible{outline:2px solid #cba6f7;outline-offset:3px}
+
+/* Mission warnings never appear over hearings, detention, success or results. */
+body.bp-mission-finished #red-alert,
+body.bp-mission-finished #red-alert.visible{display:none!important;animation:none!important}
