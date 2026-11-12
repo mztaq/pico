@@ -1028,10 +1028,10 @@ startGame=function(mode){
   bp.keys.clear();bp.dragging=false;
   bp.stepClock=0;bp.npcHiding=false;bp.npcTyping=true;
   bpHackerState='working';bpHackerWaypoint=0;bpHackerStateTime=0;bpHackerHoldUntil=0;attacker.scale.y=1;
-  for(const p of patrols){p.index=0;p.phase=0;p.emergency=false;p.chaseUntil=0;}
+  for(const p of patrols){p.index=0;p.state='idle';p.path=[];p.wait=0;p.lastSeen=null;p.agent.position.set(p.home[0],0,p.home[1]);}
   bpWallHistory.length=0;bpWallSampleTimer=0;bpWallPaintTimer=0;
   attacker.visible=mode==='defend';attacker.position.set(-9.15,0,4.72);attacker.rotation.y=Math.PI;
-  security.position.set(10.9,0,-3);
+  security.position.set(patrols[0].home[0],0,patrols[0].home[1]);
   bpPlayerAvatar.visible=false;
   document.body.classList.remove('terminal-open');
   $('interaction-hint').classList.remove('visible');
@@ -1194,13 +1194,17 @@ function bpMovePlayer(dt){
 /* Security guards follow separate patrol routes and inspect the aisles. */
 
 /* Guards patrol independently and move to distinct response stations when traffic surges. */
+
+/* Guard office: crews remain inside until a genuine alarm or dispatch order.
+   Dispatches end with a physical return to base. No teleporting NPCs. */
 const patrols=[
-  {agent:security,route:[[10.2,-2.5],[10.1,9.9],[12.5,9.9],[12.5,-10.8],[9.7,-10.8]],response:[[10.6,-3.05],[11.7,-1.1],[10.5,-3.1]],index:0,speed:1.55,phase:0},
-  {agent:character(-1.6,10.1,'guard'),route:[[-1.6,10.3],[-1.4,-10.6],[-8.2,-10.6],[-12.4,-10.6],[-12.4,9.9]],response:[[-1.5,-6.7],[-1.4,-9],[-1.6,-3.2]],index:0,speed:1.35,phase:0},
-  {agent:character(-12.3,5,'guard'),route:[[-12.4,7.5],[-5.15,7.5],[-5.15,1.1],[-12.3,1.1]],response:[[-11,4.1],[-12.2,6],[-10.7,2.7]],index:0,speed:1.2,phase:0},
+  {agent:security,role:'proxy',home:[21.2,-.6],index:0,speed:1.70,state:'idle',path:[],wait:0,proxyIndex:-1},
+  {agent:character(23.4,4.1,'guard'),role:'search',home:[23.4,4.1],index:0,speed:1.58,state:'idle',path:[],wait:0,proxyIndex:-1},
+  {agent:character(25.8,-4.5,'guard'),role:'search',home:[25.8,-4.5],index:0,speed:1.52,state:'idle',path:[],wait:0,proxyIndex:-1},
 ];
 const bpGuards=patrols.map(p=>p.agent);
 for(const p of patrols){
+  p.agent.position.set(p.home[0],0,p.home[1]);
   const guard=p.agent;
   const badge=mat('#c5bbd3',{metal:.45,rough:.3});
   const uniform=mat('#304960',{metal:.1,rough:.78});
@@ -1212,115 +1216,189 @@ for(const p of patrols){
   box(.31,.28,.33,.09,.31,.08,uniform,guard);
 }
 const bpWorkPosition=V(-9.15,0,4.72);
-const bpHackerEscape=[V(-10.45,0,6.65),V(-7.5,0,9.05),V(-4.4,0,9.35)];
+const bpHackerEscape=[V(-10.15,0,6.62),V(-14.2,0,9.78),V(-21.1,0,9.8)];
+const bpHackerCover={minX:-19.24,maxX:-16.71,minZ:6.7,maxZ:9.37};
 let bpHackerState='working',bpHackerWaypoint=0,bpHackerHoldUntil=0,bpHackerStateTime=0;
-let bpEmergencyCalls=0;
+const bpOfficePassage=[[18.5,.4],[16.5,.4],[13.7,.4]];
+const bpGuardSearchRoutes=[
+  [[11.8,1.3],[9.4,4.63],[4.2,4.61],[-1,4.62],[-5.9,4.9],[-8.1,6.45],[-12.5,9.75],[-16.1,9.72]],
+  [[12,-1],[9.1,-.35],[7.9,3.8],[4,4.6],[-2,4.55],[-8.4,6.4],[-12.2,9.5],[-15.8,9.63]]
+];
+const bpGuardBackPath=[[13.0,.35],[16.6,.4],[18.7,.4]];
 function bpGuardEmergency(g){
-  return Boolean(g&&!g.ended&&(g.burst>0||g.attackerWave>0||g.traffic>13000||g.health<78||g.coolingEventUntil>g.elapsed));
+  return Boolean(g&&!g.ended&&(g.burst>0||g.attackerWave>0||g.traffic>12500||g.health<75||g.coolingEventUntil>g.elapsed));
 }
-function bpPatrolStep(p,dt){
-  if(!game)return;
-  const emergency=game.securityResponseUntil>game.elapsed;
-  const suspect=game.mode==='attack'?bp.player:attacker.position;
-  if(emergency&&p.agent.position.x<0&&bpGuardCanSee(p.agent,suspect,7.4)){
-    p.chaseUntil=game.elapsed+3.8;
-  }
-  const chasing=emergency&&p.agent.position.x<0&&(p.chaseUntil||0)>game.elapsed&&bpDistance(p.agent,suspect)<10;
-  const points=chasing?[[suspect.x,suspect.z]]:emergency?p.response:p.route;
-  if(p.emergency!==emergency){p.emergency=emergency;p.phase=0;p.index=0;}
-  const idx=chasing?0:emergency?p.phase:p.index;
-  const goal=points[idx];
-  const dx=goal[0]-p.agent.position.x,dz=goal[1]-p.agent.position.z;
-  const distance=Math.hypot(dx,dz);
-  if(distance<.27){
-    if(!chasing&&emergency)p.phase=(p.phase+1)%points.length;
-    else if(!chasing)p.index=(p.index+1)%points.length;
-  }else{
-    const velocity=Math.min(distance,p.speed*(chasing?2.65:emergency?2.22:1)*dt);
-    p.agent.position.x+=dx/distance*velocity;
-    p.agent.position.z+=dz/distance*velocity;
-    const wanted=Math.atan2(dx,dz);
-    const diff=Math.atan2(Math.sin(wanted-p.agent.rotation.y),Math.cos(wanted-p.agent.rotation.y));
-    p.agent.rotation.y+=diff*Math.min(1,dt*(emergency?10:4));
-  }
-  if(chasing&&game.mode==='attack'&&distance<1.4&&!game.ended){
-    endGame(false,'SECURITY INTERCEPTED YOU','Security guards reached the intruder before the web cluster went offline.');
-  }
-  const phase=game.elapsed*(emergency?15:8.2)+(p.agent.id%7);
-  p.agent.position.y=Math.sin(phase)*.028;
-  // Urgent hand-held radio signaling and a faster, visibly animated stride.
-  if(p.agent.children[5])p.agent.children[5].rotation.z=emergency?-.33+Math.sin(phase*1.7)*.28:Math.sin(phase)*.07;
-  if(p.agent.children[6])p.agent.children[6].rotation.z=emergency?.28+Math.cos(phase*1.45)*.14:Math.sin(phase+Math.PI)*.07;
-}
-function bpGuardCanSee(guard,position,distanceLimit=6){
+function bpGuardCanSee(guard,position,distanceLimit=7){
   const distance=bpDistance(guard.position,position);
-  if(distance<2.35)return true;
   if(distance>distanceLimit)return false;
+  if(isSightBlocked(guard.position,position,bpHackerCover))return false;
+  if(distance<2.25)return true;
   const dx=position.x-guard.position.x,dz=position.z-guard.position.z;
-  const forwardX=Math.sin(guard.rotation.y),forwardZ=Math.cos(guard.rotation.y);
-  return (dx*forwardX+dz*forwardZ)/Math.max(.1,distance)>.42;
+  const fx=Math.sin(guard.rotation.y),fz=Math.cos(guard.rotation.y);
+  return (dx*fx+dz*fz)/Math.max(.1,distance)>.2;
 }
-function bpMoveHackerTowards(target,dt,speed=2.12){
+function bpWalkGuard(p,target,dt,urgent=true){
+  const dx=target[0]-p.agent.position.x,dz=target[1]-p.agent.position.z;
+  const distance=Math.hypot(dx,dz);
+  if(distance<.28)return true;
+  const speed=p.speed*(urgent?2.03:1);
+  const step=Math.min(distance,speed*dt);
+  p.agent.position.x+=dx/distance*step;
+  p.agent.position.z+=dz/distance*step;
+  const angle=Math.atan2(dx,dz);
+  const delta=Math.atan2(Math.sin(angle-p.agent.rotation.y),Math.cos(angle-p.agent.rotation.y));
+  p.agent.rotation.y+=delta*Math.min(1,dt*8);
+  return false;
+}
+function bpGuardSetReturn(p){
+  p.state='returning';p.index=0;p.path=[...bpGuardBackPath,p.home];
+}
+function bpAssignSecurityDispatch(g){
+  g.securityDispatchActive=true;
+  g.securityResponseUntil=g.elapsed+62;
+  g.nextDispatchAllowed=g.elapsed+48;
+  g.guardResponseStarted=true;
+  bpShowIncident('SECURITY ALERT / OFFICERS RESPONDING');
+  sfx.alert();
+  for(let i=0;i<patrols.length;i++){
+    const p=patrols[i];p.index=0;p.wait=0;
+    p.agent.position.set(p.home[0],0,p.home[1]);
+    if(p.role==='proxy'&&g.proxies<6){
+      p.proxyIndex=g.proxies;
+      const unit=proxyObjects[p.proxyIndex];
+      const position=unit.position;
+      p.path=[...bpOfficePassage,[12.7,-2.5],[12.7,position.z],[position.x+.7,position.z+.65]];
+      p.state='deploying';
+    }else{
+      p.path=[...bpOfficePassage,...bpGuardSearchRoutes[(i+1)%2]];
+      p.state='searching';
+    }
+  }
+}
+function bpMoveGuard(p,dt,g){
+  if(p.state==='idle'){
+    const fx=p.home[0],fz=p.home[1];
+    p.agent.position.x+=(fx-p.agent.position.x)*Math.min(1,dt*4);
+    p.agent.position.z+=(fz-p.agent.position.z)*Math.min(1,dt*4);
+    p.agent.rotation.y+=Math.sin(g.elapsed*.45+p.agent.id)*dt*.09;
+    return;
+  }
+  if(p.state==='switching'){
+    p.wait-=dt;
+    const station=proxyObjects[p.proxyIndex];
+    if(station){
+      const targetAngle=Math.atan2(station.position.x-p.agent.position.x,station.position.z-p.agent.position.z);
+      const angleDiff=Math.atan2(Math.sin(targetAngle-p.agent.rotation.y),Math.cos(targetAngle-p.agent.rotation.y));
+      p.agent.rotation.y+=angleDiff*Math.min(1,dt*9);
+    }
+    if(p.wait<=0){
+      if(g.proxies<6 && p.proxyIndex===g.proxies && bpPowerProxy(p.proxyIndex)){
+        g.proxies++;
+        g.proxyOrders=Math.max(0,(g.proxyOrders||0)-1);
+        log('Edge appliance '+g.proxies+' activated by security officer.','good');
+      }
+      bpGuardSetReturn(p);
+    }
+    return;
+  }
+  const suspect=g.mode==='attack'?bp.player:attacker.position;
+  const searcher=p.role==='search'&&p.state==='searching';
+  const sight=searcher&&p.agent.position.x<13&&bpGuardCanSee(p.agent,suspect,8.3);
+  if(sight){
+    p.lastSeen={x:suspect.x,z:suspect.z,until:g.elapsed+3.0};
+    if(g.mode==='attack'&&!bp.guardAlert){
+      bpShowIncident('SECURITY / UNAUTHORIZED PERSON SEEN');
+      bp.guardAlert=true;sfx.alert();
+    }
+    if(g.mode==='defend')g.suspectSpotted=true;
+  }
+  let destination=p.path[p.index];
+  if(searcher&&p.lastSeen&&p.lastSeen.until>g.elapsed){
+    destination=[p.lastSeen.x,p.lastSeen.z];
+    if(g.mode==='attack'&&bpDistance(p.agent,bp.player)<1.4){
+      endGame(false,'CAUGHT BY SECURITY','A security officer caught the intruder inside the data center.');
+      return;
+    }
+  }
+  if(!destination){
+    if(p.state==='deploying'){p.state='switching';p.wait=2.1;sfx.scan();}
+    else if(p.state==='returning'){p.state='idle';p.agent.position.set(p.home[0],0,p.home[1]);}
+    else bpGuardSetReturn(p);
+    return;
+  }
+  const arrived=bpWalkGuard(p,destination,dt);
+  if(arrived&&!(searcher&&p.lastSeen&&p.lastSeen.until>g.elapsed))p.index++;
+  if(p.state==='searching'&&g.elapsed>g.securityResponseUntil)bpGuardSetReturn(p);
+  const motion=g.elapsed*13+p.agent.id*.25;
+  p.agent.position.y=Math.sin(motion)*.027;
+  if(p.agent.children[5])p.agent.children[5].rotation.z=-.27+Math.sin(motion)*.21;
+  if(p.agent.children[6])p.agent.children[6].rotation.z=.18+Math.sin(motion+2)*.16;
+}
+function bpMoveHackerTowards(target,dt,speed=2.6){
   const dx=target.x-attacker.position.x,dz=target.z-attacker.position.z;
   const distance=Math.hypot(dx,dz);
-  if(distance<.17)return true;
+  if(distance<.19)return true;
   const step=Math.min(distance,dt*speed);
   attacker.position.x+=dx/distance*step;
   attacker.position.z+=dz/distance*step;
   const goalYaw=Math.atan2(dx,dz);
   const diff=Math.atan2(Math.sin(goalYaw-attacker.rotation.y),Math.cos(goalYaw-attacker.rotation.y));
-  attacker.rotation.y+=diff*Math.min(1,dt*9);
+  attacker.rotation.y+=diff*Math.min(1,dt*8);
   return false;
 }
 function bpNpcUpdate(dt){
   if(!game||game.ended)return;
   const g=game;
-  const alert=bpGuardEmergency(g);
-  if(alert){
-    const prior=g.securityResponseUntil||0;
-    g.securityResponseUntil=Math.max(prior,g.elapsed+16);
-    if(!g.guardResponseStarted){
-      g.guardResponseStarted=true;
-      bpEmergencyCalls++;
-      bpShowIncident('SECURITY TEAM / EMERGENCY RESPONSE');
-      sfx.alert();
-    }
-  }else if((g.securityResponseUntil||0)<g.elapsed){
-    g.guardResponseStarted=false;
+  const activeAlarm=bpGuardEmergency(g);
+  const queued=(g.proxyOrders||0)>0;
+  if(!g.securityDispatchActive&&g.elapsed>8&&g.elapsed>=(g.nextDispatchAllowed||0)&&(activeAlarm||queued)){
+    bpAssignSecurityDispatch(g);
   }
-  for(const p of patrols)bpPatrolStep(p,dt);
-  const emergency=g.securityResponseUntil>g.elapsed;
-  technician.position.x=emergency?10.4:10.8;
-  technician.position.z=emergency?(-1.25+Math.sin(g.elapsed*.36)*1.7):(4.5+Math.sin(g.elapsed*.029)*4.7);
-  technician.rotation.y=emergency?Math.PI:Math.cos(g.elapsed*.029)>0?Math.PI:0;
+  for(const p of patrols)bpMoveGuard(p,dt,g);
+  if(g.securityDispatchActive&&patrols.every(p=>p.state==='idle')){
+    g.securityDispatchActive=false;
+    g.securityResponseUntil=0;
+    g.guardResponseStarted=false;
+    g.nextDispatchAllowed=Math.max(g.nextDispatchAllowed,g.elapsed+8);
+    bpShowIncident('SECURITY SEARCH COMPLETE / CREW RETURNED');
+  }
+  // Operators stay inside the actual security office until a threat calls guards out.
+  technician.position.set(26+Math.sin(g.elapsed*.13)*.5,0,1.8+Math.sin(g.elapsed*.11)*1.1);
+  technician.rotation.y=Math.PI;
   if(g.mode==='attack')return;
-  const spotted=bpGuards.some(guard=>bpGuardCanSee(guard,attacker.position,emergency?8:5.6));
-  if(bpHackerState==='working'&&spotted){
+  const guardsInHall=patrols.some(p=>p.state==='searching'&&p.agent.position.x<12);
+  const nearest=Math.min(...patrols.map(p=>bpDistance(p.agent,attacker.position)));
+  const visible=patrols.some(p=>p.state==='searching'&&bpGuardCanSee(p.agent,attacker.position,10));
+  const threatened=guardsInHall&&(nearest<11||visible);
+  if(bpHackerState==='working'&&threatened){
     bpHackerState='fleeing';bpHackerWaypoint=0;bpHackerStateTime=g.elapsed;
-    bpShowIncident('SECURITY MOVING THROUGH WEST AISLE');
+    bpShowIncident('SECURITY CHECK / WEST AISLE');
+    sfx.scan();
   }
   if(bpHackerState==='fleeing'){
-    const arrived=bpMoveHackerTowards(bpHackerEscape[bpHackerWaypoint],dt,3);
-    if(arrived){
+    if(bpMoveHackerTowards(bpHackerEscape[bpHackerWaypoint],dt,3.2)){
       bpHackerWaypoint++;
       if(bpHackerWaypoint>=bpHackerEscape.length){
-        bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+8;bpHackerStateTime=g.elapsed;
+        bpHackerState='hiding';bpHackerHoldUntil=g.elapsed+10;bpHackerStateTime=g.elapsed;
       }
     }
   }else if(bpHackerState==='hiding'){
-    if(spotted)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+5);
-    if(g.elapsed>bpHackerHoldUntil&&!bpGuards.some(guard=>bpGuardCanSee(guard,attacker.position,8))){
+    if(guardsInHall&&nearest<13)bpHackerHoldUntil=Math.max(bpHackerHoldUntil,g.elapsed+4);
+    const safe=(!guardsInHall||nearest>14);
+    if(g.elapsed>bpHackerHoldUntil&&safe){
       bpHackerState='returning';bpHackerWaypoint=bpHackerEscape.length-2;
       bpHackerStateTime=g.elapsed;
     }
   }else if(bpHackerState==='returning'){
-    if(spotted){
+    if(threatened){
       bpHackerState='fleeing';bpHackerWaypoint=1;bpHackerStateTime=g.elapsed;
     }else{
-      const target=bpHackerWaypoint>=0?bpHackerEscape[bpHackerWaypoint]:bpWorkPosition;
-      if(bpMoveHackerTowards(target,dt,1.85)){
+      const point=bpHackerWaypoint>=0?bpHackerEscape[bpHackerWaypoint]:bpWorkPosition;
+      if(bpMoveHackerTowards(point,dt,2.15)){
         bpHackerWaypoint--;
-        if(bpHackerWaypoint< -1){bpHackerState='working';bpHackerStateTime=g.elapsed;}
+        if(bpHackerWaypoint < -1){
+          bpHackerState='working';bpHackerStateTime=g.elapsed;
+        }
       }
     }
   }else{
@@ -1330,10 +1408,10 @@ function bpNpcUpdate(dt){
   }
   bp.npcHiding=bpHackerState==='hiding';
   bp.npcTyping=bpHackerState==='working';
-  attacker.scale.y+=((bpHackerState==='hiding'?.73:1)-attacker.scale.y)*Math.min(1,dt*5);
-  // The attacker launches new waves at the laptop, not while hiding from a patrol.
-  if(bpHackerState!=='working'&&g.nextAttackerWave<=g.elapsed+.2)
+  attacker.scale.y+=((bpHackerState==='hiding'?.72:1)-attacker.scale.y)*Math.min(1,dt*5);
+  if(bpHackerState!=='working'&&g.nextAttackerWave<=g.elapsed+.2){
     g.nextAttackerWave=g.elapsed+2.4;
+  }
 }
 function bpInteractionStatus(){
   if(!game || game.ended || bp.terminal){
@@ -1390,13 +1468,7 @@ stepGame=function(dt){
   bpOriginalStep(dt);
   if(!game || game.ended){bpInteractionStatus();return;}
   if(game.mode==='attack'&&!bp.terminal){
-    const seen=bpGuards.some(guard=>{
-      const distance=bpDistance(bp.player,guard.position);
-      if(distance>7.5)return false;
-      const forwardX=Math.sin(guard.rotation.y),forwardZ=Math.cos(guard.rotation.y);
-      const facing=((bp.player.x-guard.position.x)*forwardX+(bp.player.z-guard.position.z)*forwardZ)/Math.max(.1,distance);
-      return facing>(bp.crouching?.75:.50)&&distance>(bp.crouching?1.6:.8);
-    });
+    const seen=patrols.some(p=>p.state==='searching'&&bpGuardCanSee(p.agent,bp.player,bp.crouching?4.4:8.2));
     if(seen){
       game.risk=Math.min(100,game.risk+dt*(bp.crouching?.42:1.9));
       if(!bp.guardAlert){bpShowIncident('SECURITY / UNAUTHORIZED PERSON SEEN');sfx.alert();}
