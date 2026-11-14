@@ -1067,14 +1067,16 @@ const bpDistance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 // pooled into InstancedMeshes so 200+ architectural details cost only a few draws.
 // No shadows, post-processing, remote assets, or expensive ambient particles.
 const bpLobby=new THREE.Group();scene.add(bpLobby);bpLobby.visible=false;
-const bpLobbyFloor=mat('#243145',{metal:.25,rough:.66});
-const bpLobbyWall=mat('#27364c',{metal:.25,rough:.76});
-const bpLobbyMetal=mat('#3b4d65',{metal:.54,rough:.43});
-const bpLobbyDark=mat('#111b2b',{metal:.32,rough:.73});
-const bpLobbyWhite=mat('#d5e9f9',{metal:.12,rough:.38,glow:.95});
-const bpLobbyAttack=mat('#ff837b',{metal:.16,rough:.42,glow:1.8});
-const bpLobbyDefense=mat('#67e2cd',{metal:.16,rough:.42,glow:1.65});
-const bpLobbyMuted=mat('#385777',{metal:.23,rough:.6,glow:.28});
+const bpLobbyFloor=mat('#34465f',{metal:.035,rough:.88});
+const bpLobbyWall=mat('#334660',{metal:.03,rough:.87});
+const bpLobbyMetal=mat('#607087',{metal:.12,rough:.68});
+const bpLobbyDark=mat('#1a2639',{metal:.035,rough:.92});
+const bpLobbyWhite=mat('#c5dae9',{metal:.04,rough:.73,glow:.16});
+const bpLobbyAttack=mat('#e57c72',{metal:.03,rough:.65,glow:.70});
+const bpLobbyDefense=mat('#65cdbd',{metal:.03,rough:.65,glow:.63});
+const bpLobbyAttackFloor=mat('#9b5d65',{metal:0,rough:.85,glow:.12});
+const bpLobbyDefenseFloor=mat('#4d998d',{metal:0,rough:.85,glow:.12});
+const bpLobbyMuted=mat('#4b6687',{metal:.03,rough:.83,glow:.12});
 const bpLobbyInstances=(material,placements)=>{
   if(!placements.length)return null;
   const instanced=new THREE.InstancedMesh(geoBox,material,placements.length);
@@ -1122,15 +1124,15 @@ bpLobbyInstances(bpLobbyWhite,bpLobbyCeilingStrips);
 const bpLobbyAttackLines=[],bpLobbyDefenseLines=[],bpLobbyPathMarkers=[];
 for(const side of [-1,1]){
   const target=side<0?bpLobbyAttackLines:bpLobbyDefenseLines;
-  for(let z=-6.1;z<=9.5;z+=2.7){
-    target.push([side*5.5,.048,z,2.7,.025,.055]);
+  for(let z=-6.5;z<=8;z+=3.6){
+    target.push([side*5.5,.048,z,2.35,.019,.047]);
   }
-  for(const x of [3.95,7.05])target.push([side*x,.049,2.3,.048,.02,13.9]);
+  for(const x of [4.25,6.85])target.push([side*x,.046,1.15,.031,.018,12.4]);
 }
 for(let z=-11.5;z<=11;z+=1.6)
   bpLobbyPathMarkers.push([0,.048,z, .09,.024,.67]);
-bpLobbyInstances(bpLobbyAttack,bpLobbyAttackLines);
-bpLobbyInstances(bpLobbyDefense,bpLobbyDefenseLines);
+bpLobbyInstances(bpLobbyAttackFloor,bpLobbyAttackLines);
+bpLobbyInstances(bpLobbyDefenseFloor,bpLobbyDefenseLines);
 bpLobbyInstances(bpLobbyWhite,bpLobbyPathMarkers);
 // Side infrastructure reads as real data-centre equipment, not empty walls.
 // Repeated vent slats and LEDs are batched into one mesh per material.
@@ -1145,7 +1147,7 @@ for(const side of [-1,1])for(const z of bpLobbyRackRows){
 }
 bpLobbyInstances(bpLobbyDark,bpLobbyRacks);
 bpLobbyInstances(bpLobbyMetal,bpLobbyVents);
-bpLobbyInstances(bpLobbyDefense,bpLobbyLeds);
+bpLobbyInstances(bpLobbyDefenseFloor,bpLobbyLeds);
 // Structural fins and glowing room dividers give depth with a handful of draws.
 for(const x of [-11.7,11.7]){
   for(const z of [-12,-4.1,4.1,12]){
@@ -1175,7 +1177,7 @@ for(const station of bpLobbyStations){
   const x=station.x,z=station.z,accent=station.color;
   // Built in depth, the portals look like heavy operational equipment.
   box(x,.12,z+1.2,5.9,.24,5.1,bpLobbyDark,bpLobby);
-  box(x,.26,z+1.2,5.05,.055,4.15,accent,bpLobby);
+  box(x,.26,z+1.2,5.05,.055,4.15,station.mode==='attack'?bpLobbyAttackFloor:bpLobbyDefenseFloor,bpLobby);
   for(const dx of [-2.25,2.25]){
     box(x+dx,2.52,z,.57,5.0,1.0,bpLobbyMetal,bpLobby);
     box(x+dx,2.49,z+.52,.09,4.25,.2,accent,bpLobby);
@@ -1210,7 +1212,7 @@ const bpLobbyStreams=bpLobbyStations.map(station=>{
   return {mesh:instanced,count,station};
 });
 const bpLobbyPulse=new THREE.Object3D();
-const bpLobbyCross=mat('#91a8c6',{metal:.25,rough:.49,glow:.4});
+const bpLobbyCross=mat('#91a8c6',{metal:0,rough:.8,glow:.15});
 bpLobbyInstances(bpLobbyCross,[
   [-.75,2.2,-12.45,.08,1.2,.05],[.75,2.2,-12.45,.08,1.2,.05],
   [0,2.2,-12.45,1.65,.07,.05],
@@ -1257,7 +1259,7 @@ function bpEnterLobby(){
   bpLobby.visible=true;
   attacker.visible=false;bpPlayerAvatar.visible=false;
   document.body.classList.remove('terminal-open');
-  scene.background.set('#19243a');scene.fog.density=.0035;
+  scene.background.set('#263950');scene.fog.density=.0023;
   $('home').hidden=true;$('home').inert=true;$('home').classList.add('hidden');
   $('game').classList.remove('active');
   bpLobbyHelp.hidden=false;
