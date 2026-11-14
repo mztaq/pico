@@ -78,6 +78,30 @@ describe('Blackout Protocol 3D', () => {
     expect(css).toContain('#bp-lobby-ui[hidden],#bp-lobby-action[hidden]');
   });
 
+  it('makes the low-quality lobby sharp without overloading slow GPUs', () => {
+    expect(game).toContain('function bpPixelRatio(){');
+    expect(game).toContain('bpLobbyRendering?1550000:950000');
+    expect(game).toContain('bpLobbyRendering?1:.86');
+    expect(game).toContain('return Math.min(device,cap,Math.sqrt(budget/pixels))');
+    expect(game).toContain('renderer.setPixelRatio(bpPixelRatio())');
+    expect(game).toContain('camera.fov=69;camera.updateProjectionMatrix()');
+    expect(game).toContain('bp.player.set(0,0,4.2)');
+    expect(game).toContain('camera.fov=84;camera.updateProjectionMatrix()');
+    expect(game).toContain('function bpLobbySign(text,x,y,z,w,h,style=');
+    expect(game).toContain('canvas.width=1024;canvas.height=256');
+    expect(game).toContain("texture.minFilter=THREE.LinearMipmapLinearFilter");
+    expect(game).toContain('new THREE.MeshBasicMaterial({map:texture,toneMapped:false');
+    expect(game).not.toContain('lowQuality?.72:1.5');
+    // A 1080p PC uses <= 1.55M lobby pixels on Low, instead of the
+    // previous fixed 72% resolution. Mission rendering stays cheaper.
+    const physicalPixels=1920*1080;
+    const lowLobby=Math.min(1,Math.sqrt(1550000/physicalPixels));
+    const lowMission=Math.min(.86,Math.sqrt(950000/physicalPixels));
+    expect(lowLobby).toBeGreaterThan(lowMission);
+    expect(Math.round(physicalPixels*lowLobby**2)).toBeLessThanOrEqual(1550000);
+    expect(Math.round(physicalPixels*lowMission**2)).toBeLessThanOrEqual(950000);
+  });
+
   it('renders a detailed lobby efficiently on low-end machines', () => {
     expect(game).toContain('const bpLobbyInstances=(material,placements)=>');
     expect(game).toContain('new THREE.InstancedMesh(geoBox,material,placements.length)');
