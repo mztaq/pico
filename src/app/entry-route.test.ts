@@ -17,6 +17,13 @@ describe('Pico browser and desktop entry routes', () => {
     }
   });
 
+  it('renders AI Usage as a standalone information page instead of a workspace', () => {
+    for (const native of [false, true]) {
+      expect(shouldRenderPicoWorkspace('/app/ai-usage', native)).toBe(false);
+      expect(shouldRenderPicoWorkspace('/app/ai-usage/', native)).toBe(false);
+    }
+  });
+
   it('preserves / as the workspace for previously shipped Tauri installers', () => {
     expect(isPicoDesktopWebview({ __TAURI_INTERNALS__: { plugins: {} } })).toBe(true);
     expect(isPicoDesktopWebview({ isTauri: true })).toBe(true);
