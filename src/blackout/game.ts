@@ -1152,12 +1152,19 @@ function bpLobbySign(text,x,y,z,w,h,style='normal'){
   panel.receiveShadow=false;
   return panel;
 }
+// Lobby scenery never casts dynamic shadows; lights stay affordable even
+// when someone selects High graphics on an integrated GPU.
+function bpLobbyBox(x,y,z,w,h,d,material,parent=bpLobby){
+  const result=box(x,y,z,w,h,d,material,parent);
+  result.castShadow=false;result.receiveShadow=false;
+  return result;
+}
 // Polished lobby geometry, with a clear unobstructed central aisle.
-box(0,-.17,0,25,.33,29,bpLobbyFloor,bpLobby);
-box(0,3.85,-14.25,25,7.8,.38,bpLobbyWall,bpLobby);
-box(0,3.85,14.25,25,7.8,.38,bpLobbyWall,bpLobby);
-for(const x of [-12.35,12.35])box(x,3.85,0,.38,7.8,29,bpLobbyWall,bpLobby);
-box(0,7.78,0,25,.36,29,bpLobbyDark,bpLobby);
+bpLobbyBox(0,-.17,0,25,.33,29,bpLobbyFloor,bpLobby);
+bpLobbyBox(0,3.85,-14.25,25,7.8,.38,bpLobbyWall,bpLobby);
+bpLobbyBox(0,3.85,14.25,25,7.8,.38,bpLobbyWall,bpLobby);
+for(const x of [-12.35,12.35])bpLobbyBox(x,3.85,0,.38,7.8,29,bpLobbyWall,bpLobby);
+bpLobbyBox(0,7.78,0,25,.36,29,bpLobbyDark,bpLobby);
 const bpLobbyFloorTiles=[],bpLobbyFloorSeams=[],bpLobbyCeiling=[],bpLobbyWallPanels=[];
 for(let z=-13.2;z<13.3;z+=2.4){
   bpLobbyFloorTiles.push([0,.008,z,8.15,.023,2.29]);
@@ -1208,8 +1215,8 @@ bpLobbyInstances(bpLobbyDefenseFloor,bpLobbyLeds);
 // Structural fins and glowing room dividers give depth with a handful of draws.
 for(const x of [-11.7,11.7]){
   for(const z of [-12,-4.1,4.1,12]){
-    box(x,3.65,z,.38,7.1,.45,bpLobbyMetal,bpLobby);
-    box(x>0?x-.24:x+.24,3.65,z,.045,6.5,.12,bpLobbyWhite,bpLobby);
+    bpLobbyBox(x,3.65,z,.38,7.1,.45,bpLobbyMetal,bpLobby);
+    bpLobbyBox(x>0?x-.24:x+.24,3.65,z,.045,6.5,.12,bpLobbyWhite,bpLobby);
   }
 }
 bpLobbySign('BLACKOUT PROTOCOL',0,5.85,-13.995,10.6,.92,'hero');
@@ -1233,16 +1240,16 @@ const bpLobbyStations=[
 for(const station of bpLobbyStations){
   const x=station.x,z=station.z,accent=station.color;
   // Built in depth, the portals look like heavy operational equipment.
-  box(x,.12,z+1.2,5.9,.24,5.1,bpLobbyDark,bpLobby);
-  box(x,.26,z+1.2,5.05,.055,4.15,station.mode==='attack'?bpLobbyAttackFloor:bpLobbyDefenseFloor,bpLobby);
+  bpLobbyBox(x,.12,z+1.2,5.9,.24,5.1,bpLobbyDark,bpLobby);
+  bpLobbyBox(x,.26,z+1.2,5.05,.055,4.15,station.mode==='attack'?bpLobbyAttackFloor:bpLobbyDefenseFloor,bpLobby);
   for(const dx of [-2.25,2.25]){
-    box(x+dx,2.52,z,.57,5.0,1.0,bpLobbyMetal,bpLobby);
-    box(x+dx,2.49,z+.52,.09,4.25,.2,accent,bpLobby);
+    bpLobbyBox(x+dx,2.52,z,.57,5.0,1.0,bpLobbyMetal,bpLobby);
+    bpLobbyBox(x+dx,2.49,z+.52,.09,4.25,.2,accent,bpLobby);
   }
-  box(x,5.06,z,5.0,.48,1.15,bpLobbyMetal,bpLobby);
-  box(x,4.81,z+.53,4.05,.08,.14,accent,bpLobby);
-  box(x,2.53,z-.1,3.95,4.38,.28,bpLobbyDark,bpLobby);
-  box(x,2.58,z+.09,3.55,3.85,.065,mat('#0b1829',{metal:.14,rough:.34,glow:.28}),bpLobby);
+  bpLobbyBox(x,5.06,z,5.0,.48,1.15,bpLobbyMetal,bpLobby);
+  bpLobbyBox(x,4.81,z+.53,4.05,.08,.14,accent,bpLobby);
+  bpLobbyBox(x,2.53,z-.1,3.95,4.38,.28,bpLobbyDark,bpLobby);
+  bpLobbyBox(x,2.58,z+.09,3.55,3.85,.065,mat('#0b1829',{metal:.14,rough:.34,glow:.28}),bpLobby);
   // Station identity stays readable when the player is far away.
   bpLobbySign(station.mode==='attack'?'ATTACK SIMULATOR':'DEFENCE COMMAND',x,4.22,z+.285,3.87,.66);
   bpLobbySign(station.mode==='attack'?'BREACH THE NETWORK':'PROTECT THE NETWORK',x,1.16,z+.295,3.30,.48,'sub');
