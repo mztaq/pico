@@ -18,10 +18,22 @@ describe('AI usage deployment assets', () => {
     expect(robots).toContain('Sitemap: https://picompiler.pages.dev/sitemap.xml');
   });
 
-  it('rewrites both policy URL forms and lists the canonical URL', () => {
+  it('redirects old policy URLs and lists the new canonical address', () => {
     const redirects = read('public/_redirects');
-    expect(redirects).toContain('/legal/ai-usage / 200');
-    expect(redirects).toContain('/legal/ai-usage/ / 200');
-    expect(read('public/sitemap.xml')).toContain('https://picompiler.pages.dev/legal/ai-usage');
+    expect(redirects).toMatch(/^\/legal\/ai-usage\s+\/app\/ai-usage\s+301$/m);
+    expect(redirects).toMatch(/^\/legal\/ai-usage\/\s+\/app\/ai-usage\s+301$/m);
+    expect(read('public/sitemap.xml')).toContain('https://picompiler.pages.dev/app/ai-usage');
+    expect(read('public/sitemap.xml')).not.toContain('/legal/ai-usage');
+  });
+  it('keeps the copyright footer minimal and links it to the policy', () => {
+    const landing=read('src/landing/LandingPage.tsx');
+    const policy=read('src/landing/AiUsagePage.tsx');
+    const footer='© 2026 Pico Development Team. All rights reserved.';
+    expect(landing).toContain('<a className="lp-footer-copyright" href="/app/ai-usage">'+footer+'</a>');
+    expect(policy).toContain('<a className="lp-footer-copyright" href="/app/ai-usage">'+footer+'</a>');
+    expect(landing).not.toContain('Original site materials ©');
+    expect(landing).not.toContain('lp-protected-notice');
+    expect(policy).not.toContain('Pico · Legal');
+    expect(policy).toContain("const canonicalUrl = 'https://picompiler.pages.dev/app/ai-usage'");
   });
 });
