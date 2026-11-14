@@ -1140,6 +1140,17 @@ for(const x of [-11.7,11.7]){
 }
 label('BLACKOUT PROTOCOL',0,5.85,-14.01,11.6,.9,0,'#e2dbff',bpLobby);
 label('CHOOSE YOUR OPERATION',0,4.94,-13.99,8,.38,0,'#aee7e0',bpLobby);
+// Suspended network core gives the room movement and a focal point. It never
+// casts shadows or creates an extra light. Low quality omits the outer details.
+const bpLobbyCore=new THREE.Group();bpLobby.add(bpLobbyCore);
+bpLobbyCore.position.set(0,4.95,-3.1);
+const bpLobbyCoreBody=mesh(new THREE.IcosahedronGeometry(.56,0),bpLobbyDefense,[0,0,0],bpLobbyCore,false);
+const bpLobbyCoreRing=mesh(new THREE.TorusGeometry(1.12,.024,5,44),bpLobbyWhite,[0,0,0],bpLobbyCore,false);
+const bpLobbyCoreOuter=lowQuality?null:mesh(new THREE.TorusGeometry(1.45,.018,5,44),bpLobbyMuted,[0,0,0],bpLobbyCore,false);
+if(bpLobbyCoreOuter)bpLobbyCoreOuter.rotation.y=.55;
+bpLobbyInstances(bpLobbyMetal,[
+  [-.75,6.85,-3.1,.05,1.35,.05],[.75,6.85,-3.1,.05,1.35,.05],
+]);
 // Two large simulator gateways, with different silhouettes and holograms.
 const bpLobbyStations=[
   {mode:'attack',name:'ATTACK',x:-5.55,z:-8.25,color:bpLobbyAttack,light:null,ring:null,halo:null,core:null},
@@ -1191,7 +1202,11 @@ function bpLobbyUpdate(){
   if(bpLobbySelected===next)return;
   bpLobbySelected=next;
   bpLobbyAction.hidden=!station;
-  if(station)bpLobbyAction.innerHTML='<kbd>E</kbd> Enter '+station.name.toLowerCase()+' mission';
+  bpLobbyHelp.dataset.mode=next;
+  if(station){
+    const mission=station.mode==='attack'?'Disrupt the network':'Defend the data centre';
+    bpLobbyAction.innerHTML='<kbd>E</kbd> <span><strong>'+station.name+'</strong><small>'+mission+'</small></span>';
+  }
 }
 function bpLobbyTryEnter(){
   if(!bp.lobby||bpPaused)return;
@@ -1219,6 +1234,10 @@ let bpLobbyLastFrame=0;
 function bpLobbyAnimate(time){
   if(!bp.lobby||(lowQuality&&time-bpLobbyLastFrame<.1))return;
   bpLobbyLastFrame=time;
+  bpLobbyCoreBody.rotation.y=time*.25;
+  bpLobbyCoreBody.rotation.z=time*.14;
+  bpLobbyCoreRing.rotation.z=time*.14;
+  if(bpLobbyCoreOuter)bpLobbyCoreOuter.rotation.y=time*.13+.55;
   const nearby=bpLobbyNearby();
   for(let i=0;i<bpLobbyStations.length;i++){
     const station=bpLobbyStations[i];
