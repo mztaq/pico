@@ -61,6 +61,14 @@ it('opens the Games library from home and returns to the workspace chooser', asy
   expect(window.location.pathname).toBe('/app/games');
   expect(document.title).toBe('Pico | Games');
   expect(container.querySelector('.pico-games h1')?.textContent).toBe('Games');
+  const header=container.querySelector('.pico-games-nav')!;
+  expect(header.firstElementChild?.classList.contains('pico-games-brand')).toBe(true);
+  expect(header.lastElementChild?.classList.contains('pico-games-back')).toBe(true);
+  expect(container.querySelector('.pico-games-eyebrow')).toBeNull();
+  expect(container.querySelector('.pico-games-section-heading')).toBeNull();
+  expect(container.querySelector('.pico-games-footnote')).toBeNull();
+  expect(container.querySelector('.pico-games-type')).toBeNull();
+  expect(container.querySelector('.pico-games-details')).toBeNull();
   expect([...container.querySelectorAll<HTMLAnchorElement>('.pico-games-card')].map(card=>card.href.endsWith('/blackout-protocol/'))).toEqual([true]);
   expect(container.querySelector('.pico-games-card h3')?.textContent).toBe('Blackout Protocol');
   await click(container.querySelector<HTMLElement>('.pico-games-back')!);
