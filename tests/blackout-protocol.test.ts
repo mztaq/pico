@@ -2,11 +2,30 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const game = readFileSync(new URL('../src/blackout/game.ts', import.meta.url), 'utf8');
+const entry = readFileSync(new URL('../src/blackout/entry.ts', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../blackout-protocol/index.html', import.meta.url), 'utf8');
 const vite = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../src/blackout/game.css', import.meta.url), 'utf8');
 
 describe('Blackout Protocol 3D', () => {
+  it('shows first-run graphics options before loading Three.js and preserves the selected choice', () => {
+    expect(html).toContain('<dialog id="graphics-setup"');
+    expect(html).toContain('name="quality" value="auto" checked');
+    expect(html).toContain('name="quality" value="low"');
+    expect(html).toContain('name="quality" value="high"');
+    expect(html).toContain('Recommended');
+    expect(html).toContain('Change this anytime using Graphics in the top bar.');
+    expect(entry).toContain("localStorage.getItem(QUALITY_KEY)");
+    expect(entry).toContain("localStorage.setItem(QUALITY_KEY, quality)");
+    expect(entry).toContain("setup.showModal()");
+    expect(entry).toContain("loading?.setAttribute('hidden', '')");
+    expect(entry).toContain("await import('./game')");
+    expect(game).toContain("let preferredQuality=window.__picoBlackoutQuality||'auto'");
+    expect(html).not.toContain('class="brand-divider"');
+    expect(html).not.toContain('class="bp-games-link"');
+    expect(html).toContain('<span class="bp-current-page">Blackout Protocol</span>');
+    expect(css).toContain('#loading[hidden]{display:none!important}');
+  });
   it('enters the playable camera for both modes and survives isolated frame faults', () => {
     expect(game).toContain("bp.active=true;bp.terminal=false;bp.third=false");
     expect(game).toContain("bpOfficeConsoleZ+2.45");
@@ -55,11 +74,11 @@ describe('Blackout Protocol 3D', () => {
       .replace("import {ATTACK_TRAFFIC_SCALE,DEFENSE_WAVE_SCALE,poweredProxyCount,firstUnpoweredProxy,nearestPoweredProxy} from './proxy-mechanics';", "const ATTACK_TRAFFIC_SCALE=1;const DEFENSE_WAVE_SCALE=1;const poweredProxyCount=()=>0;const firstUnpoweredProxy=()=>0;const nearestPoweredProxy=()=>-1;")
       .replace(/import \{\s*flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,\s*acknowledgeSecurityDispatch, securityOfficersReturned,\s*\} from '\.\/security-response';/, 'const flagSecurityIncident = () => {};const observeSecurityAlarm = () => {};const shouldDispatchSecurity = () => false;const acknowledgeSecurityDispatch = () => {};const securityOfficersReturned = () => {};const SECURITY_OFFICE_REST_SECONDS = 10;'))).not.toThrow();
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
-    expect(html).toContain('src="/src/blackout/game.ts"');
+    expect(html).toContain('src="/src/blackout/entry.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
     expect(html).toContain('href="/app/games"');
     expect(html).toContain('href="/app" aria-label="Pico, back to Workspaces"');
-    expect(html).toContain('href="/app/games" aria-label="Back to Games"');
+    expect(html).toContain('href="/app/games">← Back to Games');
     expect(html).toContain('aria-label="Return to Blackout mission menu"');
     expect(html).not.toContain('title="Main menu">⌂');
     expect(css).toContain('.bp-brand-home:focus-visible');
