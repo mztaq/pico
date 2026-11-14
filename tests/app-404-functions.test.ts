@@ -55,14 +55,28 @@ describe('Custom 404 for invalid app routes',()=>{
       expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
     }
   });
-  it('loads Blackout as its own game HTML at both nested URL forms',async()=>{
-    for(const path of ['/app/game/blackout-protocol','/app/game/blackout-protocol/']){
-      const {ctx,fetch}=context(path);
-      const response=await nestedRoute(ctx);
-      expect(response.status).toBe(200);
-      expect(new URL(fetch.mock.calls[0]![0].url).pathname)
-        .toBe('/app/game/blackout-protocol/index.html');
-    }
+  it('loads the standalone game at its canonical URL without requesting an index.html redirect',async()=>{
+    const {ctx,fetch}=context('/app/game/blackout-protocol');
+    const response=await nestedRoute(ctx);
+    expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/app/game/blackout-protocol');
+    // Cloudflare Pages redirects directory index.html files to their clean
+    // paths, so fetching one from a clean-path Function causes a loop.
+    expect(new URL(fetch.mock.calls[0]![0].url).pathname).not.toContain('/index.html');
+  });
+  it('normalizes the trailing slash once without recursively requesting the asset',async()=>{
+    const {ctx,fetch}=context('/app/game/blackout-protocol/');
+    const response=await nestedRoute(ctx);
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe('https://picompiler.pages.dev/app/game/blackout-protocol');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it('builds an independent flat HTML file that Pages serves at the extensionless game URL',()=>{
+    const html=readFileSync(new URL('../app/game/blackout-protocol.html',import.meta.url),'utf8');
+    const vite=readFileSync(new URL('../vite.config.ts',import.meta.url),'utf8');
+    expect(html).toContain('src="/src/blackout/entry.ts"');
+    expect(vite).toContain("'app/game/blackout-protocol.html'");
   });
   it('redirects the former shorter game slug to the canonical path',async()=>{
     for(const path of ['/app/game/blackout','/app/game/blackout/']){
@@ -76,8 +90,8 @@ describe('Custom 404 for invalid app routes',()=>{
   it('redirects older Blackout links to the nested Games route',()=>{
     const redirects=readFileSync(new URL('../public/_redirects',import.meta.url),'utf8');
     const oldPage=readFileSync(new URL('../public/blackout-protocol.html',import.meta.url),'utf8');
-    expect(redirects).toMatch(/\/blackout-protocol\s+\/app\/game\/blackout\s+301/);
-    expect(redirects).toMatch(/\/blackout-protocol\/\s+\/app\/game\/blackout\s+301/);
+    expect(redirects).toMatch(/^\/blackout-protocol\s+\/app\/game\/blackout-protocol\s+301$/m);
+    expect(redirects).toMatch(/^\/blackout-protocol\/\s+\/app\/game\/blackout-protocol\s+301$/m);
     expect(oldPage).toContain("location.replace('/app/game/blackout-protocol')");
   });
   it('rejects unregistered game paths instead of rendering the React workspace app',async()=>{
