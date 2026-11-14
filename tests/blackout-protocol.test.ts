@@ -58,7 +58,11 @@ describe('Blackout Protocol 3D', () => {
     expect(html).toContain('src="/src/blackout/game.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
     expect(html).toContain('href="/app/games"');
-    expect(html).toContain('aria-label="Back to Pico games"');
+    expect(html).toContain('href="/app" aria-label="Pico, back to Workspaces"');
+    expect(html).toContain('href="/app/games" aria-label="Back to Games"');
+    expect(html).toContain('aria-label="Return to Blackout mission menu"');
+    expect(html).not.toContain('title="Main menu">⌂');
+    expect(css).toContain('.bp-brand-home:focus-visible');
   });
 
   it('clears high-load warnings on attack success, failure, court hearings and jail', () => {
