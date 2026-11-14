@@ -246,7 +246,9 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('new THREE.PerspectiveCamera(84, 1, .07, 120)');
     expect(game).toContain('if(!bp.active || (!bp.lobby&&(!game||game.ended))){');
     expect(game).not.toContain('if(!bp.active || !game || game.ended || bp.terminal){');
-    expect(game).toContain("if(game || $('home').hidden || $('home').classList.contains('hidden'))return;");
+    expect(game).toContain('if(!bp.lobby||bpPaused)return;');
+    expect(game).toContain('const station=bpLobbyNearby();');
+    expect(game).toContain('startGame(station.mode);');
     expect(game).toContain('if(game&&!game.ended)return;');
     expect(game).toContain("if(mode!=='attack'&&mode!=='defend')return;");
     expect(game).toContain("$('home').hidden=true;$('home').inert=true;");
