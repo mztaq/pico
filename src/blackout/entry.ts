@@ -1,5 +1,9 @@
 /* First-visit graphics setup loads before WebGL and before the full game scene.
    The chosen quality therefore applies to initial 3D geometry as well as FPS. */
+// Keep the public URL clean even if a browser reused a cached folder slash.
+if (location.pathname === '/app/game/blackout-protocol/') {
+  history.replaceState(history.state, '', '/app/game/blackout-protocol' + location.search + location.hash);
+}
 type Quality = 'auto' | 'low' | 'high';
 const QUALITY_KEY = 'pico.blackout.graphics';
 const validQuality = (value: string | null): Quality | null =>
