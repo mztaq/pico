@@ -36,6 +36,8 @@ try {preferredQuality=window.__picoBlackoutQuality||localStorage.getItem('pico.b
 if(!['auto','low','high'].includes(preferredQuality))preferredQuality='auto';
 let lowQuality=preferredQuality==='low'||(preferredQuality==='auto'&&autoLow);
 let bpLobbyRendering=false;
+let bpLobbyResolutionScale=1;
+let bpLobbySampleStart=0,bpLobbyRenderedFrames=0;
 // Low-end machines need fewer 3D pixels in long missions, but the compact
 // entry room has a much smaller draw-call budget and deserves crisp signage.
 function bpPixelRatio(){
@@ -43,7 +45,8 @@ function bpPixelRatio(){
   const pixels=Math.max(1,innerWidth*innerHeight);
   const budget=lowQuality?(bpLobbyRendering?1550000:950000):3400000;
   const cap=lowQuality?(bpLobbyRendering?1:.86):1.5;
-  return Math.min(device,cap,Math.sqrt(budget/pixels));
+  return Math.min(device,cap,Math.sqrt(budget/pixels))*
+    (bpLobbyRendering&&lowQuality?bpLobbyResolutionScale:1);
 }
 const renderer = new THREE.WebGLRenderer({ antialias: !lowQuality, powerPreference: 'low-power', alpha: false });
 const qualitySelect=$('quality');
@@ -1016,6 +1019,26 @@ window.addEventListener('resize',resize);
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();if(game)notify('GRAPHICS CONTEXT LOST. RELOAD THE PAGE.',true);});
 const clock=new THREE.Clock();
 let lastDraw=0;
+function bpTrackLobbyPerformance(now){
+  if(!bpLobbyRendering||!lowQuality){
+    bpLobbySampleStart=0;bpLobbyRenderedFrames=0;
+    return;
+  }
+  if(!bpLobbySampleStart){bpLobbySampleStart=now;return;}
+  bpLobbyRenderedFrames++;
+  if(now-bpLobbySampleStart<4000)return;
+  const measuredFps=bpLobbyRenderedFrames*1000/(now-bpLobbySampleStart);
+  let next=bpLobbyResolutionScale;
+  // The normal Low cap is 27 FPS. Only sacrifice resolution when it falls
+  // substantially below that, and restore sharpness if performance recovers.
+  if(measuredFps<21)next=Math.max(.78,next-.08);
+  else if(measuredFps>25&&next<1)next=Math.min(1,next+.04);
+  if(next!==bpLobbyResolutionScale){
+    bpLobbyResolutionScale=next;
+    renderer.setPixelRatio(bpPixelRatio());
+  }
+  bpLobbySampleStart=now;bpLobbyRenderedFrames=0;
+}
 // A failed AI, UI, or CCTV update must never lock the view at the menu camera.
 // Report each failing subsystem once while keeping movement and rendering alive.
 const bpFrameErrors=new Set();
@@ -1047,9 +1070,15 @@ function frame(now=0){
     try{updateUI();}catch(error){bpReportFrameError('HUD',error);}
   }
   const targetFps=lowQuality?27:60;
-  if(now-lastDraw>=1000/targetFps){
-    try{renderer.render(scene,camera);lastDraw=now;}
-    catch(error){bpReportFrameError('renderer',error);}
+  const frameInterval=1000/targetFps;
+  if(now-lastDraw>=frameInterval){
+    try{
+      renderer.render(scene,camera);
+      // Preserve fractional frame time: 27 FPS must not turn into 20 FPS
+      // because a 60 Hz monitor cannot hit exactly 37 ms per frame.
+      lastDraw=now-(now-lastDraw)%frameInterval;
+      bpTrackLobbyPerformance(now);
+    }catch(error){bpReportFrameError('renderer',error);}
   }
 }
 
@@ -1276,6 +1305,7 @@ function bpLobbyTryEnter(){
 }
 function bpEnterLobby(){
   bpLobbyRendering=true;
+  bpLobbyResolutionScale=1;bpLobbySampleStart=0;bpLobbyRenderedFrames=0;
   renderer.setPixelRatio(bpPixelRatio());
   renderer.toneMappingExposure=1.34;
   camera.fov=69;camera.updateProjectionMatrix();
@@ -1831,6 +1861,7 @@ moveCamera=function(dt){
 const bpOriginalStartGame=startGame;
 startGame=function(mode){
   bpLobbyRendering=false;
+  bpLobbySampleStart=0;bpLobbyRenderedFrames=0;
   renderer.setPixelRatio(bpPixelRatio());
   renderer.toneMappingExposure=lowQuality?1.66:1.72;
   camera.fov=84;camera.updateProjectionMatrix();
