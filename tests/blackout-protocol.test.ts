@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const game = readFileSync(new URL('../src/blackout/game.ts', import.meta.url), 'utf8');
 const entry = readFileSync(new URL('../src/blackout/entry.ts', import.meta.url), 'utf8');
-const html = readFileSync(new URL('../app/game/blackout-protocol/index.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../app/game/blackout-protocol.html', import.meta.url), 'utf8');
 const vite = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../src/blackout/game.css', import.meta.url), 'utf8');
 
@@ -183,7 +183,7 @@ describe('Blackout Protocol 3D', () => {
       .replace("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
       .replace("import {ATTACK_TRAFFIC_SCALE,DEFENSE_WAVE_SCALE,poweredProxyCount,firstUnpoweredProxy,nearestPoweredProxy} from './proxy-mechanics';", "const ATTACK_TRAFFIC_SCALE=1;const DEFENSE_WAVE_SCALE=1;const poweredProxyCount=()=>0;const firstUnpoweredProxy=()=>0;const nearestPoweredProxy=()=>-1;")
       .replace(/import \{\s*flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,\s*acknowledgeSecurityDispatch, securityOfficersReturned,\s*\} from '\.\/security-response';/, 'const flagSecurityIncident = () => {};const observeSecurityAlarm = () => {};const shouldDispatchSecurity = () => false;const acknowledgeSecurityDispatch = () => {};const securityOfficersReturned = () => {};const SECURITY_OFFICE_REST_SECONDS = 10;'))).not.toThrow();
-    expect(vite).toContain("blackout: resolve(process.cwd(), 'app/game/blackout-protocol/index.html')");
+    expect(vite).toContain("blackout: resolve(process.cwd(), 'app/game/blackout-protocol.html')");
     expect(html).toContain('<title>Pico | Blackout Protocol</title>');
     expect(html).toContain('src="/src/blackout/entry.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
