@@ -1021,8 +1021,10 @@ function frame(now=0){
   // Always restore the active player's camera, even after a simulation fault.
   try{moveCamera(dt);}catch(error){bpReportFrameError('camera',error);}
   // Essential animations run even if the CCTV or monitor update fails.
-  try{bpAnimateRequestPackets(visualTime);}catch(error){bpReportFrameError('traffic visuals',error);}
-  try{bpAnimateFans(dt);}catch(error){bpReportFrameError('cooling fans',error);}
+  if(!bp.lobby){
+    try{bpAnimateRequestPackets(visualTime);}catch(error){bpReportFrameError('traffic visuals',error);}
+    try{bpAnimateFans(dt);}catch(error){bpReportFrameError('cooling fans',error);}
+  }
   try{animateScene(visualTime,dt);}catch(error){bpReportFrameError('scene',error);}
   uiTick+=dt;
   if(game&&uiTick>.18){
@@ -1082,7 +1084,7 @@ box(0,3.85,-14.25,25,7.8,.38,bpLobbyWall,bpLobby);
 box(0,3.85,14.25,25,7.8,.38,bpLobbyWall,bpLobby);
 for(const x of [-12.35,12.35])box(x,3.85,0,.38,7.8,29,bpLobbyWall,bpLobby);
 box(0,7.78,0,25,.36,29,bpLobbyDark,bpLobby);
-const bpLobbyFloorTiles=[],bpLobbyFloorSeams=[],bpLobbyCeiling=[],bpLobbyWallPanels=[],bpLobbyWallLights=[];
+const bpLobbyFloorTiles=[],bpLobbyFloorSeams=[],bpLobbyCeiling=[],bpLobbyWallPanels=[];
 for(let z=-13.2;z<13.3;z+=2.4){
   bpLobbyFloorTiles.push([0,.008,z,8.15,.023,2.29]);
   bpLobbyFloorSeams.push([-4.5,.029,z, .035,.015,2.17],[4.5,.029,z,.035,.015,2.17]);
@@ -1143,7 +1145,6 @@ const bpLobbyStations=[
   {mode:'attack',name:'ATTACK',x:-5.55,z:-8.25,color:bpLobbyAttack,light:null,ring:null,halo:null,core:null},
   {mode:'defend',name:'DEFEND',x:5.55,z:-8.25,color:bpLobbyDefense,light:null,ring:null,halo:null,core:null},
 ];
-const bpLobbyDecor=new THREE.Group();bpLobby.add(bpLobbyDecor);
 for(const station of bpLobbyStations){
   const x=station.x,z=station.z,accent=station.color;
   // Built in depth, the portals look like heavy operational equipment.
@@ -1207,7 +1208,7 @@ function bpEnterLobby(){
   bpLobby.visible=true;
   attacker.visible=false;bpPlayerAvatar.visible=false;
   document.body.classList.remove('terminal-open');
-  scene.background.set('#151e2c');scene.fog.density=.005;
+  scene.background.set('#19243a');scene.fog.density=.0035;
   $('home').hidden=true;$('home').inert=true;$('home').classList.add('hidden');
   $('game').classList.remove('active');
   bpLobbyHelp.hidden=false;
@@ -2729,8 +2730,9 @@ updateUI=function(force=false){
 };
 const bpOriginalAnimate=animateScene;
 animateScene=function(t,dt){
+  // Monitors, fans and CCTV in the hidden datacentre do not update in lobby.
+  if(bp.lobby){bpLobbyAnimate(t);return;}
   bpOriginalAnimate(t,dt);
-  bpLobbyAnimate(t);
   if($('incident-banner')&&incidentVisibleUntil&&performance.now()>incidentVisibleUntil)$('incident-banner').classList.remove('visible');
   if(game&&game.coolingEventUntil>game.elapsed){
     for(let i=0;i<bpEmergencyLights.length;i++)bpEmergencyLights[i].color.setHex(0xff7e44);
