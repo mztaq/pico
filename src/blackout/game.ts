@@ -35,6 +35,16 @@ let preferredQuality=window.__picoBlackoutQuality||'auto';
 try {preferredQuality=window.__picoBlackoutQuality||localStorage.getItem('pico.blackout.graphics')||'auto';}catch { /* Storage is disabled on some classroom browsers. */ }
 if(!['auto','low','high'].includes(preferredQuality))preferredQuality='auto';
 let lowQuality=preferredQuality==='low'||(preferredQuality==='auto'&&autoLow);
+let bpLobbyRendering=false;
+// Low-end machines need fewer 3D pixels in long missions, but the compact
+// entry room has a much smaller draw-call budget and deserves crisp signage.
+function bpPixelRatio(){
+  const device=Math.min(window.devicePixelRatio||1,2);
+  const pixels=Math.max(1,innerWidth*innerHeight);
+  const budget=lowQuality?(bpLobbyRendering?1550000:950000):3400000;
+  const cap=lowQuality?(bpLobbyRendering?1:.86):1.5;
+  return Math.min(device,cap,Math.sqrt(budget/pixels));
+}
 const renderer = new THREE.WebGLRenderer({ antialias: !lowQuality, powerPreference: 'low-power', alpha: false });
 const qualitySelect=$('quality');
 qualitySelect.value=preferredQuality;
@@ -42,10 +52,10 @@ function updateQuality(setting) {
   const mode=['auto','low','high'].includes(setting)?setting:'auto';
   preferredQuality=mode;qualitySelect.value=mode;
   lowQuality=mode==='low'||(mode==='auto'&&autoLow);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lowQuality?.72:1.5));
+  renderer.setPixelRatio(bpPixelRatio());
   renderer.shadowMap.enabled=!lowQuality;
   renderer.shadowMap.autoUpdate=!lowQuality;
-  renderer.toneMappingExposure=lowQuality?1.95:1.72;
+  renderer.toneMappingExposure=bpLobbyRendering?1.34:(lowQuality?1.66:1.72);
   renderer.setSize(innerWidth,innerHeight);
   bpApplyQuality();
   try {localStorage.setItem('pico.blackout.graphics',mode);}catch{}
@@ -54,10 +64,10 @@ function updateQuality(setting) {
 qualitySelect.addEventListener('pointerdown',event=>event.stopPropagation());
 qualitySelect.addEventListener('click',event=>event.stopPropagation());
 qualitySelect.addEventListener('change',event=>{event.stopPropagation();updateQuality(event.target.value);});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,lowQuality?.72:1.5));
+renderer.setPixelRatio(bpPixelRatio());
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.85;
+renderer.toneMappingExposure = lowQuality?1.66:1.72;
 renderer.shadowMap.enabled = !lowQuality;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setSize(innerWidth, innerHeight);
@@ -996,7 +1006,12 @@ document.addEventListener('keydown',e=>{
   if(!game||game.ended)return;
   if(!window.__bpIsFPS?.()&&['Digit1','Digit2','Digit3'].includes(e.code))focus(['overview','hacker','servers'][Number(e.code.slice(-1))-1]);
 });
-function resize(){const w=innerWidth,h=innerHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}
+function resize(){
+  const w=innerWidth,h=innerHeight;
+  camera.aspect=w/h;camera.updateProjectionMatrix();
+  renderer.setPixelRatio(bpPixelRatio());
+  renderer.setSize(w,h);
+}
 window.addEventListener('resize',resize);
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();if(game)notify('GRAPHICS CONTEXT LOST. RELOAD THE PAGE.',true);});
 const clock=new THREE.Clock();
@@ -1230,9 +1245,14 @@ function bpLobbyTryEnter(){
   startGame(station.mode);
 }
 function bpEnterLobby(){
+  bpLobbyRendering=true;
+  renderer.setPixelRatio(bpPixelRatio());
+  renderer.toneMappingExposure=1.34;
+  camera.fov=69;camera.updateProjectionMatrix();
   bp.lobby=true;bp.active=true;bp.terminal=false;bp.third=false;bp.crouching=false;
   bp.keys.clear();bp.dragging=false;bp.stepClock=0;
-  bp.player.set(0,0,8);bp.yaw=0;bp.pitch=-.035;
+  // Frame both bays at readable size without an oversized empty foreground.
+  bp.player.set(0,0,4.2);bp.yaw=0;bp.pitch=-.02;
   world.visible=false;dynamic.visible=false;courtroom.visible=false;jail.visible=false;
   bpLobby.visible=true;
   attacker.visible=false;bpPlayerAvatar.visible=false;
@@ -1780,6 +1800,10 @@ moveCamera=function(dt){
 };
 const bpOriginalStartGame=startGame;
 startGame=function(mode){
+  bpLobbyRendering=false;
+  renderer.setPixelRatio(bpPixelRatio());
+  renderer.toneMappingExposure=lowQuality?1.66:1.72;
+  camera.fov=84;camera.updateProjectionMatrix();
   bp.lobby=false;bpLobby.visible=false;bpLobbyHelp.hidden=true;
   bpOriginalStartGame(mode);
   document.body.classList.remove('bp-mission-finished');
