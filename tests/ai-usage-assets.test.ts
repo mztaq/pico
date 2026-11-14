@@ -21,8 +21,8 @@ describe('AI usage deployment assets', () => {
 
   it('rewrites both policy URL forms and lists the canonical URL', () => {
     const redirects = read('public/_redirects');
-    expect(redirects).toContain('/legal/ai-usage /index.html 200');
-    expect(redirects).toContain('/legal/ai-usage/ /index.html 200');
+    expect(redirects).toContain('/legal/ai-usage / 200');
+    expect(redirects).toContain('/legal/ai-usage/ / 200');
     expect(read('public/sitemap.xml')).toContain('https://picompiler.pages.dev/legal/ai-usage');
   });
 });
