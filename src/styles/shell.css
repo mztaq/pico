@@ -33,6 +33,22 @@
   font-weight: 700;
   letter-spacing: -.4px;
 }
+/* The Pico wordmark itself is a workspace-home control in every studio. */
+.pico-brand-home {
+  appearance: none;
+  padding: 4px 6px;
+  margin: 0;
+  border: 0;
+  border-radius: var(--ds-radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pico-brand-home:hover { background: var(--ds-hover); }
+.pico-brand-home:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pico-brand-home:disabled { cursor: not-allowed; opacity: .5; }
 :is(.pico-app, .logic-app, .cpu-app) .topbar .brand-mark { width: 24px; height: 24px; margin-right: 8px; filter: none; }
 :is(.pico-app, .logic-app, .cpu-app) .topbar .brand-period { color: var(--accent); }
 .pico-appbar-sep { color: color-mix(in srgb, var(--ds-muted) 55%, transparent); font-size: 18px; font-weight: 300; margin: 0 2px; user-select: none; }
