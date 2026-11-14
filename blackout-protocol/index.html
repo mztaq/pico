@@ -18,13 +18,17 @@
   </nav>
   <div class="top-right"><a class="bp-top-games" href="/app/games" aria-label="Back to Games">← Back to Games</a></div>
 </header>
-<section id="home"><div class="homebox"><h1>BLACKOUT<br><span>PROTOCOL.</span></h1><p class="subtitle">Explore the data center, operate workstations, manage emergencies, and stay ahead of security. Choose your side.</p><div class="modecards"><button class="modecard attack" data-mode="attack"><span class="arrow">↗</span><h2>Attack the server</h2><p>Control traffic from your laptop, pressure the edge network, and evade patrols.</p></button><button class="modecard" data-mode="defend"><span class="arrow">↗</span><h2>Defend the server</h2><p>Protect the web cluster, investigate traffic spikes, and find the intruder.</p></button></div><div class="homefoot"><span>WASD to move</span><span>E to use workstations</span><span>Mouse to look around</span></div></div></section>
+<section id="home" hidden inert aria-hidden="true"></section>
+<div id="bp-lobby-ui" class="bp-lobby-ui" hidden aria-live="polite">
+  <div class="bp-lobby-intro"><strong>Choose your side</strong><span>Walk to a station to start</span></div>
+  <div class="bp-lobby-controls"><kbd>W A S D</kbd> Move <kbd>MOUSE</kbd> Look <kbd>E</kbd> Enter</div>
+  <div id="bp-lobby-action" class="bp-lobby-action" hidden></div>
+</div>
 <div id="game"><div class="game-hud" hidden aria-hidden="true"><div class="metric"><div class="label">INCOMING TRAFFIC</div><div class="value" id="traffic">0</div><div class="sub">REQUESTS / SECOND</div></div><div class="metric"><div class="label">SERVER INTEGRITY</div><div class="value" id="health">100%</div><div class="sub">CRITICAL BELOW 30%</div></div><div class="metric"><div class="label">ACTIVE PROXIES</div><div class="value" id="proxies">0</div><div class="sub">TRAFFIC FILTERING</div></div><div class="metric"><div class="label" id="trace-label">TRACE EXPOSURE</div><div class="value" id="trace">0%</div><div class="sub" id="trace-sub">INVESTIGATION PROGRESS</div></div><div class="metric"><div class="label">TIME REMAINING</div><div class="value" id="timer">12:00</div><div class="sub">INCIDENT WINDOW</div></div></div><div id="game-title" hidden aria-hidden="true"><div class="stage" id="stage">PHASE 01 / INITIAL ACCESS</div><h2 id="objective">Acquire remote devices.</h2><p id="mission">Generate traffic. The security team responds automatically.</p></div><div id="terminal-backdrop"></div><div id="crosshair"></div><div id="interaction-hint"></div><div id="red-alert" role="status">⚠ HIGH LOAD / COOLING WARNING</div><div id="incident-banner" role="status" aria-live="polite"></div><div id="mission-step">Move with WASD. Walk to the illuminated laptop, then press E to access its controls.</div><div id="control-help"><kbd>W A S D</kbd> Move · <kbd>SHIFT</kbd> Sprint<br><kbd>MOUSE</kbd> Look · <kbd>E</kbd> Interact<br><kbd>F</kbd> Take laptop · <kbd>C</kbd> Crouch · <kbd>V</kbd> Camera</div><div id="controls"><div class="panelheading"><strong id="panelname">ATTACK CONSOLE</strong><small id="panelmeta">TACTICAL ACTIONS</small><button id="terminal-close" aria-label="Close terminal">Close ✕</button></div><div id="actions"></div><div class="capbar" id="progressbar"><div id="progress"></div></div><p id="trace-description">Detection risk</p></div><div id="camera-ui"><button class="cam-btn selected" data-camera="overview">OVERVIEW</button><button class="cam-btn" data-camera="hacker">ATTACKER</button><button class="cam-btn" data-camera="servers">SERVERS</button></div><div class="draghelp">DRAG TO ORBIT CAMERA · SCROLL TO ZOOM</div><div id="toast"></div></div>
 <div id="bp-pause" class="bp-pause" role="dialog" aria-modal="true" aria-labelledby="bp-pause-title" aria-describedby="bp-pause-note" hidden inert>
   <div class="bp-pause-panel">
-    <p class="bp-pause-eyebrow">BLACKOUT PROTOCOL</p>
     <h2 id="bp-pause-title">Paused</h2>
-    <p id="bp-pause-note">Your mission is paused.</p>
+    <p id="bp-pause-note" hidden>Paused while you were away.</p>
     <button type="button" class="bp-pause-primary" id="bp-resume">Resume game</button>
     <div class="bp-pause-settings">
       <label class="bp-pause-field" for="quality">Graphics
@@ -33,8 +37,7 @@
       <div class="bp-pause-field"><span>Sound</span><button type="button" id="audio" class="bp-pause-sound" aria-label="Toggle audio">♫ ON</button></div>
     </div>
     <button type="button" id="bp-restart-mission" class="bp-pause-secondary">Restart mission</button>
-    <a id="bp-leave-game" class="bp-pause-leave" href="/app/games">Leave game</a>
-    <span class="bp-pause-hint">Press Esc to resume</span>
+    <button type="button" id="bp-leave-game" class="bp-pause-leave">Leave game</button>
   </div>
 </div>
 <div id="ending"><div class="endingbox"><div class="endresult" id="result-type">OPERATION COMPLETE</div><h2 id="result-title">Server secured.</h2><p id="result-text">The network survived.</p><button class="endbtn" id="again">REPLAY MISSION</button><button class="endbtn alt" id="menu">MAIN MENU</button></div></div>
