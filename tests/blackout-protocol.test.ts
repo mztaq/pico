@@ -57,6 +57,8 @@ describe('Blackout Protocol 3D', () => {
     expect(vite).toContain("blackout: resolve(process.cwd(), 'blackout-protocol/index.html')");
     expect(html).toContain('src="/src/blackout/game.ts"');
     expect(html).toContain('src="/pico-logo.svg"');
+    expect(html).toContain('href="/app/games"');
+    expect(html).toContain('aria-label="Back to Pico games"');
   });
 
   it('clears high-load warnings on attack success, failure, court hearings and jail', () => {
