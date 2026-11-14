@@ -1253,8 +1253,8 @@ function bpLobbyAnimate(time){
   bpLobbyCoreRing.rotation.z=time*.14;
   if(bpLobbyCoreOuter)bpLobbyCoreOuter.rotation.y=time*.13+.55;
   for(const stream of bpLobbyStreams){
-    for(let j=0;j<stream.count;j++){
-      const progress=(time*2.25+j*1.7)%14;
+    for(let j=0;j<stream.mesh.count;j++){
+      const progress=(time*2.25+j*1.7)%18;
       bpLobbyPulse.position.set(stream.station.x,.095,9.45-progress);
       bpLobbyPulse.scale.set(.065,.04,.18);
       bpLobbyPulse.updateMatrix();
