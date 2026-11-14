@@ -1047,12 +1047,108 @@ function frame(now=0){
    Every "attack", trace, proxy and request is in-memory gameplay only. */
 const bp = {
   player: V(-8.3, 0, 6.15), yaw:.24, pitch:-.06, keys:new Set(),
-  terminal:false, active:false, third:false, crouching:false,dragging:false,dragX:0,dragY:0,
+  terminal:false, active:false, lobby:false, third:false, crouching:false,dragging:false,dragX:0,dragY:0,
   stepClock:0, npcTyping:true, npcHiding:false,
   targetDesk: V(-8.8,0,4.0), guardAlert:false,
 };
 const bpClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const bpDistance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+// Walkable mission-selection room. It is a real Three.js space rather than
+// two large DOM cards. The live server hall stays hidden until a mode begins.
+const bpLobby=new THREE.Group();scene.add(bpLobby);bpLobby.visible=false;
+const bpLobbyFloor=mat('#1a2334',{metal:.27,rough:.64});
+const bpLobbyWall=mat('#1b283b',{metal:.4,rough:.53});
+const bpLobbyPlinth=mat('#263348',{metal:.68,rough:.29});
+const bpLobbyAttack=mat('#ff997e',{metal:.18,rough:.29,glow:2.2});
+const bpLobbyDefense=mat('#a995f9',{metal:.18,rough:.29,glow:2.3});
+box(0,-.2,0,23,.4,25,bpLobbyFloor,bpLobby);
+box(0,3.1,-12.4,23,6.3,.3,bpLobbyWall,bpLobby);
+box(0,3.1,12.4,23,6.3,.3,bpLobbyWall,bpLobby);
+for(const x of [-11.45,11.45])box(x,3.1,0,.3,6.3,25,bpLobbyWall,bpLobby);
+box(0,6.35,0,23,.28,25,mat('#172334',{metal:.37,rough:.63}),bpLobby);
+for(const z of [-9,-3,3,9]){
+  box(0,6.14,z,20,.06,.22,edgeMetal,bpLobby);
+  for(const x of [-8,0,8]){
+    box(x,6.08,z,3.2,.045,.23,ice,bpLobby);
+    if(x!==0)light(x,5.7,z,0xb9c8ff,1.25,12,bpLobby);
+  }
+}
+for(const x of [-10.98,10.98]){
+  for(let z=-10;z<=10;z+=3.3){
+    box(x,1.1,z,.16,1.85,2.5,darkMetal,bpLobby);
+    for(let row=0;row<7;row++){
+      box(x>0?x-.11:x+.11,.37+row*.22,z,.055,.037,2.06,row%3===0?mint:blue,bpLobby);
+    }
+  }
+}
+label('BLACKOUT  /  SELECT YOUR SIDE',0,4.5,-12.21,12.8,.78,0,'#d4cffd',bpLobby);
+label('WALK TO A STATION  -  PRESS E',0,3.77,-12.2,8.8,.38,0,'#a5b8d2',bpLobby);
+const bpLobbyStations=[
+  {mode:'attack',name:'ATTACK',x:-5.2,z:-7.35,color:bpLobbyAttack,light:null},
+  {mode:'defend',name:'DEFEND',x:5.2,z:-7.35,color:bpLobbyDefense,light:null},
+];
+for(const station of bpLobbyStations){
+  const x=station.x,z=station.z,emissive=station.color;
+  // Tall illuminated frame with a single unambiguous in-world interaction.
+  for(const dx of [-1.55,1.55])box(x+dx,2.17,z,.26,4.3,.37,emissive,bpLobby);
+  box(x,4.33,z,3.38,.24,.4,emissive,bpLobby);
+  box(x,0.06,z,3.44,.12,1.7,bpLobbyPlinth,bpLobby);
+  box(x,2.27,z-.12,2.75,3.7,.17,darkMetal,bpLobby);
+  box(x,2.28,z+.02,2.57,3.45,.10,mat('#1b2b48',{metal:.24,rough:.38,glow:.22}),bpLobby);
+  label(station.name,x,2.91,z+.091,2.17,.55,0,'#e7e5ff',bpLobby);
+  label('PRESS E TO ENTER',x,1.87,z+.095,2.28,.34,0,'#c6cedf',bpLobby);
+  box(x,.025,z+1.2,3.1,.05,1.5,emissive,bpLobby);
+  station.light=light(x,3,z+1.35,station.mode==='attack'?0xff9875:0xb9a7ff,2.0,8,bpLobby);
+  for(const lane of [-1,1])box(x+lane*.92,.027,z+4.7,.055,.038,5.0,emissive,bpLobby);
+}
+const bpLobbyHelp=$('bp-lobby-ui'),bpLobbyAction=$('bp-lobby-action');
+let bpLobbySelected='';
+function bpLobbyNearby(range=2.65){
+  return bpLobbyStations.find(s=>Math.hypot(bp.player.x-s.x,bp.player.z-(s.z+1.4))<range)||null;
+}
+function bpLobbyWalkable(x,z){
+  if(x< -10.55||x>10.55||z< -10.8||z>10.85)return false;
+  return !bpLobbyStations.some(s=>Math.abs(x-s.x)<1.83&&z<s.z+.32&&z>s.z-1.8);
+}
+function bpLobbyUpdate(){
+  if(!bp.lobby)return;
+  const station=bpLobbyNearby();
+  const next=station?.mode||'';
+  if(bpLobbySelected===next)return;
+  bpLobbySelected=next;
+  bpLobbyAction.hidden=!station;
+  if(station)bpLobbyAction.innerHTML='<kbd>E</kbd> Enter '+station.name.toLowerCase()+' mission';
+}
+function bpLobbyTryEnter(){
+  if(!bp.lobby||bpPaused)return;
+  const station=bpLobbyNearby();
+  if(!station)return;
+  sfx.init();sfx.deploy();
+  startGame(station.mode);
+}
+function bpEnterLobby(){
+  bp.lobby=true;bp.active=true;bp.terminal=false;bp.third=false;bp.crouching=false;
+  bp.keys.clear();bp.dragging=false;bp.stepClock=0;
+  bp.player.set(0,0,8);bp.yaw=0;bp.pitch=-.035;
+  world.visible=false;dynamic.visible=false;courtroom.visible=false;jail.visible=false;
+  bpLobby.visible=true;
+  attacker.visible=false;bpPlayerAvatar.visible=false;
+  document.body.classList.remove('terminal-open');
+  scene.background.set('#151e2c');scene.fog.density=.005;
+  $('home').hidden=true;$('home').inert=true;$('home').classList.add('hidden');
+  $('game').classList.remove('active');
+  bpLobbyHelp.hidden=false;
+  bpLobbySelected='unset';bpLobbyUpdate();
+  moveCamera(0);
+}
+function bpLobbyAnimate(time){
+  if(!bp.lobby)return;
+  for(let i=0;i<bpLobbyStations.length;i++){
+    const station=bpLobbyStations[i];
+    station.light.intensity=1.9+.32*Math.sin(time*1.9+i*1.5);
+  }
+}
+
 const bpAttackerDesk=V(-8.5,0,3.97);
 const bpDefenseDesk=V(bpOfficeConsoleX,0,bpOfficeConsoleZ+1.05);
 const bpHideSpot=V(-4.15,0,8.8);
@@ -1531,7 +1627,7 @@ renderer.domElement.addEventListener('pointermove',e=>{
 
 const bpOriginalCamera=moveCamera;
 moveCamera=function(dt){
-  if(!bp.active || !game || game.ended){
+  if(!bp.active || (!bp.lobby&&(!game||game.ended))){
     bpOriginalCamera(dt);return;
   }
   if(bp.terminal){
@@ -1553,6 +1649,7 @@ moveCamera=function(dt){
 };
 const bpOriginalStartGame=startGame;
 startGame=function(mode){
+  bp.lobby=false;bpLobby.visible=false;bpLobbyHelp.hidden=true;
   bpOriginalStartGame(mode);
   document.body.classList.remove('bp-mission-finished');
   bpFrameErrors.clear();bpCctvDisabled=false;
@@ -1597,6 +1694,7 @@ menu=function(){
   bpPlayerAvatar.visible=false;
   $('interaction-hint').classList.remove('visible');
   $('red-alert').classList.remove('visible');
+  bpEnterLobby();
 };
 function bpOpenTerminal(){
   if(!game||game.ended)return;
@@ -1692,8 +1790,14 @@ function bpTryInteract(){
 }
 const bpReservedKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyC','KeyV','KeyE','KeyF','ShiftLeft','ShiftRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Digit1','Digit2','Digit3','Digit4']);
 document.addEventListener('keydown',e=>{
-  if(!bp.active || !game || game.ended || bpPaused)return;
+  if(!bp.active || ((!game||game.ended)&&!bp.lobby) || bpPaused)return;
   if(bpReservedKeys.has(e.code))e.preventDefault();
+  if(bp.lobby){
+    if(!sfx.ctx)sfx.init();
+    bp.keys.add(e.code);
+    if(!e.repeat&&e.code==='KeyE')bpLobbyTryEnter();
+    return;
+  }
   bp.keys.add(e.code);
   if(e.repeat)return;
   if(/^Digit[1-4]$/.test(e.code)){
@@ -1731,7 +1835,13 @@ document.addEventListener('mousemove',e=>{
   bp.pitch=bpClamp(bp.pitch-bpClamp(e.movementY,-110,110)*.0019,-1.3,1.3);
 });
 renderer.domElement.addEventListener('click',event=>{
-  if(bpPaused||!bp.active||!game||game.ended)return;
+  if(bpPaused||!bp.active)return;
+  if(bp.lobby){
+    if(bpLobbyNearby()){bpLobbyTryEnter();return;}
+    if(document.pointerLockElement!==renderer.domElement)void renderer.domElement.requestPointerLock?.();
+    return;
+  }
+  if(!game||game.ended)return;
   const index=bpTerminalActionAt(event.clientX,event.clientY);
   if(index>=0){bpTerminalSelect(index);return;}
   if(!bp.terminal&&document.pointerLockElement!==renderer.domElement)
@@ -1755,7 +1865,7 @@ function bpGuardWalkable(x,z){
     bpWalkable(x,z+.22)&&bpWalkable(x,z-.22);
 }
 function bpMovePlayer(dt){
-  if(bp.terminal || !game || game.ended)return;
+  if(bp.terminal || (!bp.lobby&&(!game||game.ended)))return;
   const x=(bp.keys.has('KeyD')?1:0)-(bp.keys.has('KeyA')?1:0);
   const z=(bp.keys.has('KeyS')?1:0)-(bp.keys.has('KeyW')?1:0);
   bp.crouching=bp.keys.has('KeyC');
@@ -1765,17 +1875,19 @@ function bpMovePlayer(dt){
   if(bp.keys.has('ArrowDown'))bp.pitch=bpClamp(bp.pitch-dt*.95,-1.05,1.05);
   if(!x&&!z)return;
   const wantsSprint=bp.keys.has('ShiftLeft')||bp.keys.has('ShiftRight');
-  const sprintAllowed=game.mode!=='attack'||bpAttackLaptopCarried||!game.securityDispatchActive;
+  const sprintAllowed=bp.lobby||game.mode!=='attack'||bpAttackLaptopCarried||!game.securityDispatchActive;
   const speed=(bp.crouching?2.0:wantsSprint&&sprintAllowed?5.9:3.6)*Math.min(1,1/Math.hypot(x,z));
   const dx=(Math.cos(bp.yaw)*x+Math.sin(bp.yaw)*z)*speed*dt;
   const dz=(-Math.sin(bp.yaw)*x+Math.cos(bp.yaw)*z)*speed*dt;
-  if(bpWalkable(bp.player.x+dx,bp.player.z))bp.player.x+=dx;
-  if(bpWalkable(bp.player.x,bp.player.z+dz))bp.player.z+=dz;
+  const walkable=bp.lobby?bpLobbyWalkable:bpWalkable;
+  if(walkable(bp.player.x+dx,bp.player.z))bp.player.x+=dx;
+  if(walkable(bp.player.x,bp.player.z+dz))bp.player.z+=dz;
   bp.stepClock+=dt;
   if(bp.stepClock>(bp.crouching?.65:.39)){
     bp.stepClock=0;
     sfx.noise(bp.crouching?.035:.06,bp.crouching?.012:.025,380);
   }
+  if(bp.lobby){bpLobbyUpdate();return;}
   const avatar=game.mode==='attack'?attacker:bpPlayerAvatar;
   avatar.position.set(bp.player.x,0,bp.player.z);
   avatar.rotation.y=bp.yaw+Math.PI;
@@ -2466,6 +2578,7 @@ function bpWorldEvents(){
 
 const bpOriginalStep=stepGame;
 stepGame=function(dt){
+  if(bp.lobby){bpMovePlayer(dt);bpLobbyUpdate();return;}
   // Advance the authoritative traffic and clock before fallible NPC work.
   bpOriginalStep(dt);
   if(!game||game.ended){bpInteractionStatus();return;}
@@ -2534,6 +2647,7 @@ updateUI=function(force=false){
 const bpOriginalAnimate=animateScene;
 animateScene=function(t,dt){
   bpOriginalAnimate(t,dt);
+  bpLobbyAnimate(t);
   if($('incident-banner')&&incidentVisibleUntil&&performance.now()>incidentVisibleUntil)$('incident-banner').classList.remove('visible');
   if(game&&game.coolingEventUntil>game.elapsed){
     for(let i=0;i<bpEmergencyLights.length;i++)bpEmergencyLights[i].color.setHex(0xff7e44);
@@ -2604,7 +2718,7 @@ renderer.domElement.setAttribute('aria-label','First-person 3D data center game.
 bpWallGraph(0);
 bpPaintOfficeMonitor();
 bpApplyQuality();
-resize();focus('overview');moveCamera(10);renderer.render(scene,camera);
+resize();bpEnterLobby();renderer.render(scene,camera);
 frame();
 $('loading').remove();
 
