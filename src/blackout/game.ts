@@ -1046,53 +1046,134 @@ const bp = {
 };
 const bpClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const bpDistance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
-// Walkable mission-selection room. It is a real Three.js space rather than
-// two large DOM cards. The live server hall stays hidden until a mode begins.
+// Mission-selection hub: two readable, interactive simulator bays. Geometry is
+// pooled into InstancedMeshes so 200+ architectural details cost only a few draws.
+// No shadows, post-processing, remote assets, or expensive ambient particles.
 const bpLobby=new THREE.Group();scene.add(bpLobby);bpLobby.visible=false;
-const bpLobbyFloor=mat('#1a2334',{metal:.27,rough:.64});
-const bpLobbyWall=mat('#1b283b',{metal:.4,rough:.53});
-const bpLobbyPlinth=mat('#263348',{metal:.68,rough:.29});
-const bpLobbyAttack=mat('#ff997e',{metal:.18,rough:.29,glow:2.2});
-const bpLobbyDefense=mat('#a995f9',{metal:.18,rough:.29,glow:2.3});
-box(0,-.2,0,23,.4,25,bpLobbyFloor,bpLobby);
-box(0,3.1,-12.4,23,6.3,.3,bpLobbyWall,bpLobby);
-box(0,3.1,12.4,23,6.3,.3,bpLobbyWall,bpLobby);
-for(const x of [-11.45,11.45])box(x,3.1,0,.3,6.3,25,bpLobbyWall,bpLobby);
-box(0,6.35,0,23,.28,25,mat('#172334',{metal:.37,rough:.63}),bpLobby);
-for(const z of [-9,-3,3,9]){
-  box(0,6.14,z,20,.06,.22,edgeMetal,bpLobby);
-  for(const x of [-8,0,8]){
-    box(x,6.08,z,3.2,.045,.23,ice,bpLobby);
-    if(x!==0)light(x,5.7,z,0xb9c8ff,1.25,12,bpLobby);
+const bpLobbyFloor=mat('#243145',{metal:.25,rough:.66});
+const bpLobbyWall=mat('#27364c',{metal:.25,rough:.76});
+const bpLobbyMetal=mat('#3b4d65',{metal:.54,rough:.43});
+const bpLobbyDark=mat('#111b2b',{metal:.32,rough:.73});
+const bpLobbyWhite=mat('#d5e9f9',{metal:.12,rough:.38,glow:.95});
+const bpLobbyAttack=mat('#ff837b',{metal:.16,rough:.42,glow:1.8});
+const bpLobbyDefense=mat('#67e2cd',{metal:.16,rough:.42,glow:1.65});
+const bpLobbyMuted=mat('#385777',{metal:.23,rough:.6,glow:.28});
+const bpLobbyInstances=(material,placements)=>{
+  if(!placements.length)return null;
+  const instanced=new THREE.InstancedMesh(geoBox,material,placements.length);
+  const dummy=new THREE.Object3D();
+  for(let i=0;i<placements.length;i++){
+    const p=placements[i];
+    dummy.position.set(p[0],p[1],p[2]);
+    dummy.scale.set(p[3],p[4],p[5]);
+    dummy.rotation.set(0,p[6]||0,0);
+    dummy.updateMatrix();
+    instanced.setMatrixAt(i,dummy.matrix);
+  }
+  instanced.instanceMatrix.needsUpdate=true;
+  instanced.castShadow=false;
+  instanced.receiveShadow=false;
+  bpLobby.add(instanced);
+  return instanced;
+};
+// Polished lobby geometry, with a clear unobstructed central aisle.
+box(0,-.17,0,25,.33,29,bpLobbyFloor,bpLobby);
+box(0,3.85,-14.25,25,7.8,.38,bpLobbyWall,bpLobby);
+box(0,3.85,14.25,25,7.8,.38,bpLobbyWall,bpLobby);
+for(const x of [-12.35,12.35])box(x,3.85,0,.38,7.8,29,bpLobbyWall,bpLobby);
+box(0,7.78,0,25,.36,29,bpLobbyDark,bpLobby);
+const bpLobbyFloorTiles=[],bpLobbyFloorSeams=[],bpLobbyCeiling=[],bpLobbyWallPanels=[],bpLobbyWallLights=[];
+for(let z=-13.2;z<13.3;z+=2.4){
+  bpLobbyFloorTiles.push([0,.008,z,8.15,.023,2.29]);
+  bpLobbyFloorSeams.push([-4.5,.029,z, .035,.015,2.17],[4.5,.029,z,.035,.015,2.17]);
+}
+for(let z=-12.4;z<=12.5;z+=3.55){
+  bpLobbyCeiling.push([0,7.48,z,23,.24,.29]);
+  bpLobbyWallPanels.push([-12.07,3.6,z,.13,6.55,3.25],[12.07,3.6,z,.13,6.55,3.25]);
+}
+bpLobbyInstances(bpLobbyDark,bpLobbyFloorTiles);
+bpLobbyInstances(bpLobbyMetal,bpLobbyCeiling);
+bpLobbyInstances(bpLobbyMuted,bpLobbyFloorSeams);
+bpLobbyInstances(bpLobbyDark,bpLobbyWallPanels);
+// Ceiling strips supply light without adding dozens of realtime point lights.
+const bpLobbyCeilingStrips=[];
+for(let z=-11;z<=11;z+=5.5)for(const x of [-8,0,8]){
+  bpLobbyCeilingStrips.push([x,7.31,z,3.8,.035,.26]);
+}
+bpLobbyInstances(bpLobbyWhite,bpLobbyCeilingStrips);
+// A runway of thin programmable floor lines guides the player to both bays.
+const bpLobbyAttackLines=[],bpLobbyDefenseLines=[],bpLobbyPathMarkers=[];
+for(const side of [-1,1]){
+  const target=side<0?bpLobbyAttackLines:bpLobbyDefenseLines;
+  for(let z=-6.1;z<=9.5;z+=2.7){
+    target.push([side*5.5,.048,z,2.7,.025,.055]);
+  }
+  for(const x of [3.95,7.05])target.push([side*x,.049,2.3,.048,.02,13.9]);
+}
+for(let z=-11.5;z<=11;z+=1.6)
+  bpLobbyPathMarkers.push([0,.048,z, .09,.024,.67]);
+bpLobbyInstances(bpLobbyAttack,bpLobbyAttackLines);
+bpLobbyInstances(bpLobbyDefense,bpLobbyDefenseLines);
+bpLobbyInstances(bpLobbyWhite,bpLobbyPathMarkers);
+// Side infrastructure reads as real data-centre equipment, not empty walls.
+// Repeated vent slats and LEDs are batched into one mesh per material.
+const bpLobbyRacks=[],bpLobbyVents=[],bpLobbyLeds=[];
+const bpLobbyRackRows=lowQuality?[-9.8,-2.9,4.0,10.5]:[-11,-7,-3,1,5,9,12];
+for(const side of [-1,1])for(const z of bpLobbyRackRows){
+  bpLobbyRacks.push([side*11.66,2.05,z,.43,3.7,2.65]);
+  for(let row=0;row<7;row++){
+    bpLobbyVents.push([side*11.38,.65+row*.4,z,.05,.065,2.26]);
+    if(row%2===0)bpLobbyLeds.push([side*11.32,.65+row*.4,z-1.03,.07,.045,.11]);
   }
 }
-for(const x of [-10.98,10.98]){
-  for(let z=-10;z<=10;z+=3.3){
-    box(x,1.1,z,.16,1.85,2.5,darkMetal,bpLobby);
-    for(let row=0;row<7;row++){
-      box(x>0?x-.11:x+.11,.37+row*.22,z,.055,.037,2.06,row%3===0?mint:blue,bpLobby);
-    }
+bpLobbyInstances(bpLobbyDark,bpLobbyRacks);
+bpLobbyInstances(bpLobbyMetal,bpLobbyVents);
+bpLobbyInstances(bpLobbyDefense,bpLobbyLeds);
+// Structural fins and glowing room dividers give depth with a handful of draws.
+for(const x of [-11.7,11.7]){
+  for(const z of [-12,-4.1,4.1,12]){
+    box(x,3.65,z,.38,7.1,.45,bpLobbyMetal,bpLobby);
+    box(x>0?x-.24:x+.24,3.65,z,.045,6.5,.12,bpLobbyWhite,bpLobby);
   }
 }
-label('SELECT MISSION',0,4.5,-12.21,10.2,.78,0,'#d4cffd',bpLobby);
+label('BLACKOUT PROTOCOL',0,5.85,-14.01,11.6,.9,0,'#e2dbff',bpLobby);
+label('CHOOSE YOUR OPERATION',0,4.94,-13.99,8,.38,0,'#aee7e0',bpLobby);
+// Two large simulator gateways, with different silhouettes and holograms.
 const bpLobbyStations=[
-  {mode:'attack',name:'ATTACK',x:-5.2,z:-7.35,color:bpLobbyAttack,light:null},
-  {mode:'defend',name:'DEFEND',x:5.2,z:-7.35,color:bpLobbyDefense,light:null},
+  {mode:'attack',name:'ATTACK',x:-5.55,z:-8.25,color:bpLobbyAttack,light:null,ring:null,halo:null,core:null},
+  {mode:'defend',name:'DEFEND',x:5.55,z:-8.25,color:bpLobbyDefense,light:null,ring:null,halo:null,core:null},
 ];
+const bpLobbyDecor=new THREE.Group();bpLobby.add(bpLobbyDecor);
 for(const station of bpLobbyStations){
-  const x=station.x,z=station.z,emissive=station.color;
-  // Tall illuminated frame with a single unambiguous in-world interaction.
-  for(const dx of [-1.55,1.55])box(x+dx,2.17,z,.26,4.3,.37,emissive,bpLobby);
-  box(x,4.33,z,3.38,.24,.4,emissive,bpLobby);
-  box(x,0.06,z,3.44,.12,1.7,bpLobbyPlinth,bpLobby);
-  box(x,2.27,z-.12,2.75,3.7,.17,darkMetal,bpLobby);
-  box(x,2.28,z+.02,2.57,3.45,.10,mat('#1b2b48',{metal:.24,rough:.38,glow:.22}),bpLobby);
-  label(station.name,x,2.91,z+.091,2.17,.55,0,'#e7e5ff',bpLobby);
-  label('PRESS E TO ENTER',x,1.87,z+.095,2.28,.34,0,'#c6cedf',bpLobby);
-  box(x,.025,z+1.2,3.1,.05,1.5,emissive,bpLobby);
-  station.light=light(x,3,z+1.35,station.mode==='attack'?0xff9875:0xb9a7ff,2.0,8,bpLobby);
-  for(const lane of [-1,1])box(x+lane*.92,.027,z+4.7,.055,.038,5.0,emissive,bpLobby);
+  const x=station.x,z=station.z,accent=station.color;
+  // Built in depth, the portals look like heavy operational equipment.
+  box(x,.12,z+1.2,5.9,.24,5.1,bpLobbyDark,bpLobby);
+  box(x,.26,z+1.2,5.05,.055,4.15,accent,bpLobby);
+  for(const dx of [-2.25,2.25]){
+    box(x+dx,2.52,z,.57,5.0,1.0,bpLobbyMetal,bpLobby);
+    box(x+dx,2.49,z+.52,.09,4.25,.2,accent,bpLobby);
+  }
+  box(x,5.06,z,5.0,.48,1.15,bpLobbyMetal,bpLobby);
+  box(x,4.81,z+.53,4.05,.08,.14,accent,bpLobby);
+  box(x,2.53,z-.1,3.95,4.38,.28,bpLobbyDark,bpLobby);
+  box(x,2.58,z+.09,3.55,3.85,.065,mat('#0b1829',{metal:.14,rough:.34,glow:.28}),bpLobby);
+  // Station identity stays readable when the player is far away.
+  label(station.mode==='attack'?'ATTACK SIMULATOR':'DEFENCE COMMAND',x,4.23,z+.282,3.85,.57,0,'#f2f3ff',bpLobby);
+  label(station.mode==='attack'?'BREACH THE NETWORK':'PROTECT THE NETWORK',x,1.2,z+.29,3.15,.33,0,'#bcd4e3',bpLobby);
+  const ringMaterial=accent;
+  const ring=mesh(new THREE.TorusGeometry(.92,.058,6,32),ringMaterial,[x,2.67,z+.39],bpLobby,false);
+  const halo=mesh(new THREE.TorusGeometry(1.23,.022,5,32),ringMaterial,[x,2.67,z+.41],bpLobby,false);
+  ring.scale.setScalar(1);
+  station.ring=ring;station.halo=halo;
+  station.core=ball(x,2.67,z+.42,.20,accent,bpLobby);
+  // Two real light sources at most, and none on Low.
+  if(!lowQuality)station.light=light(x,3.1,z+2.0,station.mode==='attack'?0xff8879:0x73e2d2,1.8,7,bpLobby);
 }
+const bpLobbyCross=mat('#91a8c6',{metal:.25,rough:.49,glow:.4});
+bpLobbyInstances(bpLobbyCross,[
+  [-.75,2.2,-12.45,.08,1.2,.05],[.75,2.2,-12.45,.08,1.2,.05],
+  [0,2.2,-12.45,1.65,.07,.05],
+]);
 const bpLobbyHelp=$('bp-lobby-ui'),bpLobbyAction=$('bp-lobby-action');
 let bpLobbySelected='';
 function bpLobbyNearby(range=2.65){
@@ -1133,11 +1214,21 @@ function bpEnterLobby(){
   bpLobbySelected='unset';bpLobbyUpdate();
   moveCamera(0);
 }
+let bpLobbyLastFrame=0;
 function bpLobbyAnimate(time){
-  if(!bp.lobby)return;
+  if(!bp.lobby||(lowQuality&&time-bpLobbyLastFrame<.1))return;
+  bpLobbyLastFrame=time;
+  const nearby=bpLobbyNearby();
   for(let i=0;i<bpLobbyStations.length;i++){
     const station=bpLobbyStations[i];
-    station.light.intensity=1.9+.32*Math.sin(time*1.9+i*1.5);
+    const pulse=Math.sin(time*1.65+i*1.8);
+    const selected=nearby===station;
+    station.ring.rotation.z=time*(i===0?.27:-.22);
+    station.halo.rotation.z=-time*(i===0?.12:-.14);
+    station.ring.scale.setScalar(selected?1.16:1+.055*pulse);
+    station.halo.scale.setScalar(selected?1.08:1+.025*pulse);
+    station.core.scale.setScalar(selected?1.36:1+.12*pulse);
+    if(station.light)station.light.intensity=selected?2.3:1.35+.18*pulse;
   }
 }
 
