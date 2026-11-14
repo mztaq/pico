@@ -1299,6 +1299,10 @@ function bpApplyQuality(){
     bpFanRotors[i].visible=true; // Low mode already builds fewer rotors per rack.
   bpRackDetail.visible=!lowQuality;
   bpCourtDetail.visible=!lowQuality;
+  // The lobby also honours quality changes made while a mission is paused.
+  for(const station of bpLobbyStations)if(station.light)station.light.visible=!lowQuality;
+  if(bpLobbyCoreOuter)bpLobbyCoreOuter.visible=!lowQuality;
+  for(const stream of bpLobbyStreams)stream.mesh.count=lowQuality?Math.min(5,stream.count):stream.count;
   for(const target of bpCctvTargets)target.setSize(lowQuality?256:448,lowQuality?144:252);
   const officeW=lowQuality?512:768,officeH=lowQuality?288:432;
   if(bpOfficeMonitorCanvas.width!==officeW){
