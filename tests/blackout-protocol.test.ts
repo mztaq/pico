@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const game = readFileSync(new URL('../src/blackout/game.ts', import.meta.url), 'utf8');
 const entry = readFileSync(new URL('../src/blackout/entry.ts', import.meta.url), 'utf8');
-const html = readFileSync(new URL('../blackout-protocol/index.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../app/game/blackout/index.html', import.meta.url), 'utf8');
 const vite = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../src/blackout/game.css', import.meta.url), 'utf8');
 
