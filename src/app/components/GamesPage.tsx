@@ -10,7 +10,7 @@ const games = [
     id: 'blackout-protocol',
     title: 'Blackout Protocol',
     description: 'Play as the hacker or defend a 3D data centre from network attacks.',
-    href: '/blackout-protocol/',
+    href: '/app/game/blackout',
   },
 ] as const;
 
