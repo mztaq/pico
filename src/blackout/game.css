@@ -36,6 +36,8 @@
 /* Pico Mocha game UI: legible overlays, minimal labels and physical laptop controls. */
 :root{--accent:#cba6f7;--warm:#f38ba8;--line:#585b70;--muted:#bac2de;color:#cdd6f4;background:#1e1e2e}
 #viewport{background:#34394c}
+/* The lobby is a bright, readable room. Reserve the heavy vignette for missions. */
+body.bp-lobby-open #vignette{background:radial-gradient(ellipse 93% 104% at 50% 50%,transparent 64%,rgba(3,7,14,.18) 100%)}
 #vignette{background:radial-gradient(ellipse at center,transparent 50%,rgba(12,12,20,.22) 100%)}
 #grain{opacity:.025}
 .topbar{min-height:64px;padding:11px 25px;background:#181825ed;border-bottom:1px solid #45475a;backdrop-filter:blur(16px)}
