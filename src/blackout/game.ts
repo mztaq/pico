@@ -925,7 +925,7 @@ for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('clic
   if(mode!=='attack'&&mode!=='defend')return;
   startGame(mode);
 });
-function menu(){bpDismissPause();game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;courtroom.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').hidden=false;$('home').inert=false;$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
+function menu(){bpDismissPause();if(bp.terminal)bpCloseTerminal();bp.active=false;bp.keys.clear();bp.dragging=false;document.body.classList.remove('terminal-open');game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;courtroom.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').hidden=false;$('home').inert=false;$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
 $('again').onclick=()=>{const mode=game?.mode||'defend';startGame(mode);};
 $('menu').onclick=()=>menu();
 
@@ -979,6 +979,7 @@ $('bp-restart-mission').addEventListener('click',()=>{
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden)bpPause('away');
+  else if(bpPaused)bpResumeButton.focus();
 });
 document.addEventListener('keydown',e=>{
   if(e.code==='Escape'&&game&&!game.ended){
@@ -992,7 +993,8 @@ document.addEventListener('keydown',e=>{
       const focusables=[...bpPauseOverlay.querySelectorAll('button:not(:disabled), a[href], select')];
       if(focusables.length){
         const first=focusables[0],last=focusables[focusables.length-1];
-        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+        if(!bpPauseOverlay.contains(document.activeElement)){e.preventDefault();first.focus();}
+        else if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
         else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
       }
     }
@@ -1605,9 +1607,9 @@ function bpOpenTerminal(){
   if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
   bp.dragging=false;view.drag=false;
   $('panelname').textContent=game.mode==='attack'?'LAPTOP / LOCAL TRAFFIC SIM':'SECURITY CONSOLE / INCIDENT RESPONSE';
-  $('panelmeta').textContent='PRESS ESC TO RETURN TO THE ROOM';
+  $('panelmeta').textContent='PRESS ESC FOR PAUSE OPTIONS';
   $('interaction-hint').classList.remove('visible');
-  $('control-help').innerHTML='<kbd>1–4</kbd> Select action  ·  <kbd>ESC</kbd> Leave laptop';
+  $('control-help').innerHTML='<kbd>1–4</kbd> Select action  ·  <kbd>ESC</kbd> Pause  ·  <kbd>CLOSE</kbd> Leave laptop';
   bpPaintTerminal();
   sfx.keyboard();
 }
@@ -1624,11 +1626,8 @@ function bpCloseTerminal(){
 }
 $('terminal-close').addEventListener('click',()=>bpCloseTerminal());
 $('terminal-backdrop').addEventListener('click',()=>bpCloseTerminal());
-window.__bpEscape=()=>{
-  if(bpCloseTerminal())return true;
-  if(document.pointerLockElement===renderer.domElement){void document.exitPointerLock?.();return true;}
-  return false;
-};
+// Escape is handled by the single pause-menu listener above, including when
+// the in-world terminal or pointer lock is active.
 window.__bpIsFPS=()=>Boolean(bp.active);
 function bpNearbyProxy(position,range=2.55,poweredOnly=false){
   const list=proxyObjects.map((proxy,index)=>({
