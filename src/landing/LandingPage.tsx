@@ -4,9 +4,9 @@ import { LandingCurves } from './LandingCurves';
 import { getTheme } from '../app/themes';
 import './landing.css';
 
-const mocha=getTheme('catppuccin-mocha');
+export const mocha=getTheme('catppuccin-mocha');
 /** Use Pico's own theme seed and derived surface colors. No second landing palette. */
-const landingStyle={
+export const landingStyle={
   '--lp-bg':mocha.bg,
   '--lp-panel':mocha.surface,
   '--lp-panel-raised':mocha.ui.surfaceRaised,
@@ -193,5 +193,7 @@ export default function LandingPage() {
   </main>
   <footer className="lp-footer"><div className="lp-container">
     <small>© 2026 Pico Development Team. All rights reserved.</small>
+    <a className="lp-legal-link" href="/legal/ai-usage">Copyright &amp; AI Usage</a>
+    <small className="lp-protected-notice">Original site materials © 2026 Amar Abdelhak Ayache. All rights reserved.</small>
   </div></footer></div>;
 }

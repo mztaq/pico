@@ -99,6 +99,7 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm test
           pnpm build
+          cmp public/robots.txt dist/robots.txt
       - name: Publish Pages site with installers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
