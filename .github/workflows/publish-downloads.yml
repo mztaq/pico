@@ -120,7 +120,8 @@ jobs:
           preview_url = match.group(0)
           print('Testing immutable deployment:', preview_url, flush=True)
           expected_robots = Path('public/robots.txt').read_bytes()
-          for base in [preview_url, 'https://picompiler.pages.dev']:
+          # Cloudflare protects immutable preview URLs from unauthenticated CI requests.
+          for base in ['https://picompiler.pages.dev']:
               for attempt in range(8):
                   try:
                       with urllib.request.urlopen(base + '/robots.txt', timeout=20) as response:
