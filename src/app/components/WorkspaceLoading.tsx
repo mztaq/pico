@@ -239,7 +239,7 @@ function HomeCardSkeleton() {
   </div>;
 }
 
-function HomeSectionSkeleton({ kind, count }: { kind: 'code' | 'visual' | 'data' | 'games'; count: number }) {
+function HomeSectionSkeleton({ kind, count }: { kind: 'code' | 'visual' | 'data'; count: number }) {
   return <section className={`pico-load-home-section pico-load-home-section--${kind}`}>
     <div className="pico-load-home-section-heading">
       <Placeholder className="pico-load-home-section-title" />
@@ -269,7 +269,6 @@ export function HomeLoading() {
           <HomeSectionSkeleton kind="code" count={2} />
           <HomeSectionSkeleton kind="visual" count={4} />
           <HomeSectionSkeleton kind="data" count={1} />
-          <HomeSectionSkeleton kind="games" count={1} />
         </div>
         <div className="pico-load-home-footer"><Placeholder className="pico-load-home-footer-item" /><Placeholder className="pico-load-home-footer-item" /><Placeholder className="pico-load-home-footer-item" /></div>
       </div>
