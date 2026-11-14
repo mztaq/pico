@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pico | Blackout Protocol</title>
+<meta name="theme-color" content="#1e1e2e">
+<link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
+<link rel="stylesheet" href="/src/blackout/game.css">
+</head>
+<body>
+<div id="viewport"></div><div id="vignette"></div><div id="grain"></div><div id="flash"></div>
+<div id="app">
+<header class="topbar">
+  <nav class="brand" aria-label="Blackout navigation">
+    <a class="bp-brand-home" href="/app" aria-label="Pico, back to Workspaces" title="Workspaces"><img class="logo" src="/pico-logo.svg" width="32" height="32" alt=""><span class="bp-brand-pico">Pico</span></a>
+    <span class="bp-current-page">Blackout Protocol</span>
+  </nav>
+  <div class="top-right"><a class="bp-top-games" href="/app/games" aria-label="Back to Games">← Back to Games</a></div>
+</header>
+<section id="home" hidden inert aria-hidden="true"></section>
+<div id="bp-lobby-ui" class="bp-lobby-ui" hidden aria-live="polite">
+  <div class="bp-lobby-intro"><strong>Choose your side</strong><span>Walk to a station to start</span></div>
+  <div class="bp-lobby-controls"><kbd>W A S D</kbd> Move <kbd>CLICK</kbd> Look <kbd>E</kbd> Enter</div>
+  <div id="bp-lobby-action" class="bp-lobby-action" hidden></div>
+</div>
+<div id="game"><div class="game-hud" hidden aria-hidden="true"><div class="metric"><div class="label">INCOMING TRAFFIC</div><div class="value" id="traffic">0</div><div class="sub">REQUESTS / SECOND</div></div><div class="metric"><div class="label">SERVER INTEGRITY</div><div class="value" id="health">100%</div><div class="sub">CRITICAL BELOW 30%</div></div><div class="metric"><div class="label">ACTIVE PROXIES</div><div class="value" id="proxies">0</div><div class="sub">TRAFFIC FILTERING</div></div><div class="metric"><div class="label" id="trace-label">TRACE EXPOSURE</div><div class="value" id="trace">0%</div><div class="sub" id="trace-sub">INVESTIGATION PROGRESS</div></div><div class="metric"><div class="label">TIME REMAINING</div><div class="value" id="timer">12:00</div><div class="sub">INCIDENT WINDOW</div></div></div><div id="game-title" hidden aria-hidden="true"><div class="stage" id="stage">PHASE 01 / INITIAL ACCESS</div><h2 id="objective">Acquire remote devices.</h2><p id="mission">Generate traffic. The security team responds automatically.</p></div><div id="terminal-backdrop"></div><div id="crosshair"></div><div id="interaction-hint"></div><div id="red-alert" role="status">⚠ HIGH LOAD / COOLING WARNING</div><div id="incident-banner" role="status" aria-live="polite"></div><div id="mission-step">Move with WASD. Walk to the illuminated laptop, then press E to access its controls.</div><div id="control-help"><kbd>W A S D</kbd> Move · <kbd>SHIFT</kbd> Sprint<br><kbd>MOUSE</kbd> Look · <kbd>E</kbd> Interact<br><kbd>F</kbd> Take laptop · <kbd>C</kbd> Crouch · <kbd>V</kbd> Camera</div><div id="controls"><div class="panelheading"><strong id="panelname">ATTACK CONSOLE</strong><small id="panelmeta">TACTICAL ACTIONS</small><button id="terminal-close" aria-label="Close terminal">Close ✕</button></div><div id="actions"></div><div class="capbar" id="progressbar"><div id="progress"></div></div><p id="trace-description">Detection risk</p></div><div id="camera-ui"><button class="cam-btn selected" data-camera="overview">OVERVIEW</button><button class="cam-btn" data-camera="hacker">ATTACKER</button><button class="cam-btn" data-camera="servers">SERVERS</button></div><div class="draghelp">DRAG TO ORBIT CAMERA · SCROLL TO ZOOM</div><div id="toast"></div></div>
+<div id="bp-pause" class="bp-pause" role="dialog" aria-modal="true" aria-labelledby="bp-pause-title" aria-describedby="bp-pause-note" hidden inert>
+  <div class="bp-pause-panel">
+    <h2 id="bp-pause-title">Paused</h2>
+    <p id="bp-pause-note" hidden>Paused while you were away.</p>
+    <button type="button" class="bp-pause-primary" id="bp-resume">Resume game</button>
+    <div class="bp-pause-settings">
+      <label class="bp-pause-field" for="quality">Graphics
+        <select id="quality" aria-label="Graphics quality"><option value="auto">Auto (recommended)</option><option value="low">Low</option><option value="high">High</option></select>
+      </label>
+      <div class="bp-pause-field"><span>Sound</span><button type="button" id="audio" class="bp-pause-sound" aria-label="Toggle audio">♫ ON</button></div>
+    </div>
+    <button type="button" id="bp-restart-mission" class="bp-pause-secondary">Restart mission</button>
+    <button type="button" id="bp-leave-game" class="bp-pause-leave">Leave game</button>
+  </div>
+</div>
+<div id="ending"><div class="endingbox"><div class="endresult" id="result-type">OPERATION COMPLETE</div><h2 id="result-title">Server secured.</h2><p id="result-text">The network survived.</p><button class="endbtn" id="again">REPLAY MISSION</button><button class="endbtn alt" id="menu">MAIN MENU</button></div></div>
+<div id="loading" role="status" aria-label="Loading Blackout Protocol">
+  <div class="bp-skeleton-top"><span class="bp-skeleton bp-sk-logo"></span><span class="bp-skeleton bp-sk-brand"></span><span class="bp-skeleton bp-sk-control"></span></div>
+  <div class="bp-skeleton-main"><span class="bp-skeleton bp-sk-heading"></span><span class="bp-skeleton bp-sk-heading bp-sk-short"></span><span class="bp-skeleton bp-sk-description"></span><span class="bp-skeleton bp-sk-description bp-sk-smaller"></span>
+    <div class="bp-sk-cards"><span class="bp-skeleton bp-sk-card"></span><span class="bp-skeleton bp-sk-card"></span></div>
+  </div>
+</div>
+</div>
+<dialog id="graphics-setup" class="bp-graphics-setup" aria-labelledby="graphics-setup-title" aria-describedby="graphics-setup-description">
+  <form id="graphics-setup-form">
+    <div class="bp-graphics-icon" aria-hidden="true">◈</div>
+    <h2 id="graphics-setup-title">Choose your graphics</h2>
+    <p id="graphics-setup-description">Select a quality setting for Blackout Protocol.</p>
+    <fieldset class="bp-graphics-options">
+      <legend class="bp-visually-hidden">Graphics quality</legend>
+      <label class="bp-graphics-option">
+        <input type="radio" name="quality" value="auto" checked>
+        <span class="bp-graphics-option-copy"><span class="bp-graphics-option-heading">Auto <span class="bp-graphics-recommended">Recommended</span></span><small>Adapts to your device for smoother gameplay.</small></span>
+      </label>
+      <label class="bp-graphics-option">
+        <input type="radio" name="quality" value="low">
+        <span class="bp-graphics-option-copy"><strong>Low</strong><small>Prioritizes performance on slower devices.</small></span>
+      </label>
+      <label class="bp-graphics-option">
+        <input type="radio" name="quality" value="high">
+        <span class="bp-graphics-option-copy"><strong>High</strong><small>Sharper detail on capable devices.</small></span>
+      </label>
+    </fieldset>
+    <button class="bp-graphics-continue" type="submit">Continue</button>
+    <p class="bp-graphics-note">Change this anytime by pressing Esc during a mission.</p>
+  </form>
+</dialog>
+<script type="module" src="/src/blackout/entry.ts"></script>
+</body>
+</html>
