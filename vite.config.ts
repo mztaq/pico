@@ -64,7 +64,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(process.cwd(), 'index.html'),
-        blackout: resolve(process.cwd(), 'app/game/blackout-protocol/index.html'),
+        blackout: resolve(process.cwd(), 'app/game/blackout-protocol.html'),
       },
     },
   },
