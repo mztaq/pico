@@ -64,6 +64,15 @@ describe('Custom 404 for invalid app routes',()=>{
         .toBe('/app/game/blackout-protocol/index.html');
     }
   });
+  it('redirects the former shorter game slug to the canonical path',async()=>{
+    for(const path of ['/app/game/blackout','/app/game/blackout/']){
+      const {ctx,fetch}=context(path);
+      const response=await nestedRoute(ctx);
+      expect(response.status).toBe(301);
+      expect(response.headers.get('location')).toBe('https://picompiler.pages.dev/app/game/blackout-protocol');
+      expect(fetch).not.toHaveBeenCalled();
+    }
+  });
   it('redirects older Blackout links to the nested Games route',()=>{
     const redirects=readFileSync(new URL('../public/_redirects',import.meta.url),'utf8');
     const oldPage=readFileSync(new URL('../public/blackout-protocol.html',import.meta.url),'utf8');
