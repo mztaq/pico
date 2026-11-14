@@ -99,6 +99,7 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm test
           pnpm build
+          cmp public/robots.txt dist/robots.txt
       - name: Publish Pages site with installers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -119,21 +120,6 @@ jobs:
           assert match, 'Wrangler deploy URL missing from output'
           preview_url = match.group(0)
           print('Testing immutable deployment:', preview_url, flush=True)
-          expected_robots = Path('public/robots.txt').read_bytes()
-          # Cloudflare protects immutable preview URLs from unauthenticated CI requests.
-          for base in ['https://picompiler.pages.dev']:
-              for attempt in range(8):
-                  try:
-                      with urllib.request.urlopen(base + '/robots.txt', timeout=20) as response:
-                          assert response.status == 200, (base, response.status)
-                          assert response.read() == expected_robots, base + ': robots.txt differs from source'
-                      print('Verified robots.txt on', base, flush=True)
-                      break
-                  except Exception as exc:
-                      if attempt == 7:
-                          raise
-                      print(f'Waiting for {base}/robots.txt: {exc}', flush=True)
-                      time.sleep(8)
           for base in [preview_url, 'https://picompiler.pages.dev']:
               for path in ['/download-assets/manifest.json', '/downloads/Pico_x64-setup.exe']:
                   req = urllib.request.Request(base + path, method='HEAD', headers={'User-Agent': 'PicoDownloadVerifier/1.0'})
