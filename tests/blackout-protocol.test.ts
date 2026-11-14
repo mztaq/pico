@@ -91,6 +91,13 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('station.ring.scale.setScalar(selected?1.16:1+.055*pulse)');
     expect(game).toContain("bpLobbyHelp.dataset.mode=next");
     expect(game).toContain("mission=station.mode==='attack'?'Disrupt the network':'Defend the data centre'");
+    expect(game).toContain('const bpLobbyStreams=bpLobbyStations.map(station=>');
+    expect(game).toContain('const count=lowQuality?5:11');
+    expect(game).toContain('instanced.frustumCulled=false');
+    expect(game).toContain('stream.mesh.instanceMatrix.needsUpdate=true');
+    expect(game).toContain("station.mode==='attack'");
+    expect(game).toContain('new THREE.OctahedronGeometry(.34,0)');
+    expect(game).toContain('new THREE.IcosahedronGeometry(.34,0)');
     expect(css).toContain('.bp-lobby-ui[data-mode="attack"] .bp-lobby-action');
     expect(css).toContain('.bp-lobby-ui[data-mode="defend"] .bp-lobby-action');
   });
