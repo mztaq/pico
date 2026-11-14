@@ -1095,6 +1095,34 @@ const bpLobbyInstances=(material,placements)=>{
   bpLobby.add(instanced);
   return instanced;
 };
+// Dedicated high-resolution sign textures replace the tiny, blurry 512px
+// generic labels. MeshBasicMaterial keeps words legible without adding lights.
+const bpLobbySignCache=new Map();
+function bpLobbySign(text,x,y,z,w,h,style='normal'){
+  const key=style+':'+text;
+  let material=bpLobbySignCache.get(key);
+  if(!material){
+    const canvas=document.createElement('canvas');
+    canvas.width=1024;canvas.height=256;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle=style==='hero'?'#233650':'#142438';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    const isSub=style==='sub';
+    ctx.fillStyle=isSub?'#bddbdc':'#f1f5ff';
+    ctx.font=(isSub?'700 76px':'900 116px')+' system-ui, sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(text,512,133,946);
+    const texture=new THREE.CanvasTexture(canvas);
+    texture.colorSpace=THREE.SRGBColorSpace;
+    texture.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),lowQuality?2:4);
+    texture.minFilter=THREE.LinearMipmapLinearFilter;
+    material=new THREE.MeshBasicMaterial({map:texture,toneMapped:false,side:THREE.FrontSide});
+    bpLobbySignCache.set(key,material);
+  }
+  const panel=mesh(new THREE.PlaneGeometry(w,h),material,[x,y,z],bpLobby,false);
+  panel.receiveShadow=false;
+  return panel;
+}
 // Polished lobby geometry, with a clear unobstructed central aisle.
 box(0,-.17,0,25,.33,29,bpLobbyFloor,bpLobby);
 box(0,3.85,-14.25,25,7.8,.38,bpLobbyWall,bpLobby);
@@ -1155,8 +1183,8 @@ for(const x of [-11.7,11.7]){
     box(x>0?x-.24:x+.24,3.65,z,.045,6.5,.12,bpLobbyWhite,bpLobby);
   }
 }
-label('BLACKOUT PROTOCOL',0,5.85,-14.01,11.6,.9,0,'#e2dbff',bpLobby);
-label('CHOOSE YOUR OPERATION',0,4.94,-13.99,8,.38,0,'#aee7e0',bpLobby);
+bpLobbySign('BLACKOUT PROTOCOL',0,5.85,-13.995,10.6,.92,'hero');
+bpLobbySign('CHOOSE YOUR OPERATION',0,4.90,-13.975,7.7,.52,'sub');
 // Suspended network core gives the room movement and a focal point. It never
 // casts shadows or creates an extra light. Low quality omits the outer details.
 const bpLobbyCore=new THREE.Group();bpLobby.add(bpLobbyCore);
@@ -1187,8 +1215,8 @@ for(const station of bpLobbyStations){
   box(x,2.53,z-.1,3.95,4.38,.28,bpLobbyDark,bpLobby);
   box(x,2.58,z+.09,3.55,3.85,.065,mat('#0b1829',{metal:.14,rough:.34,glow:.28}),bpLobby);
   // Station identity stays readable when the player is far away.
-  label(station.mode==='attack'?'ATTACK SIMULATOR':'DEFENCE COMMAND',x,4.23,z+.282,3.85,.57,0,'#f2f3ff',bpLobby);
-  label(station.mode==='attack'?'BREACH THE NETWORK':'PROTECT THE NETWORK',x,1.2,z+.29,3.15,.33,0,'#bcd4e3',bpLobby);
+  bpLobbySign(station.mode==='attack'?'ATTACK SIMULATOR':'DEFENCE COMMAND',x,4.22,z+.285,3.87,.66);
+  bpLobbySign(station.mode==='attack'?'BREACH THE NETWORK':'PROTECT THE NETWORK',x,1.16,z+.295,3.30,.48,'sub');
   const ringMaterial=accent;
   const ring=mesh(new THREE.TorusGeometry(.92,.058,6,32),ringMaterial,[x,2.67,z+.39],bpLobby,false);
   const halo=mesh(new THREE.TorusGeometry(1.23,.022,5,32),ringMaterial,[x,2.67,z+.41],bpLobby,false);
