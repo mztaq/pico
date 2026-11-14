@@ -70,7 +70,11 @@ it('opens Pico Team above the preserved home and keeps founder/concept content',
   expect(dialog.textContent).not.toMatch(/11BR|11BB/);
   expect(dialog.querySelectorAll('.site-info-links, .site-info-toc')).toHaveLength(0);
   expect(dialog.querySelectorAll('a[href^="#"]')).toHaveLength(0);
-  expect(host.querySelectorAll('.pico-home .site-info-links a')).toHaveLength(4);
+  // The home may grow new navigation links; the four policy destinations
+  // must remain available even when new sections (such as Games) are added.
+  const infoLinks=[...host.querySelectorAll<HTMLAnchorElement>('.pico-home .site-info-links a[href]')];
+  for(const path of ['/app/team','/app/privacy','/app/cookies','/app/terms'])
+    expect(infoLinks.some(link=>link.getAttribute('href')===path)).toBe(true);
   expect(document.activeElement).toBe(dialog.querySelector('h1'));
 
   await act(async () => dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')?.click());
