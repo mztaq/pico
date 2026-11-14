@@ -1311,6 +1311,7 @@ function bpLobbyTryEnter(){
   startGame(station.mode);
 }
 function bpEnterLobby(){
+  document.body.classList.add('bp-lobby-open');
   bpLobbyRendering=true;
   bpLobbyResolutionScale=1;bpLobbySampleStart=0;bpLobbyRenderedFrames=0;
   renderer.setPixelRatio(bpPixelRatio());
@@ -1867,6 +1868,7 @@ moveCamera=function(dt){
 };
 const bpOriginalStartGame=startGame;
 startGame=function(mode){
+  document.body.classList.remove('bp-lobby-open');
   bpLobbyRendering=false;
   bpLobbySampleStart=0;bpLobbyRenderedFrames=0;
   renderer.setPixelRatio(bpPixelRatio());
