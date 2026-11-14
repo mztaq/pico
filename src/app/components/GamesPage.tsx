@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from 'react';
-import { ArrowLeft, ArrowUpRight, Clock3, Gamepad2, ShieldCheck, Swords } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { loadSettings } from '../../storage/settings';
 import { cssVariables, getTheme } from '../themes';
 import { HomeAmbientCurves } from './HomeScreen';
@@ -9,7 +9,7 @@ const games = [
   {
     id: 'blackout-protocol',
     title: 'Blackout Protocol',
-    description: 'Explore a 3D data centre, defend the network or play as the hacker. Investigate incidents, manage proxies and avoid security patrols.',
+    description: 'Play as the hacker or defend a 3D data centre from network attacks.',
     href: '/blackout-protocol/',
   },
 ] as const;
@@ -83,40 +83,27 @@ export function GamesPage({ onHome }: { onHome: () => void }) {
   return <main className="pico-home pico-games" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as React.CSSProperties}>
     <HomeAmbientCurves />
     <nav className="pico-games-nav" aria-label="Games navigation">
+      <a href="/app" className="pico-games-brand" onClick={back} aria-label="Pico home"><img src="/pico-logo.svg" alt="" width="30" height="30"/> Pico<span>.</span></a>
       <a href="/app" className="pico-games-back" onClick={back}><ArrowLeft size={17} aria-hidden="true"/> Workspaces</a>
-      <a href="/app" className="pico-games-brand" onClick={back}><img src="/pico-logo.svg" alt="" width="30" height="30"/> Pico<span>.</span></a>
     </nav>
     <div className="home-inner pico-games-inner">
       <header className="pico-games-hero">
-        <p className="pico-games-eyebrow"><Gamepad2 size={17} aria-hidden="true"/> PICO GAMES</p>
-        <h1>Games</h1>
-        <p className="pico-games-intro">Play interactive computer science missions built for Pico.</p>
+        <h1 id="pico-games-section-title">Games</h1>
       </header>
       <section className="pico-games-library" aria-labelledby="pico-games-section-title">
-        <div className="pico-games-section-heading">
-          <h2 id="pico-games-section-title">Available games</h2>
-          <span>{games.length} available</span>
-        </div>
         <div className="pico-games-grid">
           {games.map(game => <a key={game.id} className="pico-games-card" href={game.href} aria-label={'Play ' + game.title}>
             <div className="pico-games-art">
               <GameArtwork />
-              <span className="pico-games-art-label">3D NETWORK SECURITY</span>
             </div>
             <div className="pico-games-card-body">
-              <div className="pico-games-card-title"><h3>{game.title}</h3><span className="pico-games-type">3D</span></div>
+              <div className="pico-games-card-title"><h3>{game.title}</h3></div>
               <p>{game.description}</p>
-              <div className="pico-games-details">
-                <span><Swords size={15} aria-hidden="true"/> Attack / Defence</span>
-                <span><ShieldCheck size={15} aria-hidden="true"/> Single-player</span>
-                <span><Clock3 size={15} aria-hidden="true"/> 18 min</span>
-              </div>
-              <span className="pico-games-play">Play game <ArrowUpRight size={17} aria-hidden="true"/></span>
+              <span className="pico-games-play">Play <ArrowUpRight size={17} aria-hidden="true"/></span>
             </div>
           </a>)}
         </div>
       </section>
-      <p className="pico-games-footnote">New games will appear here as they are released.</p>
     </div>
   </main>;
 }
