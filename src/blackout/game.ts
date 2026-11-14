@@ -680,13 +680,14 @@ class Soundscape {
   }
 }
 const sfx=new Soundscape();
-$('audio').onclick=()=>{$('audio').textContent=sfx.toggle()?'♫ ON':'♫ OFF';sfx.tap();};
+$('audio').onclick=()=>{$('audio').textContent=sfx.toggle()?'♫ ON':'♫ OFF';if(bpPaused)bpPauseAudio(true);else sfx.tap();};
 
 // --------------------------------------------------------------------------
 // Fictional gameplay model. There are no fetch(), WebSocket or live IP calls.
 // --------------------------------------------------------------------------
 const GAME_SECONDS=1080;
 let game=null,uiTick=0,toastTimer=0,visualTime=0,flashAlpha=0,endingDelay=0,alarmCooldown=0;
+let bpPaused=false,bpPauseReturnFocus=null;
 const ACTIONS={
   attack:[
     {id:'bots',title:'Recruit remote devices',description:'Increase the size of your device swarm.',cd:2,kind:'primary'},
@@ -924,12 +925,79 @@ for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('clic
   if(mode!=='attack'&&mode!=='defend')return;
   startGame(mode);
 });
-function menu(){game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;courtroom.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').hidden=false;$('home').inert=false;$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
-$('restart').onclick=()=>menu();
+function menu(){bpDismissPause();game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;courtroom.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').hidden=false;$('home').inert=false;$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
 $('again').onclick=()=>{const mode=game?.mode||'defend';startGame(mode);};
 $('menu').onclick=()=>menu();
+
+// One Escape menu owns mission settings and navigation. Simulation and sound
+// stay stopped until Resume is explicitly selected, including after tab changes.
+const bpPauseOverlay=$('bp-pause');
+const bpResumeButton=$('bp-resume');
+function bpPauseAudio(paused){
+  try{
+    const ctx=sfx.ctx;
+    if(ctx){const result=paused?ctx.suspend():ctx.resume();void result?.catch?.(()=>{});}
+  }catch(error){console.warn('[Blackout Protocol] Audio pause unavailable',error);}
+}
+function bpPause(reason='manual'){
+  if(!game||game.ended||bpPaused)return;
+  bpPaused=true;
+  bpPauseReturnFocus=document.activeElement;
+  bp.keys.clear();bp.dragging=false;view.drag=false;
+  if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
+  bpPauseAudio(true);
+  $('bp-pause-title').textContent=reason==='away'?'Welcome back':'Game paused';
+  $('bp-pause-note').textContent=reason==='away'
+    ?'The mission was paused when you left this tab.'
+    :'Your mission is paused. No time or requests are advancing.';
+  bpPauseOverlay.hidden=false;bpPauseOverlay.inert=false;
+  if(!document.hidden)bpResumeButton.focus();
+}
+function bpDismissPause(){
+  if(!bpPaused)return;
+  bpPaused=false;
+  bpPauseOverlay.hidden=true;bpPauseOverlay.inert=true;
+  bpPauseAudio(false);
+  bpPauseReturnFocus=null;
+}
+function bpResume(){
+  if(!bpPaused||!game||game.ended)return;
+  const returnFocus=bpPauseReturnFocus;
+  bpDismissPause();
+  bp.keys.clear();bp.dragging=false;
+  // Do not restore pointer lock automatically. The next canvas click is optional.
+  if(returnFocus?.isConnected&&!returnFocus.closest('#home')&&
+     !returnFocus.closest('#bp-pause'))returnFocus.focus?.();
+  else renderer.domElement.focus?.();
+}
+bpResumeButton.addEventListener('click',bpResume);
+$('bp-restart-mission').addEventListener('click',()=>{
+  if(!game||game.ended)return;
+  const mode=game.mode;
+  menu();
+  startGame(mode);
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)bpPause('away');
+});
 document.addEventListener('keydown',e=>{
-  if(e.code==='Escape'&&game){if(window.__bpEscape?.())return;menu();return;}
+  if(e.code==='Escape'&&game&&!game.ended){
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if(bpPaused)bpResume();else bpPause();
+    return;
+  }
+  if(bpPaused){
+    if(e.key==='Tab'){
+      const focusables=[...bpPauseOverlay.querySelectorAll('button:not(:disabled), a[href], select')];
+      if(focusables.length){
+        const first=focusables[0],last=focusables[focusables.length-1];
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      }
+    }
+    return;
+  }
   if(!game||game.ended)return;
   if(!window.__bpIsFPS?.()&&['Digit1','Digit2','Digit3'].includes(e.code))focus(['overview','hacker','servers'][Number(e.code.slice(-1))-1]);
 });
@@ -950,6 +1018,9 @@ function bpReportFrameError(stage,error){
 function frame(now=0){
   requestAnimationFrame(frame);
   const dt=Math.min(clock.getDelta(),.05);
+  // Continue requesting frames to drain the clock, but never advance any
+  // mission clocks, animations, NPCs, CCTV, or audio while paused.
+  if(bpPaused)return;
   visualTime+=dt;alarmCooldown=Math.max(0,alarmCooldown-dt);
   try{stepGame(dt);}catch(error){bpReportFrameError('simulation',error);}
   // Always restore the active player's camera, even after a simulation fault.
@@ -1622,7 +1693,7 @@ function bpTryInteract(){
 }
 const bpReservedKeys=new Set(['KeyW','KeyA','KeyS','KeyD','KeyC','KeyV','KeyE','KeyF','ShiftLeft','ShiftRight','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Digit1','Digit2','Digit3','Digit4']);
 document.addEventListener('keydown',e=>{
-  if(!bp.active || !game || game.ended)return;
+  if(!bp.active || !game || game.ended || bpPaused)return;
   if(bpReservedKeys.has(e.code))e.preventDefault();
   bp.keys.add(e.code);
   if(e.repeat)return;
@@ -1638,14 +1709,17 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyV'&&!bp.terminal){bp.third=!bp.third;sfx.tap();notify(bp.third?'SHOULDER CAMERA':'FIRST-PERSON CAMERA');}
 });
 document.addEventListener('keyup',e=>{bp.keys.delete(e.code);});
-window.addEventListener('blur',()=>{bp.keys.clear();bp.dragging=false;});
+window.addEventListener('blur',()=>{
+  bp.keys.clear();bp.dragging=false;
+  bpPause('away');
+});
 document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===renderer.domElement)bp.dragging=false;});
 renderer.domElement.addEventListener('pointerdown',e=>{
-  if(!bp.active||bp.terminal||e.button!==0||document.pointerLockElement===renderer.domElement)return;
+  if(bpPaused||!bp.active||bp.terminal||e.button!==0||document.pointerLockElement===renderer.domElement)return;
   bp.dragging=true;bp.dragX=e.clientX;bp.dragY=e.clientY;
 });
 renderer.domElement.addEventListener('pointermove',e=>{
-  if(!bp.active||!bp.dragging||bp.terminal||document.pointerLockElement===renderer.domElement)return;
+  if(bpPaused||!bp.active||!bp.dragging||bp.terminal||document.pointerLockElement===renderer.domElement)return;
   bp.yaw-=bpClamp(e.clientX-bp.dragX,-90,90)*.004;
   bp.pitch=bpClamp(bp.pitch-bpClamp(e.clientY-bp.dragY,-90,90)*.003,-1.3,1.3);
   bp.dragX=e.clientX;bp.dragY=e.clientY;
@@ -1653,12 +1727,12 @@ renderer.domElement.addEventListener('pointermove',e=>{
 renderer.domElement.addEventListener('pointerup',()=>{bp.dragging=false;});
 renderer.domElement.addEventListener('pointercancel',()=>{bp.dragging=false;});
 document.addEventListener('mousemove',e=>{
-  if(!bp.active || bp.terminal || document.pointerLockElement!==renderer.domElement)return;
+  if(bpPaused||!bp.active || bp.terminal || document.pointerLockElement!==renderer.domElement)return;
   bp.yaw-=bpClamp(e.movementX,-110,110)*.0023;
   bp.pitch=bpClamp(bp.pitch-bpClamp(e.movementY,-110,110)*.0019,-1.3,1.3);
 });
 renderer.domElement.addEventListener('click',event=>{
-  if(!bp.active||!game||game.ended)return;
+  if(bpPaused||!bp.active||!game||game.ended)return;
   const index=bpTerminalActionAt(event.clientX,event.clientY);
   if(index>=0){bpTerminalSelect(index);return;}
   if(!bp.terminal&&document.pointerLockElement!==renderer.domElement)
