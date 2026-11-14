@@ -122,7 +122,7 @@ export function BinaryLab({ onHome }: { onHome: () => void }) {
     <header className="binary-header pico-appbar">
       <div className="pico-appbar-lead">
         <button className="binary-icon-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17} /></button>
-        <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="24" height="24" /><span>Pico<span className="brand-period">.</span></span></div>
+        <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="24" height="24" /><span>Pico<span className="brand-period">.</span></span></button>
         <span className="pico-appbar-sep" aria-hidden="true">/</span><strong className="pico-appbar-tool">Binary Lab</strong>
       </div>
       <div className="binary-header-actions"><button className="binary-tutorial-button" aria-label="Open Binary Lab tutorial" onClick={() => setTourStep(0)}><BookOpen size={16} /> Tutorial</button><button className="binary-icon-button" aria-label="Binary Lab theme" title="Choose theme" onClick={() => setThemeOpen(true)}><Settings2 size={17} /></button></div>
