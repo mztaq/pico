@@ -14,7 +14,7 @@ describe('Blackout Protocol 3D', () => {
     expect(html).toContain('name="quality" value="low"');
     expect(html).toContain('name="quality" value="high"');
     expect(html).toContain('Recommended');
-    expect(html).toContain('Change this anytime using Graphics in the top bar.');
+    expect(html).toContain('Change this anytime by pressing Esc during a mission.');
     expect(entry).toContain("localStorage.getItem(QUALITY_KEY)");
     expect(entry).toContain("localStorage.setItem(QUALITY_KEY, quality)");
     expect(entry).toContain("setup.showModal()");
@@ -26,6 +26,31 @@ describe('Blackout Protocol 3D', () => {
     expect(html).toContain('<span class="bp-current-page">Blackout Protocol</span>');
     expect(css).toContain('#loading[hidden]{display:none!important}');
   });
+  it('pauses time, traffic, NPCs and audio on Escape or tab switch until Resume', () => {
+    expect(html).toContain('id="bp-pause" class="bp-pause" role="dialog" aria-modal="true"');
+    expect(html).toContain('aria-labelledby="bp-pause-title"');
+    expect(html).toContain('id="bp-resume"');
+    expect(html).toContain('id="bp-restart-mission"');
+    expect(html).toContain('id="bp-leave-game" class="bp-pause-leave" href="/app/games"');
+    expect(html).toContain('id="quality" aria-label="Graphics quality"');
+    expect(html).toContain('id="audio" class="bp-pause-sound"');
+    expect(html.match(/id="quality"/g)).toHaveLength(1);
+    expect(html.match(/id="audio"/g)).toHaveLength(1);
+    expect(game).toContain("if(e.code==='Escape'&&game&&!game.ended)");
+    expect(game).toContain("if(bpPaused)bpResume();else bpPause()");
+    expect(game).toContain("window.addEventListener('blur'");
+    expect(game).toContain("document.addEventListener('visibilitychange'");
+    expect(game).toContain("if(document.hidden)bpPause('away')");
+    expect(game).toContain("else if(bpPaused)bpResumeButton.focus()");
+    expect(game).toContain("if(bpPaused)return;\n  visualTime+=dt");
+    expect(game).toContain("bpPauseAudio(true)");
+    expect(game).toContain("bpPauseAudio(false)");
+    expect(game).toContain("bpPauseOverlay.hidden=false;bpPauseOverlay.inert=false");
+    expect(game).toContain("const mode=game.mode;\n  menu();\n  startGame(mode);");
+    expect(game).not.toContain("if(e.code==='Escape'&&game){if(window.__bpEscape?.())return;menu();return;}");
+    expect(css).toContain('#bp-pause[hidden]{display:none!important}');
+  });
+
   it('enters the playable camera for both modes and survives isolated frame faults', () => {
     expect(game).toContain("bp.active=true;bp.terminal=false;bp.third=false");
     expect(game).toContain("bpOfficeConsoleZ+2.45");
@@ -78,8 +103,10 @@ describe('Blackout Protocol 3D', () => {
     expect(html).toContain('src="/pico-logo.svg"');
     expect(html).toContain('href="/app/games"');
     expect(html).toContain('href="/app" aria-label="Pico, back to Workspaces"');
-    expect(html).toContain('href="/app/games">← Back to Games');
-    expect(html).toContain('aria-label="Return to Blackout mission menu"');
+    expect(html).toContain('href="/app/games" aria-label="Back to Games">← Back to Games');
+    expect(html).toContain('id="bp-restart-mission"');
+    expect(html).not.toContain('id="restart"');
+    expect(html).not.toContain('class="quality-control"');
     expect(html).not.toContain('title="Main menu">⌂');
     expect(css).toContain('.bp-brand-home:focus-visible');
   });
