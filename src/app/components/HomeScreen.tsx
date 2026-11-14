@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Binary, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
@@ -21,7 +21,19 @@ const HOME_AMBIENT_CURVES = [
   { d: 'M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304', width: 1.3, opacity: .28 },
 ] as const;
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic') => void }) {
+export function HomeAmbientCurves() {
+  return <svg className="pico-home-curves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    {HOME_AMBIENT_CURVES.map((curve, index) => (
+      <path key={index} d={curve.d} strokeWidth={curve.width} opacity={curve.opacity} />
+    ))}
+    {[0, 2].map(index => (
+      <path key={`flow-${index}`} d={HOME_AMBIENT_CURVES[index].d} pathLength={1000}
+        className={index === 0 ? 'pico-home-curve-flow' : 'pico-home-curve-flow pico-home-curve-flow--right'} />
+    ))}
+  </svg>;
+}
+
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic' | 'games') => void }) {
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
@@ -83,15 +95,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     return () => window.clearTimeout(timeout);
   }, [reportNotice]);
   return <main className="pico-home" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
-      <svg className="pico-home-curves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-        {HOME_AMBIENT_CURVES.map((curve, index) => (
-          <path key={index} d={curve.d} strokeWidth={curve.width} opacity={curve.opacity} />
-        ))}
-        {[0, 2].map(index => (
-          <path key={`flow-${index}`} d={HOME_AMBIENT_CURVES[index].d} pathLength={1000}
-            className={index === 0 ? 'pico-home-curve-flow' : 'pico-home-curve-flow pico-home-curve-flow--right'} />
-        ))}
-      </svg>
+      <HomeAmbientCurves />
     <div className="home-nav">
       <div className="home-theme-anchor" ref={themeMenuRef}>
         <button type="button" className="home-theme-trigger" aria-label="Change theme" aria-expanded={themeOpen} aria-controls="home-theme-menu" onClick={() => setThemeOpen(open => !open)}>
@@ -102,6 +106,11 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </div>}
       </div>
       <div className="home-updates">
+        <a className="home-games-link" href="/app/games" onClick={event => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          onChoose('games');
+        }}><Gamepad2 size={16} aria-hidden="true" /><span>Games</span></a>
         <SoundButton /><UpdateCenter />
       </div>
     </div>
@@ -156,14 +165,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
               <circle cx="164" cy="38" r="5" className="home-traffic-packet"/><circle cx="220" cy="38" r="3" className="home-traffic-packet"/>
             </svg>
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Network size={18}/>} title="Blackout Protocol 3D" description="Play an interactive 3D attack-or-defend server security mission." onClick={() => { window.location.href = '/blackout-protocol/'; }}>
-            <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 76" aria-hidden="true">
-              <path className="home-chart-link" d="M35 54 L92 30 L152 50 L220 22 L300 38 M92 30 L92 10 M220 22 L220 7"/>
-              <rect x="7" y="32" width="46" height="36" rx="5"/><rect x="144" y="27" width="44" height="39" rx="5"/><rect x="284" y="20" width="51" height="47" rx="5"/>
-              <path d="M17 43 H42 M17 51 H42 M154 40 H178 M154 49 H178 M296 34 H322 M296 44 H322 M296 54 H322"/>
-              <circle cx="92" cy="30" r="5" className="home-traffic-packet"/><circle cx="220" cy="22" r="5" className="home-traffic-packet"/>
-            </svg>
-          </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">
           <WorkspaceChoice icon={<Calculator size={18} />} title="Binary Lab" description="Explore bits, hexadecimal, logical shifts, overflow and two’s complement." onClick={() => onChoose('binary')}>
@@ -171,6 +172,16 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
               <div className="home-binary-byte">{'00101010'.split('').map((bit, index) => <span className={bit === '1' ? 'on' : ''} key={index}>{bit}</span>)}</div>
               <div className="home-binary-equation"><code>0010 1010</code><span>=</span><strong>42</strong><span>=</span><code>0x2A</code></div>
             </div>
+          </WorkspaceChoice>
+        </HomeGroup>
+        <HomeGroup label="Games" detail="Play interactive computer science missions" kind="games">
+          <WorkspaceChoice icon={<Gamepad2 size={18} />} title="Open Games" description="Visit the games library to play Blackout Protocol and future Pico games." onClick={() => onChoose('games')}>
+            <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 76" aria-hidden="true">
+              <path className="home-chart-link" d="M35 54 L92 30 L152 50 L220 22 L300 38 M92 30 L92 10 M220 22 L220 7"/>
+              <rect x="7" y="32" width="46" height="36" rx="5"/><rect x="144" y="27" width="44" height="39" rx="5"/><rect x="284" y="20" width="51" height="47" rx="5"/>
+              <path d="M17 43 H42 M17 51 H42 M154 40 H178 M154 49 H178 M296 34 H322 M296 44 H322 M296 54 H322"/>
+              <circle cx="92" cy="30" r="5" className="home-traffic-packet"/><circle cx="220" cy="22" r="5" className="home-traffic-packet"/>
+            </svg>
           </WorkspaceChoice>
         </HomeGroup>
       </div>
@@ -196,7 +207,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
   </main>;
 }
 
-function HomeGroup({ label, detail, children, kind }: { label: string; detail: string; children: ReactNode; kind?: 'visual' | 'data' }) {
+function HomeGroup({ label, detail, children, kind }: { label: string; detail: string; children: ReactNode; kind?: 'visual' | 'data' | 'games' }) {
   return <section className={`home-group${kind ? ` home-group--${kind}` : ''}`} aria-label={label}>
     <div className="home-group-head"><span className="home-group-label">{label}</span><span className="home-group-detail">{detail}</span></div>
     <div className="home-group-grid">{children}</div>
