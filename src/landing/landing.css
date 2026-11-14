@@ -196,6 +196,9 @@ html.pico-landing-scroll{scroll-padding-top:94px}
 /* Minimal footer. No duplicate branding, links or decorative layout. */
 .lp-footer{border-top:1px solid var(--lp-line);padding:22px 0 24px;text-align:center}
 .lp-footer small{display:block;color:#9ba0bb;font-size:14px;line-height:1.6;letter-spacing:.1px}
+.lp-footer .lp-legal-link{display:inline-block;margin-top:4px;color:#9ba0bb;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.lp-footer .lp-legal-link:hover,.lp-footer .lp-legal-link:focus-visible{color:var(--lp-text)}
+.lp-footer .lp-protected-notice{margin-top:4px;font-size:12px}
 
 /* Stack at tablet widths. The mobile menu stays attached to the sticky header. */
 @media(max-width:1150px){
