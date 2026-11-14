@@ -68,6 +68,8 @@ body:has(.pico-cookie-banner) .pico-home {
   background: transparent;
 }
 .pico-home .home-brand { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 49px; font-weight: 750; letter-spacing: -.8px; }
+.pico-home .home-brand { color: var(--ds-text); text-decoration: none; border-radius: 10px; }
+.pico-home .home-brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .pico-home .home-brand img { width: 52px; height: 52px; }
 .pico-home .home-updates { position: absolute; right: max(20px, calc(50% - 540px)); top: 0; height: 60px; display: flex; align-items: center; gap: 8px; }
 .pico-home .home-games-link { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 10px; border-radius: var(--ds-radius-md); color: var(--ds-muted); text-decoration: none; font-size: 12px; font-weight: 600; }
