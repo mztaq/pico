@@ -1,0 +1,4 @@
+# Historical standalone Blackout URL now lives under Pico Games.
+/blackout-protocol       /app/game/blackout 301
+/blackout-protocol/      /app/game/blackout 301
+/blackout-protocol/*     /app/game/blackout 301
