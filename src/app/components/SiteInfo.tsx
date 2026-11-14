@@ -32,6 +32,7 @@ export function SiteInfoLinks({ current }: { current?: InformationPage }) {
     }}>
       <Icon size={17} aria-hidden="true" /><span>{title}</span>
     </a>)}
+    <a href="/legal/ai-usage"><FileText size={17} aria-hidden="true" /><span>Copyright &amp; AI Usage</span></a>
   </nav>;
 }
 

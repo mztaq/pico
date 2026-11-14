@@ -98,12 +98,13 @@ describe('Pico landing page', () => {
     expect(container.querySelector('a[href="#downloads"]')).not.toBeNull();
     expect(container.querySelector('header.lp-header a[href="/mcp-docs"]')?.textContent).toBe('MCP Docs');
   });
-  it('uses only one small copyright line in the footer', async () => {
+  it('keeps the existing copyright line and links to the usage policy', async () => {
     await render();
     const footer=container.querySelector('footer.lp-footer');
-    expect(footer?.querySelector('small')?.textContent)
+    expect(footer?.querySelector('small:first-child')?.textContent)
       .toBe('© 2026 Pico Development Team. All rights reserved.');
-    expect(footer?.querySelectorAll('a')).toHaveLength(0);
+    expect(footer?.querySelector('a')?.getAttribute('href')).toBe('/legal/ai-usage');
+    expect(footer?.querySelector('a')?.textContent).toBe('Copyright & AI Usage');
     expect(footer?.querySelector('img')).toBeNull();
     expect(footer?.querySelector('nav')).toBeNull();
   });
@@ -145,7 +146,7 @@ describe('Pico landing page', () => {
     await render();
     expect(container.querySelector('.lp-header')).not.toBeNull();
     expect(container.querySelector('.lp-nav-start')).toBeNull();
-    expect(container.querySelector('footer small')?.textContent)
+    expect(container.querySelector('footer small:first-child')?.textContent)
       .toBe('© 2026 Pico Development Team. All rights reserved.');
   });
   it('serves the three current Pico installers through Cloudflare when GitHub is private', () => {
