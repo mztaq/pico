@@ -70,7 +70,9 @@ it('opens Pico Team above the preserved home and keeps founder/concept content',
   expect(dialog.textContent).not.toMatch(/11BR|11BB/);
   expect(dialog.querySelectorAll('.site-info-links, .site-info-toc')).toHaveLength(0);
   expect(dialog.querySelectorAll('a[href^="#"]')).toHaveLength(0);
-  expect(host.querySelectorAll('.pico-home .site-info-links a')).toHaveLength(4);
+  expect([...host.querySelectorAll<HTMLAnchorElement>('.pico-home .site-info-links a')].map(link => link.getAttribute('href'))).toEqual([
+    '/app/team', '/app/privacy', '/app/cookies', '/app/terms', '/legal/ai-usage',
+  ]);
   expect(document.activeElement).toBe(dialog.querySelector('h1'));
 
   await act(async () => dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')?.click());
