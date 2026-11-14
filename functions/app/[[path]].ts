@@ -9,13 +9,12 @@ export async function onRequestGet({request,env}:Context):Promise<Response>{
   // The built asset is app/game/blackout-protocol.html. Cloudflare Pages
   // serves that file at its extensionless URL. Never fetch /index.html here:
   // Pages redirects that back to the folder URL and would cause a loop.
-  if(url.pathname==='/app/game/blackout-protocol/'){
-    const canonical=new URL(request.url);
-    canonical.pathname='/app/game/blackout-protocol';
-    return Response.redirect(canonical,302);
-  }
-  if(url.pathname==='/app/game/blackout-protocol'){
-    return env.ASSETS.fetch(request);
+  if(/^\/app\/game\/blackout-protocol\/?$/.test(url.pathname)){
+    // Serve both variants directly. A browser might have cached the former
+    // folder redirect from /blackout-protocol to /blackout-protocol/.
+    // Never redirect them back and forth.
+    url.pathname='/app/game/blackout-protocol';
+    return env.ASSETS.fetch(new Request(url,request));
   }
   // Redirect preview links that used the earlier shorter game slug.
   if(/^\/app\/game\/blackout\/?$/.test(url.pathname)){
