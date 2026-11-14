@@ -1,4 +1,4 @@
-/* Separate Games library. Reuse Pico's saved theme and home background. */
+/* Games library follows Pico's home theme and spacing. */
 .pico-games .pico-games-nav {
   position: relative;
   z-index: 2;
@@ -6,67 +6,56 @@
   align-items: center;
   justify-content: space-between;
   width: min(1120px, calc(100% - 40px));
-  height: 72px;
+  height: 70px;
   margin: auto;
   border-bottom: 1px solid var(--ds-line);
 }
-.pico-games-back,
-.pico-games-brand {
+.pico-games-brand,
+.pico-games-back {
   display: inline-flex;
   align-items: center;
   gap: 9px;
   text-decoration: none;
+}
+.pico-games-brand {
+  color: var(--ds-text);
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -.045em;
+}
+.pico-games-brand img { width: 32px; height: 32px; }
+.pico-games-brand span { color: var(--accent); margin-left: -9px; }
+.pico-games-back {
+  padding: 9px 12px;
+  margin-right: -12px;
+  border-radius: var(--ds-radius-md);
   color: var(--ds-muted);
   font-size: 13px;
   font-weight: 650;
 }
-.pico-games-back { padding: 9px 12px; margin-left: -12px; border-radius: var(--ds-radius-md); }
 .pico-games-back:hover { color: var(--ds-text); background: var(--ds-hover); }
-.pico-games-brand { color: var(--ds-text); font-size: 19px; font-weight: 750; letter-spacing: -.045em; }
-.pico-games-brand img { width: 30px; height: 30px; }
-.pico-games-brand span { color: var(--accent); margin-left: -9px; }
 .pico-games :is(.pico-games-back, .pico-games-brand, .pico-games-card):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
-.pico-games .pico-games-inner { padding-top: clamp(56px, 9vh, 108px); padding-bottom: 68px; }
-.pico-games-hero { margin: 0 auto 68px; text-align: center; max-width: 600px; }
-.pico-games-eyebrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  margin: 0 0 18px;
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: .17em;
+.pico-games .pico-games-inner {
+  padding-top: clamp(32px, 5vh, 56px);
+  padding-bottom: 56px;
 }
+.pico-games-hero { margin: 0 0 28px; text-align: left; }
 .pico-games .pico-games-hero h1 {
-  font-size: clamp(44px, 6vw, 66px);
-  line-height: 1.1;
-  font-weight: 760;
-  letter-spacing: -.06em;
+  font-size: clamp(32px, 4vw, 42px);
+  font-weight: 720;
+  line-height: 1.15;
+  letter-spacing: -.04em;
 }
-.pico-games-intro { margin: 16px 0 0; color: var(--ds-muted); font-size: 15px; line-height: 1.6; }
-.pico-games-section-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid var(--ds-line);
-  padding-bottom: 13px;
-  margin-bottom: 18px;
-}
-.pico-games-section-heading h2 { margin: 0; color: var(--ds-text); font-size: 18px; font-weight: 700; }
-.pico-games-section-heading span { color: var(--ds-muted); font-size: 12px; }
 .pico-games-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .pico-games-card {
   display: grid;
-  grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
-  overflow: hidden;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
   min-width: 0;
-  min-height: 300px;
+  min-height: 248px;
+  overflow: hidden;
   border: 1px solid var(--ds-line-strong);
   border-radius: var(--ds-radius-lg);
   background: var(--ds-panel);
@@ -76,68 +65,52 @@
 }
 .pico-games-card:hover { border-color: var(--accent); transform: translateY(-2px); }
 .pico-games-art {
-  position: relative;
   display: grid;
   place-items: center;
   overflow: hidden;
-  min-height: 300px;
+  min-height: 248px;
   background: #0b1224;
   border-right: 1px solid var(--ds-line);
 }
-.pico-games-blackout-art { display: block; width: 100%; height: 100%; min-height: 300px; object-fit: cover; }
 .games-blackout-art { display: block; width: 100%; height: 100%; }
-.pico-games-art::after {
-  content: "";
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 65%, #0b1224b8);
+.pico-games-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  padding: clamp(22px, 3vw, 32px);
 }
-.pico-games-art-label {
-  position: absolute;
-  z-index: 1;
-  bottom: 20px;
-  left: 22px;
-  padding: 7px 10px;
-  border: 1px solid #cba6f755;
-  border-radius: 6px;
-  background: #131b2bdd;
-  color: #d9d2ff;
-  font: 700 10px var(--ds-font-code);
-  letter-spacing: .08em;
+.pico-games-card-title h3 {
+  margin: 0;
+  font-size: clamp(23px, 2.5vw, 29px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -.035em;
 }
-.pico-games-card-body { display: flex; flex-direction: column; gap: 0; padding: clamp(22px, 3.2vw, 34px); }
-.pico-games-card-title { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.pico-games-card-title h3 { margin: 0; font-size: clamp(22px, 2.5vw, 29px); letter-spacing: -.04em; line-height: 1.25; }
-.pico-games-type {
-  padding: 4px 7px;
-  border: 1px solid var(--ds-line-strong);
-  border-radius: var(--ds-radius-pill);
+.pico-games-card-body > p {
+  margin: 12px 0 0;
+  max-width: 360px;
   color: var(--ds-muted);
-  font: 600 11px var(--ds-font-code);
+  font-size: 14px;
+  line-height: 1.6;
 }
-.pico-games-card-body > p { margin: 17px 0 0; color: var(--ds-muted); font-size: 14px; line-height: 1.65; }
-.pico-games-details { display: flex; flex-wrap: wrap; gap: 10px 17px; margin-top: 19px; }
-.pico-games-details span { display: inline-flex; align-items: center; gap: 6px; color: var(--ds-muted); font-size: 12px; }
 .pico-games-play {
-  margin-top: auto;
-  padding-top: 24px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  margin-top: 24px;
   color: var(--accent);
   font-size: 14px;
   font-weight: 700;
 }
-.pico-games-footnote { margin: 24px 0 0; color: var(--ds-muted); font-size: 12px; }
 @media (max-width: 760px) {
-  .pico-games .pico-games-nav { width: calc(100% - 32px); }
-  .pico-games .pico-games-inner { padding-top: 52px; }
-  .pico-games-hero { margin-bottom: 46px; }
-  .pico-games-card { grid-template-columns: minmax(0,1fr); }
-  .pico-games-art { min-height: 216px; height: 216px; border-right: 0; border-bottom: 1px solid var(--ds-line); }
+  .pico-games .pico-games-nav { width: calc(100% - 32px); height: 62px; }
+  .pico-games .pico-games-inner { padding-top: 34px; }
+  .pico-games-hero { margin-bottom: 22px; }
+  .pico-games-card { grid-template-columns: minmax(0, 1fr); }
+  .pico-games-art { height: 200px; min-height: 200px; border-right: 0; border-bottom: 1px solid var(--ds-line); }
   .pico-games-card-body { padding: 22px 20px 24px; }
-  .pico-games-play { margin-top: 0; }
+  .pico-games-play { margin-top: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pico-games-card { transition: none; }
