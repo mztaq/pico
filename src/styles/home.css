@@ -226,6 +226,8 @@ body:has(.pico-cookie-banner) .pico-home {
   .home-group-grid, .home-group--visual .home-group-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .compiler-choice-stage { height: 112px; padding: 14px 16px; }
   .compiler-choice-copy { padding: 16px; }
+  .home-group--data .compiler-choice { flex-direction: column; }
+  .home-group--data .compiler-choice-stage { flex: none; height: 112px; min-height: 0; border-right: 0; border-bottom: 1px solid var(--ds-line); }
   .pico-home .compiler-choice:hover { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
