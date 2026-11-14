@@ -1081,8 +1081,7 @@ for(const x of [-10.98,10.98]){
     }
   }
 }
-label('BLACKOUT  /  SELECT YOUR SIDE',0,4.5,-12.21,12.8,.78,0,'#d4cffd',bpLobby);
-label('WALK TO A STATION  -  PRESS E',0,3.77,-12.2,8.8,.38,0,'#a5b8d2',bpLobby);
+label('SELECT MISSION',0,4.5,-12.21,10.2,.78,0,'#d4cffd',bpLobby);
 const bpLobbyStations=[
   {mode:'attack',name:'ATTACK',x:-5.2,z:-7.35,color:bpLobbyAttack,light:null},
   {mode:'defend',name:'DEFEND',x:5.2,z:-7.35,color:bpLobbyDefense,light:null},
