@@ -8,10 +8,14 @@ export async function onRequestGet({request,env}:Context):Promise<Response>{
   const url=new URL(request.url);
   // Blackout is a separate Vite HTML entry, not the React workspace app.
   // Resolve both canonical and trailing-slash URLs to its built HTML asset.
-  if(/^\/app\/game\/blackout\/?$/.test(url.pathname)){
-    url.pathname='/app/game/blackout/index.html';
+  if(/^\/app\/game\/blackout-protocol\/?$/.test(url.pathname)){
+    url.pathname='/app/game/blackout-protocol/index.html';
     url.search='';
     return env.ASSETS.fetch(new Request(url,request));
+  }
+  // Redirect preview links that used the earlier shorter game slug.
+  if(/^\/app\/game\/blackout\/?$/.test(url.pathname)){
+    return Response.redirect(new URL('/app/game/blackout-protocol',request.url),301);
   }
   if(appRoute.test(url.pathname)){
     url.pathname='/';
