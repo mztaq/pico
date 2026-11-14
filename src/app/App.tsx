@@ -430,7 +430,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     <header className="topbar pico-appbar" inert={tutorialOpen || tutorialOfferOpen}>
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
-        <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26" /><span>Pico</span><span className="brand-period">.</span></div>
+        <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={() => leaveWorkspace()}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26" /><span>Pico</span><span className="brand-period">.</span></button>
         <span className="pico-appbar-sep" aria-hidden="true">/</span>
         <span className="brand-subtitle pico-appbar-tool">{isPython ? pythonVersion || "Python" : "Pseudocode"}</span>
         <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />
