@@ -8,18 +8,18 @@ import { HomeLoading } from '../src/app/components/WorkspaceLoading';
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Pico workspace-selector home skeleton',()=>{
-  it('matches the Code, Visual Labs, Data Lab and Games card counts',()=>{
+  it('matches the Code, Visual Labs and Data Lab card counts',()=>{
     const html=renderToStaticMarkup(createElement(HomeLoading));
     expect(html).toContain('data-loading-workspace="Home"');
     expect(html).toContain('aria-label="Opening Pico home"');
     expect(html).toContain('role="status"');
     expect(html).toContain('aria-hidden="true"');
-    expect((html.match(/class="pico-load-home-card"/g)??[])).toHaveLength(8);
-    expect((html.match(/class="pico-load-home-section /g)??[])).toHaveLength(4);
+    expect((html.match(/class="pico-load-home-card"/g)??[])).toHaveLength(7);
+    expect((html.match(/class="pico-load-home-section /g)??[])).toHaveLength(3);
     expect(html).toContain('pico-load-home-section--code');
     expect(html).toContain('pico-load-home-section--visual');
     expect(html).toContain('pico-load-home-section--data');
-    expect(html).toContain('pico-load-home-section--games');
+    expect(html).not.toContain('pico-load-home-section--games');
     expect(html).not.toMatch(/<button\b|<a\b|<input\b/);
   });
 
@@ -60,7 +60,7 @@ describe('Pico workspace-selector home skeleton',()=>{
       expect(document.defaultView!.getComputedStyle(landing).display==='none').toBe(path!=='/');
     }
     const home=new JSDOM(initialHtml).window.document.querySelector('.pico-initial-home-loading');
-    expect(home?.querySelectorAll('.pico-initial-home-card')).toHaveLength(8);
-    expect(home?.querySelectorAll('.pico-initial-home-group')).toHaveLength(4);
+    expect(home?.querySelectorAll('.pico-initial-home-card')).toHaveLength(7);
+    expect(home?.querySelectorAll('.pico-initial-home-group')).toHaveLength(3);
   });
 });
