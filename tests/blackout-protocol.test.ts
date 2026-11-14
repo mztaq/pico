@@ -95,6 +95,11 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("bpLobbyRendering&&lowQuality?bpLobbyResolutionScale:1");
     expect(game).toContain("lastDraw=now-(now-lastDraw)%frameInterval");
     expect(game).toContain("bpTrackLobbyPerformance(now)");
+    expect(game).toContain("function bpLobbyBox(x,y,z,w,h,d,material,parent=bpLobby)");
+    expect(game).toContain("result.castShadow=false;result.receiveShadow=false");
+    expect(game).toContain("document.body.classList.add('bp-lobby-open')");
+    expect(game).toContain("document.body.classList.remove('bp-lobby-open')");
+    expect(css).toContain("body.bp-lobby-open #vignette{background:radial-gradient(");
     expect(game).toContain('new THREE.MeshBasicMaterial({map:texture,toneMapped:false');
     expect(game).not.toContain('lowQuality?.72:1.5');
     // A 1080p PC uses <= 1.55M lobby pixels on Low, instead of the
