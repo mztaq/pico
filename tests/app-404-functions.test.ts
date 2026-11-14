@@ -1,5 +1,5 @@
 import {describe,expect,it,vi} from 'vitest';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 import {onRequestGet as workspaceRoute} from '../functions/app/[workspace]';
 import {onRequestGet as nestedRoute} from '../functions/app/[[path]]';
 
@@ -72,6 +72,7 @@ describe('Custom 404 for invalid app routes',()=>{
     const vite=readFileSync(new URL('../vite.config.ts',import.meta.url),'utf8');
     expect(html).toContain('src="/src/blackout/entry.ts"');
     expect(vite).toContain("'app/game/blackout-protocol.html'");
+    expect(existsSync(new URL('../app/game/blackout-protocol/index.html',import.meta.url))).toBe(false);
   });
   it('redirects the former shorter game slug to the canonical path',async()=>{
     for(const path of ['/app/game/blackout','/app/game/blackout/']){
