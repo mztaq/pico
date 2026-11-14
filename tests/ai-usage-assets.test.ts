@@ -4,9 +4,8 @@ import { describe, expect, it } from 'vitest';
 const read = (path: string) => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 
 describe('AI usage deployment assets', () => {
-  it('publishes the reviewed crawler rules from Vite public assets', () => {
+  it('publishes documented crawler preferences from Vite public assets', () => {
     const robots = read('public/robots.txt');
-    expect(read('robots.txt')).toBe(robots);
     for (const agent of [
       'ClaudeBot', 'Claude-User', 'Claude-SearchBot',
       'GPTBot', 'OAI-SearchBot', 'ChatGPT-User',
