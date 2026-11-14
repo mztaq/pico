@@ -42,7 +42,8 @@ function SkipToContent() {
 // there only inside their native webviews, without changing the browser URL.
 const inApp = shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window));
 const isHomePage = (window.location.pathname === '/' || window.location.pathname === '/index.html') && !inApp;
-const isAiUsagePage = /^\/legal\/ai-usage\/?$/.test(window.location.pathname);
+// AI usage is a Pico information page, served at /app but rendered outside the workspace shell.
+const isAiUsagePage = /^\/app\/ai-usage\/?$/.test(window.location.pathname);
 // Direct workspace paths and legacy query links share the same loading skeleton.
 function directVisualWorkspace(pathname: string, search: string): VisualWorkspace | null {
   switch (workspaceFromLocation(pathname, search)) {
