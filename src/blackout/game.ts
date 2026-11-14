@@ -1177,10 +1177,24 @@ for(const station of bpLobbyStations){
   const halo=mesh(new THREE.TorusGeometry(1.23,.022,5,32),ringMaterial,[x,2.67,z+.41],bpLobby,false);
   ring.scale.setScalar(1);
   station.ring=ring;station.halo=halo;
-  station.core=ball(x,2.67,z+.42,.20,accent,bpLobby);
+  const coreGeometry=station.mode==='attack'
+    ?new THREE.OctahedronGeometry(.34,0)
+    :new THREE.IcosahedronGeometry(.34,0);
+  station.core=mesh(coreGeometry,accent,[x,2.67,z+.43],bpLobby,false);
   // Two real light sources at most, and none on Low.
   if(!lowQuality)station.light=light(x,3.1,z+2.0,station.mode==='attack'?0xff8879:0x73e2d2,1.8,7,bpLobby);
 }
+// Light-data pulses travel along the floor. Two meshes, capped at five
+// instances per stream on Low. No particles, transparency sorting or lights.
+const bpLobbyStreams=bpLobbyStations.map(station=>{
+  const count=lowQuality?5:11;
+  const instanced=new THREE.InstancedMesh(geoBox,station.color,count);
+  instanced.castShadow=false;instanced.receiveShadow=false;
+  instanced.frustumCulled=false;
+  bpLobby.add(instanced);
+  return {mesh:instanced,count,station};
+});
+const bpLobbyPulse=new THREE.Object3D();
 const bpLobbyCross=mat('#91a8c6',{metal:.25,rough:.49,glow:.4});
 bpLobbyInstances(bpLobbyCross,[
   [-.75,2.2,-12.45,.08,1.2,.05],[.75,2.2,-12.45,.08,1.2,.05],
@@ -1238,6 +1252,16 @@ function bpLobbyAnimate(time){
   bpLobbyCoreBody.rotation.z=time*.14;
   bpLobbyCoreRing.rotation.z=time*.14;
   if(bpLobbyCoreOuter)bpLobbyCoreOuter.rotation.y=time*.13+.55;
+  for(const stream of bpLobbyStreams){
+    for(let j=0;j<stream.count;j++){
+      const progress=(time*2.25+j*1.7)%14;
+      bpLobbyPulse.position.set(stream.station.x,.095,9.45-progress);
+      bpLobbyPulse.scale.set(.065,.04,.18);
+      bpLobbyPulse.updateMatrix();
+      stream.mesh.setMatrixAt(j,bpLobbyPulse.matrix);
+    }
+    stream.mesh.instanceMatrix.needsUpdate=true;
+  }
   const nearby=bpLobbyNearby();
   for(let i=0;i<bpLobbyStations.length;i++){
     const station=bpLobbyStations[i];
