@@ -946,10 +946,9 @@ function bpPause(reason='manual'){
   bp.keys.clear();bp.dragging=false;view.drag=false;
   if(document.pointerLockElement===renderer.domElement)void document.exitPointerLock?.();
   bpPauseAudio(true);
-  $('bp-pause-title').textContent=reason==='away'?'Welcome back':'Game paused';
-  $('bp-pause-note').textContent=reason==='away'
-    ?'The mission was paused when you left this tab.'
-    :'Your mission is paused. No time or requests are advancing.';
+  $('bp-pause-title').textContent='Paused';
+  $('bp-pause-note').hidden=reason!=='away';
+  $('bp-pause-note').textContent='Paused while you were away.';
   bpPauseOverlay.hidden=false;bpPauseOverlay.inert=false;
   if(!document.hidden)bpResumeButton.focus();
 }
@@ -971,6 +970,7 @@ function bpResume(){
   else renderer.domElement.focus?.();
 }
 bpResumeButton.addEventListener('click',bpResume);
+$('bp-leave-game').addEventListener('click',()=>menu());
 $('bp-restart-mission').addEventListener('click',()=>{
   if(!game||game.ended)return;
   const mode=game.mode;
