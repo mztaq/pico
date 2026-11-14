@@ -78,6 +78,23 @@ describe('Blackout Protocol 3D', () => {
     expect(css).toContain('#bp-lobby-ui[hidden],#bp-lobby-action[hidden]');
   });
 
+  it('renders a detailed lobby efficiently on low-end machines', () => {
+    expect(game).toContain('const bpLobbyInstances=(material,placements)=>');
+    expect(game).toContain('new THREE.InstancedMesh(geoBox,material,placements.length)');
+    expect(game).toContain("const bpLobbyRackRows=lowQuality?");
+    expect(game).toContain('if(!lowQuality)station.light=light(');
+    expect(game).toContain('const bpLobbyCoreOuter=lowQuality?null:');
+    expect(game).toContain("if(!bp.lobby||(lowQuality&&time-bpLobbyLastFrame<.1))return");
+    expect(game).toContain('if(bp.lobby){bpLobbyAnimate(t);return;}');
+    expect(game).toContain('if(!bp.lobby){\n    try{bpAnimateRequestPackets(visualTime);}');
+    expect(game).toContain('bpLobbyCoreBody.rotation.y=time*.25');
+    expect(game).toContain('station.ring.scale.setScalar(selected?1.16:1+.055*pulse)');
+    expect(game).toContain("bpLobbyHelp.dataset.mode=next");
+    expect(game).toContain("mission=station.mode==='attack'?'Disrupt the network':'Defend the data centre'");
+    expect(css).toContain('.bp-lobby-ui[data-mode="attack"] .bp-lobby-action');
+    expect(css).toContain('.bp-lobby-ui[data-mode="defend"] .bp-lobby-action');
+  });
+
   it('enters the playable camera for both modes and survives isolated frame faults', () => {
     expect(game).toContain("bp.active=true;bp.terminal=false;bp.third=false");
     expect(game).toContain("bpOfficeConsoleZ+2.45");
