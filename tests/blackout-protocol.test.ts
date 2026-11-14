@@ -31,7 +31,8 @@ describe('Blackout Protocol 3D', () => {
     expect(html).toContain('aria-labelledby="bp-pause-title"');
     expect(html).toContain('id="bp-resume"');
     expect(html).toContain('id="bp-restart-mission"');
-    expect(html).toContain('id="bp-leave-game" class="bp-pause-leave" href="/app/games"');
+    expect(html).toContain('id="bp-leave-game" class="bp-pause-leave"');
+    expect(game).toContain("$('bp-leave-game').addEventListener('click',()=>menu());");
     expect(html).toContain('id="quality" aria-label="Graphics quality"');
     expect(html).toContain('id="audio" class="bp-pause-sound"');
     expect(html.match(/id="quality"/g)).toHaveLength(1);
@@ -49,6 +50,32 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain("const mode=game.mode;\n  menu();\n  startGame(mode);");
     expect(game).not.toContain("if(e.code==='Escape'&&game){if(window.__bpEscape?.())return;menu();return;}");
     expect(css).toContain('#bp-pause[hidden]{display:none!important}');
+  });
+
+  it('starts in a walkable 3D lobby and chooses Attack or Defence with the E key', () => {
+    expect(html).toContain('<section id="home" hidden inert aria-hidden="true"></section>');
+    expect(html).toContain('id="bp-lobby-ui" class="bp-lobby-ui"');
+    expect(html).toContain('id="bp-lobby-action"');
+    expect(html).not.toContain('class="modecards"');
+    expect(html).not.toContain('data-mode="attack"');
+    expect(html).not.toContain('data-mode="defend"');
+    expect(game).toContain('const bpLobby=new THREE.Group();scene.add(bpLobby);');
+    expect(game).toContain('const bpLobbyStations=[');
+    expect(game).toContain("mode:'attack',name:'ATTACK'");
+    expect(game).toContain("mode:'defend',name:'DEFEND'");
+    expect(game).toContain('function bpLobbyWalkable(x,z)');
+    expect(game).toContain('function bpLobbyNearby(range=2.65)');
+    expect(game).toContain('function bpLobbyTryEnter()');
+    expect(game).toContain('startGame(station.mode)');
+    expect(game).toContain("if(!e.repeat&&e.code==='KeyE')bpLobbyTryEnter()");
+    expect(game).toContain('if(bp.lobby){bpMovePlayer(dt);bpLobbyUpdate();return;}');
+    expect(game).toContain('if(bp.lobby){bpLobbyUpdate();return;}');
+    expect(game).toContain('bpLobby.visible=true;');
+    expect(game).toContain('world.visible=false;dynamic.visible=false;');
+    expect(game).toContain('resize();bpEnterLobby();renderer.render(scene,camera);');
+    expect(game).toContain('bp.lobby=false;bpLobby.visible=false;bpLobbyHelp.hidden=true;');
+    expect(game).toContain('bpEnterLobby();\n};\nfunction bpOpenTerminal()');
+    expect(css).toContain('#bp-lobby-ui[hidden],#bp-lobby-action[hidden]');
   });
 
   it('enters the playable camera for both modes and survives isolated frame faults', () => {
@@ -217,7 +244,7 @@ describe('Blackout Protocol 3D', () => {
     expect(game).toContain('const bpWorkPosition=V(-8.5,0,4.18)');
     expect(game).toContain("endGame(false,'CAUGHT BY SECURITY'");
     expect(game).toContain('new THREE.PerspectiveCamera(84, 1, .07, 120)');
-    expect(game).toContain('if(!bp.active || !game || game.ended){');
+    expect(game).toContain('if(!bp.active || (!bp.lobby&&(!game||game.ended))){');
     expect(game).not.toContain('if(!bp.active || !game || game.ended || bp.terminal){');
     expect(game).toContain("if(game || $('home').hidden || $('home').classList.contains('hidden'))return;");
     expect(game).toContain('if(game&&!game.ended)return;');
