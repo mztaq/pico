@@ -214,3 +214,51 @@ body.bp-mission-finished #red-alert.visible{display:none!important;animation:non
 .bp-pause-hint{display:block;margin-top:17px;color:#9399ac;font-size:11px;text-align:center}
 @media(max-width:500px){#bp-pause.bp-pause{padding:70px 12px 14px}.bp-pause-panel{padding:20px}.bp-pause-settings{margin:17px 0;padding:15px 0}}
 @media(prefers-reduced-motion:reduce){#bp-pause.bp-pause{backdrop-filter:none}}
+
+/* 3D mode-selection lobby: only the two useful prompts remain in the UI. */
+#bp-lobby-ui[hidden],#bp-lobby-action[hidden]{display:none!important}
+#bp-lobby-ui{
+  position:absolute;inset:0;z-index:5;pointer-events:none;
+  font-family:'DM Sans',system-ui,sans-serif;color:#e2e7ff;
+}
+.bp-lobby-intro{
+  position:absolute;top:88px;left:clamp(16px,3vw,40px);
+  display:grid;gap:5px;padding:13px 16px;
+  border:1px solid #585b7066;border-radius:12px;
+  background:#181825d9;backdrop-filter:blur(12px);
+}
+.bp-lobby-intro strong{font-size:19px;letter-spacing:-.025em}
+.bp-lobby-intro span{font-size:12px;color:#a6adc8}
+.bp-lobby-controls{
+  position:absolute;bottom:clamp(20px,4vw,34px);left:clamp(16px,3vw,40px);
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  color:#bac2de;font-size:12px;font-weight:650;
+  background:#181825d6;border:1px solid #585b7066;
+  padding:10px 12px;border-radius:10px;
+}
+.bp-lobby-controls kbd,.bp-lobby-action kbd{
+  color:#1e1e2e;background:#cba6f7;border-radius:5px;
+  padding:4px 6px;font:800 11px 'JetBrains Mono',monospace;
+}
+.bp-lobby-action{
+  position:absolute;bottom:15%;left:50%;transform:translateX(-50%);
+  width:max-content;max-width:calc(100vw - 32px);
+  background:#242437f4;border:1px solid #cba6f7;border-radius:10px;
+  box-shadow:0 15px 40px #0007;padding:13px 19px;
+  font-size:14px;font-weight:750;display:flex;align-items:center;gap:10px;
+  white-space:nowrap;
+}
+#bp-pause-note[hidden]{display:none!important}
+.bp-pause-panel{width:min(372px,100%);padding:23px}
+.bp-pause-panel h2{font-size:30px;margin-bottom:17px}
+#bp-pause-note{margin:-7px 0 16px;font-size:12px}
+.bp-pause-primary,.bp-pause-secondary,.bp-pause-leave{min-height:41px}
+.bp-pause-settings{gap:11px;margin:15px 0;padding:15px 0}
+.bp-pause-leave{margin-top:6px}
+@media(max-width:560px){
+  .bp-lobby-intro{top:75px;left:12px;padding:10px 12px}
+  .bp-lobby-intro strong{font-size:16px}
+  .bp-lobby-controls{left:12px;right:12px;bottom:12px;font-size:11px;gap:5px}
+  .bp-lobby-action{bottom:19%;font-size:12px}
+  .bp-pause-panel{padding:20px}
+}
