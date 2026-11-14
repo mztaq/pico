@@ -1,5 +1,5 @@
 import {describe,expect,it,vi} from 'vitest';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 import {onRequestGet as workspaceRoute} from '../functions/app/[workspace]';
 import {onRequestGet as nestedRoute} from '../functions/app/[[path]]';
 
@@ -30,7 +30,7 @@ describe('Custom 404 for invalid app routes',()=>{
     expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/404.html');
   });
   it('keeps valid deep links loading the app',async()=>{
-    for(const route of ['/app/flowchart','/app/logic','/app/traffic','/app/traffic/','/app/team']){
+    for(const route of ['/app/flowchart','/app/logic','/app/traffic','/app/traffic/','/app/games','/app/games/','/app/team']){
       const {ctx,fetch}=context(route);
       const response=await workspaceRoute(ctx);
       expect(response.status).toBe(200);
@@ -48,11 +48,54 @@ describe('Custom 404 for invalid app routes',()=>{
     }
   });
   it('keeps direct workspaces and information pages working through the catch-all',async()=>{
-    for(const route of ['/app/flowchart','/app/logic','/app/python','/app/traffic','/app/traffic/','/app/team','/app/report']){
+    for(const route of ['/app/flowchart','/app/logic','/app/python','/app/traffic','/app/traffic/','/app/games','/app/games/','/app/team','/app/report']){
       const {ctx,fetch}=context(route);
       const response=await nestedRoute(ctx);
       expect(response.status).toBe(200);
       expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
+    }
+  });
+  it('serves either game URL variant without an index.html rewrite or redirect',async()=>{
+    for(const path of ['/app/game/blackout-protocol','/app/game/blackout-protocol/']){
+      const {ctx,fetch}=context(path);
+      const response=await nestedRoute(ctx);
+      expect(response.status).toBe(200);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/app/game/blackout-protocol');
+      // Pages redirects folder index.html files, which previously caused a
+      // loop when an asset fetch requested the index from a catch-all route.
+      expect(new URL(fetch.mock.calls[0]![0].url).pathname).not.toContain('/index.html');
+    }
+  });
+  it('builds an independent flat HTML file that Pages serves at the extensionless game URL',()=>{
+    const html=readFileSync(new URL('../app/game/blackout-protocol.html',import.meta.url),'utf8');
+    const vite=readFileSync(new URL('../vite.config.ts',import.meta.url),'utf8');
+    expect(html).toContain('src="/src/blackout/entry.ts"');
+    expect(vite).toContain("'app/game/blackout-protocol.html'");
+    expect(existsSync(new URL('../app/game/blackout-protocol/index.html',import.meta.url))).toBe(false);
+  });
+  it('redirects the former shorter game slug to the canonical path',async()=>{
+    for(const path of ['/app/game/blackout','/app/game/blackout/']){
+      const {ctx,fetch}=context(path);
+      const response=await nestedRoute(ctx);
+      expect(response.status).toBe(301);
+      expect(response.headers.get('location')).toBe('https://picompiler.pages.dev/app/game/blackout-protocol');
+      expect(fetch).not.toHaveBeenCalled();
+    }
+  });
+  it('redirects older Blackout links to the nested Games route',()=>{
+    const redirects=readFileSync(new URL('../public/_redirects',import.meta.url),'utf8');
+    const oldPage=readFileSync(new URL('../public/blackout-protocol.html',import.meta.url),'utf8');
+    expect(redirects).toMatch(/^\/blackout-protocol\s+\/app\/game\/blackout-protocol\s+301$/m);
+    expect(redirects).toMatch(/^\/blackout-protocol\/\s+\/app\/game\/blackout-protocol\s+301$/m);
+    expect(oldPage).toContain("location.replace('/app/game/blackout-protocol')");
+  });
+  it('rejects unregistered game paths instead of rendering the React workspace app',async()=>{
+    for(const path of ['/app/game','/app/game/unknown','/app/game/blackout-protocol/extra']){
+      const {ctx,fetch}=context(path);
+      const response=path==='/app/game'?await workspaceRoute(ctx):await nestedRoute(ctx);
+      expect(response.status).toBe(404);
+      expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/404.html');
     }
   });
   it('serves the same 404 page for unsupported nested paths',async()=>{

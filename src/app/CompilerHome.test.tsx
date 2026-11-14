@@ -34,7 +34,9 @@ const choose=async(language:string)=>{await click(container.querySelector(`.comp
 async function type(element:HTMLInputElement|HTMLTextAreaElement,value:string){await act(async()=>{Object.getOwnPropertyDescriptor(element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event('input',{bubbles:true}));});}
 beforeEach(async()=>{
   localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.python.visitCount.v1','3');jobs.length=0;
-  window.history.replaceState(null, '', window.location.pathname);
+  // Each test must start at the workspace home. Tests that visit /app/games,
+  // /app/cpu or /app/report must not leak their URL into the next case.
+  window.history.replaceState(null, '', '/app');
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);
   container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));
 });
@@ -51,6 +53,60 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
+});
+it('resets test navigation after visiting Games', async()=>{
+  const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
+  await click(gamesLink);
+  expect(window.location.pathname).toBe('/app/games');
+  // The next test's beforeEach restores /app regardless of this URL.
+});
+it('opens the Games library from home and returns to the workspace chooser', async()=>{
+  expect(container.querySelector('.home-group[aria-label="Games"]')).toBeNull();
+  expect(container.querySelector('.home-group--visual')?.textContent).not.toContain('Blackout Protocol');
+  const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
+  expect(gamesLink).not.toBeNull();
+  await click(gamesLink);
+  expect(window.location.pathname).toBe('/app/games');
+  expect(document.title).toBe('Pico | Games');
+  expect(container.querySelector('.pico-games h1')?.textContent).toBe('Games');
+  const header=container.querySelector('.pico-games-nav')!;
+  expect(header.firstElementChild?.classList.contains('pico-games-brand')).toBe(true);
+  expect(header.lastElementChild?.classList.contains('pico-games-back')).toBe(true);
+  expect(container.querySelector('.pico-games-eyebrow')).toBeNull();
+  expect(container.querySelector('.pico-games-section-heading')).toBeNull();
+  expect(container.querySelector('.pico-games-footnote')).toBeNull();
+  expect(container.querySelector('.pico-games-type')).toBeNull();
+  expect(container.querySelector('.pico-games-details')).toBeNull();
+  expect([...container.querySelectorAll<HTMLAnchorElement>('.pico-games-card')].map(card=>card.href.endsWith('/app/game/blackout-protocol'))).toEqual([true]);
+  expect(container.querySelector('.pico-games-card h3')?.textContent).toBe('Blackout Protocol');
+  await click(container.querySelector<HTMLElement>('.pico-games-back')!);
+  expect(window.location.pathname).toBe('/app');
+  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
+});
+it('handles a direct /app/games URL and browser navigation',async()=>{
+  await act(async()=>{
+    window.history.pushState(null,'','/app/games');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  expect(container.querySelector('.pico-games')).not.toBeNull();
+  expect(document.title).toBe('Pico | Games');
+  await act(async()=>{
+    window.history.pushState(null,'','/app');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  expect(container.querySelector('.pico-games')).toBeNull();
+  expect(container.querySelector('.home-hero h1')?.textContent).toBe('Choose your workspace');
+});
+it('uses the Pico logo to return to Workspaces from Games and the compiler',async()=>{
+  await click(container.querySelector<HTMLElement>('a.home-games-link[href="/app/games"]')!);
+  expect(window.location.pathname).toBe('/app/games');
+  await click(container.querySelector<HTMLElement>('.pico-games-brand')!);
+  expect(window.location.pathname).toBe('/app');
+  await choose('Python Compiler');
+  expect(window.location.pathname).toBe('/app/python');
+  await click(container.querySelector<HTMLElement>('.pico-brand-home[aria-label="Pico, back to Workspaces"]')!);
+  expect(window.location.pathname).toBe('/app');
+  expect(container.querySelector('.home-hero h1')?.textContent).toBe('Choose your workspace');
 });
 it('shows three matching concept developer cards and prominent co-founders',async()=>{
   await act(async()=>{

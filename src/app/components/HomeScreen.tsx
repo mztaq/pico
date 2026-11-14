@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Binary, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
@@ -21,7 +21,19 @@ const HOME_AMBIENT_CURVES = [
   { d: 'M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304', width: 1.3, opacity: .28 },
 ] as const;
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic') => void }) {
+export function HomeAmbientCurves() {
+  return <svg className="pico-home-curves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    {HOME_AMBIENT_CURVES.map((curve, index) => (
+      <path key={index} d={curve.d} strokeWidth={curve.width} opacity={curve.opacity} />
+    ))}
+    {[0, 2].map(index => (
+      <path key={`flow-${index}`} d={HOME_AMBIENT_CURVES[index].d} pathLength={1000}
+        className={index === 0 ? 'pico-home-curve-flow' : 'pico-home-curve-flow pico-home-curve-flow--right'} />
+    ))}
+  </svg>;
+}
+
+export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic' | 'games') => void }) {
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
@@ -83,15 +95,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     return () => window.clearTimeout(timeout);
   }, [reportNotice]);
   return <main className="pico-home" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
-      <svg className="pico-home-curves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-        {HOME_AMBIENT_CURVES.map((curve, index) => (
-          <path key={index} d={curve.d} strokeWidth={curve.width} opacity={curve.opacity} />
-        ))}
-        {[0, 2].map(index => (
-          <path key={`flow-${index}`} d={HOME_AMBIENT_CURVES[index].d} pathLength={1000}
-            className={index === 0 ? 'pico-home-curve-flow' : 'pico-home-curve-flow pico-home-curve-flow--right'} />
-        ))}
-      </svg>
+      <HomeAmbientCurves />
     <div className="home-nav">
       <div className="home-theme-anchor" ref={themeMenuRef}>
         <button type="button" className="home-theme-trigger" aria-label="Change theme" aria-expanded={themeOpen} aria-controls="home-theme-menu" onClick={() => setThemeOpen(open => !open)}>
@@ -102,12 +106,17 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </div>}
       </div>
       <div className="home-updates">
+        <a className="home-games-link" href="/app/games" onClick={event => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          onChoose('games');
+        }}><Gamepad2 size={16} aria-hidden="true" /><span>Games</span></a>
         <SoundButton /><UpdateCenter />
       </div>
     </div>
     <div className="home-inner">
       <div className="home-hero">
-      <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
+      <a className="home-brand" href="/app" aria-label="Pico, Workspaces"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
         <h1>Choose your workspace</h1>
       </div>
       <div className="compiler-choices">

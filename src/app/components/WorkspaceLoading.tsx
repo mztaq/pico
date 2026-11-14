@@ -258,7 +258,7 @@ export function HomeLoading() {
     <div className="pico-load-home-layout" aria-hidden="true">
       <div className="pico-load-home-nav">
         <Placeholder className="pico-load-home-nav-theme" />
-        <div className="pico-load-home-nav-actions"><Placeholder className="pico-load-home-nav-action" /><Placeholder className="pico-load-home-nav-action" /></div>
+        <div className="pico-load-home-nav-actions"><Placeholder className="pico-load-home-nav-action" /><Placeholder className="pico-load-home-nav-action" /><Placeholder className="pico-load-home-nav-action" /></div>
       </div>
       <div className="pico-load-home-inner">
         <div className="pico-load-home-hero">

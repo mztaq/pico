@@ -19,6 +19,7 @@ import { GuidedTutorial, tutorialSteps } from './components/GuidedTutorial';
 import { TutorialOffer } from './components/TutorialOffer';
 import { HighlightedCode } from './components/HighlightedCode';
 import { HomeScreen } from './components/HomeScreen';
+import { GamesPage } from './components/GamesPage';
 import { workspaceFromLocation, workspaceUrl, type PicoWorkspace } from './workspace-deeplink';
 import { SiteInfo, informationPageFromHash, informationPageFromPath, type InformationPage } from './components/SiteInfo';
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
@@ -87,12 +88,12 @@ export default function App() {
       window.removeEventListener('hashchange', syncInformation);
     };
   }, []);
-  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : language === 'traffic' ? 'Pico | Traffic Storm' : 'Pico | Home'; }, [language, informationPage]);
+  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : language === 'traffic' ? 'Pico | Traffic Storm' : language === 'games' ? 'Pico | Games' : 'Pico | Home'; }, [language, informationPage]);
   // Workspace URLs are updated by setLanguage, and popstate restores browser history.
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
-    if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu' && language !== 'binary' && language !== 'traffic') snapshots.current[language] = snapshot;
+    if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu' && language !== 'binary' && language !== 'traffic' && language !== 'games') snapshots.current[language] = snapshot;
     setLanguage(next);
   };
   if (informationPage || !language) return <>
@@ -101,6 +102,7 @@ export default function App() {
     </div>
     {informationPage && <SiteInfo page={informationPage} onClose={closeInformationPage} />}
   </>;
+  if (language === 'games') return <GamesPage onHome={() => setLanguage(null)} />;
   if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><WorkspaceTransition workspace="CPU Studio"><CpuStudio onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'binary') return <WorkspaceLoadBoundary key="binary" workspace="Binary Lab"><WorkspaceTransition workspace="Binary Lab"><BinaryLab onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
@@ -428,7 +430,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     <header className="topbar pico-appbar" inert={tutorialOpen || tutorialOfferOpen}>
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
-        <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26" /><span>Pico</span><span className="brand-period">.</span></div>
+        <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={() => leaveWorkspace()}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26" /><span>Pico</span><span className="brand-period">.</span></button>
         <span className="pico-appbar-sep" aria-hidden="true">/</span>
         <span className="brand-subtitle pico-appbar-tool">{isPython ? pythonVersion || "Python" : "Pseudocode"}</span>
         <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />

@@ -8,7 +8,7 @@ import { HomeLoading } from '../src/app/components/WorkspaceLoading';
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Pico workspace-selector home skeleton',()=>{
-  it('matches the exact Code, Visual Labs and Data Lab card counts',()=>{
+  it('matches the Code, Visual Labs and Data Lab card counts',()=>{
     const html=renderToStaticMarkup(createElement(HomeLoading));
     expect(html).toContain('data-loading-workspace="Home"');
     expect(html).toContain('aria-label="Opening Pico home"');
@@ -19,6 +19,7 @@ describe('Pico workspace-selector home skeleton',()=>{
     expect(html).toContain('pico-load-home-section--code');
     expect(html).toContain('pico-load-home-section--visual');
     expect(html).toContain('pico-load-home-section--data');
+    expect(html).not.toContain('pico-load-home-section--games');
     expect(html).not.toMatch(/<button\b|<a\b|<input\b/);
   });
 

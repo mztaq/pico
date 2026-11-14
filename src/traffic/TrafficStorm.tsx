@@ -604,11 +604,12 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     <header className="storm-header pico-appbar">
       <div className="pico-appbar-lead">
         <button type="button" className="storm-icon-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17}/></button>
-        <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="24" height="24"/><span>Pico<span className="brand-period">.</span></span></div>
+        <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="24" height="24"/><span>Pico<span className="brand-period">.</span></span></button>
         <span className="pico-appbar-sep" aria-hidden="true">/</span>
         <strong className="pico-appbar-tool">Traffic Storm</strong>
       </div>
       <div className="storm-header-actions">
+        <a href="/blackout-protocol/" className="storm-secondary storm-3d-shortcut" title="Play the Blackout Protocol 3D game">3D Game <ArrowRight size={14} aria-hidden="true"/></a>
         <button type="button" className="storm-icon-button" aria-label="Traffic Storm tutorial" title="Open tutorial" onClick={() => { setTutorialStep(0); setShowHelp(value => !value); }}><CircleHelp size={17}/></button>
         <span data-storm-tour="sound" className="storm-tour-sound-target"><SoundButton/></span>
         <div className="storm-theme-wrap">

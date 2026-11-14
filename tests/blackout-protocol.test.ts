@@ -1,0 +1,376 @@
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+
+const game = readFileSync(new URL('../src/blackout/game.ts', import.meta.url), 'utf8');
+const entry = readFileSync(new URL('../src/blackout/entry.ts', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../app/game/blackout-protocol.html', import.meta.url), 'utf8');
+const vite = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8');
+const css = readFileSync(new URL('../src/blackout/game.css', import.meta.url), 'utf8');
+
+describe('Blackout Protocol 3D', () => {
+  it('shows first-run graphics options before loading Three.js and preserves the selected choice', () => {
+    expect(html).toContain('<dialog id="graphics-setup"');
+    expect(html).toContain('name="quality" value="auto" checked');
+    expect(html).toContain('name="quality" value="low"');
+    expect(html).toContain('name="quality" value="high"');
+    expect(html).toContain('Recommended');
+    expect(html).toContain('Change this anytime by pressing Esc during a mission.');
+    expect(entry).toContain("localStorage.getItem(QUALITY_KEY)");
+    expect(entry).toContain("localStorage.setItem(QUALITY_KEY, quality)");
+    expect(entry).toContain("setup.showModal()");
+    expect(entry).toContain("loading?.setAttribute('hidden', '')");
+    expect(entry).toContain("await import('./game')");
+    expect(game).toContain("let preferredQuality=window.__picoBlackoutQuality||'auto'");
+    expect(html).not.toContain('class="brand-divider"');
+    expect(html).not.toContain('class="bp-games-link"');
+    expect(html).toContain('<span class="bp-current-page">Blackout Protocol</span>');
+    expect(css).toContain('#loading[hidden]{display:none!important}');
+  });
+  it('pauses time, traffic, NPCs and audio on Escape or tab switch until Resume', () => {
+    expect(html).toContain('id="bp-pause" class="bp-pause" role="dialog" aria-modal="true"');
+    expect(html).toContain('aria-labelledby="bp-pause-title"');
+    expect(html).toContain('id="bp-resume"');
+    expect(html).toContain('id="bp-restart-mission"');
+    expect(html).toContain('id="bp-leave-game" class="bp-pause-leave"');
+    expect(game).toContain("$('bp-leave-game').addEventListener('click',()=>menu());");
+    expect(html).toContain('id="quality" aria-label="Graphics quality"');
+    expect(html).toContain('id="audio" class="bp-pause-sound"');
+    expect(html.match(/id="quality"/g)).toHaveLength(1);
+    expect(html.match(/id="audio"/g)).toHaveLength(1);
+    expect(game).toContain("if(e.code==='Escape'&&game&&!game.ended)");
+    expect(game).toContain("if(bpPaused)bpResume();else bpPause()");
+    expect(game).toContain("window.addEventListener('blur'");
+    expect(game).toContain("document.addEventListener('visibilitychange'");
+    expect(game).toContain("if(document.hidden)bpPause('away')");
+    expect(game).toContain("else if(bpPaused)bpResumeButton.focus()");
+    expect(game).toContain("if(bpPaused)return;\n  visualTime+=dt");
+    expect(game).toContain("bpPauseAudio(true)");
+    expect(game).toContain("bpPauseAudio(false)");
+    expect(game).toContain("bpPauseOverlay.hidden=false;bpPauseOverlay.inert=false");
+    expect(game).toContain("const mode=game.mode;\n  menu();\n  startGame(mode);");
+    expect(game).not.toContain("if(e.code==='Escape'&&game){if(window.__bpEscape?.())return;menu();return;}");
+    expect(css).toContain('#bp-pause[hidden]{display:none!important}');
+  });
+
+  it('starts in a walkable 3D lobby and chooses Attack or Defence with the E key', () => {
+    expect(html).toContain('<section id="home" hidden inert aria-hidden="true"></section>');
+    expect(html).toContain('id="bp-lobby-ui" class="bp-lobby-ui"');
+    expect(html).toContain('id="bp-lobby-action"');
+    expect(html).not.toContain('class="modecards"');
+    expect(html).not.toContain('data-mode="attack"');
+    expect(html).not.toContain('data-mode="defend"');
+    expect(game).toContain('const bpLobby=new THREE.Group();scene.add(bpLobby);');
+    expect(game).toContain('const bpLobbyStations=[');
+    expect(game).toContain("mode:'attack',name:'ATTACK'");
+    expect(game).toContain("mode:'defend',name:'DEFEND'");
+    expect(game).toContain('function bpLobbyWalkable(x,z)');
+    expect(game).toContain('function bpLobbyNearby(range=2.65)');
+    expect(game).toContain('function bpLobbyTryEnter()');
+    expect(game).toContain('startGame(station.mode)');
+    expect(game).toContain("if(!e.repeat&&e.code==='KeyE')bpLobbyTryEnter()");
+    expect(game).toContain('if(bp.lobby){bpMovePlayer(dt);bpLobbyUpdate();return;}');
+    expect(game).toContain('if(bp.lobby){bpLobbyUpdate();return;}');
+    expect(game).toContain('bpLobby.visible=true;');
+    expect(game).toContain('world.visible=false;dynamic.visible=false;');
+    expect(game).toContain('resize();bpEnterLobby();renderer.render(scene,camera);');
+    expect(game).toContain('bp.lobby=false;bpLobby.visible=false;bpLobbyHelp.hidden=true;');
+    expect(game).toContain('bpEnterLobby();\n};\nfunction bpOpenTerminal()');
+    expect(css).toContain('#bp-lobby-ui[hidden],#bp-lobby-action[hidden]');
+  });
+
+  it('makes the low-quality lobby sharp without overloading slow GPUs', () => {
+    expect(game).toContain('function bpPixelRatio(){');
+    expect(game).toContain('bpLobbyRendering?1550000:950000');
+    expect(game).toContain('bpLobbyRendering?1:.86');
+    expect(game).toContain('return Math.min(device,cap,Math.sqrt(budget/pixels))');
+    expect(game).toContain('renderer.setPixelRatio(bpPixelRatio())');
+    expect(game).toContain('camera.fov=69;camera.updateProjectionMatrix()');
+    expect(game).toContain('bp.player.set(0,0,4.2)');
+    expect(game).toContain('camera.fov=84;camera.updateProjectionMatrix()');
+    expect(game).toContain('function bpLobbySign(text,x,y,z,w,h,style=');
+    expect(game).toContain('canvas.width=1024;canvas.height=256');
+    expect(game).toContain("texture.minFilter=THREE.LinearMipmapLinearFilter");
+    expect(game).toContain("if(measuredFps<21)next=Math.max(.78,next-.08)");
+    expect(game).toContain("else if(measuredFps>25&&next<1)next=Math.min(1,next+.04)");
+    expect(game).toContain("bpLobbyRendering&&lowQuality?bpLobbyResolutionScale:1");
+    expect(game).toContain("lastDraw=now-(now-lastDraw)%frameInterval");
+    expect(game).toContain("bpTrackLobbyPerformance(now)");
+    expect(game).toContain("function bpLobbyBox(x,y,z,w,h,d,material,parent=bpLobby)");
+    expect(game).toContain("result.castShadow=false;result.receiveShadow=false");
+    expect(game).toContain("document.body.classList.add('bp-lobby-open')");
+    expect(game).toContain("document.body.classList.remove('bp-lobby-open')");
+    expect(css).toContain("body.bp-lobby-open #vignette{background:radial-gradient(");
+    expect(game).toContain('new THREE.MeshBasicMaterial({map:texture,toneMapped:false');
+    expect(game).not.toContain('lowQuality?.72:1.5');
+    // A 1080p PC uses <= 1.55M lobby pixels on Low, instead of the
+    // previous fixed 72% resolution. Mission rendering stays cheaper.
+    const physicalPixels=1920*1080;
+    const lowLobby=Math.min(1,Math.sqrt(1550000/physicalPixels));
+    const lowMission=Math.min(.86,Math.sqrt(950000/physicalPixels));
+    expect(lowLobby).toBeGreaterThan(lowMission);
+    expect(Math.round(physicalPixels*lowLobby**2)).toBeLessThanOrEqual(1550000);
+    expect(Math.round(physicalPixels*lowMission**2)).toBeLessThanOrEqual(950000);
+  });
+
+  it('renders a detailed lobby efficiently on low-end machines', () => {
+    expect(game).toContain('const bpLobbyInstances=(material,placements)=>');
+    expect(game).toContain('new THREE.InstancedMesh(geoBox,material,placements.length)');
+    expect(game).toContain("const bpLobbyRackRows=lowQuality?");
+    expect(game).toContain('if(!lowQuality)station.light=light(');
+    expect(game).toContain('const bpLobbyCoreOuter=lowQuality?null:');
+    expect(game).toContain("if(!bp.lobby||(lowQuality&&time-bpLobbyLastFrame<.1))return");
+    expect(game).toContain('if(bp.lobby){bpLobbyAnimate(t);return;}');
+    expect(game).toContain('if(!bp.lobby){\n    try{bpAnimateRequestPackets(visualTime);}');
+    expect(game).toContain('bpLobbyCoreBody.rotation.y=time*.25');
+    expect(game).toContain('station.ring.scale.setScalar(selected?1.16:1+.055*pulse)');
+    expect(game).toContain("bpLobbyHelp.dataset.mode=next");
+    expect(game).toContain("mission=station.mode==='attack'?'Disrupt the network':'Defend the data centre'");
+    expect(game).toContain('const bpLobbyStreams=bpLobbyStations.map(station=>');
+    expect(game).toContain('const count=lowQuality?5:11');
+    expect(game).toContain('instanced.frustumCulled=false');
+    expect(game).toContain('stream.mesh.instanceMatrix.needsUpdate=true');
+    expect(game).toContain("station.mode==='attack'");
+    expect(game).toContain('new THREE.OctahedronGeometry(.34,0)');
+    expect(game).toContain('new THREE.IcosahedronGeometry(.34,0)');
+    expect(css).toContain('.bp-lobby-ui[data-mode="attack"] .bp-lobby-action');
+    expect(css).toContain('.bp-lobby-ui[data-mode="defend"] .bp-lobby-action');
+  });
+
+  it('enters the playable camera for both modes and survives isolated frame faults', () => {
+    expect(game).toContain("bp.active=true;bp.terminal=false;bp.third=false");
+    expect(game).toContain("bpOfficeConsoleZ+2.45");
+    expect(game).toContain("try{moveCamera(0);renderer.render(scene,camera);}");
+    expect(game).toContain("try{moveCamera(dt);}catch(error){bpReportFrameError('camera',error);}");
+    expect(game).toContain("try{bpNpcUpdate(dt);}catch(error){bpReportFrameError('security AI',error);}");
+    expect(game).toContain("bpCctvDisabled=true");
+    expect(game).toContain("bpFrameErrors.clear()");
+  });
+
+  it('parses the TypeScript game module as JavaScript and bundles the graphics engine locally', () => {
+    expect(game).toContain("import * as THREE from 'three'");
+    expect(game).toContain("import { createTrafficFeed } from './traffic-model'");
+    expect(game).toContain("import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic'");
+    expect(game).toContain("import { drawTerminalScreen, terminalHitTest } from './terminal-screen'");
+    expect(game).toContain("import { routeTo } from './navigation'");
+    expect(game).toContain("import { moveGuardWithAvoidance } from './guard-movement'");
+    expect(game).toContain("import {EVIDENCE_STATIONS,selectGuardEvidence,collectGuardEvidence} from './evidence-coordination'");
+    expect(game).toContain("import { renderOfficeFeed } from './office-monitor'");
+    expect(game).toContain("import { rankedCoverSpots, formationPosition } from './ai-coordination'");
+    expect(game).toContain("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth'");
+    expect(game).toContain("import {ATTACK_TRAFFIC_SCALE,DEFENSE_WAVE_SCALE,poweredProxyCount,firstUnpoweredProxy,nearestPoweredProxy} from './proxy-mechanics'");
+    expect(game).toContain("import {");
+    expect(game).toContain("} from './security-response'");
+    expect(game).toContain('observeSecurityAlarm(g,activeAlarm)');
+    expect(game).toContain("const respondersReturning=g.securityDispatchActive&&patrols");
+    expect(game).toContain('if(shouldDispatchSecurity(g,respondersReturning))');
+    expect(game).toContain("const firstSweep=g.mode==='attack'");
+    expect(game).toContain('p.path=bpGuardRoute(p.agent.position,firstSweep)');
+    expect(game).toContain('acknowledgeSecurityDispatch(g)');
+    expect(game).toContain('securityOfficersReturned(g)');
+    expect(game).toContain("case'burst':g.burst=8;g.risk+=9;flagSecurityIncident(g)");
+    expect(game).toContain("function bpApplyQuality()");
+    expect(game).toContain("qualitySelect.addEventListener('change'");
+    expect(() => new Function(game
+      .replace("import * as THREE from 'three';", 'const THREE = {};')
+      .replace("import { createTrafficFeed } from './traffic-model';", 'const createTrafficFeed = () => ({});')
+      .replace("import { drawTerminalScreen, terminalHitTest } from './terminal-screen';", 'const drawTerminalScreen = () => {}; const terminalHitTest = () => -1;')
+      .replace("import { isSightBlocked, chooseHackerPhase, hackerAreaIsClear } from './stealth-logic';", 'const isSightBlocked = () => false; const chooseHackerPhase = () => "working"; const hackerAreaIsClear = () => true;')
+      .replace("import { routeTo } from './navigation';", 'const routeTo = () => [];')
+      .replace("import { moveGuardWithAvoidance } from './guard-movement';", "const moveGuardWithAvoidance = () => ({point:{x:0,z:0},arrived:false,moved:0});")
+      .replace("import {EVIDENCE_STATIONS,selectGuardEvidence,collectGuardEvidence} from './evidence-coordination';", "const EVIDENCE_STATIONS = []; const selectGuardEvidence = () => null; const collectGuardEvidence = () => false;")
+      .replace("import { renderOfficeFeed } from './office-monitor';", 'const renderOfficeFeed = () => {};')
+      .replace("import { rankedCoverSpots, formationPosition } from './ai-coordination';", 'const rankedCoverSpots = () => []; const formationPosition = () => ({x:0,z:0});')
+      .replace("import {estimatedBitsPerSecond, formatBandwidth,DEFAULT_BYTES_PER_REQUEST} from './traffic-bandwidth';", "const estimatedBitsPerSecond = () => 0;const formatBandwidth = () => ''; const DEFAULT_BYTES_PER_REQUEST = 0;")
+      .replace("import {ATTACK_TRAFFIC_SCALE,DEFENSE_WAVE_SCALE,poweredProxyCount,firstUnpoweredProxy,nearestPoweredProxy} from './proxy-mechanics';", "const ATTACK_TRAFFIC_SCALE=1;const DEFENSE_WAVE_SCALE=1;const poweredProxyCount=()=>0;const firstUnpoweredProxy=()=>0;const nearestPoweredProxy=()=>-1;")
+      .replace(/import \{\s*flagSecurityIncident, observeSecurityAlarm, shouldDispatchSecurity,\s*acknowledgeSecurityDispatch, securityOfficersReturned,\s*\} from '\.\/security-response';/, 'const flagSecurityIncident = () => {};const observeSecurityAlarm = () => {};const shouldDispatchSecurity = () => false;const acknowledgeSecurityDispatch = () => {};const securityOfficersReturned = () => {};const SECURITY_OFFICE_REST_SECONDS = 10;'))).not.toThrow();
+    expect(vite).toContain("blackout: resolve(process.cwd(), 'app/game/blackout-protocol.html')");
+    expect(html).toContain('<title>Pico | Blackout Protocol</title>');
+    expect(html).toContain('src="/src/blackout/entry.ts"');
+    expect(html).toContain('src="/pico-logo.svg"');
+    expect(html).toContain('href="/app/games"');
+    expect(html).toContain('href="/app" aria-label="Pico, back to Workspaces"');
+    expect(html).toContain('href="/app/games" aria-label="Back to Games">← Back to Games');
+    expect(html).toContain('id="bp-restart-mission"');
+    expect(html).not.toContain('id="restart"');
+    expect(html).not.toContain('class="quality-control"');
+    expect(html).not.toContain('title="Main menu">⌂');
+    expect(css).toContain('.bp-brand-home:focus-visible');
+  });
+
+  it('clears high-load warnings on attack success, failure, court hearings and jail', () => {
+    expect(game).toContain("const liveMission=bp.active&&!g.ended&&!courtroom.visible&&!jail.visible&&");
+    expect(game).toContain("const urgent=liveMission&&");
+    expect(game).toContain("document.body.classList.add('bp-mission-finished')");
+    expect(game).toContain("document.body.classList.remove('bp-mission-finished')");
+    expect(game).toContain("bpOriginalEnd(win,title,description)");
+    expect(game).toContain("$('red-alert').textContent=''");
+    expect(css).toContain('body.bp-mission-finished #red-alert.visible{display:none!important;animation:none!important}');
+  });
+
+  it('displays the laptop controls directly without a separate traffic panel or E interaction', () => {
+    expect(game).toContain("if(game&&!game.ended)bpPaintTerminal()");
+    expect(game).toContain("function bpCanUseTerminal()");
+    expect(game).toContain("const index=bpTerminalActionAt(event.clientX,event.clientY)");
+    expect(game).toContain("if(index>=0){bpTerminalSelect(index);return;}");
+    expect(game).toContain("function bpDrawStandbyScreen(ctx,texture)");
+    expect(game).not.toContain("NETWORK ACTIVITY");
+    expect(game).not.toContain("bpDrawScreen(bpDisplayContext");
+    expect(game).toContain("const liveMission=bp.active&&!g.ended");
+  });
+
+  it('supports an extended first-person mission with independent patrols', () => {
+    expect(game).toContain('const GAME_SECONDS=1080;');
+    expect(game).toContain('function bpOpenTerminal()');
+    expect(game).toContain("e.code==='KeyE'");
+    expect(game).toContain('function bpWalkable(x,z)');
+    expect(game).toContain('const bpFanRotors=[]');
+    expect(game).toContain('function bpMoveGuard(p,dt,g)');
+    expect(game).toContain('function bpAssignSecurityDispatch(g)');
+    expect(game).toContain("p.state='switching'");
+    expect(game).toContain("p.role==='search'");
+    expect(game).toContain("bpHackerState=chooseHackerPhase({");
+    expect(game).toContain("phase:'working',guardVisible:visible,nearbyGuard:true");
+    expect(game).toContain("phase:'escaping',guardVisible:false,nearbyGuard:false");
+    expect(game).toContain("if(bpHackerState==='escaping')");
+    expect(game).toContain('function bpGuardRoute(from,to)');
+    expect(game).toContain('function bpGuardWalkable(x,z)');
+    expect(game).toContain('function bpDispatchForensicGuards(g)');
+    expect(game).toContain("p.state='investigating'");
+    expect(game).toContain("p.state='collecting'");
+    expect(game).toContain("p.state='detaining'");
+    expect(game).toContain('collectGuardEvidence(g,station)');
+    expect(game).toContain('const bpCctvModels=[');
+    expect(game).toContain('function bpRenderCctv(dt)');
+    expect(game).toContain('renderer.setRenderTarget(feed.target)');
+    expect(game).toContain('bpRenderCctv(dt)');
+    expect(game).toContain('const rackCoords=[');
+    expect(game).toContain('bpHackerSortieCount<3');
+    expect(game).toContain('bpHackerSortieVisited.add(disabled)');
+    expect(game).toContain('const fanSurge=Boolean(g.securityDispatchActive &&');
+    expect(game).toContain('this.fan.gain.value=.042');
+    expect(game).toContain('fanLoad=0');
+    expect(game).toContain("g.suspectHeld=true");
+    expect(game).toContain('function bpRecoverGuard(p,g)');
+    expect(game).toContain('p.stalledFor=(p.stalledFor||0)+dt');
+    expect(game).toContain('if(p.stalledFor>1.15)bpRecoverGuard(p,g)');
+    expect(game).toContain('moveGuardWithAvoidance(');
+    expect(game).toContain('bpFollowHackerRoute(dt,4.15)');
+    expect(game).toContain('bpFollowHackerRoute(dt,2.85)');
+    expect(game).toContain('bpFollowHackerRoute(dt,3.0)');
+    expect(game).toContain('Math.pow(saturation-1,1.14)*1.35');
+    expect(game).toContain("p.state='chasing'");
+    expect(game).toContain('p.repathAt=g.elapsed+');
+    expect(game).toContain("p.path=bpGuardRoute(p.agent.position,destination)");
+    expect(game).toContain("const slot=formationPosition(p.lastSeen,attacker.rotation.y,p.approachIndex??0,g.trace>=100?1.35:2.35)");
+    expect(game).toContain("function bpHackerThreats()");
+    expect(game).toContain("const clear=hackerAreaIsClear(guardPositions,bp.player,attacker.position,bpWorkPosition)");
+    expect(game).toContain("bpHackerSafeSince+2.5");
+    expect(game).toContain("bpPlanHackerReturn()");
+    expect(game).toContain("const bpWorkPosition=V(-8.5,0,4.18)");
+    expect(game).toContain("bpHackerHoldUntil=g.elapsed+3+bpRandom(g)*2");
+    expect(game).not.toContain("const safe=!guardsInHall&&!playerClose");
+    expect(game).toContain("function bpPlanHackerCover(g)");
+    expect(game).toContain("const points=rankedCoverSpots(");
+    expect(game).toContain("function bpFollowHackerRoute(dt,speed)");
+    expect(game).toContain("function bpPaintOfficeMonitor()");
+    expect(game).toContain("ctx.fillText('ESTIMATED NETWORK THROUGHPUT',35,127)");
+    expect(game).toContain("ctx.fillText(formatBandwidth(bits),35,177)");
+    expect(game).not.toContain("bpDrawScreen(bpDisplayContext");
+    expect(game).not.toContain("NETWORK ACTIVITY");
+    expect(game).toContain("if(game&&!game.ended)bpPaintTerminal()");
+    expect(game).toContain("const hovered=bpTerminalActionAt(e.clientX,e.clientY)");
+    expect(game).toContain("function bpCanUseTerminal()");
+    expect(game).toContain("const index=bpTerminalActionAt(event.clientX,event.clientY)");
+    expect(game).toContain("if(index>=0){bpTerminalSelect(index);return;}");
+    expect(game).toContain("bpTerminalRaycaster.intersectObject(mesh,false)");
+    expect(game).toContain("function bpDrawStandbyScreen(ctx,texture)");
+    expect(game).toContain("const locked=document.pointerLockElement===renderer.domElement&&!bp.terminal");
+    expect(game).toContain("if(!bpCanUseTerminal())return;");
+    expect(game).toContain("connected:game.mode!=='attack'||!bpAttackLaptopCarried");
+    expect(game).toContain("bytesPerRequest:game.requestFeed?.averageBytesPerRequest");
+    expect(game).toContain("bitsPerSecond:estimatedBitsPerSecond(game.traffic");
+    expect(game).toContain("const bpSearchWindowSeconds=24");
+    expect(game).toContain("const bpMaxChaseSeconds=8");
+    expect(game).not.toContain('const bpDispatchRestSeconds=100');
+    expect(game).toContain("bpLaptopRig.visible=!(game?.mode==='attack'&&bpAttackLaptopCarried&&!bp.third)");
+    expect(game).toContain("bp.player.copy(mode==='attack'?V(-8.3,0,6.15):V(bpOfficeConsoleX,0,bpOfficeConsoleZ+2.45))");
+    expect(game).toContain('const bpOfficeConsoleX=23.15');
+    expect(game).not.toContain("bpHackerState==='fleeing'");
+    expect(game).not.toContain('const bpHackerEscape=[');
+    expect(game).toContain('bpGuardCanSee(p.agent,attacker.position,13)');
+    expect(game).toContain("p.state='returning'");
+    expect(game).toContain("p.state='idle'");
+    expect(game).toContain('const bpWorkPosition=V(-8.5,0,4.18)');
+    expect(game).toContain("endGame(false,'CAUGHT BY SECURITY'");
+    expect(game).toContain('new THREE.PerspectiveCamera(84, 1, .07, 120)');
+    expect(game).toContain('if(!bp.active || (!bp.lobby&&(!game||game.ended))){');
+    expect(game).not.toContain('if(!bp.active || !game || game.ended || bp.terminal){');
+    expect(game).toContain('if(!bp.lobby||bpPaused)return;');
+    expect(game).toContain('const station=bpLobbyNearby();');
+    expect(game).toContain('startGame(station.mode);');
+    expect(game).toContain('if(game&&!game.ended)return;');
+    expect(game).toContain("if(mode!=='attack'&&mode!=='defend')return;");
+    expect(game).toContain("$('home').hidden=true;$('home').inert=true;");
+    expect(game).toContain("$('home').hidden=false;$('home').inert=false;");
+    expect(game).toContain('const bpLaptopRig=new THREE.Group()');
+    expect(game).toContain('function bpToggleAttackLaptop()');
+    expect(game).toContain("e.code==='KeyF'");
+    expect(game).toContain("bpHackerState='packing'");
+    expect(game).toContain("if(bpHackerState==='escaping')");
+    expect(game).toContain("const courtroom=new THREE.Group()");
+    expect(game).toContain("g.courtPhase='hearing'");
+    expect(game).toContain("g.courtPhase='detention'");
+    expect(game).toContain('const bpJudge=character(');
+    expect(game).toContain("focus('courtroom')");
+    expect(game).toContain('function bpGuardRoute(from,to)');
+    expect(game).toContain('bpRandomSearchTarget(g)');
+    expect(game).toContain("box(23,-.19,0,17,.35,24,concrete)");
+    expect(game).toContain('function bpPowerProxy(index)');
+    expect(game).toContain("function bpDisableProxy(index,who='intruder')");
+    expect(game).toContain('function bpNearbyProxy(position,range=2.55,poweredOnly=false)');
+    expect(game).toContain("game.proxySabotage={index:proxyIndex,until:game.elapsed+2.2}");
+    expect(game).toContain("bpDisableProxy(task.index,'intruder')");
+    expect(game).toContain("if(game.mode==='defend'&&!proxy.userData.powered)");
+    expect(game).toContain('function bpPlanHackerProxySabotage(g,continueSortie=false)');
+    expect(game).toContain("bpHackerState='sabotaging'");
+    expect(game).toContain("bpDisableProxy(disabled,'the hooded suspect')");
+    expect(game).toContain("const targetRps=(750+g.bots*185+(g.burst>0?14500:0))*ATTACK_TRAFFIC_SCALE");
+    expect(game).toContain("const targetRps=(3800+g.bots*118+(g.attackerWave>0?4700:0))*DEFENSE_WAVE_SCALE");
+    expect(game).toContain("p.state=p.path.length?'coolingTravel':'returning'");
+    expect(game).toContain("p.state='coolingFix'");
+    expect(game).toContain("function bpTriggerCoolingIssue(g)");
+    expect(game).toContain("bpTriggerCoolingIssue(g)");
+    expect(game).toContain("COOLING RESTORED / OFFICER COMPLETED REPAIR");
+    expect(game).toContain("bpCoolingIndicator.material=red");
+    expect(game).toContain('game.proxies=poweredProxyCount(proxyObjects)');
+    expect(game).toContain('bpGuardSetReturn(p)');
+    expect(game).not.toContain('DEFENDERS ARE DEPLOYING PROXY SERVERS');
+    expect(game).toContain('function bpTerminalActionAt(x,y)');
+    expect(game).toContain('bpTerminalRaycaster.intersectObject(mesh,false)');
+    expect(game).toContain('function bpGuardCanSee(');
+    expect(game).toContain('function bpWorldEvents()');
+    expect(game).toContain("if(bp?.active)return;");
+  });
+
+  it('has a wall-mounted live graph and an adaptive graphics setting', () => {
+    expect(game).toContain('function bpWallGraph(t)');
+    expect(game).toContain('const bpWallHistory=[]');
+    expect(game).toContain('const bpWallDisplay=new THREE.Mesh(');
+    expect(game).toContain('const latest=(g?.requestFeed?.recent??[]).slice(-3).reverse();');
+    expect(game).toContain('bpSmoothedRpm');
+    expect(game).toContain('bpFanBlurMaterial.opacity');
+    expect(game).toContain('const bpCourtDetail=new THREE.Group()');
+    expect(game).toContain('const bpRackDetail=new THREE.Group()');
+    expect(game).toContain('new THREE.InstancedMesh(');
+    expect(game).toContain('bpRackDetail.visible=!lowQuality');
+    expect(game).toContain("ctx.setTransform(1,0,0,1,0,0)");
+    expect(game).toContain('this.fanWhine.frequency.setTargetAtTime');
+    expect(game).toContain("box(-10.55,2.20,2.2,1.65,4.35,1.88,darkMetal)");
+    expect(html).toContain('bp-skeleton-main');
+    expect(html).not.toContain('INITIALIZING 3D ENVIRONMENT');
+    expect(html).not.toContain('id="feed"');
+    expect(game).toContain("const gpuCores=Number(navigator.hardwareConcurrency)||4");
+    expect(html).toContain('id="quality"');
+    expect(html).not.toContain('FICTIONAL NETWORK SIMULATION');
+  });
+});
