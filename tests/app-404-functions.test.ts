@@ -55,22 +55,17 @@ describe('Custom 404 for invalid app routes',()=>{
       expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/');
     }
   });
-  it('loads the standalone game at its canonical URL without requesting an index.html redirect',async()=>{
-    const {ctx,fetch}=context('/app/game/blackout-protocol');
-    const response=await nestedRoute(ctx);
-    expect(response.status).toBe(200);
-    expect(fetch).toHaveBeenCalledTimes(1);
-    expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/app/game/blackout-protocol');
-    // Cloudflare Pages redirects directory index.html files to their clean
-    // paths, so fetching one from a clean-path Function causes a loop.
-    expect(new URL(fetch.mock.calls[0]![0].url).pathname).not.toContain('/index.html');
-  });
-  it('normalizes the trailing slash once without recursively requesting the asset',async()=>{
-    const {ctx,fetch}=context('/app/game/blackout-protocol/');
-    const response=await nestedRoute(ctx);
-    expect(response.status).toBe(302);
-    expect(response.headers.get('location')).toBe('https://picompiler.pages.dev/app/game/blackout-protocol');
-    expect(fetch).not.toHaveBeenCalled();
+  it('serves either game URL variant without an index.html rewrite or redirect',async()=>{
+    for(const path of ['/app/game/blackout-protocol','/app/game/blackout-protocol/']){
+      const {ctx,fetch}=context(path);
+      const response=await nestedRoute(ctx);
+      expect(response.status).toBe(200);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/app/game/blackout-protocol');
+      // Pages redirects folder index.html files, which previously caused a
+      // loop when an asset fetch requested the index from a catch-all route.
+      expect(new URL(fetch.mock.calls[0]![0].url).pathname).not.toContain('/index.html');
+    }
   });
   it('builds an independent flat HTML file that Pages serves at the extensionless game URL',()=>{
     const html=readFileSync(new URL('../app/game/blackout-protocol.html',import.meta.url),'utf8');
