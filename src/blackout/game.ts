@@ -917,14 +917,7 @@ function animateScene(t,dt){
 // --------------------------------------------------------------------------
 // Input, restart, responsive rendering and fixed-delta loop.
 // --------------------------------------------------------------------------
-// Mode selection must never receive clicks behind an active 3D scene.
-for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',event=>{
-  event.stopPropagation();
-  if(game || $('home').hidden || $('home').classList.contains('hidden'))return;
-  const mode=b.dataset.mode;
-  if(mode!=='attack'&&mode!=='defend')return;
-  startGame(mode);
-});
+// Mode selection now happens in the physical lobby via E or an entry click.
 function menu(){bpDismissPause();if(bp.terminal)bpCloseTerminal();bp.active=false;bp.keys.clear();bp.dragging=false;document.body.classList.remove('terminal-open');game=null;endingDelay=0;world.visible=true;dynamic.visible=true;jail.visible=false;courtroom.visible=false;scene.fog.density=.010;scene.background.set('#25313f');$('home').hidden=false;$('home').inert=false;$('home').classList.remove('hidden');$('game').classList.remove('active');$('ending').classList.remove('visible');reqTube.visible=false;for(let o of proxyObjects)o.visible=false;focus('overview');sfx.tap();}
 $('again').onclick=()=>{const mode=game?.mode||'defend';startGame(mode);};
 $('menu').onclick=()=>menu();
