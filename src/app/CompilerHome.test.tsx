@@ -97,6 +97,17 @@ it('handles a direct /app/games URL and browser navigation',async()=>{
   expect(container.querySelector('.pico-games')).toBeNull();
   expect(container.querySelector('.home-hero h1')?.textContent).toBe('Choose your workspace');
 });
+it('uses the Pico logo to return to Workspaces from Games and the compiler',async()=>{
+  await click(container.querySelector<HTMLElement>('a.home-games-link[href="/app/games"]')!);
+  expect(window.location.pathname).toBe('/app/games');
+  await click(container.querySelector<HTMLElement>('.pico-games-brand')!);
+  expect(window.location.pathname).toBe('/app');
+  await choose('Python Compiler');
+  expect(window.location.pathname).toBe('/app/python');
+  await click(container.querySelector<HTMLElement>('.pico-brand-home[aria-label="Pico, back to Workspaces"]')!);
+  expect(window.location.pathname).toBe('/app');
+  expect(container.querySelector('.home-hero h1')?.textContent).toBe('Choose your workspace');
+});
 it('shows three matching concept developer cards and prominent co-founders',async()=>{
   await act(async()=>{
     window.location.hash='#team';
