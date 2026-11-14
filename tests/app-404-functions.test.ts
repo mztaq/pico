@@ -56,12 +56,12 @@ describe('Custom 404 for invalid app routes',()=>{
     }
   });
   it('loads Blackout as its own game HTML at both nested URL forms',async()=>{
-    for(const path of ['/app/game/blackout','/app/game/blackout/']){
+    for(const path of ['/app/game/blackout-protocol','/app/game/blackout-protocol/']){
       const {ctx,fetch}=context(path);
       const response=await nestedRoute(ctx);
       expect(response.status).toBe(200);
       expect(new URL(fetch.mock.calls[0]![0].url).pathname)
-        .toBe('/app/game/blackout/index.html');
+        .toBe('/app/game/blackout-protocol/index.html');
     }
   });
   it('redirects older Blackout links to the nested Games route',()=>{
@@ -69,10 +69,10 @@ describe('Custom 404 for invalid app routes',()=>{
     const oldPage=readFileSync(new URL('../public/blackout-protocol.html',import.meta.url),'utf8');
     expect(redirects).toMatch(/\/blackout-protocol\s+\/app\/game\/blackout\s+301/);
     expect(redirects).toMatch(/\/blackout-protocol\/\s+\/app\/game\/blackout\s+301/);
-    expect(oldPage).toContain("location.replace('/app/game/blackout')");
+    expect(oldPage).toContain("location.replace('/app/game/blackout-protocol')");
   });
   it('rejects unregistered game paths instead of rendering the React workspace app',async()=>{
-    for(const path of ['/app/game','/app/game/unknown','/app/game/blackout/extra']){
+    for(const path of ['/app/game','/app/game/unknown','/app/game/blackout-protocol/extra']){
       const {ctx,fetch}=context(path);
       const response=path==='/app/game'?await workspaceRoute(ctx):await nestedRoute(ctx);
       expect(response.status).toBe(404);
