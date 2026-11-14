@@ -34,7 +34,9 @@ const choose=async(language:string)=>{await click(container.querySelector(`.comp
 async function type(element:HTMLInputElement|HTMLTextAreaElement,value:string){await act(async()=>{Object.getOwnPropertyDescriptor(element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event('input',{bubbles:true}));});}
 beforeEach(async()=>{
   localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.python.visitCount.v1','3');jobs.length=0;
-  window.history.replaceState(null, '', window.location.pathname);
+  // Each test must start at the workspace home. Tests that visit /app/games,
+  // /app/cpu or /app/report must not leak their URL into the next case.
+  window.history.replaceState(null, '', '/app');
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);
   container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));
 });
@@ -51,6 +53,12 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
+});
+it('resets test navigation after visiting Games', async()=>{
+  const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
+  await click(gamesLink);
+  expect(window.location.pathname).toBe('/app/games');
+  // The next test's beforeEach restores /app regardless of this URL.
 });
 it('opens the Games library from home and returns to the workspace chooser', async()=>{
   expect(container.querySelector('.home-group[aria-label="Games"]')).not.toBeNull();
