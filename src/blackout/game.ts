@@ -29,8 +29,10 @@ const camera = new THREE.PerspectiveCamera(84, 1, .07, 120);
 const gpuMemory=Number(navigator.deviceMemory)||4;
 const gpuCores=Number(navigator.hardwareConcurrency)||4;
 const autoLow=gpuMemory<=4||gpuCores<=4||Math.min(innerWidth,innerHeight)<680;
-let preferredQuality='auto';
-try {preferredQuality=localStorage.getItem('pico.blackout.graphics')||'auto';}catch { /* Storage is disabled on some classroom browsers. */ }
+// entry.ts chooses quality before any geometry is built, including when
+// localStorage is disabled. Keep the existing Graphics dropdown for later changes.
+let preferredQuality=window.__picoBlackoutQuality||'auto';
+try {preferredQuality=window.__picoBlackoutQuality||localStorage.getItem('pico.blackout.graphics')||'auto';}catch { /* Storage is disabled on some classroom browsers. */ }
 if(!['auto','low','high'].includes(preferredQuality))preferredQuality='auto';
 let lowQuality=preferredQuality==='low'||(preferredQuality==='auto'&&autoLow);
 const renderer = new THREE.WebGLRenderer({ antialias: !lowQuality, powerPreference: 'low-power', alpha: false });
