@@ -116,7 +116,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
     </div>
     <div className="home-inner">
       <div className="home-hero">
-      <div className="home-brand"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></div>
+      <a className="home-brand" href="/app" aria-label="Pico, Workspaces"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
         <h1>Choose your workspace</h1>
       </div>
       <div className="compiler-choices">
