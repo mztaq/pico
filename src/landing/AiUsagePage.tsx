@@ -4,7 +4,7 @@ import './ai-usage.css';
 
 const title = 'Copyright & AI Usage | Pico';
 const description = 'Pico copyright, automated access, and AI-assisted website reproduction policy.';
-const canonicalUrl = 'https://picompiler.pages.dev/legal/ai-usage';
+const canonicalUrl = 'https://picompiler.pages.dev/app/ai-usage';
 
 export default function AiUsagePage() {
   useEffect(() => {
@@ -32,8 +32,7 @@ export default function AiUsagePage() {
     </header>
     <main id="main" className="lp-container pico-ai-policy-main">
       <div className="pico-ai-policy-heading">
-        <p className="pico-ai-policy-eyebrow">Pico · Legal</p>
-        <h1>Copyright &amp; AI Usage</h1>
+         <h1>Copyright &amp; AI Usage</h1>
         <p className="pico-ai-policy-intro">How Pico's original materials may be accessed and used.</p>
         <dl className="pico-ai-policy-meta">
           <div><dt>Effective date</dt><dd><time dateTime="2026-11-14">November 14, 2026</time></dd></div>
@@ -74,6 +73,6 @@ export default function AiUsagePage() {
         </section>
       </article>
     </main>
-    <footer className="lp-footer"><div className="lp-container"><small>© 2026 Amar Abdelhak Ayache. All rights reserved.</small></div></footer>
+    <footer className="lp-footer"><div className="lp-container"><a className="lp-footer-copyright" href="/app/ai-usage">© 2026 Pico Development Team. All rights reserved.</a></div></footer>
   </div>;
 }
