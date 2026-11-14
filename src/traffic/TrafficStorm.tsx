@@ -604,7 +604,7 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
     <header className="storm-header pico-appbar">
       <div className="pico-appbar-lead">
         <button type="button" className="storm-icon-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17}/></button>
-        <div className="brand-lockup"><img className="brand-mark" src="/pico-logo.svg" alt="" width="24" height="24"/><span>Pico<span className="brand-period">.</span></span></div>
+        <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="24" height="24"/><span>Pico<span className="brand-period">.</span></span></button>
         <span className="pico-appbar-sep" aria-hidden="true">/</span>
         <strong className="pico-appbar-tool">Traffic Storm</strong>
       </div>
