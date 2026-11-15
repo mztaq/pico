@@ -192,8 +192,6 @@ export default function LandingPage() {
     </section>
   </main>
   <footer className="lp-footer"><div className="lp-container">
-    <small>© 2026 Pico Development Team. All rights reserved.</small>
-    <a className="lp-legal-link" href="/legal/ai-usage">Copyright &amp; AI Usage</a>
-    <small className="lp-protected-notice">Original site materials © 2026 Amar Abdelhak Ayache. All rights reserved.</small>
+    <a className="lp-footer-copyright" href="/app/ai-usage">© 2026 Pico Development Team. All rights reserved.</a>
   </div></footer></div>;
 }

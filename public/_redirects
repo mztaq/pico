@@ -1,5 +1,5 @@
-/legal/ai-usage / 200
-/legal/ai-usage/ / 200
+/legal/ai-usage /app/ai-usage 301
+/legal/ai-usage/ /app/ai-usage 301
 # Historical standalone Blackout URL now lives under Pico Games.
 /blackout-protocol       /app/game/blackout-protocol 301
 /blackout-protocol/      /app/game/blackout-protocol 301
