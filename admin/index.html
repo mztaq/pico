@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1e1e2e">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
+<title>Incident Management | Pico</title>
+<style>
+:root{color-scheme:dark;--bg:#1e1e2e;--surface:#262638;--raised:#2d2c40;--line:#44445c;--fg:#cdd6f4;--bright:#f6f3ff;--muted:#a6adc8;--purple:#cba6f7;--green:#a6e3a1;--amber:#f9e2af;--red:#f38ba8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:inherit;text-decoration:none}a:hover{color:var(--purple)}
+:focus-visible{outline:2px solid var(--purple);outline-offset:3px}
+.wrap{width:min(100% - 42px,1040px);margin:auto}
+header{border-bottom:1px solid var(--line)}
+nav{display:flex;align-items:center;justify-content:space-between;min-height:85px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:750;letter-spacing:-.6px;color:var(--bright)}
+.brand img{width:34px;height:34px}.brand .split{width:1px;height:23px;background:var(--line);margin:0 5px}
+.brand .sub{font-size:14px;color:var(--muted);font-weight:500;letter-spacing:0}
+.link{font-size:13px;color:var(--muted)}
+main{padding:46px 0 95px}
+h1{font-size:clamp(30px,5vw,40px);color:var(--bright);letter-spacing:-1.2px;margin:0 0 7px;line-height:1.2}
+.lead{font-size:14px;color:var(--muted);margin:0 0 32px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.panel-head{padding:22px 24px;border-bottom:1px solid var(--line)}
+.panel-head h2{font-size:19px;color:var(--bright);letter-spacing:-.45px;margin:0;font-weight:700}
+.body{padding:23px 24px}
+label{display:block;color:var(--bright);font-size:13px;font-weight:630;margin-bottom:8px}
+.field{width:100%;background:#1e1e2e;color:var(--bright);border:1px solid var(--line);border-radius:8px;padding:12px 13px;font:inherit;font-size:14px;outline:none}
+.field:focus{border-color:var(--purple);box-shadow:0 0 0 2px #cba6f726}
+textarea.field{resize:vertical;min-height:118px}
+.group{margin-bottom:20px}
+button{font:inherit;cursor:pointer}
+.primary{width:100%;padding:12px 15px;border:1px solid transparent;border-radius:9px;background:var(--purple);color:#181624;font-size:14px;font-weight:750;transition:filter .15s}
+.primary:hover{filter:brightness(1.08)}
+.primary:disabled{opacity:.55;cursor:not-allowed}
+.notice{font-size:13px;color:var(--muted);margin:13px 0 0;min-height:18px}
+.notice.fail{color:var(--red)}.notice.ok{color:var(--green)}
+.incident-list{max-height:360px;overflow:auto}
+.pick{display:flex;align-items:center;justify-content:space-between;gap:15px;width:100%;text-align:left;padding:17px 24px;background:transparent;color:inherit;border:none;border-bottom:1px solid var(--line)}
+.pick:last-child{border-bottom:0}.pick:hover{background:var(--raised)}
+.pick.active{background:#cba6f712;box-shadow:inset 3px 0 0 var(--purple)}
+.pick strong{display:block;color:var(--bright);font-size:14px;font-weight:675}
+.pick small{display:block;color:var(--muted);font-size:12px;margin-top:5px}
+.status{font-size:12px;font-weight:650;white-space:nowrap;color:var(--amber)}
+.status.resolved{color:var(--green)}
+.picker-empty{padding:28px 24px;color:var(--muted);font-size:14px}
+.update-head{margin:27px 0 14px;color:var(--bright);font-size:18px;font-weight:710}
+.selected{font-size:14px;color:var(--muted);margin:0 0 20px}
+#update-form[hidden]{display:none}
+footer{border-top:1px solid #ffffff17;padding:26px 0;text-align:center;font-size:12px;color:var(--muted)}
+@media(max-width:780px){.grid{grid-template-columns:1fr;gap:20px}main{padding-top:34px}.panel-head,.body{padding:19px}.pick{padding:17px 19px}}
+@media(max-width:420px){.wrap{width:calc(100% - 28px)}nav{min-height:70px}.brand{font-size:18px}.brand img{width:30px;height:30px}.brand .sub,.link{font-size:12px}.brand .split{margin:0 2px}}
+</style>
+</head>
+<body>
+<header><nav class="wrap"><a class="brand" href="https://picompiler.pages.dev/"><img src="/pico-logo.svg" alt="">Pico.<span class="split"></span><span class="sub">Admin</span></a><a class="link" href="/">Public status ↗</a></nav></header>
+<main class="wrap">
+  <h1>Incident management</h1>
+  <p class="lead">Publish updates to Pico's public status page.</p>
+  <div class="grid">
+    <section class="panel" aria-labelledby="incidents-heading">
+      <div class="panel-head"><h2 id="incidents-heading">Incidents</h2></div>
+      <div id="incidents" class="incident-list"><div class="picker-empty">Loading incidents…</div></div>
+      <div class="body" style="border-top:1px solid var(--line)">
+        <h3 class="update-head" style="margin-top:0">Publish update</h3>
+        <p id="selection" class="selected">Select an incident above.</p>
+        <form id="update-form" hidden>
+          <div class="group"><label for="stage">Stage</label>
+            <select class="field" id="stage" required>
+              <option value="investigating">Investigating</option>
+              <option value="identified">Identified</option>
+              <option value="monitoring">Monitoring</option>
+              <option value="resolved">Resolved</option>
+            </select>
+          </div>
+          <div class="group"><label for="update-message">Public message</label>
+            <textarea class="field" id="update-message" minlength="10" maxlength="650" required placeholder="Describe what's happening and what the team is doing."></textarea>
+          </div>
+          <button id="publish-update" class="primary" type="submit">Publish update</button>
+          <p id="update-result" class="notice" role="status"></p>
+        </form>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="new-heading">
+      <div class="panel-head"><h2 id="new-heading">Create incident</h2></div>
+      <div class="body">
+        <form id="create-form">
+          <div class="group"><label for="service">Affected service</label>
+            <select class="field" id="service" required>
+              <option value="website">Pico Website</option>
+              <option value="mcp">Pico MCP</option>
+              <option value="oauth">Pico OAuth</option>
+            </select>
+          </div>
+          <div class="group"><label for="title">Incident title</label>
+            <input class="field" type="text" id="title" minlength="5" maxlength="120" required placeholder="Pico MCP connection errors">
+          </div>
+          <div class="group"><label for="create-message">First public update</label>
+            <textarea class="field" id="create-message" minlength="10" maxlength="650" required placeholder="We're investigating connection failures affecting Pico MCP."></textarea>
+          </div>
+          <button id="create-incident" class="primary" type="submit">Create incident</button>
+          <p class="notice" id="create-result" role="status"></p>
+        </form>
+      </div>
+    </section>
+  </div>
+</main>
+<footer><div class="wrap"><a href="https://picompiler.pages.dev/app/ai-usage">© 2026 Pico Development Team. All rights reserved.</a></div></footer>
+<script>
+(() => {
+  const $=id=>document.getElementById(id);
+  const services={website:"Pico Website",mcp:"Pico MCP",oauth:"Pico OAuth"};
+  const stages=["investigating","identified","monitoring","resolved"];
+  const labels={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring",resolved:"Resolved"};
+  let incidents=[],selected=null,loading=false;
+  function note(id,text,ok){const element=$(id);element.textContent=text;element.className="notice "+(ok?"ok":"fail")}
+  async function request(path,options){
+    const response=await fetch(path,{credentials:"same-origin",cache:"no-store",...options});
+    let body;
+    try{body=await response.json()}catch{throw Error("Unable to read server response")}
+    if(!response.ok)throw Error(body.error||"Request failed");
+    return body;
+  }
+  function choose(incident){
+    selected=incident;
+    $("selection").textContent=incident.title+" · "+(services[incident.serviceId]||"Pico");
+    $("update-form").hidden=false;
+    const stage=$("stage");
+    for(const option of stage.options){
+      option.disabled=stages.indexOf(option.value)<stages.indexOf(incident.status);
+    }
+    stage.value=incident.status;
+    $("update-message").value="";
+    note("update-result","",true);
+    draw();
+  }
+  function draw(){
+    const root=$("incidents");root.replaceChildren();
+    if(!incidents.length){const empty=document.createElement("div");empty.className="picker-empty";empty.textContent="No incidents";root.append(empty);return;}
+    incidents.forEach(i=>{
+      const button=document.createElement("button");button.type="button";button.className="pick"+(selected&&selected.id===i.id?" active":"");
+      const left=document.createElement("span"),name=document.createElement("strong"),small=document.createElement("small");
+      const status=document.createElement("span");
+      name.textContent=i.title;
+      small.textContent=(services[i.serviceId]||"Pico")+" · "+new Date(i.startedAt).toLocaleDateString();
+      status.className="status"+(i.status==="resolved"?" resolved":"");
+      status.textContent=labels[i.status]||"Unknown";
+      left.append(name,small);button.append(left,status);
+      button.addEventListener("click",()=>choose(i));
+      root.append(button);
+    });
+  }
+  async function reload(preferred){
+    if(loading)return;
+    loading=true;
+    try{
+      const result=await request("/admin/api/incidents");
+      incidents=Array.isArray(result.incidents)?result.incidents:[];
+      if(preferred){selected=incidents.find(i=>i.id===preferred)||null;}
+      else if(selected){selected=incidents.find(i=>i.id===selected.id)||null;}
+      if(selected)choose(selected);
+      else{$("update-form").hidden=true;$("selection").textContent="Select an incident above.";draw()}
+    }catch(error){
+      const div=document.createElement("div");div.className="picker-empty";
+      div.textContent="Access denied or admin setup incomplete.";
+      $("incidents").replaceChildren(div);
+      $("update-form").hidden=true;
+    }finally{loading=false}
+  }
+  $("create-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(!confirm("Publish this incident to the public status page?"))return;
+    const button=$("create-incident");button.disabled=true;
+    try{
+      const result=await request("/admin/api/incidents",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({serviceId:$("service").value,title:$("title").value,message:$("create-message").value})
+      });
+      $("create-form").reset();note("create-result","Incident published.",true);
+      await reload(result.id);
+    }catch(error){note("create-result",error.message,false)}
+    finally{button.disabled=false}
+  });
+  $("update-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(!selected)return;
+    if(!confirm("Publish this update publicly?"))return;
+    const button=$("publish-update");button.disabled=true;
+    const id=selected.id;
+    try{
+      await request("/admin/api/updates",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({incidentId:id,stage:$("stage").value,message:$("update-message").value})});
+      await reload(id);
+      note("update-result","Update published.",true);
+    }catch(error){note("update-result",error.message,false)}
+    finally{button.disabled=false}
+  });
+  reload();
+})();
+</script>
+</body>
+</html>
