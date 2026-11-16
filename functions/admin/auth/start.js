@@ -16,6 +16,8 @@ export async function onRequestGet(context){
   github.searchParams.set("state",state);
   github.searchParams.set("code_challenge",await challenge(verifier));
   github.searchParams.set("code_challenge_method","S256");
+  // Explicitly request no GitHub permissions beyond basic identity.
+  github.searchParams.set("scope","");
   github.searchParams.set("allow_signup","false");
   // No repo, profile, email or other OAuth scopes are requested.
   return redirect(github.toString(),[setCookie(LOGIN_COOKIE,loginCookie,LOGIN_SECONDS)]);
