@@ -16,10 +16,7 @@
       <img src="/pico-logo.svg" alt="" width="32" height="32">
       <span>Pico.</span><span class="brand-divider"></span><span class="brand-section">Admin</span>
     </a>
-    <div class="nav-actions">
-      <a class="nav-link" href="/">Status page <span aria-hidden="true">↗</span></a>
-      <button class="nav-link signout" id="logout" type="button">Sign out</button>
-    </div>
+    <button class="signout" id="logout" type="button">Sign out</button>
   </nav>
 </header>
 
@@ -99,6 +96,10 @@
     </div>
   </form>
 </dialog>
+
+<a class="floating-status" href="/" aria-label="View public Pico system status">
+  <span>Public status</span><span class="floating-arrow" aria-hidden="true">↗</span>
+</a>
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
