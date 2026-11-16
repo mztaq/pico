@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import { LearningHub } from './LearningHub';
+import { getTheme } from '../app/themes';
 
 const host = document.createElement('div');
 const root = createRoot(host);
@@ -37,4 +38,26 @@ it('shows complete notes, an example and an interactive model without a multi-st
   expect(host.textContent).toContain('Question 1 of 2');
   await act(async () => button('Exit practice').click());
   expect(host.textContent).toContain('Worked example');
+});
+
+it('updates Learn panels when Pico theme settings change without remounting', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const saved = localStorage.getItem('pico.settings.v6');
+  document.body.append(host);
+  try {
+    localStorage.setItem('pico.settings.v6', JSON.stringify({ theme: 'catppuccin-mocha' }));
+    await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
+    const learn = host.querySelector<HTMLElement>('.learning-hub')!;
+    expect(learn.style.getPropertyValue('--ds-panel')).toBe(getTheme('catppuccin-mocha').ui.surfaceRaised);
+    await act(async () => {
+      localStorage.setItem('pico.settings.v6', JSON.stringify({ theme: 'catppuccin-latte' }));
+      window.dispatchEvent(new Event('pico:settings-saved'));
+    });
+    expect(learn.style.getPropertyValue('--ds-panel')).toBe(getTheme('catppuccin-latte').ui.surfaceRaised);
+    expect(learn.style.colorScheme).toBe('light');
+    expect(learn.style.getPropertyValue('--ds-text')).toBe(getTheme('catppuccin-latte').text);
+  } finally {
+    if (saved === null) localStorage.removeItem('pico.settings.v6');
+    else localStorage.setItem('pico.settings.v6', saved);
+  }
 });
