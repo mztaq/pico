@@ -6,6 +6,7 @@ import { readProgress, recordAnswer, saveProgress } from './progress';
 import { loadSettings } from '../storage/settings';
 import { cssVariables, getTheme } from '../app/themes';
 import { LearningVisual, visualizedTopics } from './LearningVisuals';
+import { topicNotes } from './notes';
 import './learning.css';
 
 type Props = {
@@ -31,15 +32,13 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   const [revealed, setRevealed] = useState(false);
   const [score, setScore] = useState(0);
   const [mode, setMode] = useState('');
-  const [lessonStep, setLessonStep] = useState(0);
   const lessonRef = useRef<HTMLElement>(null);
 
   const filtered = useMemo(() => topics.filter(topic =>
     `${topic.title} ${topic.unit} ${topic.idea}`.toLowerCase().includes(query.trim().toLowerCase())), [query]);
   const units = [...new Set(filtered.map(topic => topic.unit))];
   const available = questions.filter(question => question.topic === selected.id);
-  const lessonStages = ['Understand', ...(selected.worked ? ['Worked example'] : []), ...(visualizedTopics.has(selected.id) ? ['Explore'] : []), ...(selected.tryThis ? ['Now try'] : []), 'Ready to practise'];
-  const stage = lessonStages[lessonStep];
+  const notes = topicNotes[selected.id];
   const attempts = Object.values(progress.attempts).reduce((total, item) => total + item.total, 0);
   const correct = Object.values(progress.attempts).reduce((total, item) => total + item.correct, 0);
 
@@ -71,28 +70,16 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   function chooseTopic(topic: Topic) {
     setSelected(topic);
     setSession(null);
-    setLessonStep(0);
     lessonRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
-  function moveLesson(step: number) {
-    setLessonStep(step);
-    lessonRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
-  }
-
   return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as React.CSSProperties}>
     <header className="learning-topbar">
       <button type="button" className="learning-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" /> Workspaces</button>
-      <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Pico learning</span>
-      <span className="learning-progress" aria-live="polite">{attempts ? `${correct}/${attempts} correct` : 'Ready to start'}</span>
+      <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn</span>
+      <span className="learning-progress" aria-live="polite">{attempts ? `${correct}/${attempts} correct` : ''}</span>
     </header>
     <div className="learning-intro">
-      <p className="learning-kicker">Study notes, made practical</p>
-      <h1>Learn a concept. Try it in Pico.</h1>
-      <p>Explore the topics in your notes, check an example, then practise or open the matching workspace. Progress stays in this browser.</p>
-      <nav className="learning-path" aria-label="Suggested beginner path"><span>Start here</span>{['number-systems', 'algorithms', 'programming', 'logic'].map((id, step) => {
-        const topic = topics.find(item => item.id === id)!;
-        return <button type="button" key={id} onClick={() => chooseTopic(topic)}><b>{step + 1}</b>{topic.title}</button>;
-      })}</nav>
+      <h1>Computer Science notes</h1>
     </div>
     <div className="learning-layout">
       <aside className="learning-catalogue" aria-label="Topics">
@@ -123,30 +110,49 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
         </section> : <section className="learning-panel learning-result" aria-live="polite"><CheckCircle2 size={32} aria-hidden="true" /><span className="learning-eyebrow">Practice complete</span><h2>{score} of {session.length} correct</h2><p>{progress.missed.length ? `${progress.missed.length} question${progress.missed.length === 1 ? '' : 's'} in your review list.` : 'No questions in your review list.'}</p><div className="learning-actions"><button type="button" className="learning-primary" onClick={() => setSession(null)}>Back to topic</button>{progress.missed.length > 0 && <button type="button" className="learning-secondary" onClick={() => start(questions.filter(question => progress.missed.includes(question.id)), 'Review missed')}>Review missed</button>}</div></section>
         : <>
           <section className="learning-panel learning-lesson" aria-labelledby="learning-topic-title" ref={lessonRef}>
-            <div className="learning-panel-top"><span className="learning-eyebrow">{selected.unit}</span><span className="learning-lesson-count">Lesson {lessonStep + 1} of {lessonStages.length}</span></div>
+            <span className="learning-eyebrow">{selected.unit}</span>
             <h2 id="learning-topic-title">{selected.title}</h2>
-            <progress className="learning-lesson-progress" value={lessonStep + 1} max={lessonStages.length} aria-label="Lesson progress" />
-            <div className="learning-step" aria-live="polite"><span className="learning-step-number">{String(lessonStep + 1).padStart(2, '0')}</span><div><h3>{stage}</h3>
-              {stage === 'Understand' && <p>{selected.idea}</p>}
-              {stage === 'Worked example' && <p>{selected.worked}</p>}
-              {stage === 'Explore' && <LearningVisual topicId={selected.id} />}
-              {stage === 'Now try' && <p>{selected.tryThis}</p>}
-              {stage === 'Ready to practise' && <p>You have finished the lesson. Check your understanding with a short quiz, or continue in a Pico workspace.</p>}
-            </div></div>
-            <div className="learning-actions">
-              {lessonStep > 0 && <button type="button" className="learning-secondary" onClick={() => moveLesson(lessonStep - 1)}>Previous step</button>}
-              {lessonStep < lessonStages.length - 1 && <button type="button" className="learning-primary" onClick={() => moveLesson(lessonStep + 1)}>{lessonStep === lessonStages.length - 2 ? 'Finish lesson' : `Next: ${lessonStages[lessonStep + 1]}`} <ArrowRight size={16} aria-hidden="true" /></button>}
-              {stage === 'Ready to practise' && <>
-                {available.length > 0 && <button type="button" className="learning-primary" onClick={() => start(available, selected.title)}><CircleHelp size={16} aria-hidden="true" /> Practise this topic ({available.length})</button>}
-                {selected.tool && <button type="button" className="learning-secondary" onClick={() => selected.starter ? onStartCode(selected.starter) : onOpenTool(selected.tool!)}>{selected.starter ? 'Open starter in compiler' : `Open ${toolNames[selected.tool] ?? 'Pico tool'}`} <ArrowRight size={16} aria-hidden="true" /></button>}
-                {!available.length && !selected.tool && <button type="button" className="learning-secondary" onClick={() => chooseTopic(topics[(topics.indexOf(selected) + 1) % topics.length])}>Next topic <ArrowRight size={16} aria-hidden="true" /></button>}
-              </>}
+
+            <section className="learning-note-section" aria-labelledby="learning-key-points">
+              <h3 id="learning-key-points">Key points</h3>
+              <p className="learning-definition">{selected.idea}</p>
+              {notes && <ul className="learning-note-list">{notes.points.map((point, pointIndex) =>
+                <li key={pointIndex}>{point}</li>
+              )}</ul>}
+            </section>
+
+            {selected.worked && <section className="learning-note-section" aria-labelledby="learning-worked-example">
+              <h3 id="learning-worked-example">Worked example</h3>
+              <p>{selected.worked}</p>
+              {notes?.exampleSteps && <ol className="learning-example-steps">{notes.exampleSteps.map((stepText, stepIndex) =>
+                <li key={stepIndex}>{stepText}</li>
+              )}</ol>}
+            </section>}
+
+            {notes?.remember && <div className="learning-remember"><strong>Remember</strong><p>{notes.remember}</p></div>}
+
+            {visualizedTopics.has(selected.id) && <section className="learning-note-section learning-interactive-example" aria-labelledby="learning-interactive-heading">
+              <h3 id="learning-interactive-heading">Interactive example</h3>
+              <LearningVisual topicId={selected.id} />
+            </section>}
+
+            {selected.tryThis && <section className="learning-note-section" aria-labelledby="learning-try-heading">
+              <h3 id="learning-try-heading">Try it yourself</h3>
+              <p>{selected.tryThis}</p>
+            </section>}
+
+            <div className="learning-actions learning-lesson-actions">
+              {available.length > 0 && <button type="button" className="learning-primary" onClick={() => start(available, selected.title)}><CircleHelp size={16} aria-hidden="true" /> Practice questions ({available.length})</button>}
+              {selected.tool && <button type="button" className="learning-secondary" onClick={() => selected.starter ? onStartCode(selected.starter) : onOpenTool(selected.tool!)}>{selected.starter ? 'Open example in compiler' : `Open ${toolNames[selected.tool] ?? 'Pico tool'}`} <ArrowRight size={16} aria-hidden="true" /></button>}
             </div>
           </section>
-          {stage === 'Ready to practise' && <section className="learning-panel learning-practice-card" aria-labelledby="practice-title">
-            <div><span className="learning-eyebrow">Revision</span><h2 id="practice-title">Keep practising</h2><p>Mix questions from the topics above, or retry only those you missed. Answers include a short reason.</p></div>
-            <div className="learning-actions"><button type="button" className="learning-secondary" onClick={() => start([...questions].sort(() => Math.random() - .5).slice(0, 8), 'Mixed practice')}>Start mixed practice</button><button type="button" className="learning-secondary" disabled={!progress.missed.length} onClick={() => start(questions.filter(question => progress.missed.includes(question.id)), 'Review missed')}><RotateCcw size={16} aria-hidden="true" /> Review missed ({progress.missed.length})</button></div>
-          </section>}
+          <section className="learning-panel learning-practice-card" aria-labelledby="practice-title">
+            <div><h2 id="practice-title">Practice</h2><p>Mixed questions or questions you answered incorrectly.</p></div>
+            <div className="learning-actions">
+              <button type="button" className="learning-secondary" onClick={() => start([...questions].sort(() => Math.random() - .5).slice(0, 8), 'Mixed practice')}>Mixed questions</button>
+              <button type="button" className="learning-secondary" disabled={!progress.missed.length} onClick={() => start(questions.filter(question => progress.missed.includes(question.id)), 'Review missed')}><RotateCcw size={16} aria-hidden="true" /> Review missed ({progress.missed.length})</button>
+            </div>
+          </section>
         </>}
       </div>
     </div>
