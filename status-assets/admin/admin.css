@@ -48,3 +48,5 @@ footer{border-top:1px solid #ffffff17;padding:26px 0;text-align:center;font-size
 
 .body-split{border-top:1px solid var(--line)}
 .update-head.compact{margin-top:0}
+
+.nav-actions{display:flex;align-items:center;gap:17px}.signout{border:0;background:none;padding:6px 0;cursor:pointer;font:inherit}
