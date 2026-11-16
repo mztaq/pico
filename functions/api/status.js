@@ -150,19 +150,30 @@ export async function onRequestGet(context) {
     if(context.env.DB) {
       try {
         const stored=await context.env.DB.prepare(
-          "SELECT external_id, service_id, reason, started_at, resolved_at " +
+          "SELECT id, source, external_id, service_id, title, reason, started_at, resolved_at, status " +
           "FROM pico_status_incidents WHERE started_at >= ? " +
           "ORDER BY started_at DESC LIMIT 30"
         ).bind(since30).all();
+        const rows=stored.results??[];
+        const ids=rows.map(row=>row.id);
+        let latest=new Map();
+        if(ids.length) {
+          const history=await context.env.DB.prepare(
+            "SELECT incident_id,message FROM pico_status_updates WHERE incident_id IN (" +
+            ids.map(()=>'?').join(',') + ") ORDER BY published_at DESC, id DESC"
+          ).bind(...ids).all();
+          for(const event of history.results??[]) {
+            if(!latest.has(event.incident_id))latest.set(event.incident_id,event.message);
+          }
+        }
         const known=new Map((incidents??[]).map(i=>[String(i.id),i]));
-        for(const row of stored.results??[]) {
+        for(const row of rows) {
           const id=String(row.external_id);
-          if(known.has(id))continue;
           const name=SERVICES.find(s=>s.id===row.service_id)?.name??'Pico';
           known.set(id,{
-            id,serviceId:row.service_id,service:name,reason:row.reason,
-            startedAt:row.started_at,resolvedAt:row.resolved_at,
-            status:row.resolved_at?'resolved':'investigating'
+            id,serviceId:row.service_id,service:name,title:row.title,
+            reason:latest.get(row.id)||row.reason,
+            startedAt:row.started_at,resolvedAt:row.resolved_at,status:row.status
           });
         }
         if((stored.results??[]).length)incidents=[...known.values()]
