@@ -245,9 +245,10 @@
         }else{
           const down=services.some(s=>s.status==="down");
           const degraded=services.some(s=>s.status==="degraded");
+          const activeIncident=Array.isArray(data.incidents)&&data.incidents.some(i=>!i.resolvedAt);
           const unverified=services.some(s=>!["up","down","degraded"].includes(s.status));
           if(down)setOverall("Service disruption","down");
-          else if(degraded)setOverall("Some services experiencing issues","warn");
+          else if(degraded||activeIncident)setOverall("Some services experiencing issues","warn");
           else if(unverified)setOverall("Partial monitoring","warn");
           else setOverall("All systems operational","up");
           renderIncidents(data.incidents);
