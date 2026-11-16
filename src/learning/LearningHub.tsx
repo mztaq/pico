@@ -121,9 +121,9 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
               )}</ul>}
             </section>
 
-            {selected.worked && <section className="learning-note-section" aria-labelledby="learning-worked-example">
+            {(selected.worked || notes?.exampleSteps?.length) && <section className="learning-note-section" aria-labelledby="learning-worked-example">
               <h3 id="learning-worked-example">Worked example</h3>
-              <p>{selected.worked}</p>
+              {selected.worked && <p>{selected.worked}</p>}
               {notes?.exampleSteps && <ol className="learning-example-steps">{notes.exampleSteps.map((stepText, stepIndex) =>
                 <li key={stepIndex}>{stepText}</li>
               )}</ol>}
