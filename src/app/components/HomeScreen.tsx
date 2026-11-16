@@ -1,8 +1,7 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
-import type { CompilerLanguage } from '../../storage/projects';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
@@ -12,6 +11,7 @@ import { ThemePicker } from './ThemePicker';
 import { BugReportDialog } from './BugReportDialog';
 import { BugReportNotice } from './BugReportNotice';
 import { picoIsOnline } from './pico-connection';
+import type { PicoWorkspace } from '../workspace-deeplink';
 
 const HOME_AMBIENT_CURVES = [
   { d: 'M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108', width: 2.6, opacity: .72 },
@@ -33,7 +33,7 @@ export function HomeAmbientCurves() {
   </svg>;
 }
 
-export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage | 'flowchart' | 'logic' | 'cpu' | 'binary' | 'traffic' | 'games') => void }) {
+export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) => void }) {
   const [settings, setSettings] = useState(loadSettings);
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
@@ -106,6 +106,10 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
         </div>}
       </div>
       <div className="home-updates">
+        <a className="home-games-link" href="/app/learn" onClick={event => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault(); onChoose('learn');
+        }}><BookOpen size={16} aria-hidden="true" /><span>Learn</span></a>
         <a className="home-games-link" href="/app/games" onClick={event => {
           if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault();
@@ -118,6 +122,10 @@ export function HomeScreen({ onChoose }: { onChoose: (language: CompilerLanguage
       <div className="home-hero">
       <a className="home-brand" href="/app" aria-label="Pico, Workspaces"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
         <h1>Choose your workspace</h1>
+        <a className="home-learning-link" href="/app/learn" onClick={event => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault(); onChoose('learn');
+        }}><BookOpen size={17} aria-hidden="true" /> New to a topic? Learn and practise first <span aria-hidden="true">→</span></a>
       </div>
       <div className="compiler-choices">
         <HomeGroup label="Code" detail="Write, run and debug programs">

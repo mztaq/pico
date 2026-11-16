@@ -19,6 +19,8 @@ import { GuidedTutorial, tutorialSteps } from './components/GuidedTutorial';
 import { TutorialOffer } from './components/TutorialOffer';
 import { HighlightedCode } from './components/HighlightedCode';
 import { HomeScreen } from './components/HomeScreen';
+import { LearningHub } from '../learning/LearningHub';
+import type { Topic } from '../learning/content';
 import { GamesPage } from './components/GamesPage';
 import { workspaceFromLocation, workspaceUrl, type PicoWorkspace } from './workspace-deeplink';
 import { SiteInfo, informationPageFromHash, informationPageFromPath, type InformationPage } from './components/SiteInfo';
@@ -88,13 +90,21 @@ export default function App() {
       window.removeEventListener('hashchange', syncInformation);
     };
   }, []);
-  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : language === 'traffic' ? 'Pico | Traffic Storm' : language === 'games' ? 'Pico | Games' : 'Pico | Home'; }, [language, informationPage]);
+  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : 'Terms and Conditions'}` : language === 'learn' ? 'Pico | Learn and practice' : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : language === 'traffic' ? 'Pico | Traffic Storm' : language === 'games' ? 'Pico | Games' : 'Pico | Home'; }, [language, informationPage]);
   // Workspace URLs are updated by setLanguage, and popstate restores browser history.
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
   const navigate = (next: CompilerLanguage | null, snapshot: WorkspaceSnapshot) => {
-    if (language && language !== 'flowchart' && language !== 'logic' && language !== 'cpu' && language !== 'binary' && language !== 'traffic' && language !== 'games') snapshots.current[language] = snapshot;
+    if (language === 'pseudocode' || language === 'python') snapshots.current[language] = snapshot;
     setLanguage(next);
+  };
+  const startCode = (starter: NonNullable<Topic['starter']>) => {
+    const projects = snapshots.current[starter.language]?.projects ?? loadProjects(starter.language);
+    const project = newProject(uniqueProjectName(starter.name, projects), starter.language);
+    project.code = starter.code;
+    project.files[0].code = starter.code;
+    snapshots.current[starter.language] = { projects: [...projects, project], activeId: project.id };
+    setLanguage(starter.language);
   };
   if (informationPage || !language) return <>
     <div className="site-info-home-underlay" inert={Boolean(informationPage)} aria-hidden={informationPage ? true : undefined}>
@@ -103,6 +113,7 @@ export default function App() {
     {informationPage && <SiteInfo page={informationPage} onClose={closeInformationPage} />}
   </>;
   if (language === 'games') return <GamesPage onHome={() => setLanguage(null)} />;
+  if (language === 'learn') return <LearningHub onBack={() => setLanguage(null)} onOpenTool={setLanguage} onStartCode={startCode} />;
   if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><WorkspaceTransition workspace="CPU Studio"><CpuStudio onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'binary') return <WorkspaceLoadBoundary key="binary" workspace="Binary Lab"><WorkspaceTransition workspace="Binary Lab"><BinaryLab onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
