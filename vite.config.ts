@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         status: resolve(process.cwd(), 'index.html'),
         history: resolve(process.cwd(), 'history.html'),
+        admin: resolve(process.cwd(), 'admin/index.html'),
       },
     },
   },
