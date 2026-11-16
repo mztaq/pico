@@ -12,6 +12,5 @@ export async function onRequest(context){
       && accept.includes("text/html"))return redirect("/admin/auth/start");
     return user;
   }
-  context.data.picoAdminUser=user;
   return context.next();
 }
