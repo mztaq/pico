@@ -221,8 +221,10 @@
       $("incidents").innerHTML=incidents.map(incident => {
         const when=incident.startedAt?new Date(incident.startedAt):null;
         const displayed=when&&Number.isFinite(when.getTime())?when.toLocaleString():null;
-        return '<article class="incident"><div class="incident-top"><h3>'+clean(incident.service||"Pico")+'</h3>'
-          + '<span class="state '+(incident.resolvedAt?"resolved":"")+'">'+(incident.resolvedAt?"Resolved":"Ongoing")+'</span></div>'
+        const stages={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring",resolved:"Resolved"};
+        const stage=stages[incident.status]||(incident.resolvedAt?"Resolved":"Investigating");
+        return '<article class="incident"><div class="incident-top"><h3>'+clean(incident.title||incident.service||"Pico")+'</h3>'
+          + '<span class="state '+(stage==="Resolved"?"resolved":"")+'">'+stage+'</span></div>'
           + '<p>'+clean(incident.reason||"Service interruption")+'</p>'
           + (displayed?'<time>'+clean(displayed)+'</time>':"")+'</article>';
       }).join("");
