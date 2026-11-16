@@ -1,131 +1,143 @@
-// Cloudflare Pages Function for the public Pico status site.
-// Set UPTIMEROBOT_API_KEY as a Preview-environment secret. Never put it in the HTML.
-// All fields returned here are public, deliberately limited to Pico monitors.
+// Public Pico status API. Only non-sensitive monitor data leaves this function.
+// Add UPTIMEROBOT_API_KEY to Cloudflare Pages Preview secrets.
 const SERVICES = [
-  { id: "website", name: "Pico Website", target: "https://picompiler.pages.dev" },
-  { id: "mcp", name: "Pico MCP", target: "https://picompiler.pages.dev/app/mcp" },
-  { id: "oauth", name: "Pico OAuth", target: "https://pico-oauth.mztaq.workers.dev" },
+  {id:"website", name:"Pico Website", target:"https://picompiler.pages.dev"},
+  {id:"mcp", name:"Pico MCP", target:"https://picompiler.pages.dev/app/mcp"},
+  {id:"oauth", name:"Pico OAuth", target:"https://pico-oauth.mztaq.workers.dev"},
 ];
+const ROOT = "https://api.uptimerobot.com/v3";
+const DAY = 86400000;
 
-function response(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
+function response(payload, code=200) {
+  return new Response(JSON.stringify(payload), {
+    status:code,
     headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": status === 200 ? "public, max-age=60, s-maxage=300" : "no-store",
-      "X-Content-Type-Options": "nosniff",
-    },
+      "Content-Type":"application/json; charset=utf-8",
+      "Cache-Control":code===200?"public, max-age=60, s-maxage=300":"no-store",
+      "X-Content-Type-Options":"nosniff",
+    }
   });
 }
-
-function normalise(url) {
-  try {
-    const parsed = new URL(url);
-    return (parsed.origin + parsed.pathname).replace(/\/+$/, "").toLowerCase();
-  } catch {
-    return "";
+function normalise(input) {
+  try { const url=new URL(input); return (url.origin+url.pathname).replace(/\/+$/,"").toLowerCase(); }
+  catch { return ""; }
+}
+function getMonitor(monitors, service) {
+  return monitors.find(m=>normalise(m.url)===normalise(service.target))
+    ?? monitors.find(m=>String(m.friendlyName||"").trim().toLowerCase()===service.name.toLowerCase())
+    ?? null;
+}
+function state(monitor) {
+  switch (String(monitor?.status||"").toUpperCase()) {
+    case "UP": return "up";
+    case "DOWN": return "down";
+    case "LOOKS_DOWN": return "degraded";
+    case "PAUSED": return "paused";
+    default: return "unknown";
   }
 }
-
-function statusOf(monitor) {
-  const value = String(monitor?.status ?? "").toUpperCase();
-  if (value === "UP") return "operational";
-  if (value === "DOWN") return "outage";
-  if (value === "LOOKS_DOWN") return "degraded";
-  return "unknown";
+function validPercent(value) {
+  const p=value?.uptime;
+  return typeof p==="number" && Number.isFinite(p) && p>=0 && p<=100 ? Math.round(p*100)/100 : null;
 }
-
-function findMonitor(monitors, service) {
-  const exact = monitors.find((monitor) => normalise(monitor.url) === normalise(service.target));
-  if (exact) return exact;
-  const words = {
-    website: ["pico website", "pico homepage"],
-    mcp: ["pico mcp", "pico api"],
-    oauth: ["pico oauth", "pico authentication"],
+async function api(path,key) {
+  const res=await fetch(ROOT+path,{
+    headers:{Authorization:"Bearer "+key,Accept:"application/json"},
+    signal:AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error("Monitoring API: "+res.status);
+  return res.json();
+}
+function incidentTime(value) {
+  if (typeof value==="number") return value>1e11?value:value*1000;
+  const time=Date.parse(value);
+  return Number.isFinite(time)?time:NaN;
+}
+function entry(incident,service,now) {
+  const start=incidentTime(incident.startedAt);
+  if (!Number.isFinite(start)) return null;
+  const rawEnd=incident.resolvedAt?incidentTime(incident.resolvedAt):null;
+  const end=Number.isFinite(rawEnd)?rawEnd:null;
+  if (start>now) return null;
+  return {
+    id:String(incident.id??""),
+    serviceId:service.id,
+    service:service.name,
+    reason:String(incident.reason||"Service interruption").slice(0,150),
+    startedAt:new Date(start).toISOString(),
+    resolvedAt:end==null?null:new Date(end).toISOString(),
+    startedMs:start,
+    endedMs:end??now,
   };
-  return monitors.find((monitor) => words[service.id].some((name) => String(monitor.friendlyName ?? "").toLowerCase() === name)) ?? null;
 }
-
-function pickPercent(data) {
-  const uptime = data && typeof data === "object" ? data.uptime : null;
-  return typeof uptime === "number" && Number.isFinite(uptime) && uptime >= 0 && uptime <= 100
-    ? Math.round(uptime * 100) / 100
-    : null;
-}
-
-async function fetchUptime(url, key) {
-  const reply = await fetch(url, {
-    headers: { Authorization: "Bearer " + key, Accept: "application/json" },
-    signal: AbortSignal.timeout(8000),
-  });
-  if (!reply.ok) throw new Error("UptimeRobot API returned " + reply.status);
-  return reply.json();
-}
-
-export async function onRequestGet(context) {
-  const key = context.env.UPTIMEROBOT_API_KEY;
-  if (!key) {
-    return response({
-      state: "unconfigured",
-      updatedAt: null,
-      services: SERVICES.map((service) => ({ ...service, status: "unknown", uptime24h: null, uptime30d: null })),
-      incidents: [],
-    });
+function history(incidentList,service,monitor,now) {
+  if (!monitor || !Array.isArray(incidentList)) return Array(30).fill(null);
+  const created=incidentTime(monitor.createdAt||monitor.created||monitor.created_at);
+  const entries=incidentList.filter(i=>i.serviceId===service.id);
+  const days=[];
+  for (let i=29;i>=0;i--) {
+    const start=now-(i+1)*DAY;
+    const end=Math.min(now, start+DAY);
+    if (Number.isFinite(created)&&created>end) {days.push(null);continue;}
+    let downtime=0;
+    for (const incident of entries) {
+      const overlap=Math.max(0,Math.min(end,incident.endedMs)-Math.max(start,incident.startedMs));
+      if (overlap>0)downtime+=overlap;
+    }
+    days.push(downtime>=.9*(end-start)?"down":downtime>0?"degraded":"up");
   }
-
-  // Cache successful responses at the Cloudflare edge. The UptimeRobot Free API
-  // is rate-limited, so browser polling must not call it for each visitor.
-  const cache = caches.default;
-  const cacheKey = new Request(new URL("/api/status", context.request.url).toString());
-  const cached = await cache.match(cacheKey);
-  if (cached) return cached;
-
+  return days;
+}
+export async function onRequestGet(context) {
+  const unknown=SERVICES.map(s=>({...s,status:"unknown",uptime24h:null,uptime30d:null,history:Array(30).fill(null)}));
+  const key=context.env.UPTIMEROBOT_API_KEY;
+  if (!key) return response({state:"unconfigured",updatedAt:null,services:unknown,incidents:null});
+  const cache=typeof caches!=="undefined"?caches.default:null;
+  const cacheKey=new Request(new URL("/api/status",context.request.url).toString());
+  if (cache) {
+    const cached=await cache.match(cacheKey);
+    if (cached) return cached;
+  }
   try {
-    const monitorsReply = await fetchUptime("https://api.uptimerobot.com/v3/monitors?limit=50", key);
-    if (!Array.isArray(monitorsReply?.data)) throw new Error("Unexpected monitor response");
-    const monitors = monitorsReply.data;
-    const services = SERVICES.map((service) => {
-      const monitor = findMonitor(monitors, service);
-      return {
-        ...service,
-        monitorId: monitor?.id ?? null,
-        status: monitor ? statusOf(monitor) : "unknown",
-        uptime24h: null,
-        uptime30d: null,
-      };
+    const result=await api("/monitors?limit=200",key);
+    if (!Array.isArray(result.data)) throw new Error("Unexpected monitor format");
+    const monitors=result.data;
+    const now=Date.now();
+    const since30=new Date(now-30*DAY).toISOString();
+    const since24=new Date(now-DAY).toISOString();
+    const services=SERVICES.map(service=>{
+      const monitor=getMonitor(monitors,service);
+      return {...service,monitor,monitorId:monitor?.id,status:monitor?state(monitor):"unknown",uptime24h:null,uptime30d:null};
     });
-    const matched = services.filter((service) => Number.isSafeInteger(service.monitorId) && service.monitorId > 0);
-
-    const now = new Date();
-    const to = now.toISOString();
-    const h24 = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-    const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const requests = matched.flatMap((service) => [
-      { service, key: "uptime24h", url: "https://api.uptimerobot.com/v3/monitors/" + service.monitorId + "/stats/uptime?from=" + encodeURIComponent(h24) + "&to=" + encodeURIComponent(to) },
-      { service, key: "uptime30d", url: "https://api.uptimerobot.com/v3/monitors/" + service.monitorId + "/stats/uptime?from=" + encodeURIComponent(d30) + "&to=" + encodeURIComponent(to) },
-    ]);
-    const results = await Promise.allSettled([
-      ...requests.map((entry) => fetchUptime(entry.url, key)),
-    ]);
-    requests.forEach((entry, index) => {
-      const result = results[index];
-      if (result.status === "fulfilled") entry.service[entry.key] = pickPercent(result.value);
-    });
-
-    // UptimeRobot v3 does not expose a general incident-history endpoint here.
-    // Keep this distinct from a verified empty incident history.
-    const incidents = null;
-
-    const body = {
-      state: matched.length ? "connected" : "no-monitors",
-      updatedAt: now.toISOString(),
-      services: services.map(({ monitorId, ...service }) => service),
-      incidents,
-    };
-    const result = response(body);
-    context.waitUntil(cache.put(cacheKey, result.clone()));
-    return result;
+    const matched=services.filter(s=>Number.isSafeInteger(s.monitorId)&&s.monitorId>0);
+    const queries=matched.flatMap(s=>([
+      {id:s.id,key:"uptime24h",path:"/monitors/"+s.monitorId+"/stats/uptime?from="+encodeURIComponent(since24)},
+      {id:s.id,key:"uptime30d",path:"/monitors/"+s.monitorId+"/stats/uptime?from="+encodeURIComponent(since30)},
+    ]));
+    const jobs=[...queries.map(q=>api(q.path,key)),api("/incidents?limit=100",key)];
+    const answers=await Promise.allSettled(jobs);
+    for(let i=0;i<queries.length;i++) {
+      if(answers[i].status!=="fulfilled")continue;
+      const service=services.find(s=>s.id===queries[i].id);
+      if(service)service[queries[i].key]=validPercent(answers[i].value);
+    }
+    const incidentsAnswer=answers[answers.length-1];
+    const rawIncidents=incidentsAnswer.status==="fulfilled"&&Array.isArray(incidentsAnswer.value?.data)?incidentsAnswer.value.data:null;
+    const byMonitor=new Map(matched.map(s=>[s.monitorId,s]));
+    const allEntries=rawIncidents===null?null:rawIncidents.map(i=>{
+      const matchedService=byMonitor.get(Number(i?.monitor?.id));
+      return matchedService?entry(i,matchedService,now):null;
+    }).filter(Boolean).sort((a,b)=>b.startedMs-a.startedMs);
+    const publicServices=services.map(s=>({
+      id:s.id,name:s.name,status:s.status,uptime24h:s.uptime24h,uptime30d:s.uptime30d,
+      history:history(allEntries,s,s.monitor,now),
+    }));
+    const incidents=allEntries?.filter(i=>i.endedMs>=now-30*DAY).slice(0,12).map(({startedMs,endedMs,...i})=>i)??null;
+    const payload={state:matched.length?"connected":"no-monitors",updatedAt:new Date(now).toISOString(),services:publicServices,incidents};
+    const output=response(payload);
+    if(cache&&context.waitUntil)context.waitUntil(cache.put(cacheKey,output.clone()));
+    return output;
   } catch {
-    return response({ state: "unavailable", updatedAt: null, services: [], incidents: null }, 503);
+    return response({state:"unavailable",updatedAt:null,services:unknown,incidents:null},503);
   }
 }
