@@ -145,7 +145,8 @@ textarea.field { min-height: 118px; resize: vertical; }
 .floating-status {
   position: fixed;
   right: max(20px, env(safe-area-inset-right));
-  bottom: max(20px, env(safe-area-inset-bottom));
+  /* Stay visibly above the footer instead of overlapping its copyright row. */
+  bottom: max(110px, calc(110px + env(safe-area-inset-bottom)));
   display: inline-flex;
   align-items: center;
   gap: 11px;
@@ -181,7 +182,7 @@ textarea.field { min-height: 118px; resize: vertical; }
   .brand { font-size: 18px; }
   .brand img { width: 30px; height: 30px; }
   .signout { font-size: 13px; padding: 8px 12px; }
-  .floating-status { right: 15px; bottom: max(15px, env(safe-area-inset-bottom)); padding: 10px 13px; }
+  .floating-status { right: 15px; bottom: max(105px, calc(105px + env(safe-area-inset-bottom))); padding: 10px 13px; }
 
   .main { padding-top: 40px; padding-bottom: 70px; }
   .page-heading { margin-bottom: 20px; }
