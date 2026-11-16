@@ -53,7 +53,10 @@
       else{$("update-form").hidden=true;$("selection").textContent="Select an incident above.";draw()}
     }catch(error){
       const div=document.createElement("div");div.className="picker-empty";
-      div.textContent="Access denied or admin setup incomplete.";
+      div.textContent="Sign in with an approved GitHub account to manage incidents. ";
+      const link=document.createElement("a");
+      link.href="/admin/auth/start";link.textContent="Sign in with GitHub";
+      div.append(link);
       $("incidents").replaceChildren(div);
       $("update-form").hidden=true;
     }finally{loading=false}
@@ -85,6 +88,16 @@
       note("update-result","Update published.",true);
     }catch(error){note("update-result",error.message,false)}
     finally{button.disabled=false}
+  });
+  $("logout").addEventListener("click",async()=>{
+    const button=$("logout");button.disabled=true;
+    try{
+      await request("/admin/auth/logout",{method:"POST"});
+      window.location.assign("/admin/auth/start");
+    }catch{
+      button.disabled=false;
+      alert("Unable to sign out. Please retry.");
+    }
   });
   reload();
 })();
