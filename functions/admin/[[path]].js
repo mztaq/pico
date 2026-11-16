@@ -1,9 +1,31 @@
-// Cover direct asset and /admin/index.html requests with the same session
-// middleware. More-specific /admin/api and /admin/auth routes take priority.
-export function onRequestGet(context) {
-  const path=new URL(context.request.url).pathname;
-  if(path==="/admin/index.html" || path==="/admin/admin.js" || path==="/admin/admin.css") {
-    return context.next();
+import {authorize,hidden} from '../_lib/status-admin-auth.js';
+
+// Pages routes /admin/ to this catch-all, not to /admin/index.js.
+// Verify the session even when this handler is called independently.
+export async function onRequestGet(context) {
+  const user = await authorize(context);
+  if(user instanceof Response) return user;
+
+  const pathname=new URL(context.request.url).pathname;
+  if(pathname==="/admin"||pathname==="/admin/"||pathname==="/admin/index"||pathname==="/admin/index.html"){
+    // Explicitly serve the private HTML after authorization. Using next()
+    // on /admin/ previously fell into the catch-all's "Not found" response.
+    const url=new URL("/admin/index.html",context.request.url);
+    const asset=await context.env.ASSETS.fetch(new Request(url.toString(),{method:"GET"}));
+    if(!asset.ok)return hidden();
+    const response=new Response(asset.body,asset);
+    response.headers.set("Cache-Control","private, no-store");
+    response.headers.set("X-Robots-Tag","noindex, nofollow");
+    return response;
   }
-  return new Response("Not found",{status:404});
+
+  if(pathname==="/admin/admin.js"||pathname==="/admin/admin.css") {
+    // These assets are protected by middleware and checked above.
+    const asset=await context.env.ASSETS.fetch(context.request);
+    if(!asset.ok)return hidden();
+    const response=new Response(asset.body,asset);
+    response.headers.set("Cache-Control","private, no-store");
+    return response;
+  }
+  return hidden();
 }
