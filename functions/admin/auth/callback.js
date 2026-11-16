@@ -22,8 +22,8 @@ export async function onRequestGet(context){
   try{
     const exchange=await fetch("https://github.com/login/oauth/access_token",{
       method:"POST",
-      headers:{"Accept":"application/json","Content-Type":"application/json","User-Agent":"Pico-Status-Admin"},
-      body:JSON.stringify({
+      headers:{"Accept":"application/json","Content-Type":"application/x-www-form-urlencoded","User-Agent":"Pico-Status-Admin"},
+      body:new URLSearchParams({
         client_id:env.GITHUB_OAUTH_CLIENT_ID,
         client_secret:env.GITHUB_OAUTH_CLIENT_SECRET,
         code,redirect_uri:ADMIN_ORIGIN+"/admin/auth/callback",
@@ -34,7 +34,9 @@ export async function onRequestGet(context){
     if(!exchange.ok)return reject();
     const details=await exchange.json();
     const token=typeof details.access_token==="string"?details.access_token:"";
-    if(details.error||!/^[-._A-Za-z0-9]{16,512}$/.test(token))return reject();
+    // Reject unexpected permissions, including scopes inherited from a prior grant.
+    if(details.error||!/^[-._A-Za-z0-9]{16,512}$/.test(token)||
+      (typeof details.scope==="string"&&details.scope.trim()!==""))return reject();
     const userResponse=await fetch("https://api.github.com/user",{
       headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"User-Agent":"Pico-Status-Admin"},
       signal:AbortSignal.timeout(10000)
