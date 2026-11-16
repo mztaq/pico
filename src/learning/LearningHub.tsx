@@ -4,7 +4,8 @@ import type { PicoWorkspace } from '../app/workspace-deeplink';
 import { questions, topics, type Question, type Topic } from './content';
 import { readProgress, recordAnswer, saveProgress } from './progress';
 import { loadSettings } from '../storage/settings';
-import { cssVariables, getTheme } from '../app/themes';
+import { getTheme } from '../app/themes';
+import { learningThemeVariables } from './theme';
 import { LearningVisual, visualizedTopics } from './LearningVisuals';
 import { topicNotes } from './notes';
 import './learning.css';
@@ -21,8 +22,16 @@ const toolNames: Partial<Record<PicoWorkspace, string>> = {
 };
 
 export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
-  const [theme] = useState(() => getTheme(loadSettings().theme));
-  useEffect(() => { document.documentElement.style.colorScheme = theme.appearance; }, [theme]);
+  const [theme, setTheme] = useState(() => getTheme(loadSettings().theme));
+  useEffect(() => {
+    const syncTheme = () => setTheme(getTheme(loadSettings().theme));
+    window.addEventListener('pico:settings-saved', syncTheme);
+    window.addEventListener('storage', syncTheme);
+    return () => {
+      window.removeEventListener('pico:settings-saved', syncTheme);
+      window.removeEventListener('storage', syncTheme);
+    };
+  }, []);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Topic>(topics[0]);
   const [progress, setProgress] = useState(readProgress);
@@ -72,7 +81,7 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
     setSession(null);
     lessonRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
-  return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as React.CSSProperties}>
+  return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={learningThemeVariables(theme)}>
     <header className="learning-topbar">
       <button type="button" className="learning-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" /> Workspaces</button>
       <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn</span>
