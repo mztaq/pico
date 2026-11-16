@@ -5,13 +5,12 @@ body:has(.pico-cookie-banner) .learning-hub { height: max(0px, calc(100dvh - var
 .learning-hub button { cursor: pointer; }
 .learning-hub button:disabled { cursor: not-allowed; opacity: .5; }
 .learning-hub :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.learning-topbar { max-width: 1160px; margin: auto; min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--ds-line); }
+.learning-topbar { max-width: 1160px; margin: auto; min-height: 68px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; border-bottom: 1px solid var(--ds-line); }
 .learning-back, .learning-text-button { display: inline-flex; align-items: center; gap: 7px; border: 0; background: transparent; color: var(--ds-muted); font-weight: 650; }
 .learning-back { min-height: 44px; }
 .learning-back:hover, .learning-text-button:hover { color: var(--ds-text); }
-.learning-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: -.02em; }
+.learning-brand { grid-column: 2; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: -.02em; }
 .learning-brand svg { color: var(--accent); }
-.learning-progress { font-size: 13px; color: var(--ds-muted); }
 .learning-intro { max-width: 1160px; margin: 32px auto 22px; }
 .learning-kicker, .learning-eyebrow { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .learning-intro h1 { margin: 0; font-size: clamp(27px, 3.8vw, 37px); letter-spacing: -.035em; line-height: 1.2; }
