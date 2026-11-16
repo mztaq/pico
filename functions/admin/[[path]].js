@@ -8,9 +8,9 @@ export async function onRequestGet(context) {
 
   const pathname=new URL(context.request.url).pathname;
   if(pathname==="/admin"||pathname==="/admin/"||pathname==="/admin/index"||pathname==="/admin/index.html"){
-    // Explicitly serve the private HTML after authorization. Using next()
-    // on /admin/ previously fell into the catch-all's "Not found" response.
-    const url=new URL("/admin/index.html",context.request.url);
+    // The Pages ASSETS binding requires the pretty URL, not index.html.
+    // /admin/index.html would redirect back to /admin/ and fail here.
+    const url=new URL("/admin/",context.request.url);
     const asset=await context.env.ASSETS.fetch(new Request(url.toString(),{method:"GET"}));
     if(!asset.ok)return hidden();
     const response=new Response(asset.body,asset);
