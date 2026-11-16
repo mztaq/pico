@@ -144,7 +144,33 @@ export async function onRequestGet(context) {
       monitoredSince:s.monitor&&Number.isFinite(incidentTime(s.monitor.createDateTime||s.monitor.createdAt||s.monitor.created||s.monitor.created_at))?new Date(incidentTime(s.monitor.createDateTime||s.monitor.createdAt||s.monitor.created||s.monitor.created_at)).toISOString():null,
       history:s.uptime30d===null?Array(30).fill(null):history(allEntries,s,s.monitor,now),
     }));
-    const incidents=allEntries?.filter(i=>i.endedMs>=now-30*DAY).slice(0,12).map(({startedMs,endedMs,isDowntime,...i})=>i)??null;
+    let incidents=allEntries?.filter(i=>i.endedMs>=now-30*DAY).slice(0,12).map(({startedMs,endedMs,isDowntime,...i})=>i)??null;
+    // Include D1-archived incidents if the Pages Preview has an existing DB binding.
+    // Never let a missing migration or D1 outage disable live status results.
+    if(context.env.DB) {
+      try {
+        const stored=await context.env.DB.prepare(
+          "SELECT external_id, service_id, reason, started_at, resolved_at " +
+          "FROM pico_status_incidents WHERE started_at >= ? " +
+          "ORDER BY started_at DESC LIMIT 30"
+        ).bind(since30).all();
+        const known=new Map((incidents??[]).map(i=>[String(i.id),i]));
+        for(const row of stored.results??[]) {
+          const id=String(row.external_id);
+          if(known.has(id))continue;
+          const name=SERVICES.find(s=>s.id===row.service_id)?.name??'Pico';
+          known.set(id,{
+            id,serviceId:row.service_id,service:name,reason:row.reason,
+            startedAt:row.started_at,resolvedAt:row.resolved_at,
+            status:row.resolved_at?'resolved':'investigating'
+          });
+        }
+        if((stored.results??[]).length)incidents=[...known.values()]
+          .sort((a,b)=>Date.parse(b.startedAt)-Date.parse(a.startedAt)).slice(0,12);
+      } catch(error) {
+        console.error('Incident archive lookup unavailable',String(error));
+      }
+    }
     const payload={state:matched.length?"connected":"no-monitors",updatedAt:new Date(now).toISOString(),services:publicServices,incidents};
     const output=response(payload);
     if(cache&&context.waitUntil)context.waitUntil(cache.put(cacheKey,output.clone()));
