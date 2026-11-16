@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite';
 
-// The status branch builds only the independent status page.
-// Do not bundle Pico's compilers, games or offline runtime here.
+// Independent status build: no compilers, games, or large Pico public assets.
 export default defineConfig({
-  build: { emptyOutDir: true },
+  publicDir: 'status-assets',
+  build: { emptyOutDir: true, outDir: 'dist' },
   server: { host: '0.0.0.0', port: 3000 },
   preview: { host: '0.0.0.0', port: 3000 },
 });
