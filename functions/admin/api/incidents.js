@@ -41,8 +41,8 @@ export async function onRequest(context){
       context.env.DB.prepare(
         "INSERT INTO pico_status_incidents "+
         "(source, external_id, service_id, title, reason, started_at, status) "+
-        "VALUES ('manual', ?, ?, ?, ?, ?, 'investigating')"
-      ).bind(externalId,serviceId,title,message,now),
+        "VALUES ('manual', ?, ?, ?, '', ?, 'investigating')"
+      ).bind(externalId,serviceId,title,now),
       context.env.DB.prepare(
         "INSERT INTO pico_status_updates (incident_id,event_key,stage,message,published_at) "+
         "SELECT id,?,'investigating',?,? FROM pico_status_incidents "+
