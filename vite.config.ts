@@ -12,7 +12,6 @@ export default defineConfig({
         status: resolve(process.cwd(), 'index.html'),
         history: resolve(process.cwd(), 'history.html'),
         admin: resolve(process.cwd(), 'admin/index.html'),
-        enroll: resolve(process.cwd(), 'enroll.html'),
       },
     },
   },
