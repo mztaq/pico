@@ -1,86 +1,110 @@
-# Secure Pico Status Admin
+# Pico Status Admin: GitHub sign-in, no Zero Trust
 
-The admin dashboard is at `https://status.picompiler.pages.dev/admin/`.
-It is for approved team members only. **The public status page stays public.**
-No passwords, Cloudflare API tokens or UptimeRobot secrets are sent to browsers.
+The private incident editor is at `https://status.picompiler.pages.dev/admin/`.
+Its login is GitHub OAuth. No Cloudflare Zero Trust account, card, extra database, GitHub repository permission, or outside service is needed.
 
-## 1. Apply the database migration
+## 1. One-time D1 setup
 
-Your existing `pico-db` D1 database already contains
-`pico_status_incidents` and `pico_status_updates`.
+In your existing `pico-db`, back up the database and run the statements in
+`migrations/0006_status_admin.sql`. This adds the admin audit log table.
+If you already applied that migration, do not change anything.
 
-Back up `pico-db`, then run `migrations/0006_status_admin.sql` in the D1 SQL Console.
-This adds `pico_status_admin_audit` and indexes. It does not alter usage tables.
+The audit table column `actor_email` is retained for backwards compatibility,
+but the new login stores an immutable identifier such as `github:12345678`
+instead of an email. This avoids relying on mutable GitHub usernames or emails.
 
-Verify:
+## 2. Create a GitHub OAuth app (free)
 
-```sql
-SELECT name FROM sqlite_master
-WHERE type = 'table' AND name = 'pico_status_admin_audit';
-```
+Go to https://github.com/settings/developers and select
+**OAuth Apps** → **New OAuth App**.
 
-The audit log records the authorized editor's email, stage, time and public message.
+Use these values:
 
-## 2. Create a Cloudflare Access application protecting the admin path
+| Field | Value |
+| --- | --- |
+| Application name | `Pico Status Admin` |
+| Homepage URL | `https://status.picompiler.pages.dev/` |
+| Authorization callback URL | `https://status.picompiler.pages.dev/admin/auth/callback` |
 
-In Cloudflare Dashboard → Zero Trust → Access controls → Applications:
+Keep **callback URL wildcard matching disabled**. Leave **device flow disabled**.
 
-1. Create a new **Self-hosted** application named `Pico Status Admin`.
-2. Protect only `status.picompiler.pages.dev/admin/*`, including the admin HTML and its APIs.
-3. Create an **Allow** policy listing only the email addresses of approved Pico editors. Do not select `Everyone`. Prefer your organization's SSO with MFA, or Access one-time PIN for approved inboxes.
-4. Save the application. Copy its **Application Audience (AUD) Tag** from Additional settings.
-5. Copy your Access **team domain** (such as `your-team.cloudflareaccess.com`).
+Register the application, note its **Client ID**, and generate a **Client Secret**.
+Do not paste the Client Secret in GitHub source code, screenshots, or chat.
 
-**Critical:** Do not enable a site-wide Access policy for `picompiler.pages.dev` or for all `*.picompiler.pages.dev` previews. That would lock users out of the public status page.
+The sign-in flow requests no extra OAuth scopes. It uses PKCE S256 and a signed,
+short-lived state cookie. After receiving the authorized GitHub account's numeric
+user ID, the server discards its GitHub access token and issues an HttpOnly,
+Secure, SameSite=Lax signed session cookie valid for at most 8 hours.
 
-Cloudflare's Access UI might require a domain belonging to your Cloudflare DNS zone for a manually configured self-hosted application. If the dashboard does not accept the `pages.dev` branch hostname with a path, **stop here**. Use a custom hostname in an owned Cloudflare zone or move the admin to a dedicated Access-protected Worker. Never remove API token verification as a workaround.
+## 3. Find each approved team member's GitHub numeric ID
 
-## 3. Add three server-only values to the status Pages preview
+Open `https://api.github.com/users/USERNAME` in a browser, replacing USERNAME.
+The top-level `id` field is that GitHub account's permanent numeric ID.
 
-Open Cloudflare → Workers & Pages → `picompiler` → Settings →
-Variables and Secrets → **Preview**. Create these values:
+Use numeric IDs rather than display names or usernames, which users can change.
+
+## 4. Add four encrypted Preview secrets to your existing Pages project
+
+In Cloudflare → Workers & Pages → `picompiler` → Settings →
+**Variables and Secrets** → **Preview**, add:
 
 | Name | Value |
 | --- | --- |
-| `CF_ACCESS_TEAM_DOMAIN` | `your-team.cloudflareaccess.com` |
-| `CF_ACCESS_AUD` | The Application Audience (AUD) Tag from step 2 |
-| `STATUS_ADMIN_EMAILS` | Approved editor email addresses, comma-separated |
+| `GITHUB_OAUTH_CLIENT_ID` | Client ID of the GitHub OAuth app |
+| `GITHUB_OAUTH_CLIENT_SECRET` | Its Client Secret |
+| `STATUS_ADMIN_GITHUB_IDS` | Numeric account IDs separated by commas, e.g. `12345,67890` |
+| `STATUS_ADMIN_SESSION_SECRET` | A random secret of at least 40 characters |
 
-Store them as encrypted secrets where supported. None of these names should be prefixed `VITE_`.
-The existing Preview D1 binding named `DB` must still point to your `pico-db`.
+Use **Encrypt** for secrets, especially Client Secret and session secret.
+Generate the session secret locally with Node.js:
 
-The app validates the JWT's RSA signature using Cloudflare Access's published keys
-and verifies issuer, audience, expiry and an exact email allowlist on **every API request**.
-It also verifies POST Origin, restricts input lengths, parameterizes SQL and writes to an audit log.
+```sh
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
 
-## 4. Deploy and verify
+The existing **Preview** D1 binding `DB` must point to `pico-db`.
+Do not prefix any of these names with `VITE_`.
 
-Deploy the latest `status` branch.
+Do not configure `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD` or
+`STATUS_ADMIN_EMAILS`. Those were used in the earlier Zero Trust version
+and are no longer needed.
 
-- `https://status.picompiler.pages.dev/` must remain publicly accessible.
-- Opening `https://status.picompiler.pages.dev/admin/` in a private browser should require Access sign-in.
-- An unauthenticated GET to `/admin/api/incidents` must return HTTP 403 if it reaches Pico code.
-- An approved signed-in editor should see the incident list.
-- An unauthorized email must be rejected even if they know the URL.
-- Do **not** create a fake incident on the public page solely to test the write API.
-  When a genuine incident occurs, you can create or select it and publish an update.
+## 5. Redeploy and verify
 
-## 5. Publishing
+Deploy the latest `status` branch. Open:
 
-An incident starts as **Investigating**. Authorized editors then publish
-**Identified**, **Monitoring** and **Resolved** updates as verified facts warrant.
-The public `/history` page displays the complete timeline.
+- Public status: `https://status.picompiler.pages.dev/`, accessible to everyone.
+- Admin: `https://status.picompiler.pages.dev/admin/`, which redirects to GitHub
+  sign-in for visitors without a valid session.
+- Admin API: `https://status.picompiler.pages.dev/admin/api/incidents`,
+  returns HTTP 401 without a valid approved session.
 
-Automated UptimeRobot incidents and manual incidents share the same existing D1 tables.
-The archive collector is unchanged and keeps running on its five-minute Cron Trigger.
-The public status API caches results, so published changes might take a few minutes to appear.
+Sign in using an approved GitHub account and verify that the dashboard loads.
+Try from a private browser session without signing in, and an unapproved GitHub
+account, and verify both lack access to the API.
 
-## Security and maintenance
+Avoid adding fake public incidents solely to test login. Genuine incidents
+and updates appear on the public incident timeline at `/history`.
 
-- Do not share Access AUD configuration as a substitute for secret authentication. The public AUD tag alone does not grant access, but the signed JWT does.
-- Grant the minimum number of editors. Remove a former editor from both the Access Allow policy and `STATUS_ADMIN_EMAILS`, then redeploy if necessary.
-- Protect the related Cloudflare and GitHub accounts with MFA.
-- Back up D1 regularly and review the `pico_status_admin_audit` table when investigating changes.
-- The admin exposes no delete endpoint.
-- The administrator page is not linked from public navigation.
-- Code deploys **do not** create the Access application, database table or secret values automatically. Until configured, publishing is blocked.
+## Security notes
+
+- The server checks the exact `status.picompiler.pages.dev` hostname, the
+  session HMAC signature, its expiration, and the GitHub numeric ID allowlist
+  on every admin API request.
+- Signed sessions expire after 8 hours. An authorized editor logs out through
+  the dashboard; removing an ID from the Preview allowlist blocks it on subsequent
+  requests even if an earlier cookie still exists.
+- POST requests require the exact same Origin as the status site.
+- Server code validates incident fields, uses parameterized D1 SQL, limits writes
+  by audit history, and saves updates to `pico_status_admin_audit`.
+- No GitHub access token is stored in D1 or sent to the public UI.
+- Public status pages and automated archive ingestion are unchanged.
+- Protect all approved GitHub accounts and your Cloudflare account with 2FA.
+- In Pages **Settings → Runtime**, set **Fail closed** for Functions requests if
+  offered. Do not let the status admin bypass authentication when Functions quotas
+  are exhausted. If the status service requires static fail-open behavior, ensure
+  the admin's API never fails open and monitor the quota.
+- If you rotate `STATUS_ADMIN_SESSION_SECRET`, all existing editor sessions
+  become invalid.
+- A successfully committed code change doesn't configure GitHub or Cloudflare
+  secrets automatically. Until configured, the admin fails closed.
