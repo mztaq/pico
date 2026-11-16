@@ -89,7 +89,7 @@ const icons={good:"✓",bad:"!",warn:"!",neutral:"○"};
 const servicesDefault=[{id:"website",name:"Pico Website"},{id:"mcp",name:"Pico MCP"},{id:"oauth",name:"Pico OAuth"}];
 const safe=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const formatPercent=v=>typeof v==="number"&&Number.isFinite(v)?v.toFixed(2)+"%":"—";
-const statusInfo={up:["Operational","good"],down:["Outage","bad"],degraded:["Degraded","warn"],paused:["Paused","warn"],unknown:["Unavailable",""]};
+const statusInfo={up:["Operational","good"],down:["Outage","bad"],degraded:["Degraded","warn"],paused:["Paused","warn"],starting:["Starting",""],not_monitored:["Not monitored",""],unknown:["No data",""]};
 const dayFormat=new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",timeZone:"UTC"});
 const dateNow=new Date(),datePrev=new Date(dateNow.getTime()-30*86400000);
 $("date-range").textContent=dayFormat.format(datePrev)+" – "+dayFormat.format(dateNow);
@@ -102,18 +102,21 @@ function renderServices(rows){
   $("services").innerHTML=rows.map(service=>{
     const [label,tone]=statusInfo[service.status]||statusInfo.unknown;
     const history=Array.isArray(service.history)&&service.history.length===30?service.history:Array(30).fill(null);
+    const since=service.monitoredSince?new Date(service.monitoredSince):null;
+    const monitoredDays=since&&Number.isFinite(since.getTime())?Math.max(0,(dateNow-since)/86400000):null;
+    const range=monitoredDays!==null&&monitoredDays<30?"Since "+dayFormat.format(since):"30 days";
     const bars=history.map((value,index)=>{
       const day=new Date(dateNow.getTime()-(30-index)*86400000);
       const colour=value==="up"?"good":value==="down"?"bad":value==="degraded"?"warn":"";
       const tooltip=(value==="up"?"Operational":value==="down"?"Outage":value==="degraded"?"Degraded":"No data")+" · "+dayFormat.format(day);
       return '<span class="tick '+colour+'" title="'+safe(tooltip)+'" aria-hidden="true"></span>';
     }).join("");
-    return '<div class="system"><div class="system-head"><div class="system-name"><span class="dot '+tone+'"></span>'+safe(service.name)+'</div><div class="system-status '+tone+'">'+label+'</div></div><div class="track" role="img" aria-label="30-day monitor history for '+safe(service.name)+'">'+bars+'</div><div class="figures"><span>30 days</span><span>Uptime <strong class="percent">'+formatPercent(service.uptime30d)+'</strong></span></div></div>';
+    return '<div class="system"><div class="system-head"><div class="system-name"><span class="dot '+tone+'"></span>'+safe(service.name)+'</div><div class="system-status '+tone+'">'+label+'</div></div><div class="track" role="img" aria-label="30-day monitor history for '+safe(service.name)+'">'+bars+'</div><div class="figures"><span>'+safe(range)+'</span><span>Uptime <strong class="percent">'+formatPercent(service.uptime30d)+'</strong></span></div></div>';
   }).join("");
 }
 function renderIncidents(incidents){
   if(!Array.isArray(incidents)){$("incidents").innerHTML='<div class="empty">Incident history unavailable.</div>';return;}
-  if(!incidents.length){$("incidents").innerHTML='<div class="empty">No incidents reported in the past 30 days.</div>';return;}
+  if(!incidents.length){$("incidents").innerHTML='<div class="empty">No incidents recorded.</div>';return;}
   $("incidents").innerHTML=incidents.map(incident=>{
     const date=new Date(incident.startedAt);
     const display=Number.isFinite(date.getTime())?date.toLocaleString():"Date unavailable";
@@ -133,12 +136,12 @@ async function update(){
       setBanner("Status unavailable","Monitoring data is not available yet.","warn");
       $("incidents").innerHTML='<div class="empty">No history available.</div>';
     }else{
-      const unmonitored=rows.filter(x=>x.status==="unknown"||x.status==="paused");
+      const unmonitored=rows.filter(x=>x.status==="unknown"||x.status==="paused"||x.status==="starting"||x.status==="not_monitored");
       const outages=rows.filter(x=>x.status==="down");
       const degraded=rows.filter(x=>x.status==="degraded");
       if(outages.length)setBanner("Service disruption","Some Pico services are experiencing problems.","bad");
       else if(degraded.length)setBanner("Partial service disruption","Some Pico services are experiencing issues.","warn");
-      else if(unmonitored.length)setBanner("Partial monitoring","Some services have no current monitoring data.","warn");
+      else if(unmonitored.length)setBanner("Partial monitoring",unmonitored.length+" service"+(unmonitored.length===1?" is":"s are")+" not reporting status.","warn");
       else setBanner("All systems operational","No issues detected across monitored Pico services.","good");
       renderIncidents(data.incidents);
     }
