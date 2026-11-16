@@ -28,8 +28,10 @@ function normalise(raw) {
 }
 
 function time(value) {
-  const valueMs = typeof value === 'number' ? (value > 1e11 ? value : value * 1000) : Date.parse(value);
-  return Number.isFinite(valueMs) ? new Date(valueMs).toISOString() : null;
+  const numeric = (typeof value === 'number' || (typeof value === 'string' && /^\d{10,13}$/.test(value)))
+    ? Number(value) : null;
+  const valueMs = numeric === null ? Date.parse(value) : (numeric > 1e11 ? numeric : numeric * 1000);
+  return Number.isFinite(valueMs) && valueMs > 0 ? new Date(valueMs).toISOString() : null;
 }
 
 function nameFor(monitor) {
@@ -55,16 +57,15 @@ async function request(path, apiKey) {
 }
 
 async function pages(path, apiKey, maximumPages = 4) {
-  let next = path;
+  let next = new URL(path, API).href;
   let results = [];
   const visited = new Set();
   for (let page = 0; page < maximumPages && next; page++) {
-    const url = new URL(next, API).href;
-    if (visited.has(url)) throw Error('Repeated monitoring pagination link');
-    visited.add(url);
+    if (visited.has(next)) throw Error('Repeated monitoring pagination link');
+    visited.add(next);
     const data = await request(next, apiKey);
     results = results.concat(data.data);
-    next = data.nextLink ?? null;
+    next = data.nextLink ? new URL(data.nextLink, next).href : null;
     if (next && page === maximumPages - 1) throw Error('Too many incident pages; increase pagination safely');
   }
   return results;
