@@ -104,31 +104,17 @@ export async function onRequestGet(context) {
       { service, key: "uptime24h", url: "https://api.uptimerobot.com/v3/monitors/" + service.monitorId + "/stats/uptime?from=" + encodeURIComponent(h24) + "&to=" + encodeURIComponent(to) },
       { service, key: "uptime30d", url: "https://api.uptimerobot.com/v3/monitors/" + service.monitorId + "/stats/uptime?from=" + encodeURIComponent(d30) + "&to=" + encodeURIComponent(to) },
     ]);
-    const incidentUrl = "https://api.uptimerobot.com/v3/incidents?started_after=" + encodeURIComponent(d30);
     const results = await Promise.allSettled([
       ...requests.map((entry) => fetchUptime(entry.url, key)),
-      ...(matched.length ? [fetchUptime(incidentUrl, key)] : []),
     ]);
     requests.forEach((entry, index) => {
       const result = results[index];
       if (result.status === "fulfilled") entry.service[entry.key] = pickPercent(result.value);
     });
 
-    const incidentsResult = matched.length ? results[results.length - 1] : null;
-    const monitorIds = new Set(matched.map((service) => service.monitorId));
-    const incidents = incidentsResult?.status === "fulfilled" && Array.isArray(incidentsResult.value?.data)
-      ? incidentsResult.value.data
-          .filter((incident) => monitorIds.has(incident.monitor?.id))
-          .slice(0, 10)
-          .map((incident) => ({
-            id: String(incident.id ?? ""),
-            service: services.find((service) => service.monitorId === incident.monitor?.id)?.name ?? "Pico",
-            reason: String(incident.reason ?? "Service interruption").slice(0, 180),
-            startedAt: incident.startedAt ?? null,
-            resolvedAt: incident.resolvedAt ?? null,
-            status: String(incident.status ?? "unknown").toLowerCase(),
-          }))
-      : null;
+    // UptimeRobot v3 does not expose a general incident-history endpoint here.
+    // Keep this distinct from a verified empty incident history.
+    const incidents = null;
 
     const body = {
       state: matched.length ? "connected" : "no-monitors",
