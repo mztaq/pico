@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1e1e2e">
+<meta name="description" content="Historical Pico service incidents and recovery updates.">
+<link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
+<title>Incident History | Pico Status</title>
+<style>
+:root{color-scheme:dark;--bg:#1e1e2e;--panel:#252536;--edge:#424258;--text:#cdd6f4;--bright:#f5f2ff;--muted:#a6adc8;--purple:#cba6f7;--green:#a6e3a1;--yellow:#f9e2af}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);min-height:100vh}
+a{color:inherit;text-decoration:none}a:hover{color:var(--purple)}a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--purple);outline-offset:4px}
+.wrap{width:min(100% - 40px,850px);margin:auto}header{border-bottom:1px solid #ffffff13}
+nav{min-height:88px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.logo{display:flex;align-items:center;gap:10px;font-size:20px;letter-spacing:-.7px;color:var(--bright);font-weight:780}.logo img{width:36px;height:36px}
+.logo .rule{background:var(--edge);height:22px;width:1px;margin:0 5px 0 7px}.logo .sub{font-size:14px;color:var(--muted);font-weight:500;letter-spacing:0}
+.back{color:var(--muted);font-size:13px;font-weight:550}main{padding:54px 0 96px}
+h1{font-size:clamp(29px,5vw,38px);letter-spacing:-1.3px;color:var(--bright);line-height:1.2;margin:0 0 26px}
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:13px;overflow:hidden}
+.event{padding:22px 28px;border-bottom:1px solid var(--edge)}.event:last-child{border:0}
+.event summary{list-style:none;cursor:pointer}.event summary::-webkit-details-marker{display:none}
+.event .heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+.event strong{color:var(--bright);font-size:18px;font-weight:700}
+.event .status{font-size:13px;color:var(--yellow);font-weight:650;white-space:nowrap}.event .status.resolved{color:var(--green)}
+.event .detail{color:var(--muted);font-size:13px;margin-top:6px}
+.event .chevron{font-size:12px;color:var(--purple);margin-top:10px}
+.event[open] .chevron{display:none}.timeline{margin:18px 0 0;border-left:2px solid var(--edge);padding-left:19px}
+.update{position:relative;margin:0 0 16px}.update:last-child{margin-bottom:0}
+.update:before{content:"";position:absolute;left:-25px;top:8px;width:10px;height:10px;background:var(--purple);border-radius:50%}
+.update h3{font-size:14px;color:var(--bright);margin:0}.update p{margin:3px 0;font-size:13px}.update time{font-size:12px;color:var(--muted)}
+.empty{padding:27px 28px;color:var(--muted);font-size:16px}.next{display:none;margin:25px auto 0;padding:10px 20px;border:1px solid var(--edge);background:var(--panel);color:var(--bright);border-radius:8px;font:inherit;cursor:pointer}
+.next:hover{border-color:var(--purple)}.next[disabled]{opacity:.5;cursor:wait}
+footer{border-top:1px solid #ffffff13;padding:29px 0;text-align:center;font-size:12px;color:var(--muted)}
+@media(max-width:600px){.wrap{width:calc(100% - 28px)}nav{min-height:72px}.logo{font-size:18px;gap:8px}.logo img{width:31px;height:31px}.logo .rule{margin:0 2px}.logo .sub,.back{font-size:12px}main{padding:40px 0 72px}.event{padding:20px 18px}.event strong{font-size:16px}.event .status{font-size:12px}}
+</style>
+</head>
+<body>
+<header><nav class="wrap"><a class="logo" href="https://picompiler.pages.dev/"><img src="/pico-logo.svg" alt="">Pico.<span class="rule"></span><span class="sub">Status</span></a><a class="back" href="/">← System status</a></nav></header>
+<main class="wrap"><h1>Incident history</h1><div class="panel" id="history" aria-live="polite"><div class="empty">Loading history…</div></div><button id="more" class="next" type="button">Load older incidents</button></main>
+<footer><div class="wrap"><a href="https://picompiler.pages.dev/app/ai-usage">© 2026 Pico Development Team. All rights reserved.</a></div></footer>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const safe=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const labels={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring",resolved:"Resolved"};
+const when=s=>{const d=new Date(s);return Number.isFinite(d.getTime())?d.toLocaleString([], {year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"Date unavailable"};
+let next=1,working=false;
+async function load(){
+ if(!next||working)return;
+ working=true;$("more").disabled=true;
+ try{
+   const response=await fetch("/api/history?page="+next,{cache:"no-store"});
+   if(!response.ok)throw Error("Archive unavailable");
+   const data=await response.json();
+   if(data.status!=="ok"||!Array.isArray(data.incidents))throw Error("Invalid archive");
+   if(next===1)$("history").innerHTML="";
+   const markup=data.incidents.map(i=>{
+     const title=safe(i.title||i.service||"Incident");
+     const reason=i.reason?'<p class="detail">'+safe(i.reason)+'</p>':"";
+     const updates=(i.updates||[]).map(u=>'<div class="update"><h3>'+safe(labels[u.stage]||"Update")+'</h3><p>'+safe(u.message)+'</p><time>'+safe(when(u.publishedAt))+'</time></div>').join("");
+     return '<details class="event"><summary><div class="heading"><strong>'+title+'</strong><span class="status '+(i.resolvedAt?"resolved":"")+'">'+(i.resolvedAt?"Resolved":"Ongoing")+'</span></div><div class="detail">'+safe(when(i.startedAt))+'</div>'+reason+'<div class="chevron">View updates</div></summary><div class="timeline">'+(updates||'<div class="detail">No updates recorded.</div>')+'</div></details>';
+   }).join("");
+   $("history").insertAdjacentHTML("beforeend",markup);
+   if(!$("history").children.length)$("history").innerHTML='<div class="empty">No incidents</div>';
+   next=Number.isInteger(data.nextPage)&&data.nextPage>0?data.nextPage:null;
+   $("more").style.display=next?"block":"none";
+ }catch{
+   if(next===1)$("history").innerHTML='<div class="empty">Incident history unavailable</div>';
+   $("more").style.display="none";
+ }finally{working=false;$("more").disabled=false}
+}
+$("more").addEventListener("click",load);load();
+})();
+</script>
+</body>
+</html>
