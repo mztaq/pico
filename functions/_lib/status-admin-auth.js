@@ -1,118 +1,126 @@
 /*
- * Pico Status Admin: Cloudflare Access JWT verification.
- * No shared password or browser-stored API key.
- * REQUIRED env: CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD, STATUS_ADMIN_EMAILS.
- *
- * A valid JWT alone is insufficient: the verified email must also be allowlisted.
- * Protect /admin/* with the matching Cloudflare Access application.
+ * Pico Status Admin - GitHub OAuth session verification.
+ * Only selected GitHub numeric IDs can publish. No user OAuth token is retained.
+ * Env (Preview secrets): GITHUB_OAUTH_CLIENT_ID,
+ * GITHUB_OAUTH_CLIENT_SECRET, STATUS_ADMIN_GITHUB_IDS,
+ * STATUS_ADMIN_SESSION_SECRET.
  */
-const KEY_CACHE = new Map();
-const KEY_TTL_MS = 10 * 60 * 1000;
-function forbidden() {
-  return new Response(JSON.stringify({error:"Access denied"}), {
-    status:403, headers:{"Content-Type":"application/json","Cache-Control":"no-store"}
-  });
+export const ADMIN_ORIGIN="https://status.picompiler.pages.dev";
+export const SESSION_COOKIE="__Host-pico_status_session";
+export const LOGIN_COOKIE="__Host-pico_status_login";
+const MAX_AGE=8*3600;
+const encoder=new TextEncoder();
+function bytes64(bytes){
+  let binary="";for(const b of new Uint8Array(bytes))binary+=String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
 }
-function decodeBase64Url(value) {
-  if (!/^[a-zA-Z0-9_-]+$/.test(value)) throw Error("Invalid encoding");
-  const normalized=value.replace(/-/g,"+").replace(/_/g,"/");
-  const binary=atob(normalized+"=".repeat((4-normalized.length%4)%4));
-  return Uint8Array.from(binary,char=>char.charCodeAt(0));
+function from64(text){
+  if(!/^[A-Za-z0-9_-]+$/.test(text))throw Error("Invalid value");
+  let binary=atob(text.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-text.length%4)%4));
+  return Uint8Array.from(binary,c=>c.charCodeAt(0));
 }
-function domain(value) {
-  if (typeof value!=="string"||!value.trim()) return null;
-  try {
-    const url=new URL(value.startsWith("https://")?value:"https://"+value);
-    if (url.protocol!=="https:" || url.pathname!=="/" || url.search || url.hash
-        || url.username || url.password || url.port
-        || !/^[a-z0-9-]+\.cloudflareaccess\.com$/.test(url.hostname)) return null;
-    return url.origin;
-  } catch {return null;}
+export function randomToken(){
+  const value=new Uint8Array(32);crypto.getRandomValues(value);return bytes64(value);
 }
-async function publicKey(origin,kid) {
-  const cacheId=origin+":"+kid;
-  const cached=KEY_CACHE.get(cacheId);
-  if(cached && cached.expires>Date.now())return cached.key;
-  const reply=await fetch(origin+"/cdn-cgi/access/certs",{
-    headers:{Accept:"application/json"},
-    signal:AbortSignal.timeout(7000)
-  });
-  if(!reply.ok)throw Error("Key fetch failed");
-  const jwks=await reply.json();
-  const jwk=Array.isArray(jwks?.keys)?jwks.keys.find(key=>
-    key.kid===kid && key.kty==="RSA" && (!key.alg||key.alg==="RS256")
-    && key.use!=="enc"):null;
-  if(!jwk)throw Error("Signing key unavailable");
-  const key=await crypto.subtle.importKey("jwk",jwk,{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["verify"]);
-  KEY_CACHE.set(cacheId,{key,expires:Date.now()+KEY_TTL_MS});
-  return key;
+export async function challenge(verifier){
+  return bytes64(await crypto.subtle.digest("SHA-256",encoder.encode(verifier)));
 }
-export async function authorize(context) {
-  const env=context.env||{};
-  const issuer=domain(env.CF_ACCESS_TEAM_DOMAIN);
-  const aud=typeof env.CF_ACCESS_AUD==="string"?env.CF_ACCESS_AUD.trim():"";
-  const allowed=new Set(String(env.STATUS_ADMIN_EMAILS||"").split(",").map(e=>e.trim().toLowerCase()).filter(e=>e.includes("@")));
-  if(!issuer||!aud||allowed.size===0)return forbidden();
-  const token=context.request.headers.get("Cf-Access-Jwt-Assertion");
-  if(!token||token.length>8192)return forbidden();
-  try {
-    const parts=token.split(".");
-    if(parts.length!==3||parts.some(s=>s.length===0))return forbidden();
-    const head=JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[0])));
-    if(head.alg!=="RS256" || typeof head.kid!=="string" || head.kid.length>200)return forbidden();
-    const key=await publicKey(issuer,head.kid);
-    const payload=JSON.parse(new TextDecoder().decode(decodeBase64Url(parts[1])));
-    if(!payload||typeof payload!=="object")return forbidden();
-    const now=Math.floor(Date.now()/1000);
-    const audiences=Array.isArray(payload.aud)?payload.aud:[payload.aud];
-    if(payload.iss!==issuer||!audiences.includes(aud)||!Number.isFinite(payload.exp)
-      ||payload.exp<=now||!Number.isFinite(payload.iat)||payload.iat>now+60
-      ||(payload.nbf!=null&&(!Number.isFinite(payload.nbf)||payload.nbf>now+60)))return forbidden();
-    const email=typeof payload.email==="string"?payload.email.trim().toLowerCase():"";
-    if(!allowed.has(email))return forbidden();
-    const valid=await crypto.subtle.verify(
-      "RSASSA-PKCS1-v1_5", key, decodeBase64Url(parts[2]),
-      new TextEncoder().encode(parts[0]+"."+parts[1])
-    );
-    return valid?{email}:forbidden();
-  } catch {
-    return forbidden();
+export function validOrigin(request){
+  try{return new URL(request.url).origin===ADMIN_ORIGIN;}catch{return false;}
+}
+function allowlist(env){
+  return new Set(String(env.STATUS_ADMIN_GITHUB_IDS||"")
+    .split(",").map(x=>x.trim()).filter(x=>/^[1-9]\d{0,15}$/.test(x)));
+}
+export function configReady(env){
+  return typeof env.GITHUB_OAUTH_CLIENT_ID==="string" &&
+    /^[A-Za-z0-9_]{8,100}$/.test(env.GITHUB_OAUTH_CLIENT_ID) &&
+    typeof env.GITHUB_OAUTH_CLIENT_SECRET==="string" && env.GITHUB_OAUTH_CLIENT_SECRET.length>=20 &&
+    typeof env.STATUS_ADMIN_SESSION_SECRET==="string" && env.STATUS_ADMIN_SESSION_SECRET.length>=40 &&
+    allowlist(env).size>0;
+}
+export function allowedId(env,id){return allowlist(env).has(String(id));}
+async function hmacKey(secret){
+  return crypto.subtle.importKey("raw",encoder.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign","verify"]);
+}
+export async function sign(value,secret,purpose){
+  const body=purpose+"|"+value;
+  return value+"."+bytes64(await crypto.subtle.sign("HMAC",await hmacKey(secret),encoder.encode(body)));
+}
+export async function verify(token,secret,purpose){
+  if(typeof token!=="string"||token.length>1024)return null;
+  const cut=token.lastIndexOf(".");
+  if(cut<1)return null;
+  const value=token.slice(0,cut), mac=token.slice(cut+1);
+  try{
+    const key=await hmacKey(secret);
+    const ok=await crypto.subtle.verify("HMAC",key,from64(mac),encoder.encode(purpose+"|"+value));
+    return ok?value:null;
+  }catch{return null;}
+}
+export function cookieValue(request,name){
+  const raw=request.headers.get("Cookie")||"";
+  for(const pair of raw.split(";")){
+    const mark=pair.indexOf("=");
+    if(mark>0&&pair.slice(0,mark).trim()===name)
+      return pair.slice(mark+1).trim();
   }
+  return null;
+}
+export function setCookie(name,value,maxAge){
+  return name+"="+value+"; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age="+maxAge;
+}
+export function clearCookie(name){return setCookie(name,"",0);}
+export function noStore(response){response.headers.set("Cache-Control","no-store");return response;}
+export function redirect(url,extraCookies=[]){
+  const response=new Response(null,{status:302,headers:{Location:url,"Cache-Control":"no-store","Referrer-Policy":"no-referrer"}});
+  for(const c of extraCookies)response.headers.append("Set-Cookie",c);
+  return response;
 }
 export function json(payload,status=200){
   return new Response(JSON.stringify(payload),{
     status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}
   });
 }
+export function deny(){return json({error:"Unauthorized"},401);}
+export async function authorize(context){
+  const env=context.env||{};
+  if(!validOrigin(context.request)||!configReady(env))return deny();
+  const token=cookieValue(context.request,SESSION_COOKIE);
+  if(!token)return deny();
+  const value=await verify(token,env.STATUS_ADMIN_SESSION_SECRET,"pico-admin-session");
+  if(!value)return deny();
+  const match=/^v1:([1-9]\d{0,15}):(\d{10})$/.exec(value);
+  if(!match)return deny();
+  const id=match[1], expiry=Number(match[2]),now=Math.floor(Date.now()/1000);
+  if(expiry<=now||expiry>now+MAX_AGE||!allowedId(env,id))return deny();
+  return {actor:"github:"+id,githubId:id};
+}
 export function requireSameOrigin(request){
-  const origin=request.headers.get("Origin");
-  try {return origin===new URL(request.url).origin} catch {return false}
+  return validOrigin(request) && request.headers.get("Origin")===ADMIN_ORIGIN;
 }
 export async function readBody(request,max=4096){
   if(!/^application\/json(?:;|$)/i.test(request.headers.get("Content-Type")||""))return null;
   if(Number(request.headers.get("Content-Length")||0)>max)return null;
   if(!request.body)return null;
   const reader=request.body.getReader();
-  let size=0;
-  const chunks=[];
+  let size=0;const chunks=[];
   try{
     while(true){
       const {value,done}=await reader.read();
-      if(done)break;
-      size+=value.byteLength;
-      if(size>max){void reader.cancel().catch(()=>{});return null;}
-      chunks.push(value);
+      if(done)break;size+=value.byteLength;
+      if(size>max){void reader.cancel().catch(()=>{});return null;}chunks.push(value);
     }
     const bytes=new Uint8Array(size);let offset=0;
     for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
     const parsed=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(bytes));
     return parsed&&typeof parsed==="object"&&!Array.isArray(parsed)?parsed:null;
-  }catch{return null}finally{reader.releaseLock()}
+  }catch{return null}finally{reader.releaseLock();}
 }
-export async function rateLimit(db,email){
+export async function rateLimit(db,actor){
   const result=await db.prepare(
     "SELECT COUNT(*) AS total FROM pico_status_admin_audit "+
-    "WHERE actor_email = ? AND created_at >= datetime('now','-1 minute')"
-  ).bind(email).first();
+    "WHERE actor_email=? AND created_at>=datetime('now','-1 minute')"
+  ).bind(actor).first();
   return Number(result?.total||0)<12;
 }
