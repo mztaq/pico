@@ -1,26 +1,158 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1e1e2e"><title>Pico Status | System Health</title><meta name="description" content="Live availability and incident monitoring for Pico."><style>
-:root{color-scheme:dark;--bg:#11111b;--surface:#1e1e2e;--border:#363649;--fg:#f4f2f8;--muted:#aaa9bb;--accent:#cba6f7;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}a{color:inherit;text-decoration:none}a:hover{color:var(--accent)}.wrap{max-width:960px;margin:auto;padding:0 24px}header{border-bottom:1px solid var(--border)}nav{height:78px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-size:22px;font-weight:800;letter-spacing:-.8px}.brand span{font-size:14px;font-weight:400;color:var(--muted);border-left:1px solid var(--border);padding-left:13px;margin-left:10px;letter-spacing:0}.back{font-size:13px;color:var(--muted)}main{padding-top:65px;padding-bottom:100px}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);font-weight:700;margin:0 0 10px}h1{font-size:clamp(38px,6vw,55px);letter-spacing:-2px;line-height:1.1;margin:0 0 14px}.intro{font-size:16px;color:var(--muted);margin:0 0 38px;max-width:590px}
-.summary,.panel{border:1px solid var(--border);border-radius:14px;background:var(--surface)}.summary{padding:25px;display:flex;align-items:center;gap:18px}.summary.good{border-color:#a6e3a155}.summary.bad{border-color:#f38ba855}.summary.warn{border-color:#f9e2af55}.symbol{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#ffffff0a;font-size:23px;color:var(--accent)}.good .symbol{color:var(--green)}.bad .symbol{color:var(--red)}.warn .symbol{color:var(--yellow)}.summary h2{font-size:18px;margin:0 0 3px;letter-spacing:-.3px}.summary p{color:var(--muted);font-size:13px;margin:0}.meta{margin:14px 2px 50px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}button{background:none;color:inherit;border:0;cursor:pointer;font:inherit}button:hover{color:var(--accent)}button:disabled{opacity:.5;cursor:wait}button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
-section{margin-top:38px}.heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px}.heading h2{font-size:20px;letter-spacing:-.5px;margin:0}.hint{font-size:12px;color:var(--muted)}.panel{overflow:hidden}.service{padding:23px 25px;border-bottom:1px solid var(--border)}.service:last-child,.incident:last-child{border:0}.top{display:flex;justify-content:space-between;gap:16px}.name{font-weight:700;margin:0 0 2px}.url{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.state{font-size:12px;white-space:nowrap;color:var(--muted);display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}.state.good{color:var(--green)}.state.bad{color:var(--red)}.state.warn{color:var(--yellow)}.meter{margin:23px 0 9px;background:#3f3d52;height:7px;border-radius:20px;overflow:hidden}.meter span{display:block;height:100%;background:var(--green);width:0}.below{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:16px}.below strong{color:var(--fg);margin-left:7px}.empty{padding:24px;color:var(--muted);font-size:13px}.incident{padding:18px 24px;border-bottom:1px solid var(--border);font-size:13px}.incident p{margin:3px 0 0;font-size:12px;color:var(--muted)}footer{border-top:1px solid var(--border);padding:28px 0;color:var(--muted);font-size:12px}footer .wrap{display:flex;justify-content:space-between;gap:12px}
-@media(max-width:600px){.wrap{padding:0 16px}nav{height:68px}main{padding-top:48px;padding-bottom:65px}.summary,.service{padding:18px}.below{font-size:11px}.back{font-size:12px}}
-</style></head><body>
-<header><nav class="wrap"><a class="brand" href="https://picompiler.pages.dev/">Pico.<span>Status</span></a><a class="back" href="https://picompiler.pages.dev/">← Back to Pico</a></nav></header>
-<main class="wrap"><p class="eyebrow">System health</p><h1>Pico Status.</h1><p class="intro">Live availability and operational history for Pico's services.</p>
-<div id="summary" class="summary" role="status" aria-live="polite"><span class="symbol">○</span><div><h2 id="headline">Checking system status</h2><p id="detail">Retrieving monitoring data.</p></div></div>
-<div class="meta"><span id="updated">Awaiting update</span><button id="refresh" type="button">↻ Refresh now</button></div>
-<section><div class="heading"><h2>Services</h2><span class="hint">24h / 30d availability</span></div><div id="services" class="panel"><div class="empty">Loading monitors…</div></div></section>
-<section><div class="heading"><h2>Recent incidents</h2><span class="hint">Last 30 days</span></div><div id="incidents" class="panel"><div class="empty">Loading incident history…</div></div></section>
-</main><footer><div class="wrap"><a href="https://picompiler.pages.dev/app/ai-usage">Pico Dev Team · All rights reserved</a><span>Powered by UptimeRobot</span></div></footer>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1e1e2e">
+<meta name="description" content="Current status and uptime of Pico services.">
+<link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
+<title>Pico Status</title>
+<style>
+:root{color-scheme:dark;--bg:#1e1e2e;--panel:#252538;--text:#cdd6f4;--muted:#a6adc8;--stroke:#414257;--accent:#cba6f7;--green:#a6e3a1;--yellow:#f9e2af;--red:#f38ba8;--dim:#585b70}
+*{box-sizing:border-box}
+html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5}
+a{color:inherit;text-decoration:none}a:hover{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{width:min(100% - 36px,728px);margin:0 auto}
+nav{display:flex;align-items:center;justify-content:space-between;padding:25px 0 29px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:780;font-size:19px;letter-spacing:-.75px;line-height:1}
+.brand img{width:29px;height:29px;border-radius:8px}
+.brand .separator{height:19px;width:1px;background:var(--stroke);margin:0 3px 0 7px}
+.brand .sub{font-weight:450;font-size:13px;letter-spacing:0;color:var(--muted)}
+.return{font-size:12px;color:var(--muted)}
+main{padding:0 0 94px}
+h1{font-size:24px;letter-spacing:-.7px;line-height:1.22;margin:4px 0 25px;font-weight:730;color:#f3eefb}
+.card{border:1px solid var(--stroke);border-radius:11px;overflow:hidden;background:var(--panel)}
+.banner{display:flex;gap:12px;align-items:center;min-height:56px;padding:14px 17px;border-bottom:1px solid var(--stroke)}
+.banner-icon{height:22px;width:22px;display:grid;place-items:center;border-radius:50%;flex-shrink:0}
+.banner-icon svg{width:16px;height:16px}
+.banner h2{font-size:14px;margin:0;font-weight:650}
+.banner.good{background:#a6e3a10c}.banner.good .banner-icon{background:#a6e3a122;color:var(--green)}
+.banner.bad{background:#f38ba80c}.banner.bad .banner-icon{background:#f38ba822;color:var(--red)}
+.banner.warn{background:#f9e2af0b}.banner.warn .banner-icon{background:#f9e2af22;color:var(--yellow)}
+.banner.neutral .banner-icon{background:#cba6f722;color:var(--accent)}
+.banner-caption{padding:11px 17px;background:#ffffff02;color:var(--muted);font-size:12px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:36px 0 13px}
+.toolbar h2{font-size:15px;letter-spacing:-.25px;margin:0;font-weight:700;color:#f3eefb}
+.time{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px}
+#updated{margin-top:12px;font-size:11px;color:var(--muted)}
+.system{padding:19px 18px 17px;border-bottom:1px solid var(--stroke)}
+.system:last-child{border-bottom:none}
+.system-head{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.system-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--dim)}
+.dot.good{background:var(--green)}.dot.bad{background:var(--red)}.dot.warn{background:var(--yellow)}
+.system-status{font-size:11px;color:var(--muted);white-space:nowrap}.system-status.good{color:var(--green)}.system-status.bad{color:var(--red)}.system-status.warn{color:var(--yellow)}
+.track{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px;margin-top:14px}
+.tick{height:20px;border-radius:2px;background:var(--dim);opacity:.45}
+.tick.good{opacity:1;background:var(--green)}
+.tick.bad{opacity:1;background:var(--red)}
+.tick.warn{opacity:1;background:var(--yellow)}
+.figures{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px;color:var(--muted);font-size:11px}
+.figures .percent{font-variant-numeric:tabular-nums;color:var(--text)}
+.figures strong{font-weight:600;color:var(--text)}
+.incident{display:flex;gap:11px;padding:15px 18px;border-bottom:1px solid var(--stroke)}
+.incident:last-child{border-bottom:none}
+.incident .dot{margin-top:4px;width:8px;height:8px;background:var(--yellow)}
+.incident strong{display:block;font-size:12px;font-weight:650}
+.incident p{font-size:11px;color:var(--muted);margin:3px 0 0}
+.empty{padding:20px 18px;color:var(--muted);font-size:12px}
+.history-link{padding:13px 0 0;text-align:center}
+.history-link button{border:1px solid var(--stroke);padding:8px 14px;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:12px;cursor:pointer}
+.history-link button:hover{background:#ffffff0b}
+footer{padding:28px 0;border-top:1px solid var(--stroke);text-align:center;font-size:11px;color:var(--muted)}
+@media (max-width:520px){nav{padding:18px 0 26px}h1{font-size:22px;margin-bottom:18px}.system{padding:17px 13px}.track{gap:2px}.tick{height:19px}.time{font-size:10px}.figures{font-size:10px}.wrap{width:calc(100% - 28px)}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header><nav class="wrap"><a class="brand" href="https://picompiler.pages.dev/" aria-label="Pico home"><img src="/pico-logo.svg" alt="" width="29" height="29">Pico.<span class="separator"></span><span class="sub">Status</span></a><a class="return" href="https://picompiler.pages.dev/">← Back to Pico</a></nav></header>
+<main class="wrap">
+<h1>System status</h1>
+<div class="card" aria-live="polite" role="status">
+<div class="banner neutral" id="banner"><span class="banner-icon" id="banner-icon" aria-hidden="true">○</span><h2 id="status-title">Checking status</h2></div>
+<div class="banner-caption" id="status-detail">Checking Pico services.</div>
+</div>
+<div class="toolbar"><h2>Services</h2><span id="date-range" class="time">Past 30 days</span></div>
+<div class="card" id="services"><div class="empty">Loading…</div></div>
+<div id="updated">Updating…</div>
+<div class="toolbar" style="margin-top:34px"><h2>Incident history</h2><span class="time">Past 30 days</span></div>
+<div class="card" id="incidents"><div class="empty">Loading…</div></div>
+<div class="history-link"><button type="button" id="reload">↻ Refresh status</button></div>
+</main>
+<footer><div class="wrap"><a href="https://picompiler.pages.dev/app/ai-usage">Pico Dev Team · All rights reserved</a></div></footer>
 <script>
-const defaults=[{name:"Pico Website",target:"https://picompiler.pages.dev"},{name:"Pico MCP",target:"https://picompiler.pages.dev/app/mcp"},{name:"Pico OAuth",target:"https://pico-oauth.mztaq.workers.dev"}];
-const el=id=>document.getElementById(id);
-const escapeHtml=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const format=x=>typeof x==="number"&&Number.isFinite(x)?x.toFixed(2)+"%":"No data";
-function summary(title,desc,tone=""){el("summary").className="summary "+tone;el("headline").textContent=title;el("detail").textContent=desc;el("summary").querySelector(".symbol").textContent=tone==="good"?"✓":tone==="bad"?"!":"○"}
-function renderServices(rows){el("services").innerHTML=rows.map(s=>{const tone=({operational:"good",outage:"bad",degraded:"warn"})[s.status]||"";const status=({operational:"Operational",outage:"Outage",degraded:"Degraded",unknown:"Not monitored"})[s.status]||"Unknown";const pct=typeof s.uptime30d==="number"?Math.max(0,Math.min(100,s.uptime30d)):0;return '<div class="service"><div class="top"><div><div class="name">'+escapeHtml(s.name)+'</div><a class="url" href="'+escapeHtml(s.target)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(s.target)+'</a></div><div class="state '+tone+'"><span class="dot"></span>'+status+'</div></div><div class="meter" role="img" aria-label="30 day uptime '+format(s.uptime30d)+'"><span style="width:'+pct+'%"></span></div><div class="below"><span>30-day uptime</span><span>24h <strong>'+format(s.uptime24h)+'</strong>　30d <strong>'+format(s.uptime30d)+'</strong></span></div></div>'}).join("")}
-function renderIncidents(items){if(items===null){el("incidents").innerHTML='<div class="empty">Incident history is temporarily unavailable.</div>';return}if(!items?.length){el("incidents").innerHTML='<div class="empty">No reported incidents for configured monitors in the last 30 days.</div>';return}el("incidents").innerHTML=items.map(i=>'<div class="incident"><b>'+escapeHtml(i.service)+' · '+escapeHtml(i.reason)+'</b><p>'+escapeHtml(i.startedAt?new Date(i.startedAt).toLocaleString():"Time unavailable")+' · '+(i.resolvedAt?"Resolved":"Unresolved")+'</p></div>').join("")}
-let busy=false;
-async function refresh(){if(busy)return;busy=true;el("refresh").disabled=true;try{const res=await fetch("/api/status",{cache:"no-store"});if(!res.ok)throw Error("Unavailable");const data=await res.json();const rows=Array.isArray(data.services)?data.services:defaults.map(s=>({...s,status:"unknown"}));renderServices(rows);if(data.state==="unconfigured"){summary("Monitoring not configured","Add your UptimeRobot API key as a Cloudflare Pages secret.","warn");el("incidents").innerHTML='<div class="empty">Incidents appear after monitoring is connected.</div>'}else if(data.state==="no-monitors"){summary("No Pico monitors found","Create matching monitors in UptimeRobot.","warn");el("incidents").innerHTML='<div class="empty">No monitored Pico services found.</div>'}else{const down=rows.filter(s=>s.status==="outage"),degraded=rows.filter(s=>s.status==="degraded"),known=rows.filter(s=>s.status!=="unknown");if(down.length)summary("Service disruption detected",down.length+" monitored service(s) down.","bad");else if(degraded.length)summary("Some systems degraded",degraded.length+" monitored service(s) degraded.","warn");else if(known.length!==rows.length)summary("Partial monitoring coverage","Some Pico services have no current monitoring status.","warn");else summary("All systems operational","All monitored Pico services are reporting normally.","good");renderIncidents(data.incidents)}el("updated").textContent=data.updatedAt?"Updated "+new Date(data.updatedAt).toLocaleTimeString():"Not yet updated"}catch{renderServices(defaults.map(s=>({...s,status:"unknown"})));summary("Status data unavailable","Live monitoring data could not be retrieved.","warn");el("updated").textContent="Update failed";el("incidents").innerHTML='<div class="empty">Incident history unavailable.</div>'}finally{busy=false;el("refresh").disabled=false}}
-el("refresh").addEventListener("click",refresh);refresh();setInterval(()=>{if(!document.hidden)refresh()},300000);
-</script></body></html>
+(()=>{
+const $=id=>document.getElementById(id);
+const icons={good:"✓",bad:"!",warn:"!",neutral:"○"};
+const servicesDefault=[{id:"website",name:"Pico Website"},{id:"mcp",name:"Pico MCP"},{id:"oauth",name:"Pico OAuth"}];
+const safe=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+const formatPercent=v=>typeof v==="number"&&Number.isFinite(v)?v.toFixed(2)+"%":"—";
+const statusInfo={up:["Operational","good"],down:["Outage","bad"],degraded:["Degraded","warn"],paused:["Paused","warn"],unknown:["Unavailable",""]};
+const dayFormat=new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",timeZone:"UTC"});
+const dateNow=new Date(),datePrev=new Date(dateNow.getTime()-30*86400000);
+$("date-range").textContent=dayFormat.format(datePrev)+" – "+dayFormat.format(dateNow);
+function setBanner(heading,detail,tone){
+  $("banner").className="banner "+tone;
+  $("banner-icon").textContent=icons[tone]||"○";
+  $("status-title").textContent=heading;$("status-detail").textContent=detail;
+}
+function renderServices(rows){
+  $("services").innerHTML=rows.map(service=>{
+    const [label,tone]=statusInfo[service.status]||statusInfo.unknown;
+    const history=Array.isArray(service.history)&&service.history.length===30?service.history:Array(30).fill(null);
+    const bars=history.map((value,index)=>{
+      const day=new Date(dateNow.getTime()-(30-index)*86400000);
+      const colour=value==="up"?"good":value==="down"?"bad":value==="degraded"?"warn":"";
+      const tooltip=(value==="up"?"Operational":value==="down"?"Outage":value==="degraded"?"Degraded":"No data")+" · "+dayFormat.format(day);
+      return '<span class="tick '+colour+'" title="'+safe(tooltip)+'" aria-hidden="true"></span>';
+    }).join("");
+    return '<div class="system"><div class="system-head"><div class="system-name"><span class="dot '+tone+'"></span>'+safe(service.name)+'</div><div class="system-status '+tone+'">'+label+'</div></div><div class="track" role="img" aria-label="30-day monitor history for '+safe(service.name)+'">'+bars+'</div><div class="figures"><span>30 days</span><span>Uptime <strong class="percent">'+formatPercent(service.uptime30d)+'</strong></span></div></div>';
+  }).join("");
+}
+function renderIncidents(incidents){
+  if(!Array.isArray(incidents)){$("incidents").innerHTML='<div class="empty">Incident history unavailable.</div>';return;}
+  if(!incidents.length){$("incidents").innerHTML='<div class="empty">No incidents reported in the past 30 days.</div>';return;}
+  $("incidents").innerHTML=incidents.map(incident=>{
+    const date=new Date(incident.startedAt);
+    const display=Number.isFinite(date.getTime())?date.toLocaleString():"Date unavailable";
+    return '<div class="incident"><span class="dot"></span><div><strong>'+safe(incident.service)+'</strong><p>'+safe(incident.reason)+'</p><p>'+safe(display)+' · '+(incident.resolvedAt?"Resolved":"Ongoing")+'</p></div></div>';
+  }).join("");
+}
+let pending=false;
+async function update(){
+  if(pending)return;pending=true;$("reload").disabled=true;
+  try{
+    const res=await fetch("/api/status",{cache:"no-store"});
+    if(!res.ok)throw Error("Monitoring unavailable");
+    const data=await res.json();
+    const rows=Array.isArray(data.services)?data.services:servicesDefault;
+    renderServices(rows);
+    if(data.state!=="connected"){
+      setBanner("Status unavailable","Monitoring data is not available yet.","warn");
+      $("incidents").innerHTML='<div class="empty">No history available.</div>';
+    }else{
+      const unmonitored=rows.filter(x=>x.status==="unknown"||x.status==="paused");
+      const outages=rows.filter(x=>x.status==="down");
+      const degraded=rows.filter(x=>x.status==="degraded");
+      if(outages.length)setBanner("Service disruption","Some Pico services are experiencing problems.","bad");
+      else if(degraded.length)setBanner("Partial service disruption","Some Pico services are experiencing issues.","warn");
+      else if(unmonitored.length)setBanner("Partial monitoring","Some services have no current monitoring data.","warn");
+      else setBanner("All systems operational","No issues detected across monitored Pico services.","good");
+      renderIncidents(data.incidents);
+    }
+    $("updated").textContent=data.updatedAt?"Last updated "+new Date(data.updatedAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"";
+  }catch{
+    renderServices(servicesDefault);
+    setBanner("Status unavailable","Monitoring data is temporarily unavailable.","warn");
+    $("incidents").innerHTML='<div class="empty">No history available.</div>';
+    $("updated").textContent="";
+  }finally{pending=false;$("reload").disabled=false;}
+}
+$("reload").addEventListener("click",update);
+update();setInterval(()=>{if(!document.hidden)update()},300000);
+})();
+</script>
+</body>
+</html>
