@@ -81,8 +81,8 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   }
   return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={learningThemeVariables(theme)}>
     <header className="learning-topbar">
-      <button type="button" className="learning-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" /> Workspaces</button>
       <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn</span>
+      <button type="button" className="learning-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" /> Workspaces</button>
     </header>
     <div className="learning-intro">
       <h1>Computer Science notes</h1>
