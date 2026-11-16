@@ -1,93 +1,159 @@
-# Private Pico Status Admin, without login or external authentication
+# Pico Status Admin: GitHub OAuth, private 404 admin page
 
-The public Pico status page stays accessible at
-`https://status.picompiler.pages.dev/`.
+## What users see
 
-The private editor is at
-`https://status.picompiler.pages.dev/admin/`.
+- Public status page: `https://status.picompiler.pages.dev/`, available to everyone.
+- Admin page: `https://status.picompiler.pages.dev/admin/`.
+  Without an authorized session, it responds with an actual **HTTP 404**.
+- Private sign-in entry: `https://status.picompiler.pages.dev/admin/auth/start`.
+  A team member signs in with their **own** GitHub account once.
+- Once signed in, returning to `/admin/` opens the editor directly for
+  up to **14 days**. Sign-out immediately revokes that browser session.
+- Any GitHub user whose **numeric account ID** is not allowlisted receives 404,
+  including after successful GitHub authentication.
 
-- Unapproved browsers receive a **real HTTP 404** from the server.
-- Approved browsers see the editor automatically with no login screen.
-- An approved browser holds a private **30-day**, Secure, HttpOnly,
-  SameSite=Strict cookie. No credential is stored in localStorage or JavaScript.
-- Team members are approved once using a **single-use invitation link**.
-- Sessions can be revoked from D1, and sign-out also revokes them.
+GitHub OAuth is free. No Cloudflare Zero Trust, payment card, shared
+password, invitation tokens, email verification, or third-party auth vendor.
 
-**Security limitation:** This authenticates a browser session rather than a
-human identity. Anyone with access to the approved, unlocked browser can
-operate the editor. Avoid shared/school computers. Use browser/OS login
-and two-factor authentication on Cloudflare accounts.
+This protects the status **admin** only, not the public status page or the
+public incident history. Grant admin rights only to team members authorized
+to publish incident updates. Having access to the GitHub repository does not
+automatically grant admin rights.
 
-## 1. Apply D1 migrations (one-time)
+## 1. Register a GitHub OAuth App
 
-Keep the existing database named `pico-db` and your existing
-Pages Preview binding `DB`.
+Open https://github.com/settings/developers → **OAuth Apps** →
+**New OAuth App**, under a GitHub account you control.
 
-If you have **not** run `migrations/0006_status_admin.sql`, run it first.
-It creates the `pico_status_admin_audit` table for the editor.
+| Setting | Value |
+| --- | --- |
+| Application name | Pico Status Admin |
+| Homepage URL | `https://status.picompiler.pages.dev/` |
+| Authorization callback URL | `https://status.picompiler.pages.dev/admin/auth/callback` |
 
-Back up `pico-db`. Run the four statements from
-`migrations/0007_status_admin_devices.sql` in the D1 SQL Console.
-The first two create invitation and session tables, and the last two
-create indexes. These statements do not modify Pico user analytics.
+Keep the device flow disabled. Do not enable callback wildcard matching.
+After saving, copy your **Client ID** and generate a **Client Secret**.
 
-Because the D1 Dashboard SQL Console has had trouble with pasted comments,
-paste SQL statements without leading `--` comment lines.
+The app uses the authorization-code flow with **PKCE S256** and a signed,
+10-minute state cookie. It requests **no repository or user-data scopes**:
+the server only needs GitHub's basic numeric user ID from `/user`.
+It does not save the GitHub access token or send it to the browser.
 
-Confirm:
+## 2. Get approved team members' GitHub IDs
 
-```sql
-SELECT name FROM sqlite_master WHERE type='table'
-AND name IN ('pico_status_admin_invites','pico_status_admin_sessions','pico_status_admin_audit');
-```
+Visit `https://api.github.com/users/USERNAME`, replacing USERNAME with
+each person's GitHub username. Copy the JSON `id` number.
 
-You should see all three names.
+Add only the **numeric ID**, not the username/email. Numeric IDs do not
+change when a person renames their GitHub account.
 
-## 2. Generate a private activation link
+Example (placeholder IDs, not real team accounts):
 
-On your computer, from your existing Pico repo checkout:
+`123456,789012`
+
+## 3. Configure the existing Cloudflare Pages Preview
+
+Cloudflare → Workers & Pages → **picompiler** → Settings →
+**Variables and Secrets** → **Preview**.
+
+Add four variables:
+
+| Name | Value |
+| --- | --- |
+| `GITHUB_OAUTH_CLIENT_ID` | The OAuth App Client ID |
+| `GITHUB_OAUTH_CLIENT_SECRET` | The OAuth App Client Secret |
+| `STATUS_ADMIN_GITHUB_IDS` | Comma-separated approved numeric IDs |
+| `STATUS_ADMIN_SESSION_SECRET` | A new, high-entropy random string of at least 40 characters |
+
+Use **encrypted secrets** for the Client Secret and session secret.
+The client ID and ID allowlist are identifiers but still belong in
+server-only variables, not public JavaScript.
+
+Generate a random 64-character hexadecimal session secret using Node.js
+on your own computer:
 
 ```sh
-node scripts/create-status-admin-invite.mjs "My Laptop"
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-The script prints:
+**Do not share secret values in chat, screenshots, or commits.**
 
-1. A SQL `INSERT INTO pico_status_admin_invites ...` command. Run that SQL
-   on the **existing** `pico-db` D1 SQL Console.
-2. A private invitation link ending with a `#` and a random secret.
-   Open it **only on the browser** you wish to approve.
+Existing Preview D1 binding `DB` must still point to `pico-db`.
+Keep `UPTIMEROBOT_API_KEY` and the separate scheduled archive Worker
+unchanged.
 
-The invitation lasts 24 hours **from the moment you insert its SQL row**
-and works only once. The secret never needs to be pasted into the repo,
-a Cloudflare environment variable, or this chat.
+If you previously added `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`
+or `STATUS_ADMIN_EMAILS`, they are unused and can be deleted from Preview.
+Old activation links and the `/enroll` page are retired.
 
-**Never share your activation link.** Anyone holding an unused link is able
-to activate their own browser.
+## 4. Apply the D1 migrations
 
-## 3. Approve your browser
+Back up the existing `pico-db` first.
 
-Open the private invitation link printed by the script. Select
-**Approve this browser**.
+In Cloudflare's D1 SQL Console, run **one SQL statement at a time**
+without the leading `--` comment lines:
 
-The server checks the one-time token, marks it used in D1, creates
-a new 30-day session and sets a browser-only signed-in cookie.
-You will be redirected to:
+- `migrations/0006_status_admin.sql` (admin audit log), if not already applied.
+- `migrations/0008_status_admin_github.sql` (GitHub session table and index), if
+  not already applied.
 
-`https://status.picompiler.pages.dev/admin/`
+You do **not** need migration `0007` or any invite table. If migration
+`0007` was already applied, migration `0008` is safe because it uses
+`IF NOT EXISTS`. Old device-only sessions are **not** accepted by the
+GitHub allowlist check, even if their cookies still exist.
 
-Later, simply visit that same URL on that approved browser.
-No login screen, OAuth provider, email or password is required.
+Verify that both required tables exist:
 
-Each team member/device requires its own one-time invitation.
-Avoid sending activation links through public channels.
+```sql
+SELECT name FROM sqlite_master
+WHERE type = 'table'
+AND name IN ('pico_status_admin_audit','pico_status_admin_sessions');
+```
 
-## 4. How to remove a device
+## 5. Redeploy and test
 
-The editor has a **Sign out** control which immediately revokes the
-current session in D1 and clears its cookie.
+Redeploy the latest `status` branch to
+`https://status.picompiler.pages.dev/`.
 
-To revoke a device manually in Cloudflare D1:
+Before logging in, use a private window to confirm:
+
+- `/admin/` returns HTTP **404** and does **not** display the dashboard.
+- `/admin/api/incidents` returns HTTP **404**.
+- `/`, `/history`, `/api/status` and `/api/history` stay public.
+
+Use the separate **private entry link** `/admin/auth/start` to open GitHub
+sign-in. With an approved GitHub account, the callback saves a secure session
+in D1 and redirects to `/admin/`.
+
+For each unapproved GitHub account, the OAuth callback fails to 404, without
+granting access. The admin UI remains hidden.
+
+Sign out and confirm that `/admin/` returns 404 in the same browser.
+
+Avoid publishing fake incidents in production purely for testing.
+
+**Required Cloudflare setting:** Workers & Pages → **picompiler** →
+Settings → Runtime → **Fail open / closed** → **Fail closed**.
+If the Pages Functions request quota is exhausted, Cloudflare should
+not serve private static admin HTML without its authentication middleware.
+
+Cloudflare's `status-assets/_routes.json` explicitly includes
+`/admin`, `/admin/*` and `/api/*` so Pages invokes Functions for all
+protected admin HTML, CSS, JS, and API routes.
+
+## Security and revocation
+
+The server verifies the cookie's SHA-256 verifier hash against an unrevoked,
+unexpired D1 row **on every admin request**. It separately checks the account
+ID against the current `STATUS_ADMIN_GITHUB_IDS` allowlist. Removing a
+user ID from Preview and redeploying revokes that user's access even if an
+existing session cookie is present.
+
+Sessions expire after 14 days. The browser holds an HttpOnly, Secure,
+SameSite=Lax host-only cookie; no token is stored in localStorage.
+State cookies have a 10-minute lifetime and are signed with an HMAC secret.
+
+To inspect or manually revoke sessions:
 
 ```sql
 SELECT id,label,created_at,expires_at,revoked_at
@@ -95,59 +161,16 @@ FROM pico_status_admin_sessions
 ORDER BY created_at DESC;
 ```
 
-After identifying the correct row, copy its exact `id` and run:
-
 ```sql
 UPDATE pico_status_admin_sessions
 SET revoked_at = unixepoch()
 WHERE id = 'PASTE_EXACT_SESSION_ID_HERE';
 ```
 
-The revoked browser now receives 404. To approve it again,
-create a new single-use invitation.
+Use GitHub 2FA on approved accounts and protect your Cloudflare dashboard.
+Every admin incident creation/update is written to the existing
+`pico_status_admin_audit` table, with `github:<numeric-id>` in its
+legacy `actor_email` column.
 
-Expired sessions are blocked automatically even if their D1 rows
-have not yet been deleted.
-
-## 5. Deploy and verify
-
-Redeploy the latest GitHub `status` branch of `mztaq/pico`.
-Do not configure GitHub OAuth or Cloudflare Access. The previous
-GitHub OAuth callback routes have been deleted.
-
-Verify:
-
-1. In a private/incognito browser, `/admin/` returns an HTTP 404.
-2. `/admin/api/incidents` also returns 404 without the cookie.
-3. The public root `/`, `/history`, and `/api/status` stay public.
-4. Activate your own browser using a private invitation and verify
-   `/admin/` loads your dashboard.
-5. Sign out and confirm `/admin/` returns 404 again.
-
-**Critical Cloudflare setting:** Workers & Pages → `picompiler` →
-Settings → Runtime → Fail open / closed → **Fail closed**.
-Without it, running out of the free-tier Functions quota might
-cause Cloudflare to serve static admin HTML without authentication.
-Public data writes still require the Functions, but the UI should
-not bypass the 404 guard.
-
-## Security properties
-
-- D1 stores SHA-256 hashes of one-time invitation tokens and session
-  verifiers, not their plaintext secrets.
-- Unapproved and revoked devices see the same server-side 404.
-- A token in the invitation URL's fragment (`#...`) is not included
-  in HTTP requests or standard referrer headers.
-- One invitation yields at most one session. The D1 redemption update
-  and session insertion are transactionally batched.
-- Administration requires an unexpired, unrevoked database session
-  for **every** page, asset and API request.
-- Mutating operations verify the browser's exact request Origin.
-- Incident updates and creations still use the existing D1 audit log.
-- Admin HTML applies a restrictive Content Security Policy.
-- No GitHub, Google, external login service or payment card.
-- A stolen or shared session cookie would grant access until expiry
-  or revocation. For stronger human identity verification, use passkeys.
-
-If there are deployment or runtime errors, do not remove authorization
-middleware. Inspect the Pages Function logs instead.
+Never disable authorization middleware to fix a deployment error.
+If login fails, inspect the Cloudflare Pages Function logs first.
