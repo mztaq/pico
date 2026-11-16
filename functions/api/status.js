@@ -68,12 +68,13 @@ function entry(incident,service,now) {
     resolvedAt:end==null?null:new Date(end).toISOString(),
     startedMs:start,
     endedMs:end??now,
+    isDowntime:!incident.type || String(incident.type).toLowerCase()==="downtime",
   };
 }
 function history(incidentList,service,monitor,now) {
   if (!monitor || !Array.isArray(incidentList)) return Array(30).fill(null);
-  const created=incidentTime(monitor.createdAt||monitor.created||monitor.created_at);
-  const entries=incidentList.filter(i=>i.serviceId===service.id);
+  const created=incidentTime(monitor.createDateTime||monitor.createdAt||monitor.created||monitor.created_at);
+  const entries=incidentList.filter(i=>i.serviceId===service.id&&i.isDowntime);
   const days=[];
   for (let i=29;i>=0;i--) {
     const start=now-(i+1)*DAY;
@@ -130,9 +131,9 @@ export async function onRequestGet(context) {
     }).filter(Boolean).sort((a,b)=>b.startedMs-a.startedMs);
     const publicServices=services.map(s=>({
       id:s.id,name:s.name,status:s.status,uptime24h:s.uptime24h,uptime30d:s.uptime30d,
-      history:history(allEntries,s,s.monitor,now),
+      history:s.uptime30d===null?Array(30).fill(null):history(allEntries,s,s.monitor,now),
     }));
-    const incidents=allEntries?.filter(i=>i.endedMs>=now-30*DAY).slice(0,12).map(({startedMs,endedMs,...i})=>i)??null;
+    const incidents=allEntries?.filter(i=>i.endedMs>=now-30*DAY).slice(0,12).map(({startedMs,endedMs,isDowntime,...i})=>i)??null;
     const payload={state:matched.length?"connected":"no-monitors",updatedAt:new Date(now).toISOString(),services:publicServices,incidents};
     const output=response(payload);
     if(cache&&context.waitUntil)context.waitUntil(cache.put(cacheKey,output.clone()));
