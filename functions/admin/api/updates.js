@@ -17,7 +17,7 @@ export async function onRequest(context){
     return json({error:'Choose an incident, stage, and message (10–650 characters).'},400);
   }
   try{
-    if(!(await rateLimit(context.env.DB,user.email)))return json({error:'Too many updates. Try later.'},429);
+    if(!(await rateLimit(context.env.DB,user.actor)))return json({error:'Too many updates. Try later.'},429);
     const existing=await context.env.DB.prepare(
       'SELECT id, status FROM pico_status_incidents WHERE id=?'
     ).bind(id).first();
@@ -39,7 +39,7 @@ export async function onRequest(context){
       context.env.DB.prepare(
         "INSERT INTO pico_status_admin_audit (incident_id,actor_email,action,stage,message) "+
         "VALUES (? ,?,'update',?,?)"
-      ).bind(id,user.email,stage,message),
+      ).bind(id,user.actor,stage,message),
     ]);
     return json({ok:true});
   }catch(error){
