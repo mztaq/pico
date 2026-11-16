@@ -6,63 +6,105 @@
 <meta name="theme-color" content="#1e1e2e">
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
-<title>Incident Management | Pico</title>
+<title>Incidents | Pico Admin</title>
 <link rel="stylesheet" href="/admin/admin.css">
 </head>
 <body>
-<header><nav class="wrap"><a class="brand" href="https://picompiler.pages.dev/"><img src="/pico-logo.svg" alt="">Pico.<span class="split"></span><span class="sub">Admin</span></a><div class="nav-actions"><a class="link" href="/">Public status ↗</a><button class="link signout" id="logout" type="button">Sign out</button></div></nav></header>
-<main class="wrap">
-  <h1>Incident management</h1>
-  <p class="lead">Publish updates to Pico's public status page.</p>
-  <div class="grid">
-    <section class="panel" aria-labelledby="incidents-heading">
-      <div class="panel-head"><h2 id="incidents-heading">Incidents</h2></div>
-      <div id="incidents" class="incident-list"><div class="picker-empty">Loading incidents…</div></div>
-      <div class="body body-split">
-        <h3 class="update-head compact">Publish update</h3>
-        <p id="selection" class="selected">Select an incident above.</p>
-        <form id="update-form" hidden>
-          <div class="group"><label for="stage">Stage</label>
-            <select class="field" id="stage" required>
-              <option value="investigating">Investigating</option>
-              <option value="identified">Identified</option>
-              <option value="monitoring">Monitoring</option>
-              <option value="resolved">Resolved</option>
-            </select>
-          </div>
-          <div class="group"><label for="update-message">Public message</label>
-            <textarea class="field" id="update-message" minlength="10" maxlength="650" required placeholder="Describe what's happening and what the team is doing."></textarea>
-          </div>
-          <button id="publish-update" class="primary" type="submit">Publish update</button>
-          <p id="update-result" class="notice" role="status"></p>
-        </form>
-      </div>
-    </section>
-    <section class="panel" aria-labelledby="new-heading">
-      <div class="panel-head"><h2 id="new-heading">Create incident</h2></div>
-      <div class="body">
-        <form id="create-form">
-          <div class="group"><label for="service">Affected service</label>
-            <select class="field" id="service" required>
-              <option value="website">Pico Website</option>
-              <option value="mcp">Pico MCP</option>
-              <option value="oauth">Pico OAuth</option>
-            </select>
-          </div>
-          <div class="group"><label for="title">Incident title</label>
-            <input class="field" type="text" id="title" minlength="5" maxlength="120" required placeholder="Pico MCP connection errors">
-          </div>
-          <div class="group"><label for="create-message">First public update</label>
-            <textarea class="field" id="create-message" minlength="10" maxlength="650" required placeholder="We're investigating connection failures affecting Pico MCP."></textarea>
-          </div>
-          <button id="create-incident" class="primary" type="submit">Create incident</button>
-          <p class="notice" id="create-result" role="status"></p>
-        </form>
-      </div>
-    </section>
+<header class="site-header">
+  <nav class="wrap nav" aria-label="Admin navigation">
+    <a class="brand" href="https://picompiler.pages.dev/" aria-label="Pico home">
+      <img src="/pico-logo.svg" alt="" width="32" height="32">
+      <span>Pico.</span><span class="brand-divider"></span><span class="brand-section">Admin</span>
+    </a>
+    <div class="nav-actions">
+      <a class="nav-link" href="/">Status page <span aria-hidden="true">↗</span></a>
+      <button class="nav-link signout" id="logout" type="button">Sign out</button>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap main">
+  <div class="page-heading">
+    <h1>Incidents</h1>
+    <button type="button" class="primary new-incident" id="new-incident">
+      <span class="plus" aria-hidden="true">+</span> New incident
+    </button>
   </div>
+
+  <section class="incident-panel" aria-label="Incident list">
+    <div id="incidents" class="incident-list" aria-live="polite">
+      <p class="empty-state">Loading incidents…</p>
+    </div>
+  </section>
 </main>
-<footer><div class="wrap"><a href="https://picompiler.pages.dev/app/ai-usage">© 2026 Pico Development Team. All rights reserved.</a></div></footer>
+
+<dialog class="modal" id="create-dialog" aria-labelledby="create-heading">
+  <form class="modal-inner" id="create-form">
+    <div class="modal-heading">
+      <h2 id="create-heading">New incident</h2>
+      <button class="close" type="button" data-close="create-dialog" aria-label="Close">×</button>
+    </div>
+    <div class="form-fields">
+      <div class="field-group">
+        <label for="service">Affected service</label>
+        <select class="field" id="service" required>
+          <option value="website">Pico Website</option>
+          <option value="mcp">Pico MCP</option>
+          <option value="oauth">Pico OAuth</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="incident-title">Title</label>
+        <input class="field" id="incident-title" type="text" minlength="5" maxlength="120" required placeholder="Pico MCP connection errors" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label for="create-message">Initial update</label>
+        <textarea class="field" id="create-message" minlength="10" maxlength="650" rows="4" required placeholder="We're investigating connection errors affecting Pico MCP."></textarea>
+      </div>
+    </div>
+    <p id="create-result" class="form-message" role="alert" hidden></p>
+    <div class="modal-actions">
+      <button class="secondary" type="button" data-close="create-dialog">Cancel</button>
+      <button class="primary" type="submit" id="create-incident">Publish incident</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="update-dialog" aria-labelledby="update-heading">
+  <form class="modal-inner" id="update-form">
+    <div class="modal-heading">
+      <h2 id="update-heading">Post an update</h2>
+      <button class="close" type="button" data-close="update-dialog" aria-label="Close">×</button>
+    </div>
+    <p class="selected-incident" id="selection"></p>
+    <div class="form-fields">
+      <div class="field-group">
+        <label for="stage">Status</label>
+        <select class="field" id="stage" required>
+          <option value="investigating">Investigating</option>
+          <option value="identified">Identified</option>
+          <option value="monitoring">Monitoring</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="update-message">Update</label>
+        <textarea class="field" id="update-message" minlength="10" maxlength="650" rows="4" required placeholder="Explain what has changed."></textarea>
+      </div>
+    </div>
+    <p id="update-result" class="form-message" role="alert" hidden></p>
+    <div class="modal-actions">
+      <button class="secondary" type="button" data-close="update-dialog">Cancel</button>
+      <button class="primary" type="submit" id="publish-update">Publish update</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<footer class="footer">
+  <div class="wrap"><a href="https://picompiler.pages.dev/app/ai-usage">© 2026 Pico Development Team. All rights reserved.</a></div>
+</footer>
 <script src="/admin/admin.js" defer></script>
 </body>
 </html>
