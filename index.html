@@ -2,159 +2,187 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1e1e2e">
-<meta name="description" content="Current status and uptime of Pico services.">
+<meta name="description" content="Pico service status and uptime.">
 <link rel="icon" type="image/svg+xml" href="/pico-logo.svg">
 <title>Pico Status</title>
 <style>
-:root{color-scheme:dark;--bg:#1e1e2e;--panel:#252538;--text:#cdd6f4;--muted:#a6adc8;--stroke:#414257;--accent:#cba6f7;--green:#a6e3a1;--yellow:#f9e2af;--red:#f38ba8;--dim:#585b70}
+:root{
+  color-scheme:dark;
+  --bg:#1e1e2e;--surface:#262637;--surface2:#2c2b40;--border:#444358;
+  --text:#cdd6f4;--bright:#f5f3fb;--muted:#a6adc8;--accent:#cba6f7;
+  --green:#a6e3a1;--yellow:#f9e2af;--red:#f38ba8;--empty:#444458;
+}
 *{box-sizing:border-box}
 html{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
-body{margin:0;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5}
-a{color:inherit;text-decoration:none}a:hover{color:var(--accent)}
-a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.wrap{width:min(100% - 36px,728px);margin:0 auto}
-nav{display:flex;align-items:center;justify-content:space-between;padding:25px 0 29px}
-.brand{display:flex;align-items:center;gap:9px;font-weight:780;font-size:19px;letter-spacing:-.75px;line-height:1}
-.brand img{width:29px;height:29px;border-radius:8px}
-.brand .separator{height:19px;width:1px;background:var(--stroke);margin:0 3px 0 7px}
-.brand .sub{font-weight:450;font-size:13px;letter-spacing:0;color:var(--muted)}
-.return{font-size:12px;color:var(--muted)}
-main{padding:0 0 94px}
-h1{font-size:24px;letter-spacing:-.7px;line-height:1.22;margin:4px 0 25px;font-weight:730;color:#f3eefb}
-.card{border:1px solid var(--stroke);border-radius:11px;overflow:hidden;background:var(--panel)}
-.banner{display:flex;gap:12px;align-items:center;min-height:56px;padding:14px 17px;border-bottom:1px solid var(--stroke)}
-.banner-icon{height:22px;width:22px;display:grid;place-items:center;border-radius:50%;flex-shrink:0}
-.banner-icon svg{width:16px;height:16px}
-.banner h2{font-size:14px;margin:0;font-weight:650}
-.banner.good{background:#a6e3a10c}.banner.good .banner-icon{background:#a6e3a122;color:var(--green)}
-.banner.bad{background:#f38ba80c}.banner.bad .banner-icon{background:#f38ba822;color:var(--red)}
-.banner.warn{background:#f9e2af0b}.banner.warn .banner-icon{background:#f9e2af22;color:var(--yellow)}
-.banner.neutral .banner-icon{background:#cba6f722;color:var(--accent)}
-.banner-caption{padding:11px 17px;background:#ffffff02;color:var(--muted);font-size:12px}
-.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:36px 0 13px}
-.toolbar h2{font-size:15px;letter-spacing:-.25px;margin:0;font-weight:700;color:#f3eefb}
-.time{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px}
-#updated{margin-top:12px;font-size:11px;color:var(--muted)}
-.system{padding:19px 18px 17px;border-bottom:1px solid var(--stroke)}
-.system:last-child{border-bottom:none}
-.system-head{display:flex;align-items:center;justify-content:space-between;gap:15px}
-.system-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
-.dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--dim)}
-.dot.good{background:var(--green)}.dot.bad{background:var(--red)}.dot.warn{background:var(--yellow)}
-.system-status{font-size:11px;color:var(--muted);white-space:nowrap}.system-status.good{color:var(--green)}.system-status.bad{color:var(--red)}.system-status.warn{color:var(--yellow)}
-.track{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px;margin-top:14px}
-.tick{height:20px;border-radius:2px;background:var(--dim);opacity:.45}
-.tick.good{opacity:1;background:var(--green)}
-.tick.bad{opacity:1;background:var(--red)}
-.tick.warn{opacity:1;background:var(--yellow)}
-.figures{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px;color:var(--muted);font-size:11px}
-.figures .percent{font-variant-numeric:tabular-nums;color:var(--text)}
-.figures strong{font-weight:600;color:var(--text)}
-.incident{display:flex;gap:11px;padding:15px 18px;border-bottom:1px solid var(--stroke)}
-.incident:last-child{border-bottom:none}
-.incident .dot{margin-top:4px;width:8px;height:8px;background:var(--yellow)}
-.incident strong{display:block;font-size:12px;font-weight:650}
-.incident p{font-size:11px;color:var(--muted);margin:3px 0 0}
-.empty{padding:20px 18px;color:var(--muted);font-size:12px}
-.history-link{padding:13px 0 0;text-align:center}
-.history-link button{border:1px solid var(--stroke);padding:8px 14px;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:12px;cursor:pointer}
-.history-link button:hover{background:#ffffff0b}
-footer{padding:28px 0;border-top:1px solid var(--stroke);text-align:center;font-size:11px;color:var(--muted)}
-@media (max-width:520px){nav{padding:18px 0 26px}h1{font-size:22px;margin-bottom:18px}.system{padding:17px 13px}.track{gap:2px}.tick{height:19px}.time{font-size:10px}.figures{font-size:10px}.wrap{width:calc(100% - 28px)}}
-@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5}
+a{color:inherit;text-decoration:none}
+a:hover{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
+.wrap{width:min(100% - 40px,800px);margin-inline:auto}
+header{border-bottom:1px solid #ffffff0d}
+.nav{display:flex;justify-content:space-between;align-items:center;min-height:84px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--bright);font-size:20px;font-weight:780;letter-spacing:-.7px}
+.brand img{width:33px;height:33px;flex-shrink:0}
+.brand .rule{width:1px;height:22px;background:var(--border);margin:0 4px 0 9px}
+.brand .sub{font-size:14px;font-weight:480;letter-spacing:0;color:var(--muted)}
+.back{font-size:13px;color:var(--muted);white-space:nowrap;font-weight:550}
+main{padding:51px 0 105px}
+h1,h2,h3,p{margin-top:0}
+h1{margin-bottom:18px;color:var(--bright);font-size:28px;line-height:1.2;letter-spacing:-.85px;font-weight:780}
+.summary{display:flex;align-items:center;position:relative;overflow:hidden;min-height:112px;background:linear-gradient(110deg,var(--surface2),var(--surface) 74%);border:1px solid var(--border);border-radius:15px;padding:28px 29px}
+.summary:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.summary[data-tone="up"]:before{background:var(--green)}
+.summary[data-tone="down"]:before{background:var(--red)}
+.summary[data-tone="warn"]:before{background:var(--yellow)}
+.summary h2{margin:0;font-size:clamp(21px,3.8vw,27px);font-weight:760;line-height:1.2;letter-spacing:-.85px;color:var(--bright)}
+.section-title{font-size:21px;color:var(--bright);letter-spacing:-.55px;font-weight:745;margin:45px 0 15px;line-height:1.25}
+.service-list,.incident-list{background:var(--surface);border:1px solid var(--border);border-radius:15px;overflow:hidden}
+.service{padding:24px 28px 23px;border-bottom:1px solid #ffffff14}
+.service:last-child{border-bottom:0}
+.service-head{display:flex;justify-content:space-between;align-items:baseline;gap:18px}
+.service-name{font-size:19px;line-height:1.3;color:var(--bright);font-weight:720;letter-spacing:-.35px}
+.service-status{font-size:14px;line-height:1.3;font-weight:720;white-space:nowrap;color:var(--muted)}
+.service-status.up{color:var(--green)}
+.service-status.down{color:var(--red)}
+.service-status.warn{color:var(--yellow)}
+.bars{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:4px;margin:21px 0 13px}
+.bar{display:block;height:28px;min-width:0;border-radius:3px;background:var(--empty);transition:filter .14s}
+.bar.up{background:var(--green)}
+.bar.down{background:var(--red)}
+.bar.warn{background:var(--yellow)}
+.bar:hover{filter:brightness(1.16)}
+.uptime{font-size:15px;font-weight:635;color:var(--bright);font-variant-numeric:tabular-nums;margin:0}
+.uptime.missing{color:var(--muted)}
+.incident{padding:18px 27px;border-bottom:1px solid #ffffff14}
+.incident:last-child{border:0}
+.incident-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.incident h3{font-size:16px;line-height:1.4;color:var(--bright);font-weight:700;margin:0}
+.incident-state{font-size:13px;color:var(--yellow);font-weight:650}
+.incident-state.resolved{color:var(--green)}
+.incident p{font-size:13px;color:var(--muted);margin:6px 0 0}
+.empty{padding:25px 28px;font-size:16px;font-weight:650;color:var(--bright)}
+footer{border-top:1px solid #ffffff0d}
+.footer{padding:27px 0 32px;text-align:center;font-size:12px;color:var(--muted)}
+@media(max-width:560px){
+  .wrap{width:calc(100% - 28px)}
+  .nav{min-height:72px}
+  .brand{font-size:18px;gap:8px}
+  .brand img{width:30px;height:30px}
+  .brand .rule{margin-left:5px;margin-right:2px}
+  .brand .sub{font-size:13px}
+  .back{font-size:12px}
+  main{padding-top:38px;padding-bottom:75px}
+  h1{font-size:25px}
+  .summary{min-height:96px;padding:22px 22px}
+  .summary h2{font-size:22px}
+  .section-title{font-size:20px;margin-top:38px}
+  .service{padding:21px 17px}
+  .service-name{font-size:17px}
+  .service-status{font-size:12px}
+  .bars{gap:2px;margin:18px 0 12px}
+  .bar{height:26px;border-radius:2px}
+  .uptime{font-size:14px}
+  .empty{padding:21px 18px}
+}
+@media(prefers-reduced-motion:reduce){.bar{transition:none}}
 </style>
 </head>
 <body>
-<header><nav class="wrap"><a class="brand" href="https://picompiler.pages.dev/" aria-label="Pico home"><img src="/pico-logo.svg" alt="" width="29" height="29">Pico.<span class="separator"></span><span class="sub">Status</span></a><a class="return" href="https://picompiler.pages.dev/">← Back to Pico</a></nav></header>
+<header>
+  <nav class="wrap nav" aria-label="Main navigation">
+    <a class="brand" href="https://picompiler.pages.dev/" aria-label="Pico home">
+      <img src="/pico-logo.svg" alt="" width="33" height="33">
+      <span>Pico.</span><span class="rule"></span><span class="sub">Status</span>
+    </a>
+    <a class="back" href="https://picompiler.pages.dev/">← Back to Pico</a>
+  </nav>
+</header>
 <main class="wrap">
-<h1>System status</h1>
-<div class="card" aria-live="polite" role="status">
-<div class="banner neutral" id="banner"><span class="banner-icon" id="banner-icon" aria-hidden="true">○</span><h2 id="status-title">Checking status</h2></div>
-<div class="banner-caption" id="status-detail">Checking Pico services.</div>
-</div>
-<div class="toolbar"><h2>Services</h2><span id="date-range" class="time">Past 30 days</span></div>
-<div class="card" id="services"><div class="empty">Loading…</div></div>
-<div id="updated">Updating…</div>
-<div class="toolbar" style="margin-top:34px"><h2>Incident history</h2><span class="time">Past 30 days</span></div>
-<div class="card" id="incidents"><div class="empty">Loading…</div></div>
-<div class="history-link"><button type="button" id="reload">↻ Refresh status</button></div>
+  <h1>System status</h1>
+  <section class="summary" data-tone="unknown" role="status" aria-live="polite" aria-label="Overall system status">
+    <h2 id="overall">Checking status</h2>
+  </section>
+  <section aria-labelledby="services-title">
+    <h2 id="services-title" class="section-title">Services</h2>
+    <div class="service-list" id="services"><div class="empty">Checking services</div></div>
+  </section>
+  <section aria-labelledby="incidents-title">
+    <h2 id="incidents-title" class="section-title">Incident history</h2>
+    <div class="incident-list" id="incidents"><div class="empty">Checking incidents</div></div>
+  </section>
 </main>
-<footer><div class="wrap"><a href="https://picompiler.pages.dev/app/ai-usage">Pico Dev Team · All rights reserved</a></div></footer>
+<footer><div class="wrap footer">
+  <a href="https://picompiler.pages.dev/app/ai-usage">© 2026 Pico Development Team. All rights reserved.</a>
+</div></footer>
 <script>
 (()=>{
-const $=id=>document.getElementById(id);
-const icons={good:"✓",bad:"!",warn:"!",neutral:"○"};
-const servicesDefault=[{id:"website",name:"Pico Website"},{id:"mcp",name:"Pico MCP"},{id:"oauth",name:"Pico OAuth"}];
-const safe=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
-const formatPercent=v=>typeof v==="number"&&Number.isFinite(v)?v.toFixed(2)+"%":"—";
-const statusInfo={up:["Operational","good"],down:["Outage","bad"],degraded:["Degraded","warn"],paused:["Paused","warn"],starting:["Starting",""],not_monitored:["Not monitored",""],unknown:["No data",""]};
-const dayFormat=new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",timeZone:"UTC"});
-const dateNow=new Date(),datePrev=new Date(dateNow.getTime()-30*86400000);
-$("date-range").textContent=dayFormat.format(datePrev)+" – "+dayFormat.format(dateNow);
-function setBanner(heading,detail,tone){
-  $("banner").className="banner "+tone;
-  $("banner-icon").textContent=icons[tone]||"○";
-  $("status-title").textContent=heading;$("status-detail").textContent=detail;
-}
-function renderServices(rows){
-  $("services").innerHTML=rows.map(service=>{
-    const [label,tone]=statusInfo[service.status]||statusInfo.unknown;
-    const history=Array.isArray(service.history)&&service.history.length===30?service.history:Array(30).fill(null);
-    const since=service.monitoredSince?new Date(service.monitoredSince):null;
-    const monitoredDays=since&&Number.isFinite(since.getTime())?Math.max(0,(dateNow-since)/86400000):null;
-    const range=monitoredDays!==null&&monitoredDays<30?"Since "+dayFormat.format(since):"30 days";
-    const bars=history.map((value,index)=>{
-      const day=new Date(dateNow.getTime()-(30-index)*86400000);
-      const colour=value==="up"?"good":value==="down"?"bad":value==="degraded"?"warn":"";
-      const tooltip=(value==="up"?"Operational":value==="down"?"Outage":value==="degraded"?"Degraded":"No data")+" · "+dayFormat.format(day);
-      return '<span class="tick '+colour+'" title="'+safe(tooltip)+'" aria-hidden="true"></span>';
+  const $=id=>document.getElementById(id);
+  const DAY=86400000;
+  const DEFAULT_SERVICES=[{id:"website",name:"Pico Website"},{id:"mcp",name:"Pico MCP"},{id:"oauth",name:"Pico OAuth"}];
+  const LABELS={up:["Operational","up"],down:["Outage","down"],degraded:["Degraded","warn"],paused:["Paused","warn"],not_monitored:["Not monitored",""],starting:["Starting",""],unknown:["Unavailable",""]};
+  const dateFormat=new Intl.DateTimeFormat(undefined,{month:"short",day:"numeric",timeZone:"UTC"});
+  const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function overall(text,tone){$("overall").textContent=text;document.querySelector(".summary").dataset.tone=tone}
+  function renderServices(services,updatedAt){
+    const end=updatedAt&&Number.isFinite(Date.parse(updatedAt))?new Date(updatedAt):new Date();
+    $("services").innerHTML=services.map(service=>{
+      const [state,tone]=LABELS[service.status]||LABELS.unknown;
+      const history=Array.isArray(service.history)&&service.history.length===30?service.history:Array(30).fill(null);
+      const bars=history.map((value,index)=>{
+        const kind=value==="up"?"up":value==="down"?"down":value==="degraded"?"warn":"";
+        const day=new Date(end.getTime()-(29-index)*DAY);
+        const text=(value==="up"?"Operational":value==="down"?"Outage":value==="degraded"?"Degraded":"No data")+" on "+dateFormat.format(day);
+        return '<span class="bar '+kind+'" title="'+escapeHtml(text)+'" aria-hidden="true"></span>';
+      }).join("");
+      const percent=typeof service.uptime30d==="number"&&Number.isFinite(service.uptime30d)?service.uptime30d.toFixed(2)+"% uptime":"Uptime unavailable";
+      return '<div class="service"><div class="service-head"><span class="service-name">'+escapeHtml(service.name)+'</span><span class="service-status '+tone+'">'+state+'</span></div><div class="bars" role="img" aria-label="Thirty-day status history for '+escapeHtml(service.name)+'">'+bars+'</div><p class="uptime'+(percent==="Uptime unavailable"?" missing":"")+'">'+percent+'</p></div>';
     }).join("");
-    return '<div class="system"><div class="system-head"><div class="system-name"><span class="dot '+tone+'"></span>'+safe(service.name)+'</div><div class="system-status '+tone+'">'+label+'</div></div><div class="track" role="img" aria-label="30-day monitor history for '+safe(service.name)+'">'+bars+'</div><div class="figures"><span>'+safe(range)+'</span><span>Uptime <strong class="percent">'+formatPercent(service.uptime30d)+'</strong></span></div></div>';
-  }).join("");
-}
-function renderIncidents(incidents){
-  if(!Array.isArray(incidents)){$("incidents").innerHTML='<div class="empty">Incident history unavailable.</div>';return;}
-  if(!incidents.length){$("incidents").innerHTML='<div class="empty">No incidents recorded.</div>';return;}
-  $("incidents").innerHTML=incidents.map(incident=>{
-    const date=new Date(incident.startedAt);
-    const display=Number.isFinite(date.getTime())?date.toLocaleString():"Date unavailable";
-    return '<div class="incident"><span class="dot"></span><div><strong>'+safe(incident.service)+'</strong><p>'+safe(incident.reason)+'</p><p>'+safe(display)+' · '+(incident.resolvedAt?"Resolved":"Ongoing")+'</p></div></div>';
-  }).join("");
-}
-let pending=false;
-async function update(){
-  if(pending)return;pending=true;$("reload").disabled=true;
-  try{
-    const res=await fetch("/api/status",{cache:"no-store"});
-    if(!res.ok)throw Error("Monitoring unavailable");
-    const data=await res.json();
-    const rows=Array.isArray(data.services)?data.services:servicesDefault;
-    renderServices(rows);
-    if(data.state!=="connected"){
-      setBanner("Status unavailable","Monitoring data is not available yet.","warn");
-      $("incidents").innerHTML='<div class="empty">No history available.</div>';
-    }else{
-      const unmonitored=rows.filter(x=>x.status==="unknown"||x.status==="paused"||x.status==="starting"||x.status==="not_monitored");
-      const outages=rows.filter(x=>x.status==="down");
-      const degraded=rows.filter(x=>x.status==="degraded");
-      if(outages.length)setBanner("Service disruption","Some Pico services are experiencing problems.","bad");
-      else if(degraded.length)setBanner("Partial service disruption","Some Pico services are experiencing issues.","warn");
-      else if(unmonitored.length)setBanner("Partial monitoring",unmonitored.length+" service"+(unmonitored.length===1?" is":"s are")+" not reporting status.","warn");
-      else setBanner("All systems operational","No issues detected across monitored Pico services.","good");
-      renderIncidents(data.incidents);
-    }
-    $("updated").textContent=data.updatedAt?"Last updated "+new Date(data.updatedAt).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}):"";
-  }catch{
-    renderServices(servicesDefault);
-    setBanner("Status unavailable","Monitoring data is temporarily unavailable.","warn");
-    $("incidents").innerHTML='<div class="empty">No history available.</div>';
-    $("updated").textContent="";
-  }finally{pending=false;$("reload").disabled=false;}
-}
-$("reload").addEventListener("click",update);
-update();setInterval(()=>{if(!document.hidden)update()},300000);
+  }
+  function renderIncidents(incidents){
+    if(!Array.isArray(incidents)){$("incidents").innerHTML='<div class="empty">History unavailable</div>';return}
+    if(!incidents.length){$("incidents").innerHTML='<div class="empty">No incidents</div>';return}
+    $("incidents").innerHTML=incidents.map(incident=>{
+      const date=incident.startedAt?new Date(incident.startedAt):null;
+      const when=date&&Number.isFinite(date.getTime())?date.toLocaleString():null;
+      const issue=escapeHtml(incident.reason||"Service interruption");
+      const service=escapeHtml(incident.service||"Pico");
+      return '<article class="incident"><div class="incident-head"><h3>'+service+'</h3><span class="incident-state '+(incident.resolvedAt?"resolved":"")+'">'+(incident.resolvedAt?"Resolved":"Ongoing")+'</span></div><p>'+issue+'</p>'+(when?'<p>'+escapeHtml(when)+'</p>':"")+'</article>';
+    }).join("");
+  }
+  let loading=false;
+  async function refresh(){
+    if(loading)return;
+    loading=true;
+    try{
+      const result=await fetch("/api/status",{cache:"no-store"});
+      if(!result.ok)throw new Error("Status API failed");
+      const data=await result.json();
+      const services=Array.isArray(data.services)?data.services:DEFAULT_SERVICES;
+      renderServices(services,data.updatedAt);
+      if(data.state!=="connected"){
+        overall("Status unavailable","warn");
+        renderIncidents(null);
+      }else{
+        const bad=services.some(s=>s.status==="down");
+        const degraded=services.some(s=>s.status==="degraded");
+        const unknown=services.some(s=>!["up","down","degraded"].includes(s.status));
+        if(bad)overall("Service disruption","down");
+        else if(degraded)overall("Partial service disruption","warn");
+        else if(unknown)overall("Partial monitoring","warn");
+        else overall("All systems operational","up");
+        renderIncidents(data.incidents);
+      }
+    }catch{
+      renderServices(DEFAULT_SERVICES);
+      renderIncidents(null);
+      overall("Status unavailable","warn");
+    }finally{loading=false}
+  }
+  refresh();
+  setInterval(()=>{if(!document.hidden)refresh()},300000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
 })();
 </script>
 </body>
