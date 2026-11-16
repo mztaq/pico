@@ -48,8 +48,6 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   const units = [...new Set(filtered.map(topic => topic.unit))];
   const available = questions.filter(question => question.topic === selected.id);
   const notes = topicNotes[selected.id];
-  const attempts = Object.values(progress.attempts).reduce((total, item) => total + item.total, 0);
-  const correct = Object.values(progress.attempts).reduce((total, item) => total + item.correct, 0);
 
   function start(items: Question[], label: string) {
     if (!items.length) return;
@@ -85,7 +83,6 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
     <header className="learning-topbar">
       <button type="button" className="learning-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" /> Workspaces</button>
       <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn</span>
-      <span className="learning-progress" aria-live="polite">{attempts ? `${correct}/${attempts} correct` : ''}</span>
     </header>
     <div className="learning-intro">
       <h1>Computer Science notes</h1>
