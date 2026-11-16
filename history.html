@@ -58,7 +58,8 @@ async function load(){
      const title=safe(i.title||i.service||"Incident");
      const reason=i.reason?'<p class="detail">'+safe(i.reason)+'</p>':"";
      const updates=(i.updates||[]).map(u=>'<div class="update"><h3>'+safe(labels[u.stage]||"Update")+'</h3><p>'+safe(u.message)+'</p><time>'+safe(when(u.publishedAt))+'</time></div>').join("");
-     return '<details class="event"><summary><div class="heading"><strong>'+title+'</strong><span class="status '+(i.resolvedAt?"resolved":"")+'">'+(i.resolvedAt?"Resolved":"Ongoing")+'</span></div><div class="detail">'+safe(when(i.startedAt))+'</div>'+reason+'<div class="chevron">View updates</div></summary><div class="timeline">'+(updates||'<div class="detail">No updates recorded.</div>')+'</div></details>';
+     const state=labels[i.status]||(i.resolvedAt?"Resolved":"Investigating");
+     return '<details class="event"><summary><div class="heading"><strong>'+title+'</strong><span class="status '+(state==="Resolved"?"resolved":"")+'">'+safe(state)+'</span></div><div class="detail">'+safe(when(i.startedAt))+'</div>'+reason+'<div class="chevron">View updates</div></summary><div class="timeline">'+(updates||'<div class="detail">No updates recorded.</div>')+'</div></details>';
    }).join("");
    $("history").insertAdjacentHTML("beforeend",markup);
    if(!$("history").children.length)$("history").innerHTML='<div class="empty">No incidents</div>';
