@@ -106,16 +106,15 @@ export async function onRequestGet(context) {
     const monitors=result.data;
     const now=Date.now();
     const since30=new Date(now-30*DAY).toISOString();
-    const since24=new Date(now-DAY).toISOString();
     const services=SERVICES.map(service=>{
       const monitor=getMonitor(monitors,service);
       return {...service,monitor,monitorId:monitor?.id,status:monitor?state(monitor):"not_monitored",uptime24h:null,uptime30d:null};
     });
     const matched=services.filter(s=>Number.isSafeInteger(s.monitorId)&&s.monitorId>0);
-    const queries=matched.flatMap(s=>([
-      {id:s.id,key:"uptime24h",path:"/monitors/"+s.monitorId+"/stats/uptime?from="+encodeURIComponent(since24)},
-      {id:s.id,key:"uptime30d",path:"/monitors/"+s.monitorId+"/stats/uptime?from="+encodeURIComponent(since30)},
-    ]));
+    // One uptime-stat request per monitor. The UI only displays 30-day uptime.
+    const queries=matched.map(s=>(
+      {id:s.id,key:"uptime30d",path:"/monitors/"+s.monitorId+"/stats/uptime?from="+encodeURIComponent(since30)}
+    ));
     const jobs=[...queries.map(q=>api(q.path,key)),api("/incidents?limit=100&started_after="+encodeURIComponent(since30),key)];
     const answers=await Promise.allSettled(jobs);
     for(let i=0;i<queries.length;i++) {
@@ -124,7 +123,7 @@ export async function onRequestGet(context) {
       if(service)service[queries[i].key]=validPercent(answers[i].value);
     }
     const incidentsAnswer=answers[answers.length-1];
-    const rawIncidents=incidentsAnswer.status==="fulfilled"&&Array.isArray(incidentsAnswer.value?.data)?incidentsAnswer.value.data:null;
+    const rawIncidents=incidentsAnswer.status==="fulfilled"&&Array.isArray(incidentsAnswer.value?.data)&&!incidentsAnswer.value?.nextLink?incidentsAnswer.value.data:null;
     const byMonitor=new Map(matched.map(s=>[s.monitorId,s]));
     const allEntries=rawIncidents===null?null:rawIncidents.map(i=>{
       const matchedService=byMonitor.get(Number(i?.monitor?.id));
