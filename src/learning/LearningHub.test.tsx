@@ -14,18 +14,27 @@ function button(label: string) {
   return found;
 }
 
-it('guides a learner through sound before showing topic practice', async () => {
+it('shows complete notes, an example and an interactive model without a multi-step wizard', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   document.body.append(host);
   await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
-  expect(host.textContent).not.toContain('Source: CS.zip');
-  expect(host.textContent).not.toContain('Practise this topic');
+  expect(host.textContent).not.toContain('Study notes, made practical');
+  expect(host.textContent).not.toContain('Learn a concept. Try it in Pico.');
+  expect(host.textContent).toContain('Computer Science notes');
+  expect(host.textContent).toContain('Key points');
+  expect(host.textContent).toContain('Worked example');
+  expect(host.textContent).toContain('Interactive example');
+  expect(host.querySelector('.learning-note-list')?.querySelectorAll('li').length).toBeGreaterThanOrEqual(3);
+  expect(host.textContent).toContain('Practice questions (2)');
+
   await act(async () => button('Text, sound and images').click());
-  expect(host.textContent).toContain('Lesson 1 of 5');
-  await act(async () => button('Next: Worked example').click());
-  await act(async () => button('Next: Explore').click());
   expect(host.querySelector('.learning-sound-chart')).not.toBeNull();
-  await act(async () => button('Next: Now try').click());
-  await act(async () => button('Finish lesson').click());
-  expect(host.textContent).toContain('Practise this topic (2)');
+  expect(host.textContent).toContain('A bitmap image is made from pixels.');
+  expect(host.textContent).toContain('8 × 3 = 24 bits');
+  expect(host.textContent).toContain('Try it yourself');
+
+  await act(async () => button('Practice questions (2)').click());
+  expect(host.textContent).toContain('Question 1 of 2');
+  await act(async () => button('Exit practice').click());
+  expect(host.textContent).toContain('Worked example');
 });
