@@ -2,8 +2,8 @@
 // Add UPTIMEROBOT_API_KEY to Cloudflare Pages Preview secrets.
 const SERVICES = [
   {id:"website", name:"Pico Website", target:"https://picompiler.pages.dev"},
-  {id:"mcp", name:"Pico MCP", target:"https://picompiler.pages.dev/app/mcp"},
-  {id:"oauth", name:"Pico OAuth", target:"https://pico-oauth.mztaq.workers.dev"},
+  {id:"mcp", name:"Pico MCP", target:"https://picompiler.pages.dev/.well-known/oauth-protected-resource/app/mcp"},
+  {id:"oauth", name:"Pico OAuth", target:"https://pico-oauth.mztaq.workers.dev/.well-known/oauth-authorization-server"},
 ];
 const ROOT = "https://api.uptimerobot.com/v3";
 const DAY = 86400000;
@@ -23,8 +23,18 @@ function normalise(input) {
   catch { return ""; }
 }
 function getMonitor(monitors, service) {
-  return monitors.find(m=>normalise(m.url)===normalise(service.target))
-    ?? monitors.find(m=>String(m.friendlyName||"").trim().toLowerCase()===service.name.toLowerCase())
+  // Prefer the exact public endpoint, because UptimeRobot defaults friendly names to URLs.
+  const target=normalise(service.target);
+  const sameUrl=monitors.find(m=>normalise(m.url)===target);
+  if(sameUrl)return sameUrl;
+  // Support monitors previously created for the old root URL as well.
+  const original={
+    website:"https://picompiler.pages.dev",
+    mcp:"https://picompiler.pages.dev/app/mcp",
+    oauth:"https://pico-oauth.mztaq.workers.dev",
+  };
+  return monitors.find(m=>String(m.friendlyName||m.friendly_name||"").trim().toLowerCase()===service.name.toLowerCase())
+    ?? monitors.find(m=>normalise(m.url)===normalise(original[service.id]))
     ?? null;
 }
 function state(monitor) {
