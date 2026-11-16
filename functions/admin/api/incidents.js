@@ -32,7 +32,7 @@ export async function onRequest(context){
     return json({error:'Provide a service, title (5–120 characters), and public update (10–650 characters).'},400);
   }
   try{
-    if(!(await rateLimit(context.env.DB,user.email)))return json({error:'Too many updates. Try later.'},429);
+    if(!(await rateLimit(context.env.DB,user.actor)))return json({error:'Too many updates. Try later.'},429);
     const externalId='manual-'+crypto.randomUUID();
     const updateKey='created-'+crypto.randomUUID();
     const now=new Date().toISOString();
@@ -52,7 +52,7 @@ export async function onRequest(context){
         "INSERT INTO pico_status_admin_audit (incident_id,actor_email,action,stage,message) "+
         "SELECT id,?,'create','investigating',? FROM pico_status_incidents "+
         "WHERE source='manual' AND external_id=?"
-      ).bind(user.email,message,externalId),
+      ).bind(user.actor,message,externalId),
       context.env.DB.prepare(
         "SELECT id FROM pico_status_incidents WHERE source='manual' AND external_id=?"
       ).bind(externalId),
