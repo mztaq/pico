@@ -48,6 +48,9 @@ describe('Arena economies and gameplay', () => {
 
   it('ends the round at the configured server deadline', () => {
     expect(remainingSeconds(100, 180, 279)).toBe(1);
+    expect(remainingSeconds(100, 180, 100)).toBe(180);
+    expect(remainingSeconds(100, 180, 101)).toBe(179);
+    expect(remainingSeconds(100, 180, 220)).toBe(60);
     expect(remainingSeconds(100, 180, 280)).toBe(0);
     expect(remainingSeconds(null, 180, 500)).toBe(180);
   });
