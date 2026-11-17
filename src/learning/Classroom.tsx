@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, ClipboardCopy, Play, RotateCcw, Users, X } from 'lucide-react';
+import { Check, ClipboardCopy, Play, Users, X } from 'lucide-react';
 import { challenges } from './challenges';
 
 type LocalSession = { code: string; token: string; role: 'host' | 'student' };
