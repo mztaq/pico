@@ -56,6 +56,22 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
+it('opens each learning feature directly from its home card', async () => {
+  const studio = container.querySelector<HTMLAnchorElement>('.home-learning-card[href="/app/learn?section=studio"]')!;
+  await click(studio);
+  expect(window.location.pathname).toBe('/app/learn');
+  expect(window.location.search).toBe('?section=studio');
+  expect(container.querySelector('.learning-sections button[aria-pressed="true"]')?.textContent).toContain('Live Studio');
+
+  await click(container.querySelector<HTMLElement>('.learning-back')!);
+  expect(window.location.pathname).toBe('/app');
+
+  const arcade = container.querySelector<HTMLAnchorElement>('.home-learning-card[href="/app/learn?section=arcade"]')!;
+  await click(arcade);
+  expect(window.location.pathname).toBe('/app/learn');
+  expect(window.location.search).toBe('?section=arcade');
+  expect(container.querySelector('.learning-sections button[aria-pressed="true"]')?.textContent).toContain('Arcade');
+});
 it('resets test navigation after visiting Games', async()=>{
   const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
   await click(gamesLink);
