@@ -1,6 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
-  ARENA_TILES, arenaPool, arenaUnits, answerReward, nodeCost,
+  ARENA_TILES, arenaPool, arenaUnits, answerReward, modeNodeCost,
   questionAt, scoreFor, visibleQuestion,
 } from '../../../src/learning/arenaRules.ts';
 
@@ -253,7 +253,7 @@ export class ArenaRoom extends DurableObject {
       const node = room.nodes[body.pos];
       if (kind === 'capture' && node.ownerId === player.id) return fail(409, 'Already yours.');
       if (kind === 'fortify' && node.ownerId !== player.id) return fail(403, 'Own the node first.');
-      const cost = nodeCost(kind, node);
+      const cost = modeNodeCost(room.settings.mode, kind, node);
       if (cost === null || player.charge < cost) return fail(409, 'Insufficient charge or maxed node.');
       player.charge -= cost;
       node.ownerId = player.id;
