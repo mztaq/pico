@@ -212,12 +212,14 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
         </>}
       </div>
     </div> : <div className="learning-feature">
-      <Suspense fallback={<div className="learning-panel" role="status">Loading game…</div>}>
-        <ArenaGame onReviewTopic={id => {
-          const topic = topics.find(item => item.id === id);
-          if (topic) chooseTopic(topic);
-        }} />
-      </Suspense>
+      <WorkspaceLoadBoundary workspace="Pico Arena">
+        <Suspense fallback={<div className="learning-panel" role="status">Loading Pico Arena…</div>}>
+          <ArenaGame onReviewTopic={id => {
+            const topic = topics.find(item => item.id === id);
+            if (topic) chooseTopic(topic);
+          }} />
+        </Suspense>
+      </WorkspaceLoadBoundary>
     </div>}
     {section === null && <PicoAppFooter onReport={() => { void openReport(); }} />}
     {reportWarning && <div className="pico-offline-backdrop" role="presentation">
