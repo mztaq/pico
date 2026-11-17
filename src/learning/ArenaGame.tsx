@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  ArrowLeft, ArrowRight, Check, Copy, Crown, Flag, Gamepad2, Play, Radio,
+  ArrowLeft, ArrowRight, Check, Copy, Crown, Flag, Play, Radio,
   RefreshCw, Shield, Swords, Trophy, Users, Volume2, VolumeX, Zap,
 } from 'lucide-react';
 import {
