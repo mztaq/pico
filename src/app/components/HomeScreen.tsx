@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowUpRight, Binary, BookOpen, Bug, Calculator, Check, Clock3, Code2, Cpu, Gamepad2, GitBranch, GraduationCap, Network, Palette, Terminal, Trophy, Users, WifiOff, X as CloseIcon } from 'lucide-react';
+import { ArrowUpRight, Binary, BookOpen, Bug, Calculator, Check, Code2, Cpu, Gamepad2, GitBranch, GraduationCap, Network, Palette, Terminal, Trophy, Users, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
