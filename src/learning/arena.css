@@ -218,3 +218,127 @@
 }
 @media (prefers-reduced-motion: reduce) { .arena-game *, .arena-game *::before, .arena-game *::after { transition: none !important; animation: none !important; } }
 .learning-hub[data-high-contrast='true'] .arena-game button, .learning-hub[data-high-contrast='true'] .arena-field { border-width: 2px; }
+
+
+/* Lobby setup and host custom question editor. */
+.arena-new-setup { max-width: 920px; }
+.arena-new-setup .arena-setup-frame { max-width: 830px; }
+.arena-new-setup .arena-setup-frame > h2 { margin: 0 0 20px; font-size: 28px; letter-spacing: -.04em; }
+.arena-setup-subhead { margin: 24px 0 12px; color: var(--ds-text); font-size: 14px; font-weight: 750; }
+.arena-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.arena-mode-card { display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
+  min-height: 120px; border: 1px solid var(--ds-line-strong); border-radius: 10px;
+  background: var(--bg); color: var(--ds-text); padding: 16px; text-align: left; }
+.arena-mode-card svg { color: var(--accent); }
+.arena-mode-card strong { font-size: 14px; font-weight: 750; }
+.arena-mode-card span { color: var(--ds-muted); font-size: 12px; line-height: 1.5; }
+.arena-mode-card.selected { border-color: var(--accent); background: var(--ds-accent-soft); }
+.arena-mode-card:hover { border-color: var(--accent); }
+.arena-config-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.arena-config-grid .arena-label { min-width: 0; }
+.arena-config-grid .arena-label select, .arena-config-grid .arena-label input { margin-top: 7px; }
+.arena-choice-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.arena-choice-row button { background: var(--bg); border: 1px solid var(--ds-line-strong);
+  color: var(--ds-text); border-radius: 8px; font-size: 12px; font-weight: 670; padding: 10px 13px; }
+.arena-choice-row button[aria-pressed='true'] { border-color: var(--accent); background: var(--ds-accent-soft); }
+.arena-custom-editor { margin-top: 18px; padding: 17px; border-radius: 12px; border: 1px solid var(--ds-line-strong); }
+.arena-custom-editor h4 { margin: 0 0 12px; font-size: 15px; }
+.arena-custom-editor > .arena-outline { margin-top: 15px; }
+.arena-custom-list { display: grid; gap: 8px; max-height: 190px; overflow-y: auto; }
+.arena-custom-list > div { display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--ds-line); border-radius: 8px; padding: 9px 11px; }
+.arena-custom-list strong { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
+.arena-custom-list button { background: transparent; border: 0; color: var(--accent); font-size: 11px; padding: 5px; }
+.arena-lobby-player { display: flex; gap: 9px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--ds-line); font-size: 13px; }
+.arena-match--hacker .arena-node { border-radius: 4px; }
+.arena-match--hacker .arena-field { background: var(--bg); }
+.arena-match--hacker .arena-board { background-image:
+  linear-gradient(var(--ds-line) 1px,transparent 1px),
+  linear-gradient(90deg,var(--ds-line) 1px,transparent 1px);
+  background-size: 23px 23px; }
+.arena-track { display: grid; gap: 13px; padding: 20px 16px; border: 1px solid var(--ds-line);
+  border-radius: 10px; background: var(--bg); }
+.arena-track-header { display: flex; justify-content: space-between; gap: 10px;
+  color: var(--ds-muted); font: 650 10px var(--ds-font-code); letter-spacing: .04em; }
+.arena-track-lane { display: grid; grid-template-columns: minmax(0, 90px) minmax(0, 1fr) 65px;
+  align-items: center; gap: 9px; }
+.arena-track-name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 11px; font-weight: 720; }
+.arena-track-strip { position: relative; height: 33px; border: 1px dashed var(--ds-line-strong);
+  background: var(--ds-panel); border-radius: 4px; }
+.arena-track-runner { position: absolute; left: 0; top: 3px; display: grid; place-items: center;
+  width: 25px; height: 25px; border-radius: 6px; color: var(--bg);
+  font: 800 18px var(--ds-font-code); transition: left 300ms ease; }
+.arena-track-lane > strong { text-align: right; font: 740 11px var(--ds-font-code); }
+
+/* Focused top-five award ceremony, no heavy rendering or image assets. */
+.arena-ceremony { position: relative; isolation: isolate; overflow: hidden; min-height: 520px;
+  padding: clamp(24px, 4vw, 48px); background: var(--ds-panel);
+  border: 1px solid var(--ds-line-strong); border-radius: 18px; }
+.arena-ceremony::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; right: 0;
+  z-index: -2; background: radial-gradient(ellipse at 50% 0%,var(--ds-accent-soft),transparent 70%); }
+.arena-stage-lights { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: -1; }
+.arena-stage-lights i { position: absolute; top: -18%; width: 32%; height: 110%;
+  background: linear-gradient(to bottom, var(--ds-accent-soft), transparent 80%);
+  clip-path: polygon(40% 0,60% 0,100% 100%,0 100%); transform-origin: 50% 0; opacity: 0; }
+.arena-stage-lights i:nth-child(1) { left: -10%; transform: rotate(-19deg); }
+.arena-stage-lights i:nth-child(2) { left: 12%; transform: rotate(-8deg); }
+.arena-stage-lights i:nth-child(3) { left: 35%; }
+.arena-stage-lights i:nth-child(4) { right: 12%; transform: rotate(8deg); }
+.arena-stage-lights i:nth-child(5) { right: -10%; transform: rotate(19deg); }
+.arena-ceremony.is-revealed .arena-stage-lights i { opacity: .7; animation: arena-spotlight 4s ease-in-out infinite alternate; }
+.arena-stage-lights i:nth-child(2n) { animation-delay: -.85s !important; }
+@keyframes arena-spotlight { from { opacity: .25; filter: brightness(.8); } to { opacity: .8; filter: brightness(1.15); } }
+.arena-ceremony-heading { display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding-bottom: 14px; }
+.arena-ceremony-heading > svg { color: var(--accent); }
+.arena-ceremony-heading h2 { font-size: clamp(25px, 3vw, 36px); margin: 0;
+  letter-spacing: -.04em; font-weight: 800; }
+.arena-ceremony-heading .arena-outline { margin-left: auto; padding: 8px; min-width: 40px; }
+.arena-ceremony-ready { display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 22px; min-height: 330px; }
+.arena-ceremony-ready p { font-size: 20px; font-weight: 700; }
+.arena-podium { display: flex; align-items: flex-end; justify-content: center;
+  gap: 9px; min-height: 290px; max-width: 660px; margin: 0 auto; padding-top: 28px; }
+.arena-podium-place { flex: 1; min-width: 0; max-width: 210px; display: flex;
+  flex-direction: column; align-items: center; text-align: center; gap: 8px;
+  color: var(--ds-text); animation: arena-rise 650ms backwards cubic-bezier(.16,.7,.3,1); }
+.arena-podium-place--1 { order: 2; animation-delay: .2s; }
+.arena-podium-place--2 { order: 1; animation-delay: .4s; }
+.arena-podium-place--3 { order: 3; animation-delay: .6s; }
+.arena-podium-place svg { color: var(--podium-owner); }
+.arena-podium-place strong { max-width: 100%; text-overflow: ellipsis; white-space: nowrap;
+  overflow: hidden; font-size: 13px; }
+.arena-podium-place > span { color: var(--ds-muted); font: 730 12px var(--ds-font-code); }
+.arena-podium-block { display: grid; place-items: center; width: 100%;
+  border: 1px solid var(--podium-owner); border-bottom: 0; border-radius: 7px 7px 0 0;
+  background: var(--ds-accent-soft); color: var(--podium-owner);
+  font: 850 35px var(--ds-font-code); }
+.arena-podium-place--1 .arena-podium-block { height: 158px; }
+.arena-podium-place--2 .arena-podium-block { height: 115px; }
+.arena-podium-place--3 .arena-podium-block { height: 85px; }
+@keyframes arena-rise { from { opacity: 0; transform: translateY(70px); }
+  to { opacity: 1; transform: translateY(0); } }
+.arena-final-standings { max-width: 590px; margin: 25px auto 0; }
+.arena-final-standings > div { display: flex; align-items: center; gap: 12px;
+  padding: 10px 15px; border-bottom: 1px solid var(--ds-line); font-size: 13px; }
+.arena-final-standings > div > span:first-child { width: 24px; color: var(--accent); font-weight: 800; }
+.arena-final-standings > div > strong { flex: 1; }
+.arena-final-standings > div > span:last-child { color: var(--ds-muted); font: 680 11px var(--ds-font-code); }
+.arena-end-actions { margin-top: 18px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+@media (max-width: 580px) {
+  .arena-mode-grid { grid-template-columns: 1fr; }
+  .arena-mode-card { min-height: 100px; }
+  .arena-config-grid { grid-template-columns: 1fr; gap: 0; }
+  .arena-track { padding: 14px 8px; }
+  .arena-track-lane { grid-template-columns: minmax(0, 63px) minmax(0, 1fr) 45px; gap: 5px; }
+  .arena-track-name, .arena-track-lane > strong { font-size: 9px; }
+  .arena-ceremony { padding: 19px; }
+  .arena-podium-place strong { font-size: 10px; }
+  .arena-podium-place > span { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arena-ceremony.is-revealed .arena-stage-lights i,
+  .arena-podium-place { animation: none !important; }
+  .arena-track-runner { transition: none; }
+}
