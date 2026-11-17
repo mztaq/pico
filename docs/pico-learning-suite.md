@@ -6,12 +6,17 @@ the single game experience. The existing Workspaces and Games section remain sep
 ## Modes
 
 - **Classic Quiz:** Host-created or topic-bank questions. Correct answers earn points.
-- **Circuit Clash:** Answer questions to earn charge, capture 20 nodes, and reinforce
-  owned nodes. Upgrade the amplifier for more charge per correct answer.
-- **Hacker Heist:** A 2D hacker-style server grid with the same charge economy.
-  Hack unclaimed and rival server nodes to take control.
-- **Data Sprint:** A 2D race in which correct answers advance a player's racer.
-- **Solo:** A simulated CPU rival with no backend. Quiz topics use Pico's existing bank.
+- **Circuit Clash:** A playable Canvas 2D tower-defence battlefield. Answer questions
+  for charge, place Blaster/Frost/Pulse towers off the winding enemy route, upgrade
+  towers, survive progressively harder malware waves and protect your server core.
+  Frost slows enemies, Pulse damages nearby groups and Blasters fire quickly.
+- **Hacker Heist:** The same real-time tower-defence engine with faster malware
+  and a distinct charge-powered Firewall Lockdown ability that slows enemies for
+  seven seconds and has a cooldown. Its own cyber-style arena graphics.
+- **Data Sprint:** An animated 2D race with original little runner characters,
+  moving on lanes and reaching a finish line as players answer questions.
+- **Solo:** A CPU opponent with its own simulated defence, automatic tower builds,
+  malware waves, core health and points. Works offline without a room Worker.
 - **Multiplayer:** One 6-character room code shared by all players, with server-side
   answers and authoritative scores. Host controls round length, player limits,
   random or player-chosen nicknames, and question source.
@@ -87,7 +92,10 @@ explanatory message. **Solo play and Notes still work without it.**
   Only SHA-256 token hashes are kept in memory.
 - Players cannot report scores to the Worker. The Worker grades each answer
   and applies all purchases to the authoritative room state.
-- Clients poll room state every 2.5 seconds. This uses request quotas.
+- Clients poll room state every 2.5 seconds. The Worker advances each
+  student's defence simulation on requests and validates all tower purchases,
+  upgrades, charge spending, cooldowns and server-side scores.
+  This uses Cloudflare request quotas.
 - A Worker must serialize overlapping actions for each room to prevent
   overspending or inconsistent tile ownership.
 - The existing Pages Function rejects cross-origin POST requests.
@@ -115,3 +123,21 @@ proof that multiplayer rooms work.
 - `src/learning/arenaRules.ts` uses a full-cycle question index so every question in a selected topic bank appears before repetition.
 - The test detects exact duplicates and simple numerical variants, not all semantic paraphrases. Editors must still review the science and wording before release.
 - For 10,000 unique questions per topic, first create a licensed, reviewed source bank and arrange topic-based static chunks. Do not bundle 300,000 questions into the initial application JavaScript.
+
+## Gameplay implementation
+
+- `src/learning/towerDefense.ts`: deterministic simulation of moving enemies,
+  tower targeting, projectiles, health, waves, upgrades and firewall abilities.
+- `src/learning/DefenseField.tsx`: 30 FPS responsive Canvas renderer with
+  visible turrets, animated malware, attack effects and click/keyboard controls.
+- `src/learning/defense-field.css`: theme-aware map and tower shop layout.
+- `src/learning/DefenseShowcase.tsx`: animated Learn landing preview matching
+  the actual winding battlefield rather than the previous static node grid.
+- `src/learning/towerDefense.test.ts`: movement, build legality, waves,
+  damage, determinism, firewall and upgrade regression checks.
+- The Learn footer appears **only on the Learn selection screen**. It never
+  overlaps gameplay, the match leaderboard or the Notes page.
+- HTML Canvas, CSS and small SVG icons are used for fast 2D rendering. No
+  game engine, WebGL, stock art or copyrighted Gimkit/Blooket assets are used.
+- The multiplayer Worker must be redeployed after this update, since room
+  participants now have server-authoritative individual defence states.
