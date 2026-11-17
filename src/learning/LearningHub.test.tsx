@@ -21,11 +21,11 @@ it('shows a focused tool chooser then full notes without a tab bar', async () =>
   document.body.append(host);
   await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
   expect(host.querySelector('.learn-landing-game')).not.toBeNull();
-  expect(host.textContent).toContain('Notes');
+  expect(host.textContent).toContain('Computer Science notes');
   expect(host.textContent).toContain('Circuit Clash');
   expect(host.textContent).toContain('Report a Bug');
   expect(host.querySelector('.learning-catalogue')).toBeNull();
-  await act(async () => button('Notes').click());
+  await act(async () => button('Open notes').click());
   expect(host.querySelector('.learn-landing')).toBeNull();
   expect(window.location.search).toBe('?section=notes');
   expect(host.textContent).not.toContain('Study notes, made practical');
