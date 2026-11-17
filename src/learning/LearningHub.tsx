@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, RotateCcw, Search, WifiOff } from 'lucide-react';
 import type { PicoWorkspace } from '../app/workspace-deeplink';
 import { questions, topics, type Question, type Topic } from './content';
@@ -12,13 +12,14 @@ import './learning.css';
 import './arena.css';
 import './learn-landing.css';
 import { LearnLanding, type LearningGameMode } from './LearnLanding';
+import { ArenaGame } from './ArenaGame';
 import { PicoAppFooter } from '../app/components/PicoAppFooter';
 import { WorkspaceLoadBoundary } from '../app/components/WorkspaceLoadBoundary';
 import { BugReportDialog } from '../app/components/BugReportDialog';
 import { BugReportNotice } from '../app/components/BugReportNotice';
 import { picoIsOnline } from '../app/components/pico-connection';
 
-const ArenaGame = lazy(() => import('./ArenaGame').then(module => ({ default: module.ArenaGame })));
+
 
 type LearningSection = 'notes' | 'arena';
 
@@ -213,12 +214,10 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
       </div>
     </div> : <div className="learning-feature">
       <WorkspaceLoadBoundary workspace="Pico Arena">
-        <Suspense fallback={<div className="learning-panel" role="status">Loading Pico Arena…</div>}>
-          <ArenaGame onReviewTopic={id => {
-            const topic = topics.find(item => item.id === id);
-            if (topic) chooseTopic(topic);
-          }} />
-        </Suspense>
+        <ArenaGame onReviewTopic={id => {
+          const topic = topics.find(item => item.id === id);
+          if (topic) chooseTopic(topic);
+        }} />
       </WorkspaceLoadBoundary>
     </div>}
     {section === null && <PicoAppFooter onReport={() => { void openReport(); }} />}
