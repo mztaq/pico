@@ -43,9 +43,11 @@ async function readJson(request) {
   } catch { return null; }
 }
 async function gate(env, request, action, limit, seconds = 60) {
-  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const window = Math.floor(nowSeconds() / seconds);
-  const bucket = await digest(action + ':' + ip + ':' + window);
+  // Submission limits are per student session, not shared by a whole school's Wi-Fi IP.
+  const identity = action === 'submit' ? (request.headers.get('Authorization') || 'unknown') :
+    (request.headers.get('CF-Connecting-IP') || 'unknown');
+  const window = Math.floor(nowSeconds() / seconds) * seconds;
+  const bucket = await digest(action + ':' + identity + ':' + window);
   const record = await env.DB.prepare(
     'INSERT INTO pico_classroom_limits(bucket,window,hits) VALUES(?,?,1) ' +
     'ON CONFLICT(bucket,window) DO UPDATE SET hits=hits+1 RETURNING hits'
@@ -97,7 +99,7 @@ async function createRoom(context, body) {
   // Remove expired classroom records. D1 enforces cascading foreign keys.
   await context.env.DB.batch([
     context.env.DB.prepare('DELETE FROM pico_classroom_rooms WHERE expires_at<?').bind(created),
-    context.env.DB.prepare('DELETE FROM pico_classroom_limits WHERE window<?').bind(Math.floor(created / 3600) - 24),
+    context.env.DB.prepare('DELETE FROM pico_classroom_limits WHERE window<?').bind(created - 86400),
   ]);
   for (let attempt = 0; attempt < 4; attempt++) {
     const code = joinCode();
@@ -115,7 +117,7 @@ async function createRoom(context, body) {
 }
 
 async function joinRoom(context, body) {
-  if (!await gate(context.env, context.request, 'join', 15)) return fail(429, 'Too many join attempts. Try later.');
+  if (!await gate(context.env, context.request, 'join', 120)) return fail(429, 'Too many join attempts. Try later.');
   const code = typeof body?.code === 'string' ? body.code.trim().toUpperCase() : '';
   const nickname = typeof body?.nickname === 'string' ? body.nickname.trim().replace(/\s+/g, ' ') : '';
   if (!nicknamePattern.test(nickname)) return fail(400, 'Use 2–24 letters, numbers, spaces, - or _.');
@@ -154,7 +156,7 @@ async function describeRoom(context, code) {
 }
 
 async function submit(context, body) {
-  if (!await gate(context.env, context.request, 'submit', 12)) return fail(429, 'Too many submissions. Try later.');
+  if (!await gate(context.env, context.request, 'submit', 8)) return fail(429, 'Too many submissions. Try later.');
   const code = typeof body?.code === 'string' ? body.code.trim().toUpperCase() : '';
   const source = body?.source;
   if (typeof source !== 'string' || !source.trim() || source.length > 12000) return fail(400, 'Code must be 1–12,000 characters.');
