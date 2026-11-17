@@ -1,36 +1,57 @@
-.learning-sections {
+/* Learn opens as a tool chooser, never a row of cramped tabs. */
+.learning-tool-grid {
   max-width: 1160px;
-  margin: 22px auto 24px;
-  display: flex;
+  margin: 33px auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  padding-bottom: 4px;
+  gap: 16px;
 }
-.learning-sections button {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  min-height: 43px;
-  padding: 10px 15px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--ds-muted);
-  font-size: 13px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-.learning-sections button:hover { background: var(--ds-hover); color: var(--ds-text); }
-.learning-sections button.is-active {
-  border-color: var(--ds-line-strong);
+.learning-tool-card {
+  min-width: 0;
+  min-height: 207px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  position: relative;
+  padding: 24px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: 14px;
+  text-align: left;
   color: var(--ds-text);
   background: var(--ds-panel);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
 }
-.learning-sections button.is-active svg { color: var(--accent); }
+.learning-tool-card:hover { border-color: var(--accent); background: var(--ds-panel-raised); }
+.learning-tool-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.learning-tool-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 45px;
+  height: 45px;
+  flex: 0 0 45px;
+  border-radius: 11px;
+  background: var(--ds-accent-soft);
+  color: var(--accent);
+}
+.learning-tool-arrow { position: absolute; right: 25px; top: 35px; color: var(--ds-muted); }
+.learning-tool-card:hover .learning-tool-arrow { color: var(--accent); }
+.learning-tool-copy { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.learning-tool-copy strong { color: var(--ds-text); font-size: 19px; font-weight: 740; letter-spacing: -.025em; line-height: 1.3; }
+.learning-tool-copy > span { color: var(--ds-muted); font-size: 13px; line-height: 1.6; }
+.learning-hub[data-high-contrast='true'] .learning-tool-card { border-width: 2px; }
+@media (max-width: 840px) { .learning-tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 530px) {
+  .learning-tool-grid { grid-template-columns: 1fr; margin: 20px auto 0; gap: 11px; }
+  .learning-tool-card { min-height: 142px; padding: 18px 20px; gap: 10px; }
+  .learning-tool-icon { width: 39px; height: 39px; flex-basis: 39px; }
+  .learning-tool-icon svg { width: 21px; height: 21px; }
+  .learning-tool-arrow { top: 29px; right: 22px; }
+  .learning-tool-copy strong { font-size: 17px; }
+  .learning-tool-copy > span { font-size: 12px; }
+}
 .learning-feature { max-width: 1160px; margin: 0 auto; min-height: 50vh; }
 .learning-feature *, .learning-feature *::before, .learning-feature *::after { box-sizing: border-box; }
 .learning-feature button, .learning-feature textarea, .learning-feature select, .learning-feature input {
@@ -240,8 +261,6 @@
   .suite-room-layout { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .learning-sections { margin: 15px auto 18px; }
-  .learning-sections button { min-height: 43px; padding: 9px 11px; font-size: 12px; }
   .suite-challenge-grid { grid-template-columns: 1fr; }
   .suite-challenge-scroll { display: flex; gap: 4px; max-height: none; overflow-x: auto; }
   .suite-challenge-option { flex: 0 0 180px; }
