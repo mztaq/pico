@@ -21,8 +21,10 @@ export type Enemy = {
   id: number; kind: EnemyKind; progress: number; hp: number; maxHp: number; slowUntil: number;
 };
 export type DefenseState = {
+  mode: DefenseMode;
   startedAt: number; lastTickAt: number; lastSpawnAt: number; spawnIndex: number;
   nextId: number; wave: number; health: number; kills: number; escaped: number;
+  firewallUntil: number; firewallReadyAt: number;
   towers: Tower[]; enemies: Enemy[];
 };
 export const TOWERS: Record<TowerKind, { label: string; cost: number; damage: number; reach: number; cooldown: number }> = {
@@ -35,10 +37,18 @@ export function validPlot(x: number, y: number) {
   return Number.isInteger(x) && Number.isInteger(y)
     && x >= 0 && x < DEFENSE_COLS && y >= 0 && y < DEFENSE_ROWS && !pathCell(x,y);
 }
-export function defenseStart(startedAt: number): DefenseState {
-  return { startedAt, lastTickAt: startedAt, lastSpawnAt: startedAt + 3200,
+export function defenseStart(startedAt: number, mode: DefenseMode = 'circuit'): DefenseState {
+  return { mode, startedAt, lastTickAt: startedAt, lastSpawnAt: startedAt + 3200,
     nextId: 0, spawnIndex: 0, wave: 1, health: 100, kills: 0, escaped: 0,
+    firewallUntil: 0, firewallReadyAt: startedAt,
     towers: [], enemies: [] };
+}
+export const FIREWALL_COST = 95;
+export function activateFirewall(state: DefenseState, at: number):
+  {state: DefenseState; cost: number} | null {
+  if(state.mode !== 'hacker' || !Number.isFinite(at) || state.health <= 0 ||
+    at < state.firewallReadyAt || at < state.startedAt)return null;
+  return {cost:FIREWALL_COST,state:{...state,firewallUntil:at+7000,firewallReadyAt:at+27000}};
 }
 export function enemyXY(progress: number) {
   const step = Math.max(0, Math.min(DEFENSE_PATH.length - 1, Math.floor(progress)));
@@ -99,7 +109,8 @@ export function advanceDefense(original:DefenseState, until:number):DefenseState
       state.enemies.push(enemy); state.spawnIndex++;
       state.lastSpawnAt=next;
     }
-    for(const enemy of state.enemies)enemy.progress+=enemySpeed(enemy,next)*dt;
+    for(const enemy of state.enemies)enemy.progress+=enemySpeed(enemy,next)*dt*
+      (state.mode==='hacker'?1.09:1)*(next<state.firewallUntil?.24:1);
     const arrived=state.enemies.filter(enemy=>enemy.progress>=DEFENSE_PATH.length-1);
     if(arrived.length){
       state.escaped+=arrived.length;
@@ -136,5 +147,6 @@ export function defenseScore(state:DefenseState):number {
 }
 export function defenseSummary(state:DefenseState){
   return {wave:state.wave,health:state.health,kills:state.kills,escaped:state.escaped,
-    towers:state.towers.length,score:defenseScore(state)};
+    towers:state.towers.length,firewallUntil:state.firewallUntil,
+    firewallReadyAt:state.firewallReadyAt,score:defenseScore(state)};
 }
