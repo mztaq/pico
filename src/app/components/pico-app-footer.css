@@ -1,0 +1,57 @@
+.pico-app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  column-gap: 18px;
+  row-gap: 4px;
+  width: 100%;
+  max-width: 1160px;
+  margin: 24px auto 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--ds-line);
+  color: var(--ds-muted);
+  font-family: var(--ds-font-ui);
+}
+.pico-app-footer .site-info-links {
+  display: flex;
+  flex: 0 1 auto;
+  width: auto;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  column-gap: 18px;
+  row-gap: 4px;
+}
+.pico-app-footer .site-info-links a,
+.pico-app-footer .pico-app-footer-report {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 4px 0;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: var(--ds-muted);
+  text-decoration: none;
+  font: 500 var(--ds-text-sm, 13px)/1.45 var(--ds-font-ui);
+  white-space: nowrap;
+}
+.pico-app-footer .site-info-links a:hover,
+.pico-app-footer .pico-app-footer-report:hover { color: var(--ds-text); }
+.pico-app-footer .site-info-links svg,
+.pico-app-footer .pico-app-footer-report svg { flex-shrink: 0; }
+.pico-app-footer .pico-app-footer-report { cursor: pointer; }
+.pico-app-footer a:focus-visible,
+.pico-app-footer button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 580px) {
+  .pico-app-footer { column-gap: 14px; margin-top: 20px; padding-top: 15px; }
+  .pico-app-footer .site-info-links { column-gap: 14px; }
+  .pico-app-footer .site-info-links a,
+  .pico-app-footer .pico-app-footer-report { font-size: 12px; min-height: 37px; }
+}
