@@ -11,7 +11,7 @@ import {
 import './arena.css';
 import { DefenseField } from './DefenseField';
 import {
-  advanceDefense, defenseScore, defenseStart, placeTower, upgradeTower,
+  activateFirewall, advanceDefense, defenseScore, defenseStart, placeTower, upgradeTower,
   type DefenseState, type TowerKind,
 } from './towerDefense';
 
@@ -320,8 +320,8 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
       cursor: 0, startedAt: clock, nextBotAt: clock + 8800, duration,
       charge: isTerritory(mode)?100:0, streak: 0, amplifier: 0, correct: 0, answered: 0,
       baseScore: 0, botScore: 0,
-      defense: isTerritory(mode)?defenseStart(clock):null,
-      botDefense: isTerritory(mode)?defenseStart(clock):null });
+      defense: isTerritory(mode)?defenseStart(clock,mode as 'circuit'|'hacker'):null,
+      botDefense: isTerritory(mode)?defenseStart(clock,mode as 'circuit'|'hacker'):null });
     setNow(clock); setNotice(''); setFeedback(null); setShowWinners(false);setSpectateBot(false);
   }
   async function call(action: string, data: Record<string, unknown>, callback?: (value: any) => void,
@@ -428,6 +428,18 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
       const data=kind==='upgrade'?{kind:'towerUpgrade',x,y}:{kind:'towerBuild',x,y,tower:kind};
       if(await call('action',{code:session.code,...data}))await reload().catch(()=>{});
     }
+  }
+  async function purchaseFirewall(){
+    if(busy||ended||gameMode!=='hacker'||!mine)return;
+    if(solo){
+      setSolo(current=>{
+        if(!current?.defense)return current;
+        const next=activateFirewall(current.defense,Date.now());
+        return next&&current.charge>=next.cost
+          ? {...current,charge:current.charge-next.cost,defense:next.state}:current;
+      });
+    }else if(session&&await call('action',{code:session.code,kind:'firewall'}))
+      await reload().catch(()=>{});
   }
   async function purchaseAmplifier(){
     if(busy||ended||!mine||!isTerritory(gameMode))return;
@@ -610,7 +622,8 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
                 charge={spectateBot||!mine?0:mine.charge}
                 busy={busy||!mine||spectateBot}
                 onBuild={(x,y,kind)=>{void towerPurchase(x,y,kind);}}
-                onUpgrade={(x,y)=>{void towerPurchase(x,y,'upgrade');}}/>
+                onUpgrade={(x,y)=>{void towerPurchase(x,y,'upgrade');}}
+                onFirewall={()=>{void purchaseFirewall();}}/>
             </>
           : gameMode === 'sprint' ? <SpeedTrack players={players} mode={gameMode}/>
             : <ClassicSummary players={players}/>}
