@@ -66,7 +66,7 @@ it('opens on two clear choices and then reveals all workspaces',async()=>{
   expect(window.location.search).toBe('?view=workspaces');
   expect(container.querySelector('.home-workspaces h1')?.textContent).toBe('Workspaces');
   expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Traffic Storm','Binary Lab']);
-  expect(container.querySelector('footer')).toBeNull();
+  expect(container.querySelector('footer.pico-app-footer')).not.toBeNull();
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/team"]')?.textContent).toBe('Pico Team');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
@@ -77,23 +77,21 @@ it('opens Learn tools individually and returns to the tool chooser', async () =>
     .find(item=>item.textContent?.includes('Learn and practise'))!);
   expect(window.location.pathname).toBe('/app/learn');
   expect(window.location.search).toBe('');
-  expect(container.querySelectorAll('.learning-tool-card')).toHaveLength(2);
+  expect(container.querySelector('.learn-landing-game')).not.toBeNull();
   expect(container.querySelector('.learning-feature')).toBeNull();
 
-  await click([...container.querySelectorAll<HTMLButtonElement>('.learning-tool-card')]
-    .find(item=>item.textContent?.includes('Circuit Clash'))!);
-  expect(window.location.search).toBe('?section=arena');
-  expect(container.querySelector('.learning-tool-grid')).toBeNull();
+  await click(container.querySelector<HTMLButtonElement>('.learn-landing-play')!);
+  expect(window.location.search).toBe('?section=arena&mode=circuit');
+  expect(container.querySelector('.learn-landing')).toBeNull();
   expect(container.querySelector('.learning-feature')).not.toBeNull();
 
   await click(container.querySelector<HTMLElement>('.learning-back')!);
   expect(window.location.pathname+window.location.search).toBe('/app/learn');
-  expect(container.querySelectorAll('.learning-tool-card')).toHaveLength(2);
+  expect(container.querySelector('.learn-landing-game')).not.toBeNull();
 
-  await click([...container.querySelectorAll<HTMLButtonElement>('.learning-tool-card')]
-    .find(item=>item.textContent?.includes('Notes'))!);
+  await click(container.querySelector<HTMLButtonElement>('.learn-landing-notes')!);
   expect(window.location.search).toBe('?section=notes');
-  expect(container.querySelector('.learning-tool-grid')).toBeNull();
+  expect(container.querySelector('.learn-landing')).toBeNull();
 
   await click(container.querySelector<HTMLElement>('.learning-back')!);
   await click(container.querySelector<HTMLElement>('.learning-back')!);
@@ -213,7 +211,7 @@ it('opens Binary Lab from its home section and updates every number view',async(
 it('shows the Logic Sim workspace without a personal footer',async()=>{
   await choose('Logic Sim');
   expect(container.querySelector('.logic-app')).not.toBeNull();
-  expect(container.querySelector('footer')).toBeNull();
+  expect(container.querySelector('footer.pico-app-footer')).not.toBeNull();
 });
 it('shows the updated Logic Sim editor controls and shared theme picker',async()=>{
   await choose('Logic Sim');
