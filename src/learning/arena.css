@@ -353,3 +353,43 @@
 .arena-classic-count { width: 100%; display: flex; justify-content: space-between;
   align-items: center; gap: 14px; margin-top: 28px; padding-top: 15px;
   border-top: 1px solid var(--ds-line); color: var(--ds-muted); font: 650 11px var(--ds-font-code); }
+
+/* Tower-defense mode: the map fills the play area and never inherits the old tile-grid frame. */
+.arena-match--circuit .arena-field, .arena-match--hacker .arena-field {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.arena-defense-viewer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 11px;
+}
+.arena-defense-viewer button {
+  border: 1px solid var(--ds-line-strong);
+  color: var(--ds-muted);
+  background: var(--ds-panel);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.arena-defense-viewer button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+}
+.arena-match--circuit .arena-match-layout, .arena-match--hacker .arena-match-layout {
+  grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr);
+  gap: 16px;
+}
+.arena-match--circuit .arena-question, .arena-match--hacker .arena-question {
+  border-color: var(--ds-line-strong);
+}
+@media (max-width: 1020px) {
+  .arena-match--circuit .arena-match-layout, .arena-match--hacker .arena-match-layout {
+    grid-template-columns: 1fr;
+  }
+}
