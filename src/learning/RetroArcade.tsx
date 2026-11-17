@@ -39,7 +39,7 @@ function BitCatcher({ onExit }: { onExit: () => void }) {
     const state: CatcherState = { x: 160, sum: 0, target: 5, score: 0, lives: 3,
       tokens: [], previous: 0, nextSpawn: 0, started: 0, finished: false };
     let cancelled = false;
-    function draw(t: number) {
+    function draw() {
       if (!ctx) return;
       ctx.fillStyle = bg; ctx.fillRect(0, 0, 320, 190);
       ctx.fillStyle = surface;
@@ -105,7 +105,7 @@ function BitCatcher({ onExit }: { onExit: () => void }) {
           ? { score: state.score, total: state.sum, target: state.target, lives: state.lives, seconds, over: state.finished }
           : old);
       }
-      draw(time);
+      draw();
       frame.current = requestAnimationFrame(frameStep);
     }
     frame.current = requestAnimationFrame(frameStep);
