@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFENSE_COLS, DEFENSE_ROWS, DEFENSE_PATH, TOWERS, advanceDefense, defenseStart,
+  DEFENSE_COLS, DEFENSE_ROWS, DEFENSE_PATH, TOWERS, activateFirewall, FIREWALL_COST,
+  advanceDefense, defenseStart,
   defenseScore, enemyXY, pathCell, placeTower, upgradeCost, upgradeTower, validPlot,
 } from './towerDefense';
 
@@ -70,6 +71,24 @@ describe('Pico Defender: real tower defense rules', () => {
     expect(defended.towers.some(tower=>tower.lastShotAt>0)).toBe(true);
     expect(defenseScore(defended)).toBeGreaterThan(0);
     expect(defended.health).toBeGreaterThanOrEqual(0);
+  });
+
+  it('gives Hacker Heist a real, paid firewall slowdown with a cooldown', () => {
+    const beginning=defenseStart(0,'hacker');
+    expect(activateFirewall(defenseStart(0,'circuit'),5000)).toBeNull();
+    const protectedRun=activateFirewall(beginning,5000);
+    expect(protectedRun?.cost).toBe(FIREWALL_COST);
+    expect(protectedRun?.state.firewallUntil).toBe(12_000);
+    expect(protectedRun?.state.firewallReadyAt).toBe(32_000);
+    expect(activateFirewall(protectedRun!.state,12_001)).toBeNull();
+    expect(activateFirewall(protectedRun!.state,32_000)).not.toBeNull();
+
+    // Starting from identical state, a protected wave should progress less.
+    let ordinary=defenseStart(0,'hacker');
+    let shielded=activateFirewall(ordinary,5000)!.state;
+    ordinary=advanceDefense(ordinary,11_000);
+    shielded=advanceDefense(shielded,11_000);
+    expect(shielded.enemies[0]?.progress).toBeLessThan(ordinary.enemies[0]!.progress);
   });
 
   it('advances deterministically with the same inputs, without hidden mutation', () => {
