@@ -151,7 +151,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
               <i key={i} className={i % 5 < 3 ? 'active' : i % 4 === 0 ? 'rival' : ''}/>)}</span>
           </span>
           <span className="home-entry-copy"><strong>Learn and practise</strong>
-            <span>Study the topics. Play Circuit Clash against friends.</span>
+            <span>Study the topics. Play Pico Arena with your class.</span>
           </span>
         </button>
         <button type="button" className="home-entry-card" onClick={openWorkspaces}>
