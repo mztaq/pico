@@ -275,7 +275,7 @@
   .suite-code { min-height: 250px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .learning-feature *, .learning-sections button { animation: none !important; transition: none !important; }
+  .learning-feature *, .learning-tool-card { animation: none !important; transition: none !important; }
 }
 
 /* Pseudocode structure, generated from Pico's AST rather than a mock diagram. */
