@@ -29,6 +29,10 @@ const button=(label:string)=>[...container.querySelectorAll<HTMLButtonElement>('
 async function click(element:HTMLElement){await act(async()=>element.click());}
 async function change(element:HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement,value:string){await act(async()=>{const prototype=element instanceof HTMLSelectElement?HTMLSelectElement.prototype:element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype;Object.getOwnPropertyDescriptor(prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event(element instanceof HTMLSelectElement?'change':'input',{bubbles:true}));});}
 const open=async()=>{
+  if(window.location.pathname==='/app/flowchart') {
+    await vi.waitFor(()=>expect(container.querySelector('.flow-builder')).not.toBeNull());
+    return;
+  }
   const workspaces=[...container.querySelectorAll<HTMLButtonElement>('.home-entry-card')]
     .find(button => button.textContent?.includes('Workspaces'));
   if (workspaces) await click(workspaces);
