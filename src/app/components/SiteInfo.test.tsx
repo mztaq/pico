@@ -42,7 +42,7 @@ it('opens Pico Team above the preserved home and keeps founder/concept content',
   opener.focus();
   await navigate('/app/team');
   expect(document.title).toBe('Pico | Pico Team');
-  expect(host.querySelector('.compiler-choices')).not.toBeNull();
+  expect(host.querySelectorAll('.home-entry-card')).toHaveLength(2);
   expect(host.querySelector('.site-info-home-underlay[inert][aria-hidden="true"]')).not.toBeNull();
   expect(host.querySelector('.site-info-backdrop')).not.toBeNull();
   expect(host.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull();
@@ -77,7 +77,7 @@ it('opens Pico Team above the preserved home and keeps founder/concept content',
 
   await act(async () => dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')?.click());
   expect(host.querySelector('.site-info-backdrop')).toBeNull();
-  expect(host.querySelector('.compiler-choices')).not.toBeNull();
+  expect(host.querySelectorAll('.home-entry-card')).toHaveLength(2);
   expect(window.location.pathname).toBe('/app');
   expect(document.title).toBe('Pico | Home');
   expect(document.activeElement).toBe(opener);
