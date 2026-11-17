@@ -140,6 +140,33 @@ try {
   await waitFor('.arena-earn-button','Earn charge button');
   console.log('Solo match mounted with real Canvas');
 
+  // Reproduce the actual reported failure: hovering the Canvas schedules a
+  // React state update. React's synthetic event.currentTarget becomes null
+  // after the handler, so event values must be read synchronously.
+  const bounds = await evalJS(`(() => {
+    const canvas = document.querySelector('.defense-canvas-wrap canvas');
+    canvas.scrollIntoView({block: 'center'});
+    canvas.dataset.hoverEvents = '0';
+    canvas.addEventListener('mousemove', () => {
+      canvas.dataset.hoverEvents = String(Number(canvas.dataset.hoverEvents) + 1);
+    });
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + r.width * .36, y: r.top + r.height * .48 };
+  })()`);
+  await send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved', x: bounds.x, y: bounds.y, buttons: 0,
+  });
+  await send('Input.dispatchMouseEvent', {
+    type: 'mouseMoved', x: bounds.x + 9, y: bounds.y + 7, buttons: 0,
+  });
+  await sleep(650);
+  const hoverEvents = await evalJS("Number(document.querySelector('.defense-canvas-wrap canvas')?.dataset.hoverEvents || 0)");
+  if(hoverEvents < 1) throw new Error('Mouse hover test failed to dispatch an event');
+  if(await evalJS("Boolean(document.querySelector('.pico-load-error'))"))
+    throw new Error('Arena crashed after hovering the battlefield: ' +
+      await evalJS("document.querySelector('.pico-load-error').innerText"));
+  console.log('Arena survived real mouse movement:', hoverEvents, 'events');
+
   // This catches the case reported by the user: briefly visible, then error.
   await sleep(2400);
   if(await evalJS("Boolean(document.querySelector('.pico-load-error'))"))
@@ -155,7 +182,7 @@ try {
   if(await evalJS("Boolean(document.querySelector('.arena-quiz-dialog'))"))
     throw new Error('Question overlay did not close');
   if(exceptions.length) throw new Error(exceptions.length+' runtime JavaScript exceptions occurred.');
-  console.log('PASS: deep-link, menu, solo, Canvas frames, timer, quiz and game return');
+  console.log('PASS: deep-link, menu, solo, Canvas frames, mouse hover, timer, quiz and game return');
 } finally {
   if(socket) socket.close();
   if(chrome) chrome.kill();
