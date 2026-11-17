@@ -224,6 +224,8 @@ function playDrumroll() {
 export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => void }) {
   const [session, setSession] = useState<Credentials | null>(getCredentials);
   const [spectateBot,setSpectateBot] = useState(false);
+  const [quizOpen,setQuizOpen] = useState(false);
+  const [scoresOpen,setScoresOpen] = useState(false);
   const [room, setRoom] = useState<Room | null>(null);
   const [screen, setScreen] = useState<Screen>('menu');
   const [mode, setMode] = useState<Mode>(() => {
@@ -325,6 +327,7 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
     try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* storage optional */ }
     setSession(null); setRoom(null); setSolo(null); setScreen('menu');
     setFeedback(null); setNotice(''); setShowWinners(false);
+    setQuizOpen(false); setScoresOpen(false);
   }
   function initSolo() {
     const clock = Date.now();
@@ -334,7 +337,8 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
       baseScore: 0, botScore: 0,
       defense: isTerritory(mode)?defenseStart(clock,mode as 'circuit'|'hacker'):null,
       botDefense: isTerritory(mode)?defenseStart(clock,mode as 'circuit'|'hacker'):null });
-    setNow(clock); setNotice(''); setFeedback(null); setShowWinners(false);setSpectateBot(false);
+    setNow(clock); setNotice(''); setFeedback(null); setShowWinners(false);
+    setSpectateBot(false); setQuizOpen(mode==='classic'); setScoresOpen(false);
   }
   async function call(action: string, data: Record<string, unknown>, callback?: (value: any) => void,
     auth: Credentials | null = credentials.current) {
@@ -351,6 +355,7 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
   function saveCredentials(value: Credentials) {
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(value)); } catch { /* storage optional */ }
     setSession(value); setRoom(null); setFeedback(null); setNotice('');
+    setQuizOpen(false); setScoresOpen(false);
   }
   async function create() {
     if (source === 'custom' && !customQuestions.length) {
@@ -617,17 +622,40 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
 
   return <section className={'arena-game arena-match arena-match--' + gameMode}>
     <header className="arena-game-top">
-      <div><h2>{modes.find(item => item.id === gameMode)?.name}</h2>
-        <span>{solo ? 'Solo vs CPU' : 'Room ' + room?.code}</span></div>
-      <div className="arena-game-top-actions"><span className="arena-clock"><span className="arena-clock-dot"/>{timeLabel(timeLeft)}</span>
-        <button type="button" className="arena-outline" onClick={leave}><ArrowLeft size={15}/> Leave</button></div>
+      <div><h2>{modes.find(item=>item.id===gameMode)?.name}</h2>
+        <span>{solo?'Solo vs CPU':'Room '+room?.code}</span></div>
+      <div className="arena-game-top-actions">
+        <span className="arena-clock"><span className="arena-clock-dot"/>{timeLabel(timeLeft)}</span>
+        {mine && <button type="button" className="arena-outline" onClick={()=>setScoresOpen(open=>!open)}
+          aria-expanded={scoresOpen}><Trophy size={16}/> Rankings</button>}
+        {mine && <button type="button" className="arena-primary arena-earn-button" onClick={()=>setQuizOpen(true)}>
+          <Zap size={16}/> {gameMode==='classic'?'Answer questions':'Earn charge'}</button>}
+        <button type="button" className="arena-outline" onClick={leave}><ArrowLeft size={15}/> Leave</button>
+      </div>
     </header>
-    <div className="arena-match-layout">
+    <div className="arena-gamebar">
+      {mine ? <>
+        <div className="arena-gamebar-stat"><Zap size={17} aria-hidden="true"/>
+          <span>CHARGE<strong>{mine.charge}</strong></span></div>
+        <div className="arena-gamebar-stat"><Trophy size={17} aria-hidden="true"/>
+          <span>POINTS<strong>{mine.score.toLocaleString()}</strong></span></div>
+        {isTerritory(gameMode)&&<div className="arena-gamebar-stat"><Shield size={17} aria-hidden="true"/>
+          <span>CORE<strong>{solo?.defense?.health??room?.defense?.health??100}%</strong></span></div>}
+        {isTerritory(gameMode)&&<div className="arena-gamebar-stat"><Flag size={17} aria-hidden="true"/>
+          <span>WAVE<strong>{solo?.defense?.wave??room?.defense?.wave??1}</strong></span></div>}
+        {isTerritory(gameMode) && <button type="button" className="arena-gamebar-upgrade"
+          disabled={busy||mine.amplifier>=3||mine.charge<70+mine.amplifier*45}
+          onClick={()=>void purchaseAmplifier()}>
+          Amplifier {mine.amplifier}/3 · {mine.amplifier>=3?'MAX':70+mine.amplifier*45+' charge'}
+        </button>}
+      </> : <span className="arena-spectator-label">Host view · Players are defending their own boards</span>}
+    </div>
+    <div className="arena-match-layout arena-match-layout--immersive">
       <div className="arena-field">
         {isTerritory(gameMode) && defense
           ? <>
               {solo && <div className="arena-defense-viewer" role="group" aria-label="Choose defense view">
-                <button type="button" aria-pressed={!spectateBot} onClick={()=>setSpectateBot(false)}>Your defense</button>
+                <button type="button" aria-pressed={!spectateBot} onClick={()=>setSpectateBot(false)}>Your defence</button>
                 <button type="button" aria-pressed={spectateBot} onClick={()=>setSpectateBot(true)}>CPU rival</button>
               </div>}
               <DefenseField state={defense} mode={gameMode as 'circuit'|'hacker'}
@@ -637,28 +665,30 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
                 onUpgrade={(x,y)=>{void towerPurchase(x,y,'upgrade');}}
                 onFirewall={()=>{void purchaseFirewall();}}/>
             </>
-          : gameMode === 'sprint' ? <SpeedTrack players={players} mode={gameMode}/>
+          : gameMode==='sprint'?<SpeedTrack players={players} mode={gameMode}/>
             : <ClassicSummary players={players}/>}
       </div>
-      <div className="arena-play-aside">
-        {mine && <div className="arena-stats">
-          <div className="arena-stat"><span><Zap size={16}/> Charge</span><strong>{mine.charge}</strong></div>
-          <div className="arena-stat"><span><Flag size={16}/> Towers</span><strong>{mine.owned}</strong></div>
-          <div className="arena-stat"><span><Trophy size={16}/> Points</span><strong>{mine.score}</strong></div>
-        </div>}
-        {mine && isTerritory(gameMode) && <div className="arena-amp"><div><strong><Zap size={16}/> Amplifier</strong>
-          <span>Level {mine.amplifier}/3 · +8 charge per level</span></div>
-          <button type="button" className="arena-outline" disabled={busy || mine.amplifier >= 3 || mine.charge<70+mine.amplifier*45}
-            onClick={() => void purchaseAmplifier()}>Upgrade {70 + mine.amplifier * 45}</button></div>}
-        {isHost && <div className="arena-host-controls">
-          <p>Players are competing. Questions and scores update automatically.</p>
-          <button className="arena-outline" type="button" onClick={() => void finish()}>End match</button></div>}
-        {mine && <QuestionPanel question={question} feedback={feedback} busy={busy}
-          onAnswer={replyToQuestion} onNext={() => setFeedback(null)}
-          onReview={onReviewTopic}/>}
-        <Leaderboard players={players} selfId={myId}/>
-        {notice && <p className="arena-message" role="status">{notice}</p>}
-      </div>
     </div>
+    {isHost && <div className="arena-immersive-host">
+      <span>Room {room?.code} · {players.length} players</span>
+      <button type="button" className="arena-outline" onClick={()=>void finish()}>End match</button>
+    </div>}
+    {scoresOpen && <div className="arena-immersive-ranking">
+      <Leaderboard players={players} selfId={myId}/>
+      <button type="button" className="arena-outline" onClick={()=>setScoresOpen(false)}>Close rankings</button>
+    </div>}
+    {notice && <p className="arena-message" role="status">{notice}</p>}
+    {mine && quizOpen && <div className="arena-quiz-scrim" onClick={()=>setQuizOpen(false)}>
+      <div className="arena-quiz-dialog" role="dialog" aria-modal="true" aria-label="Answer questions for charge"
+        onClick={event=>event.stopPropagation()} onKeyDown={event=>{
+          if(event.key==='Escape'){event.stopPropagation();setQuizOpen(false);}
+        }}>
+        <header className="arena-quiz-dialog-top"><span><Zap size={17}/> Earn charge</span>
+          <button type="button" onClick={()=>setQuizOpen(false)}>Back to game <ArrowRight size={15}/></button>
+        </header>
+        <QuestionPanel question={question} feedback={feedback} busy={busy}
+          onAnswer={replyToQuestion} onNext={()=>setFeedback(null)} onReview={onReviewTopic}/>
+      </div>
+    </div>}
   </section>;
 }
