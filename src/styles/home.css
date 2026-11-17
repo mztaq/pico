@@ -130,9 +130,9 @@ body:has(.pico-cookie-banner) .pico-home {
 .pico-home h1 { margin: 0; font-size: clamp(29px, 2.8vw, 38px); font-weight: 700; line-height: 1.12; letter-spacing: -.04em; }
 
 
-/* Six learning destinations are part of the homepage, not a hidden menu. */
+/* A deliberate choice first, individual workspaces second. */
 .pico-home .home-hero {
-  margin-bottom: 30px;
+  margin-bottom: 28px;
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
@@ -141,169 +141,135 @@ body:has(.pico-cookie-banner) .pico-home {
 }
 .pico-home .home-brand { font-size: 40px; gap: 10px; }
 .pico-home .home-brand img { width: 42px; height: 42px; }
-.pico-home .home-learning,
-.pico-home .home-workspaces { width: 100%; }
-.pico-home .home-learning { margin: 0 0 42px; }
-.pico-home .home-learning > h1,
-.pico-home .home-workspaces > h2 {
-  margin: 0 0 18px;
-  font-size: clamp(22px, 2.8vw, 25px);
-  font-weight: 740;
-  line-height: 1.3;
-  letter-spacing: -.03em;
-  color: var(--ds-text);
-}
-.pico-home .home-workspaces > h2 { margin-bottom: 22px; }
-.pico-home .home-learning-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 13px;
-}
-.pico-home .home-learning-card {
+.pico-home .home-inner--entry {
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  padding-top: 87px;
+}
+.pico-home .home-entry {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: auto 0;
+  padding: 22px 0 45px;
+}
+.pico-home .home-entry-card {
+  width: 100%;
   min-width: 0;
-  min-height: 168px;
-  gap: 12px;
-  padding: 19px;
+  min-height: 265px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 22px;
+  padding: clamp(25px, 3vw, 35px);
   border: 1px solid var(--ds-line-strong);
-  border-radius: 12px;
+  border-radius: 18px;
   background: var(--ds-panel);
   color: var(--ds-text);
-  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
   transition: border-color var(--ds-fast) var(--ds-ease), background var(--ds-fast) var(--ds-ease);
 }
-.pico-home .home-learning-card:hover {
+.pico-home .home-entry-card:hover {
   border-color: var(--accent);
   background: var(--ds-panel-raised);
 }
-.pico-home .home-learning-card:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-.pico-home .home-learning-card--featured {
-  grid-column: span 2;
-  min-height: 216px;
-  padding: 20px 22px;
-}
-.pico-home .home-learning-card-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-.pico-home .home-learning-card-icon {
-  display: grid;
+.pico-home .home-entry-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.pico-home .home-entry-icon {
+  display: inline-grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border-radius: 9px;
-  color: var(--accent);
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
   background: var(--ds-accent-soft);
+  color: var(--accent);
+  border-radius: 13px;
 }
-.pico-home .home-learning-card-arrow { color: var(--ds-muted); }
-.pico-home .home-learning-card:hover .home-learning-card-arrow { color: var(--accent); }
-.pico-home .home-learning-card-copy { min-width: 0; }
-.pico-home .home-learning-card-copy h3 {
-  margin: 0 0 5px;
-  font-size: 17px;
-  line-height: 1.35;
-  font-weight: 730;
-  letter-spacing: -.02em;
-  color: var(--ds-text);
-}
-.pico-home .home-learning-card-copy p {
-  margin: 0;
-  max-width: 40ch;
-  color: var(--ds-muted);
-  font-size: 12px;
-  line-height: 1.55;
-}
-.pico-home .home-learning-card--featured .home-learning-card-copy h3 { font-size: 19px; }
-.pico-home .home-learning-card-preview {
-  display: flex;
-  align-items: stretch;
-  flex-wrap: wrap;
-  gap: 10px;
-  border-top: 1px solid var(--ds-line);
-  margin-top: auto;
-  padding-top: 11px;
-}
-.pico-home .home-learning-preview-code {
+.pico-home .home-entry-copy {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 10px;
+  margin-top: auto;
+}
+.pico-home .home-entry-copy strong {
+  color: var(--ds-text);
+  font-size: clamp(23px, 3vw, 29px);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  line-height: 1.15;
+}
+.pico-home .home-entry-copy > span {
   color: var(--ds-muted);
-  font: 11px/1.35 var(--ds-font-code);
-  white-space: pre;
+  font-size: 14px;
+  line-height: 1.6;
 }
-.pico-home .home-learning-preview-code b { color: var(--accent); font-weight: 650; }
-.pico-home .home-learning-preview-trace {
-  display: flex;
-  align-items: flex-end;
-  gap: 7px;
-  margin-left: auto;
+.pico-home .home-entry-arrow {
+  position: absolute;
+  right: 32px;
+  top: 32px;
+  color: var(--ds-muted);
 }
-.pico-home .home-learning-preview-trace span {
+.pico-home .home-entry-card:hover .home-entry-arrow { color: var(--accent); }
+.pico-home .home-workspaces { width: 100%; }
+.pico-home .home-workspaces-heading {
   display: flex;
   align-items: center;
-  gap: 7px;
-  border: 1px solid var(--ds-line-strong);
-  border-radius: 7px;
-  padding: 6px 8px;
-  color: var(--ds-muted);
-  font: 10px var(--ds-font-code);
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 22px;
 }
-.pico-home .home-learning-preview-trace b { color: var(--ds-text); font-size: 12px; }
-.pico-home .home-learning-card-preview--challenges { align-items: center; justify-content: space-between; }
-.pico-home .home-learning-preview-tests {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
+.pico-home .home-workspaces-heading h1 {
+  margin: 0;
+  font-size: clamp(23px, 3vw, 30px);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  color: var(--ds-text);
 }
-.pico-home .home-learning-preview-tests span {
+.pico-home .home-section-back {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: var(--ds-muted);
-  border: 1px solid var(--ds-line);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font: 10px var(--ds-font-code);
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 9px 13px;
+  min-height: 40px;
+  border: 1px solid var(--ds-line-strong);
+  border-radius: 9px;
+  color: var(--ds-text);
+  background: var(--ds-panel);
+  font: 650 13px var(--ds-font-ui);
+  cursor: pointer;
 }
-.pico-home .home-learning-preview-tests svg { color: var(--accent); }
-.pico-home .home-learning-preview-score { color: var(--accent); font: 700 11px var(--ds-font-code); white-space: nowrap; }
+.pico-home .home-section-back:hover { border-color: var(--accent); background: var(--ds-hover); }
+.pico-home .home-section-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .pico-home .home-group-head { margin-bottom: 14px; }
 .pico-home .home-group-label { margin: 0; }
-@media (max-width: 920px) {
-  .pico-home .home-learning-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .pico-home .home-learning-card--featured { grid-column: span 1; }
-  .pico-home .home-learning-preview-trace { margin-left: 0; }
+@media (max-width: 740px) {
+  .pico-home .home-entry { gap: 12px; }
+  .pico-home .home-entry-card { min-height: 235px; padding: 22px; }
+  .pico-home .home-entry-copy strong { font-size: 24px; }
+  .pico-home .home-entry-arrow { top: 27px; right: 23px; }
 }
-@media (max-width: 640px) {
-  .pico-home .home-hero { margin-bottom: 24px; }
-  .pico-home .home-brand { font-size: 35px; }
-  .pico-home .home-brand img { width: 38px; height: 38px; }
-  .pico-home .home-learning { margin-bottom: 34px; }
-  .pico-home .home-learning-grid { grid-template-columns: 1fr; gap: 10px; }
-  .pico-home .home-learning-card,
-  .pico-home .home-learning-card--featured { min-height: 0; padding: 16px; gap: 10px; }
-  .pico-home .home-learning-card-preview { display: none; }
-  .pico-home .home-learning-card-copy h3,
-  .pico-home .home-learning-card--featured .home-learning-card-copy h3 { font-size: 16px; }
-  .pico-home .home-workspaces > h2 { margin-bottom: 15px; }
-}
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .pico-home .home-learning-card { transition: border-color var(--ds-fast) var(--ds-ease), background var(--ds-fast) var(--ds-ease), transform var(--ds-base) var(--ds-ease); }
-  .pico-home .home-learning-card:hover { transform: translateY(-2px); }
+@media (max-width: 580px) {
+  .pico-home .home-inner--entry { padding-top: 85px; min-height: 100dvh; }
+  .pico-home .home-entry {
+    grid-template-columns: 1fr;
+    padding: 12px 0 35px;
+    margin: auto 0;
+  }
+  .pico-home .home-entry-card { min-height: 180px; gap: 17px; }
+  .pico-home .home-entry-copy strong { font-size: 23px; }
+  .pico-home .home-entry-copy > span { font-size: 12px; }
+  .pico-home .home-entry-icon { width: 43px; height: 43px; flex-basis: 43px; }
+  .pico-home .home-entry-icon svg { width: 23px; height: 23px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pico-home .home-learning-card { transition: none; }
-  .pico-home .home-learning-card:hover { transform: none; }
+  .pico-home .home-entry-card { transition: none; }
 }
-.pico-home[data-high-contrast='true'] .home-learning-card { border-width: 2px; }
+.pico-home[data-high-contrast='true'] .home-entry-card { border-width: 2px; }
 
 .pico-home .compiler-choices { width: 100%; display: flex; flex-direction: column; gap: 36px; }
 .home-group-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--ds-line); }
