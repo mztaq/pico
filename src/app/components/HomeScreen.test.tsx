@@ -10,7 +10,9 @@ describe('Pico homepage learning navigation', () => {
     for (const section of links) {
       expect(html).toContain('/app/learn?section=' + section);
     }
-    expect((html.match(/class="home-learning-card/g) || []).length).toBe(links.length);
+    const markup = document.createElement('div');
+    markup.innerHTML = html;
+    expect(markup.querySelectorAll('a.home-learning-card')).toHaveLength(links.length);
     expect(html).toContain('Live Studio');
     expect(html).toContain('Exam practice');
     expect(html).toContain('Retro Arcade');
