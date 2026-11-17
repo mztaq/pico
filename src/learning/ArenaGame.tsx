@@ -259,10 +259,10 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
   const gameMode = solo?.mode ?? room?.mode ?? mode;
   const ended = Boolean(soloEnded || room?.state === 'finished' ||
     (room?.defense && room.role === 'player' && room.defense.health === 0) ||
-    (room?.startsAt && remainingSeconds(room.startsAt, room.duration, now / 1000) === 0));
+    (room?.startsAt && remainingSeconds(room.startsAt === null ? null : room.startsAt / 1000, room.duration, now / 1000) === 0));
   const timeLeft = solo
     ? remainingSeconds(solo.startedAt / 1000, solo.duration, now / 1000)
-    : room ? remainingSeconds(room.startsAt, room.duration, now / 1000) : duration;
+    : room ? remainingSeconds(room.startsAt === null ? null : room.startsAt / 1000, room.duration, now / 1000) : duration;
   const players = solo ? soloStandings(solo) : room?.players ?? [];
   const defense = solo ? (spectateBot ? solo.botDefense : solo.defense) : room?.defense ?? null;
   const myId = solo ? 'you' : room?.playerId ?? null;
