@@ -342,3 +342,14 @@
   .arena-podium-place { animation: none !important; }
   .arena-track-runner { transition: none; }
 }
+
+.arena-classic-summary { display: flex; align-items: center; flex-direction: column;
+  justify-content: center; text-align: center; min-height: 290px;
+  border: 1px solid var(--ds-line); border-radius: 10px; padding: 22px;
+  background: var(--bg); }
+.arena-classic-summary > svg { color: var(--accent); }
+.arena-classic-summary h4 { margin: 14px 0 8px; font-size: 24px; letter-spacing: -.03em; }
+.arena-classic-summary p { margin: 0; font-size: 13px; color: var(--ds-muted); max-width: 38ch; line-height: 1.65; }
+.arena-classic-count { width: 100%; display: flex; justify-content: space-between;
+  align-items: center; gap: 14px; margin-top: 28px; padding-top: 15px;
+  border-top: 1px solid var(--ds-line); color: var(--ds-muted); font: 650 11px var(--ds-font-code); }
