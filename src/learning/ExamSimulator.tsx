@@ -3,13 +3,40 @@ import { ArrowLeft, ArrowRight, Clock3 } from 'lucide-react';
 import { questions, topics, type Question } from './content';
 
 type ExamSession = {
+  id: string;
   questions: Question[];
   answers: Record<string, number>;
   deadline: number;
+  duration: number;
   completed: boolean;
 };
-type ExamHistory = { date: string; score: number; total: number; duration: number };
+type ExamHistory = { id: string; date: string; score: number; total: number; duration: number };
 const historyKey = 'pico.exam.results.v1';
+const activeKey = 'pico.exam.active.v1';
+
+function restoreSession(): ExamSession | null {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(activeKey) ?? 'null') as {
+      id?: string; ids?: string[]; answers?: Record<string, number>; deadline?: number;
+      duration?: number; completed?: boolean;
+    } | null;
+    if (!saved || typeof saved.id !== 'string' || !Array.isArray(saved.ids) ||
+      saved.ids.length < 1 || saved.ids.length > 30 || !Number.isFinite(saved.deadline) ||
+      !Number.isFinite(saved.duration)) return null;
+    const questionMap = new Map(questions.map(question => [question.id, question]));
+    const restored = saved.ids.map(id => questionMap.get(id));
+    if (restored.some(question => !question)) return null;
+    const answers: Record<string, number> = {};
+    for (const id of saved.ids) {
+      const answer = saved.answers?.[id];
+      if (Number.isInteger(answer) && answer! >= 0 && answer! <= 3) answers[id] = answer!;
+    }
+    return {
+      id: saved.id, questions: restored as Question[], answers,
+      deadline: saved.deadline!, duration: saved.duration!, completed: Boolean(saved.completed),
+    };
+  } catch { return null; }
+}
 function chooseQuestions(size: number, unit: string): Question[] {
   const topicIds = new Set(topics.filter(topic => unit === 'all' || topic.unit === unit).map(topic => topic.id));
   const pool = questions.filter(question => topicIds.has(question.topic));
@@ -27,6 +54,7 @@ function resultOf(session: ExamSession) {
 function rememberResult(result: ExamHistory) {
   try {
     const stored = JSON.parse(localStorage.getItem(historyKey) ?? '[]') as ExamHistory[];
+    if (stored.some(previous => previous.id === result.id)) return;
     localStorage.setItem(historyKey, JSON.stringify([result, ...stored].slice(0, 20)));
   } catch { /* optional local storage */ }
 }
@@ -38,12 +66,29 @@ export function ExamSimulator({ onReviewTopic }: { onReviewTopic: (topicId: stri
   const [unit, setUnit] = useState('all');
   const [count, setCount] = useState(10);
   const [minutes, setMinutes] = useState(15);
-  const [session, setSession] = useState<ExamSession | null>(null);
+  const [session, setSession] = useState<ExamSession | null>(restoreSession);
   const [index, setIndex] = useState(0);
   const [now, setNow] = useState(Date.now());
   const units = [...new Set(topics.map(t => t.unit))];
   const available = questions.filter(q => unit === 'all' || topics.find(t => t.id === q.topic)?.unit === unit).length;
   const timeLeft = session ? Math.max(0, Math.ceil((session.deadline - now) / 1000)) : 0;
+
+  useEffect(() => {
+    try {
+      if (session) sessionStorage.setItem(activeKey, JSON.stringify({
+        id: session.id, ids: session.questions.map(q => q.id), answers: session.answers,
+        deadline: session.deadline, duration: session.duration, completed: session.completed,
+      }));
+      else sessionStorage.removeItem(activeKey);
+    } catch { /* Storage not required for practice. */ }
+  }, [session]);
+
+  useEffect(() => {
+    if (!session?.completed) return;
+    const correct = session.questions.filter(q => session.answers[q.id] === q.answer).length;
+    rememberResult({ id: session.id, date: new Date().toISOString(),
+      score: correct, total: session.questions.length, duration: session.duration });
+  }, [session?.id, session?.completed]);
 
   useEffect(() => {
     if (!session || session.completed) return;
@@ -60,17 +105,14 @@ export function ExamSimulator({ onReviewTopic }: { onReviewTopic: (topicId: stri
     if (!selected.length) return;
     const started = Date.now();
     setNow(started);
-    setSession({ questions: selected, answers: {}, deadline: started + minutes * 60000, completed: false });
+    setSession({ id: String(started) + '-' + Math.random().toString(36).slice(2),
+      questions: selected, answers: {}, deadline: started + minutes * 60000,
+      duration: minutes, completed: false });
     setIndex(0);
   }
   function finish() {
-    setSession(current => {
-      if (!current || current.completed) return current;
-      const done = { ...current, completed: true };
-      const correct = done.questions.filter(q => done.answers[q.id] === q.answer).length;
-      rememberResult({ date: new Date().toISOString(), score: correct, total: done.questions.length, duration: minutes });
-      return done;
-    });
+    setSession(current => current && !current.completed
+      ? { ...current, completed: true } : current);
   }
   function answer(choice: number) {
     setSession(current => current && !current.completed && Date.now() < current.deadline
