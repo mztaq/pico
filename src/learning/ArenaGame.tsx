@@ -4,11 +4,16 @@ import {
   RefreshCw, Shield, Swords, Trophy, Users, Volume2, VolumeX, Zap,
 } from 'lucide-react';
 import {
-  ARENA_TILES, arenaPool, arenaUnits, answerReward, modeNodeCost,
-  questionAt, remainingSeconds, scoreFor, timeLabel, visibleQuestion,
-  type ArenaAction, type ArenaNode, type ArenaPlayer, type ArenaQuestion,
+  arenaPool, arenaUnits, answerReward,
+  questionAt, remainingSeconds, timeLabel, visibleQuestion,
+  type ArenaPlayer, type ArenaQuestion,
 } from './arenaRules';
 import './arena.css';
+import { DefenseField } from './DefenseField';
+import {
+  advanceDefense, defenseScore, defenseStart, placeTower, upgradeTower,
+  type DefenseState, type TowerKind,
+} from './towerDefense';
 
 type Mode = 'classic' | 'circuit' | 'hacker' | 'sprint';
 type Screen = 'menu' | 'solo' | 'host' | 'join';
@@ -24,22 +29,23 @@ type Room = {
   nicknameMode: NicknameMode; questionSource: Source;
   startsAt: number | null; duration: number; expiresAt: number;
   playerId: string | null; question: ArenaQuestion | null;
-  players: ArenaPlayer[]; nodes: ArenaNode[];
+  players: ArenaPlayer[]; defense: DefenseState | null;
 };
 type Feedback = { correct: boolean; earned: number; explanation: string; correctChoice: number; points: number };
 type Solo = {
   mode: Mode; unit: string; seed: number; cursor: number; startedAt: number;
   nextBotAt: number; duration: number; charge: number; streak: number;
   amplifier: number; correct: number; answered: number; baseScore: number;
-  botScore: number; nodes: ArenaNode[];
+  botScore: number; defense: DefenseState | null; botDefense: DefenseState | null;
+
 };
 
 const STORAGE_KEY = 'pico.arena.room.v1';
 const hues = ['#cba6f7', '#89b4fa', '#a6e3a1', '#fab387', '#f38ba8', '#94e2d5', '#f9e2af', '#b4befe'];
 const modes = [
   { id: 'classic', name: 'Classic Quiz', subtitle: 'Answer quickly. Highest score wins.', icon: Trophy },
-  { id: 'circuit', name: 'Circuit Clash', subtitle: 'Earn charge to capture and reinforce a 2D network.', icon: Zap },
-  { id: 'hacker', name: 'Hacker Heist', subtitle: 'Break into rival nodes and control the server grid.', icon: Shield },
+  { id: 'circuit', name: 'Circuit Clash', subtitle: 'Answer questions to build towers and protect your core.', icon: Zap },
+  { id: 'hacker', name: 'Hacker Heist', subtitle: 'Defend your cyber-server from incoming malware waves.', icon: Shield },
   { id: 'sprint', name: 'Data Sprint', subtitle: 'Each correct answer accelerates your racer.', icon: Swords },
 ] as const;
 
@@ -49,71 +55,33 @@ function getCredentials(): Credentials | null {
     return value && /^[A-HJ-NP-Z2-9]{6}$/.test(value.code) && /^[a-f0-9]{64}$/.test(value.token) ? value : null;
   } catch { return null; }
 }
-function freshBoard(): ArenaNode[] {
-  return Array.from({ length: ARENA_TILES }, (_, pos) => ({ pos, ownerId: null, level: 1 }));
-}
 function isTerritory(mode: Mode) { return mode === 'circuit' || mode === 'hacker'; }
-function stageScore(player: { correct: number; amplifier: number; baseScore: number }, nodes: ArenaNode[], id: string): number {
-  return player.baseScore + scoreFor(nodes.filter(node => node.ownerId === id).map(node => node.level), player.correct, player.amplifier);
-}
-function soloStandings(solo: Solo): ArenaPlayer[] {
-  const youNodes = solo.nodes.filter(node => node.ownerId === 'you');
-  const botNodes = solo.nodes.filter(node => node.ownerId === 'bot');
+function soloStandings(run: Solo): ArenaPlayer[] {
   return [
-    { id: 'you', nickname: 'You', charge: solo.charge, streak: solo.streak,
-      amplifier: solo.amplifier, correct: solo.correct, answered: solo.answered,
-      score: stageScore(solo, solo.nodes, 'you'), owned: youNodes.length, color: 0 },
-    { id: 'bot', nickname: 'CPU Rival', charge: 0, streak: 0, amplifier: 0,
-      correct: 0, answered: 0, score: solo.botScore + scoreFor(botNodes.map(node => node.level), 0, 0),
-      owned: botNodes.length, color: 1 },
-  ].sort((a, b) => b.score - a.score);
+    { id: 'you', nickname: 'You', charge: run.charge, streak: run.streak,
+      amplifier: run.amplifier, correct: run.correct, answered: run.answered,
+      score: run.baseScore+(run.defense?defenseScore(run.defense):0),
+      owned: run.defense?.towers.length||0, color: 0 },
+    { id: 'bot', nickname: 'CPU Rival', charge: 0, streak: 0,
+      amplifier: 0, correct: 0, answered: 0,
+      score: run.botScore+(run.botDefense?defenseScore(run.botDefense):0),
+      owned: run.botDefense?.towers.length||0, color: 1 },
+  ].sort((a,b)=>b.score-a.score);
 }
-function doBotTurn(solo: Solo): Solo {
-  const next = { ...solo, nodes: solo.nodes.map(node => ({ ...node })),
-    nextBotAt: Date.now() + 6200 + Math.floor(Math.random() * 3200) };
-  if (!isTerritory(solo.mode)) {
-    next.botScore += 85 + Math.floor(Math.random() * (solo.mode === 'sprint' ? 135 : 95));
-    return next;
-  }
-  const available = next.nodes.filter(node => node.ownerId === null);
-  const enemies = next.nodes.filter(node => node.ownerId === 'you');
-  const owned = next.nodes.filter(node => node.ownerId === 'bot' && node.level < 3);
-  const candidates = available.length ? available : enemies.length ? enemies : owned;
-  if (candidates.length) {
-    const node = candidates[Math.floor(Math.random() * candidates.length)]!;
-    next.nodes[node.pos] = node.ownerId === 'bot'
-      ? { ...node, level: node.level + 1 }
-      : { pos: node.pos, level: 1, ownerId: 'bot' };
+function doBotTurn(run: Solo): Solo {
+  const next: Solo={...run,nextBotAt:Date.now()+8300+Math.floor(Math.random()*3200)};
+  if(!next.botDefense){next.botScore+=95+Math.floor(Math.random()*110);return next;}
+  if(next.botDefense.health<=0)return next;
+  const plots=[[3,2],[6,3],[7,3],[9,5],[4,0],[6,5],[1,2],[10,5],[9,7],[7,5]];
+  for(const [x,y] of plots){
+    const move=placeTower(next.botDefense,x!,y!,next.botDefense.towers.length%3===2?'frost':'blaster');
+    if(move){next.botDefense=move.state;return next;}
   }
   return next;
 }
+
 function emptyDraft(): CustomQuestion {
   return { prompt: '', choices: ['', '', '', ''], answer: 0, explanation: '' };
-}
-
-function NetworkBoard({ nodes, players, viewerId, mode, onSelect, disabled }: {
-  nodes: ArenaNode[]; players: ArenaPlayer[]; viewerId: string | null;
-  mode: Mode; onSelect: (node: ArenaNode) => void; disabled: boolean;
-}) {
-  const owners = new Map(players.map(player => [player.id, player]));
-  return <div className={'arena-board arena-board--' + mode} role="group"
-    aria-label={mode === 'hacker' ? 'Hacker Heist server grid' : 'Circuit Clash network'}>
-    {nodes.map(node => {
-      const owner = node.ownerId ? owners.get(node.ownerId) : null;
-      const own = node.ownerId === viewerId && Boolean(viewerId);
-      const color = owner ? hues[owner.color % hues.length] : undefined;
-      return <button type="button" className={'arena-node' + (own ? ' is-own' : owner ? ' is-rival' : '')}
-        key={node.pos} disabled={disabled} title={'Node ' + (node.pos + 1) + ': ' + (owner?.nickname || 'Unclaimed')}
-        style={color ? { '--arena-owner': color } as React.CSSProperties : undefined}
-        onClick={() => onSelect(node)}>
-        <span className="arena-node-number">{String(node.pos + 1).padStart(2, '0')}</span>
-        <span className="arena-node-core" aria-hidden="true">{mode === 'hacker' ? node.ownerId ? '▣' : '□' : node.ownerId ? '◆' : '◇'}</span>
-        <span className="arena-node-owner">{owner?.nickname || (mode === 'hacker' ? 'Hack' : 'Claim')}</span>
-        {node.ownerId && <span className="arena-node-bars">
-          {Array.from({ length: node.level }, (_, index) => <i key={index}/>)}</span>}
-      </button>;
-    })}
-  </div>;
 }
 
 function SpeedTrack({ players, mode }: { players: ArenaPlayer[]; mode: Mode }) {
@@ -243,6 +211,7 @@ function playDrumroll() {
 
 export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => void }) {
   const [session, setSession] = useState<Credentials | null>(getCredentials);
+  const [spectateBot,setSpectateBot] = useState(false);
   const [room, setRoom] = useState<Room | null>(null);
   const [screen, setScreen] = useState<Screen>('menu');
   const [mode, setMode] = useState<Mode>(() => {
@@ -270,15 +239,17 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
   const credentials = useRef(session);
   credentials.current = session;
 
-  const soloEnded = solo && remainingSeconds(solo.startedAt / 1000, solo.duration, now / 1000) === 0;
+  const soloEnded = solo && (remainingSeconds(solo.startedAt / 1000, solo.duration, now / 1000) === 0 ||
+    (solo.defense !== null && solo.defense.health === 0));
   const gameMode = solo?.mode ?? room?.mode ?? mode;
   const ended = Boolean(soloEnded || room?.state === 'finished' ||
+    (room?.defense && room.role === 'player' && room.defense.health === 0) ||
     (room?.startsAt && remainingSeconds(room.startsAt, room.duration, now / 1000) === 0));
   const timeLeft = solo
     ? remainingSeconds(solo.startedAt / 1000, solo.duration, now / 1000)
     : room ? remainingSeconds(room.startsAt, room.duration, now / 1000) : duration;
   const players = solo ? soloStandings(solo) : room?.players ?? [];
-  const nodes = solo?.nodes ?? room?.nodes ?? freshBoard();
+  const defense = solo ? (spectateBot ? solo.botDefense : solo.defense) : room?.defense ?? null;
   const myId = solo ? 'you' : room?.playerId ?? null;
   const mine = players.find(player => player.id === myId);
   const isHost = Boolean(session && room?.role === 'host');
@@ -308,8 +279,16 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
     const interval = window.setInterval(() => {
       const moment = Date.now();
       setNow(moment);
-      setSolo(old => old && remainingSeconds(old.startedAt / 1000, old.duration, moment / 1000) > 0 &&
-        moment >= old.nextBotAt ? doBotTurn(old) : old);
+      setSolo(old => {
+        if(!old || remainingSeconds(old.startedAt/1000,old.duration,moment/1000)===0) return old;
+        let updated={...old,
+          defense:old.defense?advanceDefense(old.defense,moment):null,
+          botDefense:old.botDefense?advanceDefense(old.botDefense,moment):null,
+        };
+        if(updated.defense && updated.defense.health===0)return updated;
+        if(moment>=updated.nextBotAt)updated=doBotTurn(updated);
+        return updated;
+      });
     }, 300);
     return () => window.clearInterval(interval);
   }, [Boolean(session), Boolean(solo)]);
@@ -338,10 +317,12 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
   function initSolo() {
     const clock = Date.now();
     setSolo({ mode, unit, seed: Math.floor(Math.random() * 10000),
-      cursor: 0, startedAt: clock, nextBotAt: clock + 7800, duration,
-      charge: 0, streak: 0, amplifier: 0, correct: 0, answered: 0,
-      baseScore: 0, botScore: 0, nodes: freshBoard() });
-    setNow(clock); setNotice(''); setFeedback(null); setShowWinners(false);
+      cursor: 0, startedAt: clock, nextBotAt: clock + 8800, duration,
+      charge: isTerritory(mode)?100:0, streak: 0, amplifier: 0, correct: 0, answered: 0,
+      baseScore: 0, botScore: 0,
+      defense: isTerritory(mode)?defenseStart(clock):null,
+      botDefense: isTerritory(mode)?defenseStart(clock):null });
+    setNow(clock); setNotice(''); setFeedback(null); setShowWinners(false);setSpectateBot(false);
   }
   async function call(action: string, data: Record<string, unknown>, callback?: (value: any) => void,
     auth: Credentials | null = credentials.current) {
@@ -430,28 +411,31 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
       });
     }
   }
-  function selectNode(node: ArenaNode) {
-    if (!mine || ended || busy || !isTerritory(gameMode)) return;
-    const kind: ArenaAction = node.ownerId === myId ? 'fortify' : 'capture';
-    void purchase(kind, node);
-  }
-  async function purchase(kind: ArenaAction, node?: ArenaNode) {
-    if (!mine || ended || busy || !isTerritory(gameMode)) return;
-    const cost = kind === 'amplify' ? 70 + mine.amplifier * 45 : modeNodeCost(gameMode, kind, node);
-    if (cost === null || cost === undefined) { setNotice('Maximum upgrade level.'); return; }
-    if (mine.charge < cost) { setNotice('Need ' + cost + ' charge. Correct answers earn charge.'); return; }
-    setNotice('');
-    if (solo) {
-      setSolo(current => current ? {
-        ...current, charge: current.charge - cost,
-        amplifier: kind === 'amplify' ? current.amplifier + 1 : current.amplifier,
-        nodes: kind === 'amplify' || !node ? current.nodes :
-          current.nodes.map(tile => tile.pos === node.pos
-            ? { ...tile, ownerId: 'you', level: kind === 'capture' ? 1 : Math.min(3, tile.level + 1) } : tile),
-      } : current);
-    } else if (session) {
-      if (await call('action', { code: session.code, kind, pos: node?.pos })) await reload();
+  async function towerPurchase(x:number,y:number,kind:TowerKind|'upgrade'){
+    if(busy||ended||!mine||!isTerritory(gameMode))return;
+    if(solo){
+      setSolo(current=>{
+        if(!current?.defense)return current;
+        const move=kind==='upgrade'
+          ? upgradeTower(current.defense,x,y)
+          : placeTower(current.defense,x,y,kind);
+        return move&&current.charge>=move.cost
+          ? {...current,charge:current.charge-move.cost,defense:move.state} : current;
+      });
+      return;
     }
+    if(session){
+      const data=kind==='upgrade'?{kind:'towerUpgrade',x,y}:{kind:'towerBuild',x,y,tower:kind};
+      if(await call('action',{code:session.code,...data}))await reload().catch(()=>{});
+    }
+  }
+  async function purchaseAmplifier(){
+    if(busy||ended||!mine||!isTerritory(gameMode))return;
+    const cost=70+mine.amplifier*45;
+    if(mine.amplifier>=3||mine.charge<cost)return;
+    if(solo){setSolo(current=>current?{...current,charge:current.charge-cost,amplifier:current.amplifier+1}:current);}
+    else if(session&&await call('action',{code:session.code,kind:'amplify'}))
+      await reload().catch(()=>{});
   }
   function reveal() {
     if (sound) playDrumroll();
@@ -616,29 +600,31 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
     </header>
     <div className="arena-match-layout">
       <div className="arena-field">
-        <div className="arena-field-heading"><h3>{isTerritory(gameMode) ? gameMode === 'hacker' ? 'Server grid' : 'Circuit grid' : 'Race track'}</h3>
-          <span>{isTerritory(gameMode) ? nodes.filter(node => node.ownerId).length + '/20 captured' : players.length + ' racers'}</span></div>
-        {isTerritory(gameMode)
-          ? <NetworkBoard nodes={nodes} players={players} viewerId={myId} mode={gameMode} onSelect={selectNode}
-            disabled={busy || !mine}/>
+        {isTerritory(gameMode) && defense
+          ? <>
+              {solo && <div className="arena-defense-viewer" role="group" aria-label="Choose defense view">
+                <button type="button" aria-pressed={!spectateBot} onClick={()=>setSpectateBot(false)}>Your defense</button>
+                <button type="button" aria-pressed={spectateBot} onClick={()=>setSpectateBot(true)}>CPU rival</button>
+              </div>}
+              <DefenseField state={defense} mode={gameMode as 'circuit'|'hacker'}
+                charge={spectateBot||!mine?0:mine.charge}
+                busy={busy||!mine||spectateBot}
+                onBuild={(x,y,kind)=>{void towerPurchase(x,y,kind);}}
+                onUpgrade={(x,y)=>{void towerPurchase(x,y,'upgrade');}}/>
+            </>
           : gameMode === 'sprint' ? <SpeedTrack players={players} mode={gameMode}/>
             : <ClassicSummary players={players}/>}
-        {isTerritory(gameMode) && <div className="arena-field-guide">
-          <span>Unclaimed {gameMode === 'hacker' ? 25 : 35} <Zap size={12}/></span>
-          <span>Steal {gameMode === 'hacker' ? 55 : 75}+ <Zap size={12}/></span>
-          <span>Reinforce {gameMode === 'hacker' ? 50 : 65}+ <Zap size={12}/></span>
-        </div>}
       </div>
       <div className="arena-play-aside">
         {mine && <div className="arena-stats">
           <div className="arena-stat"><span><Zap size={16}/> Charge</span><strong>{mine.charge}</strong></div>
-          <div className="arena-stat"><span><Flag size={16}/> Nodes</span><strong>{mine.owned}</strong></div>
+          <div className="arena-stat"><span><Flag size={16}/> Towers</span><strong>{mine.owned}</strong></div>
           <div className="arena-stat"><span><Trophy size={16}/> Points</span><strong>{mine.score}</strong></div>
         </div>}
         {mine && isTerritory(gameMode) && <div className="arena-amp"><div><strong><Zap size={16}/> Amplifier</strong>
           <span>Level {mine.amplifier}/3 · +8 charge per level</span></div>
-          <button type="button" className="arena-outline" disabled={busy || mine.amplifier >= 3}
-            onClick={() => void purchase('amplify')}>Upgrade {70 + mine.amplifier * 45}</button></div>}
+          <button type="button" className="arena-outline" disabled={busy || mine.amplifier >= 3 || mine.charge<70+mine.amplifier*45}
+            onClick={() => void purchaseAmplifier()}>Upgrade {70 + mine.amplifier * 45}</button></div>}
         {isHost && <div className="arena-host-controls">
           <p>Players are competing. Questions and scores update automatically.</p>
           <button className="arena-outline" type="button" onClick={() => void finish()}>End match</button></div>}
