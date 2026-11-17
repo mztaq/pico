@@ -35,7 +35,7 @@ const open=async()=>{
   await click([...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(b=>b.querySelector('h2')?.textContent==='Flowchart Builder')!);
   await vi.waitFor(()=>expect(container.querySelector('.flow-builder')).not.toBeNull());
 };
-beforeEach(async()=>{localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');(()=>{const p=exampleProject();saveCharts({projects:[p],activeId:p.id,tutorialCompleted:true});})();executions.length=0;vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));await open();});
+beforeEach(async()=>{window.history.replaceState(null,'','/app');localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');(()=>{const p=exampleProject();saveCharts({projects:[p],activeId:p.id,tutorialCompleted:true});})();executions.length=0;vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));await open();});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
 it('shows the flowchart workspace without a personal footer',()=>{
   expect(container.querySelector('.flow-builder')).not.toBeNull();
