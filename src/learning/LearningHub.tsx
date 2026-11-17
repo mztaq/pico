@@ -19,9 +19,10 @@ const RetroArcade = lazy(() => import('./RetroArcade').then(module => ({ default
 
 type LearningSection = 'notes' | 'studio' | 'challenges' | 'exam' | 'classroom' | 'arcade';
 
-export function sectionFromSearch(search: string): LearningSection {
+export function sectionFromSearch(search: string): LearningSection | null {
   const candidate = new URLSearchParams(search).get('section');
   switch (candidate) {
+    case 'notes':
     case 'studio':
     case 'challenges':
     case 'exam':
@@ -29,16 +30,16 @@ export function sectionFromSearch(search: string): LearningSection {
     case 'arcade':
       return candidate;
     default:
-      return 'notes';
+      return null;
   }
 }
 const sections = [
-  { id: 'notes', label: 'Notes', icon: BookOpen },
-  { id: 'studio', label: 'Live Studio', icon: Code2 },
-  { id: 'challenges', label: 'Challenges', icon: Trophy },
-  { id: 'exam', label: 'Exam practice', icon: GraduationCap },
-  { id: 'classroom', label: 'Classroom', icon: Users },
-  { id: 'arcade', label: 'Arcade', icon: Gamepad2 },
+  { id: 'notes', label: 'Notes', description: 'Computer Science topics and worked examples.', icon: BookOpen },
+  { id: 'studio', label: 'Live Studio', description: 'Run pseudocode and inspect variables and flowcharts.', icon: Code2 },
+  { id: 'challenges', label: 'Challenges', description: 'Solve problems and check your code.', icon: Trophy },
+  { id: 'exam', label: 'Exam practice', description: 'Timed questions and answer reviews.', icon: GraduationCap },
+  { id: 'classroom', label: 'Classroom', description: 'Host or join a coding challenge.', icon: Users },
+  { id: 'arcade', label: 'Retro Arcade', description: 'Play Bit Catcher and Logic Rush.', icon: Gamepad2 },
 ] as const;
 
 
@@ -64,18 +65,19 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
       window.removeEventListener('storage', syncTheme);
     };
   }, []);
-  const [section, setSection] = useState<LearningSection>(() => sectionFromSearch(window.location.search));
+  const [section, setSection] = useState<LearningSection | null>(() => sectionFromSearch(window.location.search));
   useEffect(() => {
     const syncSection = () => setSection(sectionFromSearch(window.location.search));
     window.addEventListener('popstate', syncSection);
     return () => window.removeEventListener('popstate', syncSection);
   }, []);
-  function chooseSection(next: LearningSection) {
+  function chooseSection(next: LearningSection | null) {
+    if (next === section) return;
     setSection(next);
     const url = new URL(window.location.href);
-    if (next === 'notes') url.searchParams.delete('section');
+    if (next === null) url.searchParams.delete('section');
     else url.searchParams.set('section', next);
-    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    window.history.pushState(window.history.state, '', url.pathname + url.search + url.hash);
   }
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Topic>(topics[0]);
@@ -121,7 +123,7 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   }
   function chooseTopic(topic: Topic) {
     setSelected(topic);
-    chooseSection('notes');
+    if (section !== 'notes') chooseSection('notes');
     setSession(null);
     lessonRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
@@ -132,19 +134,22 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   }
   return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={learningThemeVariables(theme)}>
     <header className="learning-topbar">
-      <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn</span>
-      <button type="button" className="learning-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" /> Workspaces</button>
+      <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn and practise</span>
+      <button type="button" className="learning-back" onClick={() => section === null ? onBack() : chooseSection(null)}>
+        <ArrowLeft size={17} aria-hidden="true" /> {section === null ? 'Home' : 'All tools'}
+      </button>
     </header>
-    <nav className="learning-sections" aria-label="Learning sections">
+    {section === null ? <div className="learning-tool-grid" aria-label="Choose a learning tool">
       {sections.map(item => {
         const Icon = item.icon;
-        return <button type="button" key={item.id} className={section === item.id ? 'is-active' : ''}
-          aria-pressed={section === item.id} onClick={() => chooseSection(item.id)}>
-          <Icon size={16} aria-hidden="true" />{item.label}
+        return <button type="button" key={item.id} className="learning-tool-card"
+          onClick={() => chooseSection(item.id)}>
+          <span className="learning-tool-icon"><Icon size={24} aria-hidden="true" /></span>
+          <ArrowRight className="learning-tool-arrow" size={18} aria-hidden="true" />
+          <span className="learning-tool-copy"><strong>{item.label}</strong><span>{item.description}</span></span>
         </button>;
       })}
-    </nav>
-    {section === 'notes' ? <div className="learning-layout">
+    </div> : section === 'notes' ? <div className="learning-layout">
       <aside className="learning-catalogue" aria-label="Topics">
         <label className="learning-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Search topics</span><input type="search" placeholder="Search topics" value={query} onChange={event => setQuery(event.target.value)} /></label>
         <div className="learning-topic-list">
