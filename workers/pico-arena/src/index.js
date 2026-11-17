@@ -1,7 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
   ARENA_TILES, arenaPool, arenaUnits, answerReward, modeNodeCost,
-  questionAt, scoreFor, visibleQuestion,
+  questionAt, questionIndex, scoreFor, visibleQuestion,
 } from '../../../src/learning/arenaRules.ts';
 
 const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -67,7 +67,7 @@ function poolFor(room) {
 }
 function currentQuestion(room, player) {
   const list = poolFor(room);
-  const question = list[(room.seed + player.cursor * 7) % list.length];
+  const question = list[questionIndex(list.length, room.seed, player.cursor)];
   return question;
 }
 function projectedQuestion(question) {
