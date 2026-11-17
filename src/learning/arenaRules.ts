@@ -91,7 +91,8 @@ export function scoreFor(ownedLevels: number[], correct: number, amplifier: numb
 
 export function remainingSeconds(startsAt: number | null, duration: number, now: number): number {
   if (startsAt === null) return duration;
-  return Math.max(0, Math.ceil((startsAt + duration - now) / 1000));
+  // startsAt and now are Unix seconds; duration is measured in seconds.
+  return Math.max(0, Math.ceil(startsAt + duration - now));
 }
 
 export function timeLabel(seconds: number): string {
