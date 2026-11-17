@@ -6,8 +6,8 @@
   "packageManager": "pnpm@11.25.0",
   "scripts": {
     "dev": "node scripts/sync-changelog.mjs && vite --host 0.0.0.0",
-    "build": "node scripts/sync-changelog.mjs && tsc --noEmit && vite build",
-    "check": "tsc --noEmit",
+    "build": "node scripts/sync-changelog.mjs && tsc --noEmit && node --check workers/pico-arena/src/index.js && vite build",
+    "check": "tsc --noEmit && node --check workers/pico-arena/src/index.js",
     "test": "vitest run",
     "update:log": "node scripts/add-update.mjs",
     "preview": "vite preview --host 0.0.0.0"
