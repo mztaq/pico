@@ -18,8 +18,16 @@ the single game experience. The existing Workspaces and Games section remain sep
 
 The server holds up to 30 host-created questions per session and validates their
 four choices, answer index and text length. The question bank currently contains
-**61 original questions across 30 topics**, not 10,000 per topic. Do not advertise
-10,000 until that many genuinely distinct, reviewed questions exist.
+**211 questions across 30 topics**: the 61 existing questions plus 150 newly written,
+conceptually distinct questions (five new questions per topic). It does **not** contain
+10,000 per topic. Each question has a separate prompt, four distinct options, one
+correct answer, and an explanation. The regression tests reject duplicate IDs,
+exact or numerical-variation prompts, invalid answers and missing topic coverage.
+
+The 10,000-per-topic target is 300,000 questions. Building this responsibly
+requires a reviewed source corpus, copyright checks, subject review and
+near-duplicate screening. Never generate number-swapped clones or advertise
+the target as complete until those checks are done.
 
 ## No D1, SQL migrations, or external server
 
@@ -99,3 +107,11 @@ pnpm build
 Cloudflare Worker deployment is separate from the Vite build. Test the Worker
 after deploying its Service Binding. A local production build alone is not
 proof that multiplayer rooms work.
+
+## Current question bank quality and growth
+
+- `src/learning/questionBankExtra.ts` holds 150 new manually authored questions, five per topic.
+- `src/learning/questionBank.test.ts` checks ID uniqueness, normalized prompts, answer choices, explanations, topic coverage and question rotation.
+- `src/learning/arenaRules.ts` uses a full-cycle question index so every question in a selected topic bank appears before repetition.
+- The test detects exact duplicates and simple numerical variants, not all semantic paraphrases. Editors must still review the science and wording before release.
+- For 10,000 unique questions per topic, first create a licensed, reviewed source bank and arrange topic-based static chunks. Do not bundle 300,000 questions into the initial application JavaScript.
