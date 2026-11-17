@@ -303,6 +303,6 @@ export default {
     const headers = new Headers(request.headers);
     headers.set('Content-Type', 'application/json');
     const stub = env.ROOMS.get(env.ROOMS.idFromName('pico-arena:' + code));
-    return stub.fetch(new Request(request, { headers, body: JSON.stringify(data) }));
+    return stub.fetch(new Request(request.url, { method: 'POST', headers, body: JSON.stringify(data) }));
   },
 };
