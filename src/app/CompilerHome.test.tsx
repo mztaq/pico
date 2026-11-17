@@ -211,7 +211,7 @@ it('opens Binary Lab from its home section and updates every number view',async(
 it('shows the Logic Sim workspace without a personal footer',async()=>{
   await choose('Logic Sim');
   expect(container.querySelector('.logic-app')).not.toBeNull();
-  expect(container.querySelector('footer.pico-app-footer')).not.toBeNull();
+  expect(container.querySelector('footer.pico-app-footer')).toBeNull();
 });
 it('shows the updated Logic Sim editor controls and shared theme picker',async()=>{
   await choose('Logic Sim');
