@@ -309,3 +309,6 @@
 .suite-flow-branch .suite-flow-node { min-width: 0; width: auto; max-width: 95%; padding: 7px 5px; font-size: 10px; }
 .suite-flow-empty, .suite-flow-loop { font: 11px/1.6 var(--ds-font-code); color: var(--ds-muted); text-align: center; display: block; }
 .suite-flow-loop { margin-top: 8px; color: var(--accent); }
+
+.suite-review-topic { padding: 2px 0; border: 0; background: transparent; color: var(--accent); font-weight: 700; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.suite-review-topic:hover { color: var(--ds-text); }
