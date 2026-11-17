@@ -23,7 +23,6 @@ const byKind = [
 ] as const;
 
 type Point = { x:number;y:number };
-const U = (v:number) => Math.round(v*100)/100;
 function rounded(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,r:number){
   const radius=Math.min(r,w/2,h/2);
   ctx.beginPath();
