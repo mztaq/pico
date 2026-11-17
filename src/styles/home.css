@@ -393,3 +393,51 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 }
 
 .pico-home .home-traffic-preview .home-traffic-packet{fill:var(--accent);stroke:none}
+
+
+/* Centred Pico identity with two informative home previews. */
+.pico-home .home-hero { display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center; gap: 0; margin: 0 0 30px; }
+.pico-home .home-brand { font-size: clamp(40px, 4.2vw, 54px); gap: 11px; }
+.pico-home .home-brand img { width: clamp(42px, 4vw, 54px); height: clamp(42px, 4vw, 54px); }
+.pico-home .home-inner--entry { padding-top: 105px; min-height: 100dvh; }
+.pico-home .home-entry { max-width: 1120px; margin: auto; align-items: stretch; gap: 16px; padding: 14px 0 28px; }
+.pico-home .home-entry-card { min-height: 370px; padding: 25px; gap: 17px; border-radius: 16px; }
+.pico-home .home-entry-head { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+.pico-home .home-entry-arrow { position: static; flex-shrink: 0; }
+.pico-home .home-entry-preview { display: flex; flex-direction: column; width: 100%; min-height: 125px;
+  margin-top: 0; padding: 16px; border: 1px solid var(--ds-line); border-radius: 11px;
+  background: var(--bg); overflow: hidden; }
+.pico-home .home-entry-preview--learn { gap: 11px; }
+.pico-home .home-entry-preview-prompt { font-size: 13px; font-weight: 680; color: var(--ds-text); }
+.pico-home .home-entry-preview-prompt b { color: var(--accent); margin-right: 7px; }
+.pico-home .home-entry-preview-choices { display: flex; gap: 7px; }
+.pico-home .home-entry-preview-choices i { padding: 7px 12px; border: 1px solid var(--ds-line-strong);
+  border-radius: 7px; color: var(--ds-muted); font-size: 11px; font-style: normal; }
+.pico-home .home-entry-preview-choices .is-correct { border-color: var(--accent); color: var(--accent); background: var(--ds-accent-soft); }
+.pico-home .home-entry-preview-choices i span { margin-left: 8px; }
+.pico-home .home-entry-preview-network { display: flex; gap: 5px; margin-top: auto; }
+.pico-home .home-entry-preview-network i { flex: 1; height: 6px; background: var(--ds-line-strong);
+  border-radius: 2px; }
+.pico-home .home-entry-preview-network i.active { background: var(--accent); }
+.pico-home .home-entry-preview-network i.rival { background: var(--ds-muted); }
+.pico-home .home-entry-preview--code { gap: 6px; padding: 11px 15px; font: 12px/1.45 var(--ds-font-code); color: var(--ds-text); }
+.pico-home .home-entry-window-controls { display: flex; gap: 4px; margin-bottom: 2px; }
+.pico-home .home-entry-window-controls i { width: 6px; height: 6px; background: var(--ds-muted); border-radius: 50%; opacity: .7; }
+.pico-home .home-entry-code-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pico-home .home-entry-code-line em { color: var(--accent); font-weight: 720; font-style: normal; }
+.pico-home .home-entry-code-line b { color: var(--ds-muted); }
+.pico-home .home-entry-code-line strong { color: var(--accent); }
+.pico-home .home-entry-code-result { display: flex; align-items: center; gap: 9px; margin-top: 3px;
+  padding-top: 7px; border-top: 1px solid var(--ds-line); color: var(--ds-muted); font-size: 11px; }
+.pico-home .home-entry-code-result b { color: var(--ds-text); }
+.pico-home .home-workspaces-heading { margin-top: 0; }
+.pico-home .home-inner:not(.home-inner--entry) .home-hero { margin-bottom: 35px; }
+@media (max-width: 640px) {
+  .pico-home .home-entry-card { min-height: 300px; padding: 20px; gap: 12px; }
+  .pico-home .home-entry-preview { min-height: 110px; }
+  .pico-home .home-brand { font-size: 39px; }
+  .pico-home .home-inner--entry { padding-top: 85px; }
+  .pico-home .home-entry { padding: 10px 0 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .pico-home .home-entry-card { transition: none; } }
