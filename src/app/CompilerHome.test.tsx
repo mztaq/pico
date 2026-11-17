@@ -43,10 +43,12 @@ beforeEach(async()=>{
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
 it('opens on a themed home screen with all workspace choices',()=>{
   expect(document.title).toBe('Pico | Home');
-  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Learn and practise');
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
+  expect(container.querySelectorAll('.home-learning-card')).toHaveLength(6);
+  expect(container.querySelector('.home-workspaces h2')?.textContent).toBe('Workspaces');
   expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Traffic Storm','Binary Lab']);
   expect(container.querySelector('footer')).toBeNull();
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/team"]')?.textContent).toBe('Pico Team');
@@ -81,7 +83,7 @@ it('opens the Games library from home and returns to the workspace chooser', asy
   expect(container.querySelector('.pico-games-card h3')?.textContent).toBe('Blackout Protocol');
   await click(container.querySelector<HTMLElement>('.pico-games-back')!);
   expect(window.location.pathname).toBe('/app');
-  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Learn and practise');
 });
 it('handles a direct /app/games URL and browser navigation',async()=>{
   await act(async()=>{
@@ -95,7 +97,7 @@ it('handles a direct /app/games URL and browser navigation',async()=>{
     window.dispatchEvent(new PopStateEvent('popstate'));
   });
   expect(container.querySelector('.pico-games')).toBeNull();
-  expect(container.querySelector('.home-hero h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelector('.home-learning h1')?.textContent).toBe('Learn and practise');
 });
 it('uses the Pico logo to return to Workspaces from Games and the compiler',async()=>{
   await click(container.querySelector<HTMLElement>('a.home-games-link[href="/app/games"]')!);
@@ -106,7 +108,7 @@ it('uses the Pico logo to return to Workspaces from Games and the compiler',asyn
   expect(window.location.pathname).toBe('/app/python');
   await click(container.querySelector<HTMLElement>('.pico-brand-home[aria-label="Pico, back to Workspaces"]')!);
   expect(window.location.pathname).toBe('/app');
-  expect(container.querySelector('.home-hero h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelector('.home-learning h1')?.textContent).toBe('Learn and practise');
 });
 it('shows three matching concept developer cards and prominent co-founders',async()=>{
   await act(async()=>{
