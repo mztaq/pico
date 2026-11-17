@@ -1,6 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
-  ARENA_TILES, arenaPool, arenaUnits, answerReward, modeNodeCost,
+  arenaPool, arenaUnits, answerReward,
   questionAt, questionIndex, scoreFor, visibleQuestion,
 } from '../../../src/learning/arenaRules.ts';
 import {
@@ -86,7 +86,7 @@ function boardScore(room, player) {
 function simulatePlayers(room) {
   if (room.state !== 'playing' && room.state !== 'finished') return;
   const deadline = room.startsAt + room.duration * 1000;
-  const until = Math.min(now(),deadline);
+  const until = Math.min(now(), deadline, room.endedAt ?? Infinity);
   for (const player of room.players.values()) {
     if (player.defense) player.defense = advanceDefense(player.defense,until);
   }
@@ -152,11 +152,10 @@ export class ArenaRoom extends DurableObject {
             explanation: (question.explanation || 'Check the correct answer above.').trim(),
           })) : null,
         hostHash: await sha(hostToken),
-        seed: random(100000), state: 'lobby', startsAt: null,
+        seed: random(100000), state: 'lobby', startsAt: null, endedAt: null,
         duration: config.duration,
         expiresAt: now() + 2 * 60 * 60 * 1000,
         players: new Map(),
-        nodes: Array.from({ length: ARENA_TILES }, (_, pos) => ({ pos, ownerId: null, level: 1 })),
       };
       return reply({ code, token: hostToken }, 201);
     }
@@ -230,6 +229,8 @@ export class ArenaRoom extends DurableObject {
     }
     if (command === 'close') {
       if (user.role !== 'host') return fail(403, 'Only the host can end the match.');
+      simulatePlayers(room);
+      room.endedAt = now();
       room.state = 'finished';
       return reply({ ok: true });
     }
