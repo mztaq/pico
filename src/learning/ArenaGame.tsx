@@ -4,7 +4,7 @@ import {
   RefreshCw, Shield, Swords, Trophy, Users, Volume2, VolumeX, Zap,
 } from 'lucide-react';
 import {
-  ARENA_TILES, arenaPool, arenaUnits, answerReward, nodeCost,
+  ARENA_TILES, arenaPool, arenaUnits, answerReward, modeNodeCost,
   questionAt, remainingSeconds, scoreFor, timeLabel, visibleQuestion,
   type ArenaAction, type ArenaNode, type ArenaPlayer, type ArenaQuestion,
 } from './arenaRules';
@@ -133,6 +133,19 @@ function SpeedTrack({ players, mode }: { players: ArenaPlayer[]; mode: Mode }) {
         <strong>{player.score.toLocaleString()}</strong>
       </div>;
     }) : <p>Waiting for players…</p>}
+  </div>;
+}
+
+function ClassicSummary({ players }: { players: ArenaPlayer[] }) {
+  const sorted = [...players].sort((a, b) => b.score - a.score);
+  return <div className="arena-classic-summary">
+    <Trophy size={34} aria-hidden="true"/>
+    <h4>Classic Quiz</h4>
+    <p>Answer questions. Earn points. Highest score wins. No upgrades or power-ups.</p>
+    <div className="arena-classic-count">
+      <span>{players.reduce((sum, player) => sum + player.answered, 0)} answers submitted</span>
+      <span>{sorted[0] ? sorted[0].score.toLocaleString() + ' leading score' : 'Waiting for answers'}</span>
+    </div>
   </div>;
 }
 
@@ -421,7 +434,7 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
   }
   async function purchase(kind: ArenaAction, node?: ArenaNode) {
     if (!mine || ended || busy || !isTerritory(gameMode)) return;
-    const cost = kind === 'amplify' ? 70 + mine.amplifier * 45 : nodeCost(kind, node);
+    const cost = kind === 'amplify' ? 70 + mine.amplifier * 45 : modeNodeCost(gameMode, kind, node);
     if (cost === null || cost === undefined) { setNotice('Maximum upgrade level.'); return; }
     if (mine.charge < cost) { setNotice('Need ' + cost + ' charge. Correct answers earn charge.'); return; }
     setNotice('');
@@ -605,11 +618,12 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
         {isTerritory(gameMode)
           ? <NetworkBoard nodes={nodes} players={players} viewerId={myId} mode={gameMode} onSelect={selectNode}
             disabled={busy || !mine}/>
-          : <SpeedTrack players={players} mode={gameMode}/>}
+          : gameMode === 'sprint' ? <SpeedTrack players={players} mode={gameMode}/>
+            : <ClassicSummary players={players}/>}
         {isTerritory(gameMode) && <div className="arena-field-guide">
-          <span>Unclaimed 35 <Zap size={12}/></span>
-          <span>Steal 75+ <Zap size={12}/></span>
-          <span>Reinforce 65+ <Zap size={12}/></span>
+          <span>Unclaimed {gameMode === 'hacker' ? 25 : 35} <Zap size={12}/></span>
+          <span>Steal {gameMode === 'hacker' ? 55 : 75}+ <Zap size={12}/></span>
+          <span>Reinforce {gameMode === 'hacker' ? 50 : 65}+ <Zap size={12}/></span>
         </div>}
       </div>
       <div className="arena-play-aside">
