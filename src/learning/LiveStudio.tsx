@@ -4,6 +4,7 @@ import { compile } from '../language';
 import type { ExecutionJob } from '../runtime/runner';
 import type { RunResult } from '../runtime/interpreter';
 import { runCode } from './execute';
+import { FlowchartPreview } from './FlowchartPreview';
 
 const samples = [
   {
@@ -47,14 +48,15 @@ export function LiveStudio() {
   const [error, setError] = useState('');
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(0);
-  const [view, setView] = useState<'trace' | 'path'>('trace');
+  const [view, setView] = useState<'trace' | 'flow'>('trace');
   const job = useRef<ExecutionJob | null>(null);
   const sourceLines = code.split('\n');
 
-  const parsed = useMemo(() => {
-    try { compile(code); return ''; }
-    catch (reason) { return reason instanceof Error ? reason.message : 'Invalid pseudocode'; }
+  const analysis = useMemo(() => {
+    try { return { diagnostic: '', program: compile(code).ast }; }
+    catch (reason) { return { diagnostic: reason instanceof Error ? reason.message : 'Invalid pseudocode', program: null }; }
   }, [code]);
+  const parsed = analysis.diagnostic;
 
   useEffect(() => {
     try { localStorage.setItem(key, code.slice(0, 12000)); } catch { /* storage optional */ }
@@ -76,8 +78,9 @@ export function LiveStudio() {
     if (parsed) { setError(parsed); return; }
     if (code.length > 12000) { setError('Limit code to 12,000 characters.'); return; }
     setRunning(true);
+    let execution: ExecutionJob | null = null;
     try {
-      const execution = runCode(code, inputs.split(/\r?\n/).filter(line => line.length > 0).slice(0, 32));
+      execution = runCode(code, inputs.split(/\r?\n/).filter(line => line.length > 0).slice(0, 32));
       job.current = execution;
       const [reply] = await execution.promise;
       if (job.current !== execution) return;
@@ -89,15 +92,16 @@ export function LiveStudio() {
       if (reply?.error) setError(reply.error.message);
       if (!reply?.error && !reply?.result) setError('No result returned.');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to run pseudocode.');
+      if (execution === null || job.current === execution)
+        setError(reason instanceof Error ? reason.message : 'Unable to run pseudocode.');
     } finally {
-      if (job.current === null) setRunning(false);
+      if (job.current === execution) { job.current = null; setRunning(false); }
+      if (execution === null) setRunning(false);
     }
   }
 
   const trace = result?.trace ?? [];
   const active = trace[Math.min(step, trace.length - 1)];
-  const executedLines = trace.slice(0, 100);
   const lineText = (line: number) => sourceLines[line - 1]?.trim() || 'End';
 
   function selectSample(next: string) {
@@ -136,19 +140,21 @@ export function LiveStudio() {
       </section>
       <section className="suite-surface suite-studio-trace" aria-label="Program execution">
         <div className="suite-section-header">
-          <h2>{view === 'trace' ? 'Trace table' : 'Execution path'}</h2>
+          <h2>{view === 'trace' ? 'Trace table' : 'Flowchart'}</h2>
           <div className="suite-switch" role="group" aria-label="Execution view">
             <button type="button" aria-pressed={view === 'trace'} onClick={() => setView('trace')}>Trace</button>
-            <button type="button" aria-pressed={view === 'path'} onClick={() => setView('path')}><GitBranch size={14} /> Path</button>
+            <button type="button" aria-pressed={view === 'flow'} onClick={() => setView('flow')}><GitBranch size={14} /> Flowchart</button>
           </div>
         </div>
-        {trace.length ? <>
-          <div className="suite-step-controls">
-            <button type="button" aria-label="Previous execution step" disabled={step === 0} onClick={() => setStep(current => current - 1)}><ArrowLeft size={16} /></button>
-            <span>Step {step + 1} / {trace.length} · Line {active?.line ?? '—'}</span>
-            <button type="button" aria-label="Next execution step" disabled={step >= trace.length - 1} onClick={() => setStep(current => current + 1)}><ArrowRight size={16} /></button>
-          </div>
-          {view === 'trace' ? <>
+        {view === 'flow' ? (analysis.program
+          ? <FlowchartPreview program={analysis.program} lines={sourceLines} activeLine={active?.line} />
+          : <p className="suite-error">Correct the pseudocode to display its flowchart.</p>)
+          : trace.length ? <>
+            <div className="suite-step-controls">
+              <button type="button" aria-label="Previous execution step" disabled={step === 0} onClick={() => setStep(current => current - 1)}><ArrowLeft size={16} /></button>
+              <span>Step {step + 1} / {trace.length} · Line {active?.line ?? '—'}</span>
+              <button type="button" aria-label="Next execution step" disabled={step >= trace.length - 1} onClick={() => setStep(current => current + 1)}><ArrowRight size={16} /></button>
+            </div>
             <div className="suite-trace-scroll">
               <table className="suite-trace-table">
                 <thead><tr><th>Variable</th><th>Value at step {step + 1}</th></tr></thead>
@@ -159,15 +165,7 @@ export function LiveStudio() {
               </table>
             </div>
             <p className="suite-hint">Line {active?.line}: {lineText(active?.line ?? 0)}</p>
-          </> : <div className="suite-execution-path" aria-label="The sequence of statements executed">
-            {executedLines.map((entry, index) => <button key={index} type="button"
-              className={'suite-path-node' + (index === step ? ' active' : '')}
-              onClick={() => setStep(index)}>
-              <span>{entry.line}</span><code>{lineText(entry.line)}</code>
-            </button>)}
-            {trace.length > executedLines.length && <p className="suite-hint">Showing first {executedLines.length} steps.</p>}
-          </div>}
-        </> : <p className="suite-hint">Run a program to inspect variables and follow its execution.</p>}
+          </> : <p className="suite-hint">Run a program to inspect its variables step by step.</p>}
       </section>
     </div>
   </section>;
