@@ -21,7 +21,10 @@ it('shows complete notes, an example and an interactive model without a multi-st
   await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
   expect(host.textContent).not.toContain('Study notes, made practical');
   expect(host.textContent).not.toContain('Learn a concept. Try it in Pico.');
-  expect(host.textContent).toContain('Computer Science notes');
+  expect(host.textContent).toContain('Live Studio');
+  expect(host.textContent).toContain('Classroom');
+  expect(host.textContent).toContain('Arcade');
+  expect(host.querySelectorAll('.learning-sections button')).toHaveLength(6);
   expect(host.textContent).toContain('Key points');
   expect(host.textContent).toContain('Worked example');
   expect(host.textContent).toContain('Interactive example');
