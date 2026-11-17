@@ -15,16 +15,22 @@ function button(label: string) {
   return found;
 }
 
-it('shows complete notes, an example and an interactive model without a multi-step wizard', async () => {
+it('shows a focused tool chooser then full notes without a tab bar', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  window.history.replaceState(null, '', '/app/learn');
   document.body.append(host);
   await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
+  expect(host.querySelectorAll('.learning-tool-card')).toHaveLength(6);
+  expect(host.querySelector('.learning-catalogue')).toBeNull();
+  await act(async () => button('Notes').click());
+  expect(host.querySelector('.learning-tool-grid')).toBeNull();
+  expect(window.location.search).toBe('?section=notes');
   expect(host.textContent).not.toContain('Study notes, made practical');
   expect(host.textContent).not.toContain('Learn a concept. Try it in Pico.');
   expect(host.textContent).toContain('Live Studio');
   expect(host.textContent).toContain('Classroom');
   expect(host.textContent).toContain('Arcade');
-  expect(host.querySelectorAll('.learning-sections button')).toHaveLength(6);
+  expect(host.querySelectorAll('.learning-sections button')).toHaveLength(0);
   expect(host.textContent).toContain('Key points');
   expect(host.textContent).toContain('Worked example');
   expect(host.textContent).toContain('Interactive example');
@@ -71,6 +77,21 @@ it('opens each homepage destination through a shareable Learn URL', () => {
     expect(sectionFromSearch('?ref=home&section=' + section)).toBe(section);
   }
   expect(sectionFromSearch('?section=notes')).toBe('notes');
-  expect(sectionFromSearch('?section=unknown')).toBe('notes');
-  expect(sectionFromSearch('')).toBe('notes');
+  expect(sectionFromSearch('?section=unknown')).toBeNull();
+  expect(sectionFromSearch('')).toBeNull();
+});
+
+it('returns from an individual tool to the learning chooser', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  window.history.replaceState(null, '', '/app/learn');
+  document.body.append(host);
+  await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
+  await act(async () => button('Challenges').click());
+  expect(window.location.search).toBe('?section=challenges');
+  expect(host.querySelector('.learning-tool-grid')).toBeNull();
+  expect(host.querySelector('.learning-feature')).not.toBeNull();
+  await act(async () => button('All tools').click());
+  expect(window.location.pathname + window.location.search).toBe('/app/learn');
+  expect(host.querySelectorAll('.learning-tool-card')).toHaveLength(6);
+  expect(host.querySelector('.learning-feature')).toBeNull();
 });
