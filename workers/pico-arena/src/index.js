@@ -186,7 +186,7 @@ export class ArenaRoom extends DurableObject {
         duration: room.duration, startsAt: room.startsAt,
         expiresAt: room.expiresAt / 1000,
         players: activePlayers(room),
-        defense: player ? player.defense : null,
+        defense: player ? player.defense : (room.players.values().next().value?.defense ?? null),
         question: player && (!player.defense || player.defense.health>0) && roundState(room) === 'playing'
           ? projectedQuestion(currentQuestion(room, player)) : null,
       });
