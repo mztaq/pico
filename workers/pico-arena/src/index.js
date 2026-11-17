@@ -3,6 +3,10 @@ import {
   ARENA_TILES, arenaPool, arenaUnits, answerReward, modeNodeCost,
   questionAt, questionIndex, scoreFor, visibleQuestion,
 } from '../../../src/learning/arenaRules.ts';
+import {
+  advanceDefense, defenseScore, defenseStart, defenseSummary,
+  placeTower, upgradeTower, TOWERS,
+} from '../../../src/learning/towerDefense.ts';
 
 const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const modes = ['classic', 'circuit', 'hacker', 'sprint'];
@@ -73,9 +77,19 @@ function currentQuestion(room, player) {
 function projectedQuestion(question) {
   return visibleQuestion(question);
 }
-function boardScore(player, nodes) {
-  const levels = nodes.filter(node => node.ownerId === player.id).map(node => node.level);
-  return scoreFor(levels, player.correct, player.amplifier) + player.baseScore;
+function boardScore(room, player) {
+  if (player.defense && (room.settings.mode === 'circuit' || room.settings.mode === 'hacker')) {
+    return player.baseScore + defenseScore(player.defense);
+  }
+  return player.baseScore + scoreFor([],player.correct,player.amplifier);
+}
+function simulatePlayers(room) {
+  if (room.state !== 'playing' && room.state !== 'finished') return;
+  const deadline = room.startsAt + room.duration * 1000;
+  const until = Math.min(now(),deadline);
+  for (const player of room.players.values()) {
+    if (player.defense) player.defense = advanceDefense(player.defense,until);
+  }
 }
 function generatedName(room) {
   const used = new Set([...room.players.values()].map(player => player.nickname.toLowerCase()));
@@ -93,8 +107,9 @@ function activePlayers(room) {
   return [...room.players.values()].map((player, index) => ({
     id: player.id, nickname: player.nickname, charge: player.charge,
     streak: player.streak, amplifier: player.amplifier, correct: player.correct,
-    answered: player.answered, score: boardScore(player, room.nodes),
-    owned: room.nodes.filter(node => node.ownerId === player.id).length,
+    answered: player.answered, score: boardScore(room,player),
+    owned: player.defense ? player.defense.towers.length : 0,
+    defense: player.defense ? defenseSummary(player.defense) : null,
     color: index % 8,
   })).sort((a, b) => b.score - a.score || b.correct - a.correct || a.nickname.localeCompare(b.nickname));
 }
@@ -160,6 +175,7 @@ export class ArenaRoom extends DurableObject {
       if (!user) return fail(401, 'Invalid room session.');
     }
     if (command === 'room') {
+      simulatePlayers(room);
       const player = user.player;
       return reply({
         code: room.code, state: roundState(room), role: user.role,
@@ -169,8 +185,9 @@ export class ArenaRoom extends DurableObject {
         questionSource: room.settings.questionSource, unit: room.settings.unit,
         duration: room.duration, startsAt: room.startsAt,
         expiresAt: room.expiresAt / 1000,
-        players: activePlayers(room), nodes: room.nodes,
-        question: player && roundState(room) === 'playing'
+        players: activePlayers(room),
+        defense: player ? player.defense : null,
+        question: player && (!player.defense || player.defense.health>0) && roundState(room) === 'playing'
           ? projectedQuestion(currentQuestion(room, player)) : null,
       });
     }
@@ -193,7 +210,7 @@ export class ArenaRoom extends DurableObject {
       room.players.set(id, {
         id, nickname, tokenHash: await sha(playerToken),
         charge: 0, streak: 0, amplifier: 0, correct: 0,
-        answered: 0, baseScore: 0, cursor: 0, lastAnswerAt: 0,
+        answered: 0, baseScore: 0, cursor: 0, lastAnswerAt: 0, defense: null,
       });
       return reply({ code: room.code, token: playerToken, nickname }, 201);
     }
@@ -203,6 +220,12 @@ export class ArenaRoom extends DurableObject {
       if (room.players.size < room.settings.minPlayers)
         return fail(409, 'Need at least ' + room.settings.minPlayers + ' players.');
       room.state = 'playing'; room.startsAt = now();
+      for (const player of room.players.values()) {
+        if (room.settings.mode === 'circuit' || room.settings.mode === 'hacker') {
+          player.defense = defenseStart(room.startsAt);
+          player.charge = 100;
+        }
+      }
       return reply({ ok: true });
     }
     if (command === 'close') {
@@ -213,6 +236,10 @@ export class ArenaRoom extends DurableObject {
     if (roundState(room) !== 'playing') return fail(409, 'Round is not active.');
     if (user.role !== 'player') return fail(403, 'Join as a player.');
     const player = user.player;
+    if (player.defense) {
+      player.defense = advanceDefense(player.defense,Math.min(now(),room.startsAt+room.duration*1000));
+      if (player.defense.health <= 0) return fail(409,'Your core is breached. Match over.');
+    }
     if (command === 'answer') {
       const choice = body.choice;
       if (!Number.isInteger(choice) || choice < 0 || choice > 3) return fail(400, 'Choose an answer.');
@@ -248,17 +275,25 @@ export class ArenaRoom extends DurableObject {
         player.amplifier++;
         return reply({ ok: true, cost });
       }
-      if (kind !== 'capture' && kind !== 'fortify') return fail(400, 'Invalid action.');
-      if (!Number.isInteger(body.pos) || body.pos < 0 || body.pos >= ARENA_TILES) return fail(400, 'Invalid node.');
-      const node = room.nodes[body.pos];
-      if (kind === 'capture' && node.ownerId === player.id) return fail(409, 'Already yours.');
-      if (kind === 'fortify' && node.ownerId !== player.id) return fail(403, 'Own the node first.');
-      const cost = modeNodeCost(room.settings.mode, kind, node);
-      if (cost === null || player.charge < cost) return fail(409, 'Insufficient charge or maxed node.');
-      player.charge -= cost;
-      node.ownerId = player.id;
-      node.level = kind === 'capture' ? 1 : Math.min(3, node.level + 1);
-      return reply({ ok: true, cost });
+      if (kind === 'towerBuild') {
+        if (!player.defense) return fail(409,'Tower defense is inactive.');
+        const towerKind = body.tower;
+        if (!Object.prototype.hasOwnProperty.call(TOWERS,towerKind)) return fail(400,'Invalid tower type.');
+        const move = placeTower(player.defense,body.x,body.y,towerKind);
+        if (!move) return fail(409,'Choose an empty land tile.');
+        if (player.charge < move.cost) return fail(409,'Not enough charge.');
+        player.charge -= move.cost;player.defense = move.state;
+        return reply({ok:true,cost:move.cost});
+      }
+      if (kind === 'towerUpgrade') {
+        if (!player.defense) return fail(409,'Tower defense is inactive.');
+        const move = upgradeTower(player.defense,body.x,body.y);
+        if (!move) return fail(409,'Tower missing or already at maximum level.');
+        if (player.charge < move.cost) return fail(409,'Not enough charge.');
+        player.charge -= move.cost;player.defense = move.state;
+        return reply({ok:true,cost:move.cost});
+      }
+      return fail(400,'Unknown purchase.');
     }
     return fail(404, 'Unknown action.');
   }
