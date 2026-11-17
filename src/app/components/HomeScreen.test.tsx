@@ -3,22 +3,27 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { HomeScreen } from './HomeScreen';
 
-describe('Pico homepage learning navigation', () => {
-  it('shows six direct learning destinations rather than hiding them in one Learn link', () => {
+describe('Pico homepage navigation', () => {
+  it('starts with only Learn and practise or Workspaces', () => {
+    window.history.replaceState(null, '', '/app');
     const html = renderToStaticMarkup(<HomeScreen onChoose={() => {}} />);
-    const links = ['studio', 'challenges', 'notes', 'exam', 'classroom', 'arcade'];
-    for (const section of links) {
-      expect(html).toContain('/app/learn?section=' + section);
-    }
     const markup = document.createElement('div');
     markup.innerHTML = html;
-    expect(markup.querySelectorAll('a.home-learning-card')).toHaveLength(links.length);
-    expect(html).toContain('Live Studio');
-    expect(html).toContain('Exam practice');
-    expect(html).toContain('Retro Arcade');
-    expect(html).toContain('Pseudocode Compiler');
-    expect(html).toContain('CPU Studio');
-    expect(html).not.toContain('New to a topic?');
-    expect(html).not.toContain('Choose your workspace');
+    expect(markup.querySelectorAll('.home-entry-card')).toHaveLength(2);
+    expect(markup.querySelector('.home-entry')?.textContent).toContain('Learn and practise');
+    expect(markup.querySelector('.home-entry')?.textContent).toContain('Workspaces');
+    expect(markup.querySelector('.compiler-choices')).toBeNull();
+    expect(markup.querySelector('.home-learning-card')).toBeNull();
+  });
+
+  it('shows all existing workspace cards only after the Workspaces choice', () => {
+    window.history.replaceState(null, '', '/app?view=workspaces');
+    const markup = document.createElement('div');
+    markup.innerHTML = renderToStaticMarkup(<HomeScreen onChoose={() => {}} />);
+    expect(markup.querySelector('.home-entry')).toBeNull();
+    expect(markup.querySelectorAll('.compiler-choice')).toHaveLength(7);
+    expect(markup.querySelector('.home-workspaces-heading h1')?.textContent).toBe('Workspaces');
+    expect(markup.querySelector('.home-section-back')).not.toBeNull();
+    window.history.replaceState(null, '', '/app');
   });
 });
