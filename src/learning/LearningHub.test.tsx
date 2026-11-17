@@ -36,7 +36,7 @@ it('shows a focused tool chooser then full notes without a tab bar', async () =>
   expect(host.textContent).toContain('Worked example');
   expect(host.textContent).toContain('Interactive example');
   expect(host.querySelector('.learning-note-list')?.querySelectorAll('li').length).toBeGreaterThanOrEqual(3);
-  expect(host.textContent).toContain('Practice questions (2)');
+  expect(host.textContent).toContain('Practice questions (7)');
 
   await act(async () => button('Text, sound and images').click());
   expect(host.querySelector('.learning-sound-chart')).not.toBeNull();
@@ -44,8 +44,8 @@ it('shows a focused tool chooser then full notes without a tab bar', async () =>
   expect(host.textContent).toContain('8 × 3 = 24 bits');
   expect(host.textContent).toContain('Try it yourself');
 
-  await act(async () => button('Practice questions (2)').click());
-  expect(host.textContent).toContain('Question 1 of 2');
+  await act(async () => button('Practice questions (7)').click());
+  expect(host.textContent).toContain('Question 1 of 7');
   await act(async () => button('Exit practice').click());
   expect(host.textContent).toContain('Worked example');
 });
