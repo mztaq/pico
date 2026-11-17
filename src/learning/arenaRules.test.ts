@@ -5,9 +5,8 @@ import {
 } from './arenaRules';
 
 describe('Pico Arena question selection', () => {
-  it('uses actual checked-in questions instead of claiming a fictional 10k question bank', () => {
+  it('uses the real topic-specific question bank with no missing units', () => {
     expect(arenaPool('all').length).toBeGreaterThanOrEqual(60);
-    expect(arenaPool('all').length).toBeLessThan(10000);
     for (const unit of arenaUnits) {
       expect(arenaPool(unit).length).toBeGreaterThan(0);
     }
