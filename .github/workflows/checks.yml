@@ -17,9 +17,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm build
-      - name: Browser smoke-test Pico Arena
+      - name: Browser smoke-test production Pico Arena bundle
         run: |
-          pnpm dev -- --host 127.0.0.1 > /tmp/pico-vite.log 2>&1 &
+          pnpm preview -- --host 127.0.0.1 > /tmp/pico-vite-preview.log 2>&1 &
           VITE_PID=$!
           trap 'kill $VITE_PID 2>/dev/null || true' EXIT
           node scripts/smoke-pico-arena.mjs
