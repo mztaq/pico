@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, Gamepad2, RotateCcw, Search, WifiOff } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, RotateCcw, Search, WifiOff } from 'lucide-react';
 import type { PicoWorkspace } from '../app/workspace-deeplink';
 import { questions, topics, type Question, type Topic } from './content';
 import { readProgress, recordAnswer, saveProgress } from './progress';
@@ -10,6 +10,8 @@ import { LearningVisual, visualizedTopics } from './LearningVisuals';
 import { topicNotes } from './notes';
 import './learning.css';
 import './arena.css';
+import './learn-landing.css';
+import { LearnLanding, type LearningGameMode } from './LearnLanding';
 import { PicoAppFooter } from '../app/components/PicoAppFooter';
 import { BugReportDialog } from '../app/components/BugReportDialog';
 import { BugReportNotice } from '../app/components/BugReportNotice';
@@ -58,6 +60,14 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
     const url = new URL(window.location.href);
     if (next === null) url.searchParams.delete('section');
     else url.searchParams.set('section', next);
+    if (next !== 'arena') url.searchParams.delete('mode');
+    window.history.pushState(window.history.state, '', url.pathname + url.search + url.hash);
+  }
+  function openArena(mode: LearningGameMode) {
+    setSection('arena');
+    const url = new URL(window.location.href);
+    url.searchParams.set('section', 'arena');
+    url.searchParams.set('mode', mode);
     window.history.pushState(window.history.state, '', url.pathname + url.search + url.hash);
   }
   const [reportOpen, setReportOpen] = useState(false);
@@ -122,23 +132,7 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
         <ArrowLeft size={17} aria-hidden="true" /> {section === null ? 'Home' : 'All tools'}
       </button>
     </header>
-    {section === null ? <div className="learning-tool-grid" aria-label="Choose a learning tool">
-      <button type="button" className="learning-tool-card learning-tool-card--notes" onClick={() => chooseSection('notes')}>
-        <span className="learning-tool-heading"><span className="learning-tool-icon"><BookOpen size={24}/></span><ArrowRight size={19}/></span>
-        <span className="learning-tool-preview learning-tool-preview--notes" aria-hidden="true">
-          <span>0010 1101</span><span className="learning-preview-arrow">→</span><span>45</span>
-          <small>32 + 8 + 4 + 1 = 45</small>
-        </span>
-        <span className="learning-tool-copy"><strong>Notes</strong><span>Computer Science topics, examples and interactive diagrams.</span></span>
-      </button>
-      <button type="button" className="learning-tool-card learning-tool-card--arena" onClick={() => chooseSection('arena')}>
-        <span className="learning-tool-heading"><span className="learning-tool-icon"><Gamepad2 size={24}/></span><ArrowRight size={19}/></span>
-        <span className="learning-tool-preview learning-tool-preview--arena" aria-hidden="true">
-          {Array.from({ length: 20 }, (_, index) => <i key={index} className={index % 6 < 3 ? 'owned' : index % 4 === 0 ? 'rival' : ''}/>)}
-        </span>
-        <span className="learning-tool-copy"><strong>Circuit Clash</strong><span>One competitive game. Solo matches, live classrooms and a 2D network to conquer.</span></span>
-      </button>
-    </div> : section === 'notes' ? <div className="learning-layout">
+    {section === null ? <LearnLanding onNotes={() => chooseSection('notes')} onArena={openArena} /> : section === 'notes' ? <div className="learning-layout">
       <aside className="learning-catalogue" aria-label="Topics">
         <label className="learning-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Search topics</span><input type="search" placeholder="Search topics" value={query} onChange={event => setQuery(event.target.value)} /></label>
         <div className="learning-topic-list">
