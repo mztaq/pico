@@ -1,11 +1,11 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, ArrowRight, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Binary, BookOpen, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
-import { SiteInfoLinks } from './SiteInfo';
+import { PicoAppFooter } from './PicoAppFooter';
 import { SoundButton } from './SoundToggle';
 import { ThemePicker } from './ThemePicker';
 import { BugReportDialog } from './BugReportDialog';
@@ -232,12 +232,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
         </HomeGroup>
       </div>
       </section>}
-      <div className="home-footer-links">
-        <SiteInfoLinks />
-        <button type="button" className="bug-report-trigger" onClick={() => { void openReport(); }}>
-          <Bug size={17} aria-hidden="true" /><span>Report a Bug</span>
-        </button>
-      </div>
+      <PicoAppFooter onReport={() => { void openReport(); }} />
     </div>
     {offlineReportWarning && <div className="pico-offline-backdrop" role="presentation">
       <section className="pico-offline-dialog" role="dialog" aria-modal="true" aria-labelledby="pico-report-offline-title">
