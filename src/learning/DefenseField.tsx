@@ -124,30 +124,57 @@ export function DefenseField({ state, mode, charge, busy, onBuild, onUpgrade, on
           const cell=w/DEFENSE_COLS;
           ctx.setTransform(cell,0,0,cell,0,0);
           const p=palette(canvas),s=gameRef.current, hovered=hoverRef.current;
-          ctx.fillStyle=p.bg;ctx.fillRect(0,0,DEFENSE_COLS,DEFENSE_ROWS);
+          // Original themed overworld. Playfield colours stay distinct from Pico chrome.
+          const dark=getComputedStyle(canvas).colorScheme!=='light';
+          const circuit=mode==='circuit';
+          const grass=dark?['#315746','#37614e','#3c6953']:['#9bd180','#a7d991','#b1dfa0'];
+          const dirt=dark?['#937354','#9f7e58']:['#c89e6d','#d1ad7a'];
+          ctx.fillStyle=circuit?grass[0]:'#172739';
+          ctx.fillRect(0,0,DEFENSE_COLS,DEFENSE_ROWS);
           for(let y=0;y<DEFENSE_ROWS;y++){
             for(let x=0;x<DEFENSE_COLS;x++){
               const isRoad=pathCell(x,y);
-              ctx.fillStyle=isRoad?(mode==='hacker'?'#31364a':'#34344d'):
-                (x+y)%2===0?p.panel:p.bg;
-              rounded(ctx,x+.035,y+.035,.93,.93,.12);ctx.fill();
-              if(isRoad){
-                ctx.strokeStyle=p.border;ctx.lineWidth=.018;ctx.stroke();
-                ctx.globalAlpha=.16;ctx.fillStyle=p.accent;ctx.fillRect(x+.41,y+.45,.18,.10);ctx.globalAlpha=1;
-              }else if((x*13+y*7)%6===0){
-                ctx.globalAlpha=.3;ctx.fillStyle=p.muted;
-                ctx.beginPath();ctx.arc(x+.18,y+.22,.035,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+              if(circuit){
+                ctx.fillStyle=isRoad?dirt[(x+y)%2]!:grass[(x*7+y*5)%3]!;
+                ctx.fillRect(x,y,1,1);
+                if(isRoad){
+                  ctx.strokeStyle=dark?'#694e40':'#ac805c';
+                  ctx.globalAlpha=.35;ctx.lineWidth=.022;
+                  ctx.strokeRect(x+.025,y+.025,.95,.95);ctx.globalAlpha=1;
+                  if((x+y)%3===0){ctx.fillStyle=dark?'#bca084':'#e4c79c';
+                    ctx.beginPath();ctx.arc(x+.23,y+.24,.038,0,Math.PI*2);ctx.fill();}
+                }else if((x*7+y*13)%5===0){
+                  // Tiny flowers and tufts: stable placement costs no RNG or art assets.
+                  ctx.fillStyle=dark?'#5a9665':'#5ba65d';
+                  ctx.fillRect(x+.17,y+.22,.04,.16);ctx.fillRect(x+.23,y+.29,.06,.045);
+                  if((x+y)%2===0){
+                    ctx.fillStyle='#f9e2af';ctx.beginPath();ctx.arc(x+.26,y+.19,.06,0,Math.PI*2);ctx.fill();
+                    ctx.fillStyle='#fff3be';ctx.beginPath();ctx.arc(x+.26,y+.19,.025,0,Math.PI*2);ctx.fill();
+                  }
+                }
+              }else{
+                ctx.fillStyle=(x+y)%2===0?'#193044':'#1b3549';ctx.fillRect(x,y,1,1);
+                ctx.strokeStyle='#336074';ctx.lineWidth=.02;ctx.strokeRect(x+.035,y+.035,.93,.93);
+                if(isRoad){
+                  ctx.fillStyle='#25606f';rounded(ctx,x+.06,y+.06,.88,.88,.1);ctx.fill();
+                  ctx.fillStyle='#79e2d4';ctx.globalAlpha=.35;
+                  ctx.fillRect(x+.45,y+.45,.13,.1);ctx.globalAlpha=1;
+                }else if((x*11+y*3)%4===0){
+                  ctx.fillStyle='#40768a';ctx.fillRect(x+.14,y+.18,.08,.08);
+                  ctx.fillRect(x+.21,y+.27,.045,.045);
+                }
               }
               if(hovered && x===hovered.x&&y===hovered.y&&validPlot(x,y)){
-                ctx.save();ctx.globalAlpha=.19;ctx.fillStyle=p.accent;
-                rounded(ctx,x+.08,y+.08,.84,.84,.13);ctx.fill();ctx.restore();
-                ctx.strokeStyle=p.accent;ctx.lineWidth=.04;rounded(ctx,x+.09,y+.09,.82,.82,.12);ctx.stroke();
+                ctx.save();ctx.globalAlpha=.21;ctx.fillStyle=p.accent;
+                rounded(ctx,x+.06,y+.06,.88,.88,.13);ctx.fill();ctx.restore();
+                ctx.strokeStyle=p.accent;ctx.lineWidth=.048;
+                rounded(ctx,x+.085,y+.085,.83,.83,.11);ctx.stroke();
               }
             }
           }
-          // Continuous winding route visually links the spawn and server.
-          ctx.strokeStyle=mode==='hacker'?'#86b7c8':'#8776b1';ctx.globalAlpha=.43;
-          ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=.19;ctx.setLineDash([.09,.18]);
+          // A readable continuous route connects the entrance and server core.
+          ctx.strokeStyle=circuit?(dark?'#d7b18b':'#f1d1a5'):'#7ad9d7';ctx.globalAlpha=.63;
+          ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=.09;ctx.setLineDash([.09,.24]);
           ctx.beginPath();DEFENSE_PATH.forEach(([x,y],i)=>i?ctx.lineTo(x+.5,y+.5):ctx.moveTo(x+.5,y+.5));ctx.stroke();
           ctx.setLineDash([]);ctx.globalAlpha=1;
           ctx.fillStyle='#a6e3a1';rounded(ctx,.13,3.19,.55,.62,.10);ctx.fill();
