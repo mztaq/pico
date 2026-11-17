@@ -127,7 +127,7 @@ it('opens the Games library from home and returns to the workspace chooser', asy
   expect(container.querySelector('.pico-games-card h3')?.textContent).toBe('Blackout Protocol');
   await click(container.querySelector<HTMLElement>('.pico-games-back')!);
   expect(window.location.pathname).toBe('/app');
-  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Learn and practise');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
 });
 it('handles a direct /app/games URL and browser navigation',async()=>{
   await act(async()=>{
