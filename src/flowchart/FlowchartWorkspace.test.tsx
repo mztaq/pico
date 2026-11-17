@@ -29,6 +29,9 @@ const button=(label:string)=>[...container.querySelectorAll<HTMLButtonElement>('
 async function click(element:HTMLElement){await act(async()=>element.click());}
 async function change(element:HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement,value:string){await act(async()=>{const prototype=element instanceof HTMLSelectElement?HTMLSelectElement.prototype:element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype;Object.getOwnPropertyDescriptor(prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event(element instanceof HTMLSelectElement?'change':'input',{bubbles:true}));});}
 const open=async()=>{
+  const workspaces=[...container.querySelectorAll<HTMLButtonElement>('.home-entry-card')]
+    .find(button => button.textContent?.includes('Workspaces'));
+  if (workspaces) await click(workspaces);
   await click([...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(b=>b.querySelector('h2')?.textContent==='Flowchart Builder')!);
   await vi.waitFor(()=>expect(container.querySelector('.flow-builder')).not.toBeNull());
 };
