@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpCircle, Bug, Crosshair, Snowflake, Waves, Zap } from 'lucide-react';
+import { ArrowUpCircle, Bug, Crosshair, LockKeyhole, Snowflake, Waves, Zap } from 'lucide-react';
 import {
-  DEFENSE_COLS, DEFENSE_ROWS, DEFENSE_PATH, TOWERS,
+  DEFENSE_COLS, DEFENSE_ROWS, DEFENSE_PATH, FIREWALL_COST, TOWERS,
   enemySpeed, enemyXY, pathCell, upgradeCost, validPlot,
   type DefenseMode, type DefenseState, type Tower, type TowerKind,
 } from './towerDefense';
@@ -14,6 +14,7 @@ type Props = {
   busy: boolean;
   onBuild: (x: number, y: number, kind: TowerKind) => void;
   onUpgrade: (x: number, y: number) => void;
+  onFirewall: () => void;
 };
 
 const byKind = [
@@ -95,7 +96,7 @@ function drawTower(ctx:CanvasRenderingContext2D,tower:Tower,now:number,p:{accent
       TOWERS[tower.kind].reach+.18*(tower.level-1),0,Math.PI*2);ctx.fill();ctx.restore();
   }
 }
-export function DefenseField({ state, mode, charge, busy, onBuild, onUpgrade }:Props){
+export function DefenseField({ state, mode, charge, busy, onBuild, onUpgrade, onFirewall }:Props){
   const canvasRef=useRef<HTMLCanvasElement>(null);
   const gameRef=useRef(state);
   const hoverRef=useRef<Point|null>(null);
@@ -263,6 +264,16 @@ export function DefenseField({ state, mode, charge, busy, onBuild, onUpgrade }:P
         </button>;
       })}
     </div>
+    {mode==='hacker' && <div className="defense-hacker-ability">
+      <span><LockKeyhole size={17} aria-hidden="true"/>
+        <strong>Firewall lockdown</strong>
+        <small>Slows every malware unit for 7 seconds</small></span>
+      <button type="button" disabled={busy||charge<FIREWALL_COST||Date.now()<state.firewallReadyAt||state.health<=0}
+        onClick={onFirewall}>
+        {Date.now()<state.firewallUntil?'ACTIVE':
+          Date.now()<state.firewallReadyAt ? 'COOLDOWN' : 'Deploy '+FIREWALL_COST+' ⚡'}
+      </button>
+    </div>}
     <div className="defense-bottom">
       <span>{current?<><ArrowUpCircle size={14}/> Upgrade {current.kind} · {need===null?'MAX':need+' charge'}</>
         :<><Zap size={14}/> Pick a tower, then click empty land to build</>}</span>
