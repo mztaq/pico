@@ -160,3 +160,56 @@ body:has(.pico-cookie-banner) .learning-hub { height: max(0px, calc(100dvh - var
   border-width: 2px;
 }
 .learning-hub .learning-topic-list { scrollbar-color: var(--ds-line-strong) transparent; }
+
+
+/* Focused Learn chooser: Notes and one game. */
+.learning-tool-grid { max-width: 1160px; margin: 34px auto 28px; display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.learning-tool-card { min-width: 0; min-height: 310px; display: flex; flex-direction: column;
+  align-items: stretch; gap: 15px; text-align: left; padding: clamp(20px, 3vw, 27px);
+  border: 1px solid var(--ds-line-strong); border-radius: 15px; background: var(--ds-panel);
+  color: var(--ds-text); cursor: pointer; transition: border-color .15s, background .15s; }
+.learning-tool-card:hover { border-color: var(--accent); background: var(--ds-panel-raised); }
+.learning-tool-heading { display: flex; align-items: center; justify-content: space-between; color: var(--ds-muted); }
+.learning-tool-heading > svg { color: var(--ds-muted); }
+.learning-tool-card:hover .learning-tool-heading > svg { color: var(--accent); }
+.learning-tool-icon { display: grid; place-items: center; width: 46px; height: 46px;
+  border-radius: 10px; color: var(--accent); background: var(--ds-accent-soft); }
+.learning-tool-preview { flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 14px; min-height: 130px; padding: 18px; border: 1px solid var(--ds-line);
+  border-radius: 10px; background: var(--bg); }
+.learning-tool-preview--notes { font: 740 clamp(20px, 3vw, 28px) var(--ds-font-code); color: var(--ds-text); flex-wrap: wrap; }
+.learning-tool-preview--notes .learning-preview-arrow { color: var(--accent); }
+.learning-tool-preview--notes small { flex-basis: 100%; text-align: center;
+  font: 500 11px var(--ds-font-code); color: var(--ds-muted); }
+.learning-tool-preview--arena { display: grid; grid-template-columns: repeat(5, 27px);
+  align-content: center; gap: 6px; }
+.learning-tool-preview--arena i { width: 27px; height: 23px; border-radius: 5px;
+  display: block; border: 1px solid var(--ds-line-strong); background: var(--ds-panel); }
+.learning-tool-preview--arena i.owned { border-color: var(--accent); background: var(--ds-accent-soft); }
+.learning-tool-preview--arena i.rival { border-color: var(--ds-muted); background: var(--ds-hover); }
+.learning-tool-copy { display: flex; flex-direction: column; gap: 7px; margin-top: auto; }
+.learning-tool-copy strong { font-size: 22px; letter-spacing: -.03em; line-height: 1.25; font-weight: 770; }
+.learning-tool-copy > span { font-size: 13px; line-height: 1.6; color: var(--ds-muted); }
+.learning-feature { max-width: 1160px; margin: auto; min-height: 45vh; }
+.learning-feature * { box-sizing: border-box; }
+.learning-footer { max-width: 1160px; margin: 55px auto 0; display: flex; flex-wrap: wrap;
+  align-items: center; justify-content: center; gap: 10px 19px; padding: 22px 0 7px;
+  border-top: 1px solid var(--ds-line); }
+.learning-footer .site-info-links { display: flex; justify-content: center; align-items: center;
+  gap: 8px 19px; flex-wrap: wrap; }
+.learning-footer .site-info-links a, .learning-footer .learning-report { color: var(--ds-muted);
+  font-size: 12px; text-decoration: none; font-weight: 560; }
+.learning-footer .site-info-links a:hover, .learning-footer .learning-report:hover { color: var(--ds-text); }
+.learning-report { display: inline-flex; align-items: center; gap: 6px; background: transparent;
+  border: 0; padding: 5px 0; cursor: pointer; }
+.learning-report svg { color: var(--accent); }
+@media (max-width: 650px) {
+  .learning-tool-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 23px; }
+  .learning-tool-card { min-height: 250px; padding: 18px; }
+  .learning-tool-preview { min-height: 105px; }
+  .learning-tool-copy strong { font-size: 19px; }
+  .learning-footer { margin-top: 30px; }
+}
+.learning-hub[data-high-contrast='true'] .learning-tool-card { border-width: 2px; }
+@media (prefers-reduced-motion: reduce) { .learning-tool-card { transition: none; } }
