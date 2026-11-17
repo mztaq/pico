@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowRight, BookOpen, Check, Code2, Flag, Gamepad2, Shield, Swords, Trophy, Zap } from 'lucide-react';
+import { DefenseShowcase } from './DefenseShowcase';
 
 export type LearningGameMode = 'classic' | 'circuit' | 'hacker' | 'sprint';
 
@@ -10,12 +11,6 @@ const gameModes = [
   { id: 'sprint', label: 'Data Sprint', icon: Swords },
 ] as const;
 
-const previewNodes: ('mine' | 'rival' | 'open')[] = [
-  'mine', 'mine', 'open', 'rival', 'open',
-  'mine', 'open', 'rival', 'rival', 'open',
-  'mine', 'mine', 'mine', 'open', 'open',
-  'open', 'mine', 'rival', 'rival', 'open',
-];
 const racers = [
   { name: 'BeardlyWolf', progress: 79, score: 1280, own: true },
   { name: 'HotMonkey', progress: 65, score: 1030, own: false },
@@ -52,17 +47,7 @@ function GameDemo({ mode }: { mode: LearningGameMode }) {
         </div><strong>{racer.score.toLocaleString()}</strong>
       </div>)}
       <div className="learn-demo-race-finish">Every correct answer moves your racer forward.</div>
-    </div> : <div className="learn-demo-grid-wrap">
-      <div className="learn-demo-grid" aria-hidden="true">
-        {previewNodes.map((node, index) => <div key={index} className={'learn-demo-cell ' + node}>
-          <span>{mode === 'hacker' ? node === 'open' ? '□' : '▣' : node === 'open' ? '◇' : '◆'}</span>
-        </div>)}
-      </div>
-      <div className="learn-demo-statline">
-        <span><Zap size={14}/> 145 charge</span><span><Flag size={14}/> 8 nodes</span><span><Trophy size={14}/> 1,120</span>
-      </div>
-      <p>{mode === 'hacker' ? 'Breach rival servers. Take control of the grid.' : 'Earn charge. Capture and reinforce the network.'}</p>
-    </div>}
+    </div> : <DefenseShowcase hacker={mode === 'hacker'} />}
     <div className="learn-demo-foot">
       <span className="learn-demo-live"><i/> Game preview</span>
       <span>2D · Lightweight</span>
