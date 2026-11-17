@@ -24,7 +24,9 @@ describe('Learn game-first selection', () => {
     expect(host.textContent).toContain('Pico Arena');
     expect(host.textContent).toContain('Computer Science notes');
     expect(host.querySelectorAll('.learn-landing-modes button')).toHaveLength(4);
-    expect(host.querySelectorAll('.learn-demo-cell')).toHaveLength(20);
+    expect(host.querySelectorAll('.defense-showcase-tile')).toHaveLength(96);
+    expect(host.querySelectorAll('.defense-showcase-tower')).toHaveLength(4);
+    expect(host.querySelectorAll('.defense-showcase-bug')).toHaveLength(4);
 
     await press('Hacker Heist');
     expect(host.querySelector('.learn-demo--hacker')).not.toBeNull();
