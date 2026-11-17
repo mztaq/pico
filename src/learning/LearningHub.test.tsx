@@ -87,6 +87,30 @@ it('renders Arena directly from a preview deployment URL instead of a blank scre
   expect(host.querySelector('.pico-load-error')).toBeNull();
 });
 
+it('opens actual solo gameplay with a playable map and quiz overlay, not a blank page', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  window.history.replaceState(null, '', '/app/learn?section=arena&mode=circuit');
+  document.body.append(host);
+  const nativeGetContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = (() => null) as typeof nativeGetContext;
+  try {
+    await act(async () => root.render(
+      <LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />
+    ));
+    await act(async () => button('Solo').click());
+    await act(async () => button('Play solo').click());
+    expect(host.querySelector('.arena-match-layout--immersive')).not.toBeNull();
+    expect(host.querySelector('.defense-canvas-wrap canvas')).not.toBeNull();
+    expect(host.querySelector('.arena-earn-button')).not.toBeNull();
+    expect(host.querySelector('.pico-app-footer')).toBeNull();
+    await act(async () => button('Earn charge').click());
+    expect(host.querySelector('.arena-quiz-dialog')).not.toBeNull();
+    expect(host.textContent).toContain('Question');
+    await act(async () => button('Back to game').click());
+    expect(host.querySelector('.arena-quiz-dialog')).toBeNull();
+  } finally { HTMLCanvasElement.prototype.getContext = nativeGetContext; }
+});
+
 it('opens each homepage destination through a shareable Learn URL', () => {
   for (const section of ['notes', 'arena'] as const) {
     expect(sectionFromSearch('?section=' + section)).toBe(section);
