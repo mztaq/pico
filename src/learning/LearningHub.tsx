@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, RotateCcw, Search } from 'lucide-react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, Code2, Gamepad2, GraduationCap, RotateCcw, Search, Trophy, Users } from 'lucide-react';
 import type { PicoWorkspace } from '../app/workspace-deeplink';
 import { questions, topics, type Question, type Topic } from './content';
 import { readProgress, recordAnswer, saveProgress } from './progress';
@@ -9,6 +9,24 @@ import { learningThemeVariables } from './theme';
 import { LearningVisual, visualizedTopics } from './LearningVisuals';
 import { topicNotes } from './notes';
 import './learning.css';
+import './suite.css';
+
+const LiveStudio = lazy(() => import('./LiveStudio').then(module => ({ default: module.LiveStudio })));
+const Challenges = lazy(() => import('./Challenges').then(module => ({ default: module.Challenges })));
+const ExamSimulator = lazy(() => import('./ExamSimulator').then(module => ({ default: module.ExamSimulator })));
+const Classroom = lazy(() => import('./Classroom').then(module => ({ default: module.Classroom })));
+const RetroArcade = lazy(() => import('./RetroArcade').then(module => ({ default: module.RetroArcade })));
+
+type LearningSection = 'notes' | 'studio' | 'challenges' | 'exam' | 'classroom' | 'arcade';
+const sections = [
+  { id: 'notes', label: 'Notes', icon: BookOpen },
+  { id: 'studio', label: 'Live Studio', icon: Code2 },
+  { id: 'challenges', label: 'Challenges', icon: Trophy },
+  { id: 'exam', label: 'Exam practice', icon: GraduationCap },
+  { id: 'classroom', label: 'Classroom', icon: Users },
+  { id: 'arcade', label: 'Arcade', icon: Gamepad2 },
+] as const;
+
 
 type Props = {
   onBack: () => void;
@@ -32,6 +50,7 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
       window.removeEventListener('storage', syncTheme);
     };
   }, []);
+  const [section, setSection] = useState<LearningSection>('notes');
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Topic>(topics[0]);
   const [progress, setProgress] = useState(readProgress);
@@ -84,10 +103,16 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
       <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn</span>
       <button type="button" className="learning-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" /> Workspaces</button>
     </header>
-    <div className="learning-intro">
-      <h1>Computer Science notes</h1>
-    </div>
-    <div className="learning-layout">
+    <nav className="learning-sections" aria-label="Learning sections">
+      {sections.map(item => {
+        const Icon = item.icon;
+        return <button type="button" key={item.id} className={section === item.id ? 'is-active' : ''}
+          aria-pressed={section === item.id} onClick={() => setSection(item.id)}>
+          <Icon size={16} aria-hidden="true" />{item.label}
+        </button>;
+      })}
+    </nav>
+    {section === 'notes' ? <div className="learning-layout">
       <aside className="learning-catalogue" aria-label="Topics">
         <label className="learning-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Search topics</span><input type="search" placeholder="Search topics" value={query} onChange={event => setQuery(event.target.value)} /></label>
         <div className="learning-topic-list">
@@ -161,6 +186,14 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
           </section>
         </>}
       </div>
-    </div>
+    </div> : <div className="learning-feature">
+      <Suspense fallback={<div className="learning-panel" role="status">Loading…</div>}>
+        {section === 'studio' && <LiveStudio />}
+        {section === 'challenges' && <Challenges />}
+        {section === 'exam' && <ExamSimulator />}
+        {section === 'classroom' && <Classroom />}
+        {section === 'arcade' && <RetroArcade />}
+      </Suspense>
+    </div>}
   </section>;
 }
