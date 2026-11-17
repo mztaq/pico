@@ -24,11 +24,6 @@ export function sectionFromSearch(search: string): LearningSection | null {
   return target === 'notes' || target === 'arena' ? target : null;
 }
 
-const sections = [
-  { id: 'notes', label: 'Notes', description: 'Understand every topic with diagrams and worked examples.', icon: BookOpen },
-  { id: 'arena', label: 'Circuit Clash', description: 'Answer questions, conquer the network and compete live.', icon: Gamepad2 },
-] as const;
-
 type Props = {
   onBack: () => void;
   onOpenTool: (tool: PicoWorkspace) => void;
