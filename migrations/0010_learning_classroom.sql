@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS pico_arena_players (
   correct INTEGER NOT NULL DEFAULT 0,
   answered INTEGER NOT NULL DEFAULT 0,
   question_cursor INTEGER NOT NULL DEFAULT 0,
+  last_answer_at INTEGER NOT NULL DEFAULT 0,
   UNIQUE(room_id,nickname)
 );
 CREATE INDEX IF NOT EXISTS idx_pico_arena_players_room
