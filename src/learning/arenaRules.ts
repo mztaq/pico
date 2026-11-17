@@ -60,6 +60,19 @@ export function nodeCost(action: ArenaAction, node?: ArenaNode): number | null {
   return 75 + (node.level - 1) * 35;
 }
 
+/** Hacker Heist emphasises cheaper breaching. Circuit Clash rewards careful investment. */
+export function modeNodeCost(mode: 'classic' | 'circuit' | 'hacker' | 'sprint',
+  action: ArenaAction, node?: ArenaNode): number | null {
+  if (mode === 'hacker' && node) {
+    if (action === 'capture') {
+      return node.ownerId === null ? 25 : 55 + (node.level - 1) * 20;
+    }
+    if (action === 'fortify') return node.ownerId !== null && node.level < 3
+      ? 30 + node.level * 20 : null;
+  }
+  return nodeCost(action, node);
+}
+
 /** Score is based on CURRENT board control, not farming the same tile repeatedly. */
 export function scoreFor(ownedLevels: number[], correct: number, amplifier: number): number {
   return ownedLevels.reduce((sum, level) => sum + 100 + (level - 1) * 40, 0)
