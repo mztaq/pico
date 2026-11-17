@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
-import { LearningHub } from './LearningHub';
+import { LearningHub, sectionFromSearch } from './LearningHub';
 import { getTheme } from '../app/themes';
 
 const host = document.createElement('div');
@@ -63,4 +63,14 @@ it('updates Learn panels when Pico theme settings change without remounting', as
     if (saved === null) localStorage.removeItem('pico.settings.v6');
     else localStorage.setItem('pico.settings.v6', saved);
   }
+});
+
+it('opens each homepage destination through a shareable Learn URL', () => {
+  for (const section of ['studio', 'challenges', 'exam', 'classroom', 'arcade'] as const) {
+    expect(sectionFromSearch('?section=' + section)).toBe(section);
+    expect(sectionFromSearch('?ref=home&section=' + section)).toBe(section);
+  }
+  expect(sectionFromSearch('?section=notes')).toBe('notes');
+  expect(sectionFromSearch('?section=unknown')).toBe('notes');
+  expect(sectionFromSearch('')).toBe('notes');
 });
