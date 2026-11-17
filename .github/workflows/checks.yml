@@ -17,3 +17,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm build
+      - name: Bundle memory-only arena Worker
+        run: npx --yes wrangler@4 deploy --dry-run --config workers/pico-arena/wrangler.jsonc
