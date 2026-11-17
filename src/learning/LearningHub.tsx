@@ -218,7 +218,7 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
         }} />
       </Suspense>
     </div>}
-    <PicoAppFooter onReport={() => { void openReport(); }} />
+    {section === null && <PicoAppFooter onReport={() => { void openReport(); }} />}
     {reportWarning && <div className="pico-offline-backdrop" role="presentation">
       <section className="pico-offline-dialog" role="dialog" aria-modal="true" aria-labelledby="learn-report-offline">
         <h2 id="learn-report-offline">You're offline</h2>
