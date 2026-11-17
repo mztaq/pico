@@ -18,6 +18,20 @@ const Classroom = lazy(() => import('./Classroom').then(module => ({ default: mo
 const RetroArcade = lazy(() => import('./RetroArcade').then(module => ({ default: module.RetroArcade })));
 
 type LearningSection = 'notes' | 'studio' | 'challenges' | 'exam' | 'classroom' | 'arcade';
+
+export function sectionFromSearch(search: string): LearningSection {
+  const candidate = new URLSearchParams(search).get('section');
+  switch (candidate) {
+    case 'studio':
+    case 'challenges':
+    case 'exam':
+    case 'classroom':
+    case 'arcade':
+      return candidate;
+    default:
+      return 'notes';
+  }
+}
 const sections = [
   { id: 'notes', label: 'Notes', icon: BookOpen },
   { id: 'studio', label: 'Live Studio', icon: Code2 },
@@ -50,7 +64,19 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
       window.removeEventListener('storage', syncTheme);
     };
   }, []);
-  const [section, setSection] = useState<LearningSection>('notes');
+  const [section, setSection] = useState<LearningSection>(() => sectionFromSearch(window.location.search));
+  useEffect(() => {
+    const syncSection = () => setSection(sectionFromSearch(window.location.search));
+    window.addEventListener('popstate', syncSection);
+    return () => window.removeEventListener('popstate', syncSection);
+  }, []);
+  function chooseSection(next: LearningSection) {
+    setSection(next);
+    const url = new URL(window.location.href);
+    if (next === 'notes') url.searchParams.delete('section');
+    else url.searchParams.set('section', next);
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  }
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Topic>(topics[0]);
   const [progress, setProgress] = useState(readProgress);
@@ -95,14 +121,14 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   }
   function chooseTopic(topic: Topic) {
     setSelected(topic);
-    setSection('notes');
+    chooseSection('notes');
     setSession(null);
     lessonRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
   function openStudioWithCode(code: string) {
     try { localStorage.setItem('pico.studio.code.v1', code.slice(0, 12000)); }
     catch { /* use default example if local storage is disabled */ }
-    setSection('studio');
+    chooseSection('studio');
   }
   return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={learningThemeVariables(theme)}>
     <header className="learning-topbar">
@@ -113,7 +139,7 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
       {sections.map(item => {
         const Icon = item.icon;
         return <button type="button" key={item.id} className={section === item.id ? 'is-active' : ''}
-          aria-pressed={section === item.id} onClick={() => setSection(item.id)}>
+          aria-pressed={section === item.id} onClick={() => chooseSection(item.id)}>
           <Icon size={16} aria-hidden="true" />{item.label}
         </button>;
       })}
