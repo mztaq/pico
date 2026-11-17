@@ -34,7 +34,7 @@ function timeText(seconds: number) {
   const n = Math.max(0, seconds);
   return String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
 }
-export function ExamSimulator() {
+export function ExamSimulator({ onReviewTopic }: { onReviewTopic: (topicId: string) => void }) {
   const [unit, setUnit] = useState('all');
   const [count, setCount] = useState(10);
   const [minutes, setMinutes] = useState(15);
@@ -82,7 +82,7 @@ export function ExamSimulator() {
     if (!result) return [];
     const countByTopic = new Map<string, number>();
     for (const question of result.missed) countByTopic.set(question.topic, (countByTopic.get(question.topic) || 0) + 1);
-    return [...countByTopic].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([id, wrong]) => ({ title: topics.find(t => t.id === id)?.title || id, wrong }));
+    return [...countByTopic].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([id, wrong]) => ({ id, title: topics.find(t => t.id === id)?.title || id, wrong }));
   }, [result]);
 
   if (!session) return <section className="suite-surface suite-exam-setup">
@@ -116,7 +116,8 @@ export function ExamSimulator() {
     <p>{Math.round(result.correct / session.questions.length * 100)}% correct</p>
     {weakTopics.length > 0 && <div className="suite-exam-review">
       <h3>Topics to review</h3>
-      <ul>{weakTopics.map(topic => <li key={topic.title}>{topic.title} · {topic.wrong} missed</li>)}</ul>
+      <ul>{weakTopics.map(topic => <li key={topic.id}><button className="suite-review-topic" type="button"
+        onClick={() => onReviewTopic(topic.id)}>{topic.title}</button> · {topic.wrong} missed</li>)}</ul>
     </div>}
     <div className="suite-exam-review">
       <h3>Answer review</h3>
