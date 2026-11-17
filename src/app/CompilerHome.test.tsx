@@ -77,22 +77,22 @@ it('opens Learn tools individually and returns to the tool chooser', async () =>
     .find(item=>item.textContent?.includes('Learn and practise'))!);
   expect(window.location.pathname).toBe('/app/learn');
   expect(window.location.search).toBe('');
-  expect(container.querySelectorAll('.learning-tool-card')).toHaveLength(6);
+  expect(container.querySelectorAll('.learning-tool-card')).toHaveLength(2);
   expect(container.querySelector('.learning-feature')).toBeNull();
 
   await click([...container.querySelectorAll<HTMLButtonElement>('.learning-tool-card')]
-    .find(item=>item.textContent?.includes('Live Studio'))!);
-  expect(window.location.search).toBe('?section=studio');
+    .find(item=>item.textContent?.includes('Circuit Clash'))!);
+  expect(window.location.search).toBe('?section=arena');
   expect(container.querySelector('.learning-tool-grid')).toBeNull();
   expect(container.querySelector('.learning-feature')).not.toBeNull();
 
   await click(container.querySelector<HTMLElement>('.learning-back')!);
   expect(window.location.pathname+window.location.search).toBe('/app/learn');
-  expect(container.querySelectorAll('.learning-tool-card')).toHaveLength(6);
+  expect(container.querySelectorAll('.learning-tool-card')).toHaveLength(2);
 
   await click([...container.querySelectorAll<HTMLButtonElement>('.learning-tool-card')]
-    .find(item=>item.textContent?.includes('Retro Arcade'))!);
-  expect(window.location.search).toBe('?section=arcade');
+    .find(item=>item.textContent?.includes('Notes'))!);
+  expect(window.location.search).toBe('?section=notes');
   expect(container.querySelector('.learning-tool-grid')).toBeNull();
 
   await click(container.querySelector<HTMLElement>('.learning-back')!);
