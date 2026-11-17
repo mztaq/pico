@@ -264,7 +264,12 @@ export function DefenseField({ state, mode, charge, busy, onBuild, onUpgrade, on
     </div>
     <div className="defense-canvas-wrap">
       <canvas ref={canvasRef} tabIndex={0} role="button" aria-label="Tower defense map, click a free land tile to place selected tower. Arrow keys move selection; Enter builds or upgrades."
-        onMouseMove={event=>setHover(old=>{const next=coordinate(event);return old?.x===next.x&&old?.y===next.y?old:next;})}
+        onMouseMove={event=>{
+          // Snapshot event.currentTarget synchronously. React clears it before
+          // deferred functional state updaters run, causing a null-ref crash.
+          const next=coordinate(event);
+          setHover(old=>old?.x===next.x&&old?.y===next.y?old:next);
+        }}
         onMouseLeave={()=>setHover(null)}
         onClick={event=>{const next=coordinate(event);setHover(next);selectCell(next);}}
         onKeyDown={event=>{
