@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowUpRight, Binary, BookOpen, Bug, Calculator, Check, Code2, Cpu, Gamepad2, GitBranch, GraduationCap, Network, Palette, Terminal, Trophy, Users, WifiOff, X as CloseIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
@@ -35,6 +35,24 @@ export function HomeAmbientCurves() {
 
 export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) => void }) {
   const [settings, setSettings] = useState(loadSettings);
+  const [homeView, setHomeView] = useState<'choose' | 'workspaces'>(() =>
+    new URLSearchParams(window.location.search).get('view') === 'workspaces' ? 'workspaces' : 'choose');
+  useEffect(() => {
+    const syncView = () => setHomeView(
+      new URLSearchParams(window.location.search).get('view') === 'workspaces' ? 'workspaces' : 'choose');
+    window.addEventListener('popstate', syncView);
+    return () => window.removeEventListener('popstate', syncView);
+  }, []);
+  function openWorkspaces() {
+    if (window.location.search !== '?view=workspaces') {
+      window.history.pushState(window.history.state, '', '/app?view=workspaces');
+    }
+    setHomeView('workspaces');
+  }
+  function backToChoice() {
+    window.history.replaceState(window.history.state, '', '/app');
+    setHomeView('choose');
+  }
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -114,23 +132,36 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
         <SoundButton /><UpdateCenter />
       </div>
     </div>
-    <div className="home-inner">
+    <div className={homeView === 'choose' ? 'home-inner home-inner--entry' : 'home-inner'}>
       <div className="home-hero">
-        <a className="home-brand" href="/app" aria-label="Pico home"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
+        <a className="home-brand" href="/app" aria-label="Pico home" onClick={event => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          backToChoice();
+        }}><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
       </div>
-      <section className="home-learning" aria-labelledby="home-learn-title">
-        <h1 id="home-learn-title">Learn and practise</h1>
-        <div className="home-learning-grid">
-          <HomeLearningCard section="studio" title="Live Studio" description="Run pseudocode, inspect variables and follow the flowchart." icon={<Code2 size={20} />} onChoose={onChoose} featured />
-          <HomeLearningCard section="challenges" title="Challenges" description="Solve programming tasks and check your code against test cases." icon={<Trophy size={20} />} onChoose={onChoose} featured />
-          <HomeLearningCard section="notes" title="Notes" description="30 Computer Science topics with worked examples." icon={<BookOpen size={20} />} onChoose={onChoose} />
-          <HomeLearningCard section="exam" title="Exam practice" description="Timed questions, marks and answer review." icon={<GraduationCap size={20} />} onChoose={onChoose} />
-          <HomeLearningCard section="classroom" title="Classroom" description="Host or join a live coding challenge." icon={<Users size={20} />} onChoose={onChoose} />
-          <HomeLearningCard section="arcade" title="Retro Arcade" description="Play Bit Catcher and Logic Rush." icon={<Gamepad2 size={20} />} onChoose={onChoose} />
+      {homeView === 'choose' ? <section className="home-entry" aria-label="Choose Pico area">
+        <button type="button" className="home-entry-card" onClick={() => onChoose('learn')}>
+          <span className="home-entry-icon" aria-hidden="true"><BookOpen size={29} /></span>
+          <span className="home-entry-copy"><strong>Learn and practise</strong>
+            <span>Notes, coding challenges, exams and retro games.</span>
+          </span>
+          <ArrowRight className="home-entry-arrow" size={22} aria-hidden="true" />
+        </button>
+        <button type="button" className="home-entry-card" onClick={openWorkspaces}>
+          <span className="home-entry-icon" aria-hidden="true"><Terminal size={29} /></span>
+          <span className="home-entry-copy"><strong>Workspaces</strong>
+            <span>Compilers, flowcharts, circuits and interactive labs.</span>
+          </span>
+          <ArrowRight className="home-entry-arrow" size={22} aria-hidden="true" />
+        </button>
+      </section> : <section className="home-workspaces" aria-labelledby="home-workspaces-title">
+        <div className="home-workspaces-heading">
+          <h1 id="home-workspaces-title">Workspaces</h1>
+          <button className="home-section-back" type="button" onClick={backToChoice}>
+            <ArrowLeft size={17} aria-hidden="true" /> Back
+          </button>
         </div>
-      </section>
-      <section className="home-workspaces" aria-labelledby="home-workspaces-title">
-        <h2 id="home-workspaces-title">Workspaces</h2>
       <div className="compiler-choices">
         <HomeGroup label="Code">
           <WorkspaceChoice icon={<Terminal size={18} />} tag=".pico" title="Pseudocode Compiler" description="Run and debug Cambridge-style pseudocode." onClick={() => onChoose('pseudocode')}>
@@ -187,7 +218,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           </WorkspaceChoice>
         </HomeGroup>
       </div>
-      </section>
+      </section>}
       <div className="home-footer-links">
         <SiteInfoLinks />
         <button type="button" className="bug-report-trigger" onClick={() => { void openReport(); }}>
@@ -210,38 +241,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
   </main>;
 }
 
-
-type LearningDestination = 'studio' | 'challenges' | 'notes' | 'exam' | 'classroom' | 'arcade';
-
-function HomeLearningCard({ section, title, description, icon, onChoose, featured = false }: {
-  section: LearningDestination; title: string; description: string; icon: ReactNode;
-  onChoose: (language: PicoWorkspace) => void; featured?: boolean;
-}) {
-  const destination = '/app/learn?section=' + section;
-  return <a className={`home-learning-card${featured ? ' home-learning-card--featured' : ''}`}
-    href={destination} onClick={event => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      event.preventDefault();
-      onChoose('learn');
-      window.history.replaceState(window.history.state, '', destination);
-    }}>
-    <div className="home-learning-card-main">
-      <span className="home-learning-card-icon" aria-hidden="true">{icon}</span>
-      <ArrowUpRight size={17} className="home-learning-card-arrow" aria-hidden="true"/>
-    </div>
-    <div className="home-learning-card-copy">
-      <h3>{title}</h3><p>{description}</p>
-    </div>
-    {section === 'studio' && <div className="home-learning-card-preview home-learning-card-preview--studio" aria-hidden="true">
-      <div className="home-learning-preview-code"><span><b>FOR</b> I ← 1 <b>TO</b> 5</span><span>  Total ← Total + I</span><span><b>NEXT</b> I</span></div>
-      <div className="home-learning-preview-trace"><span>I <b>5</b></span><span>Total <b>15</b></span></div>
-    </div>}
-    {section === 'challenges' && <div className="home-learning-card-preview home-learning-card-preview--challenges" aria-hidden="true">
-      <div className="home-learning-preview-tests">{[1,2,3,4].map(index => <span key={index}><Check size={13}/> Test {index}</span>)}</div>
-      <span className="home-learning-preview-score">4 / 4 passed</span>
-    </div>}
-  </a>;
-}
 
 function HomeGroup({ label, children, kind }: { label: string; children: ReactNode; kind?: 'visual' | 'data' }) {
   return <section className={`home-group${kind ? ` home-group--${kind}` : ''}`} aria-label={label}>
