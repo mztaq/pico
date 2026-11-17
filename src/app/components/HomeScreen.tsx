@@ -142,18 +142,31 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
       </div>
       {homeView === 'choose' ? <section className="home-entry" aria-label="Choose Pico area">
         <button type="button" className="home-entry-card" onClick={() => onChoose('learn')}>
-          <span className="home-entry-icon" aria-hidden="true"><BookOpen size={29} /></span>
-          <span className="home-entry-copy"><strong>Learn and practise</strong>
-            <span>Notes, coding challenges, exams and retro games.</span>
+          <span className="home-entry-head"><span className="home-entry-icon" aria-hidden="true"><BookOpen size={27} /></span>
+            <ArrowRight className="home-entry-arrow" size={20} aria-hidden="true" /></span>
+          <span className="home-entry-preview home-entry-preview--learn" aria-hidden="true">
+            <span className="home-entry-preview-prompt"><b>Q.</b> What is 1010 in denary?</span>
+            <span className="home-entry-preview-choices"><i>8</i><i className="is-correct">10 <span>✓</span></i><i>12</i></span>
+            <span className="home-entry-preview-network">{Array.from({ length: 12 }, (_, i) =>
+              <i key={i} className={i % 5 < 3 ? 'active' : i % 4 === 0 ? 'rival' : ''}/>)}</span>
           </span>
-          <ArrowRight className="home-entry-arrow" size={22} aria-hidden="true" />
+          <span className="home-entry-copy"><strong>Learn and practise</strong>
+            <span>Study the topics. Play Circuit Clash against friends.</span>
+          </span>
         </button>
         <button type="button" className="home-entry-card" onClick={openWorkspaces}>
-          <span className="home-entry-icon" aria-hidden="true"><Terminal size={29} /></span>
-          <span className="home-entry-copy"><strong>Workspaces</strong>
-            <span>Compilers, flowcharts, circuits and interactive labs.</span>
+          <span className="home-entry-head"><span className="home-entry-icon" aria-hidden="true"><Terminal size={27} /></span>
+            <ArrowRight className="home-entry-arrow" size={20} aria-hidden="true" /></span>
+          <span className="home-entry-preview home-entry-preview--code" aria-hidden="true">
+            <span className="home-entry-window-controls"><i/><i/><i/></span>
+            <span className="home-entry-code-line"><em>DECLARE</em> Score : <b>INTEGER</b></span>
+            <span className="home-entry-code-line">Score ← <strong>42</strong></span>
+            <span className="home-entry-code-line"><em>OUTPUT</em> Score</span>
+            <span className="home-entry-code-result">Output <b>42</b></span>
           </span>
-          <ArrowRight className="home-entry-arrow" size={22} aria-hidden="true" />
+          <span className="home-entry-copy"><strong>Workspaces</strong>
+            <span>Compile code, build flowcharts and simulate systems.</span>
+          </span>
         </button>
       </section> : <section className="home-workspaces" aria-labelledby="home-workspaces-title">
         <div className="home-workspaces-heading">
