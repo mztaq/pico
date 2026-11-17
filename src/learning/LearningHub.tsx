@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, Code2, Gamepad2, GraduationCap, RotateCcw, Search, Trophy, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Bug, CheckCircle2, CircleHelp, Gamepad2, RotateCcw, Search, WifiOff } from 'lucide-react';
 import type { PicoWorkspace } from '../app/workspace-deeplink';
 import { questions, topics, type Question, type Topic } from './content';
 import { readProgress, recordAnswer, saveProgress } from './progress';
@@ -9,39 +9,25 @@ import { learningThemeVariables } from './theme';
 import { LearningVisual, visualizedTopics } from './LearningVisuals';
 import { topicNotes } from './notes';
 import './learning.css';
-import './suite.css';
+import './arena.css';
+import { SiteInfoLinks } from '../app/components/SiteInfo';
+import { BugReportDialog } from '../app/components/BugReportDialog';
+import { BugReportNotice } from '../app/components/BugReportNotice';
+import { picoIsOnline } from '../app/components/pico-connection';
 
-const LiveStudio = lazy(() => import('./LiveStudio').then(module => ({ default: module.LiveStudio })));
-const Challenges = lazy(() => import('./Challenges').then(module => ({ default: module.Challenges })));
-const ExamSimulator = lazy(() => import('./ExamSimulator').then(module => ({ default: module.ExamSimulator })));
-const Classroom = lazy(() => import('./Classroom').then(module => ({ default: module.Classroom })));
-const RetroArcade = lazy(() => import('./RetroArcade').then(module => ({ default: module.RetroArcade })));
+const ArenaGame = lazy(() => import('./ArenaGame').then(module => ({ default: module.ArenaGame })));
 
-type LearningSection = 'notes' | 'studio' | 'challenges' | 'exam' | 'classroom' | 'arcade';
+type LearningSection = 'notes' | 'arena';
 
 export function sectionFromSearch(search: string): LearningSection | null {
-  const candidate = new URLSearchParams(search).get('section');
-  switch (candidate) {
-    case 'notes':
-    case 'studio':
-    case 'challenges':
-    case 'exam':
-    case 'classroom':
-    case 'arcade':
-      return candidate;
-    default:
-      return null;
-  }
+  const target = new URLSearchParams(search).get('section');
+  return target === 'notes' || target === 'arena' ? target : null;
 }
-const sections = [
-  { id: 'notes', label: 'Notes', description: 'Computer Science topics and worked examples.', icon: BookOpen },
-  { id: 'studio', label: 'Live Studio', description: 'Run pseudocode and inspect variables and flowcharts.', icon: Code2 },
-  { id: 'challenges', label: 'Challenges', description: 'Solve problems and check your code.', icon: Trophy },
-  { id: 'exam', label: 'Exam practice', description: 'Timed questions and answer reviews.', icon: GraduationCap },
-  { id: 'classroom', label: 'Classroom', description: 'Host or join a coding challenge.', icon: Users },
-  { id: 'arcade', label: 'Retro Arcade', description: 'Play Bit Catcher and Logic Rush.', icon: Gamepad2 },
-] as const;
 
+const sections = [
+  { id: 'notes', label: 'Notes', description: 'Understand every topic with diagrams and worked examples.', icon: BookOpen },
+  { id: 'arena', label: 'Circuit Clash', description: 'Answer questions, conquer the network and compete live.', icon: Gamepad2 },
+] as const;
 
 type Props = {
   onBack: () => void;
@@ -79,6 +65,9 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
     else url.searchParams.set('section', next);
     window.history.pushState(window.history.state, '', url.pathname + url.search + url.hash);
   }
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportWarning, setReportWarning] = useState(false);
+  const [reportNotice, setReportNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Topic>(topics[0]);
   const [progress, setProgress] = useState(readProgress);
@@ -127,10 +116,9 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
     setSession(null);
     lessonRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
-  function openStudioWithCode(code: string) {
-    try { localStorage.setItem('pico.studio.code.v1', code.slice(0, 12000)); }
-    catch { /* use default example if local storage is disabled */ }
-    chooseSection('studio');
+  async function openReport() {
+    if (await picoIsOnline()) setReportOpen(true);
+    else setReportWarning(true);
   }
   return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={learningThemeVariables(theme)}>
     <header className="learning-topbar">
@@ -140,15 +128,21 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
       </button>
     </header>
     {section === null ? <div className="learning-tool-grid" aria-label="Choose a learning tool">
-      {sections.map(item => {
-        const Icon = item.icon;
-        return <button type="button" key={item.id} className="learning-tool-card"
-          onClick={() => chooseSection(item.id)}>
-          <span className="learning-tool-icon"><Icon size={24} aria-hidden="true" /></span>
-          <ArrowRight className="learning-tool-arrow" size={18} aria-hidden="true" />
-          <span className="learning-tool-copy"><strong>{item.label}</strong><span>{item.description}</span></span>
-        </button>;
-      })}
+      <button type="button" className="learning-tool-card learning-tool-card--notes" onClick={() => chooseSection('notes')}>
+        <span className="learning-tool-heading"><span className="learning-tool-icon"><BookOpen size={24}/></span><ArrowRight size={19}/></span>
+        <span className="learning-tool-preview learning-tool-preview--notes" aria-hidden="true">
+          <span>0010 1101</span><span className="learning-preview-arrow">→</span><span>45</span>
+          <small>32 + 8 + 4 + 1 = 45</small>
+        </span>
+        <span className="learning-tool-copy"><strong>Notes</strong><span>Computer Science topics, examples and interactive diagrams.</span></span>
+      </button>
+      <button type="button" className="learning-tool-card learning-tool-card--arena" onClick={() => chooseSection('arena')}>
+        <span className="learning-tool-heading"><span className="learning-tool-icon"><Gamepad2 size={24}/></span><ArrowRight size={19}/></span>
+        <span className="learning-tool-preview learning-tool-preview--arena" aria-hidden="true">
+          {Array.from({ length: 20 }, (_, index) => <i key={index} className={index % 6 < 3 ? 'owned' : index % 4 === 0 ? 'rival' : ''}/>)}
+        </span>
+        <span className="learning-tool-copy"><strong>Circuit Clash</strong><span>One competitive game. Solo matches, live classrooms and a 2D network to conquer.</span></span>
+      </button>
     </div> : section === 'notes' ? <div className="learning-layout">
       <aside className="learning-catalogue" aria-label="Topics">
         <label className="learning-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Search topics</span><input type="search" placeholder="Search topics" value={query} onChange={event => setQuery(event.target.value)} /></label>
@@ -212,10 +206,8 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
             <div className="learning-actions learning-lesson-actions">
               {available.length > 0 && <button type="button" className="learning-primary" onClick={() => start(available, selected.title)}><CircleHelp size={16} aria-hidden="true" /> Practice questions ({available.length})</button>}
               {selected.tool && <button type="button" className="learning-secondary"
-                onClick={() => selected.starter?.language === 'pseudocode' ? openStudioWithCode(selected.starter.code)
-                  : selected.starter ? onStartCode(selected.starter) : onOpenTool(selected.tool!)}>
-                {selected.starter?.language === 'pseudocode' ? 'Try in Live Studio'
-                  : selected.starter ? 'Open example in compiler' : `Open ${toolNames[selected.tool] ?? 'Pico tool'}`}
+                onClick={() => selected.starter ? onStartCode(selected.starter) : onOpenTool(selected.tool!)}>
+                {selected.starter ? 'Open example in compiler' : `Open ${toolNames[selected.tool] ?? 'Pico tool'}`}
                 <ArrowRight size={16} aria-hidden="true" />
               </button>}
             </div>
@@ -230,16 +222,31 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
         </>}
       </div>
     </div> : <div className="learning-feature">
-      <Suspense fallback={<div className="learning-panel" role="status">Loading…</div>}>
-        {section === 'studio' && <LiveStudio />}
-        {section === 'challenges' && <Challenges onDebug={openStudioWithCode} />}
-        {section === 'exam' && <ExamSimulator onReviewTopic={id => {
+      <Suspense fallback={<div className="learning-panel" role="status">Loading game…</div>}>
+        <ArenaGame onReviewTopic={id => {
           const topic = topics.find(item => item.id === id);
           if (topic) chooseTopic(topic);
-        }} />}
-        {section === 'classroom' && <Classroom />}
-        {section === 'arcade' && <RetroArcade />}
+        }} />
       </Suspense>
     </div>}
+    <footer className="learning-footer">
+      <SiteInfoLinks />
+      <button type="button" className="learning-report" onClick={() => { void openReport(); }}>
+        <Bug size={16} aria-hidden="true"/> Report a Bug
+      </button>
+    </footer>
+    {reportWarning && <div className="pico-offline-backdrop" role="presentation">
+      <section className="pico-offline-dialog" role="dialog" aria-modal="true" aria-labelledby="learn-report-offline">
+        <h2 id="learn-report-offline">You're offline</h2>
+        <p>Connect to the internet to report a bug.</p>
+        <button type="button" className="pico-offline-continue" onClick={() => setReportWarning(false)}>
+          <WifiOff size={16}/> Close
+        </button>
+      </section>
+    </div>}
+    {reportOpen && <BugReportDialog onClose={() => setReportOpen(false)}
+      onResult={(type, message) => { setReportOpen(false); setReportNotice({ type, message }); }}/>}
+    {reportNotice && <BugReportNotice type={reportNotice.type} message={reportNotice.message}
+      onClose={() => setReportNotice(null)}/>}
   </section>;
 }
