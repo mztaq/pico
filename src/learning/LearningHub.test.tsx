@@ -20,10 +20,10 @@ it('shows a focused tool chooser then full notes without a tab bar', async () =>
   window.history.replaceState(null, '', '/app/learn');
   document.body.append(host);
   await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
-  expect(host.querySelectorAll('.learning-tool-card')).toHaveLength(6);
-  expect(host.textContent).toContain('Live Studio');
-  expect(host.textContent).toContain('Classroom');
-  expect(host.textContent).toContain('Retro Arcade');
+  expect(host.querySelectorAll('.learning-tool-card')).toHaveLength(2);
+  expect(host.textContent).toContain('Notes');
+  expect(host.textContent).toContain('Circuit Clash');
+  expect(host.textContent).toContain('Report a Bug');
   expect(host.querySelector('.learning-catalogue')).toBeNull();
   await act(async () => button('Notes').click());
   expect(host.querySelector('.learning-tool-grid')).toBeNull();
@@ -73,7 +73,7 @@ it('updates Learn panels when Pico theme settings change without remounting', as
 });
 
 it('opens each homepage destination through a shareable Learn URL', () => {
-  for (const section of ['studio', 'challenges', 'exam', 'classroom', 'arcade'] as const) {
+  for (const section of ['notes', 'arena'] as const) {
     expect(sectionFromSearch('?section=' + section)).toBe(section);
     expect(sectionFromSearch('?ref=home&section=' + section)).toBe(section);
   }
@@ -87,12 +87,12 @@ it('returns from an individual tool to the learning chooser', async () => {
   window.history.replaceState(null, '', '/app/learn');
   document.body.append(host);
   await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
-  await act(async () => button('Challenges').click());
-  expect(window.location.search).toBe('?section=challenges');
+  await act(async () => button('Circuit Clash').click());
+  expect(window.location.search).toBe('?section=arena');
   expect(host.querySelector('.learning-tool-grid')).toBeNull();
   expect(host.querySelector('.learning-feature')).not.toBeNull();
   await act(async () => button('All tools').click());
   expect(window.location.pathname + window.location.search).toBe('/app/learn');
-  expect(host.querySelectorAll('.learning-tool-card')).toHaveLength(6);
+  expect(host.querySelectorAll('.learning-tool-card')).toHaveLength(2);
   expect(host.querySelector('.learning-feature')).toBeNull();
 });
