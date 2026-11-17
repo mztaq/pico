@@ -277,12 +277,17 @@ export default {
       return stub.fetch(request);
     }
     if (command === 'create') {
+      if (request.method !== 'POST') return fail(405, 'POST required.');
+      const raw = await request.text();
+      if (raw.length > 35000) return fail(413, 'Request too large.');
       for (let attempt = 0; attempt < 5; attempt++) {
         const code = key(6);
         const stub = env.ROOMS.get(env.ROOMS.idFromName('pico-arena:' + code));
         const headers = new Headers(request.headers);
         headers.set('X-Arena-Code', code);
-        const response = await stub.fetch(new Request(request, { headers }));
+        const response = await stub.fetch(new Request(request.url, {
+          method: 'POST', headers, body: raw,
+        }));
         if (response.status !== 409) return response;
       }
       return fail(503, 'Could not allocate a room code.');
