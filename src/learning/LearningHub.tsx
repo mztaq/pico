@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, Bug, CheckCircle2, CircleHelp, Gamepad2, RotateCcw, Search, WifiOff } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, Gamepad2, RotateCcw, Search, WifiOff } from 'lucide-react';
 import type { PicoWorkspace } from '../app/workspace-deeplink';
 import { questions, topics, type Question, type Topic } from './content';
 import { readProgress, recordAnswer, saveProgress } from './progress';
@@ -10,7 +10,7 @@ import { LearningVisual, visualizedTopics } from './LearningVisuals';
 import { topicNotes } from './notes';
 import './learning.css';
 import './arena.css';
-import { SiteInfoLinks } from '../app/components/SiteInfo';
+import { PicoAppFooter } from '../app/components/PicoAppFooter';
 import { BugReportDialog } from '../app/components/BugReportDialog';
 import { BugReportNotice } from '../app/components/BugReportNotice';
 import { picoIsOnline } from '../app/components/pico-connection';
@@ -224,12 +224,7 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
         }} />
       </Suspense>
     </div>}
-    <footer className="learning-footer">
-      <SiteInfoLinks />
-      <button type="button" className="learning-report" onClick={() => { void openReport(); }}>
-        <Bug size={16} aria-hidden="true"/> Report a Bug
-      </button>
-    </footer>
+    <PicoAppFooter onReport={() => { void openReport(); }} />
     {reportWarning && <div className="pico-offline-backdrop" role="presentation">
       <section className="pico-offline-dialog" role="dialog" aria-modal="true" aria-labelledby="learn-report-offline">
         <h2 id="learn-report-offline">You're offline</h2>
