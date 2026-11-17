@@ -13,6 +13,7 @@ import './arena.css';
 import './learn-landing.css';
 import { LearnLanding, type LearningGameMode } from './LearnLanding';
 import { PicoAppFooter } from '../app/components/PicoAppFooter';
+import { WorkspaceLoadBoundary } from '../app/components/WorkspaceLoadBoundary';
 import { BugReportDialog } from '../app/components/BugReportDialog';
 import { BugReportNotice } from '../app/components/BugReportNotice';
 import { picoIsOnline } from '../app/components/pico-connection';
