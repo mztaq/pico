@@ -4,7 +4,7 @@ import {
   questionAt, questionIndex, scoreFor, visibleQuestion,
 } from '../../../src/learning/arenaRules.ts';
 import {
-  advanceDefense, defenseScore, defenseStart, defenseSummary,
+  activateFirewall, advanceDefense, defenseScore, defenseStart, defenseSummary,
   placeTower, upgradeTower, TOWERS,
 } from '../../../src/learning/towerDefense.ts';
 
@@ -222,7 +222,7 @@ export class ArenaRoom extends DurableObject {
       room.state = 'playing'; room.startsAt = now();
       for (const player of room.players.values()) {
         if (room.settings.mode === 'circuit' || room.settings.mode === 'hacker') {
-          player.defense = defenseStart(room.startsAt);
+          player.defense = defenseStart(room.startsAt,room.settings.mode);
           player.charge = 100;
         }
       }
@@ -274,6 +274,15 @@ export class ArenaRoom extends DurableObject {
         player.charge -= cost;
         player.amplifier++;
         return reply({ ok: true, cost });
+      }
+      if (kind === 'firewall') {
+        if (!player.defense || room.settings.mode !== 'hacker')
+          return fail(409,'Firewall is only available in Hacker Heist.');
+        const move = activateFirewall(player.defense,now());
+        if (!move) return fail(409,'Firewall is cooling down.');
+        if (player.charge < move.cost) return fail(409,'Not enough charge.');
+        player.charge -= move.cost;player.defense=move.state;
+        return reply({ok:true,cost:move.cost});
       }
       if (kind === 'towerBuild') {
         if (!player.defense) return fail(409,'Tower defense is inactive.');
