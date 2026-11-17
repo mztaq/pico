@@ -245,7 +245,10 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
   const [session, setSession] = useState<Credentials | null>(getCredentials);
   const [room, setRoom] = useState<Room | null>(null);
   const [screen, setScreen] = useState<Screen>('menu');
-  const [mode, setMode] = useState<Mode>('circuit');
+  const [mode, setMode] = useState<Mode>(() => {
+    const requested = new URLSearchParams(window.location.search).get('mode');
+    return requested === 'classic' || requested === 'hacker' || requested === 'sprint' ? requested : 'circuit';
+  });
   const [unit, setUnit] = useState('all');
   const [nicknameMode, setNicknameMode] = useState<NicknameMode>('generated');
   const [source, setSource] = useState<Source>('bank');
