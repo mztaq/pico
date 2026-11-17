@@ -31,11 +31,18 @@ function BitCatcher({ onExit }: { onExit: () => void }) {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d', { alpha: false });
     if (!ctx || !canvas) return;
-    const style = getComputedStyle(canvas);
-    const bg = style.getPropertyValue('--bg').trim() || '#1e1e2e';
-    const accent = style.getPropertyValue('--accent').trim() || '#cba6f7';
-    const fg = style.getPropertyValue('--ds-text').trim() || '#cdd6f4';
-    const surface = style.getPropertyValue('--ds-panel-raised').trim() || '#2a2a40';
+    let bg = '', accent = '', fg = '', surface = '';
+    function refreshPalette() {
+      if (!canvas) return;
+      const style = getComputedStyle(canvas);
+      bg = style.getPropertyValue('--bg').trim() || '#1e1e2e';
+      accent = style.getPropertyValue('--accent').trim() || '#cba6f7';
+      fg = style.getPropertyValue('--ds-text').trim() || '#cdd6f4';
+      surface = style.getPropertyValue('--ds-panel-raised').trim() || '#2a2a40';
+    }
+    refreshPalette();
+    window.addEventListener('pico:settings-saved', refreshPalette);
+    window.addEventListener('storage', refreshPalette);
     const state: CatcherState = { x: 160, sum: 0, target: 5, score: 0, lives: 3,
       tokens: [], previous: 0, nextSpawn: 0, started: 0, finished: false };
     let cancelled = false;
@@ -67,6 +74,11 @@ function BitCatcher({ onExit }: { onExit: () => void }) {
     function frameStep(time: number) {
       if(cancelled) return;
       if(!state.started) { state.started = time; state.previous = time; }
+      // Limit rendering to about 30 FPS for low-spec classroom PCs.
+      if (time - state.previous < 32) {
+        frame.current = requestAnimationFrame(frameStep);
+        return;
+      }
       const dt = Math.min((time - state.previous) / 1000, 0.06);
       state.previous = time;
       const left = held.current.left, right = held.current.right;
@@ -127,6 +139,8 @@ function BitCatcher({ onExit }: { onExit: () => void }) {
       cancelAnimationFrame(frame.current);
       window.removeEventListener('keydown', keyDown);
       window.removeEventListener('keyup', keyUp);
+      window.removeEventListener('pico:settings-saved', refreshPalette);
+      window.removeEventListener('storage', refreshPalette);
       held.current.left = false;
       held.current.right = false;
     };
