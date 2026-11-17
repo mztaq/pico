@@ -393,3 +393,93 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Data Sprint: original lightweight 2D running race, no WebGL or images. */
+.arena-sprint-world {
+  display: flex; flex-direction: column; border: 1px solid var(--ds-line-strong);
+  border-radius: 13px; overflow: hidden; background: var(--bg);
+}
+.arena-sprint-sky {
+  position: relative; min-height: 88px; overflow: hidden; display: flex;
+  justify-content: center; align-items: center;
+  background: linear-gradient(180deg,var(--ds-accent-soft),var(--bg));
+  border-bottom: 1px solid var(--ds-line-strong);
+}
+.arena-sprint-banner {
+  position: relative; z-index: 2; color: var(--ds-text);
+  border: 1px solid var(--ds-line-strong); background: var(--ds-panel);
+  border-radius: 9px; padding: 12px 21px; letter-spacing: .09em;
+  font: 850 clamp(14px,2vw,20px) var(--ds-font-code);
+}
+.arena-sprint-cloud {
+  position: absolute; width: 83px; height: 25px; border-radius: 50%;
+  background: var(--ds-panel-raised); opacity: .48;
+}
+.arena-sprint-cloud.cloud-one { left: 9%; top: 19px; }
+.arena-sprint-cloud.cloud-two { right: 14%; bottom: 10px; transform: scale(.75); }
+.arena-sprint-finish-label {
+  position: absolute; display: inline-flex; align-items: center; gap: 6px;
+  right: 18px; top: 12px; color: var(--ds-muted); font: 750 10px var(--ds-font-code);
+}
+.arena-sprint-tracks { display: grid; gap: 0; padding: 10px 12px 15px; }
+.arena-sprint-lane {
+  display: grid; grid-template-columns: 26px minmax(0,1fr) minmax(75px,95px);
+  gap: 8px; align-items: center; min-height: 66px;
+  border-bottom: 1px solid var(--ds-line);
+}
+.arena-sprint-number { color: var(--ds-muted); font: 750 11px var(--ds-font-code); text-align: center; }
+.arena-sprint-road {
+  position: relative; min-width: 0; height: 42px; overflow: hidden;
+  border: 1px solid var(--ds-line-strong); border-radius: 7px; background: var(--ds-panel);
+}
+.arena-sprint-dashes {
+  position: absolute; left: 0; right: 0; top: 52%;
+  border-top: 2px dashed var(--ds-line-strong); opacity: .8;
+}
+.arena-sprint-finish-line {
+  position: absolute; top: 0; bottom: 0; left: 94%; width: 8px; opacity: .85;
+  background: repeating-conic-gradient(var(--ds-text) 0 25%,var(--bg) 0 50%) 0 0/8px 8px;
+}
+.arena-sprint-runner {
+  position: absolute; display: grid; place-items: center;
+  left: 0; top: 3px; width: 31px; height: 35px;
+  transition: left 650ms cubic-bezier(.2,.7,.25,1);
+}
+.arena-sprint-runner-head {
+  position: absolute; top: 3px; display: flex; align-items: center;
+  justify-content: center; gap: 5px; width: 29px; height: 25px;
+  background: var(--runner-color); border: 2px solid #1c1b2c;
+  border-radius: 40% 40% 38% 38%; box-shadow: 0 3px 4px #0002;
+  animation: arena-run-bob .36s ease-in-out infinite alternate;
+}
+.arena-sprint-runner-head i { display: block; width: 4px; height: 6px;
+  border-radius: 50%; background: #1c1b2c; }
+.arena-sprint-runner-body {
+  position: absolute; width: 16px; height: 7px; bottom: 2px;
+  border-radius: 4px; background: var(--runner-color); border: 1px solid #1c1b2c;
+}
+.arena-sprint-runner-feet {
+  position: absolute; bottom: 0; width: 24px; height: 2px;
+  border-radius: 8px; background: #1c1b2c;
+  animation: arena-run-feet .26s ease-in-out infinite alternate;
+}
+@keyframes arena-run-bob { from {transform:translateY(0)} to {transform:translateY(-3px)} }
+@keyframes arena-run-feet { from {transform:scaleX(.75)} to {transform:scaleX(1.15)} }
+.arena-sprint-player-info { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 0; }
+.arena-sprint-player-info strong { display: block; max-width: 100%; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.arena-sprint-player-info span { color: var(--ds-muted); font: 710 10px var(--ds-font-code); }
+.arena-sprint-bottom { display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 11px 16px; border-top: 1px solid var(--ds-line);
+  color: var(--ds-muted); font: 600 9px var(--ds-font-code); }
+.arena-sprint-bottom strong { text-align: center; color: var(--ds-text); font-size: 10px; }
+@media(max-width:650px) {
+  .arena-sprint-tracks { padding: 7px; }
+  .arena-sprint-lane { grid-template-columns: 17px minmax(0,1fr) 62px; gap: 3px; }
+  .arena-sprint-player-info strong,.arena-sprint-player-info span {font-size:9px;}
+  .arena-sprint-banner {padding:9px 13px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .arena-sprint-runner-head,.arena-sprint-runner-feet {animation:none;}
+  .arena-sprint-runner {transition:none;}
+}
