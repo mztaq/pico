@@ -30,7 +30,18 @@ const switchViaHome=async(language:'Python Compiler'|'Pseudocode Compiler')=>{
   await click(container.querySelector<HTMLElement>('[aria-label="Go to home screen"]')!);
   await choose(language);
 };
-const choose=async(language:string)=>{await click(container.querySelector(`.compiler-choice h2`)?.textContent===language?container.querySelector<HTMLElement>('.compiler-choice')!:container.querySelectorAll<HTMLElement>('.compiler-choice')[1]!);};
+const choose=async(language:string)=>{
+  if(!container.querySelector('.compiler-choice')) {
+    const entry=[...container.querySelectorAll<HTMLButtonElement>('.home-entry-card')]
+      .find(item=>item.textContent?.includes('Workspaces'));
+    if(!entry) throw Error('Workspaces entry not found');
+    await click(entry);
+  }
+  const item=[...container.querySelectorAll<HTMLElement>('.compiler-choice')]
+    .find(choice=>choice.querySelector('h2')?.textContent===language);
+  if(!item) throw Error('Workspace missing: '+language);
+  await click(item);
+};
 async function type(element:HTMLInputElement|HTMLTextAreaElement,value:string){await act(async()=>{Object.getOwnPropertyDescriptor(element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event('input',{bubbles:true}));});}
 beforeEach(async()=>{
   localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.python.visitCount.v1','3');jobs.length=0;
@@ -41,14 +52,17 @@ beforeEach(async()=>{
   container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
-it('opens on a themed home screen with all workspace choices',()=>{
+it('opens on two clear choices and then reveals all workspaces',async()=>{
   expect(document.title).toBe('Pico | Home');
-  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Learn and practise');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect(container.querySelectorAll('.home-learning-card')).toHaveLength(6);
-  expect(container.querySelector('.home-workspaces h2')?.textContent).toBe('Workspaces');
+  expect(container.querySelector('.compiler-choices')).toBeNull();
+  await click([...container.querySelectorAll<HTMLButtonElement>('.home-entry-card')]
+    .find(item=>item.textContent?.includes('Workspaces'))!);
+  expect(window.location.search).toBe('?view=workspaces');
+  expect(container.querySelector('.home-workspaces h1')?.textContent).toBe('Workspaces');
   expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Traffic Storm','Binary Lab']);
   expect(container.querySelector('footer')).toBeNull();
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/team"]')?.textContent).toBe('Pico Team');
@@ -56,21 +70,33 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
-it('opens each learning feature directly from its home card', async () => {
-  const studio = container.querySelector<HTMLAnchorElement>('.home-learning-card[href="/app/learn?section=studio"]')!;
-  await click(studio);
+it('opens Learn tools individually and returns to the tool chooser', async () => {
+  await click([...container.querySelectorAll<HTMLButtonElement>('.home-entry-card')]
+    .find(item=>item.textContent?.includes('Learn and practise'))!);
   expect(window.location.pathname).toBe('/app/learn');
+  expect(window.location.search).toBe('');
+  expect(container.querySelectorAll('.learning-tool-card')).toHaveLength(6);
+  expect(container.querySelector('.learning-feature')).toBeNull();
+
+  await click([...container.querySelectorAll<HTMLButtonElement>('.learning-tool-card')]
+    .find(item=>item.textContent?.includes('Live Studio'))!);
   expect(window.location.search).toBe('?section=studio');
-  expect(container.querySelector('.learning-sections button[aria-pressed="true"]')?.textContent).toContain('Live Studio');
+  expect(container.querySelector('.learning-tool-grid')).toBeNull();
+  expect(container.querySelector('.learning-feature')).not.toBeNull();
 
   await click(container.querySelector<HTMLElement>('.learning-back')!);
-  expect(window.location.pathname).toBe('/app');
+  expect(window.location.pathname+window.location.search).toBe('/app/learn');
+  expect(container.querySelectorAll('.learning-tool-card')).toHaveLength(6);
 
-  const arcade = container.querySelector<HTMLAnchorElement>('.home-learning-card[href="/app/learn?section=arcade"]')!;
-  await click(arcade);
-  expect(window.location.pathname).toBe('/app/learn');
+  await click([...container.querySelectorAll<HTMLButtonElement>('.learning-tool-card')]
+    .find(item=>item.textContent?.includes('Retro Arcade'))!);
   expect(window.location.search).toBe('?section=arcade');
-  expect(container.querySelector('.learning-sections button[aria-pressed="true"]')?.textContent).toContain('Arcade');
+  expect(container.querySelector('.learning-tool-grid')).toBeNull();
+
+  await click(container.querySelector<HTMLElement>('.learning-back')!);
+  await click(container.querySelector<HTMLElement>('.learning-back')!);
+  expect(window.location.pathname).toBe('/app');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
 });
 it('resets test navigation after visiting Games', async()=>{
   const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
@@ -113,7 +139,7 @@ it('handles a direct /app/games URL and browser navigation',async()=>{
     window.dispatchEvent(new PopStateEvent('popstate'));
   });
   expect(container.querySelector('.pico-games')).toBeNull();
-  expect(container.querySelector('.home-learning h1')?.textContent).toBe('Learn and practise');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
 });
 it('uses the Pico logo to return to Workspaces from Games and the compiler',async()=>{
   await click(container.querySelector<HTMLElement>('a.home-games-link[href="/app/games"]')!);
@@ -124,7 +150,7 @@ it('uses the Pico logo to return to Workspaces from Games and the compiler',asyn
   expect(window.location.pathname).toBe('/app/python');
   await click(container.querySelector<HTMLElement>('.pico-brand-home[aria-label="Pico, back to Workspaces"]')!);
   expect(window.location.pathname).toBe('/app');
-  expect(container.querySelector('.home-learning h1')?.textContent).toBe('Learn and practise');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
 });
 it('shows three matching concept developer cards and prominent co-founders',async()=>{
   await act(async()=>{
