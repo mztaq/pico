@@ -31,11 +31,21 @@ export function arenaPool(unit: string): Question[] {
     : questions.filter(question => topicUnits.get(question.topic) === unit);
 }
 
-/** A predictable index lets a room resume without persisting complete question text. */
+/**
+ * Walk the complete question pool before repeating anything.
+ * The step is coprime to the pool size so no subset is accidentally skipped.
+ */
+export function questionIndex(length: number, seed: number, cursor: number): number {
+  if (!Number.isSafeInteger(length) || length < 1) throw Error('Question bank is empty.');
+  const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+  let step = 7;
+  while (gcd(step, length) !== 1) step += 2;
+  return ((seed % length + length) % length + (cursor % length) * step) % length;
+}
+
 export function questionAt(unit: string, seed: number, cursor: number): Question {
   const pool = arenaPool(unit);
-  if (!pool.length) throw Error('No questions in this topic.');
-  return pool[((seed + cursor * 7) % pool.length + pool.length) % pool.length]!;
+  return pool[questionIndex(pool.length, seed, cursor)]!;
 }
 
 export function visibleQuestion(question: Question): ArenaQuestion {
