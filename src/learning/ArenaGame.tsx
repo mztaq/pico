@@ -85,23 +85,35 @@ function emptyDraft(): CustomQuestion {
 }
 
 function SpeedTrack({ players, mode }: { players: ArenaPlayer[]; mode: Mode }) {
-  const high = Math.max(600, ...players.map(player => player.score));
-  return <div className={'arena-track arena-track--' + mode}>
-    <div className="arena-track-header"><span>START</span><span>{mode === 'sprint' ? 'DATA RACE' : 'SCORE TRACK'}</span><span>FINISH</span></div>
-    {players.length ? [...players].sort((a, b) => b.score - a.score).slice(0, 12).map(player => {
-      const distance = Math.min(94, player.score / high * 90);
-      return <div className="arena-track-lane" key={player.id}>
-        <span className="arena-track-name">{player.nickname}</span>
-        <div className="arena-track-strip">
-          <span className="arena-track-runner" style={{ left: distance + '%',
-            background: hues[player.color % hues.length] }}>
-            {mode === 'sprint' ? '▸' : '◆'}
-          </span>
-        </div>
-        <strong>{player.score.toLocaleString()}</strong>
-      </div>;
-    }) : <p>Waiting for players…</p>}
-  </div>;
+  const ordered=[...players].sort((a,b)=>b.score-a.score);
+  const finishScore=Math.max(1500,...players.map(player=>player.score));
+  return <section className={'arena-sprint-world arena-sprint-world--'+mode} aria-label="Live 2D Data Sprint race">
+    <div className="arena-sprint-sky"><span className="arena-sprint-cloud cloud-one"/><span className="arena-sprint-cloud cloud-two"/>
+      <span className="arena-sprint-banner">DATA SPRINT</span>
+      <span className="arena-sprint-finish-label"><Flag size={14}/> FINISH</span>
+    </div>
+    <div className="arena-sprint-tracks">
+      {ordered.slice(0,12).map((player,index)=>{
+        const distance=Math.min(89,player.score/finishScore*88);
+        return <div className="arena-sprint-lane" key={player.id}>
+          <span className="arena-sprint-number">{index+1}</span>
+          <div className="arena-sprint-road">
+            <span className="arena-sprint-dashes" aria-hidden="true"/>
+            <span className="arena-sprint-finish-line" aria-hidden="true"/>
+            <div className="arena-sprint-runner" style={{left:distance+'%','--runner-color':hues[player.color%hues.length]} as React.CSSProperties}>
+              <span className="arena-sprint-runner-head"><i/><i/></span>
+              <span className="arena-sprint-runner-body"/><span className="arena-sprint-runner-feet"/>
+            </div>
+          </div>
+          <div className="arena-sprint-player-info">
+            <strong>{player.nickname}</strong><span>{player.score.toLocaleString()} pts</span>
+          </div>
+        </div>;
+      })}
+      {!players.length && <p className="arena-note">Waiting for racers…</p>}
+    </div>
+    <div className="arena-sprint-bottom"><span>START</span><strong>Correct answers move your racer along the track</strong><span>FINISH</span></div>
+  </section>;
 }
 
 function ClassicSummary({ players }: { players: ArenaPlayer[] }) {
