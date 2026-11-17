@@ -95,8 +95,14 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   }
   function chooseTopic(topic: Topic) {
     setSelected(topic);
+    setSection('notes');
     setSession(null);
     lessonRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  }
+  function openStudioWithCode(code: string) {
+    try { localStorage.setItem('pico.studio.code.v1', code.slice(0, 12000)); }
+    catch { /* use default example if local storage is disabled */ }
+    setSection('studio');
   }
   return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={learningThemeVariables(theme)}>
     <header className="learning-topbar">
@@ -174,7 +180,13 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
 
             <div className="learning-actions learning-lesson-actions">
               {available.length > 0 && <button type="button" className="learning-primary" onClick={() => start(available, selected.title)}><CircleHelp size={16} aria-hidden="true" /> Practice questions ({available.length})</button>}
-              {selected.tool && <button type="button" className="learning-secondary" onClick={() => selected.starter ? onStartCode(selected.starter) : onOpenTool(selected.tool!)}>{selected.starter ? 'Open example in compiler' : `Open ${toolNames[selected.tool] ?? 'Pico tool'}`} <ArrowRight size={16} aria-hidden="true" /></button>}
+              {selected.tool && <button type="button" className="learning-secondary"
+                onClick={() => selected.starter?.language === 'pseudocode' ? openStudioWithCode(selected.starter.code)
+                  : selected.starter ? onStartCode(selected.starter) : onOpenTool(selected.tool!)}>
+                {selected.starter?.language === 'pseudocode' ? 'Try in Live Studio'
+                  : selected.starter ? 'Open example in compiler' : `Open ${toolNames[selected.tool] ?? 'Pico tool'}`}
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>}
             </div>
           </section>
           <section className="learning-panel learning-practice-card" aria-labelledby="practice-title">
@@ -189,8 +201,11 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
     </div> : <div className="learning-feature">
       <Suspense fallback={<div className="learning-panel" role="status">Loading…</div>}>
         {section === 'studio' && <LiveStudio />}
-        {section === 'challenges' && <Challenges />}
-        {section === 'exam' && <ExamSimulator />}
+        {section === 'challenges' && <Challenges onDebug={openStudioWithCode} />}
+        {section === 'exam' && <ExamSimulator onReviewTopic={id => {
+          const topic = topics.find(item => item.id === id);
+          if (topic) chooseTopic(topic);
+        }} />}
         {section === 'classroom' && <Classroom />}
         {section === 'arcade' && <RetroArcade />}
       </Suspense>
