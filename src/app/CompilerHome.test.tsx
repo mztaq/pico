@@ -30,7 +30,20 @@ const switchViaHome=async(language:'Python Compiler'|'Pseudocode Compiler')=>{
   await click(container.querySelector<HTMLElement>('[aria-label="Go to home screen"]')!);
   await choose(language);
 };
-const choose=async(language:string)=>{await click(container.querySelector(`.compiler-choice h2`)?.textContent===language?container.querySelector<HTMLElement>('.compiler-choice')!:container.querySelectorAll<HTMLElement>('.compiler-choice')[1]!);};
+const openWorkspaceMenu=async()=>{
+  if(container.querySelector('.compiler-choice')) return;
+  const entry=[...container.querySelectorAll<HTMLButtonElement>('.home-entry-card')]
+    .find(item=>item.textContent?.includes('Workspaces'));
+  if(!entry) throw Error('Workspaces entry not found');
+  await click(entry);
+};
+const choose=async(language:string)=>{
+  await openWorkspaceMenu();
+  const item=[...container.querySelectorAll<HTMLElement>('.compiler-choice')]
+    .find(choice=>choice.querySelector('h2')?.textContent===language);
+  if(!item) throw Error('Workspace missing: '+language);
+  await click(item);
+};
 async function type(element:HTMLInputElement|HTMLTextAreaElement,value:string){await act(async()=>{Object.getOwnPropertyDescriptor(element instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value')!.set!.call(element,value);element.dispatchEvent(new Event('input',{bubbles:true}));});}
 beforeEach(async()=>{
   localStorage.clear();localStorage.setItem('pico.visitCount.v1','3');localStorage.setItem('pico.python.visitCount.v1','3');jobs.length=0;
@@ -41,18 +54,49 @@ beforeEach(async()=>{
   container=document.createElement('div');document.body.append(container);root=createRoot(container);await act(async()=>root.render(<App/>));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.restoreAllMocks();vi.unstubAllGlobals();});
-it('opens on a themed home screen with all workspace choices',()=>{
+it('opens on two clear choices and then reveals all workspaces',async()=>{
   expect(document.title).toBe('Pico | Home');
-  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
+  expect(container.querySelector('.compiler-choices')).toBeNull();
+  await click([...container.querySelectorAll<HTMLButtonElement>('.home-entry-card')]
+    .find(item=>item.textContent?.includes('Workspaces'))!);
+  expect(window.location.search).toBe('?view=workspaces');
+  expect(container.querySelector('.home-workspaces h1')?.textContent).toBe('Workspaces');
   expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Traffic Storm','Binary Lab']);
-  expect(container.querySelector('footer')).toBeNull();
+  expect(container.querySelector('footer.pico-app-footer')).not.toBeNull();
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/team"]')?.textContent).toBe('Pico Team');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
+});
+it('opens Learn tools individually and returns to the tool chooser', async () => {
+  await click([...container.querySelectorAll<HTMLButtonElement>('.home-entry-card')]
+    .find(item=>item.textContent?.includes('Learn and practise'))!);
+  expect(window.location.pathname).toBe('/app/learn');
+  expect(window.location.search).toBe('');
+  expect(container.querySelector('.learn-landing-game')).not.toBeNull();
+  expect(container.querySelector('.learning-feature')).toBeNull();
+
+  await click(container.querySelector<HTMLButtonElement>('.learn-landing-play')!);
+  expect(window.location.search).toBe('?section=arena&mode=circuit');
+  expect(container.querySelector('.learn-landing')).toBeNull();
+  expect(container.querySelector('.learning-feature')).not.toBeNull();
+
+  await click(container.querySelector<HTMLElement>('.learning-back')!);
+  expect(window.location.pathname+window.location.search).toBe('/app/learn');
+  expect(container.querySelector('.learn-landing-game')).not.toBeNull();
+
+  await click(container.querySelector<HTMLButtonElement>('.learn-landing-notes')!);
+  expect(window.location.search).toBe('?section=notes');
+  expect(container.querySelector('.learn-landing')).toBeNull();
+
+  await click(container.querySelector<HTMLElement>('.learning-back')!);
+  await click(container.querySelector<HTMLElement>('.learning-back')!);
+  expect(window.location.pathname).toBe('/app');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
 });
 it('resets test navigation after visiting Games', async()=>{
   const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
@@ -62,7 +106,7 @@ it('resets test navigation after visiting Games', async()=>{
 });
 it('opens the Games library from home and returns to the workspace chooser', async()=>{
   expect(container.querySelector('.home-group[aria-label="Games"]')).toBeNull();
-  expect(container.querySelector('.home-group--visual')?.textContent).not.toContain('Blackout Protocol');
+  expect(container.querySelector('.pico-home')?.textContent).not.toContain('Blackout Protocol');
   const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
   expect(gamesLink).not.toBeNull();
   await click(gamesLink);
@@ -81,7 +125,7 @@ it('opens the Games library from home and returns to the workspace chooser', asy
   expect(container.querySelector('.pico-games-card h3')?.textContent).toBe('Blackout Protocol');
   await click(container.querySelector<HTMLElement>('.pico-games-back')!);
   expect(window.location.pathname).toBe('/app');
-  expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
 });
 it('handles a direct /app/games URL and browser navigation',async()=>{
   await act(async()=>{
@@ -95,7 +139,7 @@ it('handles a direct /app/games URL and browser navigation',async()=>{
     window.dispatchEvent(new PopStateEvent('popstate'));
   });
   expect(container.querySelector('.pico-games')).toBeNull();
-  expect(container.querySelector('.home-hero h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
 });
 it('uses the Pico logo to return to Workspaces from Games and the compiler',async()=>{
   await click(container.querySelector<HTMLElement>('a.home-games-link[href="/app/games"]')!);
@@ -106,7 +150,7 @@ it('uses the Pico logo to return to Workspaces from Games and the compiler',asyn
   expect(window.location.pathname).toBe('/app/python');
   await click(container.querySelector<HTMLElement>('.pico-brand-home[aria-label="Pico, back to Workspaces"]')!);
   expect(window.location.pathname).toBe('/app');
-  expect(container.querySelector('.home-hero h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelectorAll('.home-entry-card')).toHaveLength(2);
 });
 it('shows three matching concept developer cards and prominent co-founders',async()=>{
   await act(async()=>{
@@ -140,13 +184,11 @@ it('changes the theme from home and saves it for workspaces',async()=>{
   await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   expect(toggle.getAttribute('aria-expanded')).toBe('false');
   expect(container.querySelector('.home-theme-menu')).toBeNull();
-  const pseudocode=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='Pseudocode Compiler')!;
-  await click(pseudocode);
+  await choose('Pseudocode Compiler');
   expect(container.querySelector('.pico-app')?.getAttribute('data-pico-theme')).toBe('nord');
 });
 it('opens Binary Lab from its home section and updates every number view',async()=>{
-  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Binary Lab');
-  await click(choice!);
+  await choose('Binary Lab');
   expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Binary Lab');
   await click(container.querySelector<HTMLElement>('.binary-tour-actions button')!);
   expect(container.querySelector('.binary-tour')).toBeNull();
@@ -159,7 +201,7 @@ it('opens Binary Lab from its home section and updates every number view',async(
   expect(container.querySelector('output[aria-label="Two’s complement signed value"]')?.textContent).toBe('-86');
   await click(container.querySelector<HTMLElement>('[aria-label="Back to Pico"]')!);
   expect(container.querySelector('.pico-home')).not.toBeNull();
-  await click([...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Binary Lab')!);
+  await choose('Binary Lab');
   expect(container.querySelector('.binary-tour')).toBeNull();
   await click(container.querySelector<HTMLElement>('[aria-label="Open Binary Lab tutorial"]')!);
   expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Binary Lab');
@@ -167,14 +209,12 @@ it('opens Binary Lab from its home section and updates every number view',async(
   expect(container.querySelector('#binary-tour-title')?.textContent).toBe('Toggle bits');
 });
 it('shows the Logic Sim workspace without a personal footer',async()=>{
-  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
-  await click(choice!);
+  await choose('Logic Sim');
   expect(container.querySelector('.logic-app')).not.toBeNull();
-  expect(container.querySelector('footer')).toBeNull();
+  expect(container.querySelector('footer.pico-app-footer')).toBeNull();
 });
 it('shows the updated Logic Sim editor controls and shared theme picker',async()=>{
-  const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='Logic Sim');
-  await click(choice!);
+  await choose('Logic Sim');
   expect(container.textContent).not.toContain('Saved locally');
   expect(container.textContent).not.toContain('EXAMPLE CIRCUITS');
   expect(container.querySelector('.logic-toolbar')?.textContent).toContain('Select all');
@@ -256,13 +296,13 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
   expect(container.querySelector('#tutorial-title')?.textContent).toBe('Tour complete');
 });
 
-it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
+it('shows uncluttered workspace cards without Open labels or preview scrollbars',async()=>{
+  await openWorkspaceMenu();
  expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
  expect(container.querySelectorAll('.compiler-choice')).toHaveLength(7);
 });
 it('offers both CPU simulation modes and a guided tutorial',async()=>{
- const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');
- await click(cpuChoice!);
+ await choose('CPU Studio');
  expect(document.title).toBe('Pico | CPU Studio');
  expect(container.querySelector('.cpu-app')).not.toBeNull();
  expect(container.querySelectorAll('.cpu-ram-row')).toHaveLength(16);
@@ -282,8 +322,7 @@ it('offers both CPU simulation modes and a guided tutorial',async()=>{
  expect(container.textContent).toContain('Press Run to start the CPU');
 });
 it('supports Step Back and only shows decode unit in Advanced mode',async()=>{
- const choice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(item=>item.querySelector('h2')?.textContent==='CPU Studio');
- await click(choice!);
+ await choose('CPU Studio');
  if(!container.querySelector('[aria-label="Skip CPU Studio tutorial"]'))await click(container.querySelector<HTMLElement>('[aria-label="Open CPU Studio tutorial"]')!);
  await click(container.querySelector<HTMLElement>('[aria-label="Skip CPU Studio tutorial"]')!);
  const back=container.querySelector<HTMLButtonElement>('[aria-label="Step backward one CPU micro-operation"]')!;

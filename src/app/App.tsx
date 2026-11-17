@@ -113,7 +113,9 @@ export default function App() {
     {informationPage && <SiteInfo page={informationPage} onClose={closeInformationPage} />}
   </>;
   if (language === 'games') return <GamesPage onHome={() => setLanguage(null)} />;
-  if (language === 'learn') return <LearningHub onBack={() => setLanguage(null)} onOpenTool={setLanguage} onStartCode={startCode} />;
+  if (language === 'learn') return <WorkspaceLoadBoundary key="learn" workspace="Pico Learn">
+    <LearningHub onBack={() => setLanguage(null)} onOpenTool={setLanguage} onStartCode={startCode} />
+  </WorkspaceLoadBoundary>;
   if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><WorkspaceTransition workspace="CPU Studio"><CpuStudio onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'binary') return <WorkspaceLoadBoundary key="binary" workspace="Binary Lab"><WorkspaceTransition workspace="Binary Lab"><BinaryLab onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;

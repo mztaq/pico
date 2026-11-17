@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
-import { LearningHub } from './LearningHub';
+import { LearningHub, sectionFromSearch } from './LearningHub';
 import { getTheme } from '../app/themes';
 
 const host = document.createElement('div');
@@ -15,18 +15,28 @@ function button(label: string) {
   return found;
 }
 
-it('shows complete notes, an example and an interactive model without a multi-step wizard', async () => {
+it('shows a focused tool chooser then full notes without a tab bar', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  window.history.replaceState(null, '', '/app/learn');
   document.body.append(host);
   await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
+  expect(host.querySelector('.learn-landing-game')).not.toBeNull();
+  expect(host.textContent).toContain('Computer Science notes');
+  expect(host.textContent).toContain('Circuit Clash');
+  expect(host.textContent).toContain('Report a Bug');
+  expect(host.querySelector('.learning-catalogue')).toBeNull();
+  await act(async () => button('Open notes').click());
+  expect(host.querySelector('.learn-landing')).toBeNull();
+  expect(window.location.search).toBe('?section=notes');
   expect(host.textContent).not.toContain('Study notes, made practical');
   expect(host.textContent).not.toContain('Learn a concept. Try it in Pico.');
-  expect(host.textContent).toContain('Computer Science notes');
+  expect(host.textContent).not.toContain('Classroom');
+  expect(host.querySelectorAll('.learning-sections button')).toHaveLength(0);
   expect(host.textContent).toContain('Key points');
   expect(host.textContent).toContain('Worked example');
   expect(host.textContent).toContain('Interactive example');
   expect(host.querySelector('.learning-note-list')?.querySelectorAll('li').length).toBeGreaterThanOrEqual(3);
-  expect(host.textContent).toContain('Practice questions (2)');
+  expect(host.textContent).toContain('Practice questions (7)');
 
   await act(async () => button('Text, sound and images').click());
   expect(host.querySelector('.learning-sound-chart')).not.toBeNull();
@@ -34,8 +44,8 @@ it('shows complete notes, an example and an interactive model without a multi-st
   expect(host.textContent).toContain('8 × 3 = 24 bits');
   expect(host.textContent).toContain('Try it yourself');
 
-  await act(async () => button('Practice questions (2)').click());
-  expect(host.textContent).toContain('Question 1 of 2');
+  await act(async () => button('Practice questions (7)').click());
+  expect(host.textContent).toContain('Question 1 of 7');
   await act(async () => button('Exit practice').click());
   expect(host.textContent).toContain('Worked example');
 });
@@ -60,4 +70,68 @@ it('updates Learn panels when Pico theme settings change without remounting', as
     if (saved === null) localStorage.removeItem('pico.settings.v6');
     else localStorage.setItem('pico.settings.v6', saved);
   }
+});
+
+it('renders Arena directly from a preview deployment URL instead of a blank screen', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  window.history.replaceState(null, '', '/app/learn?section=arena&mode=circuit');
+  document.body.append(host);
+  await act(async () => root.render(
+    <LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />
+  ));
+  expect(host.querySelector('.learning-hub')).not.toBeNull();
+  expect(host.querySelector('.learning-feature')).not.toBeNull();
+  expect(host.querySelector('.arena-intro')).not.toBeNull();
+  expect(host.textContent).toContain('Host a game');
+  expect(host.querySelector('.pico-app-footer')).toBeNull();
+  expect(host.querySelector('.pico-load-error')).toBeNull();
+});
+
+it('opens actual solo gameplay with a playable map and quiz overlay, not a blank page', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  window.history.replaceState(null, '', '/app/learn?section=arena&mode=circuit');
+  document.body.append(host);
+  const nativeGetContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = (() => null) as typeof nativeGetContext;
+  try {
+    await act(async () => root.render(
+      <LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />
+    ));
+    await act(async () => button('Solo').click());
+    await act(async () => button('Play solo').click());
+    expect(host.querySelector('.arena-match-layout--immersive')).not.toBeNull();
+    expect(host.querySelector('.defense-canvas-wrap canvas')).not.toBeNull();
+    expect(host.querySelector('.arena-earn-button')).not.toBeNull();
+    expect(host.querySelector('.pico-app-footer')).toBeNull();
+    await act(async () => button('Earn charge').click());
+    expect(host.querySelector('.arena-quiz-dialog')).not.toBeNull();
+    expect(host.textContent).toContain('Question');
+    await act(async () => button('Back to game').click());
+    expect(host.querySelector('.arena-quiz-dialog')).toBeNull();
+  } finally { HTMLCanvasElement.prototype.getContext = nativeGetContext; }
+});
+
+it('opens each homepage destination through a shareable Learn URL', () => {
+  for (const section of ['notes', 'arena'] as const) {
+    expect(sectionFromSearch('?section=' + section)).toBe(section);
+    expect(sectionFromSearch('?ref=home&section=' + section)).toBe(section);
+  }
+  expect(sectionFromSearch('?section=notes')).toBe('notes');
+  expect(sectionFromSearch('?section=unknown')).toBeNull();
+  expect(sectionFromSearch('')).toBeNull();
+});
+
+it('returns from an individual tool to the learning chooser', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  window.history.replaceState(null, '', '/app/learn');
+  document.body.append(host);
+  await act(async () => root.render(<LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />));
+  await act(async () => button('Play Pico Arena').click());
+  expect(window.location.search).toBe('?section=arena&mode=circuit');
+  expect(host.querySelector('.learn-landing')).toBeNull();
+  expect(host.querySelector('.learning-feature')).not.toBeNull();
+  await act(async () => button('All tools').click());
+  expect(window.location.pathname + window.location.search).toBe('/app/learn');
+  expect(host.querySelector('.learn-landing-game')).not.toBeNull();
+  expect(host.querySelector('.learning-feature')).toBeNull();
 });

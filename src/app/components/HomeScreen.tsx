@@ -1,11 +1,11 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Binary, BookOpen, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
-import { SiteInfoLinks } from './SiteInfo';
+import { PicoAppFooter } from './PicoAppFooter';
 import { SoundButton } from './SoundToggle';
 import { ThemePicker } from './ThemePicker';
 import { BugReportDialog } from './BugReportDialog';
@@ -35,6 +35,24 @@ export function HomeAmbientCurves() {
 
 export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) => void }) {
   const [settings, setSettings] = useState(loadSettings);
+  const [homeView, setHomeView] = useState<'choose' | 'workspaces'>(() =>
+    new URLSearchParams(window.location.search).get('view') === 'workspaces' ? 'workspaces' : 'choose');
+  useEffect(() => {
+    const syncView = () => setHomeView(
+      new URLSearchParams(window.location.search).get('view') === 'workspaces' ? 'workspaces' : 'choose');
+    window.addEventListener('popstate', syncView);
+    return () => window.removeEventListener('popstate', syncView);
+  }, []);
+  function openWorkspaces() {
+    if (window.location.search !== '?view=workspaces') {
+      window.history.pushState(window.history.state, '', '/app?view=workspaces');
+    }
+    setHomeView('workspaces');
+  }
+  function backToChoice() {
+    window.history.replaceState(window.history.state, '', '/app');
+    setHomeView('choose');
+  }
   const [themeOpen, setThemeOpen] = useState(false);
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -106,10 +124,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
         </div>}
       </div>
       <div className="home-updates">
-        <a className="home-games-link" href="/app/learn" onClick={event => {
-          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-          event.preventDefault(); onChoose('learn');
-        }}><BookOpen size={16} aria-hidden="true" /><span>Learn</span></a>
         <a className="home-games-link" href="/app/games" onClick={event => {
           if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault();
@@ -118,17 +132,51 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
         <SoundButton /><UpdateCenter />
       </div>
     </div>
-    <div className="home-inner">
+    <div className={homeView === 'choose' ? 'home-inner home-inner--entry' : 'home-inner'}>
       <div className="home-hero">
-      <a className="home-brand" href="/app" aria-label="Pico, Workspaces"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
-        <h1>Choose your workspace</h1>
-        <a className="home-learning-link" href="/app/learn" onClick={event => {
+        <a className="home-brand" href="/app" aria-label="Pico home" onClick={event => {
           if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-          event.preventDefault(); onChoose('learn');
-        }}><BookOpen size={17} aria-hidden="true" /> New to a topic? Learn and practise first <span aria-hidden="true">→</span></a>
+          event.preventDefault();
+          backToChoice();
+        }}><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
       </div>
+      {homeView === 'choose' ? <section className="home-entry" aria-label="Choose Pico area">
+        <button type="button" className="home-entry-card" onClick={() => onChoose('learn')}>
+          <span className="home-entry-head"><span className="home-entry-icon" aria-hidden="true"><BookOpen size={27} /></span>
+            <ArrowRight className="home-entry-arrow" size={20} aria-hidden="true" /></span>
+          <span className="home-entry-preview home-entry-preview--learn" aria-hidden="true">
+            <span className="home-entry-preview-prompt"><b>Q.</b> What is 1010 in denary?</span>
+            <span className="home-entry-preview-choices"><i>8</i><i className="is-correct">10 <span>✓</span></i><i>12</i></span>
+            <span className="home-entry-preview-network">{Array.from({ length: 12 }, (_, i) =>
+              <i key={i} className={i % 5 < 3 ? 'active' : i % 4 === 0 ? 'rival' : ''}/>)}</span>
+          </span>
+          <span className="home-entry-copy"><strong>Learn and practise</strong>
+            <span>Study the topics. Play Pico Arena with your class.</span>
+          </span>
+        </button>
+        <button type="button" className="home-entry-card" onClick={openWorkspaces}>
+          <span className="home-entry-head"><span className="home-entry-icon" aria-hidden="true"><Terminal size={27} /></span>
+            <ArrowRight className="home-entry-arrow" size={20} aria-hidden="true" /></span>
+          <span className="home-entry-preview home-entry-preview--code" aria-hidden="true">
+            <span className="home-entry-window-controls"><i/><i/><i/></span>
+            <span className="home-entry-code-line"><em>DECLARE</em> Score : <b>INTEGER</b></span>
+            <span className="home-entry-code-line">Score ← <strong>42</strong></span>
+            <span className="home-entry-code-line"><em>OUTPUT</em> Score</span>
+            <span className="home-entry-code-result">Output <b>42</b></span>
+          </span>
+          <span className="home-entry-copy"><strong>Workspaces</strong>
+            <span>Compile code, build flowcharts and simulate systems.</span>
+          </span>
+        </button>
+      </section> : <section className="home-workspaces" aria-labelledby="home-workspaces-title">
+        <div className="home-workspaces-heading">
+          <h1 id="home-workspaces-title">Workspaces</h1>
+          <button className="home-section-back" type="button" onClick={backToChoice}>
+            <ArrowLeft size={17} aria-hidden="true" /> Back
+          </button>
+        </div>
       <div className="compiler-choices">
-        <HomeGroup label="Code" detail="Write, run and debug programs">
+        <HomeGroup label="Code">
           <WorkspaceChoice icon={<Terminal size={18} />} tag=".pico" title="Pseudocode Compiler" description="Run and debug Cambridge-style pseudocode." onClick={() => onChoose('pseudocode')}>
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode code={'DECLARE Name : STRING\nINPUT Name\nOUTPUT "Hello ", Name, "!"'} /></pre>
           </WorkspaceChoice>
@@ -136,7 +184,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
             <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
           </WorkspaceChoice>
         </HomeGroup>
-        <HomeGroup label="Visual labs" detail="Build and explore interactive models" kind="visual">
+        <HomeGroup label="Visual labs" kind="visual">
           <WorkspaceChoice icon={<GitBranch size={18} />} title="Flowchart Builder" description="Build, run and convert flowcharts to pseudocode." onClick={() => onChoose('flowchart')}>
             <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
           <rect x="1" y="22" width="68" height="32" rx="16"/>
@@ -174,7 +222,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
             </svg>
           </WorkspaceChoice>
         </HomeGroup>
-        <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">
+        <HomeGroup label="Data lab" kind="data">
           <WorkspaceChoice icon={<Calculator size={18} />} title="Binary Lab" description="Explore bits, hexadecimal, logical shifts, overflow and two’s complement." onClick={() => onChoose('binary')}>
             <div className="compiler-choice-preview home-binary-preview" aria-hidden="true">
               <div className="home-binary-byte">{'00101010'.split('').map((bit, index) => <span className={bit === '1' ? 'on' : ''} key={index}>{bit}</span>)}</div>
@@ -183,12 +231,8 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           </WorkspaceChoice>
         </HomeGroup>
       </div>
-      <div className="home-footer-links">
-        <SiteInfoLinks />
-        <button type="button" className="bug-report-trigger" onClick={() => { void openReport(); }}>
-          <Bug size={17} aria-hidden="true" /><span>Report a Bug</span>
-        </button>
-      </div>
+      </section>}
+      <PicoAppFooter onReport={() => { void openReport(); }} />
     </div>
     {offlineReportWarning && <div className="pico-offline-backdrop" role="presentation">
       <section className="pico-offline-dialog" role="dialog" aria-modal="true" aria-labelledby="pico-report-offline-title">
@@ -205,9 +249,10 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
   </main>;
 }
 
-function HomeGroup({ label, detail, children, kind }: { label: string; detail: string; children: ReactNode; kind?: 'visual' | 'data' }) {
+
+function HomeGroup({ label, children, kind }: { label: string; children: ReactNode; kind?: 'visual' | 'data' }) {
   return <section className={`home-group${kind ? ` home-group--${kind}` : ''}`} aria-label={label}>
-    <div className="home-group-head"><span className="home-group-label">{label}</span><span className="home-group-detail">{detail}</span></div>
+    <div className="home-group-head"><h3 className="home-group-label">{label}</h3></div>
     <div className="home-group-grid">{children}</div>
   </section>;
 }

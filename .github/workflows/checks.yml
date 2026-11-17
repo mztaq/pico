@@ -17,3 +17,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm build
+      - name: Browser smoke-test production Pico Arena bundle
+        run: |
+          pnpm preview -- --host 127.0.0.1 > /tmp/pico-vite-preview.log 2>&1 &
+          VITE_PID=$!
+          trap 'kill $VITE_PID 2>/dev/null || true' EXIT
+          node scripts/smoke-pico-arena.mjs
+      - name: Bundle memory-only arena Worker
+        run: npx --yes wrangler@4 deploy --dry-run --config workers/pico-arena/wrangler.jsonc

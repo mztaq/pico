@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, RotateCcw, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, CircleHelp, RotateCcw, Search, WifiOff } from 'lucide-react';
 import type { PicoWorkspace } from '../app/workspace-deeplink';
 import { questions, topics, type Question, type Topic } from './content';
 import { readProgress, recordAnswer, saveProgress } from './progress';
@@ -9,6 +9,24 @@ import { learningThemeVariables } from './theme';
 import { LearningVisual, visualizedTopics } from './LearningVisuals';
 import { topicNotes } from './notes';
 import './learning.css';
+import './arena.css';
+import './learn-landing.css';
+import { LearnLanding, type LearningGameMode } from './LearnLanding';
+import { ArenaGame } from './ArenaGame';
+import { PicoAppFooter } from '../app/components/PicoAppFooter';
+import { WorkspaceLoadBoundary } from '../app/components/WorkspaceLoadBoundary';
+import { BugReportDialog } from '../app/components/BugReportDialog';
+import { BugReportNotice } from '../app/components/BugReportNotice';
+import { picoIsOnline } from '../app/components/pico-connection';
+
+
+
+type LearningSection = 'notes' | 'arena';
+
+export function sectionFromSearch(search: string): LearningSection | null {
+  const target = new URLSearchParams(search).get('section');
+  return target === 'notes' || target === 'arena' ? target : null;
+}
 
 type Props = {
   onBack: () => void;
@@ -32,6 +50,31 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
       window.removeEventListener('storage', syncTheme);
     };
   }, []);
+  const [section, setSection] = useState<LearningSection | null>(() => sectionFromSearch(window.location.search));
+  useEffect(() => {
+    const syncSection = () => setSection(sectionFromSearch(window.location.search));
+    window.addEventListener('popstate', syncSection);
+    return () => window.removeEventListener('popstate', syncSection);
+  }, []);
+  function chooseSection(next: LearningSection | null) {
+    if (next === section) return;
+    setSection(next);
+    const url = new URL(window.location.href);
+    if (next === null) url.searchParams.delete('section');
+    else url.searchParams.set('section', next);
+    if (next !== 'arena') url.searchParams.delete('mode');
+    window.history.pushState(window.history.state, '', url.pathname + url.search + url.hash);
+  }
+  function openArena(mode: LearningGameMode) {
+    setSection('arena');
+    const url = new URL(window.location.href);
+    url.searchParams.set('section', 'arena');
+    url.searchParams.set('mode', mode);
+    window.history.pushState(window.history.state, '', url.pathname + url.search + url.hash);
+  }
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportWarning, setReportWarning] = useState(false);
+  const [reportNotice, setReportNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Topic>(topics[0]);
   const [progress, setProgress] = useState(readProgress);
@@ -76,18 +119,22 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
   }
   function chooseTopic(topic: Topic) {
     setSelected(topic);
+    if (section !== 'notes') chooseSection('notes');
     setSession(null);
     lessonRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
   }
+  async function openReport() {
+    if (await picoIsOnline()) setReportOpen(true);
+    else setReportWarning(true);
+  }
   return <section className="learning-hub" aria-label="Learn and practice" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={learningThemeVariables(theme)}>
     <header className="learning-topbar">
-      <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn</span>
-      <button type="button" className="learning-back" onClick={onBack}><ArrowLeft size={17} aria-hidden="true" /> Workspaces</button>
+      <span className="learning-brand"><BookOpen size={18} aria-hidden="true" /> Learn and practise</span>
+      <button type="button" className="learning-back" onClick={() => section === null ? onBack() : chooseSection(null)}>
+        <ArrowLeft size={17} aria-hidden="true" /> {section === null ? 'Home' : 'All tools'}
+      </button>
     </header>
-    <div className="learning-intro">
-      <h1>Computer Science notes</h1>
-    </div>
-    <div className="learning-layout">
+    {section === null ? <LearnLanding onNotes={() => chooseSection('notes')} onArena={openArena} /> : section === 'notes' ? <div className="learning-layout">
       <aside className="learning-catalogue" aria-label="Topics">
         <label className="learning-search"><Search size={17} aria-hidden="true" /><span className="sr-only">Search topics</span><input type="search" placeholder="Search topics" value={query} onChange={event => setQuery(event.target.value)} /></label>
         <div className="learning-topic-list">
@@ -149,7 +196,11 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
 
             <div className="learning-actions learning-lesson-actions">
               {available.length > 0 && <button type="button" className="learning-primary" onClick={() => start(available, selected.title)}><CircleHelp size={16} aria-hidden="true" /> Practice questions ({available.length})</button>}
-              {selected.tool && <button type="button" className="learning-secondary" onClick={() => selected.starter ? onStartCode(selected.starter) : onOpenTool(selected.tool!)}>{selected.starter ? 'Open example in compiler' : `Open ${toolNames[selected.tool] ?? 'Pico tool'}`} <ArrowRight size={16} aria-hidden="true" /></button>}
+              {selected.tool && <button type="button" className="learning-secondary"
+                onClick={() => selected.starter ? onStartCode(selected.starter) : onOpenTool(selected.tool!)}>
+                {selected.starter ? 'Open example in compiler' : `Open ${toolNames[selected.tool] ?? 'Pico tool'}`}
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>}
             </div>
           </section>
           <section className="learning-panel learning-practice-card" aria-labelledby="practice-title">
@@ -161,6 +212,27 @@ export function LearningHub({ onBack, onOpenTool, onStartCode }: Props) {
           </section>
         </>}
       </div>
-    </div>
+    </div> : <div className="learning-feature">
+      <WorkspaceLoadBoundary workspace="Pico Arena">
+        <ArenaGame onReviewTopic={id => {
+          const topic = topics.find(item => item.id === id);
+          if (topic) chooseTopic(topic);
+        }} />
+      </WorkspaceLoadBoundary>
+    </div>}
+    {section === null && <PicoAppFooter onReport={() => { void openReport(); }} />}
+    {reportWarning && <div className="pico-offline-backdrop" role="presentation">
+      <section className="pico-offline-dialog" role="dialog" aria-modal="true" aria-labelledby="learn-report-offline">
+        <h2 id="learn-report-offline">You're offline</h2>
+        <p>Connect to the internet to report a bug.</p>
+        <button type="button" className="pico-offline-continue" onClick={() => setReportWarning(false)}>
+          <WifiOff size={16}/> Close
+        </button>
+      </section>
+    </div>}
+    {reportOpen && <BugReportDialog onClose={() => setReportOpen(false)}
+      onResult={(type, message) => { setReportOpen(false); setReportNotice({ type, message }); }}/>}
+    {reportNotice && <BugReportNotice type={reportNotice.type} message={reportNotice.message}
+      onClose={() => setReportNotice(null)}/>}
   </section>;
 }

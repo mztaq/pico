@@ -1,4 +1,5 @@
 import type { PicoWorkspace } from '../app/workspace-deeplink';
+import { supplementalQuestions } from './questionBankExtra';
 
 export type Topic = {
   id: string;
@@ -47,7 +48,7 @@ export const topics: Topic[] = [
 ];
 
 export type Question = { id: string; topic: string; prompt: string; choices: [string, string, string, string]; answer: number; explanation: string };
-export const questions: Question[] = [
+const foundationQuestions: Question[] = [
   { id: 'bits-1', topic: 'number-systems', prompt: 'What is 0010 1101 in denary?', choices: ['37', '45', '53', '61'], answer: 1, explanation: 'The set places are 32, 8, 4 and 1. Their sum is 45.' },
   { id: 'bits-2', topic: 'number-systems', prompt: 'How many bits does one hexadecimal digit represent?', choices: ['2', '4', '8', '16'], answer: 1, explanation: 'One hexadecimal digit represents one nibble: four bits.' },
   { id: 'sound-1', topic: 'text-media', prompt: 'What does a sound sample measure?', choices: ['The wave’s amplitude at one moment', 'The number of speakers', 'The file name', 'The network address'], answer: 0, explanation: 'Sampling records the amplitude of the analogue sound wave at points in time.' },
@@ -110,3 +111,6 @@ export const questions: Question[] = [
   { id: 'logic-1', topic: 'logic', prompt: 'A = 1 and B = 1. What does XOR output?', choices: ['0', '1', '2', 'It depends on the order'], answer: 0, explanation: 'XOR outputs 1 only when exactly one input is 1.' },
   { id: 'logic-2', topic: 'logic', prompt: 'A = 1 and B = 0. What does AND output?', choices: ['0', '1', 'Both 0 and 1', 'No output'], answer: 0, explanation: 'AND outputs 1 only when both inputs are 1.' },
 ];
+
+// Extra questions live in a separately reviewed file. Do not generate number-swapped variants.
+export const questions: Question[] = [...foundationQuestions, ...supplementalQuestions];

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/wrangler.json",
+  "name": "pico-arena-rooms",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-17",
+  "workers_dev": false,
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ROOMS",
+        "class_name": "ArenaRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "ArenaRoom"
+      ]
+    }
+  ]
+}
