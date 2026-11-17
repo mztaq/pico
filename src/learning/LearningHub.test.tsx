@@ -72,6 +72,21 @@ it('updates Learn panels when Pico theme settings change without remounting', as
   }
 });
 
+it('renders Arena directly from a preview deployment URL instead of a blank screen', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  window.history.replaceState(null, '', '/app/learn?section=arena&mode=circuit');
+  document.body.append(host);
+  await act(async () => root.render(
+    <LearningHub onBack={() => {}} onOpenTool={() => {}} onStartCode={() => {}} />
+  ));
+  expect(host.querySelector('.learning-hub')).not.toBeNull();
+  expect(host.querySelector('.learning-feature')).not.toBeNull();
+  expect(host.querySelector('.arena-intro')).not.toBeNull();
+  expect(host.textContent).toContain('Host a game');
+  expect(host.querySelector('.pico-app-footer')).toBeNull();
+  expect(host.querySelector('.pico-load-error')).toBeNull();
+});
+
 it('opens each homepage destination through a shareable Learn URL', () => {
   for (const section of ['notes', 'arena'] as const) {
     expect(sectionFromSearch('?section=' + section)).toBe(section);
