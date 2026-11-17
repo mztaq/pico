@@ -10,6 +10,7 @@ import {
 } from './arenaRules';
 import './arena.css';
 import { DefenseField } from './DefenseField';
+import { DefenseShowcase } from './DefenseShowcase';
 import {
   activateFirewall, advanceDefense, defenseScore, defenseStart, placeTower, upgradeTower,
   type DefenseState, type TowerKind,
@@ -482,10 +483,8 @@ export function ArenaGame({ onReviewTopic }: { onReviewTopic?: (id: string) => v
       </div>
       <div className="arena-rules-pills"><span>4 game modes</span><span>2D gameplay</span><span>Up to 30 players</span></div>
     </div>
-    <div className="arena-intro-art">
-      <div className="arena-intro-board" aria-hidden="true">{Array.from({ length: 20 }, (_, i) =>
-        <span key={i} className={i % 7 < 3 ? 'owned' : i % 5 === 0 ? 'enemy' : ''}>{i % 7 < 3 ? '◆' : '◇'}</span>)}</div>
-      <div className="arena-intro-hud"><span><Zap size={16}/> 145</span><span><Flag size={16}/> 8 nodes</span><span><Trophy size={16}/> 1,120</span></div>
+    <div className="arena-intro-art arena-intro-art--playfield">
+      <DefenseShowcase hacker={mode==='hacker'} />
     </div>
   </section>;
 
