@@ -9,7 +9,7 @@ function readDraft(id: string, starter: string): string {
   catch { return starter; }
 }
 
-export function Challenges() {
+export function Challenges({ onDebug }: { onDebug: (code: string) => void }) {
   const [selected, setSelected] = useState<Challenge>(challenges[0]!);
   const [code, setCode] = useState(() => readDraft(challenges[0]!.id, challenges[0]!.starter));
   const [solved, setSolved] = useState(readSolved);
@@ -100,6 +100,7 @@ export function Challenges() {
       <div className="suite-actions">
         <button className="suite-primary" type="button" disabled={running} onClick={check}><Play size={15} /> {running ? 'Checking…' : 'Check solution'}</button>
         <button className="suite-secondary" type="button" onClick={reset}><RotateCcw size={15} /> Reset code</button>
+        <button className="suite-text-button" type="button" onClick={() => onDebug(code)}>Debug in Live Studio</button>
       </div>
       {error && <p className="suite-error" role="alert">{error}</p>}
       {result && <section className="suite-check-results" aria-label="Test results" aria-live="polite">
