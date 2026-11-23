@@ -1,112 +1,84 @@
 <div align="center">
-  <img src="public/pico-logo.svg" alt="Pico logo" width="76" height="76">
+
+  <img src="public/pico-logo.svg" alt="Pico logo" width="78" height="78">
 
   # Pico.
 
   **Built by students, for students.**
 
-  Learn computer science by writing code, building diagrams, testing circuits and exploring how computers work.
+  Write code. Build circuits. Explore computers.
 
-  **[Visit Pico](https://picompiler.pages.dev)** · **[Open the app](https://picompiler.pages.dev/app)** · **[Play Blackout Protocol](https://picompiler.pages.dev/app/game/blackout-protocol)** · **[Connect Pico to AI](https://picompiler.pages.dev/mcp-docs)**
 </div>
 
-## Why Pico exists
+<table>
+  <tr>
+    <td align="center"><h3>1.33k</h3><sub>VISITS</sub></td>
+    <td align="center"><h3>65.49k</h3><sub>HTTP REQUESTS</sub></td>
+    <td align="center"><h3>4.14k</h3><sub>PAGE VIEWS</sub></td>
+    <td align="center"><h3>4.98k</h3><sub>API REQUESTS</sub></td>
+    <td align="center"><h3>6.47 GB</h3><sub>DATA TRANSFER</sub></td>
+  </tr>
+</table>
 
-Pico began as a pseudocode editor after we found that the tools we were using lacked features needed for our computer science specification. Instead of working around those limitations, we started building our own.
+<p align="center"><sub>Cloudflare traffic snapshot from a 30-day period in our project presentation. Historical figures, not live statistics or unique-user counts.</sub></p>
 
-In October 2026, Pico expanded from one editor to two compilers, then to visual tools for flowcharts, logic and CPU architecture. It has since grown into a browser-based learning platform with seven interactive workspaces, lessons, simulations, games and an MCP connection for AI assistants.
+## From one editor to a learning platform
 
-## Explore Pico
+Pico started in October 2026 when we needed a better way to practise our computer science specification. What began as a pseudocode editor grew into **seven interactive workspaces**, a learning area, a game, and tools that AI assistants can use.
 
-| Workspace | What you do |
+## Seven workspaces
+
+| Workspace | Try it for |
 | --- | --- |
-| **[Pseudocode Compiler](https://picompiler.pages.dev/app/pseudocode)** | Write Cambridge-style pseudocode, handle input, find errors and debug execution step by step. |
-| **[Python Compiler](https://picompiler.pages.dev/app/python)** | Run real Python through Pyodide in the browser, with an editor, files, console and debugger. |
-| **[Flowchart Builder](https://picompiler.pages.dev/app/flowchart)** | Drag and connect blocks, run or debug a flowchart, and convert it into pseudocode. |
-| **[Logic Sim](https://picompiler.pages.dev/app/logic)** | Connect logic gates, change inputs, inspect live signals, and generate truth tables. |
-| **[CPU Studio](https://picompiler.pages.dev/app/cpu)** | Follow the fetch–decode–execute cycle with animated registers, buses and CPU components. |
-| **[Binary Lab](https://picompiler.pages.dev/app/binary)** | Toggle eight bits, compare binary, decimal and hexadecimal, and try shifts, overflow and two's complement. |
-| **[Traffic Storm](https://picompiler.pages.dev/app/traffic)** | Change simulated botnet size, proxies and server capacity, then observe traffic, response time and server health. |
+| [Pseudocode Compiler](https://picompiler.pages.dev/app/pseudocode) | Run Cambridge-style pseudocode, enter inputs and debug line by line. |
+| [Python Compiler](https://picompiler.pages.dev/app/python) | Execute real Python in the browser with a console and debugger. |
+| [Flowchart Builder](https://picompiler.pages.dev/app/flowchart) | Draw, test and convert flowcharts into pseudocode. |
+| [Logic Sim](https://picompiler.pages.dev/app/logic) | Connect gates, follow signals and generate truth tables. |
+| [CPU Studio](https://picompiler.pages.dev/app/cpu) | Step through fetch, decode and execute with visual CPU components. |
+| [Binary Lab](https://picompiler.pages.dev/app/binary) | Explore bits, hex, shifts, overflow and two's complement. |
+| [Traffic Storm](https://picompiler.pages.dev/app/traffic) | Change botnet size, proxies and servers in a network-traffic simulation. |
 
-Pico also offers:
+Also inside Pico: **[Learn](https://picompiler.pages.dev/app/learn)** for topic practice and progress, and **[Blackout Protocol](https://picompiler.pages.dev/app/game/blackout-protocol)**, a 3D data-centre game with attack and defence modes.
 
-- **[Learn](https://picompiler.pages.dev/app/learn):** Topic notes, questions, interactive practice and progress stored in your browser.
-- **[Blackout Protocol](https://picompiler.pages.dev/app/game/blackout-protocol):** A 3D data-centre game where you play on the attack or defence side of a simulated network incident.
-- **Everyday tools:** Guided tutorials, adjustable themes, local project saving, and streamlined right-click actions for different workspaces.
+Pico includes guided tutorials, themes, browser-saved projects and streamlined right-click actions. Traffic Storm and Blackout Protocol use fictional attack and traffic data for education.
 
-Traffic Storm and Blackout Protocol are educational simulations. Their traffic and attack figures are fictional, not measurements of actual networks.
+## ChatGPT × Pico MCP
 
-## Pico in numbers
+Pico's remote **Model Context Protocol (MCP)** server lets compatible AI assistants execute and debug pseudocode, create flowcharts, simulate circuits and generate truth tables. Connections use GitHub sign-in and authorization.
 
-The following figures come from a **30-day Cloudflare HTTP traffic snapshot included in our project presentation**. They describe that reporting period, not today's live traffic.
+**Try running a loop:**
 
-| Visits | HTTP requests | Page views | API requests | Data transferred |
-| :---: | :---: | :---: | :---: | :---: |
-| **1.33k** | **65.49k** | **4.14k** | **4.98k** | **6.47 GB** |
-
-*Visits, requests and page views measure different things. The numbers above should not be interpreted as a count of unique users.*
-
-## Pico meets AI
-
-Pico exposes a remote **Model Context Protocol (MCP)** server. Compatible AI clients, including ChatGPT when remote MCP connections are supported, can call Pico's tools to:
-
-- Run pseudocode and return its output.
-- Debug pseudocode and report syntax or execution errors.
-- Create, validate and run flowcharts.
-- Create and simulate logic circuits.
-- Generate truth tables and inspect Pico's supported capabilities.
-
-### Example: Ask ChatGPT to execute code with Pico
-
-> Use Pico MCP to execute this pseudocode and return the output.
-
-\`\`\`text
+```text
+Use Pico MCP to execute:
 FOR Index <- 1 TO 5
     OUTPUT Index
 NEXT Index
-\`\`\`
+```
 
-Expected output:
+Output: `1 2 3 4 5` (one number per line).
 
-\`\`\`text
-1
-2
-3
-4
-5
-\`\`\`
+**Try finding an error:**
 
-### Example: Ask ChatGPT to find the error
-
-> Use Pico MCP to debug this pseudocode and explain what needs fixing.
-
-\`\`\`text
+```text
+Use Pico MCP to debug:
 FOR Index <- 1 TO 5
     OUTPUT Index
-\`\`\`
+```
 
-Pico reports that the \`NEXT\` statement is missing. The AI assistant can use that result to explain the error and show the corrected loop. Both types of interaction are demonstrated in the project presentation.
+Pico identifies the missing `NEXT` statement. These workflows are demonstrated in our project presentation.
 
-**MCP endpoint:** \`https://picompiler.pages.dev/app/mcp\`
+MCP server: `https://picompiler.pages.dev/app/mcp` · [Connection guide](https://picompiler.pages.dev/mcp-docs)
 
-Connecting an AI client requires GitHub sign-in and authorization. See the [MCP documentation](https://picompiler.pages.dev/mcp-docs) for connection instructions and available tools.
+## Built for students
 
-## Built around student feedback
+Pico includes optional cookie preferences and a bug-report form for feedback with screenshots. Our Computer Science teacher, Mr Boyle, praised the project and expressed interest in using it with Year 10 and Year 11 classes.
 
-Pico includes optional analytics and preference controls, so visitors choose whether to allow those cookies. Its bug-reporting form lets users describe a problem and attach screenshots, with reports sent to the team by email.
-
-Teachers have also responded positively to the project. In feedback shared with the team, Computer Science teacher Mr Boyle expressed interest in using Pico during Year 10 and Year 11 lessons.
-
-## Use Pico anywhere
-
-Use Pico directly in your browser without installing software or creating an account for the workspaces. A desktop version is also available for **Windows, macOS and Linux**. It opens the same live platform and requires an internet connection.
-
-**[Open Pico](https://picompiler.pages.dev/app)** · **[Download for desktop](https://picompiler.pages.dev/#downloads)**
-
----
+Use Pico in your browser without a workspace account, or download the online desktop app for **Windows, macOS and Linux**. The desktop app requires an internet connection.
 
 <div align="center">
-  <strong>Pico.</strong><br>
-  Built by students, for students.<br>
-  Created by Amar Ayache and Muhammad Mustaqim.
+
+  **[Open Pico](https://picompiler.pages.dev/app)** · **[Download Pico](https://picompiler.pages.dev/#downloads)** · **[MCP Docs](https://picompiler.pages.dev/mcp-docs)**
+
+  <sub>Created by Amar Ayache and Muhammad Mustaqim.</sub>
+
 </div>
