@@ -51,3 +51,55 @@ describe('public status API published incident updates',()=>{
     expect(response.headers.get('Cache-Control')).toContain('max-age=60');
   });
 });
+
+describe('status uptime API resilience',()=>{
+  it('accepts string monitor IDs and retries transient stats failures without losing other services',async()=>{
+    const seen:string[]=[];
+    let websiteAttempts=0;
+    vi.stubGlobal('fetch',vi.fn(async (input:string|URL|Request)=>{
+      const url=String(input);
+      seen.push(url);
+      if(url.includes('/monitors?'))return new Response(JSON.stringify({data:[
+        {id:'10',url:'https://picompiler.pages.dev',status:'UP'},
+        {id:11,url:'https://picompiler.pages.dev/.well-known/oauth-protected-resource/app/mcp',status:'UP'},
+        {id:'12',url:'https://pico-oauth.mztaq.workers.dev/.well-known/oauth-authorization-server',status:'UP'},
+      ]}));
+      if(url.includes('/monitors/10/stats/uptime')) {
+        websiteAttempts++;
+        if(websiteAttempts===1)return new Response('Rate limited',{status:429});
+        return new Response(JSON.stringify({data:{uptime:99.8}}));
+      }
+      if(url.includes('/monitors/11/stats/uptime'))return new Response(JSON.stringify({uptime:100}));
+      if(url.includes('/monitors/12/stats/uptime'))return new Response(JSON.stringify({uptime:'99.5'}));
+      if(url.includes('/incidents?'))return new Response(JSON.stringify({data:[]}));
+      throw Error('Unexpected request '+url);
+    }));
+    const response=await onRequestGet({
+      request:new Request('https://status.example.test/api/status'),
+      env:{UPTIMEROBOT_API_KEY:'test-key'},
+    } as never);
+    const payload=await response.json();
+    expect(payload.services.map((s:{availability30d:number})=>s.availability30d)).toEqual([99.8,100,99.5]);
+    expect(websiteAttempts).toBe(2);
+    expect(seen.filter(url=>url.includes('/stats/uptime'))).toHaveLength(4);
+    expect(seen.at(-1)).toContain('/incidents?');
+  });
+  it('does not invent availability when monitor statistics remain unavailable',async()=>{
+    vi.stubGlobal('fetch',vi.fn(async (input:string|URL|Request)=>{
+      const url=String(input);
+      if(url.includes('/monitors?'))return new Response(JSON.stringify({data:[{
+        id:10,url:'https://picompiler.pages.dev',status:'UP'
+      }]}));
+      if(url.includes('/stats/uptime'))return new Response('Forbidden',{status:403});
+      if(url.includes('/incidents?'))return new Response(JSON.stringify({data:[]}));
+      throw Error('Unexpected request '+url);
+    }));
+    const response=await onRequestGet({
+      request:new Request('https://status.example.test/api/status'),
+      env:{UPTIMEROBOT_API_KEY:'test-key'},
+    } as never);
+    const payload=await response.json();
+    expect(payload.services[0].status).toBe('up');
+    expect(payload.services[0].availability30d).toBeNull();
+  });
+});
