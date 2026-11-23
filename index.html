@@ -48,28 +48,15 @@
     h1,h2,h3,p { margin-top: 0; }
     h1 { font-size: clamp(29px, 5vw, 38px); font-weight: 770; line-height: 1.16; letter-spacing: -1.5px; color: var(--bright); margin-bottom: 24px; }
     .overall {
-      position: relative; display: flex; align-items: center;
+      position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: center;
       overflow: hidden; min-height: 120px; padding: 31px 33px;
       border: 1px solid rgba(166,227,161,.34); border-radius: 12px;
       background: linear-gradient(100deg, rgba(166,227,161,.095), rgba(166,227,161,.02) 72%), var(--panel);
       isolation: isolate;
     }
-    .overall::before {
-      content: ""; position: absolute; width: 4px; top: 0; bottom: 0; left: 0;
-      background: var(--green);
-    }
-    .overall::after {
-      content: ""; position: absolute; right: -62px; top: -110px;
-      width: 300px; height: 300px; border: 1px solid rgba(166,227,161,.09);
-      border-radius: 50%; box-shadow: 0 0 0 45px rgba(166,227,161,.018), 0 0 0 95px rgba(166,227,161,.014);
-      pointer-events: none; z-index: -1;
-    }
     .overall[data-tone="down"] { border-color: rgba(243,139,168,.38); background: linear-gradient(100deg, rgba(243,139,168,.09), transparent 80%),var(--panel); }
     .overall[data-tone="warn"] { border-color: rgba(249,226,175,.36); background: linear-gradient(100deg, rgba(249,226,175,.08), transparent 80%),var(--panel); }
     .overall[data-tone="unknown"] { border-color: var(--edge); background: var(--panel); }
-    .overall[data-tone="down"]::before { background: var(--red); }
-    .overall[data-tone="warn"]::before { background: var(--amber); }
-    .overall[data-tone="unknown"]::before { background: var(--accent); }
     .overall h2 { margin: 0; color: var(--bright); font-size: clamp(21px,3.6vw,27px); letter-spacing: -.9px; line-height: 1.28; font-weight: 720; }
     .overall[data-tone="up"] h2 { color: #def2dc; }
     .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin: 47px 0 17px; }
@@ -96,6 +83,14 @@
     .uptime { font-size: 16px; font-weight: 710; color: var(--bright); font-variant-numeric: tabular-nums; }
     .uptime.missing { font-size: 13px; font-weight: 520; color: var(--muted); }
     .empty { padding: 25px 29px; color: var(--bright); font-size: 16px; font-weight: 570; }
+    .active-incidents { margin-top: 20px; padding-top: 19px; border-top: 1px solid var(--edge); }
+    .active-incidents[hidden] { display: none; }
+    .active-incident + .active-incident { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .active-incident-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .active-incident h3 { margin: 0; color: var(--bright); font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
+    .active-incident .stage { color: var(--amber); font-size: 13px; font-weight: 660; white-space: nowrap; }
+    .active-incident p { margin: 8px 0 0; color: var(--text); font-size: 14px; }
+    .active-incident .affected { color: var(--muted); font-size: 12px; margin-top: 10px; }
     .incident { padding: 23px 29px; border-bottom: 1px solid var(--line); }
     .incident:last-child { border: 0; }
     .incident-top { display: flex; justify-content: space-between; gap: 18px; align-items: baseline; }
@@ -125,6 +120,7 @@
       .day { height: 28px; border-radius: 2px; }
       .uptime { font-size: 15px; }
       .empty,.incident { padding: 21px 18px; }
+      .active-incident h3 { font-size: 16px; }
     }
     @media(max-width:370px) {
       .history { gap: 2px; }
@@ -151,6 +147,7 @@
     <h1>System status</h1>
     <section class="overall" id="overall-panel" data-tone="unknown" aria-live="polite" role="status">
       <h2 id="overall-title">Checking system status</h2>
+      <div class="active-incidents" id="active-incidents" aria-label="Ongoing incidents" aria-live="polite" hidden></div>
     </section>
 
     <section aria-labelledby="services-heading">
@@ -209,16 +206,34 @@
           + '<div class="service-footer"><span class="period">30 days ago</span><span class="uptime'+(uptime==="Uptime unavailable"?" missing":"")+'">'+clean(uptime)+'</span></div></article>';
       }).join("");
     }
+    const active = incident => incident && !incident.resolvedAt && String(incident.status||"").toLowerCase()!=="resolved";
+    function renderActiveIncidents(incidents) {
+      const panel=$("active-incidents");
+      const current=Array.isArray(incidents)?incidents.filter(active)
+        .sort((a,b)=>(Date.parse(b.startedAt)||0)-(Date.parse(a.startedAt)||0)):[];
+      if(!current.length) { panel.replaceChildren(); panel.hidden=true; return; }
+      const stages={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring"};
+      panel.innerHTML=current.map(i=>{
+        const stage=stages[String(i.status||"").toLowerCase()]||"Investigating";
+        return '<article class="active-incident"><div class="active-incident-top"><h3>'+clean(i.title||i.service||"Service issue")+'</h3>'
+          +'<span class="stage">'+clean(stage)+'</span></div>'
+          +'<p>'+clean(i.reason||"We are investigating an issue affecting this service.")+'</p>'
+          +(i.service?'<div class="affected">Affected: '+clean(i.service)+'</div>':"")
+          +'</article>';
+      }).join("");
+      panel.hidden=false;
+    }
     function renderIncidents(incidents) {
       if(!Array.isArray(incidents)) {
         $("incidents").innerHTML='<div class="empty">Incident history unavailable</div>';
         return;
       }
-      if(incidents.length===0) {
-        $("incidents").innerHTML='<div class="empty">No incidents</div>';
+      const past=incidents.filter(i=>!active(i));
+      if(past.length===0) {
+        $("incidents").innerHTML='<div class="empty">No past incidents</div>';
         return;
       }
-      $("incidents").innerHTML=incidents.map(incident => {
+      $("incidents").innerHTML=past.map(incident => {
         const when=incident.startedAt?new Date(incident.startedAt):null;
         const displayed=when&&Number.isFinite(when.getTime())?when.toLocaleString():null;
         const stages={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring",resolved:"Resolved"};
@@ -239,6 +254,7 @@
         const data=await response.json();
         const services=Array.isArray(data.services)?data.services:DEFAULTS;
         renderServices(services,data.updatedAt);
+        renderActiveIncidents(data.state==="connected"?data.incidents:null);
         if(data.state!=="connected"){
           setOverall("Status unavailable","unknown");
           renderIncidents(null);
@@ -255,6 +271,7 @@
         }
       }catch {
         renderServices(DEFAULTS);
+        renderActiveIncidents(null);
         renderIncidents(null);
         setOverall("Status unavailable","unknown");
       }finally {loading=false}
