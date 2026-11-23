@@ -119,7 +119,7 @@ describe('workspace right-click menu', () => {
     ].join('');
     document.body.append(area);
     expect(buildWorkspaceMenu('python', area).actions.some(action => action.label === 'Run program')).toBe(true);
-    expect(buildWorkspaceMenu('logic', area).actions.some(action => action.label === 'Run / Pause')).toBe(true);
+    expect(buildWorkspaceMenu('logic', area).actions.some(action => action.label === 'Pause')).toBe(true);
     expect(buildWorkspaceMenu('cpu', area).actions.some(action => action.label === 'Step forward')).toBe(true);
     expect(buildWorkspaceMenu('binary', area).actions.some(action => action.label === 'Clear register')).toBe(true);
     expect(buildWorkspaceMenu('traffic', area).actions.some(action => action.label === 'Start simulation')).toBe(true);
