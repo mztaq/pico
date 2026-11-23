@@ -46,11 +46,13 @@ export function WorkspaceContextMenu() {
         scope.matches('.learning-hub') ? 'learn' : null
       );
       const model = buildWorkspaceMenu(inferred, target);
-      if (!model.actions.length) return;
       event.preventDefault();
       event.stopPropagation();
-      setActive(Math.max(0, model.actions.findIndex(item => !item.disabled)));
-      setMenu({ ...model, x: event.clientX, y: event.clientY });
+      // Only show commands that are available now. Avoid disabled menu clutter.
+      const actions = model.actions.filter(action => !action.disabled);
+      if (!actions.length) { setMenu(null); return; }
+      setActive(0);
+      setMenu({ ...model, actions, x: event.clientX, y: event.clientY });
     };
     const onPointerDown = (event: PointerEvent) => {
       if (!menuRef.current?.contains(event.target as Node)) close();
@@ -135,20 +137,16 @@ export function WorkspaceContextMenu() {
         }
         else if (event.key === 'Tab') close();
       }}>
-      <div className="pico-context-title">{menu.title}</div>
       <div className="pico-context-list">
         {menu.actions.map((action, index) => {
           const Icon = action.icon;
-          const separator = index > 0 && action.group !== menu.actions[index - 1].group;
-          return <div key={action.group + ':' + action.label} className={separator ? 'pico-context-separated' : undefined}>
-            <button type="button" role="menuitem" disabled={action.disabled}
-              className={'pico-context-action' + (action.destructive ? ' pico-context-destructive' : '')}
-              tabIndex={active === index ? 0 : -1}
-              onFocus={() => setActive(index)}
-              onClick={() => execute(index)}>
-              <Icon size={15} aria-hidden="true" strokeWidth={1.8}/><span>{action.label}</span>
-            </button>
-          </div>;
+          return <button key={action.group + ':' + action.label} type="button" role="menuitem"
+            className={'pico-context-action' + (action.destructive ? ' pico-context-destructive' : '')}
+            tabIndex={active === index ? 0 : -1}
+            onFocus={() => setActive(index)}
+            onClick={() => execute(index)}>
+            <Icon size={14} aria-hidden="true" strokeWidth={1.8}/><span>{action.label}</span>
+          </button>;
         })}
       </div>
     </div>,
