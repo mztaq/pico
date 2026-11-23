@@ -108,7 +108,6 @@ export function buildWorkspaceMenu(
     const node = target.closest<HTMLElement>('.flow-node');
     if (node) {
       custom('Select block', Check, 'selection', () => { if (node.isConnected) node.click(); });
-      const deleteButton = find('.flow-delete-block');
       custom('Delete block', Trash2, 'selection', () => {
         if (!node.isConnected) return;
         flushSync(() => node.click());
