@@ -5,27 +5,58 @@
 
   **Built by students, for students.**
 
-  Pico is a browser-based learning platform for exploring programming, algorithms, digital logic and computer architecture. No installation or account is required.
+  An interactive platform for learning programming, algorithms, computer systems and digital logic.
 
-  **[Visit Pico](https://picompiler.pages.dev)** · **[Open the browser app](https://picompiler.pages.dev/app)** · **[MCP Docs](https://picompiler.pages.dev/mcp-docs)**
+  **[Website](https://picompiler.pages.dev)** · **[Open Pico](https://picompiler.pages.dev/app)** · **[Desktop downloads](https://picompiler.pages.dev/#downloads)** · **[MCP Docs](https://picompiler.pages.dev/mcp-docs)**
 </div>
 
-## Features
+## Workspaces
 
-- **Pseudocode Compiler** — Write, run and debug Cambridge-style pseudocode with interactive input and syntax assistance.
-- **Python Compiler** — Run real Python in your browser, with an editor, console and debugger.
-- **Flowchart Builder** — Build and run flowcharts, convert them to pseudocode, and import projects from files or pasted JSON.
-- **Logic Sim** — Build and simulate logic circuits, view truth tables, and import circuits from files or pasted JSON.
-- **CPU Studio** — Explore the fetch–decode–execute cycle with animated CPU components and registers.
+- **[Pseudocode Compiler](https://picompiler.pages.dev/app/pseudocode)** — Write, execute and debug Cambridge-style pseudocode with interactive input and editor assistance.
+- **[Python Compiler](https://picompiler.pages.dev/app/python)** — Run Python in your browser with a console, files and debugging tools.
+- **[Flowchart Builder](https://picompiler.pages.dev/app/flowchart)** — Draw, connect, run and debug flowcharts, then convert them to pseudocode. Import projects from files or JSON.
+- **[Logic Sim](https://picompiler.pages.dev/app/logic)** — Build and simulate logic circuits, inspect signals and generate truth tables. Import circuits from files or JSON.
+- **[CPU Studio](https://picompiler.pages.dev/app/cpu)** — Step through the fetch–decode–execute cycle and explore registers, buses and other CPU components.
+- **[Binary Lab](https://picompiler.pages.dev/app/binary)** — Explore 8-bit values, binary and hexadecimal, shifts, overflow and two's complement.
+- **[Traffic Storm](https://picompiler.pages.dev/app/traffic)** — Explore a visual, fictional network-traffic simulation with botnets, proxies, servers and overload behaviour.
 
-Pico includes customizable themes, guided tutorials and browser-based project saving. 
+## Learn and play
 
-## Desktop apps
+- **[Learn](https://picompiler.pages.dev/app/learn)** — Study computer science topics with notes, interactive questions and locally saved progress.
+- **[Games](https://picompiler.pages.dev/app/games)** — Play [Blackout Protocol](https://picompiler.pages.dev/app/game/blackout-protocol), a 3D data-centre game with attack and defence modes.
 
-Pico is also available as an **online-only desktop app** for Windows, macOS and Linux.
-Desktop packages are built by the [Desktop installers GitHub Actions workflow](https://github.com/mztaq/pico/actions/workflows/desktop.yml).
-Website changes are picked up on the next desktop launch/refresh, without reinstalling. New desktop builds target `/app`. Previously released Tauri 2 installers still target `/`; Pico detects their native webview and shows the workspace there, while ordinary browsers see the landing page.
+Pico also includes guided tutorials, customizable themes, local project saving and workspace-specific right-click menus. The browser workspaces do not require an account.
 
-Pico retains **one existing GitHub release**, `desktop-v0.1.0-build.10`. Future desktop builds produce **one installer per OS**: `Pico_x64-setup.exe`, `Pico_universal.dmg` (both Intel and Apple Silicon) and `Pico_amd64.AppImage`. The existing release is upgraded in place during the verified Cloudflare publish workflow. Pico serves installers through Cloudflare Pages, so downloads keep working when the source repository is private. The prior six binaries are backed up before replacement. See [desktop build and update notes](docs/desktop.md).
-See [desktop build and update notes](docs/desktop.md) for installer formats and signing limitations.
- 
+## Pico MCP
+
+Pico offers a remote [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for compatible AI clients. Its tools run and debug pseudocode, create and execute flowcharts, work with logic circuits and generate truth tables.
+
+**Endpoint:** `https://picompiler.pages.dev/app/mcp`
+
+Connection uses GitHub sign-in and authorization. See the [MCP setup guide](https://picompiler.pages.dev/mcp-docs) for supported tools and instructions.
+
+## Desktop
+
+Pico is available for **Windows, macOS and Linux** from the [downloads section](https://picompiler.pages.dev/#downloads). The desktop app displays the live Pico website and requires an internet connection. Website updates appear on the next launch or refresh without reinstalling the app.
+
+See [desktop installation and update details](docs/desktop.md).
+
+## Development
+
+Pico is built with **React, TypeScript and Vite**, with **CodeMirror** for editing, **Pyodide** for Python execution and **Three.js** for 3D content. The web app is deployed on **Cloudflare Pages**.
+
+Install Node.js and pnpm, then run:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+To check changes:
+
+```bash
+pnpm test
+pnpm build
+```
+
+The app runs locally at `http://localhost:3000` by default. See [desktop build details](docs/desktop.md) for native app requirements.
