@@ -1,5 +1,5 @@
 import {
-  ArrowLeft, ArrowRight, Check, Code2, Copy, FilePlus2, FolderOpen,
+  ArrowLeft, ArrowRight, Code2, Copy, FilePlus2,
   Keyboard, Maximize2, Minus, Pause, Play, Plus, Redo2, RotateCcw,
   Settings2, StepBack, StepForward, Trash2, Undo2, Workflow,
   type LucideIcon,
