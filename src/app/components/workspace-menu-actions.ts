@@ -122,7 +122,8 @@ export function buildWorkspaceMenu(
       choose('Delete selection', '.logic-toolbar button[aria-label="Delete selection"]', Trash2, 'selection', true);
       add('Duplicate', findText('.logic-toolbar button', 'Duplicate'), Copy, 'selection');
     }
-    add('Run / Pause', find('.logic-sim-controls .logic-run'), Play, 'run');
+    const playback = find('.logic-sim-controls .logic-run');
+    add(playback?.textContent?.trim() === 'Pause' ? 'Pause' : 'Run', playback, playback?.textContent?.trim() === 'Pause' ? Pause : Play, 'run');
     add('Step', findText('.logic-sim-controls button', 'Step'), StepForward, 'run');
     add('Reset simulation', findText('.logic-sim-controls button', 'Reset'), RotateCcw, 'run');
     choose('Undo', '.logic-toolbar button[aria-label="Undo"]', Undo2, 'edit');
@@ -132,7 +133,8 @@ export function buildWorkspaceMenu(
   }
 
   if (workspace === 'cpu') {
-    add('Run / Pause', find('.cpu-playback .cpu-play'), Play, 'run');
+    const playback = find('.cpu-playback .cpu-play');
+    add(playback?.textContent?.trim() === 'Pause' ? 'Pause' : 'Run', playback, playback?.textContent?.trim() === 'Pause' ? Pause : Play, 'run');
     choose('Step forward', 'button[aria-label="Step forward one CPU micro-operation"]', StepForward, 'run');
     choose('Step back', 'button[aria-label="Step backward one CPU micro-operation"]', StepBack, 'run');
     add('Reset CPU', findText('.cpu-playback button', 'Reset'), RotateCcw, 'run');
@@ -149,7 +151,8 @@ export function buildWorkspaceMenu(
 
   if (workspace === 'traffic') {
     choose('Start simulation', '.storm-start-simulation', Play, 'simulation');
-    add('Pause / Resume', findText('.storm-app button', 'Pause') ?? findText('.storm-app button', 'Resume'), Pause, 'simulation');
+    const pauseButton = findText('.storm-app button', 'Pause') ?? findText('.storm-app button', 'Resume');
+    add(pauseButton?.textContent?.trim() ?? 'Pause', pauseButton, pauseButton?.textContent?.trim() === 'Resume' ? Play : Pause, 'simulation');
     add('Restart simulation', findText('.storm-app button', 'Restart'), RotateCcw, 'simulation');
   }
 
