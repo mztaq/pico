@@ -78,6 +78,31 @@ describe('Pico Status active incident placement',()=>{
     expect(panel.textContent).toContain('<img src=x onerror=alert(1)>');
     page.window.close();
   });
+  it('shows ongoing duration in the upper-right of the combined card and hides it when resolved',async()=>{
+    const startedAt=new Date(Date.now()-2*24*60*60*1000-60000).toISOString();
+    const page=await render([{...issue(),startedAt}]);
+    const doc=page.window.document;
+    const timer=doc.querySelector<HTMLElement>('#ongoing-time')!;
+    expect(timer.parentElement?.classList.contains('overall-heading')).toBe(true);
+    expect(timer.parentElement?.querySelector('#overall-title')).not.toBeNull();
+    expect(timer.hidden).toBe(false);
+    expect(timer.textContent).toBe('Ongoing for 2 days');
+    expect(doc.querySelector('#active-incidents .ongoing-time')).toBeNull();
+    page.window.close();
+    const resolved=await render([{...issue('resolved',new Date().toISOString()),startedAt}]);
+    expect((resolved.window.document.querySelector('#ongoing-time') as HTMLElement).hidden).toBe(true);
+    resolved.window.close();
+  });
+  it('counts duration from earliest active incident and ignores invalid start times',async()=>{
+    const first=new Date(Date.now()-65*60000).toISOString();
+    const second=new Date(Date.now()-5*60000).toISOString();
+    const page=await render([{...issue(),startedAt:first},{...issue(),id:'2',startedAt:second}]);
+    expect(page.window.document.querySelector('#ongoing-time')?.textContent).toBe('Ongoing for 1 hr');
+    page.window.close();
+    const bad=await render([{...issue(),startedAt:'invalid'}]);
+    expect((bad.window.document.querySelector('#ongoing-time') as HTMLElement).hidden).toBe(true);
+    bad.window.close();
+  });
   it('hides the section when all incidents are resolved',async()=>{
     const page=await render([issue('resolved','2026-11-23T12:00:00Z')]);
     const doc=page.window.document;
