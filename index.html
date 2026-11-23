@@ -26,12 +26,25 @@
     }
     * { box-sizing: border-box; }
     html { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-    body {
-      margin: 0; min-height: 100vh; color: var(--text); background:
-      radial-gradient(ellipse 640px 250px at 50% 0, rgba(203,166,247,.055), transparent 80%),
-      var(--bg);
-      font-size: 15px; line-height: 1.55;
+    body { margin: 0; min-height: 100vh; color: var(--text); background: var(--bg); font-size: 15px; line-height: 1.55; }
+    .status-curves { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; fill: none; stroke: var(--accent); opacity: .15; }
+    .status-curves path { stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .status-curve-flow { stroke-width: 3.8; stroke-dasharray: 150 850; opacity: .24; }
+    header, main, footer { position: relative; z-index: 1; }
+    @keyframes status-curves-orbit {
+      0%,100% { transform: translate3d(-3%,0,0) scale(1.05); }
+      25% { transform: translate3d(0,-2%,0) scale(1.06); }
+      50% { transform: translate3d(3%,0,0) scale(1.05); }
+      75% { transform: translate3d(0,2%,0) scale(1.06); }
     }
+    @keyframes status-curve-trace { to { stroke-dashoffset: -1000; } }
+    @media (prefers-reduced-motion: no-preference) {
+      .status-curves { animation: status-curves-orbit 22s linear infinite; }
+      .status-curve-flow { animation: status-curve-trace 29s linear infinite; }
+      .status-curve-flow--right { animation-duration: 34s; animation-delay: -10s; }
+    }
+    @media (prefers-reduced-motion: reduce) { .status-curves, .status-curve-flow { animation: none !important; } }
+    @media (forced-colors: active) { .status-curves { display: none; } }
     a { text-decoration: none; color: inherit; }
     a:hover { color: var(--accent); }
     a:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; border-radius: 3px; }
@@ -51,13 +64,16 @@
       position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: center;
       overflow: hidden; min-height: 120px; padding: 31px 33px;
       border: 1px solid rgba(166,227,161,.34); border-radius: 12px;
-      background: linear-gradient(100deg, rgba(166,227,161,.095), rgba(166,227,161,.02) 72%), var(--panel);
+      background: var(--panel);
       isolation: isolate;
     }
-    .overall[data-tone="down"] { border-color: rgba(243,139,168,.38); background: linear-gradient(100deg, rgba(243,139,168,.09), transparent 80%),var(--panel); }
-    .overall[data-tone="warn"] { border-color: rgba(249,226,175,.36); background: linear-gradient(100deg, rgba(249,226,175,.08), transparent 80%),var(--panel); }
+    .overall[data-tone="down"] { border-color: rgba(243,139,168,.58); }
+    .overall[data-tone="warn"] { border-color: rgba(249,226,175,.58); background: #302f35; }
     .overall[data-tone="unknown"] { border-color: var(--edge); background: var(--panel); }
+    .overall-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .overall h2 { margin: 0; color: var(--bright); font-size: clamp(21px,3.6vw,27px); letter-spacing: -.9px; line-height: 1.28; font-weight: 720; }
+    .ongoing-time { color: var(--amber); font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .ongoing-time[hidden] { display: none; }
     .overall[data-tone="up"] h2 { color: #def2dc; }
     .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin: 47px 0 17px; }
     .section-heading h2 { font-size: 22px; line-height: 1.28; color: var(--bright); font-weight: 720; letter-spacing: -.65px; margin: 0; }
@@ -86,11 +102,19 @@
     .active-incidents { margin-top: 20px; padding-top: 19px; border-top: 1px solid var(--edge); }
     .active-incidents[hidden] { display: none; }
     .active-incident + .active-incident { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
-    .active-incident-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .active-incident-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .active-incident h3 { margin: 0; color: var(--bright); font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
     .active-incident .stage { color: var(--amber); font-size: 13px; font-weight: 660; white-space: nowrap; }
     .active-incident p { margin: 8px 0 0; color: var(--text); font-size: 14px; }
-    .active-incident .affected { color: var(--muted); font-size: 12px; margin-top: 10px; }
+    .active-incident .affected { display: inline-flex; align-items: baseline; gap: 5px; color: var(--bright); font-size: 13px; font-weight: 650; line-height: 1.3; }
+    .active-incident .affected-label { color: var(--muted); font-weight: 500; }
+    .incident-updates { margin-top: 13px; }
+    .incident-update { padding: 12px 0; border-top: 1px solid var(--line); }
+    .incident-update:first-child { padding-top: 0; border-top: 0; }
+    .incident-update:last-child { padding-bottom: 0; }
+    .incident-update-meta { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: var(--text); font-size: 14px; }
+    .incident-update-meta .stage { color: var(--amber); font-size: 14px; }
+    .incident-update p { margin: 5px 0 0; color: var(--text); font-size: 14px; overflow-wrap: anywhere; }
     .incident { padding: 23px 29px; border-bottom: 1px solid var(--line); }
     .incident:last-child { border: 0; }
     .incident-top { display: flex; justify-content: space-between; gap: 18px; align-items: baseline; }
@@ -134,6 +158,15 @@
   </style>
 </head>
 <body>
+  <svg class="status-curves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <path d="M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108" stroke-width="2.6" opacity=".72"/>
+    <path d="M -230 -120 C -10 46 186 200 168 370 C 149 548 -75 659 62 850 C 174 1008 341 1080 476 1163" stroke-width="1.5" opacity=".39"/>
+    <path d="M 1260 -185 C 1080 30 1183 190 1375 350 C 1564 506 1459 670 1390 805 C 1334 954 1429 1075 1684 1176" stroke-width="2.6" opacity=".72"/>
+    <path d="M 1332 -220 C 1150 22 1246 193 1428 353 C 1599 511 1520 676 1441 819 C 1375 960 1478 1096 1743 1200" stroke-width="1.5" opacity=".40"/>
+    <path d="M 1010 -170 C 1080 -75 1162 -28 1190 105 C 1221 217 1286 251 1387 304" stroke-width="1.3" opacity=".28"/>
+    <path class="status-curve-flow" d="M -170 -160 C 40 26 230 186 210 362 C 186 520 -27 624 104 814 C 222 981 376 1028 500 1108" pathLength="1000"/>
+    <path class="status-curve-flow status-curve-flow--right" d="M 1260 -185 C 1080 30 1183 190 1375 350 C 1564 506 1459 670 1390 805 C 1334 954 1429 1075 1684 1176" pathLength="1000"/>
+  </svg>
   <header>
     <nav class="container nav" aria-label="Main navigation">
       <a class="brand" href="https://picompiler.pages.dev/" aria-label="Pico home">
@@ -146,7 +179,7 @@
   <main class="container">
     <h1>System status</h1>
     <section class="overall" id="overall-panel" data-tone="unknown" aria-live="polite" role="status">
-      <h2 id="overall-title">Checking system status</h2>
+      <div class="overall-heading"><h2 id="overall-title">Checking system status</h2><span class="ongoing-time" id="ongoing-time" hidden></span></div>
       <div class="active-incidents" id="active-incidents" aria-label="Ongoing incidents" aria-live="polite" hidden></div>
     </section>
 
@@ -199,26 +232,56 @@
           const [meaning,kind] = status==="up"?["Operational","up"]:status==="down"?["Outage","down"]:status==="degraded"?["Degraded","warn"]:["No data",""];
           return '<span class="day '+kind+'" title="'+clean(dateFmt.format(day)+" · "+meaning)+'" aria-hidden="true"></span>';
         }).join("");
-        const uptime=typeof service.uptime30d==="number"&&Number.isFinite(service.uptime30d)
-          ? service.uptime30d.toFixed(2)+"% uptime" : "Uptime unavailable";
+        const availability=typeof service.availability30d==="number"&&Number.isFinite(service.availability30d)
+          ? service.availability30d.toFixed(2)+"% availability"
+          : typeof service.uptime30d==="number"&&Number.isFinite(service.uptime30d)
+            ? service.uptime30d.toFixed(2)+"% uptime" : "Availability unavailable";
         return '<article class="service"><div class="service-top"><span class="service-name">'+clean(service.name)+'</span><span class="service-state '+tone+'">'+clean(label)+'</span></div>'
           + '<div class="history" role="img" aria-label="30-day history for '+clean(service.name)+'">'+bars+'</div>'
-          + '<div class="service-footer"><span class="period">30 days ago</span><span class="uptime'+(uptime==="Uptime unavailable"?" missing":"")+'">'+clean(uptime)+'</span></div></article>';
+          + '<div class="service-footer"><span class="period">30 days ago</span><span class="uptime'+(availability==="Availability unavailable"?" missing":"")+'">'+clean(availability)+'</span></div></article>';
       }).join("");
     }
     const active = incident => incident && !incident.resolvedAt && String(incident.status||"").toLowerCase()!=="resolved";
+    let activeSince=null;
+    function ongoingDuration(startedAt, now=Date.now()) {
+      const started=Date.parse(startedAt);
+      if(!Number.isFinite(started)||started>now) return "";
+      const minutes=Math.max(1,Math.floor((now-started)/60000));
+      const unit=minutes>=43200?"month":minutes>=1440?"day":minutes>=60?"hr":"min";
+      const amount=Math.floor(minutes/(unit==="month"?43200:unit==="day"?1440:unit==="hr"?60:1));
+      return amount+" "+unit+(unit==="month"||unit==="day"?amount===1?"":"s":"");
+    }
+    function refreshOngoingTime() {
+      const element=$("ongoing-time");
+      const duration=activeSince?ongoingDuration(activeSince):"";
+      element.textContent=duration?"Ongoing for "+duration:"";
+      element.hidden=!duration;
+    }
     function renderActiveIncidents(incidents) {
       const panel=$("active-incidents");
       const current=Array.isArray(incidents)?incidents.filter(active)
         .sort((a,b)=>(Date.parse(b.startedAt)||0)-(Date.parse(a.startedAt)||0)):[];
+      const starts=current.map(i=>Date.parse(i.startedAt)).filter(time=>Number.isFinite(time)&&time<=Date.now());
+      activeSince=starts.length?new Date(Math.min(...starts)).toISOString():null;
+      refreshOngoingTime();
       if(!current.length) { panel.replaceChildren(); panel.hidden=true; return; }
-      const stages={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring"};
+      const stages={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring",resolved:"Resolved"};
       panel.innerHTML=current.map(i=>{
         const stage=stages[String(i.status||"").toLowerCase()]||"Investigating";
+        const updates=Array.isArray(i.updates)?i.updates:[];
+        const updateMarkup=updates.map(u=>{
+          const when=u.publishedAt?new Date(u.publishedAt):null;
+          const date=when&&Number.isFinite(when.getTime())?when.toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+          const updateStage=stages[String(u.stage||"").toLowerCase()]||stage;
+          return '<div class="incident-update"><div class="incident-update-meta"><span class="stage">'+clean(updateStage)+'</span>'
+            +(date?'<time datetime="'+clean(when.toISOString())+'">'+clean(date)+'</time>':"")
+            +'</div><p>'+clean(u.message||"")+'</p></div>';
+        }).join("");
         return '<article class="active-incident"><div class="active-incident-top"><h3>'+clean(i.title||i.service||"Service issue")+'</h3>'
-          +'<span class="stage">'+clean(stage)+'</span></div>'
-          +'<p>'+clean(i.reason||"We are investigating an issue affecting this service.")+'</p>'
-          +(i.service?'<div class="affected">Affected: '+clean(i.service)+'</div>':"")
+          +(i.service?'<span class="affected"><span class="affected-label">Affected service:</span><span>'+clean(i.service)+'</span></span>':"")
+          +'</div>'
+          +(updates.length?'<div class="incident-updates">'+updateMarkup+'</div>'
+            :'<p>'+clean(i.reason||"We are investigating an issue affecting this service.")+'</p>')
           +'</article>';
       }).join("");
       panel.hidden=false;
@@ -245,6 +308,7 @@
       }).join("");
     }
     let loading=false;
+    let hasLoadedStatus=false;
     async function refresh() {
       if(loading) return;
       loading=true;
@@ -252,7 +316,9 @@
         const response=await fetch("/api/status",{cache:"no-store"});
         if(!response.ok) throw Error("Unavailable");
         const data=await response.json();
+        if(data.state!=="connected") throw Error("Monitoring unavailable");
         const services=Array.isArray(data.services)?data.services:DEFAULTS;
+        hasLoadedStatus=true;
         renderServices(services,data.updatedAt);
         renderActiveIncidents(data.state==="connected"?data.incidents:null);
         if(data.state!=="connected"){
@@ -270,13 +336,17 @@
           renderIncidents(data.incidents);
         }
       }catch {
-        renderServices(DEFAULTS);
-        renderActiveIncidents(null);
-        renderIncidents(null);
-        setOverall("Status unavailable","unknown");
+        // Keep the last verified status if a refresh fails temporarily.
+        if(!hasLoadedStatus) {
+          renderServices(DEFAULTS);
+          renderActiveIncidents(null);
+          renderIncidents(null);
+          setOverall("Status unavailable","unknown");
+        }
       }finally {loading=false}
     }
     refresh();
+    setInterval(()=>{if(!document.hidden)refreshOngoingTime()},30000);
     setInterval(()=>{if(!document.hidden)refresh()},300000);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
   })();

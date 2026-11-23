@@ -102,6 +102,34 @@ function history(incidentList,service,monitor,now) {
 }
 // An HTTP 200 response does not mean every feature is healthy.
 // Incident severity is separate from uptime statistics supplied by UptimeRobot.
+// Percentage of the last 30 days without a recorded incident. Count overlapping
+// incidents once. Preserve UptimeRobot's independent HTTP uptime metric.
+export function incidentAdjustedAvailability(service, incidents, now=Date.now()) {
+  const uptime=service.uptime30d;
+  if(typeof uptime!=="number"||!Number.isFinite(uptime)) return null;
+  if(!Array.isArray(incidents)) return uptime;
+  const since=now-30*DAY;
+  const ranges=incidents.filter(i=>i && i.serviceId===service.id &&
+    !(String(i.status||"").toLowerCase()==="resolved"&&!i.resolvedAt))
+    .map(i=>{
+      const start=incidentTime(i.startedAt);
+      const end=i.resolvedAt?incidentTime(i.resolvedAt):now;
+      return [Math.max(since,start),Math.min(now,end)];
+    }).filter(([a,b])=>Number.isFinite(a)&&Number.isFinite(b)&&b>a)
+    .sort((a,b)=>a[0]-b[0]);
+  let affected=0,lastStart=null,lastEnd=null;
+  for(const [start,end] of ranges){
+    if(lastStart===null){lastStart=start;lastEnd=end;}
+    else if(start<=lastEnd){lastEnd=Math.max(lastEnd,end);}
+    else {affected+=lastEnd-lastStart;lastStart=start;lastEnd=end;}
+  }
+  if(lastStart!==null)affected+=lastEnd-lastStart;
+  const healthyPercent=Math.max(0,100-affected/(30*DAY)*100);
+  // HTTP downtime and an incident may overlap, so avoid double-counting
+  // downtime when only independent aggregate uptime data is available.
+  return Math.round(Math.min(uptime,healthyPercent)*100)/100;
+}
+
 export function applyIncidentImpact(services, incidents) {
   if (!Array.isArray(incidents)) return services;
   const affected = new Set(incidents.filter(incident =>
@@ -170,19 +198,24 @@ export async function onRequestGet(context) {
       try {
         const stored=await context.env.DB.prepare(
           "SELECT id, source, external_id, service_id, title, reason, started_at, resolved_at, status " +
-          "FROM pico_status_incidents WHERE started_at >= ? " +
-          "ORDER BY started_at DESC LIMIT 30"
-        ).bind(since30).all();
+          "FROM pico_status_incidents WHERE started_at >= ? OR resolved_at >= ? OR resolved_at IS NULL " +
+          "ORDER BY started_at DESC LIMIT 100"
+        ).bind(since30,since30).all();
         const rows=stored.results??[];
         const ids=rows.map(row=>row.id);
-        let latest=new Map();
+        const updatesByIncident=new Map();
         if(ids.length) {
           const history=await context.env.DB.prepare(
-            "SELECT incident_id,message FROM pico_status_updates WHERE incident_id IN (" +
+            "SELECT incident_id,stage,message,published_at FROM pico_status_updates WHERE incident_id IN (" +
             ids.map(()=>'?').join(',') + ") ORDER BY published_at DESC, id DESC"
           ).bind(...ids).all();
           for(const event of history.results??[]) {
-            if(!latest.has(event.incident_id))latest.set(event.incident_id,event.message);
+            if(!updatesByIncident.has(event.incident_id))updatesByIncident.set(event.incident_id,[]);
+            updatesByIncident.get(event.incident_id).push({
+              stage:event.stage,
+              message:event.message,
+              publishedAt:event.published_at
+            });
           }
         }
         const known=new Map((incidents??[]).map(i=>[String(i.id),i]));
@@ -191,7 +224,8 @@ export async function onRequestGet(context) {
           const name=SERVICES.find(s=>s.id===row.service_id)?.name??'Pico';
           known.set(id,{
             id,serviceId:row.service_id,service:name,title:row.title,
-            reason:latest.get(row.id)||row.reason,
+            reason:row.reason,
+            updates:updatesByIncident.get(row.id)||[],
             startedAt:row.started_at,resolvedAt:row.resolved_at,status:row.status
           });
         }
@@ -201,7 +235,27 @@ export async function onRequestGet(context) {
         console.error('Incident archive lookup unavailable',String(error));
       }
     }
-    const visibleServices=applyIncidentImpact(publicServices,incidents);
+    const visibleServices=applyIncidentImpact(publicServices,incidents).map(service=>{
+      // Match the 30 history bars to the same incident window as availability.
+      const timeline=Array.isArray(service.history)?[...service.history]:null;
+      if(timeline?.length===30 && Array.isArray(incidents)){
+        for(const incident of incidents){
+          if(incident?.serviceId!==service.id)continue;
+          const start=incidentTime(incident.startedAt);
+          const end=incident.resolvedAt?incidentTime(incident.resolvedAt):now;
+          if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)continue;
+          for(let day=0;day<30;day++){
+            const from=now-(30-day)*DAY, to=from+DAY;
+            if(start<to && end>from && timeline[day]==="up")timeline[day]="degraded";
+          }
+        }
+      }
+      return {
+        ...service,
+        history:timeline??service.history,
+        availability30d:incidentAdjustedAvailability(service,incidents,now)
+      };
+    });
     const payload={state:matched.length?"connected":"no-monitors",updatedAt:new Date(now).toISOString(),services:visibleServices,incidents};
     const output=response(payload);
     if(cache&&context.waitUntil)context.waitUntil(cache.put(cacheKey,output.clone()));

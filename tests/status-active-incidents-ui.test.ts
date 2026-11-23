@@ -34,8 +34,11 @@ describe('Pico Status active incident placement',()=>{
     const panel=doc.querySelector<HTMLElement>('#active-incidents')!;
     expect(panel.hidden).toBe(false);
     expect(panel.textContent).toContain('Flowchart zoom issue');
-    expect(panel.textContent).toContain('Investigating');
-    expect(panel.textContent).toContain('Affected: Pico Website');
+    expect(panel.querySelector('.active-incident-top .stage')).toBeNull();
+    const affected=panel.querySelector('.active-incident-top .affected');
+    expect(affected).not.toBeNull();
+    expect(affected?.querySelector('.affected-label')?.textContent).toBe('Affected service:');
+    expect(affected?.lastElementChild?.textContent).toBe('Pico Website');
     expect(panel.textContent).toContain('Zoom out controls are not responding.');
     expect(panel.parentElement?.id).toBe('overall-panel');
     expect(panel.parentElement?.nextElementSibling?.querySelector('#services-heading')).not.toBeNull();
@@ -45,6 +48,94 @@ describe('Pico Status active incident placement',()=>{
     expect(html).not.toContain('border-left: 4px solid var(--amber)');
     expect(panel.querySelectorAll('h2')).toHaveLength(0);
     expect(doc.querySelector('#incidents')?.textContent).not.toContain('Flowchart zoom issue');
+    page.window.close();
+  });
+  it('shows published updates newest first with stages and timestamps without repeating the initial message',async()=>{
+    const page=await render([{
+      ...issue(),
+      updates:[
+        {stage:'identified',message:'We found the zoom rendering problem.',publishedAt:'2026-11-23T13:40:00Z'},
+        {stage:'investigating',message:'Zoom out controls are not responding.',publishedAt:'2026-11-22T14:00:00Z'},
+      ],
+    }]);
+    const doc=page.window.document;
+    const panel=doc.querySelector('#active-incidents')!;
+    const messages=[...panel.querySelectorAll('.incident-update p')].map(element=>element.textContent);
+    expect(messages).toEqual([
+      'We found the zoom rendering problem.',
+      'Zoom out controls are not responding.',
+    ]);
+    expect(panel.querySelectorAll('.incident-update time')).toHaveLength(2);
+    expect(panel.querySelector('.incident-update .stage')?.textContent).toBe('Identified');
+    expect(panel.querySelectorAll('.active-incident > p')).toHaveLength(0);
+    expect(doc.querySelector('#incidents')?.textContent).not.toContain('We found the zoom rendering problem.');
+    page.window.close();
+  });
+  it('escapes update messages to prevent script injection',async()=>{
+    const page=await render([{
+      ...issue(),
+      updates:[{stage:'monitoring',message:'<img src=x onerror=alert(1)>',publishedAt:'2026-11-23T13:45:00Z'}],
+    }]);
+    const panel=page.window.document.querySelector('#active-incidents')!;
+    expect(panel.querySelector('img')).toBeNull();
+    expect(panel.textContent).toContain('<img src=x onerror=alert(1)>');
+    page.window.close();
+  });
+  it('shows ongoing duration in the upper-right of the combined card and hides it when resolved',async()=>{
+    const startedAt=new Date(Date.now()-2*24*60*60*1000-60000).toISOString();
+    const page=await render([{...issue(),startedAt}]);
+    const doc=page.window.document;
+    const timer=doc.querySelector<HTMLElement>('#ongoing-time')!;
+    expect(timer.parentElement?.classList.contains('overall-heading')).toBe(true);
+    expect(timer.parentElement?.querySelector('#overall-title')).not.toBeNull();
+    expect(timer.hidden).toBe(false);
+    expect(timer.textContent).toBe('Ongoing for 2 days');
+    expect(doc.querySelector('#active-incidents .ongoing-time')).toBeNull();
+    page.window.close();
+    const resolved=await render([{...issue('resolved',new Date().toISOString()),startedAt}]);
+    expect((resolved.window.document.querySelector('#ongoing-time') as HTMLElement).hidden).toBe(true);
+    resolved.window.close();
+  });
+  it('counts duration from earliest active incident and ignores invalid start times',async()=>{
+    const first=new Date(Date.now()-65*60000).toISOString();
+    const second=new Date(Date.now()-5*60000).toISOString();
+    const page=await render([{...issue(),startedAt:first},{...issue(),id:'2',startedAt:second}]);
+    expect(page.window.document.querySelector('#ongoing-time')?.textContent).toBe('Ongoing for 1 hr');
+    page.window.close();
+    const bad=await render([{...issue(),startedAt:'invalid'}]);
+    expect((bad.window.document.querySelector('#ongoing-time') as HTMLElement).hidden).toBe(true);
+    bad.window.close();
+  });
+  it('preserves valid status when a later network request fails',async()=>{
+    let calls=0;
+    let refresh: (() => void)|undefined;
+    const page=new JSDOM(html,{
+      url:'https://status.example.test/',
+      runScripts:'dangerously',
+      beforeParse(window){
+        window.setInterval=((callback:TimerHandler,ms?:number)=>{
+          if(ms===300000 && typeof callback==='function') refresh=callback as ()=>void;
+          return 1;
+        }) as typeof window.setInterval;
+        window.fetch=(async()=>{
+          calls++;
+          if(calls>1) throw Error('Temporary network failure');
+          return {ok:true,json:async()=>({
+            state:'connected',services,incidents:[issue()],updatedAt:new Date().toISOString()
+          })};
+        }) as typeof window.fetch;
+      },
+    });
+    for(let i=0;i<8;i++) await new Promise(resolve=>setTimeout(resolve,0));
+    expect(page.window.document.querySelector('#overall-title')?.textContent).toBe('Some services experiencing issues');
+    expect(refresh).toBeTypeOf('function');
+    // jsdom marks documents hidden by default, unlike an active browser tab.
+    Object.defineProperty(page.window.document,'hidden',{configurable:true,value:false});
+    refresh?.();
+    for(let i=0;i<8;i++) await new Promise(resolve=>setTimeout(resolve,0));
+    expect(calls).toBe(2);
+    expect(page.window.document.querySelector('#overall-title')?.textContent).toBe('Some services experiencing issues');
+    expect(page.window.document.querySelector('#active-incidents')?.textContent).toContain('Flowchart zoom issue');
     page.window.close();
   });
   it('hides the section when all incidents are resolved',async()=>{
