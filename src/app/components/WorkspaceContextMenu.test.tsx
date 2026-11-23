@@ -63,6 +63,8 @@ describe('workspace right-click menu', () => {
     area.className = 'pico-app';
     area.innerHTML = [
       '<button data-tour="run">Run</button>',
+      '<button aria-label="New project">New project</button>',
+      '<button aria-label="New file">New file</button>',
       '<div class="code-editor"><div class="cm-editor"><div class="cm-content" contenteditable="true"><span>OUTPUT</span></div></div></div>',
       '<input type="text" aria-label="Workspace name">',
       '<textarea aria-label="Practice file"></textarea>',
@@ -126,7 +128,7 @@ describe('workspace right-click menu', () => {
     area.remove();
   });
   it('uses a flat shadow-free menu with no decorative labels', () => {
-    const css = readFileSync(new URL('./workspace-context-menu.css', import.meta.url), 'utf8');
+    const css = readFileSync('src/app/components/workspace-context-menu.css', 'utf8');
     expect(css).toContain('box-shadow: none;');
     expect(css).not.toContain('.pico-context-title');
     expect(css).not.toContain('.pico-context-separated');
