@@ -80,6 +80,19 @@ export function WorkspaceContextMenu() {
     if (!menu || !menuRef.current) return;
     const element = menuRef.current;
     const rect = element.getBoundingClientRect();
+    const themed = document.querySelector<HTMLElement>(
+      '.pico-app[data-pico-theme], .logic-app[data-pico-theme], .cpu-app[data-pico-theme], ' +
+      '.binary-app[data-pico-theme], .storm-app[data-pico-theme], .pico-home[data-pico-theme], ' +
+      '.learning-hub[data-pico-theme]',
+    );
+    if (themed) {
+      const computed = window.getComputedStyle(themed);
+      for (const property of ['--surface', '--text', '--muted', '--border', '--accent-soft', '--font-ui', '--error-color']) {
+        const value = computed.getPropertyValue(property);
+        if (value) element.style.setProperty(property, value);
+      }
+      element.style.colorScheme = computed.colorScheme;
+    }
     const padding = 8;
     element.style.left = Math.max(padding, Math.min(menu.x, window.innerWidth - rect.width - padding)) + 'px';
     element.style.top = Math.max(padding, Math.min(menu.y, window.innerHeight - rect.height - padding)) + 'px';
