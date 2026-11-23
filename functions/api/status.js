@@ -100,6 +100,25 @@ function history(incidentList,service,monitor,now) {
   }
   return days;
 }
+// An HTTP 200 response does not mean every feature is healthy.
+// Incident severity is separate from uptime statistics supplied by UptimeRobot.
+export function applyIncidentImpact(services, incidents) {
+  if (!Array.isArray(incidents)) return services;
+  const affected = new Set(incidents.filter(incident =>
+    incident && !incident.resolvedAt &&
+    String(incident.status || "").toLowerCase() !== "resolved" &&
+    typeof incident.serviceId === "string"
+  ).map(incident => incident.serviceId));
+  return services.map(service => {
+    if (!affected.has(service.id) || service.status !== "up") return service;
+    const history = Array.isArray(service.history) ? [...service.history] : service.history;
+    if (Array.isArray(history) && history.length && history[history.length - 1] === "up") {
+      history[history.length - 1] = "degraded";
+    }
+    return {...service, status:"degraded", history};
+  });
+}
+
 export async function onRequestGet(context) {
   const unknown=SERVICES.map(s=>({...s,status:"unknown",uptime24h:null,uptime30d:null,history:Array(30).fill(null)}));
   const key=context.env.UPTIMEROBOT_API_KEY;
@@ -182,7 +201,8 @@ export async function onRequestGet(context) {
         console.error('Incident archive lookup unavailable',String(error));
       }
     }
-    const payload={state:matched.length?"connected":"no-monitors",updatedAt:new Date(now).toISOString(),services:publicServices,incidents};
+    const visibleServices=applyIncidentImpact(publicServices,incidents);
+    const payload={state:matched.length?"connected":"no-monitors",updatedAt:new Date(now).toISOString(),services:visibleServices,incidents};
     const output=response(payload);
     if(cache&&context.waitUntil)context.waitUntil(cache.put(cacheKey,output.clone()));
     return output;

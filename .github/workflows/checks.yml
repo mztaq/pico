@@ -15,5 +15,13 @@ jobs:
           package-manager-cache: false
       - run: npm install --global pnpm@11.25.0
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      # Status is a separate static site with its own Vite entry points.
+      # Pico application tests rely on the app's index.html and are not valid
+      # on status-branch PRs. Keep the complete suite for main app changes.
+      - name: Test Pico Status
+        if: (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'status') || github.ref == 'refs/heads/status'
+        run: pnpm exec vitest run tests/status-
+      - name: Test Pico application
+        if: (github.event_name != 'pull_request' || github.event.pull_request.base.ref != 'status') && github.ref != 'refs/heads/status'
+        run: pnpm test
       - run: pnpm build
