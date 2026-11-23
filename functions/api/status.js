@@ -235,10 +235,27 @@ export async function onRequestGet(context) {
         console.error('Incident archive lookup unavailable',String(error));
       }
     }
-    const visibleServices=applyIncidentImpact(publicServices,incidents).map(service=>({
-      ...service,
-      availability30d:incidentAdjustedAvailability(service,incidents,now)
-    }));
+    const visibleServices=applyIncidentImpact(publicServices,incidents).map(service=>{
+      // Match the 30 history bars to the same incident window as availability.
+      const timeline=Array.isArray(service.history)?[...service.history]:null;
+      if(timeline?.length===30 && Array.isArray(incidents)){
+        for(const incident of incidents){
+          if(incident?.serviceId!==service.id)continue;
+          const start=incidentTime(incident.startedAt);
+          const end=incident.resolvedAt?incidentTime(incident.resolvedAt):now;
+          if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)continue;
+          for(let day=0;day<30;day++){
+            const from=now-(30-day)*DAY, to=from+DAY;
+            if(start<to && end>from && timeline[day]==="up")timeline[day]="degraded";
+          }
+        }
+      }
+      return {
+        ...service,
+        history:timeline??service.history,
+        availability30d:incidentAdjustedAvailability(service,incidents,now)
+      };
+    });
     const payload={state:matched.length?"connected":"no-monitors",updatedAt:new Date(now).toISOString(),services:visibleServices,incidents};
     const output=response(payload);
     if(cache&&context.waitUntil)context.waitUntil(cache.put(cacheKey,output.clone()));
