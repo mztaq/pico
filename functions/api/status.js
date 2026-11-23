@@ -119,32 +119,30 @@ function history(incidentList,service,monitor,now) {
 }
 // An HTTP 200 response does not mean every feature is healthy.
 // Incident severity is separate from uptime statistics supplied by UptimeRobot.
-// Percentage of the last 30 days without a recorded incident. Count overlapping
-// incidents once. Preserve UptimeRobot's independent HTTP uptime metric.
+// Count each distinct incident once in the 30-day availability estimate.
+// A continuing incident, new timeline update, or repeated provider record
+// must not reduce this figure again on each refresh. Each incident contributes
+// one incident-day, rather than treating its ongoing duration as fresh downtime.
+// This is an incident-based estimate, separate from HTTP uptime statistics.
 export function incidentAdjustedAvailability(service, incidents, now=Date.now()) {
   const uptime=service.uptime30d;
   if(typeof uptime!=="number"||!Number.isFinite(uptime)) return null;
   if(!Array.isArray(incidents)) return uptime;
   const since=now-30*DAY;
-  const ranges=incidents.filter(i=>i && i.serviceId===service.id &&
-    !(String(i.status||"").toLowerCase()==="resolved"&&!i.resolvedAt))
-    .map(i=>{
-      const start=incidentTime(i.startedAt);
-      const end=i.resolvedAt?incidentTime(i.resolvedAt):now;
-      return [Math.max(since,start),Math.min(now,end)];
-    }).filter(([a,b])=>Number.isFinite(a)&&Number.isFinite(b)&&b>a)
-    .sort((a,b)=>a[0]-b[0]);
-  let affected=0,lastStart=null,lastEnd=null;
-  for(const [start,end] of ranges){
-    if(lastStart===null){lastStart=start;lastEnd=end;}
-    else if(start<=lastEnd){lastEnd=Math.max(lastEnd,end);}
-    else {affected+=lastEnd-lastStart;lastStart=start;lastEnd=end;}
+  const unique=new Set();
+  for(const incident of incidents) {
+    if(!incident || incident.serviceId!==service.id)continue;
+    const started=incidentTime(incident.startedAt);
+    if(!Number.isFinite(started) || started>now || started<since)continue;
+    const id=incident.id==null || String(incident.id).trim()===""
+      ? "started:"+started
+      : "id:"+String(incident.id);
+    unique.add(id);
   }
-  if(lastStart!==null)affected+=lastEnd-lastStart;
-  const healthyPercent=Math.max(0,100-affected/(30*DAY)*100);
-  // HTTP downtime and an incident may overlap, so avoid double-counting
-  // downtime when only independent aggregate uptime data is available.
-  return Math.round(Math.min(uptime,healthyPercent)*100)/100;
+  const incidentAvailability=Math.max(0,100-unique.size*100/30);
+  // Keep actual HTTP downtime reflected without counting it twice as a
+  // separate incident-based deduction.
+  return Math.round(Math.min(uptime,incidentAvailability)*100)/100;
 }
 
 export function applyIncidentImpact(services, incidents) {
