@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act } from 'react';
+import { readFileSync } from 'node:fs';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkspaceContextMenu } from './WorkspaceContextMenu';
@@ -74,10 +75,8 @@ describe('workspace right-click menu', () => {
       expect(menu.getAttribute('aria-label')).toBe('Pseudocode options');
       const items = Array.from(menu.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
         .map(item => item.textContent?.trim());
-      expect(items).toContain('Run program');
-      expect(items).not.toContain('Copy');
-      expect(items).not.toContain('Paste');
-      expect(items).not.toContain('Select all');
+      expect(items).toEqual(['Run program', 'New project', 'New file']);
+      expect(menu.querySelector('.pico-context-title')).toBeNull();
       await act(async () => menu.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })));
     }
   });
@@ -95,13 +94,12 @@ describe('workspace right-click menu', () => {
   it('honors disabled controls, Escape and clicks outside', async () => {
     const area = document.createElement('div');
     area.className = 'pico-app flow-builder';
-    area.innerHTML = '<button class="run-button" disabled>Run</button><div class="flow-viewport"></div>';
+    area.innerHTML = '<button class="run-button" disabled>Run</button><button aria-label="Fit flowchart">Fit</button><div class="flow-viewport"></div>';
     host.append(area);
     await rightClick(area.querySelector('.flow-viewport')!);
-    const runAction = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
-      .find(item => item.textContent?.includes('Run flowchart'))!;
-    expect(runAction.disabled).toBe(true);
-    await act(async () => runAction.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })));
+    const items = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+    expect(items.map(item => item.textContent?.trim())).toEqual(['Fit to screen']);
+    await act(async () => items[0]!.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })));
     expect(document.querySelector('.pico-context-menu')).toBeNull();
 
     await rightClick(area);
@@ -117,14 +115,22 @@ describe('workspace right-click menu', () => {
       '<div class="logic-sim-controls"><button class="logic-run">Pause</button></div>',
       '<button aria-label="Step forward one CPU micro-operation">Step</button>',
       '<button aria-label="Add defensive proxy">+</button>',
-      '<div class="binary-presets"><button>255</button></div>',
+      '<div class="binary-register"><button>Clear</button></div>',
     ].join('');
     document.body.append(area);
     expect(buildWorkspaceMenu('python', area).actions.some(action => action.label === 'Run program')).toBe(true);
     expect(buildWorkspaceMenu('logic', area).actions.some(action => action.label === 'Run / Pause')).toBe(true);
     expect(buildWorkspaceMenu('cpu', area).actions.some(action => action.label === 'Step forward')).toBe(true);
-    expect(buildWorkspaceMenu('binary', area).actions.some(action => action.label === 'Set 255')).toBe(true);
+    expect(buildWorkspaceMenu('binary', area).actions.some(action => action.label === 'Clear register')).toBe(true);
     expect(buildWorkspaceMenu('traffic', area).actions.some(action => action.label === 'Add proxy')).toBe(true);
     area.remove();
+  });
+  it('uses a flat shadow-free menu with no decorative labels', () => {
+    const css = readFileSync(new URL('./workspace-context-menu.css', import.meta.url), 'utf8');
+    expect(css).toContain('box-shadow: none;');
+    expect(css).not.toContain('.pico-context-title');
+    expect(css).not.toContain('.pico-context-separated');
+    const menu = document.querySelector('.pico-context-menu');
+    expect(menu).toBeNull();
   });
 });
