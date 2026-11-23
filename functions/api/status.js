@@ -47,8 +47,25 @@ function state(monitor) {
   }
 }
 function validPercent(value) {
-  const p=value?.uptime;
+  // Different API clients expose the stats object directly or inside data.
+  const raw=value?.uptime ?? value?.data?.uptime;
+  const p=typeof raw==="string" && raw.trim()!=="" ? Number(raw) : raw;
   return typeof p==="number" && Number.isFinite(p) && p>=0 && p<=100 ? Math.round(p*100)/100 : null;
+}
+function validMonitorId(value) {
+  const id=typeof value==="string" && /^\\d+$/.test(value) ? Number(value) : value;
+  return Number.isSafeInteger(id)&&id>0?id:null;
+}
+async function uptimeStats(path,key) {
+  // UptimeRobot sometimes throttles simultaneous per-monitor statistics calls.
+  // Retry transient errors once and never misreport an unknown value as 100%.
+  for(let attempt=0;attempt<2;attempt++) {
+    try { return await api(path,key); }
+    catch(error) {
+      if(attempt===1 || !/Monitoring API: (429|5\\d\\d)/.test(String(error))) throw error;
+      await new Promise(resolve=>setTimeout(resolve,750));
+    }
+  }
 }
 async function api(path,key) {
   const res=await fetch(ROOT+path,{
@@ -165,21 +182,30 @@ export async function onRequestGet(context) {
     const since30=new Date(now-30*DAY).toISOString();
     const services=SERVICES.map(service=>{
       const monitor=getMonitor(monitors,service);
-      return {...service,monitor,monitorId:monitor?.id,status:monitor?state(monitor):"not_monitored",uptime24h:null,uptime30d:null};
+      return {...service,monitor,monitorId:validMonitorId(monitor?.id),status:monitor?state(monitor):"not_monitored",uptime24h:null,uptime30d:null};
     });
     const matched=services.filter(s=>Number.isSafeInteger(s.monitorId)&&s.monitorId>0);
     // One uptime-stat request per monitor. The UI only displays 30-day uptime.
     const queries=matched.map(s=>(
       {id:s.id,key:"uptime30d",path:"/monitors/"+s.monitorId+"/stats/uptime?from="+encodeURIComponent(since30)}
     ));
-    const jobs=[...queries.map(q=>api(q.path,key)),api("/incidents?limit=100&started_after="+encodeURIComponent(since30),key)];
-    const answers=await Promise.allSettled(jobs);
-    for(let i=0;i<queries.length;i++) {
-      if(answers[i].status!=="fulfilled")continue;
-      const service=services.find(s=>s.id===queries[i].id);
-      if(service)service[queries[i].key]=validPercent(answers[i].value);
+    // Query each monitor sequentially to avoid short bursts of API rate limits.
+    for(const query of queries) {
+      try {
+        const stats=await uptimeStats(query.path,key);
+        const service=services.find(s=>s.id===query.id);
+        if(service)service[query.key]=validPercent(stats);
+      } catch(error) {
+        console.error("Monitor uptime statistics unavailable",query.id,String(error));
+      }
     }
-    const incidentsAnswer=answers[answers.length-1];
+    let incidentsAnswer;
+    try {
+      incidentsAnswer={status:"fulfilled",value:await api("/incidents?limit=100&started_after="+encodeURIComponent(since30),key)};
+    } catch(error) {
+      console.error("Monitoring incident list unavailable",String(error));
+      incidentsAnswer={status:"rejected"};
+    }
     const rawIncidents=incidentsAnswer.status==="fulfilled"&&Array.isArray(incidentsAnswer.value?.data)&&!incidentsAnswer.value?.nextLink?incidentsAnswer.value.data:null;
     const byMonitor=new Map(matched.map(s=>[s.monitorId,s]));
     const allEntries=rawIncidents===null?null:rawIncidents.map(i=>{
