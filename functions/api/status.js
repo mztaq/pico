@@ -53,7 +53,7 @@ function validPercent(value) {
   return typeof p==="number" && Number.isFinite(p) && p>=0 && p<=100 ? Math.round(p*100)/100 : null;
 }
 function validMonitorId(value) {
-  const id=typeof value==="string" && /^\\d+$/.test(value) ? Number(value) : value;
+  const id=typeof value==="string" && /^\d+$/.test(value) ? Number(value) : value;
   return Number.isSafeInteger(id)&&id>0?id:null;
 }
 async function uptimeStats(path,key) {
@@ -62,7 +62,7 @@ async function uptimeStats(path,key) {
   for(let attempt=0;attempt<2;attempt++) {
     try { return await api(path,key); }
     catch(error) {
-      if(attempt===1 || !/Monitoring API: (429|5\\d\\d)/.test(String(error))) throw error;
+      if(attempt===1 || !/Monitoring API: (429|5\d\d)/.test(String(error))) throw error;
       await new Promise(resolve=>setTimeout(resolve,750));
     }
   }
