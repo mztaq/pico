@@ -47,6 +47,37 @@ describe('Pico Status active incident placement',()=>{
     expect(doc.querySelector('#incidents')?.textContent).not.toContain('Flowchart zoom issue');
     page.window.close();
   });
+  it('shows published updates newest first with stages and timestamps without repeating the initial message',async()=>{
+    const page=await render([{
+      ...issue(),
+      updates:[
+        {stage:'identified',message:'We found the zoom rendering problem.',publishedAt:'2026-11-23T13:40:00Z'},
+        {stage:'investigating',message:'Zoom out controls are not responding.',publishedAt:'2026-11-22T14:00:00Z'},
+      ],
+    }]);
+    const doc=page.window.document;
+    const panel=doc.querySelector('#active-incidents')!;
+    const messages=[...panel.querySelectorAll('.incident-update p')].map(element=>element.textContent);
+    expect(messages).toEqual([
+      'We found the zoom rendering problem.',
+      'Zoom out controls are not responding.',
+    ]);
+    expect(panel.querySelectorAll('.incident-update time')).toHaveLength(2);
+    expect(panel.querySelector('.incident-update .stage')?.textContent).toBe('Identified');
+    expect(panel.querySelectorAll('.active-incident > p')).toHaveLength(0);
+    expect(doc.querySelector('#incidents')?.textContent).not.toContain('We found the zoom rendering problem.');
+    page.window.close();
+  });
+  it('escapes update messages to prevent script injection',async()=>{
+    const page=await render([{
+      ...issue(),
+      updates:[{stage:'monitoring',message:'<img src=x onerror=alert(1)>',publishedAt:'2026-11-23T13:45:00Z'}],
+    }]);
+    const panel=page.window.document.querySelector('#active-incidents')!;
+    expect(panel.querySelector('img')).toBeNull();
+    expect(panel.textContent).toContain('<img src=x onerror=alert(1)>');
+    page.window.close();
+  });
   it('hides the section when all incidents are resolved',async()=>{
     const page=await render([issue('resolved','2026-11-23T12:00:00Z')]);
     const doc=page.window.document;
