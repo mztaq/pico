@@ -47,8 +47,25 @@ function state(monitor) {
   }
 }
 function validPercent(value) {
-  const p=value?.uptime;
+  // Different API clients expose the stats object directly or inside data.
+  const raw=value?.uptime ?? value?.data?.uptime;
+  const p=typeof raw==="string" && raw.trim()!=="" ? Number(raw) : raw;
   return typeof p==="number" && Number.isFinite(p) && p>=0 && p<=100 ? Math.round(p*100)/100 : null;
+}
+function validMonitorId(value) {
+  const id=typeof value==="string" && /^\d+$/.test(value) ? Number(value) : value;
+  return Number.isSafeInteger(id)&&id>0?id:null;
+}
+async function uptimeStats(path,key) {
+  // UptimeRobot sometimes throttles simultaneous per-monitor statistics calls.
+  // Retry transient errors once and never misreport an unknown value as 100%.
+  for(let attempt=0;attempt<2;attempt++) {
+    try { return await api(path,key); }
+    catch(error) {
+      if(attempt===1 || !/Monitoring API: (429|5\d\d)/.test(String(error))) throw error;
+      await new Promise(resolve=>setTimeout(resolve,750));
+    }
+  }
 }
 async function api(path,key) {
   const res=await fetch(ROOT+path,{
@@ -102,32 +119,30 @@ function history(incidentList,service,monitor,now) {
 }
 // An HTTP 200 response does not mean every feature is healthy.
 // Incident severity is separate from uptime statistics supplied by UptimeRobot.
-// Percentage of the last 30 days without a recorded incident. Count overlapping
-// incidents once. Preserve UptimeRobot's independent HTTP uptime metric.
+// Count each distinct incident once in the 30-day availability estimate.
+// A continuing incident, new timeline update, or repeated provider record
+// must not reduce this figure again on each refresh. Each incident contributes
+// one incident-day, rather than treating its ongoing duration as fresh downtime.
+// This is an incident-based estimate, separate from HTTP uptime statistics.
 export function incidentAdjustedAvailability(service, incidents, now=Date.now()) {
   const uptime=service.uptime30d;
   if(typeof uptime!=="number"||!Number.isFinite(uptime)) return null;
   if(!Array.isArray(incidents)) return uptime;
   const since=now-30*DAY;
-  const ranges=incidents.filter(i=>i && i.serviceId===service.id &&
-    !(String(i.status||"").toLowerCase()==="resolved"&&!i.resolvedAt))
-    .map(i=>{
-      const start=incidentTime(i.startedAt);
-      const end=i.resolvedAt?incidentTime(i.resolvedAt):now;
-      return [Math.max(since,start),Math.min(now,end)];
-    }).filter(([a,b])=>Number.isFinite(a)&&Number.isFinite(b)&&b>a)
-    .sort((a,b)=>a[0]-b[0]);
-  let affected=0,lastStart=null,lastEnd=null;
-  for(const [start,end] of ranges){
-    if(lastStart===null){lastStart=start;lastEnd=end;}
-    else if(start<=lastEnd){lastEnd=Math.max(lastEnd,end);}
-    else {affected+=lastEnd-lastStart;lastStart=start;lastEnd=end;}
+  const unique=new Set();
+  for(const incident of incidents) {
+    if(!incident || incident.serviceId!==service.id)continue;
+    const started=incidentTime(incident.startedAt);
+    if(!Number.isFinite(started) || started>now || started<since)continue;
+    const id=incident.id==null || String(incident.id).trim()===""
+      ? "started:"+started
+      : "id:"+String(incident.id);
+    unique.add(id);
   }
-  if(lastStart!==null)affected+=lastEnd-lastStart;
-  const healthyPercent=Math.max(0,100-affected/(30*DAY)*100);
-  // HTTP downtime and an incident may overlap, so avoid double-counting
-  // downtime when only independent aggregate uptime data is available.
-  return Math.round(Math.min(uptime,healthyPercent)*100)/100;
+  const incidentAvailability=Math.max(0,100-unique.size*100/30);
+  // Keep actual HTTP downtime reflected without counting it twice as a
+  // separate incident-based deduction.
+  return Math.round(Math.min(uptime,incidentAvailability)*100)/100;
 }
 
 export function applyIncidentImpact(services, incidents) {
@@ -165,21 +180,30 @@ export async function onRequestGet(context) {
     const since30=new Date(now-30*DAY).toISOString();
     const services=SERVICES.map(service=>{
       const monitor=getMonitor(monitors,service);
-      return {...service,monitor,monitorId:monitor?.id,status:monitor?state(monitor):"not_monitored",uptime24h:null,uptime30d:null};
+      return {...service,monitor,monitorId:validMonitorId(monitor?.id),status:monitor?state(monitor):"not_monitored",uptime24h:null,uptime30d:null};
     });
     const matched=services.filter(s=>Number.isSafeInteger(s.monitorId)&&s.monitorId>0);
     // One uptime-stat request per monitor. The UI only displays 30-day uptime.
     const queries=matched.map(s=>(
       {id:s.id,key:"uptime30d",path:"/monitors/"+s.monitorId+"/stats/uptime?from="+encodeURIComponent(since30)}
     ));
-    const jobs=[...queries.map(q=>api(q.path,key)),api("/incidents?limit=100&started_after="+encodeURIComponent(since30),key)];
-    const answers=await Promise.allSettled(jobs);
-    for(let i=0;i<queries.length;i++) {
-      if(answers[i].status!=="fulfilled")continue;
-      const service=services.find(s=>s.id===queries[i].id);
-      if(service)service[queries[i].key]=validPercent(answers[i].value);
+    // Query each monitor sequentially to avoid short bursts of API rate limits.
+    for(const query of queries) {
+      try {
+        const stats=await uptimeStats(query.path,key);
+        const service=services.find(s=>s.id===query.id);
+        if(service)service[query.key]=validPercent(stats);
+      } catch(error) {
+        console.error("Monitor uptime statistics unavailable",query.id,String(error));
+      }
     }
-    const incidentsAnswer=answers[answers.length-1];
+    let incidentsAnswer;
+    try {
+      incidentsAnswer={status:"fulfilled",value:await api("/incidents?limit=100&started_after="+encodeURIComponent(since30),key)};
+    } catch(error) {
+      console.error("Monitoring incident list unavailable",String(error));
+      incidentsAnswer={status:"rejected"};
+    }
     const rawIncidents=incidentsAnswer.status==="fulfilled"&&Array.isArray(incidentsAnswer.value?.data)&&!incidentsAnswer.value?.nextLink?incidentsAnswer.value.data:null;
     const byMonitor=new Map(matched.map(s=>[s.monitorId,s]));
     const allEntries=rawIncidents===null?null:rawIncidents.map(i=>{

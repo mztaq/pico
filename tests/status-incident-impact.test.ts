@@ -60,13 +60,13 @@ describe("30-day incident-adjusted service availability",()=>{
     startedAt:new Date(start).toISOString(),
     resolvedAt:end===null?null:new Date(end).toISOString(),
   });
-  it("reduces healthy availability when HTTP uptime is 100% but a feature incident lasts 1 day",()=>{
+  it("applies one fixed incident-day deduction for a new incident",()=>{
     const value=incidentAdjustedAvailability({id:"website",uptime30d:100},[
       issue("website",now-DAY,null)
     ],now);
     expect(value).toBe(96.67);
   });
-  it("counts overlapping incidents only once",()=>{
+  it("counts distinct incidents, not the time they overlap",()=>{
     const value=incidentAdjustedAvailability({id:"website",uptime30d:100},[
       issue("website",now-2*DAY,now-DAY),
       issue("website",now-1.5*DAY,null),
@@ -74,10 +74,28 @@ describe("30-day incident-adjusted service availability",()=>{
     ],now);
     expect(value).toBe(93.33);
   });
-  it("clips incident periods to the last 30 days",()=>{
+  it("does not count incidents that started before the 30-day window",()=>{
     expect(incidentAdjustedAvailability({id:"website",uptime30d:100},[
       issue("website",now-40*DAY,null)
-    ],now)).toBe(0);
+    ],now)).toBe(100);
+  });
+  it("keeps availability fixed while the same incident stays open and changes stage",()=>{
+    const opened=now-2*DAY;
+    const original={...issue("website",opened,null),id:"incident-42",status:"investigating"};
+    const identified={...original,status:"identified"};
+    const reportedAgain={...original,status:"monitoring"};
+    const first=incidentAdjustedAvailability({id:"website",uptime30d:100},[original],now);
+    const later=incidentAdjustedAvailability({id:"website",uptime30d:100},[identified],now+DAY);
+    const repeated=incidentAdjustedAvailability({id:"website",uptime30d:100},[original,reportedAgain],now+DAY);
+    expect(first).toBe(96.67);
+    expect(later).toBe(first);
+    expect(repeated).toBe(first);
+  });
+  it("reduces availability only when a different incident starts",()=>{
+    const original={...issue("website",now-2*DAY,null),id:"incident-42"};
+    const another={...issue("website",now-DAY,null),id:"incident-43"};
+    expect(incidentAdjustedAvailability({id:"website",uptime30d:100},[original,another],now)).toBe(93.33);
+    expect(incidentAdjustedAvailability({id:"mcp",uptime30d:100},[original,another],now)).toBe(100);
   });
   it("preserves lower monitor uptime and does not make up metrics if unavailable",()=>{
     expect(incidentAdjustedAvailability({id:"website",uptime30d:95},[

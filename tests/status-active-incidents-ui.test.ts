@@ -50,6 +50,20 @@ describe('Pico Status active incident placement',()=>{
     expect(doc.querySelector('#incidents')?.textContent).not.toContain('Flowchart zoom issue');
     page.window.close();
   });
+  it('shows the current stage when the API has no update history',async()=>{
+    const page=await render([{...issue('identified'),reason:'We located the zoom issue.',updates:[]}]);
+    const panel=page.window.document.querySelector('#active-incidents')!;
+    expect(panel.querySelector('.incident-update .stage')?.textContent).toBe('Identified');
+    expect(panel.querySelector('.incident-update p')?.textContent).toBe('We located the zoom issue.');
+    expect(panel.querySelectorAll('.incident-update')).toHaveLength(1);
+    expect(panel.querySelectorAll('.incident-update time')).toHaveLength(0);
+    page.window.close();
+  });
+  it('uses investigating as the fallback stage for a newly reported issue',async()=>{
+    const page=await render([issue()]);
+    expect(page.window.document.querySelector('.incident-update .stage')?.textContent).toBe('Investigating');
+    page.window.close();
+  });
   it('shows published updates newest first with stages and timestamps without repeating the initial message',async()=>{
     const page=await render([{
       ...issue(),
