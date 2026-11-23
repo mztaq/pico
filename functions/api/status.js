@@ -13,7 +13,7 @@ function response(payload, code=200) {
     status:code,
     headers: {
       "Content-Type":"application/json; charset=utf-8",
-      "Cache-Control":code===200?"public, max-age=15, s-maxage=30":"no-store",
+      "Cache-Control":code===200?"public, max-age=60, s-maxage=300":"no-store",
       "X-Content-Type-Options":"nosniff",
     }
   });
