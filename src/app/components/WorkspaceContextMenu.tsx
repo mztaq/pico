@@ -9,15 +9,12 @@ interface MenuState extends WorkspaceMenuModel {
   y: number;
 }
 
-const isEditable = (target: Element): boolean =>
-  Boolean(target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), .cm-editor, [role="textbox"]'));
-
 const isOverlay = (target: Element): boolean =>
   Boolean(target.closest('[role="dialog"], [aria-modal="true"], .pico-offline-overlay, .pico-offline-modal, [inert]'));
 
 /**
- * App-level right-click options. Text editors keep their native clipboard and
- * spellcheck menu, and disabled/inert controls cannot be bypassed.
+ * App-level right-click options, including inside CodeMirror and text fields.
+ * Disabled/inert controls cannot be bypassed. Modal dialogs keep their own menus.
  */
 export function WorkspaceContextMenu() {
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -29,7 +26,7 @@ export function WorkspaceContextMenu() {
     const onContextMenu = (event: MouseEvent) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
-      if (!target.closest('#root') || isEditable(target) || isOverlay(target)) return;
+      if (!target.closest('#root') || isOverlay(target)) return;
       const scope = target.closest(
         '.pico-app, .flow-builder, .logic-app, .cpu-app, .binary-app, .storm-app, ' +
         '.pico-home, .learning-hub',
