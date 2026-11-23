@@ -10,13 +10,13 @@
 
 </div>
 
-<table>
+<table align="center" width="100%">
   <tr>
-    <td align="center"><h3>1.33k</h3><sub>VISITS</sub></td>
-    <td align="center"><h3>65.49k</h3><sub>HTTP REQUESTS</sub></td>
-    <td align="center"><h3>4.14k</h3><sub>PAGE VIEWS</sub></td>
-    <td align="center"><h3>4.98k</h3><sub>API REQUESTS</sub></td>
-    <td align="center"><h3>6.47 GB</h3><sub>DATA TRANSFER</sub></td>
+    <td align="center" width="20%"><h3>1.33k</h3><sub>VISITS</sub></td>
+    <td align="center" width="20%"><h3>65.49k</h3><sub>HTTP REQUESTS</sub></td>
+    <td align="center" width="20%"><h3>4.14k</h3><sub>PAGE VIEWS</sub></td>
+    <td align="center" width="20%"><h3>4.98k</h3><sub>API REQUESTS</sub></td>
+    <td align="center" width="20%"><h3>6.47 GB</h3><sub>DATA TRANSFER</sub></td>
   </tr>
 </table>
 
