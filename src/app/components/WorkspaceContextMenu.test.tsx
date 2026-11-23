@@ -56,16 +56,40 @@ describe('workspace right-click menu', () => {
     expect(document.querySelector('.pico-context-menu')).toBeNull();
   });
 
-  it('keeps native context menus in editors and dialogs', async () => {
+  it('shows Pico options inside CodeMirror and text inputs, never the browser clipboard menu', async () => {
+    window.history.replaceState({}, '', '/app/pseudocode');
     const area = document.createElement('div');
     area.className = 'pico-app';
-    area.innerHTML = '<textarea>test</textarea><div class="cm-editor"></div><div role="dialog"><span>Dialog</span></div>';
+    area.innerHTML = [
+      '<button data-tour="run">Run</button>',
+      '<div class="code-editor"><div class="cm-editor"><div class="cm-content" contenteditable="true"><span>OUTPUT</span></div></div></div>',
+      '<input type="text" aria-label="Workspace name">',
+      '<textarea aria-label="Practice file"></textarea>',
+    ].join('');
     host.append(area);
-    for (const selector of ['textarea', '.cm-editor', '[role="dialog"] span']) {
+    for (const selector of ['.cm-content span', 'input', 'textarea']) {
       const event = await rightClick(area.querySelector(selector)!);
-      expect(event.defaultPrevented).toBe(false);
-      expect(document.querySelector('.pico-context-menu')).toBeNull();
+      expect(event.defaultPrevented).toBe(true);
+      const menu = document.querySelector<HTMLElement>('.pico-context-menu')!;
+      expect(menu.getAttribute('aria-label')).toBe('Pseudocode options');
+      const items = Array.from(menu.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
+        .map(item => item.textContent?.trim());
+      expect(items).toContain('Run program');
+      expect(items).not.toContain('Copy');
+      expect(items).not.toContain('Paste');
+      expect(items).not.toContain('Select all');
+      await act(async () => menu.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })));
     }
+  });
+
+  it('leaves modal dialogs outside the workspace context-menu handler', async () => {
+    const area = document.createElement('div');
+    area.className = 'pico-app';
+    area.innerHTML = '<div role="dialog"><span>Dialog</span></div>';
+    host.append(area);
+    const event = await rightClick(area.querySelector('[role="dialog"] span')!);
+    expect(event.defaultPrevented).toBe(false);
+    expect(document.querySelector('.pico-context-menu')).toBeNull();
   });
 
   it('honors disabled controls, Escape and clicks outside', async () => {
