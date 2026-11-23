@@ -126,6 +126,8 @@ describe('Pico Status active incident placement',()=>{
     for(let i=0;i<8;i++) await new Promise(resolve=>setTimeout(resolve,0));
     expect(page.window.document.querySelector('#overall-title')?.textContent).toBe('Some services experiencing issues');
     expect(refresh).toBeTypeOf('function');
+    // jsdom marks documents hidden by default, unlike an active browser tab.
+    Object.defineProperty(page.window.document,'hidden',{configurable:true,value:false});
     refresh?.();
     for(let i=0;i<8;i++) await new Promise(resolve=>setTimeout(resolve,0));
     expect(calls).toBe(2);
