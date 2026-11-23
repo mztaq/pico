@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyIncidentImpact } from "../functions/api/status.js";
+import { applyIncidentImpact, incidentAdjustedAvailability } from "../functions/api/status.js";
 
 const services = () => [
   {id:"website",name:"Pico Website",status:"up",uptime30d:100,history:Array(30).fill("up")},
@@ -49,5 +49,40 @@ describe("Pico status incident impact", () => {
   });
   it("does not invent incident states when the archive is unavailable", () => {
     expect(applyIncidentImpact(services(),null).map(s=>s.status)).toEqual(["up","up","down"]);
+  });
+});
+
+describe("30-day incident-adjusted service availability",()=>{
+  const DAY=86400000;
+  const now=Date.parse("2026-11-23T12:00:00Z");
+  const issue=(id:string,start:number,end:number|null)=>({
+    serviceId:id,status:end===null?"identified":"resolved",
+    startedAt:new Date(start).toISOString(),
+    resolvedAt:end===null?null:new Date(end).toISOString(),
+  });
+  it("reduces healthy availability when HTTP uptime is 100% but a feature incident lasts 1 day",()=>{
+    const value=incidentAdjustedAvailability({id:"website",uptime30d:100},[
+      issue("website",now-DAY,null)
+    ],now);
+    expect(value).toBe(96.67);
+  });
+  it("counts overlapping incidents only once",()=>{
+    const value=incidentAdjustedAvailability({id:"website",uptime30d:100},[
+      issue("website",now-2*DAY,now-DAY),
+      issue("website",now-1.5*DAY,null),
+      issue("mcp",now-5*DAY,null)
+    ],now);
+    expect(value).toBe(93.33);
+  });
+  it("clips incident periods to the last 30 days",()=>{
+    expect(incidentAdjustedAvailability({id:"website",uptime30d:100},[
+      issue("website",now-40*DAY,null)
+    ],now)).toBe(0);
+  });
+  it("preserves lower monitor uptime and does not make up metrics if unavailable",()=>{
+    expect(incidentAdjustedAvailability({id:"website",uptime30d:95},[
+      issue("website",now-DAY,null)
+    ],now)).toBe(95);
+    expect(incidentAdjustedAvailability({id:"website",uptime30d:null},[],now)).toBeNull();
   });
 });
