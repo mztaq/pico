@@ -34,7 +34,7 @@ describe('Pico Status active incident placement',()=>{
     const panel=doc.querySelector<HTMLElement>('#active-incidents')!;
     expect(panel.hidden).toBe(false);
     expect(panel.textContent).toContain('Flowchart zoom issue');
-    expect(panel.textContent).toContain('Investigating');
+    expect(panel.querySelector('.active-incident-top .stage')).toBeNull();
     expect(panel.textContent).toContain('Affected: Pico Website');
     expect(panel.textContent).toContain('Zoom out controls are not responding.');
     expect(panel.parentElement?.id).toBe('overall-panel');
