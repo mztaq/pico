@@ -6,6 +6,7 @@ const LandingPage = lazy(() => import('./landing/LandingPage'));
 const AiUsagePage = lazy(() => import('./landing/AiUsagePage'));
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { OfflineStatus } from './app/components/OfflineStatus';
+import { WorkspaceContextMenu } from './app/components/WorkspaceContextMenu';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
 import { workspaceFromLocation } from './app/workspace-deeplink';
@@ -64,7 +65,7 @@ installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /><OfflineStatus /></> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}>{isAiUsagePage ? <AiUsagePage /> : <LandingPage />}</Suspense>}
+    {inApp ? <><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /><OfflineStatus /><WorkspaceContextMenu /></> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}>{isAiUsagePage ? <AiUsagePage /> : <LandingPage />}</Suspense>}
   </React.StrictMode>,
 );
 
