@@ -283,6 +283,7 @@
       }).join("");
     }
     let loading=false;
+    let hasLoadedStatus=false;
     async function refresh() {
       if(loading) return;
       loading=true;
@@ -290,7 +291,9 @@
         const response=await fetch("/api/status",{cache:"no-store"});
         if(!response.ok) throw Error("Unavailable");
         const data=await response.json();
+        if(data.state!=="connected") throw Error("Monitoring unavailable");
         const services=Array.isArray(data.services)?data.services:DEFAULTS;
+        hasLoadedStatus=true;
         renderServices(services,data.updatedAt);
         renderActiveIncidents(data.state==="connected"?data.incidents:null);
         if(data.state!=="connected"){
@@ -308,14 +311,18 @@
           renderIncidents(data.incidents);
         }
       }catch {
-        renderServices(DEFAULTS);
-        renderActiveIncidents(null);
-        renderIncidents(null);
-        setOverall("Status unavailable","unknown");
+        // Keep the last verified status if a refresh fails temporarily.
+        if(!hasLoadedStatus) {
+          renderServices(DEFAULTS);
+          renderActiveIncidents(null);
+          renderIncidents(null);
+          setOverall("Status unavailable","unknown");
+        }
       }finally {loading=false}
     }
     refresh();
-    setInterval(()=>{if(!document.hidden){refreshOngoingTime();refresh()}},30000);
+    setInterval(()=>{if(!document.hidden)refreshOngoingTime()},30000);
+    setInterval(()=>{if(!document.hidden)refresh()},300000);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
   })();
   </script>
