@@ -1,0 +1,55 @@
+.pico-context-menu {
+  position: fixed;
+  z-index: 2147483600;
+  width: min(258px, calc(100vw - 16px));
+  max-height: min(490px, calc(100vh - 16px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--surface, #242431);
+  color: var(--text, #f5f2ef);
+  border: 1px solid var(--border, #5c5966);
+  border-radius: 11px;
+  box-shadow: 0 14px 38px #0005, 0 2px 8px #0002;
+  padding: 5px;
+  font: 13px/1.4 var(--font-ui, system-ui, sans-serif);
+  animation: pico-context-appear 110ms ease-out both;
+}
+.pico-context-title {
+  padding: 9px 10px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .035em;
+  color: var(--muted, #b3abbc);
+  user-select: none;
+}
+.pico-context-list { display: grid; gap: 1px; }
+.pico-context-separated { border-top: 1px solid var(--border, #5c5966); margin-top: 5px; padding-top: 5px; }
+.pico-context-action {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 9px 10px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+.pico-context-action svg { flex: none; opacity: .78; }
+.pico-context-action span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pico-context-action:hover:not(:disabled), .pico-context-action:focus-visible {
+  background: var(--accent-soft, #444050);
+  outline: none;
+}
+.pico-context-action:disabled { opacity: .38; cursor: not-allowed; }
+.pico-context-destructive:not(:disabled) { color: var(--error-color, #f18d89); }
+@keyframes pico-context-appear {
+  from { opacity: 0; transform: translateY(-3px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pico-context-menu { animation: none; }
+}
