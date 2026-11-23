@@ -114,7 +114,7 @@ describe('workspace right-click menu', () => {
       '<button class="logic-run">Pause</button>',
       '<div class="logic-sim-controls"><button class="logic-run">Pause</button></div>',
       '<button aria-label="Step forward one CPU micro-operation">Step</button>',
-      '<button aria-label="Add defensive proxy">+</button>',
+      '<button class="storm-start-simulation">Start</button>',
       '<div class="binary-register"><button>Clear</button></div>',
     ].join('');
     document.body.append(area);
@@ -122,7 +122,7 @@ describe('workspace right-click menu', () => {
     expect(buildWorkspaceMenu('logic', area).actions.some(action => action.label === 'Run / Pause')).toBe(true);
     expect(buildWorkspaceMenu('cpu', area).actions.some(action => action.label === 'Step forward')).toBe(true);
     expect(buildWorkspaceMenu('binary', area).actions.some(action => action.label === 'Clear register')).toBe(true);
-    expect(buildWorkspaceMenu('traffic', area).actions.some(action => action.label === 'Add proxy')).toBe(true);
+    expect(buildWorkspaceMenu('traffic', area).actions.some(action => action.label === 'Start simulation')).toBe(true);
     area.remove();
   });
   it('uses a flat shadow-free menu with no decorative labels', () => {
