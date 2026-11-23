@@ -89,18 +89,12 @@
     .active-incidents { margin-top: 20px; padding-top: 19px; border-top: 1px solid var(--edge); }
     .active-incidents[hidden] { display: none; }
     .active-incident + .active-incident { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
-    .active-incident-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .active-incident-top { display: flex; align-items: baseline; justify-content: flex-start; gap: 12px; flex-wrap: wrap; }
     .active-incident h3 { margin: 0; color: var(--bright); font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
     .active-incident .stage { color: var(--amber); font-size: 13px; font-weight: 660; white-space: nowrap; }
     .active-incident p { margin: 8px 0 0; color: var(--text); font-size: 14px; }
-    .active-incident .affected {
-      display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      max-width: 100%; margin: 12px 0 0; padding: 8px 12px;
-      border: 1px solid var(--edge); border-radius: 999px;
-      background: rgba(255,255,255,.045); color: var(--bright);
-      font-size: 15px; font-weight: 700; line-height: 1.25;
-    }
-    .active-incident .affected-label { color: var(--muted); font-weight: 600; }
+    .active-incident .affected { display: inline-flex; align-items: baseline; gap: 5px; color: var(--bright); font-size: 13px; font-weight: 650; line-height: 1.3; }
+    .active-incident .affected-label { color: var(--muted); font-weight: 500; }
     .incident-updates { margin-top: 13px; }
     .incident-update { padding: 12px 0; border-top: 1px solid var(--line); }
     .incident-update:first-child { padding-top: 0; border-top: 0; }
@@ -261,8 +255,9 @@
             +(date?'<time datetime="'+clean(when.toISOString())+'">'+clean(date)+'</time>':"")
             +'</div><p>'+clean(u.message||"")+'</p></div>';
         }).join("");
-        return '<article class="active-incident"><div class="active-incident-top"><h3>'+clean(i.title||i.service||"Service issue")+'</h3></div>'
-          +(i.service?'<div class="affected"><span class="affected-label">Affected service:</span><span>'+clean(i.service)+'</span></div>':"")
+        return '<article class="active-incident"><div class="active-incident-top"><h3>'+clean(i.title||i.service||"Service issue")+'</h3>'
+          +(i.service?'<span class="affected"><span class="affected-label">Affected service:</span><span>'+clean(i.service)+'</span></span>':"")
+          +'</div>'
           +(updates.length?'<div class="incident-updates">'+updateMarkup+'</div>'
             :'<p>'+clean(i.reason||"We are investigating an issue affecting this service.")+'</p>')
           +'</article>';
