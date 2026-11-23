@@ -1,5 +1,5 @@
 import {
-  ArrowLeft, BookOpen, Check, CircleHelp, Code2, Copy, Download, FilePlus2,
+  ArrowLeft, ArrowRight, BookOpen, Check, CircleHelp, Code2, Copy, Download, FilePlus2,
   FolderOpen, Keyboard, Maximize2, Minus, Pause, Play, Plus, Redo2, RotateCcw,
   Settings2, StepBack, StepForward, Trash2, Undo2, Upload, Workflow, ZoomIn, ZoomOut,
   type LucideIcon,
@@ -149,7 +149,7 @@ export function buildWorkspaceMenu(
     add('Select all', findText('.logic-toolbar button', 'Select all'), Check, 'edit');
     choose('Undo', '.logic-toolbar button[aria-label="Undo"]', Undo2, 'edit');
     choose('Redo', '.logic-toolbar button[aria-label="Redo"]', Redo2, 'edit');
-    add('Copy selection', findText('.logic-toolbar button', 'Copy selected'), Copy, 'edit');
+    choose('Copy selection', '.logic-toolbar button[title="Copy selected"]', Copy, 'edit');
     add('Paste selection', findText('.logic-toolbar button', 'Paste'), FilePlus2, 'edit');
     add('Truth table', findText('.logic-toolbar button', 'Truth table'), Code2, 'view');
     add('Boolean expression', findText('.logic-toolbar button', 'Boolean Expression'), Keyboard, 'view');
@@ -175,7 +175,7 @@ export function buildWorkspaceMenu(
     add('Clear register', findText('.binary-register button', 'Clear'), RotateCcw, 'bits');
     add('Negate value', find('.binary-signed-action'), Minus, 'bits');
     add('Shift left', findText('.binary-operations button', 'Shift left'), ArrowLeft, 'bits');
-    add('Shift right', findText('.binary-operations button', 'Shift right'), ArrowLeft, 'bits');
+    add('Shift right', findText('.binary-operations button', 'Shift right'), ArrowRight, 'bits');
     add('Add to register', findText('.binary-operations button', 'Add to register'), Plus, 'bits');
     for (const value of ['0', '1', '127', '128', '255']) {
       add('Set ' + value, findText('.binary-presets button', value), Check, 'presets');
