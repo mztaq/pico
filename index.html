@@ -96,6 +96,20 @@
     .uptime { font-size: 16px; font-weight: 710; color: var(--bright); font-variant-numeric: tabular-nums; }
     .uptime.missing { font-size: 13px; font-weight: 520; color: var(--muted); }
     .empty { padding: 25px 29px; color: var(--bright); font-size: 16px; font-weight: 570; }
+    .active-incidents { margin-top: 26px; }
+    .active-incidents[hidden] { display: none; }
+    .active-incident {
+      padding: 21px 25px; border: 1px solid rgba(249,226,175,.36);
+      border-left: 4px solid var(--amber); border-radius: 11px;
+      background: linear-gradient(105deg,rgba(249,226,175,.075),transparent 80%),var(--panel);
+    }
+    .active-incident + .active-incident { margin-top: 12px; }
+    .active-incident-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .active-incident h3 { margin: 0; color: var(--bright); font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
+    .active-incident .stage { color: var(--amber); font-size: 13px; font-weight: 660; white-space: nowrap; }
+    .active-incident p { margin: 8px 0 0; color: var(--text); font-size: 14px; }
+    .active-incident .affected { color: var(--muted); font-size: 12px; margin-top: 10px; }
+    .active-incident .affected a { color: var(--accent); }
     .incident { padding: 23px 29px; border-bottom: 1px solid var(--line); }
     .incident:last-child { border: 0; }
     .incident-top { display: flex; justify-content: space-between; gap: 18px; align-items: baseline; }
@@ -125,6 +139,8 @@
       .day { height: 28px; border-radius: 2px; }
       .uptime { font-size: 15px; }
       .empty,.incident { padding: 21px 18px; }
+      .active-incident { padding: 20px 17px; }
+      .active-incident h3 { font-size: 16px; }
     }
     @media(max-width:370px) {
       .history { gap: 2px; }
@@ -152,6 +168,8 @@
     <section class="overall" id="overall-panel" data-tone="unknown" aria-live="polite" role="status">
       <h2 id="overall-title">Checking system status</h2>
     </section>
+
+    <section class="active-incidents" id="active-incidents" aria-label="Ongoing incidents" aria-live="polite" hidden></section>
 
     <section aria-labelledby="services-heading">
       <div class="section-heading">
@@ -209,16 +227,34 @@
           + '<div class="service-footer"><span class="period">30 days ago</span><span class="uptime'+(uptime==="Uptime unavailable"?" missing":"")+'">'+clean(uptime)+'</span></div></article>';
       }).join("");
     }
+    const active = incident => incident && !incident.resolvedAt && String(incident.status||"").toLowerCase()!=="resolved";
+    function renderActiveIncidents(incidents) {
+      const panel=$("active-incidents");
+      const current=Array.isArray(incidents)?incidents.filter(active)
+        .sort((a,b)=>(Date.parse(b.startedAt)||0)-(Date.parse(a.startedAt)||0)):[];
+      if(!current.length) { panel.replaceChildren(); panel.hidden=true; return; }
+      const stages={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring"};
+      panel.innerHTML=current.map(i=>{
+        const stage=stages[String(i.status||"").toLowerCase()]||"Investigating";
+        return '<article class="active-incident"><div class="active-incident-top"><h3>'+clean(i.title||i.service||"Service issue")+'</h3>'
+          +'<span class="stage">'+clean(stage)+'</span></div>'
+          +'<p>'+clean(i.reason||"We are investigating an issue affecting this service.")+'</p>'
+          +(i.service?'<div class="affected">Affected: '+clean(i.service)+'</div>':"")
+          +'</article>';
+      }).join("");
+      panel.hidden=false;
+    }
     function renderIncidents(incidents) {
       if(!Array.isArray(incidents)) {
         $("incidents").innerHTML='<div class="empty">Incident history unavailable</div>';
         return;
       }
-      if(incidents.length===0) {
-        $("incidents").innerHTML='<div class="empty">No incidents</div>';
+      const past=incidents.filter(i=>!active(i));
+      if(past.length===0) {
+        $("incidents").innerHTML='<div class="empty">No past incidents</div>';
         return;
       }
-      $("incidents").innerHTML=incidents.map(incident => {
+      $("incidents").innerHTML=past.map(incident => {
         const when=incident.startedAt?new Date(incident.startedAt):null;
         const displayed=when&&Number.isFinite(when.getTime())?when.toLocaleString():null;
         const stages={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring",resolved:"Resolved"};
@@ -239,6 +275,7 @@
         const data=await response.json();
         const services=Array.isArray(data.services)?data.services:DEFAULTS;
         renderServices(services,data.updatedAt);
+        renderActiveIncidents(data.state==="connected"?data.incidents:null);
         if(data.state!=="connected"){
           setOverall("Status unavailable","unknown");
           renderIncidents(null);
@@ -255,6 +292,7 @@
         }
       }catch {
         renderServices(DEFAULTS);
+        renderActiveIncidents(null);
         renderIncidents(null);
         setOverall("Status unavailable","unknown");
       }finally {loading=false}
