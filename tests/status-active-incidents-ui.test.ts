@@ -103,6 +103,36 @@ describe('Pico Status active incident placement',()=>{
     expect((bad.window.document.querySelector('#ongoing-time') as HTMLElement).hidden).toBe(true);
     bad.window.close();
   });
+  it('preserves valid status when a later network request fails',async()=>{
+    let calls=0;
+    let refresh: (() => void)|undefined;
+    const page=new JSDOM(html,{
+      url:'https://status.example.test/',
+      runScripts:'dangerously',
+      beforeParse(window){
+        window.setInterval=((callback:TimerHandler,ms?:number)=>{
+          if(ms===300000 && typeof callback==='function') refresh=callback as ()=>void;
+          return 1;
+        }) as typeof window.setInterval;
+        window.fetch=(async()=>{
+          calls++;
+          if(calls>1) throw Error('Temporary network failure');
+          return {ok:true,json:async()=>({
+            state:'connected',services,incidents:[issue()],updatedAt:new Date().toISOString()
+          })};
+        }) as typeof window.fetch;
+      },
+    });
+    for(let i=0;i<8;i++) await new Promise(resolve=>setTimeout(resolve,0));
+    expect(page.window.document.querySelector('#overall-title')?.textContent).toBe('Some services experiencing issues');
+    expect(refresh).toBeTypeOf('function');
+    refresh?.();
+    for(let i=0;i<8;i++) await new Promise(resolve=>setTimeout(resolve,0));
+    expect(calls).toBe(2);
+    expect(page.window.document.querySelector('#overall-title')?.textContent).toBe('Some services experiencing issues');
+    expect(page.window.document.querySelector('#active-incidents')?.textContent).toContain('Flowchart zoom issue');
+    page.window.close();
+  });
   it('hides the section when all incidents are resolved',async()=>{
     const page=await render([issue('resolved','2026-11-23T12:00:00Z')]);
     const doc=page.window.document;
