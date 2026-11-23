@@ -280,8 +280,9 @@
         return '<article class="active-incident"><div class="active-incident-top"><h3>'+clean(i.title||i.service||"Service issue")+'</h3>'
           +(i.service?'<span class="affected"><span class="affected-label">Affected service:</span><span>'+clean(i.service)+'</span></span>':"")
           +'</div>'
-          +(updates.length?'<div class="incident-updates">'+updateMarkup+'</div>'
-            :'<p>'+clean(i.reason||"We are investigating an issue affecting this service.")+'</p>')
+          +'<div class="incident-updates">'+(updates.length?updateMarkup
+            :'<div class="incident-update"><div class="incident-update-meta"><span class="stage">'+clean(stage)+'</span></div>'
+              +'<p>'+clean(i.reason||"We are investigating an issue affecting this service.")+'</p></div>')+'</div>'
           +'</article>';
       }).join("");
       panel.hidden=false;
