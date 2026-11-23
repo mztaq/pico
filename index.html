@@ -209,11 +209,13 @@
           const [meaning,kind] = status==="up"?["Operational","up"]:status==="down"?["Outage","down"]:status==="degraded"?["Degraded","warn"]:["No data",""];
           return '<span class="day '+kind+'" title="'+clean(dateFmt.format(day)+" · "+meaning)+'" aria-hidden="true"></span>';
         }).join("");
-        const uptime=typeof service.uptime30d==="number"&&Number.isFinite(service.uptime30d)
-          ? service.uptime30d.toFixed(2)+"% uptime" : "Uptime unavailable";
+        const availability=typeof service.availability30d==="number"&&Number.isFinite(service.availability30d)
+          ? service.availability30d.toFixed(2)+"% availability"
+          : typeof service.uptime30d==="number"&&Number.isFinite(service.uptime30d)
+            ? service.uptime30d.toFixed(2)+"% uptime" : "Availability unavailable";
         return '<article class="service"><div class="service-top"><span class="service-name">'+clean(service.name)+'</span><span class="service-state '+tone+'">'+clean(label)+'</span></div>'
           + '<div class="history" role="img" aria-label="30-day history for '+clean(service.name)+'">'+bars+'</div>'
-          + '<div class="service-footer"><span class="period">30 days ago</span><span class="uptime'+(uptime==="Uptime unavailable"?" missing":"")+'">'+clean(uptime)+'</span></div></article>';
+          + '<div class="service-footer"><span class="period">30 days ago</span><span class="uptime'+(availability==="Availability unavailable"?" missing":"")+'">'+clean(availability)+'</span></div></article>';
       }).join("");
     }
     const active = incident => incident && !incident.resolvedAt && String(incident.status||"").toLowerCase()!=="resolved";
