@@ -48,6 +48,6 @@ describe('public status API published incident updates',()=>{
       {stage:'investigating',message:'Initial investigation.',publishedAt:started},
     ]);
     expect(payload.services[0].status).toBe('degraded');
-    expect(response.headers.get('Cache-Control')).toContain('max-age=15');
+    expect(response.headers.get('Cache-Control')).toContain('max-age=60');
   });
 });
