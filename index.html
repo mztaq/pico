@@ -57,7 +57,10 @@
     .overall[data-tone="down"] { border-color: rgba(243,139,168,.38); background: linear-gradient(100deg, rgba(243,139,168,.09), transparent 80%),var(--panel); }
     .overall[data-tone="warn"] { border-color: rgba(249,226,175,.36); background: linear-gradient(100deg, rgba(249,226,175,.08), transparent 80%),var(--panel); }
     .overall[data-tone="unknown"] { border-color: var(--edge); background: var(--panel); }
+    .overall-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .overall h2 { margin: 0; color: var(--bright); font-size: clamp(21px,3.6vw,27px); letter-spacing: -.9px; line-height: 1.28; font-weight: 720; }
+    .ongoing-time { color: var(--amber); font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .ongoing-time[hidden] { display: none; }
     .overall[data-tone="up"] h2 { color: #def2dc; }
     .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin: 47px 0 17px; }
     .section-heading h2 { font-size: 22px; line-height: 1.28; color: var(--bright); font-weight: 720; letter-spacing: -.65px; margin: 0; }
@@ -153,7 +156,7 @@
   <main class="container">
     <h1>System status</h1>
     <section class="overall" id="overall-panel" data-tone="unknown" aria-live="polite" role="status">
-      <h2 id="overall-title">Checking system status</h2>
+      <div class="overall-heading"><h2 id="overall-title">Checking system status</h2><span class="ongoing-time" id="ongoing-time" hidden></span></div>
       <div class="active-incidents" id="active-incidents" aria-label="Ongoing incidents" aria-live="polite" hidden></div>
     </section>
 
@@ -214,10 +217,28 @@
       }).join("");
     }
     const active = incident => incident && !incident.resolvedAt && String(incident.status||"").toLowerCase()!=="resolved";
+    let activeSince=null;
+    function ongoingDuration(startedAt, now=Date.now()) {
+      const started=Date.parse(startedAt);
+      if(!Number.isFinite(started)||started>now) return "";
+      const minutes=Math.max(1,Math.floor((now-started)/60000));
+      const unit=minutes>=43200?"month":minutes>=1440?"day":minutes>=60?"hr":"min";
+      const amount=Math.floor(minutes/(unit==="month"?43200:unit==="day"?1440:unit==="hr"?60:1));
+      return amount+" "+unit+(unit==="month"||unit==="day"?amount===1?"":"s":"");
+    }
+    function refreshOngoingTime() {
+      const element=$("ongoing-time");
+      const duration=activeSince?ongoingDuration(activeSince):"";
+      element.textContent=duration?"Ongoing for "+duration:"";
+      element.hidden=!duration;
+    }
     function renderActiveIncidents(incidents) {
       const panel=$("active-incidents");
       const current=Array.isArray(incidents)?incidents.filter(active)
         .sort((a,b)=>(Date.parse(b.startedAt)||0)-(Date.parse(a.startedAt)||0)):[];
+      const starts=current.map(i=>Date.parse(i.startedAt)).filter(time=>Number.isFinite(time)&&time<=Date.now());
+      activeSince=starts.length?new Date(Math.min(...starts)).toISOString():null;
+      refreshOngoingTime();
       if(!current.length) { panel.replaceChildren(); panel.hidden=true; return; }
       const stages={investigating:"Investigating",identified:"Identified",monitoring:"Monitoring",resolved:"Resolved"};
       panel.innerHTML=current.map(i=>{
@@ -294,7 +315,7 @@
       }finally {loading=false}
     }
     refresh();
-    setInterval(()=>{if(!document.hidden)refresh()},30000);
+    setInterval(()=>{if(!document.hidden){refreshOngoingTime();refresh()}},30000);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
   })();
   </script>
