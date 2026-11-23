@@ -37,8 +37,12 @@ describe('Pico Status active incident placement',()=>{
     expect(panel.textContent).toContain('Investigating');
     expect(panel.textContent).toContain('Affected: Pico Website');
     expect(panel.textContent).toContain('Zoom out controls are not responding.');
-    expect(panel.previousElementSibling?.id).toBe('overall-panel');
-    expect(panel.nextElementSibling?.querySelector('#services-heading')).not.toBeNull();
+    expect(panel.parentElement?.id).toBe('overall-panel');
+    expect(panel.parentElement?.nextElementSibling?.querySelector('#services-heading')).not.toBeNull();
+    expect(doc.querySelectorAll('#overall-panel .active-incident')).toHaveLength(1);
+    expect(html).not.toContain('.overall::before');
+    expect(html).not.toContain('.overall::after');
+    expect(html).not.toContain('border-left: 4px solid var(--amber)');
     expect(panel.querySelectorAll('h2')).toHaveLength(0);
     expect(doc.querySelector('#incidents')?.textContent).not.toContain('Flowchart zoom issue');
     page.window.close();
