@@ -13,7 +13,7 @@ function response(payload, code=200) {
     status:code,
     headers: {
       "Content-Type":"application/json; charset=utf-8",
-      "Cache-Control":code===200?"public, max-age=60, s-maxage=300":"no-store",
+      "Cache-Control":code===200?"public, max-age=15, s-maxage=30":"no-store",
       "X-Content-Type-Options":"nosniff",
     }
   });
@@ -175,14 +175,19 @@ export async function onRequestGet(context) {
         ).bind(since30).all();
         const rows=stored.results??[];
         const ids=rows.map(row=>row.id);
-        let latest=new Map();
+        const updatesByIncident=new Map();
         if(ids.length) {
           const history=await context.env.DB.prepare(
-            "SELECT incident_id,message FROM pico_status_updates WHERE incident_id IN (" +
+            "SELECT incident_id,stage,message,published_at FROM pico_status_updates WHERE incident_id IN (" +
             ids.map(()=>'?').join(',') + ") ORDER BY published_at DESC, id DESC"
           ).bind(...ids).all();
           for(const event of history.results??[]) {
-            if(!latest.has(event.incident_id))latest.set(event.incident_id,event.message);
+            if(!updatesByIncident.has(event.incident_id))updatesByIncident.set(event.incident_id,[]);
+            updatesByIncident.get(event.incident_id).push({
+              stage:event.stage,
+              message:event.message,
+              publishedAt:event.published_at
+            });
           }
         }
         const known=new Map((incidents??[]).map(i=>[String(i.id),i]));
@@ -191,7 +196,8 @@ export async function onRequestGet(context) {
           const name=SERVICES.find(s=>s.id===row.service_id)?.name??'Pico';
           known.set(id,{
             id,serviceId:row.service_id,service:name,title:row.title,
-            reason:latest.get(row.id)||row.reason,
+            reason:row.reason,
+            updates:updatesByIncident.get(row.id)||[],
             startedAt:row.started_at,resolvedAt:row.resolved_at,status:row.status
           });
         }
