@@ -376,19 +376,17 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  width: min(100%, 510px);
+  width: min(100%, 480px);
   min-width: 0;
   min-height: 32px;
   color: var(--ds-muted);
   font-size: 13px;
   line-height: 1.2;
 }
-.pico-home-glass .home-tech-label { white-space: nowrap; flex: none; }
 .pico-home-glass .home-tech-window {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 420px;
+  max-width: 480px;
   overflow: hidden;
   padding-block: 3px;
 }
@@ -420,7 +418,6 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .home-tech-window:focus-within .home-tech-track { animation-play-state: paused; }
 .pico-home-glass .home-tech-window:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 @media (max-width: 540px) {
-  .pico-home-glass .home-tech-cycle { flex-direction: column; gap: 4px; }
   .pico-home-glass .home-tech-window { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {

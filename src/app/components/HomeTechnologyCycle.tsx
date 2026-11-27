@@ -23,7 +23,6 @@ const technologies = [
 
 export function HomeTechnologyCycle() {
   return <div className="home-tech-cycle">
-    <span className="home-tech-label">Built with</span>
     <div className="home-tech-window" role="group" tabIndex={0} aria-label={technologies.map(technology => technology.name).join(', ') + '. Focus or hover to pause the carousel.'}>
       <div className="home-tech-track" aria-hidden="true">
         {[0, 1].map(copy => <div className="home-tech-strip" key={copy} data-copy={copy}>

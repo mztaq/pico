@@ -66,6 +66,7 @@ it('shows only the four service logos in a seamless carousel without playback bu
   expect(strips).toHaveLength(2);
   for(const strip of strips) expect([...strip.querySelectorAll('.home-tech-item')].map(node=>node.textContent)).toEqual(expected);
   expect(cycle!.querySelector('button')).toBeNull();
+  expect(cycle!.textContent).not.toContain('Built with');
   expect(cycle!.querySelector('.home-tech-window')?.getAttribute('tabindex')).toBe('0');
 });
 it('resets test navigation after visiting Games', async()=>{
