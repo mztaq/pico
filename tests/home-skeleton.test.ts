@@ -14,11 +14,15 @@ describe('Pico workspace-selector home skeleton',()=>{
     expect(html).toContain('aria-label="Opening Pico home"');
     expect(html).toContain('role="status"');
     expect(html).toContain('aria-hidden="true"');
-    expect((html.match(/class="pico-load-home-card"/g)??[])).toHaveLength(7);
+    expect((html.match(/class="pico-load-home-card"/g)??[])).toHaveLength(8);
     expect((html.match(/class="pico-load-home-section /g)??[])).toHaveLength(3);
     expect(html).toContain('pico-load-home-section--code');
     expect(html).toContain('pico-load-home-section--visual');
     expect(html).toContain('pico-load-home-section--data');
+    const document = new JSDOM(html).window.document;
+    for (const [kind, count] of [['code', 2], ['visual', 4], ['data', 2]] as const) {
+      expect(document.querySelectorAll('.pico-load-home-section--' + kind + ' .pico-load-home-card')).toHaveLength(count);
+    }
     expect(html).not.toContain('pico-load-home-section--games');
     expect(html).not.toMatch(/<button\b|<a\b|<input\b/);
   });
@@ -42,6 +46,8 @@ describe('Pico workspace-selector home skeleton',()=>{
       {path:'/',show:false},
       {path:'/app?tool=flowchart',show:false},
       {path:'/app?tool=binary',show:false},
+      {path:'/app?tool=sql',show:false},
+      {path:'/app/sql',show:false},
       {path:'/app?tool=pseudocode',show:false},
       {path:'/app/pseudocode',show:false},
       {path:'/app/flowchart',show:false},
@@ -60,7 +66,8 @@ describe('Pico workspace-selector home skeleton',()=>{
       expect(document.defaultView!.getComputedStyle(landing).display==='none').toBe(path!=='/');
     }
     const home=new JSDOM(initialHtml).window.document.querySelector('.pico-initial-home-loading');
-    expect(home?.querySelectorAll('.pico-initial-home-card')).toHaveLength(7);
+    expect(home?.querySelectorAll('.pico-initial-home-card')).toHaveLength(8);
     expect(home?.querySelectorAll('.pico-initial-home-group')).toHaveLength(3);
+    expect(home?.querySelectorAll('.pico-initial-home-data .pico-initial-home-card')).toHaveLength(2);
   });
 });
