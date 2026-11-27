@@ -4,6 +4,7 @@ import { Activity, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitB
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HomeFluidBackground } from './HomeFluidBackground';
+import { HomeTechnologyCycle } from './HomeTechnologyCycle';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
@@ -128,6 +129,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault(); onChoose('learn');
         }}><BookOpen size={17} aria-hidden="true" /> New to a topic? Learn and practise first <span aria-hidden="true">→</span></a>
+        <HomeTechnologyCycle />
       </div>
       <div className="compiler-choices">
         <HomeGroup label="Code" detail="Write, run and debug programs">

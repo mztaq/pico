@@ -369,3 +369,66 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
     backdrop-filter: none;
   }
 }
+
+
+/* Compact theme-aware technology wordmark rotation. No remote logo requests. */
+.pico-home-glass .home-tech-cycle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 27px;
+  max-width: 100%;
+  color: var(--ds-muted);
+  font-size: 13px;
+  line-height: 1.2;
+}
+.pico-home-glass .home-tech-label { white-space: nowrap; }
+.pico-home-glass .home-tech-window {
+  display: grid;
+  grid-template-columns: minmax(0, 112px);
+  grid-template-rows: 27px;
+  overflow: hidden;
+}
+.pico-home-glass .home-tech-item {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ds-text);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  animation: pico-home-tech-cycle 18s ease-in-out infinite both;
+  animation-delay: calc(var(--tech-index) * 3s - .4s);
+}
+.pico-home-glass .home-tech-item svg { flex: 0 0 19px; }
+@keyframes pico-home-tech-cycle {
+  0% { opacity: 0; transform: translateY(10px); }
+  2% { opacity: 1; transform: translateY(0); }
+  14% { opacity: 1; transform: translateY(0); }
+  16.6667%, 100% { opacity: 0; transform: translateY(-10px); }
+}
+.pico-home-glass .home-tech-cycle[data-paused='true'] .home-tech-item { animation-play-state: paused; }
+.pico-home-glass .home-tech-pause {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ds-muted);
+  cursor: pointer;
+}
+.pico-home-glass .home-tech-pause:hover { color: var(--ds-text); background: var(--ds-hover); }
+.pico-home-glass .home-tech-pause:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pico-home-glass .home-tech-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .pico-home-glass .home-tech-cycle { flex-wrap: wrap; }
+  .pico-home-glass .home-tech-window { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; overflow: visible; }
+  .pico-home-glass .home-tech-item { animation: none; opacity: 1; transform: none; font-size: 13px; }
+  .pico-home-glass .home-tech-pause { display: none; }
+}
