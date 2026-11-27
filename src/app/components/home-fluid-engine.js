@@ -38,6 +38,7 @@ export function startFluid(canvas, initialPalette, onFailure) {
     PRESSURE_ITERATIONS: compact ? 8 : 12, PRESSURE: 0.8, CURL: 24,
     DENSITY_DISSIPATION: 0.85, VELOCITY_DISSIPATION: 0.55, SPLAT_RADIUS: 0.28 };
   let lastPointer = null;
+  let overLogo = false;
   let pending = null;
   let lastFrame = 0;
   let frameBudget = 0;
@@ -69,7 +70,7 @@ export function startFluid(canvas, initialPalette, onFailure) {
     }
   }
   function onLost() { dispose(); onFailure(); }
-  function resetPointer() { lastPointer = null; pending = null; }
+  function resetPointer() { lastPointer = null; pending = null; overLogo = false; }
   function onPointer(event) {
     if (disposed || document.hidden) return;
     const rect = canvas.getBoundingClientRect();
@@ -79,6 +80,13 @@ export function startFluid(canvas, initialPalette, onFailure) {
     if (x < 0 || x > 1 || y < 0 || y > 1) { resetPointer(); return; }
     const previous = lastPointer?.id === event.pointerId ? lastPointer : null;
     lastPointer = { x, y, id: event.pointerId };
+    const onLogo = event.target instanceof Element && !!event.target.closest('.home-interactive-logo');
+    const enteredLogo = onLogo && !overLogo;
+    overLogo = onLogo;
+    if (enteredLogo || (onLogo && event.type === 'pointerdown')) {
+      pending = {x, y, dx: x < 0.5 ? -180 : 180, dy: -140, amount: 1.1};
+      return;
+    }
     if (event.type === 'pointerdown') { pending = {x, y, dx: 80, dy: 50}; return; }
     if (!previous) return;
     const aspect = rect.width / rect.height;
@@ -86,7 +94,7 @@ export function startFluid(canvas, initialPalette, onFailure) {
     const dy = (y - previous.y) / Math.max(aspect, 1) * 4500;
     if (Math.abs(dx) + Math.abs(dy) < 1) return;
     const clamp = n => Math.max(-550, Math.min(550, n));
-    pending = { x, y, dx: clamp(dx + (pending?.dx ?? 0)), dy: clamp(dy + (pending?.dy ?? 0)) };
+    pending = { x, y, dx: clamp(dx + (pending?.dx ?? 0)), dy: clamp(dy + (pending?.dy ?? 0)), amount: pending?.amount ?? (onLogo ? 0.85 : 0.65) };
   }
   function onVisibility() {
     cancelAnimationFrame(frame);
@@ -636,7 +644,7 @@ update = now => {
   try {
     if (resizeCanvas()) { initFramebuffers(); seed(); }
     if (pending) {
-      addInk(pending.x, pending.y, pending.dx, pending.dy, 0.65);
+      addInk(pending.x, pending.y, pending.dx, pending.dy, pending.amount ?? 0.65);
       pending = null;
     }
     if (now >= nextAmbient) {

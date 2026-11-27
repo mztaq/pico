@@ -1,11 +1,10 @@
 import '../../styles/home.css';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type PointerEvent } from 'react';
 import { Activity, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HomeFluidBackground } from './HomeFluidBackground';
 import { HomeTechnologyCycle } from './HomeTechnologyCycle';
-import { HomeQuickLaunch } from './HomeQuickLaunch';
 import { useHomePreviewStep } from './useHomePreviewStep';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
@@ -125,14 +124,13 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
     </div>
     <div className="home-inner">
       <div className="home-hero">
-      <a className="home-brand" href="/app" aria-label="Pico, Workspaces"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
+      <HomeInteractiveLogo />
         <h1>Choose your workspace</h1>
         <a className="home-learning-link" href="/app/learn" onClick={event => {
           if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault(); onChoose('learn');
         }}><BookOpen size={17} aria-hidden="true" /> New to a topic? Learn and practise first <span aria-hidden="true">→</span></a>
         <HomeTechnologyCycle />
-        <HomeQuickLaunch onChoose={onChoose} disabled={reportOpen || offlineReportWarning || themeOpen} />
       </div>
       <div className="compiler-choices">
         <HomeGroup label="Code" detail="Write, run and debug programs">
@@ -215,6 +213,27 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
     {reportNotice && <BugReportNotice type={reportNotice.type} message={reportNotice.message} onClose={() => setReportNotice(null)} />}
 
   </main>;
+}
+
+function HomeInteractiveLogo() {
+  function move(event: PointerEvent<HTMLAnchorElement>) {
+    if (event.pointerType === 'touch' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const logo = event.currentTarget;
+    const rect = logo.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = Math.max(-1, Math.min(1, (event.clientX - rect.left) / rect.width * 2 - 1));
+    const y = Math.max(-1, Math.min(1, (event.clientY - rect.top) / rect.height * 2 - 1));
+    logo.style.setProperty('--logo-x', `${x * 5}px`);
+    logo.style.setProperty('--logo-y', `${y * 4}px`);
+    logo.style.setProperty('--logo-rx', `${-y * 12}deg`);
+    logo.style.setProperty('--logo-ry', `${x * 12}deg`);
+  }
+  function reset(event: PointerEvent<HTMLAnchorElement>) {
+    for (const key of ['--logo-x', '--logo-y', '--logo-rx', '--logo-ry']) event.currentTarget.style.removeProperty(key);
+  }
+  return <a className="home-brand home-interactive-logo" href="/app" aria-label="Pico, Workspaces" onPointerMove={move} onPointerLeave={reset} onPointerCancel={reset}>
+    <img src="/pico-logo.svg" alt="" width="30" height="30" draggable={false} /><span>Pico<span className="brand-period">.</span></span>
+  </a>;
 }
 
 function HomeGroup({ label, detail, children, kind }: { label: string; detail: string; children: ReactNode; kind?: 'visual' | 'data' }) {
