@@ -15,6 +15,7 @@ const workspaces: Record<string,string> = {
   'Pico | CPU Studio': 'cpu',
   'Pico | Binary Lab': 'binary',
   'Pico | Traffic Storm': 'traffic',
+  'Pico | SQL Playground': 'sql',
 };
 
 async function post(path: string, value: unknown) {

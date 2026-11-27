@@ -108,7 +108,9 @@ it('discloses current workspace analytics and separately submitted reports', asy
   await renderApp();
   const page = host.querySelector('.site-info-page')!;
   expect(page.textContent).toContain('Binary Lab and Traffic Storm');
-  expect(page.textContent).toContain('Learn, Games and SQL Playground do not have separate workspace-time tracking');
+  expect(page.textContent).toContain('Learn and Games do not have separate workspace-time tracking');
+  expect(page.textContent).toContain('Traffic Storm and SQL Playground');
+  expect(page.textContent).toContain('not database contents, table or field names, imported files, SQL statements or query results');
   expect(page.textContent).toContain('through Resend');
   expect(page.textContent).toContain('Cloudflare Turnstile');
   expect(page.textContent).toContain('Pico MCP');

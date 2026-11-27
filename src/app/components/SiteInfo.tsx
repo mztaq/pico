@@ -91,13 +91,13 @@ function PicoTeam() {
 function Privacy() {
   return <>
     <Section title="Your work">
-      <p>Your code, console input, projects and diagrams in browser workspaces are processed locally. SQL Playground processes manually entered database records, CSV files and queries locally. Databases, queries and workspace preferences are stored in your browser using IndexedDB and local storage so they survive refreshes. Pico does not upload their contents or provide cloud backups. Optional analytics does not collect their contents. Information you choose to share, including through reports or MCP requests, is sent to the relevant service.</p>
+      <p>Your code, console input, projects and diagrams in browser workspaces are processed locally. SQL Playground processes manually entered database records, CSV files and queries locally. Databases, queries and workspace preferences are stored in your browser using IndexedDB and local storage so they survive refreshes. Pico does not upload their contents or provide cloud backups. Optional analytics measures workspace activity time, not database contents, table or field names, imported files, SQL statements or query results. Information you choose to share, including through reports or MCP requests, is sent to the relevant service.</p>
     </Section>
     <Section title="Service and storage">
       <p>Browser storage saves projects, settings and consent choices. Cloudflare hosts Pico and Google Fonts serves some typography; those providers may process connection information.</p>
     </Section>
     <Section title="Optional data">
-      <p>If you opt in, analytics records browser information, visits and time spent in Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim, CPU Studio, Binary Lab and Traffic Storm. Learn, Games and SQL Playground do not have separate workspace-time tracking. Optional preferences store selected settings. A random browser identifier links those records; neither option is required.</p>
+      <p>If you opt in, analytics records browser information, visits and time spent in Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim, CPU Studio, Binary Lab, Traffic Storm and SQL Playground. Learn and Games do not have separate workspace-time tracking. Optional preferences store selected settings. A random browser identifier links those records; neither option is required.</p>
     </Section>
     <Section title="Reports and integrations">
       <p>When you submit a report, its type, workspace, description, optional email address and screenshots are sent to the Pico team through Resend. Cloudflare Turnstile verifies submissions and security controls help prevent abuse. Reports are separate from optional analytics. Avoid including passwords or other sensitive information.</p>
@@ -115,10 +115,10 @@ function Privacy() {
 function Cookies() {
   return <>
     <Section title="Essential storage">
-      <p>Browser storage saves projects, settings and consent choices needed for Pico to work.</p>
+      <p>Browser storage saves projects, SQL databases, saved queries, display preferences, settings and consent choices needed for Pico to work. SQL databases and queries remain on your device in IndexedDB and local storage independently of optional cookie consent. Clearing site data removes this local work.</p>
     </Section>
     <Section title="Your choices">
-      <p><strong>Analytics</strong> records visits, browser information and workspace usage. <strong>Preferences</strong> remembers selected settings. Both are off until you opt in. Neither collects your code, project files or console input.</p>
+      <p><strong>Analytics</strong> records visits, browser information and workspace usage. <strong>Preferences</strong> remembers selected settings. Both are off until you opt in. Neither collects your code, project files, console input, SQL queries or database contents. SQL Playground usage tracking records active time only when analytics consent is enabled.</p>
       <p>With consent, an identifier cookie links optional records so your choices can be managed. Security measures also help prevent abuse.</p>
     </Section>
     <Section title="Control and retention">
@@ -138,7 +138,7 @@ function Terms() {
     </Section>
     <Section title="Your work">
       <p>Your work remains yours. Using Pico does not transfer ownership. Only use material you have permission to access.</p>
-      <p>Export important projects: browser storage can be lost, and Pico has no account-based backups.</p>
+      <p>Keep separate copies of important projects, source CSV files and SQL queries. Browser storage can be lost, and Pico has no account-based backups. Only import records you have permission to use, and avoid storing sensitive personal information on shared devices.</p>
     </Section>
     <Section title="Availability and responsibility">
       <p>Pico is provided as available, without guaranteed uptime, accurate results or recovery of lost work. To the extent permitted by law, the maintainers disclaim warranties and liability. Applicable legal rights are not excluded.</p>
@@ -272,7 +272,7 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
                 ? <p className="site-info-author-subtitle">The people behind Pico.</p>
                 : page === 'ai-usage'
                 ? <p className="site-info-intro">Effective date <time dateTime="2026-11-14">14 November 2026</time></p>
-                : <p className="site-info-intro">Last updated <time dateTime={page === 'privacy' ? '2026-11-27' : '2026-10-24'}>{page === 'privacy' ? '27 November 2026' : '24 October 2026'}</time></p>}
+                : <p className="site-info-intro">Last updated <time dateTime={['privacy','cookies','terms'].includes(page) ? '2026-11-28' : '2026-10-24'}>{['privacy','cookies','terms'].includes(page) ? '28 November 2026' : '24 October 2026'}</time></p>}
             </div>
           </div>
           <button type="button" className="site-info-dialog-close" aria-label={`Close ${title}`} onClick={onClose}>
