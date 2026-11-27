@@ -83,7 +83,6 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         const entry = databases.get(databaseName);
         if (!entry) return;
         entry.response = value; database.current = value.database; setState(value); setStatus(value.message);
-        if (value.suggestedQuery) { setSql(value.suggestedQuery); entry.query = value.suggestedQuery; }
         if (request.action === 'create' || request.action === 'import') setModal(null);
       };
       current.onerror = () => fail('SQLite failed to start. Try again or reload Pico.');
@@ -177,7 +176,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         <div className="sql-tables">
           {state?.tables.map(table => <details className="sql-table-item" key={table.name} open>
             <summary><Database size={15}/><span>{table.name}</span></summary>
-            <button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + formatIdentifier(table.name) + ';'; updateQuery(query); execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>
+            <button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + formatIdentifier(table.name) + ';'; execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>
             <ul>{table.columns.map((column, i) => <li key={i}><span>{column.name}</span><small>{column.type}</small></li>)}</ul>
           </details>)}
           {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Table2 size={18}/></span><p>No tables yet</p></div>}

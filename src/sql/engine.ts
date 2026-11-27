@@ -10,7 +10,7 @@ const MAX_DATABASE_BYTES = 32 * 1024 * 1024;
 export interface TableInfo { name: string; columns: { name: string; type: string }[]; }
 export interface QueryResult { columns: string[]; rows: Cell[][]; truncated: boolean; }
 export interface SqlRequest { database?: Uint8Array; action: 'init' | 'reset' | 'import' | 'create' | 'query'; table?: ManualTable; files?: { name: string; text: string }[]; sql?: string; }
-export interface SqlResponse { database: Uint8Array; tables: TableInfo[]; result: QueryResult | null; message: string; suggestedQuery?: string; }
+export interface SqlResponse { database: Uint8Array; tables: TableInfo[]; result: QueryResult | null; message: string; }
 export type WorkerReply = { ok: true; value: SqlResponse } | { ok: false; error: string } | { ready: true };
 
 function displayCell(value: SqlValue): Cell {
@@ -48,7 +48,7 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
   // Each operation works on a copy. Errors and cancellation preserve the last successful database.
   const db = new SQL.Database(request.action === 'reset' ? undefined : request.database);
   try {
-    let result: QueryResult | null = null, message = 'SQLite ready', suggestedQuery: string | undefined;
+    let result: QueryResult | null = null, message = 'SQLite ready';
     if (request.action === 'import') {
       const taken = new Set(tables(db).map(table => table.name.toLowerCase()));
       const imported: string[] = [];
@@ -65,8 +65,7 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
         imported.push(name);
       }
       if (imported.length) {
-        suggestedQuery = 'SELECT * FROM ' + formatIdentifier(imported[0]) + ';';
-        result = query(db, suggestedQuery);
+        result = query(db, 'SELECT * FROM ' + formatIdentifier(imported[0]) + ';');
       }
       message = 'Imported ' + imported.length + (imported.length === 1 ? ' table' : ' tables');
     } else if (request.action === 'create') {
@@ -84,8 +83,7 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
           db.run('COMMIT');
         } finally { insert.free(); }
       }
-      suggestedQuery = 'SELECT * FROM ' + formatIdentifier(name) + ';';
-      result = query(db, suggestedQuery);
+      result = query(db, 'SELECT * FROM ' + formatIdentifier(name) + ';');
       message = 'Created ' + name;
     } else if (request.action === 'query') {
       if (!request.sql?.trim()) throw new Error('Enter a SQL statement.');
@@ -96,6 +94,6 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
     const schema = tables(db);
     const database = db.export();
     if (database.byteLength > MAX_DATABASE_BYTES) throw new Error('Database exceeds the 32 MB session limit.');
-    return { database, tables: schema, result, message, suggestedQuery };
+    return { database, tables: schema, result, message };
   } finally { db.close(); }
 }

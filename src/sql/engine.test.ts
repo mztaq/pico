@@ -100,12 +100,14 @@ describe('Cambridge-style identifiers', () => {
   it.each([['Students','Students'],['Student_ID','Student_ID'],['Score','Score'],['Full name','"Full name"'],['SELECT','"SELECT"'],['order','"order"'],['true','"true"'],['ASCENDING','"ASCENDING"'],['12A','"12A"'],['A"B','"A""B"']])('formats %s as %s', (name, expected) => {
     expect(formatIdentifier(name)).toBe(expected);
   });
-  it('generates executable bare-name queries for imported and manually created tables', () => {
+  it('previews imported and manually created tables without supplying editor text', () => {
     const imported = executeSql(SQL,{action:'import',files:[{name:'Students.csv',text:'Name,Score\nAda,90'}]});
-    expect(imported.suggestedQuery).toBe('SELECT * FROM Students;');
+    expect(imported.result?.rows).toEqual([['Ada',90]]);
+    expect(imported).not.toHaveProperty('suggestedQuery');
     const created = executeSql(SQL,{action:'create',database:imported.database,table:{name:'Order',columns:[{name:'Full name',type:'TEXT',primaryKey:false}],rows:[['Ada']]}});
-    expect(created.suggestedQuery).toBe('SELECT * FROM "Order";');
-    expect(executeSql(SQL,{action:'query',database:created.database,sql:created.suggestedQuery}).result?.rows).toEqual([['Ada']]);
+    expect(created).not.toHaveProperty('suggestedQuery');
+    expect(created.result?.rows).toEqual([['Ada']]);
+    expect(executeSql(SQL,{action:'query',database:created.database,sql:'SELECT * FROM "Order";'}).result?.rows).toEqual([['Ada']]);
     expect(executeSql(SQL,{action:'query',database:created.database,sql:'SELECT Name, Score FROM Students WHERE Score > 80;'}).result?.rows).toEqual([['Ada',90]]);
   });
 });

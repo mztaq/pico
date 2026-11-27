@@ -15,10 +15,10 @@ const keywords = 'SELECT FROM WHERE AS DISTINCT JOIN INNER LEFT RIGHT FULL CROSS
 const keywordSet = new Set(keywords);
 const functions = 'COUNT SUM AVG MIN MAX ROUND LENGTH LOWER UPPER SUBSTR COALESCE NULLIF ABS TRIM REPLACE DATE DATETIME STRFTIME TOTAL GROUP_CONCAT'.split(' ');
 const functionSet = new Set(functions);
-const types = new Set(['INTEGER','REAL','TEXT','BLOB','NUMERIC','BOOLEAN','DATE','VARCHAR']);
+const types = new Set(['INTEGER','REAL','TEXT','BLOB','NUMERIC','BOOLEAN','DATE','VARCHAR','CHARACTER','TIME','DATETIME','FLOAT','DOUBLE','DECIMAL','CHAR','INT']);
 export const sqlLanguage = StreamLanguage.define({
   startState: () => ({ comment: false, quote: '' }),
-  tokenTable: { keyword: tags.keyword, number: tags.number, string: tags.string, comment: tags.comment, operator: tags.operator, variable: tags.variableName, type: tags.typeName, fn: tags.function(tags.variableName) },
+  tokenTable: { keyword: tags.keyword, number: tags.number, string: tags.string, comment: tags.comment, operator: tags.operator, punctuation: tags.punctuation, literal: tags.bool, variable: tags.variableName, type: tags.typeName, fn: tags.function(tags.variableName) },
   token(stream, state) {
     if (state.comment || stream.match('/*')) {
       state.comment = true;
@@ -34,14 +34,18 @@ export const sqlLanguage = StreamLanguage.define({
           else { state.quote = ''; break; }
         }
       }
-      return quote === "'" ? 'string' : 'variable';
+      return quote === '`' ? 'variable' : 'string';
     }
     if (stream.eatSpace()) return null;
+    if (stream.match(/^\[[^\]]*\]?/)) return 'variable';
+    if (stream.match(/^(?:\?|[:@$][a-z_][\w$]*)/i)) return 'variable';
     if (stream.match('--')) { stream.skipToEnd(); return 'comment'; }
     if (stream.match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/)) return 'number';
     if (stream.match(/^(?:<>|!=|<=|>=|\|\||[=<>+*/%-])/)) return 'operator';
+    if (stream.match(/^[(),.;]/)) return 'punctuation';
     if (stream.match(/^[a-z_][\w$]*/i)) {
       const word = stream.current().toUpperCase();
+      if (['TRUE','FALSE','NULL'].includes(word)) return 'literal';
       return types.has(word) ? 'type' : keywordSet.has(word) ? 'keyword' : functionSet.has(word) ? 'fn' : 'variable';
     }
     stream.next(); return null;
