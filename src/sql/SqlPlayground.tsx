@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, Database, Download, Play, Settings2, X, Table2, FileCode2, Trash2, Plus, KeyRound, PencilRuler } from 'lucide-react';
+import { ArrowLeft, Database, Download, Play, Settings2, X, Table2, FileCode2, Trash2, Plus, PencilRuler, ChevronDown, ChevronRight, Save } from 'lucide-react';
 import { cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { FloatingPanel } from '../app/components/FloatingPanel';
 import { ResizeHandle } from '../app/components/ResizeHandle';
 import { SqlEditor } from './SqlEditor';
 import { CreateDatabaseDialog, CreateTableDialog } from './SqlCreateDialogs';
+import { Modal } from './SqlDialog';
 import { DesignView } from './SqlTableDesign';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { toCsv } from './csv';
 import { formatIdentifier } from './identifiers';
 import { diagnoseSqlError, type SqlDiagnostic } from './diagnostics';
 import type { SqlRequest, SqlResponse, WorkerReply, TableInfo } from './engine';
-import { loadSqlState, saveDatabase, saveSelection, saveQuery, saveLayout, type DatabaseSession, type SqlLayout } from './storage';
+import { loadSqlState, saveDatabase, saveSelection, saveQuery, saveLayout, saveNamedQueries, type SavedQuery, type DatabaseSession, type SqlLayout } from './storage';
 import './sql-playground.css';
 
 const databases = new Map<string, DatabaseSession>();
@@ -48,6 +49,13 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(!restored);
   const [storageError, setStorageError] = useState(restored && !storageAvailable ? 'Local storage is unavailable. Changes will not survive a refresh.' : '');
+  const [tablesOpen,setTablesOpen] = useState(true);
+  const [queriesOpen,setQueriesOpen] = useState(true);
+  const [selectedTable,setSelectedTable] = useState<string|null>(null);
+  const [savedQueries,setSavedQueries] = useState<SavedQuery[]>(()=>selectedDatabase?databases.get(selectedDatabase)?.savedQueries??[]:[]);
+  const [selectedQuery,setSelectedQuery] = useState<string|null>(null);
+  const [queryName,setQueryName] = useState<string|null>(null);
+  const [nameError,setNameError] = useState('');
   const [designTable, setDesignTable] = useState<TableInfo | null>(null);
   const [status, setStatus] = useState(selectedDatabase ? 'SQLite ready' : '');
   const [error, setError] = useState('');
@@ -139,6 +147,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       const name=selectedDatabase;
       const entry=name?databases.get(name):undefined;
       activeRef.current=name; setActiveDatabase(name); setDatabaseNames([...databases.keys()]);
+      setSavedQueries(entry?.savedQueries??[]); setSelectedTable(null); setSelectedQuery(null);
       database.current=entry?.response?.database; setState(entry?.response); setSql(entry?.query??'');
       setSidebarWidth(savedLayout.sidebarWidth); setEditorRatio(savedLayout.editorRatio);
       setStatus(entry?.response?.message??(name?'SQLite ready':''));
@@ -163,6 +172,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if (!entry) return;
     selectedDatabase = name; activeRef.current = name; setActiveDatabase(name);
     if (storageAvailable) persist(saveSelection(name));
+    setSavedQueries(entry.savedQueries??[]); setSelectedTable(null); setSelectedQuery(null);
     database.current = entry.response?.database; setState(entry.response); setSql(entry.query);
     setError(''); setQueryError(null); setStatus(entry.response ? 'SQLite ready' : 'Loading SQLite…');
     if (!entry.response) execute({ action: 'init' });
@@ -176,7 +186,42 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   }
   function openTable(mode: 'manual' | 'csv') {
     if (!activeRef.current || running.current || loading) return;
-    setError(''); setQueryError(null); setModal(mode);
+    setError(''); setQueryError(null); setTablesOpen(true); setModal(mode);
+  }
+  function changeSavedQueries(next:SavedQuery[]) {
+    const name=activeRef.current;
+    const entry=name?databases.get(name):undefined;
+    if(!name||!entry)return;
+    entry.savedQueries=next;setSavedQueries(next);
+    if(storageAvailable)persist(saveNamedQueries(name,next));
+  }
+  function saveCurrentQuery() {
+    if(!activeDatabase||disabled||!sql.trim())return;
+    if(selectedQuery) {
+      changeSavedQueries(savedQueries.map(query=>query.name===selectedQuery?{...query,sql}:query));
+      return;
+    }
+    setNameError('');setQueryName('');
+  }
+  function saveAsQuery() {
+    const name=queryName?.trim()??'';
+    if(!name||name.length>80){setNameError('Enter a query name (1–80 characters).');return;}
+    if(savedQueries.some(query=>query.name.toLowerCase()===name.toLowerCase())){setNameError('A query with this name already exists.');return;}
+    changeSavedQueries([...savedQueries,{name,sql}]);setSelectedQuery(name);setQueryName(null);setQueriesOpen(true);
+  }
+  function openSavedQuery(query:SavedQuery) {
+    if(disabled)return;
+    setSelectedQuery(query.name);updateQuery(query.sql);
+  }
+  function deleteSavedQuery(query:SavedQuery) {
+    if(disabled||!window.confirm('Delete saved query "'+query.name+'"?'))return;
+    changeSavedQueries(savedQueries.filter(item=>item.name!==query.name));
+    if(selectedQuery===query.name)setSelectedQuery(null);
+  }
+  function viewTable(table:TableInfo) {
+    if(disabled)return;
+    setSelectedTable(table.name);
+    execute({action:'query',sql:'SELECT * FROM '+formatIdentifier(table.name)+';'});
   }
   const result = state?.result;
   function downloadResults() {
@@ -221,23 +266,37 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
             {databaseNames.map(name => <option key={name}>{name}</option>)}
           </select> : <button type="button" className="subtle-button sql-create-database" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={15}/> Create database</button>}
         </div>
-        {activeDatabase && <><div className="sql-panel-heading"><h2><Table2 size={16}/> Tables</h2><div className="sql-sidebar-actions"><button type="button" className="topbar-icon sql-create-table" aria-label="Create table" title="Create table" disabled={disabled} onClick={() => openTable('manual')}><Plus size={16}/></button>{!!state?.tables.length && <button type="button" className="topbar-icon" aria-label="Clear database" title="Clear database" disabled={disabled || !state?.tables.length} onClick={() => { if (window.confirm('Permanently clear all tables in this database?')) execute({ action: 'reset' }); }}><Trash2 size={15}/></button>}</div></div>
-        <div className="sql-tables">
-          {state?.tables.map(table => <details className="sql-table-item" key={table.name} open>
-            <summary><Table2 size={15}/><span>{table.name}</span></summary>
-            <div className="sql-table-tools"><button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + formatIdentifier(table.name) + ';'; execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>{table.kind !== 'view' && <button type="button" className="toolbar-button" disabled={disabled} onClick={()=>{setError('');setQueryError(null);setDesignTable(table);}}><PencilRuler size={14}/> Design View</button>}</div>
-            <ul>{table.columns.map((column, i) => <li key={i}><span>{column.primaryKey && <KeyRound size={12}/>} {column.name}</span><small>{column.type}</small></li>)}</ul>
-          </details>)}
-          {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Table2 size={18}/></span><p>No tables yet</p></div>}
-        </div></>}
-        {!activeDatabase && <div className="sql-tables"/>}
+        <nav className="sql-object-nav" aria-label="Database objects">
+          {activeDatabase && <>
+            <section className="sql-object-group">
+              <div className="sql-object-heading"><button type="button" className="sql-group-toggle" aria-expanded={tablesOpen} onClick={()=>setTablesOpen(value=>!value)}><span>Tables</span>{tablesOpen?<ChevronDown size={15}/>:<ChevronRight size={15}/>}</button><button type="button" className="topbar-icon sql-create-table" aria-label="Create table" title="Create table" disabled={disabled} onClick={()=>openTable('manual')}><Plus size={15}/></button>{!!state?.tables.length&&<button type="button" className="topbar-icon" aria-label="Clear database" title="Clear database" disabled={disabled} onClick={()=>{if(window.confirm('Permanently clear all tables in this database?')){setSelectedTable(null);execute({action:'reset'});}}}><Trash2 size={14}/></button>}</div>
+              {tablesOpen&&<div className="sql-object-list">
+                {state?.tables.map(table=><div className={'sql-object-row'+(selectedTable===table.name?' selected':'')} key={table.name}>
+                  <button type="button" className="sql-object-open sql-preview-table" title={table.name} disabled={disabled} onClick={()=>viewTable(table)}><Table2 size={16}/><span>{table.name}</span></button>
+                  {table.kind!=='view'&&<button type="button" className="topbar-icon sql-object-action" title="Design View" aria-label={'Design View: '+table.name} disabled={disabled} onClick={()=>{setSelectedTable(table.name);setError('');setQueryError(null);setDesignTable(table);}}><PencilRuler size={14}/></button>}
+                </div>)}
+                {!state?.tables.length&&<div className="sql-object-empty">No tables</div>}
+              </div>}
+            </section>
+            <section className="sql-object-group">
+              <div className="sql-object-heading"><button type="button" className="sql-group-toggle" aria-expanded={queriesOpen} onClick={()=>setQueriesOpen(value=>!value)}><span>Queries</span>{queriesOpen?<ChevronDown size={15}/>:<ChevronRight size={15}/>}</button><button type="button" className="topbar-icon" aria-label="New query" title="New query" disabled={disabled} onClick={()=>{setSelectedQuery(null);updateQuery('');setQueriesOpen(true);}}><Plus size={15}/></button></div>
+              {queriesOpen&&<div className="sql-object-list">
+                {savedQueries.map(query=><div className={'sql-object-row'+(selectedQuery===query.name?' selected':'')} key={query.name}>
+                  <button type="button" className="sql-object-open" title={query.name} disabled={disabled} onClick={()=>openSavedQuery(query)}><FileCode2 size={16}/><span>{query.name}</span></button>
+                  <button type="button" className="topbar-icon sql-object-action" title="Delete saved query" aria-label={'Delete query '+query.name} disabled={disabled} onClick={()=>deleteSavedQuery(query)}><Trash2 size={14}/></button>
+                </div>)}
+                {!savedQueries.length&&<div className="sql-object-empty">No saved queries</div>}
+              </div>}
+            </section>
+          </>}
+        </nav>
         <div className="sql-sidebar-bottom">Databases are stored on this device.</div>
       </aside>
       <ResizeHandle axis="x" label="Resize table explorer" onResize={delta => setSidebarWidth(value => Math.max(190, Math.min(420, value + delta)))}/>
       <section ref={mainRef} className="sql-main" style={{ '--sql-editor-ratio': editorRatio + '%' } as CSSProperties}>
         <section className="editor-card sql-editor-panel">
-          <div className="file-tabs sql-editor-tabs"><div className="file-tab active sql-file-tab"><FileCode2 size={15}/><span>query.sql</span></div></div>
-          {loading ? <div className="sql-empty-state sql-code-editor" role="status">Opening saved databases…</div> : <SqlEditor key={activeDatabase ?? "no-database"} value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables ?? []} diagnostic={queryError?.source === sql ? queryError.diagnostic : undefined}/>}
+          <div className="file-tabs sql-editor-tabs"><div className="file-tab active sql-file-tab"><FileCode2 size={15}/><span>{selectedQuery??'query.sql'}</span></div><button type="button" className="toolbar-button sql-save-query" disabled={disabled||!activeDatabase||!sql.trim()} onClick={saveCurrentQuery}><Save size={14}/> Save query</button></div>
+          {loading ? <div className="sql-empty-state sql-code-editor" role="status">Opening saved databases…</div> : <SqlEditor key={(activeDatabase??'no-database')+'::'+(selectedQuery??'draft')} value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables ?? []} diagnostic={queryError?.source === sql ? queryError.diagnostic : undefined}/>}
           <div className="editor-card-foot sql-editor-footer"><span>SQLite</span><span>{sql.split('\n').length} {sql.split('\n').length === 1 ? 'line' : 'lines'}</span></div>
         </section>
         <ResizeHandle axis="y" label="Resize query results" onResize={delta => setEditorRatio(value => Math.max(25, Math.min(75, value + delta / Math.max(1, mainRef.current?.clientHeight ?? 600) * 100)))}/>
@@ -249,6 +308,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         </section>
       </section>
     </div>
+    {queryName!==null&&<Modal title="Save query" onClose={()=>setQueryName(null)}><form className="sql-dialog-form" onSubmit={event=>{event.preventDefault();saveAsQuery();}}><label>Query name<input autoFocus maxLength={80} value={queryName} onChange={event=>{setQueryName(event.target.value);setNameError('');}} placeholder="Enter a query name"/></label>{nameError&&<p className="sql-dialog-error" role="alert">{nameError}</p>}<div className="sql-dialog-actions"><button type="button" className="subtle-button" onClick={()=>setQueryName(null)}>Cancel</button><button type="submit" className="run-button" disabled={!queryName.trim()}>Save</button></div></form></Modal>}
     {modal === 'database' && <CreateDatabaseDialog names={databaseNames} onCreate={createDatabase} onClose={() => setModal(null)}/>}
     {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} stoppable={busy && !saving} error={error} onClose={() => { setModal(null); setError(''); }} onStop={()=>stop()} onCreate={table => execute({ action:'create', table })} existingNames={state?.tables.map(table=>table.name)??[]} onImport={files => execute({action:'import',files})}/>}
     {designTable && <DesignView table={designTable} busy={busy} stoppable={busy && !saving} error={error} onClose={()=>{setDesignTable(null);setError('');}} onStop={()=>stop()} onSave={design=>execute({action:'design',design})}/>}

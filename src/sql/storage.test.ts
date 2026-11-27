@@ -26,6 +26,11 @@ describe('SQL local workspace restoration',()=>{
     localStorage.setItem('pico:sql:query:School','SELECT Name FROM Students');
     expect(restoreRecords([{key:'database:School',kind:'database',name:'School',query:'SELECT 1;',response}]).databases.get('School')?.query).toBe('SELECT Name FROM Students');
   });
+  it('restores named queries separately for each database',()=>{
+    const saved=restoreRecords([{key:'database:A',kind:'database',name:'A',query:''},{key:'database:B',kind:'database',name:'B',query:''},{key:'savedQueries:A',kind:'savedQueries',name:'A',value:[{name:'Top scores',sql:'SELECT Score FROM Students;'}]}]);
+    expect(saved.databases.get('A')?.savedQueries).toEqual([{name:'Top scores',sql:'SELECT Score FROM Students;'}]);
+    expect(saved.databases.get('B')?.savedQueries).toEqual([]);
+  });
   it('handles empty storage and missing selections, clamps invalid layout values',()=>{
     expect(restoreRecords([]).selected).toBeNull();
     const saved=restoreRecords([{key:'database:A',kind:'database',name:'A',query:''},{key:'selection',kind:'selection',name:'Missing'},{key:'layout',kind:'layout',value:{sidebarWidth:900,editorRatio:10}}]);

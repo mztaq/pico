@@ -1,6 +1,7 @@
 import type { SqlResponse } from './engine';
 
-export interface DatabaseSession { response?: SqlResponse; query: string; }
+export interface SavedQuery { name:string; sql:string; }
+export interface DatabaseSession { response?: SqlResponse; query: string; savedQueries?: SavedQuery[]; }
 export interface SqlLayout { sidebarWidth: number; editorRatio: number; }
 export interface SqlSavedState { databases: Map<string, DatabaseSession>; selected: string | null; layout: SqlLayout; }
 const DATABASE = 'pico-sql-playground';
@@ -9,6 +10,7 @@ const QUERY_PREFIX = 'pico:sql:query:';
 const DEFAULT_LAYOUT: SqlLayout = { sidebarWidth:260, editorRatio:55 };
 export type StoredRecord =
   | { key: string; kind:'database'; name:string; response?:SqlResponse; query:string }
+  | { key:string; kind:'savedQueries'; name:string; value:SavedQuery[] }
   | { key:string; kind:'query'; name:string; value:string }
   | { key:'selection'; kind:'selection'; name:string|null }
   | { key:'layout'; kind:'layout'; value:SqlLayout };
@@ -41,15 +43,20 @@ export function restoreRecords(records: StoredRecord[]):SqlSavedState {
   const databases=new Map<string,DatabaseSession>();
   let selected:string|null=null,layout=DEFAULT_LAYOUT;
   const queries=new Map<string,string>();
+  const savedQueries=new Map<string,SavedQuery[]>();
   for(const record of records){
     if(record.kind==='database' && typeof record.name==='string' && typeof record.query==='string') {
       if(record.response && !(record.response.database instanceof Uint8Array)) throw new Error('Invalid saved database. Local data has been left untouched.');
       databases.set(record.name,{response:record.response,query:record.query});
-    } else if(record.kind==='query') queries.set(record.name,record.value);
+    } else if(record.kind==='savedQueries') savedQueries.set(record.name,record.value);
+    else if(record.kind==='query') queries.set(record.name,record.value);
     else if(record.kind==='selection') selected=record.name;
     else if(record.kind==='layout') layout=layoutValue(record.value);
   }
-  for (const [name,entry] of databases) entry.query=getQuery(name,queries.get(name)??entry.query);
+  for (const [name,entry] of databases) {
+    entry.query=getQuery(name,queries.get(name)??entry.query);
+    entry.savedQueries=savedQueries.get(name)??[];
+  }
   return {databases,selected:selected && databases.has(selected)?selected:databases.keys().next().value??null,layout};
 }
 export async function loadSqlState():Promise<SqlSavedState> {
@@ -77,6 +84,7 @@ export function saveDatabase(name:string,session:DatabaseSession):Promise<void>{
   // Snapshot metadata immediately. The SQLite byte array is immutable between successful operations.
   return put({key:'database:'+name,kind:'database',name,response:session.response,query:session.query});
 }
+export function saveNamedQueries(name:string,value:SavedQuery[]){return put({key:'savedQueries:'+name,kind:'savedQueries',name,value});}
 export function saveSelection(name:string|null){return put({key:'selection',kind:'selection',name});}
 export function saveLayout(value:SqlLayout){return put({key:'layout',kind:'layout',value:layoutValue(value)});}
 /** Query drafts are small and synchronous so even immediate refresh preserves typing. */
