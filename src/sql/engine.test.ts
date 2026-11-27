@@ -168,23 +168,21 @@ describe('Access-style import and Design View', () => {
 });
 
 describe('Datasheet View',()=>{
-  it('browses every table record in pages without mutating the database or running editor SQL',()=>{
+  it('browses every table record without pagination without mutating the database or running editor SQL',()=>{
     const data=executeSql(SQL,{action:'query',sql:'CREATE TABLE Students (ID INTEGER); WITH RECURSIVE nums(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM nums WHERE n<605) INSERT INTO Students SELECT n FROM nums;'});
-    const page=executeSql(SQL,{action:'browse',database:data.database,browse:{table:'Students',offset:500},sql:'DROP TABLE Students;'});
-    expect(page.datasheet).toEqual({table:'Students',offset:500,total:605,pageSize:100});
-    expect(page.result?.rows).toHaveLength(100);
-    expect(page.result?.rows[0]).toEqual([501]);
+    const page=executeSql(SQL,{action:'browse',database:data.database,browse:{table:'Students'},sql:'DROP TABLE Students;'});
+    expect(page.datasheet).toEqual({table:'Students',total:605});
+    expect(page.result?.rows).toHaveLength(605);
+    expect(page.result?.rows[0]).toEqual([1]);
+    expect(page.result?.rows.at(-1)).toEqual([605]);
     expect(page.database).toEqual(data.database);
-    const last=executeSql(SQL,{action:'browse',database:data.database,browse:{table:'Students',offset:9999}});
-    expect(last.datasheet?.offset).toBe(600);
-    expect(last.result?.rows).toEqual([[601],[602],[603],[604],[605]]);
     expect(executeSql(SQL,{action:'query',database:data.database,sql:'SELECT COUNT(*) FROM Students;'}).result?.rows).toEqual([[605]]);
   });
   it('retains field names when a table has no records',()=>{
     const data=executeSql(SQL,{action:'query',sql:'CREATE TABLE "My Table" ("Full name" TEXT, Score INTEGER);'});
-    const page=executeSql(SQL,{action:'browse',database:data.database,browse:{table:'My Table',offset:0}});
+    const page=executeSql(SQL,{action:'browse',database:data.database,browse:{table:'My Table'}});
     expect(page.result).toEqual({columns:['Full name','Score'],rows:[],truncated:false});
     expect(page.datasheet?.total).toBe(0);
-    expect(()=>executeSql(SQL,{action:'browse',database:data.database,browse:{table:'missing',offset:0}})).toThrow(/Table not found/);
+    expect(()=>executeSql(SQL,{action:'browse',database:data.database,browse:{table:'missing'}})).toThrow(/Table not found/);
   });
 });

@@ -6,15 +6,15 @@ import { normalizeSortDirections } from './worksheet-sql';
 import { formatIdentifier } from './identifiers';
 
 export const MAX_RESULT_ROWS = 500;
-export const DATASHEET_PAGE_SIZE = 100;
-export interface DatasheetPage { table: string; offset: number; total: number; pageSize: number; }
+export const MAX_DATASHEET_ROWS = 100_000;
+export interface DatasheetInfo { table: string; total: number; }
 const MAX_DATABASE_BYTES = 32 * 1024 * 1024;
 export interface TableInfo { name: string; kind?: 'table' | 'view'; columns: { name: string; type: string; primaryKey?: boolean }[]; }
 export interface CsvImportFile { name: string; text: string; tableName?: string; columns?: ManualColumn[]; }
 export interface TableDesign { name: string; columns: ManualColumn[]; }
 export interface QueryResult { columns: string[]; rows: Cell[][]; truncated: boolean; }
-export interface SqlRequest { database?: Uint8Array; action: 'init' | 'reset' | 'import' | 'create' | 'design' | 'query' | 'browse'; browse?: { table: string; offset: number }; table?: ManualTable; design?: TableDesign; files?: CsvImportFile[]; sql?: string; }
-export interface SqlResponse { database: Uint8Array; tables: TableInfo[]; result: QueryResult | null; message: string; datasheet?: DatasheetPage; openedTable?: string; }
+export interface SqlRequest { database?: Uint8Array; action: 'init' | 'reset' | 'import' | 'create' | 'design' | 'query' | 'browse'; browse?: { table: string }; table?: ManualTable; design?: TableDesign; files?: CsvImportFile[]; sql?: string; }
+export interface SqlResponse { database: Uint8Array; tables: TableInfo[]; result: QueryResult | null; message: string; datasheet?: DatasheetInfo; openedTable?: string; }
 export type WorkerReply = { ok: true; value: SqlResponse } | { ok: false; error: string } | { ready: true };
 
 function displayCell(value: SqlValue): Cell {
@@ -114,16 +114,28 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
     let result: QueryResult | null = null, message = 'SQLite ready', openedTable: string | undefined;
     if (request.action === 'browse') {
       const source = request.browse;
-      if (!source || !Number.isSafeInteger(source.offset) || source.offset < 0) throw new Error('Invalid datasheet page.');
+      if (!source) throw new Error('Choose a table.');
       const schema = tables(db);
       const table = schema.find(item=>item.name===source.table);
       if (!table) throw new Error('Table not found: '+source.table);
       const identifier=quoteIdentifier(table.name);
       const total=Number(db.exec('SELECT COUNT(*) FROM '+identifier)[0]?.values[0]?.[0]??0);
-      const offset=Math.min(Math.floor(source.offset/DATASHEET_PAGE_SIZE)*DATASHEET_PAGE_SIZE,Math.max(0,Math.floor((total-1)/DATASHEET_PAGE_SIZE)*DATASHEET_PAGE_SIZE));
-      const sheet=db.exec('SELECT * FROM '+identifier+' LIMIT '+DATASHEET_PAGE_SIZE+' OFFSET '+offset)[0];
-      result={columns:sheet?.columns??table.columns.map(column=>column.name),rows:sheet?.values.map(row=>row.map(displayCell))??[],truncated:false};
-      return {database:request.database??db.export(),tables:schema,result,message:total+' records',datasheet:{table:table.name,total,offset,pageSize:DATASHEET_PAGE_SIZE}};
+      const statement=db.prepare('SELECT * FROM '+identifier);
+      const rows: Cell[][]=[];
+      let budget=32*1024*1024;
+      let truncated=false;
+      try {
+        const columns=statement.getColumnNames();
+        while(statement.step()){
+          if(rows.length>=MAX_DATASHEET_ROWS){truncated=true;break;}
+          const row=statement.get().map(value=>value instanceof Uint8Array?'[BLOB: '+value.length+' bytes]':value);
+          const size=row.reduce<number>((sum,value)=>sum+String(value??'').length*2+16,0);
+          if(size>budget){truncated=true;break;}
+          budget-=size;rows.push(row);
+        }
+        result={columns:columns.length?columns:table.columns.map(column=>column.name),rows,truncated};
+      } finally { statement.free(); }
+      return {database:request.database??db.export(),tables:schema,result,message:total+' records',datasheet:{table:table.name,total}};
     }
     if (request.action === 'import') {
       const taken = new Set(tables(db).map(table => table.name.toLowerCase()));
