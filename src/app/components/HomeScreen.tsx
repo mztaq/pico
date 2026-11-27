@@ -5,6 +5,7 @@ import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HomeFluidBackground } from './HomeFluidBackground';
 import { HomeTechnologyCycle } from './HomeTechnologyCycle';
+import { useWorkspaceGlass, WorkspaceGlassFilter } from './WorkspaceGlass';
 import { useHomePreviewStep } from './useHomePreviewStep';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
@@ -98,14 +99,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
     return () => window.clearTimeout(timeout);
   }, [reportNotice]);
   return <main className="pico-home pico-home-glass" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
-      <svg className="home-glass-filter-defs" width="0" height="0" aria-hidden="true" focusable="false">
-        <defs>
-          <filter id="pico-workspace-glass" x="-10%" y="-10%" width="120%" height="120%" colorInterpolationFilters="sRGB">
-            <feTurbulence type="fractalNoise" baseFrequency="0.018 0.028" numOctaves={2} seed={8} result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale={12} xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
       <HomeFluidBackground theme={theme} disabled={reportOpen || offlineReportWarning} fallback={<HomeAmbientCurves />} />
     <div className="home-nav">
       <div className="home-theme-anchor" ref={themeMenuRef}>
@@ -250,11 +243,13 @@ function HomeGroup({ label, detail, children, kind }: { label: string; detail: s
 
 function WorkspaceChoice({ icon, previewInterval, title, description, onClick, children }: { icon: ReactNode; previewInterval?: number; title: string; description: string; onClick: () => void; children: (step: number) => ReactNode }) {
   const { ref, step } = useHomePreviewStep(previewInterval);
-  return <button className="compiler-choice" onClick={onClick}>
+  const glass = useWorkspaceGlass();
+  return <><WorkspaceGlassFilter id={glass.id} lens={glass.lens} />
+  <button ref={glass.ref} className="compiler-choice" data-refractive={glass.lens ? "true" : undefined} style={glass.lens ? { "--home-lens": `url(#${glass.id})` } as React.CSSProperties : undefined} onClick={onClick}>
     <div className="compiler-choice-stage" ref={ref} data-preview-step={step} aria-hidden="true">{children(step)}</div>
     <div className="compiler-choice-copy">
       <div className="compiler-choice-title"><i className="compiler-choice-icon" aria-hidden="true">{icon}</i><h2>{title}</h2></div>
       <p>{description}</p>
     </div>
-  </button>;
+  </button></>;
 }
