@@ -175,19 +175,23 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           <text className="home-preview-phase" x="175" y="86">{['FETCH', 'DECODE', 'EXECUTE'][step % 3]}</text>
         </svg>}
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Network size={18}/>} title="Traffic Storm" previewInterval={125} description="Watch simulated request floods and server overload." onClick={() => onChoose('traffic')}>
+          <WorkspaceChoice icon={<Network size={18}/>} title="Traffic Storm" previewInterval={500} description="Watch simulated request floods and server overload." onClick={() => onChoose('traffic')}>
             {step => <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 88" aria-hidden="true">
               {[15,38,61].map(y => <g key={y}>
                 <path className="home-chart-link" d={`M 49 ${y} C 105 ${y} 126 38 173 38 H 253`}/>
                 <rect x="5" y={y-10} width="44" height="20" rx="4"/><circle cx="16" cy={y} r="3"/><path d={`M 26 ${y} h 14`} className="home-chart-link"/>
               </g>)}
-              {[15,38,61].map((y, lane) => Array.from({length: 4}, (_, index) => {
-                const t = ((step + index * 3 + lane) % 12) / 12;
-                const x = 54 + 118 * t;
-                const py = y + (38 - y) * (t * t * (3 - 2 * t));
-                return <circle key={`${lane}-${index}`} className="home-traffic-packet" cx={x} cy={py} r="2.5" opacity={.75 + lane * .1}/>;
-              }))}
-              {Array.from({length: 6}, (_, index) => <circle key={index} className="home-traffic-packet home-traffic-spam" cx={177 + ((step * 7 + index * 13) % 74)} cy={38 + (index % 3 - 1) * 3} r="2.2"/>)}
+              {[15,38,61].map((y, lane) => Array.from({length: 4}, (_, index) =>
+                <circle key={`${lane}-${index}`} className="home-traffic-packet" r="2.5" opacity={.75 + lane * .1}>
+                  <animateMotion path={`M 49 ${y} C 105 ${y} 126 38 173 38`} dur="1.5s" begin={`-${(index * .375 + lane * .125).toFixed(3)}s`} repeatCount="indefinite" calcMode="paced"/>
+                </circle>
+              ))}
+              {Array.from({length: 6}, (_, index) => {
+                const y = 38 + (index % 3 - 1) * 3;
+                return <circle key={index} className="home-traffic-packet home-traffic-spam" r="2.2">
+                  <animateMotion path={`M 173 ${y} H 253`} dur="0.9s" begin={`-${(index * .15).toFixed(2)}s`} repeatCount="indefinite" calcMode="paced"/>
+                </circle>;
+              })}
               <rect className="home-traffic-server" x="253" y="7" width="89" height="60" rx="7"/>
               {[18,38].map(y => <g key={y}><rect x="262" y={y} width="71" height="14" rx="3"/><circle className="home-traffic-status-light" cx="270" cy={y+7} r="2.5"/><path className="home-chart-link" d={`M 279 ${y+7} h 44`}/></g>)}
               <rect className="home-traffic-load-track" x="262" y="57" width="71" height="4" rx="2"/>

@@ -67,6 +67,8 @@ it('keeps the original Pico logo and all seven initial workspace previews withou
   expect(container.querySelector('.home-chart-output')?.textContent).toBe('OUTPUT "Hello"');
   expect(container.querySelector('.home-preview-bulb')?.getAttribute('data-lit')).toBe('false');
   expect(container.querySelectorAll('.home-traffic-packet')).toHaveLength(18);
+  expect(container.querySelectorAll('.home-traffic-packet > animateMotion')).toHaveLength(18);
+  expect([...container.querySelectorAll('.home-traffic-packet > animateMotion')].every(motion => motion.getAttribute('repeatCount') === 'indefinite')).toBe(true);
   expect(container.querySelector('.home-quick-trigger')).toBeNull();
   await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true,cancelable:true})));
   expect(container.querySelector('.home-quick-dialog')).toBeNull();
