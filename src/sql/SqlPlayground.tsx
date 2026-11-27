@@ -1,17 +1,19 @@
-import { useEffect, useRef, useState, type CSSProperties, type ChangeEvent } from 'react';
-import { ArrowLeft, Database, Download, Play, Upload, Settings2, X, Table2, FileCode2, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { ArrowLeft, Database, Download, Play, Upload, Settings2, X, Table2, FileCode2, Trash2, Plus } from 'lucide-react';
 import { cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { FloatingPanel } from '../app/components/FloatingPanel';
 import { ResizeHandle } from '../app/components/ResizeHandle';
 import { SqlEditor } from './SqlEditor';
+import { CreateDatabaseDialog, CreateTableDialog } from './SqlCreateDialogs';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { MAX_CSV_BYTES, quoteIdentifier, toCsv } from './csv';
 import type { SqlRequest, SqlResponse, WorkerReply } from './engine';
 import './sql-playground.css';
 
-let session: SqlResponse | undefined;
-let sessionQuery = '';
+interface DatabaseSession { response?: SqlResponse; query: string; }
+const databases = new Map<string, DatabaseSession>();
+let selectedDatabase: string | null = null;
 
 export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const [settings, setSettings] = useState(loadSettings);
@@ -22,18 +24,21 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const settingsAnchor = useRef<HTMLDivElement>(null);
   const theme = getTheme(themeId);
   const [themeOpen, setThemeOpen] = useState(false);
-  const [state, setState] = useState<SqlResponse | undefined>(session);
-  const [sql, setSql] = useState(sessionQuery);
+  const [activeDatabase, setActiveDatabase] = useState<string | null>(selectedDatabase);
+  const [databaseNames, setDatabaseNames] = useState(() => [...databases.keys()]);
+  const activeRef = useRef(selectedDatabase);
+  const [modal, setModal] = useState<'database' | 'manual' | 'csv' | null>(null);
+  const [state, setState] = useState<SqlResponse | undefined>(() => selectedDatabase ? databases.get(selectedDatabase)?.response : undefined);
+  const [sql, setSql] = useState(() => selectedDatabase ? databases.get(selectedDatabase)?.query ?? '' : '');
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
-  const [status, setStatus] = useState(session ? 'SQLite ready' : 'Loading SQLite…');
+  const [status, setStatus] = useState(selectedDatabase ? 'SQLite ready' : 'Create a database to begin');
   const [error, setError] = useState('');
   const worker = useRef<Worker | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const running = useRef(false);
   const alive = useRef(true);
-  const fileInput = useRef<HTMLInputElement>(null);
-  const database = useRef(session?.database);
+  const database = useRef(state?.database);
   const disabled = busy || reading;
 
   useEffect(() => {
@@ -56,8 +61,9 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     dispose(); setBusy(false); setStatus(message);
   };
   function execute(request: Omit<SqlRequest, 'database'>) {
-    if (running.current || !alive.current) return;
-    running.current = true; setBusy(true); setError(''); setStatus(request.action === 'import' ? 'Importing CSV…' : request.action === 'init' ? 'Loading SQLite…' : 'Running…');
+    if (running.current || !alive.current || !activeRef.current) return;
+    const databaseName = activeRef.current;
+    running.current = true; setBusy(true); setError(''); setStatus(request.action === 'import' ? 'Importing CSV…' : request.action === 'init' ? 'Loading SQLite…' : request.action === 'create' ? 'Creating table…' : 'Running…');
     const fail = (message: string) => { dispose(); setBusy(false); setError(message); setStatus('Previous database kept'); };
     try {
       worker.current ??= new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
@@ -73,8 +79,11 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         clearTimer(); running.current = false; setBusy(false);
         if (!reply.ok) { setError(reply.error); setStatus('Previous database kept'); return; }
         const value = reply.value;
-        session = value; database.current = value.database; setState(value); setStatus(value.message);
-        if (value.suggestedQuery) { setSql(value.suggestedQuery); sessionQuery = value.suggestedQuery; }
+        const entry = databases.get(databaseName);
+        if (!entry) return;
+        entry.response = value; database.current = value.database; setState(value); setStatus(value.message);
+        if (value.suggestedQuery) { setSql(value.suggestedQuery); entry.query = value.suggestedQuery; }
+        if (request.action === 'create' || request.action === 'import') setModal(null);
       };
       current.onerror = () => fail('SQLite failed to start. Try again or reload Pico.');
       timer.current = setTimeout(() => fail('SQLite took too long to load. Try again.'), 35_000);
@@ -83,13 +92,33 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   }
   useEffect(() => {
     alive.current = true;
-    if (!session) execute({ action: 'init' });
+    if (activeRef.current && !database.current) execute({ action: 'init' });
     return () => { alive.current = false; dispose(); };
   }, []);
-  function updateQuery(value: string) { setSql(value); sessionQuery = value; }
-  async function importFiles(event: ChangeEvent<HTMLInputElement>) {
-    const files = [...(event.target.files ?? [])];
-    event.target.value = '';
+  function updateQuery(value: string) {
+    setSql(value);
+    const entry = activeRef.current ? databases.get(activeRef.current) : undefined;
+    if (entry) entry.query = value;
+  }
+  function selectDatabase(name: string) {
+    if (running.current || reading) return;
+    const entry = databases.get(name);
+    if (!entry) return;
+    selectedDatabase = name; activeRef.current = name; setActiveDatabase(name);
+    database.current = entry.response?.database; setState(entry.response); setSql(entry.query);
+    setError(''); setStatus(entry.response ? 'SQLite ready' : 'Loading SQLite…');
+    if (!entry.response) execute({ action: 'init' });
+  }
+  function createDatabase(name: string) {
+    if (databases.has(name) || running.current || reading) return;
+    databases.set(name, { query: '' });
+    setDatabaseNames([...databases.keys()]); setModal(null); selectDatabase(name);
+  }
+  function openTable(mode: 'manual' | 'csv') {
+    if (!activeRef.current || running.current || reading) return;
+    setError(''); setModal(mode);
+  }
+  async function importFiles(files: File[]) {
     if (!files.length || running.current || reading) return;
     if (files.length > 10 || files.some(file => !/\.csv$/i.test(file.name) || file.size > MAX_CSV_BYTES) || files.reduce((sum, file) => sum + file.size, 0) > 20 * 1024 * 1024) {
       setError('Choose up to 10 CSV files, at most 5 MB each and 20 MB total.'); return;
@@ -109,7 +138,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const runQuery = (value: string) => {
-    if (!disabled && value.trim()) execute({ action: 'query', sql: value });
+    if (activeDatabase && !disabled && value.trim()) execute({ action: 'query', sql: value });
   };
   return <main className="pico-app sql-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
     <header className="topbar pico-appbar sql-header">
@@ -119,8 +148,8 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         <h1 className="sql-workspace-title">SQL Playground</h1>
       </div>
       <div className="topbar-spacer"/>
-      <button type="button" className="toolbar-button sql-import" disabled={disabled} onClick={() => fileInput.current?.click()}><Upload size={15}/> Import CSV</button>
-      <input ref={fileInput} type="file" accept=".csv,text/csv" multiple hidden onChange={importFiles}/>
+      <button type="button" className="toolbar-button sql-create-database" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={15}/> Database</button>
+      <button type="button" className="toolbar-button sql-create-table" disabled={disabled || !activeDatabase} onClick={() => openTable('manual')}><Plus size={15}/> Table</button>
       <div className="settings-anchor" ref={settingsAnchor}>
         <button type="button" className={`topbar-icon ${themeOpen ? 'active' : ''}`} aria-label="Open settings" aria-expanded={themeOpen} title="Settings" onClick={() => setThemeOpen(open => !open)}><Settings2 size={16}/></button>
         <FloatingPanel anchor={settingsAnchor} open={themeOpen} className="settings-popover">
@@ -133,21 +162,29 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       </div>
       <div className="pico-appbar-run sql-actions">
         {busy && <button type="button" className="toolbar-button stop-button" onClick={() => stop()}><X size={15}/> Stop</button>}
-        <button type="button" className="run-button sql-run" disabled={disabled || !sql.trim()} onClick={() => runQuery(sql)}><Play size={14} fill="currentColor"/> <span>Run query</span><kbd>Ctrl ↵</kbd></button>
+        <button type="button" className="run-button sql-run" disabled={disabled || !activeDatabase || !sql.trim()} onClick={() => runQuery(sql)}><Play size={14} fill="currentColor"/> <span>Run query</span><kbd>Ctrl ↵</kbd></button>
       </div>
     </header>
     <div className="sql-layout" style={{ '--sql-sidebar-width': sidebarWidth + 'px' } as CSSProperties}>
       <aside className="sql-sidebar">
-        <div className="sql-panel-heading"><h2><Database size={16}/> Tables</h2><button type="button" className="topbar-icon" aria-label="Clear database" title="Clear database" disabled={disabled || !state?.tables.length} onClick={() => { if (window.confirm('Clear all tables in this SQL session?')) execute({ action: 'reset' }); }}><Trash2 size={15}/></button></div>
+        <div className="sql-database-picker">
+          <label htmlFor="sql-database-select"><Database size={16}/> Database</label>
+          <select id="sql-database-select" value={activeDatabase ?? ''} disabled={disabled || !databaseNames.length} onChange={event => selectDatabase(event.target.value)}>
+            <option value="" disabled>Select a database</option>
+            {databaseNames.map(name => <option key={name}>{name}</option>)}
+          </select>
+        </div>
+        <div className="sql-panel-heading"><h2><Table2 size={16}/> Tables</h2><button type="button" className="topbar-icon" aria-label="Clear database" title="Clear database" disabled={disabled || !state?.tables.length} onClick={() => { if (window.confirm('Clear all tables in this SQL session?')) execute({ action: 'reset' }); }}><Trash2 size={15}/></button></div>
         <div className="sql-tables">
           {state?.tables.map(table => <details className="sql-table-item" key={table.name} open>
             <summary><Database size={15}/><span>{table.name}</span></summary>
             <button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + quoteIdentifier(table.name) + ';'; updateQuery(query); execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>
             <ul>{table.columns.map((column, i) => <li key={i}><span>{column.name}</span><small>{column.type}</small></li>)}</ul>
           </details>)}
-          {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Database size={18}/></span><p>No tables yet</p><button type="button" className="toolbar-button" disabled={disabled} onClick={() => fileInput.current?.click()}><Upload size={14}/> Import CSV</button></div>}
+          {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Database size={18}/></span><p>{activeDatabase ? 'No tables yet' : 'No database selected'}</p>{activeDatabase ? <><button type="button" className="toolbar-button" disabled={disabled} onClick={() => openTable('manual')}><Plus size={14}/> Create table</button><button type="button" className="toolbar-button sql-import" disabled={disabled} onClick={() => openTable('csv')}><Upload size={14}/> Import CSV</button></> : <button type="button" className="toolbar-button" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={14}/> Create database</button>}</div>}
+          {!!state?.tables.length && <button type="button" className="toolbar-button sql-import" disabled={disabled} onClick={() => openTable('csv')}><Upload size={14}/> Import CSV</button>}
         </div>
-        <div className="sql-sidebar-bottom">CSV files stay on your device for this session.</div>
+        <div className="sql-sidebar-bottom">Databases stay on your device for this session.</div>
       </aside>
       <ResizeHandle axis="x" label="Resize table explorer" onResize={delta => setSidebarWidth(value => Math.max(190, Math.min(420, value + delta)))}/>
       <section ref={mainRef} className="sql-main" style={{ '--sql-editor-ratio': editorRatio + '%' } as CSSProperties}>
@@ -164,5 +201,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         </section>
       </section>
     </div>
+    {modal === 'database' && <CreateDatabaseDialog names={databaseNames} onCreate={createDatabase} onClose={() => setModal(null)}/>}
+    {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} error={error} onClose={() => { setModal(null); setError(''); }} onStop={() => { if (!reading) stop(); }} onCreate={table => execute({ action:'create', table })} onImport={files => { void importFiles(files); }}/>}
   </main>;
 }

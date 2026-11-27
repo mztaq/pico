@@ -153,6 +153,8 @@ export function buildWorkspaceMenu(
     const stop = findText('.sql-actions button', 'Stop');
     if (stop) add('Stop query', stop, Pause, 'run');
     else choose('Run query', '.sql-run', Play, 'run');
+    choose('Create database', '.sql-create-database', FilePlus2, 'files');
+    choose('Create table', '.sql-create-table', Plus, 'files');
     choose('Import CSV', '.sql-import', FilePlus2, 'files');
     add('Export CSV', findText('.sql-results-panel button', 'Export CSV'), Copy, 'files');
   }

@@ -91,7 +91,7 @@ function PicoTeam() {
 function Privacy() {
   return <>
     <Section title="Your work">
-      <p>Your code, console input, projects and diagrams in browser workspaces are processed locally. SQL Playground processes CSV files and queries locally in browser memory; these tables are not uploaded or saved by Pico after you reload. Optional analytics does not collect their contents. Information you choose to share, including through reports or MCP requests, is sent to the relevant service.</p>
+      <p>Your code, console input, projects and diagrams in browser workspaces are processed locally. SQL Playground processes manually entered database records, CSV files and queries locally in browser memory; these databases are not uploaded or saved by Pico after you reload. Optional analytics does not collect their contents. Information you choose to share, including through reports or MCP requests, is sent to the relevant service.</p>
     </Section>
     <Section title="Service and storage">
       <p>Browser storage saves projects, settings and consent choices. Cloudflare hosts Pico and Google Fonts serves some typography; those providers may process connection information.</p>
