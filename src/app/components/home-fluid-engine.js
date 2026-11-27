@@ -39,6 +39,7 @@ export function startFluid(canvas, initialPalette, onFailure) {
     DENSITY_DISSIPATION: 0.85, VELOCITY_DISSIPATION: 0.55, SPLAT_RADIUS: 0.28 };
   let lastPointer = null;
   let pending = null;
+  const frameInterval = 1000 / 50;
   let lastFrame = 0;
   let frameBudget = 0;
   let simulatedElapsed = 0;
@@ -623,16 +624,16 @@ draw();
 update = now => {
   if (disposed || document.hidden) return;
   frame = requestAnimationFrame(update);
-  // Target 60fps even on high-refresh displays. Carry fractional frame time forward.
-  const elapsed = lastFrame ? now - lastFrame : 1000 / 60;
+  // Limit GPU simulation and drawing to 50fps. Carry fractional frame time forward.
+  const elapsed = lastFrame ? now - lastFrame : frameInterval;
   lastFrame = now;
   frameBudget += Math.min(elapsed, 40);
   simulatedElapsed += elapsed;
-  if (frameBudget < 1000 / 60 - 0.5) return;
+  if (frameBudget < frameInterval - 0.5) return;
   const dt = Math.min(simulatedElapsed / 1000, 0.04);
   simulatedElapsed = 0;
-  frameBudget = Math.max(0, frameBudget % (1000 / 60));
-  if (frameBudget > 1000 / 60 - 0.5) frameBudget = 0;
+  frameBudget = Math.max(0, frameBudget % (frameInterval));
+  if (frameBudget > frameInterval - 0.5) frameBudget = 0;
   try {
     if (resizeCanvas()) { initFramebuffers(); seed(); }
     if (pending) {
