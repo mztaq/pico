@@ -78,11 +78,8 @@ describe('Landing route migration leaves backend services available', () => {
     expect(home).toContain('className="pico-home pico-home-glass"');
     expect(css).toContain('.pico-home-glass .compiler-choice');
     expect(css).toContain('backdrop-filter: blur(var(--home-glass-blur))');
-    expect(css).toContain('mask-composite: exclude');
-    const engine = read('src/app/components/home-fluid-engine.js');
-    expect(engine).toContain('vec2 refractedUV()');
-    expect(engine).toContain('texture2D(uTexture, refractedUV())');
-    expect(engine).toContain('gl.scissor(left, bottom, right - left, top - bottom)');
+    const glass = css.slice(css.indexOf('/* Workspace chooser only:'));
+    expect(glass).not.toMatch(/home-theme-trigger|home-games-link|home-updates|home-theme-menu/);
     expect(css).toContain('--home-glass-tint: color-mix(in srgb, var(--accent)');
     expect(css).toContain(".pico-home.pico-home-glass[data-high-contrast='true']");
     expect(read('src/app/components/GamesPage.tsx')).not.toContain('pico-home-glass');

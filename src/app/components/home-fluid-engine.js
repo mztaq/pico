@@ -385,36 +385,8 @@ const displayShader = compileShader(gl.FRAGMENT_SHADER, `
   uniform vec3 uPalette0;
   uniform vec3 uPalette1;
   uniform vec3 uPalette2;
-  uniform vec4 uLensRect;
-  uniform vec2 uViewport;
-  uniform vec2 uLensShape;
-  // Signed distance to the glass's rounded rectangular perimeter in pixels.
-  float lensDistance(vec2 p, vec2 halfSize, float radius) {
-    vec2 q = abs(p) - halfSize + vec2(radius);
-    return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - radius;
-  }
-  vec2 refractedUV() {
-    if (uLensRect.z <= 0.0) return vUv;
-    vec2 halfSize = uLensRect.zw * 0.5;
-    vec2 p = gl_FragCoord.xy - uLensRect.xy - halfSize;
-    float radius = min(uLensShape.x, min(halfSize.x, halfSize.y));
-    float d = lensDistance(p, halfSize, radius);
-    if (d >= 0.0) return vUv;
-    vec2 normal = vec2(
-      lensDistance(p + vec2(1.0, 0.0), halfSize, radius) - lensDistance(p - vec2(1.0, 0.0), halfSize, radius),
-      lensDistance(p + vec2(0.0, 1.0), halfSize, radius) - lensDistance(p - vec2(0.0, 1.0), halfSize, radius)
-    );
-    normal /= max(length(normal), 0.001);
-    float depth = -d;
-    float edge = smoothstep(0.0, 1.4, depth);
-    float bend = edge * exp(-depth / max(radius * 0.55, 1.0)) * uLensShape.y;
-    // The curved meniscus refracts most strongly near the edge; the centre
-    // has a mild magnification. Only background dye is sampled, never text.
-    vec2 offset = normal * bend - p * (0.035 * edge);
-    return clamp(vUv + offset / uViewport, vec2(0.0), vec2(1.0));
-  }
   void main() {
-    vec3 ink = max(texture2D(uTexture, refractedUV()).rgb, vec3(0.0));
+    vec3 ink = max(texture2D(uTexture, vUv).rgb, vec3(0.0));
     float density = dot(ink, vec3(1.0));
     vec3 color = (ink.r * uPalette0 + ink.g * uPalette1 + ink.b * uPalette2) / max(density, 0.0001);
     float alpha = 1.0 - exp(-density * 1.4);
@@ -643,43 +615,7 @@ function draw() {
   displayProgram.bind();
   gl.uniform1i(displayProgram.uniforms.uTexture, dye.read.attach(0));
   palette.forEach((color, index) => gl.uniform3fv(displayProgram.uniforms['uPalette' + index], color));
-  const uniforms = displayProgram.uniforms;
-  const width = gl.drawingBufferWidth;
-  const height = gl.drawingBufferHeight;
-  gl.uniform2f(uniforms.uViewport, width, height);
-  gl.uniform4f(uniforms.uLensRect, 0, 0, 0, 0);
-  gl.disable(gl.SCISSOR_TEST);
   blit(null);
-
-  // The fluid is already rendered once. Redraw only the visible lens rectangles
-  // with a scissor test, avoiding a loop over every lens for every screen pixel.
-  // Rects are read together before rendering, so scroll and hover stay aligned.
-  const bounds = canvas.getBoundingClientRect();
-  if (!bounds.width || !bounds.height) return;
-  const sx = width / bounds.width;
-  const sy = height / bounds.height;
-  const scale = Math.min(sx, sy);
-  const lenses = Array.from(parent.querySelectorAll('.compiler-choice, .home-theme-trigger, .home-games-link, .home-learning-link, .home-updates .toolbar-button, .home-footer-links .bug-report-trigger'), element => ({
-    rect: element.getBoundingClientRect(),
-    radius: element.classList.contains('compiler-choice') ? 26 : element.classList.contains('home-learning-link') ? 18 : 14
-  }));
-  gl.enable(gl.SCISSOR_TEST);
-  for (const {rect, radius} of lenses) {
-    const x = (rect.left - bounds.left) * sx;
-    const y = (bounds.bottom - rect.bottom) * sy;
-    const w = rect.width * sx;
-    const h = rect.height * sy;
-    const left = Math.max(0, Math.floor(x));
-    const bottom = Math.max(0, Math.floor(y));
-    const right = Math.min(width, Math.ceil(x + w));
-    const top = Math.min(height, Math.ceil(y + h));
-    if (right <= left || top <= bottom) continue;
-    gl.scissor(left, bottom, right - left, top - bottom);
-    gl.uniform4f(uniforms.uLensRect, x, y, w, h);
-    gl.uniform2f(uniforms.uLensShape, radius * scale, (radius === 26 ? 20 : 10) * scale);
-    blit(null);
-  }
-  gl.disable(gl.SCISSOR_TEST);
 }
 initFramebuffers();
 seed();
