@@ -58,10 +58,10 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
-it('shows only the four service logos in a seamless carousel without playback buttons',()=>{
+it('shows only the six technology logos in a seamless carousel without playback buttons',()=>{
   const cycle = container.querySelector('.home-tech-cycle');
   expect(cycle).not.toBeNull();
-  const expected = ['Cloudflare','GitHub','Resend','UptimeRobot'];
+  const expected = ['Cloudflare','GitHub','Resend','UptimeRobot','WebGL','Electron'];
   const strips = [...cycle!.querySelectorAll('.home-tech-strip')];
   expect(strips).toHaveLength(2);
   for(const strip of strips) expect([...strip.querySelectorAll('.home-tech-item')].map(node=>node.textContent)).toEqual(expected);
