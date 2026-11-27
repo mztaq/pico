@@ -6,13 +6,15 @@ import { normalizeSortDirections } from './worksheet-sql';
 import { formatIdentifier } from './identifiers';
 
 export const MAX_RESULT_ROWS = 500;
+export const DATASHEET_PAGE_SIZE = 100;
+export interface DatasheetPage { table: string; offset: number; total: number; pageSize: number; }
 const MAX_DATABASE_BYTES = 32 * 1024 * 1024;
 export interface TableInfo { name: string; kind?: 'table' | 'view'; columns: { name: string; type: string; primaryKey?: boolean }[]; }
 export interface CsvImportFile { name: string; text: string; tableName?: string; columns?: ManualColumn[]; }
 export interface TableDesign { name: string; columns: ManualColumn[]; }
 export interface QueryResult { columns: string[]; rows: Cell[][]; truncated: boolean; }
-export interface SqlRequest { database?: Uint8Array; action: 'init' | 'reset' | 'import' | 'create' | 'design' | 'query'; table?: ManualTable; design?: TableDesign; files?: CsvImportFile[]; sql?: string; }
-export interface SqlResponse { database: Uint8Array; tables: TableInfo[]; result: QueryResult | null; message: string; }
+export interface SqlRequest { database?: Uint8Array; action: 'init' | 'reset' | 'import' | 'create' | 'design' | 'query' | 'browse'; browse?: { table: string; offset: number }; table?: ManualTable; design?: TableDesign; files?: CsvImportFile[]; sql?: string; }
+export interface SqlResponse { database: Uint8Array; tables: TableInfo[]; result: QueryResult | null; message: string; datasheet?: DatasheetPage; openedTable?: string; }
 export type WorkerReply = { ok: true; value: SqlResponse } | { ok: false; error: string } | { ready: true };
 
 function displayCell(value: SqlValue): Cell {
@@ -109,7 +111,20 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
   // Each operation works on a copy. Errors and cancellation preserve the last successful database.
   const db = new SQL.Database(request.action === 'reset' ? undefined : request.database);
   try {
-    let result: QueryResult | null = null, message = 'SQLite ready';
+    let result: QueryResult | null = null, message = 'SQLite ready', openedTable: string | undefined;
+    if (request.action === 'browse') {
+      const source = request.browse;
+      if (!source || !Number.isSafeInteger(source.offset) || source.offset < 0) throw new Error('Invalid datasheet page.');
+      const schema = tables(db);
+      const table = schema.find(item=>item.name===source.table);
+      if (!table) throw new Error('Table not found: '+source.table);
+      const identifier=quoteIdentifier(table.name);
+      const total=Number(db.exec('SELECT COUNT(*) FROM '+identifier)[0]?.values[0]?.[0]??0);
+      const offset=Math.min(Math.floor(source.offset/DATASHEET_PAGE_SIZE)*DATASHEET_PAGE_SIZE,Math.max(0,Math.floor((total-1)/DATASHEET_PAGE_SIZE)*DATASHEET_PAGE_SIZE));
+      const sheet=db.exec('SELECT * FROM '+identifier+' LIMIT '+DATASHEET_PAGE_SIZE+' OFFSET '+offset)[0];
+      result={columns:sheet?.columns??table.columns.map(column=>column.name),rows:sheet?.values.map(row=>row.map(displayCell))??[],truncated:false};
+      return {database:request.database??db.export(),tables:schema,result,message:total+' records',datasheet:{table:table.name,total,offset,pageSize:DATASHEET_PAGE_SIZE}};
+    }
     if (request.action === 'import') {
       const taken = new Set(tables(db).map(table => table.name.toLowerCase()));
       const imported: string[] = [];
@@ -129,6 +144,7 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
         imported.push(name);
       }
       if (imported.length) {
+        openedTable=imported[0];
         result = query(db, 'SELECT * FROM ' + formatIdentifier(imported[0]) + ';');
       }
       message = 'Imported ' + imported.length + (imported.length === 1 ? ' table' : ' tables');
@@ -140,11 +156,13 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
         db.run('BEGIN'); insertRows(db,name,columns,values); db.run('COMMIT');
       }
       result = query(db, 'SELECT * FROM ' + formatIdentifier(name) + ';');
+      openedTable=name;
       message = 'Created ' + name;
     } else if (request.action === 'design') {
       if (!request.design) throw new Error('Choose a table design.');
       const name = changeDesign(db,request.design);
       result = query(db,'SELECT * FROM ' + quoteIdentifier(name) + ';');
+      openedTable=name;
       message = 'Saved design for ' + name;
     } else if (request.action === 'query') {
       if (!request.sql?.trim()) throw new Error('Enter a SQL statement.');
@@ -155,6 +173,6 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
     const schema = tables(db);
     const database = db.export();
     if (database.byteLength > MAX_DATABASE_BYTES) throw new Error('Database exceeds the 32 MB session limit.');
-    return { database, tables: schema, result, message };
+    return { database, tables: schema, result, message, openedTable };
   } finally { db.close(); }
 }
