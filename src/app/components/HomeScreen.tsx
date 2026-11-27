@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Activity, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
+import { HomeFluidBackground } from './HomeFluidBackground';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
@@ -95,6 +96,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
     return () => window.clearTimeout(timeout);
   }, [reportNotice]);
   return <main className="pico-home" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
+      <HomeFluidBackground theme={theme} disabled={reportOpen || offlineReportWarning} />
       <HomeAmbientCurves />
     <div className="home-nav">
       <div className="home-theme-anchor" ref={themeMenuRef}>
