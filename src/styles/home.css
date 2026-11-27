@@ -251,3 +251,6 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 }
 
 .pico-home .home-traffic-preview .home-traffic-packet{fill:var(--accent);stroke:none}
+
+.pico-home .home-theme-anchor { display: flex; align-items: center; gap: 4px; }
+.pico-home .home-status-link { flex-shrink: 0; }

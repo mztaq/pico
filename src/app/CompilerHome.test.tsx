@@ -229,7 +229,7 @@ it('runs Python source, accepts console input and displays final debugger variab
   await choose('Python Compiler');expect(preloadPythonRuntime).toHaveBeenCalled();expect(container.querySelector('textarea')?.value).toBe('');await type(container.querySelector('textarea')!,'name=input("Enter your name: ")\nprint(f"Hello {name}!")');await click(button('Run⌘ ↵'));const execution=jobs[0]!;
   expect(execution.request.code).toContain('input(');expect(execution.request.debug).toBe(true);expect(execution.request.filename).toBe('main.py');
   await act(async()=>{execution.callbacks.onStatus?.('Python 3.14.2');execution.callbacks.onOutput?.(['Enter your name: ']);execution.callbacks.onInput?.({id:1,variable:'input()',dataType:'STRING',line:3});});
-  expect(container.querySelector('.brand-subtitle')?.textContent).toBe('Python 3.14.2');
+  expect(container.querySelector('.pico-appbar-tool')).toBeNull();
   await type(container.querySelector('.console-input-form input')!,'Ada');
   await act(async()=>container.querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
   expect(execution.job.provideInput).toHaveBeenCalledWith(1,'Ada');
@@ -318,4 +318,12 @@ it('opens the bug report dialog directly from /app/report and updates browser hi
   expect(container.querySelector('[role="dialog"]')).not.toBeNull();
   await act(async()=>container.querySelector<HTMLButtonElement>('[aria-label="Close report form"]')?.click());
   expect(window.location.pathname).toBe('/app');
+});
+
+
+it('links to Pico Status beside the home theme control',()=>{
+  const link=container.querySelector<HTMLAnchorElement>('.home-theme-anchor .home-status-link');
+  expect(link?.getAttribute('href')).toBe('https://status.picompiler.pages.dev/');
+  expect(link?.textContent).toBe('Status');
+  expect(link?.target).toBe('_blank');
 });
