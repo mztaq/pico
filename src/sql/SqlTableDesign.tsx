@@ -51,7 +51,7 @@ export function CsvImportDesign({ existingNames, files, onChange, disabled, onRe
   </>;
 }
 
-export function DesignView({table,busy,error,onSave,onClose,onStop}:{table:TableInfo;busy:boolean;error:string;onSave:(design:TableDesign)=>void;onClose:()=>void;onStop:()=>void}){
+export function DesignView({table,busy,stoppable,error,onSave,onClose,onStop}:{table:TableInfo;busy:boolean;stoppable:boolean;error:string;onSave:(design:TableDesign)=>void;onClose:()=>void;onStop:()=>void}){
   const unsupported=table.columns.some(column=>!columnTypes.includes(column.type as ColumnType));
   const [columns,setColumns]=useState<ManualColumn[]>(()=>table.columns.map(column=>({name:column.name,type:columnTypes.includes(column.type as ColumnType)?column.type as ColumnType:'TEXT',primaryKey:Boolean(column.primaryKey)})));
   const [validation,setValidation]=useState('');
@@ -62,7 +62,7 @@ export function DesignView({table,busy,error,onSave,onClose,onStop}:{table:Table
       {unsupported?<div className="sql-design-grid"><table><thead><tr><th>Field name</th><th>Data type</th></tr></thead><tbody>{table.columns.map(column=><tr key={column.name}><td>{column.name}</td><td>{column.type}</td></tr>)}</tbody></table><p className="sql-form-note">Custom SQL data types must be edited using SQL.</p></div>:<FieldGrid columns={columns} disabled={busy} onChange={next=>{setColumns(next);setValidation('');}}/>}
       <p className="sql-form-note">Changes apply to existing records. Invalid conversions or duplicate primary keys leave the original table unchanged.</p>
       {(validation||error)&&<p className="sql-dialog-error" role="alert">{validation||error}</p>}
-      <div className="sql-dialog-actions">{busy?<button type="button" className="toolbar-button stop-button" onClick={onStop}>Stop</button>:<button type="button" className="subtle-button" onClick={onClose}>Cancel</button>}<button type="button" className="run-button" disabled={busy||unsupported||!changed} onClick={save}><Save size={15}/> Save changes</button></div>
+      <div className="sql-dialog-actions">{busy?<button type="button" className="toolbar-button stop-button" disabled={!stoppable} onClick={onStop}>Stop</button>:<button type="button" className="subtle-button" onClick={onClose}>Cancel</button>}<button type="button" className="run-button" disabled={busy||unsupported||!changed} onClick={save}><Save size={15}/> Save changes</button></div>
     </div>
   </Modal>;
 }

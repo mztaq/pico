@@ -7,8 +7,9 @@ const DATABASE = 'pico-sql-playground';
 const STORE = 'workspace';
 const QUERY_PREFIX = 'pico:sql:query:';
 const DEFAULT_LAYOUT: SqlLayout = { sidebarWidth:260, editorRatio:55 };
-type StoredRecord =
+export type StoredRecord =
   | { key: string; kind:'database'; name:string; response?:SqlResponse; query:string }
+  | { key:string; kind:'query'; name:string; value:string }
   | { key:'selection'; kind:'selection'; name:string|null }
   | { key:'layout'; kind:'layout'; value:SqlLayout };
 let connection: Promise<IDBDatabase> | undefined;
@@ -39,13 +40,16 @@ function layoutValue(value:SqlLayout|undefined):SqlLayout {
 export function restoreRecords(records: StoredRecord[]):SqlSavedState {
   const databases=new Map<string,DatabaseSession>();
   let selected:string|null=null,layout=DEFAULT_LAYOUT;
+  const queries=new Map<string,string>();
   for(const record of records){
     if(record.kind==='database' && typeof record.name==='string' && typeof record.query==='string') {
       if(record.response && !(record.response.database instanceof Uint8Array)) throw new Error('Invalid saved database. Local data has been left untouched.');
-      databases.set(record.name,{response:record.response,query:getQuery(record.name,record.query)});
-    } else if(record.kind==='selection') selected=record.name;
+      databases.set(record.name,{response:record.response,query:record.query});
+    } else if(record.kind==='query') queries.set(record.name,record.value);
+    else if(record.kind==='selection') selected=record.name;
     else if(record.kind==='layout') layout=layoutValue(record.value);
   }
+  for (const [name,entry] of databases) entry.query=getQuery(name,queries.get(name)??entry.query);
   return {databases,selected:selected && databases.has(selected)?selected:databases.keys().next().value??null,layout};
 }
 export async function loadSqlState():Promise<SqlSavedState> {
@@ -76,4 +80,8 @@ export function saveDatabase(name:string,session:DatabaseSession):Promise<void>{
 export function saveSelection(name:string|null){return put({key:'selection',kind:'selection',name});}
 export function saveLayout(value:SqlLayout){return put({key:'layout',kind:'layout',value:layoutValue(value)});}
 /** Query drafts are small and synchronous so even immediate refresh preserves typing. */
-export function saveQuery(name:string,query:string){localStorage.setItem(queryKey(name),query);}
+export function saveQuery(name:string,query:string):Promise<void>{
+  try { localStorage.setItem(queryKey(name),query); }
+  catch { try { localStorage.removeItem(queryKey(name)); } catch { /* Browser storage denied. IndexedDB remains the fallback. */ } }
+  return put({key:'query:'+name,kind:'query',name,value:query});
+}

@@ -154,7 +154,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     const entry = activeRef.current ? databases.get(activeRef.current) : undefined;
     if (entry && activeRef.current) {
       entry.query = value;
-      if (storageAvailable) { try { saveQuery(activeRef.current,value); } catch { reportStorageError(); persist(saveDatabase(activeRef.current,entry)); } }
+      if (storageAvailable) persist(saveQuery(activeRef.current,value));
     }
   }
   function selectDatabase(name: string) {
@@ -171,7 +171,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if (databases.has(name) || running.current || loading) return;
     const entry = { query: '' };
     databases.set(name, entry);
-    if (storageAvailable) { try { saveQuery(name,''); } catch { reportStorageError(); } persist(saveDatabase(name,entry)); }
+    if (storageAvailable) { persist(saveQuery(name,'')); persist(saveDatabase(name,entry)); }
     setDatabaseNames([...databases.keys()]); selectDatabase(name); setModal('manual');
   }
   function openTable(mode: 'manual' | 'csv') {
@@ -251,6 +251,6 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     </div>
     {modal === 'database' && <CreateDatabaseDialog names={databaseNames} onCreate={createDatabase} onClose={() => setModal(null)}/>}
     {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} stoppable={busy && !saving} error={error} onClose={() => { setModal(null); setError(''); }} onStop={()=>stop()} onCreate={table => execute({ action:'create', table })} existingNames={state?.tables.map(table=>table.name)??[]} onImport={files => execute({action:'import',files})}/>}
-    {designTable && <DesignView table={designTable} busy={busy} error={error} onClose={()=>{setDesignTable(null);setError('');}} onStop={()=>stop()} onSave={design=>execute({action:'design',design})}/>}
+    {designTable && <DesignView table={designTable} busy={busy} stoppable={busy && !saving} error={error} onClose={()=>{setDesignTable(null);setError('');}} onStop={()=>stop()} onSave={design=>execute({action:'design',design})}/>}
   </main>;
 }
