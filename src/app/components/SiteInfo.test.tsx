@@ -99,7 +99,7 @@ it.each([
   expect(document.title).toBe(`Pico | ${title}`);
   expect([...dialog.querySelectorAll('h2')].some(heading => heading.textContent === section)).toBe(true);
   expect(localStorage.getItem('pico.projects.v1')).toBe(savedProjects);
-  expect(dialog.querySelector('time')?.getAttribute('dateTime')).toBe(hash === '/app/privacy' ? '2026-11-27' : hash === '/app/ai-usage' ? '2026-11-14' : '2026-10-24');
+  expect(dialog.querySelector('time')?.getAttribute('dateTime')).toBe(hash === '/app/ai-usage' ? '2026-11-14' : '2026-11-28');
   expect(host.querySelector('.pico-home')).not.toBeNull();
 });
 
@@ -107,9 +107,8 @@ it('discloses current workspace analytics and separately submitted reports', asy
   window.history.replaceState(null, '', '/app/privacy');
   await renderApp();
   const page = host.querySelector('.site-info-page')!;
-  expect(page.textContent).toContain('Binary Lab and Traffic Storm');
+  expect(page.textContent).toContain('Binary Lab, Traffic Storm and SQL Playground');
   expect(page.textContent).toContain('Learn and Games do not have separate workspace-time tracking');
-  expect(page.textContent).toContain('Traffic Storm and SQL Playground');
   expect(page.textContent).toContain('not database contents, table or field names, imported files, SQL statements or query results');
   expect(page.textContent).toContain('through Resend');
   expect(page.textContent).toContain('Cloudflare Turnstile');
