@@ -81,7 +81,7 @@ it('keeps the original Pico logo and all eight initial workspace previews withou
   await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true,cancelable:true})));
   expect(container.querySelector('.home-quick-dialog')).toBeNull();
   expect(container.querySelectorAll('.compiler-choice-stage[data-preview-step="0"]')).toHaveLength(8);
-  expect([...container.querySelectorAll('.home-preview-output')].map(node=>node.textContent)).toEqual(['> 42','> 42']);
+  expect([...container.querySelectorAll('.home-preview-output')].map(node=>node.textContent)).toEqual(['> 42', '> 42', '2 rows returned']);
   expect(container.querySelector('.home-binary-equation')?.textContent).toBe('0010 1010=42=0x2A');
 });
 it('shows only the eleven technology logos in a seamless carousel without playback buttons',()=>{
