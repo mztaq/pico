@@ -148,8 +148,8 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         <h1 className="sql-workspace-title">SQL Playground</h1>
       </div>
       <div className="topbar-spacer"/>
-      <button type="button" className="toolbar-button sql-create-database" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={15}/> Database</button>
-      <button type="button" className="toolbar-button sql-create-table" disabled={disabled || !activeDatabase} onClick={() => openTable('manual')}><Plus size={15}/> Table</button>
+      <button type="button" className="toolbar-button sql-create-database" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={15}/> Create database</button>
+      <button type="button" className="toolbar-button sql-create-table" disabled={disabled || !activeDatabase} onClick={() => openTable('manual')}><Plus size={15}/> Create table</button>
       <div className="settings-anchor" ref={settingsAnchor}>
         <button type="button" className={`topbar-icon ${themeOpen ? 'active' : ''}`} aria-label="Open settings" aria-expanded={themeOpen} title="Settings" onClick={() => setThemeOpen(open => !open)}><Settings2 size={16}/></button>
         <FloatingPanel anchor={settingsAnchor} open={themeOpen} className="settings-popover">
@@ -190,7 +190,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       <section ref={mainRef} className="sql-main" style={{ '--sql-editor-ratio': editorRatio + '%' } as CSSProperties}>
         <section className="editor-card sql-editor-panel">
           <div className="file-tabs sql-editor-tabs"><div className="file-tab active sql-file-tab"><FileCode2 size={15}/><span>query.sql</span></div></div>
-          <SqlEditor value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables ?? []}/>
+          <SqlEditor key={activeDatabase ?? "no-database"} value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables ?? []}/>
           <div className="editor-card-foot sql-editor-footer"><span>SQLite</span><span>{sql.split('\n').length} {sql.split('\n').length === 1 ? 'line' : 'lines'}</span></div>
         </section>
         <ResizeHandle axis="y" label="Resize query results" onResize={delta => setEditorRatio(value => Math.max(25, Math.min(75, value + delta / Math.max(1, mainRef.current?.clientHeight ?? 600) * 100)))}/>
@@ -202,6 +202,6 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       </section>
     </div>
     {modal === 'database' && <CreateDatabaseDialog names={databaseNames} onCreate={createDatabase} onClose={() => setModal(null)}/>}
-    {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} error={error} onClose={() => { setModal(null); setError(''); }} onStop={() => { if (!reading) stop(); }} onCreate={table => execute({ action:'create', table })} onImport={files => { void importFiles(files); }}/>}
+    {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} stoppable={busy && !reading} error={error} onClose={() => { setModal(null); setError(''); }} onStop={() => { if (!reading) stop(); }} onCreate={table => execute({ action:'create', table })} onImport={files => { void importFiles(files); }}/>}
   </main>;
 }

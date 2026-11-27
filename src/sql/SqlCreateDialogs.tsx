@@ -35,9 +35,9 @@ export function CreateDatabaseDialog({ names, onCreate, onClose }: { names: stri
   </Modal>;
 }
 
-interface TableProps { databaseName: string; initialMode: 'manual' | 'csv'; busy: boolean; error: string; onClose: () => void; onStop: () => void; onCreate: (table: ManualTable) => void; onImport: (files: File[]) => void; }
+interface TableProps { databaseName: string; initialMode: 'manual' | 'csv'; busy: boolean; stoppable: boolean; error: string; onClose: () => void; onStop: () => void; onCreate: (table: ManualTable) => void; onImport: (files: File[]) => void; }
 const blankColumn = (): ManualColumn => ({ name:'', type:'TEXT', primaryKey:false });
-export function CreateTableDialog({ databaseName, initialMode, busy, error, onClose, onStop, onCreate, onImport }: TableProps) {
+export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, error, onClose, onStop, onCreate, onImport }: TableProps) {
   const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<ManualColumn[]>([blankColumn(), blankColumn()]);
@@ -113,7 +113,7 @@ export function CreateTableDialog({ databaseName, initialMode, busy, error, onCl
       </>}
       {(validation || error) && <p role="alert" className="sql-dialog-error">{validation || error}</p>}
       <div className="sql-dialog-actions">
-        {busy ? <button type="button" className="toolbar-button stop-button" onClick={onStop}>Stop</button> : <button type="button" className="subtle-button" onClick={onClose}>Cancel</button>}
+        {busy ? <button type="button" className="toolbar-button stop-button" disabled={!stoppable} onClick={onStop}>Stop</button> : <button type="button" className="subtle-button" onClick={onClose}>Cancel</button>}
         <button type="button" className="run-button" disabled={busy || (mode === 'manual' ? !name.trim() : !files.length)} onClick={submit}>{busy ? 'Working…' : mode === 'manual' ? 'Create table' : 'Import CSV'}</button>
       </div>
     </div>
