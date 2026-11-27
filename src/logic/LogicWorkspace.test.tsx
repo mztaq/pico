@@ -111,3 +111,26 @@ it('drops a palette component using pointer events without the WebView native Co
   expect(host.querySelector('.pico-palette-drag-preview')).toBeNull();
   expect(host.querySelector('.logic-placement-hint')).toBeNull();
 });
+
+it('fits the rendered circuit again after auto-layout commits its new positions',async()=>{
+  const board=host.querySelector<SVGSVGElement>('svg[aria-label="Circuit canvas"]')!;
+  Object.defineProperties(board,{clientWidth:{value:1000},clientHeight:{value:600}});
+  const group=board.querySelector<SVGGElement>('.logic-circuit-content')!;
+  const getBounds=vi.fn(()=>({x:-1000,y:-500,width:6000,height:3000}));
+  Object.defineProperty(group,'getBBox',{value:getBounds});
+  const fit=host.querySelector<HTMLButtonElement>('[aria-label="Fit circuit"]')!;
+  const auto=host.querySelector<HTMLButtonElement>('[aria-label="Auto-layout circuit"]')!;
+  await act(async()=>fit.click());
+  expect(group.parentElement!.getAttribute('transform')).toContain('scale(0.');
+  expect(Number(host.querySelector('.logic-zoom')!.textContent!.replace('%',''))).toBeLessThan(35);
+  const before=nodes()[0]!.firstElementChild!.getAttribute('transform');
+  getBounds.mockImplementation(()=>{
+    expect(nodes()[0]!.firstElementChild!.getAttribute('transform')).not.toBe(before);
+    return {x:64,y:48,width:5000,height:2400};
+  });
+  await act(async()=>auto.click());
+  const fitted=group.parentElement!.getAttribute('transform');
+  expect(getBounds).toHaveBeenCalledTimes(2);
+  await act(async()=>fit.click());
+  expect(group.parentElement!.getAttribute('transform')).toBe(fitted);
+});
