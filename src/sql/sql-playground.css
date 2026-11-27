@@ -108,3 +108,20 @@
 .sql-app .sql-query-error details { color:var(--ds-muted); font-size:var(--ds-text-xs); }
 .sql-app .sql-query-error summary { cursor:pointer; }
 .sql-app .sql-error-token { text-decoration:underline wavy var(--ds-danger); text-underline-offset:4px; }
+
+.sql-app .sql-table-tools{display:flex;align-items:center;flex-wrap:wrap;gap:2px;padding-left:8px}
+.sql-app .sql-table-tools .sql-preview-table{margin-left:0}
+.sql-app .sql-table-item li>span{display:flex;align-items:center;gap:4px;min-width:0;overflow-wrap:anywhere}
+.sql-app .sql-table-item li svg{color:var(--accent);flex-shrink:0}
+.sql-app .sql-design-grid{overflow:auto;max-height:360px;border:1px solid var(--ds-line);border-radius:var(--ds-radius-md)}
+.sql-app .sql-design-grid table{width:100%;border-collapse:separate;border-spacing:0;font:inherit}
+.sql-app .sql-design-grid th,.sql-app .sql-design-grid td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--ds-line);border-right:1px solid var(--ds-line)}
+.sql-app .sql-design-grid th{position:sticky;top:0;z-index:1;background:var(--ds-panel-raised);font-weight:600;white-space:nowrap}
+.sql-app .sql-design-grid td:first-child{width:32px}
+.sql-app .sql-design-grid td input,.sql-app .sql-design-grid td select{width:100%;min-width:120px}
+.sql-app .sql-design-grid .sql-key-toggle{color:var(--ds-muted);opacity:.5}
+.sql-app .sql-design-grid .sql-key-toggle.active{color:var(--accent);opacity:1;background:var(--ds-accent-soft)}
+.sql-app .sql-design-sample{max-width:200px;min-width:110px;overflow-wrap:anywhere;color:var(--ds-muted);font-size:var(--ds-text-xs)}
+.sql-app .sql-import-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sql-app .sql-import-picker button,.sql-app .sql-dialog-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.sql-app .sql-import-picker span{color:var(--ds-muted);font-size:var(--ds-text-xs)}

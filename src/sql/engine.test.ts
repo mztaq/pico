@@ -142,3 +142,27 @@ describe('SQL query diagnostics', () => {
     expect(diagnoseSqlError('no such column: Missing','SELECT Missing, Missing FROM Students').line).toBeUndefined();
   });
 });
+
+describe('Access-style import and Design View', () => {
+  it('imports selected data types without losing text formatting or keys', () => {
+    const data=executeSql(SQL,{action:'import',files:[{name:'records.csv',text:'id,active,score\n001,yes,90\n002,no,85',tableName:'Students',columns:[{name:'ID',type:'TEXT',primaryKey:true},{name:'Active',type:'BOOLEAN',primaryKey:false},{name:'Score',type:'REAL',primaryKey:false}]}]});
+    expect(data.result?.rows).toEqual([['001',1,90],['002',0,85]]);
+    expect(data.tables[0]?.columns[0]?.primaryKey).toBe(true);
+  });
+  it('changes names, types and keys while preserving records, and rejects invalid conversions', () => {
+    const imported=executeSql(SQL,{action:'import',files:[{name:'data.csv',text:'id,score\n001,90\n002,85'}]});
+    const changed=executeSql(SQL,{action:'design',database:imported.database,design:{name:'data',columns:[{name:'StudentID',type:'INTEGER',primaryKey:true},{name:'Score',type:'TEXT',primaryKey:false}]}});
+    expect(changed.result?.rows).toEqual([[1,'90'],[2,'85']]);
+    const again=executeSql(SQL,{action:'design',database:changed.database,design:{name:'data',columns:[{name:'StudentID',type:'TEXT',primaryKey:true},{name:'Score',type:'INTEGER',primaryKey:false}]}});
+    expect(again.result?.rows).toEqual([['1',90],['2',85]]);
+    expect(()=>executeSql(SQL,{action:'design',database:changed.database,design:{name:'data',columns:[{name:'StudentID',type:'INTEGER',primaryKey:true},{name:'Score',type:'BOOLEAN',primaryKey:false}]}})).toThrow(/Row 1, Score/);
+    expect(executeSql(SQL,{action:'query',database:changed.database,sql:'SELECT * FROM data ORDER BY StudentID;'}).result?.rows).toEqual([[1,'90'],[2,'85']]);
+  });
+  it('does not silently discard dependent SQL structures or commit a failed import', () => {
+    const data=executeSql(SQL,{action:'import',files:[{name:'data.csv',text:'id\n1\n2'}]});
+    const indexed=executeSql(SQL,{action:'query',database:data.database,sql:'CREATE INDEX idx ON data(id);'});
+    expect(()=>executeSql(SQL,{action:'design',database:indexed.database,design:{name:'data',columns:[{name:'id',type:'TEXT',primaryKey:false}]}})).toThrow(/indexes/);
+    expect(()=>executeSql(SQL,{action:'import',database:data.database,files:[{name:'invalid.csv',text:'x\nnot-a-number',columns:[{name:'x',type:'INTEGER',primaryKey:false}]}]})).toThrow(/Row 1, x/);
+    expect(executeSql(SQL,{action:'query',database:data.database,sql:'SELECT * FROM data;'}).result?.rows).toEqual([[1],[2]]);
+  });
+});

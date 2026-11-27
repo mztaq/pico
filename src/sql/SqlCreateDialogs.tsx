@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type ClipboardEvent, type ReactNode } from 'react';
 import { Database, Plus, Table2, Trash2, Upload, X } from 'lucide-react';
+import { CsvImportDesign } from './SqlTableDesign';
+import type { CsvImportFile } from './engine';
 import { columnTypes, type ColumnType, type ManualColumn, type ManualTable, validateManualTable, resizeManualGrid, columnTypeLabels } from './manual-table';
 
-function Modal({ title, children, onClose, busy = false }: { title: string; children: ReactNode; onClose: () => void; busy?: boolean }) {
+export function Modal({ title, children, onClose, busy = false }: { title: string; children: ReactNode; onClose: () => void; busy?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -35,9 +37,9 @@ export function CreateDatabaseDialog({ names, onCreate, onClose }: { names: stri
   </Modal>;
 }
 
-interface TableProps { databaseName: string; initialMode: 'manual' | 'csv'; busy: boolean; stoppable: boolean; error: string; onClose: () => void; onStop: () => void; onCreate: (table: ManualTable) => void; onImport: (files: File[]) => void; }
+interface TableProps { databaseName: string; initialMode: 'manual' | 'csv'; busy: boolean; stoppable: boolean; error: string; onClose: () => void; onStop: () => void; onCreate: (table: ManualTable) => void; onImport: (files: CsvImportFile[]) => void; existingNames: string[]; }
 const blankColumn = (): ManualColumn => ({ name:'', type:'TEXT', primaryKey:false });
-export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, error, onClose, onStop, onCreate, onImport }: TableProps) {
+export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, error, onClose, onStop, onCreate, onImport, existingNames }: TableProps) {
   const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<ManualColumn[]>([blankColumn(), blankColumn()]);
@@ -49,7 +51,8 @@ export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, 
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const page = Math.min(recordPage, pageCount - 1);
   useEffect(() => { setFieldCount(String(columns.length)); setRecordCount(String(rows.length)); }, [columns.length, rows.length]);
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<CsvImportFile[]>([]);
+  const [csvReading, setCsvReading] = useState(false);
   const [validation, setValidation] = useState('');
   function applySize() {
     const fields = Number(fieldCount), records = Number(recordCount);
@@ -95,18 +98,18 @@ export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, 
     setValidation('');
   }
   function submit() {
-    if (mode === 'csv') { if (files.length) onImport(files); return; }
+    if (mode === 'csv') { if (files.length && !csvReading) onImport(files); return; }
     if (fieldCount !== String(columns.length) || recordCount !== String(rows.length)) { setValidation('Select Set size before creating the table.'); return; }
     const table = { name, columns, rows: rows.filter(row => row.some(cell => cell !== '')) };
     try { validateManualTable(table); setValidation(''); onCreate(table); }
     catch (cause) { setValidation(cause instanceof Error ? cause.message : String(cause)); }
   }
-  return <Modal title="Create table" busy={busy} onClose={onClose}>
+  return <Modal title="Create table" busy={busy || csvReading} onClose={onClose}>
     <div className="sql-dialog-form sql-table-form">
       <div className="sql-dialog-db"><Database size={15}/>{databaseName}</div>
       <div className="sql-mode-switch" role="group" aria-label="Table source">
-        <button type="button" className={'subtle-button' + (mode === 'manual' ? ' active' : '')} aria-pressed={mode === 'manual'} disabled={busy} onClick={() => { setMode('manual'); setValidation(''); }}><Table2 size={16}/> Enter manually</button>
-        <button type="button" className={'subtle-button' + (mode === 'csv' ? ' active' : '')} aria-pressed={mode === 'csv'} disabled={busy} onClick={() => { setMode('csv'); setValidation(''); }}><Upload size={16}/> Import CSV</button>
+        <button type="button" className={'subtle-button' + (mode === 'manual' ? ' active' : '')} aria-pressed={mode === 'manual'} disabled={busy || csvReading} onClick={() => { setMode('manual'); setValidation(''); }}><Table2 size={16}/> Enter manually</button>
+        <button type="button" className={'subtle-button' + (mode === 'csv' ? ' active' : '')} aria-pressed={mode === 'csv'} disabled={busy || csvReading} onClick={() => { setMode('csv'); setValidation(''); }}><Upload size={16}/> Import CSV</button>
       </div>
       {mode === 'manual' ? <>
         <label>Table name<input autoFocus disabled={busy} value={name} onChange={event => setName(event.target.value)} maxLength={100} placeholder="Enter a table name"/></label>
@@ -132,14 +135,12 @@ export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, 
         {pageCount > 1 && <div className="sql-record-pages"><span>Records {page * pageSize + 1}–{Math.min(rows.length, (page + 1) * pageSize)} of {rows.length}</span><button type="button" className="toolbar-button" disabled={page === 0 || busy} onClick={() => setRecordPage(page - 1)}>Previous</button><button type="button" className="toolbar-button" disabled={page + 1 >= pageCount || busy} onClick={() => setRecordPage(page + 1)}>Next</button></div>}
         <p className="sql-form-note">Type records or paste spreadsheet cells. Empty cells become NULL. Fully blank rows are skipped. Use YYYY-MM-DD or HH:MM[:SS] for dates and times.</p>
       </> : <>
-        <label className="sql-csv-select">CSV files<input type="file" multiple accept=".csv,text/csv" disabled={busy} onChange={event=>setFiles([...event.target.files ?? []])}/></label>
-        <p className="sql-form-note">Each file becomes a table named after the file. The first row supplies field names. Up to 5 MB per file.</p>
-        {files.length > 0 && <ul className="sql-file-selection">{files.map((file,i)=><li key={i}><Table2 size={15}/>{file.name}</li>)}</ul>}
+        <CsvImportDesign existingNames={existingNames} files={files} onChange={setFiles} disabled={busy} onReading={setCsvReading}/>
       </>}
       {(validation || error) && <p role="alert" className="sql-dialog-error">{validation || error}</p>}
       <div className="sql-dialog-actions">
-        {busy ? <button type="button" className="toolbar-button stop-button" disabled={!stoppable} onClick={onStop}>Stop</button> : <button type="button" className="subtle-button" onClick={onClose}>Cancel</button>}
-        <button type="button" className="run-button" disabled={busy || (mode === 'manual' ? !name.trim() : !files.length)} onClick={submit}>{busy ? 'Working…' : mode === 'manual' ? 'Create table' : 'Import CSV'}</button>
+        {busy ? <button type="button" className="toolbar-button stop-button" disabled={!stoppable} onClick={onStop}>Stop</button> : <button type="button" className="subtle-button" disabled={csvReading} onClick={onClose}>Cancel</button>}
+        <button type="button" className="run-button" disabled={busy || csvReading || (mode === 'manual' ? !name.trim() : !files.length)} onClick={submit}>{busy ? 'Working…' : mode === 'manual' ? 'Create table' : 'Import CSV'}</button>
       </div>
     </div>
   </Modal>;
