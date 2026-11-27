@@ -158,3 +158,16 @@
   .flow-builder .flow-palette-block strong { font-size: 12px; }
   .flow-builder .flow-palette-block small { font-size: 10px; }
 }
+
+/* Keep the labelled canvas controls readable without widening the workspace. */
+.flow-builder .flow-canvas-toolbar { min-height: 48px; }
+.flow-builder .flow-canvas-toolbar > span { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flow-builder .flow-canvas-toolbar > div { margin-left: auto; flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
+.flow-builder .flow-canvas-toolbar button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: auto; height: 34px; min-width: 34px; padding: 0 9px;
+  flex: 0 0 auto; white-space: nowrap; font-size: 12px;
+}
+.flow-builder .flow-canvas-toolbar button svg { flex-shrink: 0; }
+.flow-builder .flow-canvas-toolbar output { flex: 0 0 auto; font-size: 12px; }
+.flow-builder .flow-canvas-toolbar .flow-auto-layout { flex: 0 0 auto; width: auto; border: 0; background: transparent; }
