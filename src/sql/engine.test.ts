@@ -37,3 +37,21 @@ describe('real SQLite', () => {
     expect(reply.result?.truncated).toBe(true);
   });
 });
+
+describe('manual worksheet tables', () => {
+  it('creates named fields with types and primary keys and joins manual and CSV tables', () => {
+    const created = executeSql(SQL, { action:'create', table:{name:'Students', columns:[{name:'ID',type:'INTEGER',primaryKey:true},{name:'Full name',type:'TEXT',primaryKey:false},{name:'Active',type:'BOOLEAN',primaryKey:false}], rows:[['1','Ada','true'],['2',"O'Brien",'false']]} });
+    expect(created.tables[0]?.name).toBe('Students');
+    expect(created.result?.rows).toEqual([[1,'Ada',1],[2,"O'Brien",0]]);
+    const imported=executeSql(SQL,{action:'import',database:created.database,files:[{name:'marks.csv',text:'id,score\n1,96\n2,78'}]});
+    expect(executeSql(SQL,{action:'query',database:imported.database,sql:'SELECT "Full name", score FROM Students JOIN marks ON Students.ID=marks.id WHERE Active=1;'}).result?.rows).toEqual([['Ada',96]]);
+  });
+  it('supports empty tables and rejects duplicate names, invalid integers and duplicate primary keys', () => {
+    const columns=[{name:'ID',type:'INTEGER',primaryKey:true}] as const;
+    const create=(rows:string[][])=>executeSql(SQL,{action:'create',table:{name:'Records',columns:[...columns],rows}});
+    expect(create([]).tables).toHaveLength(1);
+    expect(()=>create([['bad']])).toThrow(/integer/);
+    expect(()=>create([['1'],['1']])).toThrow(/UNIQUE/);
+    expect(()=>executeSql(SQL,{action:'create',table:{name:'Records',columns:[...columns,...columns],rows:[]}})).toThrow(/unique/);
+  });
+});

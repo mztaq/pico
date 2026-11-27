@@ -1,11 +1,13 @@
 import type { Database, SqlModule, SqlValue } from 'sql.js';
 import { csvTable, quoteIdentifier, tableName, type Cell } from './csv';
 
+import { validateManualTable, type ManualTable } from './manual-table';
+
 export const MAX_RESULT_ROWS = 500;
 const MAX_DATABASE_BYTES = 32 * 1024 * 1024;
 export interface TableInfo { name: string; columns: { name: string; type: string }[]; }
 export interface QueryResult { columns: string[]; rows: Cell[][]; truncated: boolean; }
-export interface SqlRequest { database?: Uint8Array; action: 'init' | 'reset' | 'import' | 'query'; files?: { name: string; text: string }[]; sql?: string; }
+export interface SqlRequest { database?: Uint8Array; action: 'init' | 'reset' | 'import' | 'create' | 'query'; table?: ManualTable; files?: { name: string; text: string }[]; sql?: string; }
 export interface SqlResponse { database: Uint8Array; tables: TableInfo[]; result: QueryResult | null; message: string; suggestedQuery?: string; }
 export type WorkerReply = { ok: true; value: SqlResponse } | { ok: false; error: string } | { ready: true };
 
@@ -65,6 +67,24 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
         result = query(db, suggestedQuery);
       }
       message = 'Imported ' + imported.length + (imported.length === 1 ? ' table' : ' tables');
+    } else if (request.action === 'create') {
+      if (!request.table) throw new Error('Enter table details.');
+      const { name, columns, values } = validateManualTable(request.table);
+      const keys = columns.filter(column => column.primaryKey);
+      const definitions = columns.map(column => quoteIdentifier(column.name) + ' ' + column.type + (column.primaryKey ? ' NOT NULL' : ''));
+      if (keys.length) definitions.push('PRIMARY KEY (' + keys.map(column => quoteIdentifier(column.name)).join(', ') + ')');
+      db.run('CREATE TABLE ' + quoteIdentifier(name) + ' (' + definitions.join(', ') + ')');
+      if (values.length) {
+        const insert = db.prepare('INSERT INTO ' + quoteIdentifier(name) + ' VALUES (' + columns.map(() => '?').join(', ') + ')');
+        try {
+          db.run('BEGIN');
+          for (const row of values) insert.run(row);
+          db.run('COMMIT');
+        } finally { insert.free(); }
+      }
+      suggestedQuery = 'SELECT * FROM ' + quoteIdentifier(name) + ';';
+      result = query(db, suggestedQuery);
+      message = 'Created ' + name;
     } else if (request.action === 'query') {
       if (!request.sql?.trim()) throw new Error('Enter a SQL statement.');
       if (request.sql.length > 100_000) throw new Error('Query exceeds 100,000 characters.');
