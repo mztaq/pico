@@ -34,7 +34,7 @@ export function startFluid(canvas, initialPalette, onFailure) {
   const resources = new Map();
   const parent = canvas.parentElement.parentElement;
   const compact = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-  const config = { SIM_RESOLUTION: 256, DYE_RESOLUTION: compact ? 192 : 320,
+  const config = { SIM_RESOLUTION: 128, DYE_RESOLUTION: compact ? 192 : 320,
     PRESSURE_ITERATIONS: compact ? 8 : 12, PRESSURE: 0.8, CURL: 24,
     DENSITY_DISSIPATION: 0.85, VELOCITY_DISSIPATION: 0.55, SPLAT_RADIUS: 0.28 };
   let lastPointer = null;
