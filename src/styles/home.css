@@ -267,14 +267,14 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   --home-glass-cool: color-mix(in srgb, #83b9cb 50%, #8bcbb6);
   --home-glass-tint: color-mix(in srgb, var(--accent) 80%, var(--home-glass-cool));
   --home-glass-base: color-mix(in srgb, var(--bg) 78%, var(--ds-panel-raised));
-  --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 55%, transparent);
-  --home-glass-stage: color-mix(in srgb, var(--bg) 25%, transparent);
+  --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 70%, transparent);
+  --home-glass-stage: color-mix(in srgb, var(--bg) 38%, transparent);
   --home-glass-edge: color-mix(in srgb, var(--home-glass-tint) 30%, var(--ds-line-strong));
   --home-glass-highlight: color-mix(in srgb, var(--home-glass-tint) 13%, transparent);
   --home-glass-rim: color-mix(in srgb, #fff 20%, transparent);
   --home-glass-copy: color-mix(in srgb, var(--ds-text) 85%, var(--ds-muted));
   --home-glass-blur: 6px;
-  --home-glass-code-opacity: 64%;
+  --home-glass-code-opacity: 78%;
   --home-card-radius: 20px;
   --home-card-padding: 16px;
 }
@@ -350,7 +350,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   outline-offset: 3px;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .pico-home.pico-home-glass { --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 65%, transparent); }
+  .pico-home.pico-home-glass { --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 82%, transparent); }
   .pico-home.pico-home-glass[data-high-contrast='true'] { --home-glass-fill: color-mix(in srgb, var(--bg) 94%, transparent); }
 }
 @media (max-width: 640px) {
