@@ -169,3 +169,17 @@ describe('Pico Status active incident placement',()=>{
     page.window.close();
   });
 });
+
+
+it('uses the Pico logo alone and a styled return link in the public status header',async()=>{
+  const page=await render([]);
+  const doc=page.window.document;
+  expect(doc.querySelector('header .brand')?.textContent?.trim()).toBe('Pico.');
+  expect(doc.querySelector('header .brand .suffix')).toBeNull();
+  const back=doc.querySelector<HTMLAnchorElement>('header .back');
+  expect(back?.getAttribute('href')).toBe('https://picompiler.pages.dev/');
+  expect(back?.textContent).toContain('Back to Pico');
+  expect(page.window.getComputedStyle(back!).display).toBe('inline-flex');
+  expect(page.window.getComputedStyle(back!).borderRadius).toBe('6px');
+  page.window.close();
+});

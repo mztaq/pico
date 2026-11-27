@@ -53,10 +53,9 @@
     .nav { min-height: 88px; display: flex; justify-content: space-between; gap: 16px; align-items: center; }
     .brand { display: flex; gap: 10px; align-items: center; color: var(--bright); font-size: 20px; font-weight: 800; letter-spacing: -.85px; white-space: nowrap; }
     .brand img { width: 36px; height: 36px; }
-    .brand .divider { width: 1px; height: 22px; background: var(--edge); margin: 0 6px 0 8px; }
-    .brand .suffix { color: var(--muted); font-size: 14px; font-weight: 500; letter-spacing: 0; }
-    .back { color: var(--muted); font-size: 13px; font-weight: 550; white-space: nowrap; }
-    .back:hover { color: var(--bright); }
+    .back { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 0 14px; border: 1px solid var(--edge); border-radius: 6px; background: var(--panel); color: var(--bright); font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .back:hover { border-color: var(--muted); }
+    .back:focus-visible { outline: 2px solid var(--muted); outline-offset: 3px; }
     main { padding: 55px 0 98px; }
     h1,h2,h3,p { margin-top: 0; }
     h1 { font-size: clamp(29px, 5vw, 38px); font-weight: 770; line-height: 1.16; letter-spacing: -1.5px; color: var(--bright); margin-bottom: 24px; }
@@ -130,8 +129,8 @@
       .nav { min-height: 72px; }
       .brand { font-size: 18px; gap: 8px; }
       .brand img { width: 31px; height: 31px; }
-      .brand .divider { margin-left: 5px; margin-right: 2px; height: 18px; }
-      .brand .suffix, .back { font-size: 12px; }
+
+      .back { font-size: 12px; }
       main { padding: 40px 0 72px; }
       h1 { margin-bottom: 19px; }
       .overall { min-height: 106px; padding: 26px 23px; }
@@ -171,7 +170,7 @@
     <nav class="container nav" aria-label="Main navigation">
       <a class="brand" href="https://picompiler.pages.dev/" aria-label="Pico home">
         <img src="/pico-logo.svg" alt="" width="36" height="36">
-        <span>Pico.</span><span class="divider"></span><span class="suffix">Status</span>
+        <span>Pico.</span>
       </a>
       <a class="back" href="https://picompiler.pages.dev/">← Back to Pico</a>
     </nav>
