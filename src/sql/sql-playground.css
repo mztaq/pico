@@ -124,3 +124,5 @@
 .sql-app .sql-import-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .sql-app .sql-import-picker button,.sql-app .sql-dialog-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
 .sql-app .sql-import-picker span{color:var(--ds-muted);font-size:var(--ds-text-xs)}
+
+.sql-app .sql-storage-warning { padding:8px 14px; color:var(--ds-text); background:color-mix(in srgb,var(--ds-danger) 10%,var(--ds-panel)); border-bottom:1px solid var(--ds-danger); font-size:var(--ds-text-xs); }
