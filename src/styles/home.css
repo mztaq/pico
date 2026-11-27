@@ -446,4 +446,3 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .home-traffic-preview .home-traffic-server { stroke: var(--accent); stroke-width: 1.8; }
 .pico-home-glass .home-traffic-preview .home-traffic-status-light, .pico-home-glass .home-traffic-preview .home-traffic-load { fill: var(--accent); stroke: none; }
 .pico-home-glass .home-traffic-preview .home-traffic-load-track { fill: var(--ds-line); stroke: none; }
-.pico-home-glass .home-traffic-preview text.home-traffic-rate { font-size: 9px; font-weight: 700; fill: var(--ds-muted); }
