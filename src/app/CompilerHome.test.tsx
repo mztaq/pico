@@ -58,16 +58,15 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
-it('shows the technology cycle and lets users pause it', async()=>{
+it('shows only the four service logos in a seamless carousel without playback buttons',()=>{
   const cycle = container.querySelector('.home-tech-cycle');
   expect(cycle).not.toBeNull();
-  expect([...cycle!.querySelectorAll('.home-tech-item')].map(node=>node.textContent)).toEqual(['Cloudflare','GitHub','Resend','React','TypeScript','Vite']);
-  const pause = cycle!.querySelector<HTMLButtonElement>('[aria-label="Pause technology animation"]')!;
-  await click(pause);
-  expect(cycle?.getAttribute('data-paused')).toBe('true');
-  expect(pause.getAttribute('aria-label')).toBe('Resume technology animation');
-  await click(pause);
-  expect(cycle?.getAttribute('data-paused')).toBe('false');
+  const expected = ['Cloudflare','GitHub','Resend','UptimeRobot'];
+  const strips = [...cycle!.querySelectorAll('.home-tech-strip')];
+  expect(strips).toHaveLength(2);
+  for(const strip of strips) expect([...strip.querySelectorAll('.home-tech-item')].map(node=>node.textContent)).toEqual(expected);
+  expect(cycle!.querySelector('button')).toBeNull();
+  expect(cycle!.querySelector('.home-tech-window')?.getAttribute('tabindex')).toBe('0');
 });
 it('resets test navigation after visiting Games', async()=>{
   const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
