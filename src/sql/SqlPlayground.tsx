@@ -9,7 +9,7 @@ import { CreateDatabaseDialog, CreateTableDialog } from './SqlCreateDialogs';
 import { Modal } from './SqlDialog';
 import { DesignView } from './SqlTableDesign';
 import { SqlDatasheet } from './SqlDatasheet';
-import type { FieldDisplay, TableDisplay } from './formats';
+import type { TableDisplay } from './formats';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { toCsv } from './csv';
 import { diagnoseSqlError, type SqlDiagnostic } from './diagnostics';
@@ -355,7 +355,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
               {selectedQuery?<button type="button" className="toolbar-button" disabled={disabled} onClick={()=>{setRenameQuery(true);setNameError('');setQueryName(selectedQuery);}}><Pencil size={14}/> Rename</button>:<button type="button" className="toolbar-button sql-save-query" disabled={disabled||!sql.trim()} onClick={saveCurrentQuery}><Save size={14}/> Save query</button>}
             </>}
             <span className="sql-view-spacer"/>
-            {view!=='sql'&&<button type="button" className="toolbar-button sql-export-csv" disabled={!result||disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button>}
+            {view!=='sql'&&<button type="button" className="toolbar-button sql-export-csv" title="Export underlying values to CSV" disabled={!result||disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button>}
           </div>
           {error&&<p className="sql-error" role="alert">{error}</p>}
           {isQuery&&queryError&&<div className="sql-error sql-query-error" role="alert"><strong>{queryError.diagnostic.title}{queryError.source===sql&&queryError.diagnostic.line?' · Line '+queryError.diagnostic.line:''}</strong><p>{queryError.diagnostic.message}</p>{queryError.diagnostic.detail!==queryError.diagnostic.message&&<details><summary>Technical details</summary><code>{queryError.diagnostic.detail}</code></details>}</div>}

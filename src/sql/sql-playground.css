@@ -162,9 +162,6 @@
 .sql-app .sql-view-spacer{flex:1}
 .sql-app .sql-view-button.active{background:var(--ds-accent-soft,var(--ds-hover));color:var(--accent)}
 .sql-app .sql-document-foot{flex-shrink:0;min-height:34px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
-.sql-app .sql-page-controls{display:flex;align-items:center;gap:4px;white-space:nowrap}
-.sql-app .sql-page-controls .topbar-icon{min-width:25px;width:25px;height:25px;padding:0}
-.sql-app .sql-page-controls .topbar-icon:disabled{opacity:.35}
 .sql-app .sql-document .sql-code-editor{min-height:0;flex:1}
 .sql-app .sql-document .sql-result-scroll{flex:1}
 .sql-app .sql-document .sql-result-scroll table{min-width:0;width:max-content}
@@ -178,3 +175,5 @@
 .sql-app .sql-document .sql-continuous-sheet th,.sql-app .sql-document .sql-continuous-sheet td{box-sizing:border-box;height:34px;max-width:none;min-width:0;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--ds-font-ui)}
 .sql-app .sql-document .sql-continuous-sheet .sql-virtual-spacer td{padding:0;border:0}
 .sql-app .sql-document .sql-continuous-sheet th{z-index:2}
+
+.sql-app .sql-document-tabs .file-tab.active::before,.sql-app .sql-document-tabs .file-tab.active::after{display:none}

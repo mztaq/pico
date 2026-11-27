@@ -168,7 +168,7 @@ describe('Access-style import and Design View', () => {
 });
 
 describe('Datasheet View',()=>{
-  it('browses every table record without pagination without mutating the database or running editor SQL',()=>{
+  it('browses records continuously without mutating the database or running editor SQL',()=>{
     const data=executeSql(SQL,{action:'query',sql:'CREATE TABLE Students (ID INTEGER); WITH RECURSIVE nums(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM nums WHERE n<605) INSERT INTO Students SELECT n FROM nums;'});
     const page=executeSql(SQL,{action:'browse',database:data.database,browse:{table:'Students'},sql:'DROP TABLE Students;'});
     expect(page.datasheet).toEqual({table:'Students',total:605});
