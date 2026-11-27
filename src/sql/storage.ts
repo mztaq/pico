@@ -66,7 +66,6 @@ export function restoreRecords(records: StoredRecord[]):SqlSavedState {
       const active=localStorage.getItem(ACTIVE_QUERY_PREFIX+encodeURIComponent(name));
       if(active&&entry.savedQueries.some(query=>query.name===active)){
         entry.activeQuery=active;
-        entry.savedQueries=entry.savedQueries.map(query=>query.name===active?{...query,sql:entry.query}:query);
       }
     } catch { /* Named queries remain available in IndexedDB. */ }
   }
@@ -109,3 +108,9 @@ export function saveQuery(name:string,query:string):Promise<void>{
 }
 
 export function saveActiveQuery(name:string,query:string|null){try{const key=ACTIVE_QUERY_PREFIX+encodeURIComponent(name);if(query===null)localStorage.removeItem(key);else localStorage.setItem(key,query);}catch{/* IndexedDB still retains named queries. */}}
+
+/** A draft remains separate from its explicitly saved query. */
+export function queryNeedsSave(sql:string,selectedQuery:string|null,queries:SavedQuery[]):boolean {
+  const saved=queries.find(query=>query.name===selectedQuery);
+  return saved ? sql!==saved.sql : Boolean(sql.trim());
+}

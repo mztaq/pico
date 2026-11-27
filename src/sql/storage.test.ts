@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { restoreRecords, type StoredRecord } from './storage';
+import { restoreRecords, queryNeedsSave, type StoredRecord } from './storage';
 import type { SqlResponse } from './engine';
 
 afterEach(()=>localStorage.clear());
@@ -36,7 +36,9 @@ describe('SQL local workspace restoration',()=>{
     localStorage.setItem('pico:sql:query:School','SELECT Score FROM Students;');
     const saved=restoreRecords([{key:'database:School',kind:'database',name:'School',query:''},{key:'savedQueries:School',kind:'savedQueries',name:'School',value:[{name:'Query1',sql:'SELECT * FROM Students;'}]}]);
     expect(saved.databases.get('School')?.activeQuery).toBe('Query1');
-    expect(saved.databases.get('School')?.savedQueries?.[0]?.sql).toBe('SELECT Score FROM Students;');
+    expect(saved.databases.get('School')?.query).toBe('SELECT Score FROM Students;');
+    expect(saved.databases.get('School')?.savedQueries?.[0]?.sql).toBe('SELECT * FROM Students;');
+    expect(queryNeedsSave(saved.databases.get('School')!.query,'Query1',saved.databases.get('School')!.savedQueries!)).toBe(true);
   });
   it('restores field formats independently for each database',()=>{
     const saved=restoreRecords([{key:'database:A',kind:'database',name:'A',query:''},{key:'database:B',kind:'database',name:'B',query:''},{key:'displays:A',kind:'displays',name:'A',value:[{table:'Students',fields:[{name:'Passed',format:'yes-no'}]}]}]);
@@ -51,5 +53,16 @@ describe('SQL local workspace restoration',()=>{
   });
   it('refuses invalid database bytes instead of silently replacing saved data',()=>{
     expect(()=>restoreRecords([{key:'database:School',kind:'database',name:'School',query:'',response:{...response,database:[1,2] as unknown as Uint8Array}}])).toThrow(/Invalid saved database/);
+  });
+});
+
+describe('explicit query saving',()=>{
+  it('requires saving changed or unnamed drafts, not unchanged queries',()=>{
+    const queries=[{name:'Query1',sql:'SELECT * FROM Students;'}];
+    expect(queryNeedsSave('SELECT * FROM Students;','Query1',queries)).toBe(false);
+    expect(queryNeedsSave('SELECT Name FROM Students;','Query1',queries)).toBe(true);
+    expect(queryNeedsSave('', 'Query1',queries)).toBe(true);
+    expect(queryNeedsSave('SELECT 1;',null,queries)).toBe(true);
+    expect(queryNeedsSave(' ',null,queries)).toBe(false);
   });
 });

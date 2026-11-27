@@ -14,7 +14,7 @@ import { ThemePicker } from '../app/components/ThemePicker';
 import { toCsv } from './csv';
 import { diagnoseSqlError, type SqlDiagnostic } from './diagnostics';
 import type { SqlRequest, SqlResponse, WorkerReply, TableInfo, QueryResult } from './engine';
-import { loadSqlState, saveDatabase, saveSelection, saveQuery, saveLayout, saveNamedQueries, saveActiveQuery, saveDisplays, type SavedQuery, type DatabaseSession, type SqlLayout } from './storage';
+import { loadSqlState, saveDatabase, saveSelection, saveQuery, saveLayout, saveNamedQueries, saveActiveQuery, saveDisplays, queryNeedsSave, type SavedQuery, type DatabaseSession, type SqlLayout } from './storage';
 import './sql-playground.css';
 
 const databases = new Map<string, DatabaseSession>();
@@ -61,6 +61,8 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const [queryName,setQueryName] = useState<string|null>(null);
   const [nameError,setNameError] = useState('');
   const [renameQuery,setRenameQuery] = useState(false);
+  const [querySaving,setQuerySaving] = useState(false);
+  const pendingNavigation=useRef<(()=>void)|null>(null);
   const [designTable, setDesignTable] = useState<TableInfo | null>(null);
   const [status, setStatus] = useState(selectedDatabase ? 'SQLite ready' : '');
   const [error, setError] = useState('');
@@ -185,11 +187,6 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   }
   function updateQuery(value:string) {
     loadQueryText(value);
-    if(selectedQuery) {
-      const entry=activeRef.current?databases.get(activeRef.current):undefined;
-      const queries=entry?.savedQueries??[];
-      if(queries.some(query=>query.name===selectedQuery)) changeSavedQueries(queries.map(query=>query.name===selectedQuery?{...query,sql:value}:query));
-    }
     setQueryResult(null);setHasRun(false);
   }
   function selectDatabase(name: string) {
@@ -213,7 +210,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   }
   function openTable(mode: 'manual' | 'csv') {
     if (!activeRef.current || running.current || loading) return;
-    setError(''); setQueryError(null); setTablesOpen(true); setModal(mode);
+    requireSavedQuery(()=>{setError(''); setQueryError(null); setTablesOpen(true); setModal(mode);});
   }
   function changeSavedQueries(next:SavedQuery[]) {
     const name=activeRef.current;
@@ -230,28 +227,57 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   }
   function createQuery() {
     if(!activeDatabase||disabled)return;
+    requireSavedQuery(()=>{
+    const existing=activeRef.current?databases.get(activeRef.current)?.savedQueries??[]:[];
     let n=1;
-    while(savedQueries.some(query=>query.name.toLowerCase()===('Query'+n).toLowerCase()))n++;
+    while(existing.some(query=>query.name.toLowerCase()===('Query'+n).toLowerCase()))n++;
     const name='Query'+n;
-    changeSavedQueries([...savedQueries,{name,sql:''}]);chooseQuery(name);
+    changeSavedQueries([...existing,{name,sql:''}]);chooseQuery(name);
     loadQueryText('');setSelectedTable(null);setView('sql');setQueryResult(null);setHasRun(false);setError('');setQueryError(null);setStatus('');setQueriesOpen(true);
+    });
+  }
+  const dirtyQuery=queryNeedsSave(sql,selectedQuery,savedQueries);
+  function showSaveQuery(afterSave: (()=>void)|null=null) {
+    pendingNavigation.current=afterSave;
+    setRenameQuery(false);setNameError('');setQueryName(selectedQuery??'');
+  }
+  function requireSavedQuery(action:()=>void) {
+    if(dirtyQuery) {showSaveQuery(action);return;}
+    action();
+  }
+  function cancelQuerySave() {
+    if(querySaving)return;
+    pendingNavigation.current=null;setQueryName(null);
   }
   function saveCurrentQuery() {
-    if(!activeDatabase||disabled||!sql.trim())return;
-    if(selectedQuery) { changeSavedQueries(savedQueries.map(query=>query.name===selectedQuery?{...query,sql}:query));return; }
-    setRenameQuery(false);setNameError('');setQueryName('');
+    if(!activeDatabase||disabled||!dirtyQuery)return;
+    showSaveQuery();
   }
-  function saveAsQuery() {
+  async function saveAsQuery() {
     const name=queryName?.trim()??'';
+    const databaseName=activeRef.current;
+    const entry=databaseName?databases.get(databaseName):undefined;
+    if(!entry||!databaseName||querySaving)return;
     if(!name||name.length>80){setNameError('Enter a query name (1–80 characters).');return;}
-    if(savedQueries.some(query=>query.name.toLowerCase()===name.toLowerCase()&&(!renameQuery||query.name!==selectedQuery))){setNameError('A query with this name already exists.');return;}
-    changeSavedQueries(renameQuery?savedQueries.map(query=>query.name===selectedQuery?{...query,name,sql}:query):[...savedQueries,{name,sql}]);
-    chooseQuery(name);setQueryName(null);setQueriesOpen(true);
+    const existing=entry.savedQueries??[];
+    if(existing.some(query=>query.name.toLowerCase()===name.toLowerCase()&&query.name!==selectedQuery)){setNameError('A query with this name already exists.');return;}
+    const next=existing.some(query=>query.name===selectedQuery)
+      ?existing.map(query=>query.name===selectedQuery?{name,sql}:query)
+      :[...existing,{name,sql}];
+    setQuerySaving(true);
+    try {
+      if(storageAvailable)await saveNamedQueries(databaseName,next);
+      entry.savedQueries=next;setSavedQueries(next);chooseQuery(name);setQueryName(null);setQueriesOpen(true);
+      const proceed=pendingNavigation.current;pendingNavigation.current=null;proceed?.();
+    } catch {
+      setNameError('Unable to save query locally. Free some browser storage and try again.');
+    } finally {setQuerySaving(false);}
   }
   function openSavedQuery(query:SavedQuery) {
     if(disabled)return;
-    chooseQuery(query.name);loadQueryText(query.sql);setSelectedTable(null);
-    setView('sql');setQueryResult(null);setHasRun(false);setError('');setQueryError(null);setStatus('');
+    if(query.name===selectedQuery){setView('sql');setSelectedTable(null);return;}
+    requireSavedQuery(()=>{chooseQuery(query.name);loadQueryText(query.sql);setSelectedTable(null);
+    setView('sql');setQueryResult(null);setHasRun(false);setError('');setQueryError(null);setStatus('');});
   }
   function deleteSavedQuery(query:SavedQuery) {
     if(disabled||!window.confirm('Delete saved query "'+query.name+'"?'))return;
@@ -260,8 +286,10 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   }
   function viewTable(table:TableInfo) {
     if(disabled)return;
-    setSelectedTable(table.name);setSheet(null);setView('table');setError('');setQueryError(null);
-    execute({action:'browse',browse:{table:table.name}});
+    requireSavedQuery(()=>{
+      setSelectedTable(table.name);setSheet(null);setView('table');setError('');setQueryError(null);
+      execute({action:'browse',browse:{table:table.name}});
+    });
   }
   const result = view==='table'?sheet?.result:queryResult;
   const tableInfo=view==='table'?sheet?.datasheet:undefined;
@@ -316,7 +344,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
               {tablesOpen&&<div className="sql-object-list">
                 {state?.tables.map(table=><div className={'sql-object-row'+(view==='table'&&selectedTable===table.name?' selected':'')} key={table.name}>
                   <button type="button" className="sql-object-open sql-preview-table" title={table.name} disabled={disabled} onClick={()=>viewTable(table)}><Table2 size={16}/><span>{table.name}</span></button>
-                  {table.kind!=='view'&&<button type="button" className="topbar-icon sql-object-action" title="Design View" aria-label={'Design View: '+table.name} disabled={disabled} onClick={()=>{setError('');setQueryError(null);setDesignTable(table);}}><PencilRuler size={14}/></button>}
+                  {table.kind!=='view'&&<button type="button" className="topbar-icon sql-object-action" title="Design View" aria-label={'Design View: '+table.name} disabled={disabled} onClick={()=>requireSavedQuery(()=>{setError('');setQueryError(null);setDesignTable(table);})}><PencilRuler size={14}/></button>}
                 </div>)}
                 {!state?.tables.length&&<div className="sql-object-empty">No tables</div>}
               </div>}
@@ -342,7 +370,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
           <div className="sql-empty-state sql-empty-results"><span className="console-placeholder-mark"><Database size={22}/></span><p>{loading?'Opening saved databases…':activeDatabase?'Open a table or create a query':'Create a database to begin'}</p></div>
         </div>:<section className="editor-card sql-document">
           <div className="file-tabs sql-document-tabs">
-            <div className="file-tab active sql-file-tab">{view==='table'?<Table2 size={15}/>:<FileCode2 size={15}/>}<span>{view==='table'?selectedTable:selectedQuery??'Unsaved query'}</span></div>
+            <div className="file-tab active sql-file-tab">{view==='table'?<Table2 size={15}/>:<FileCode2 size={15}/>}<span>{view==='table'?selectedTable:(selectedQuery??'Unsaved query')+(dirtyQuery?' *':'')}</span></div>
             <button type="button" className="topbar-icon sql-close-object" title="Close view" aria-label="Close view" disabled={disabled} onClick={()=>{setView('idle');setSelectedTable(null);setError('');setQueryError(null);}}><X size={14}/></button>
           </div>
           <div className="sql-view-toolbar">
@@ -352,7 +380,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
             </>:<>
               <button type="button" className={'toolbar-button sql-view-button'+(view==='sql'?' active':'')} disabled={disabled} aria-pressed={view==='sql'} onClick={()=>setView('sql')}><FileCode2 size={15}/> SQL View</button>
               <button type="button" className={'toolbar-button sql-view-button'+(view==='results'?' active':'')} disabled={disabled||!hasRun} aria-pressed={view==='results'} onClick={()=>setView('results')}><Table2 size={15}/> Datasheet View</button>
-              {selectedQuery?<button type="button" className="toolbar-button" disabled={disabled} onClick={()=>{setRenameQuery(true);setNameError('');setQueryName(selectedQuery);}}><Pencil size={14}/> Rename</button>:<button type="button" className="toolbar-button sql-save-query" disabled={disabled||!sql.trim()} onClick={saveCurrentQuery}><Save size={14}/> Save query</button>}
+              <button type="button" className="toolbar-button sql-save-query" disabled={disabled||!dirtyQuery} onClick={saveCurrentQuery}><Save size={14}/> Save query</button>{selectedQuery&&<button type="button" className="toolbar-button" disabled={disabled} onClick={()=>{pendingNavigation.current=null;setRenameQuery(true);setNameError('');setQueryName(selectedQuery);}}><Pencil size={14}/> Rename</button>}
             </>}
             <span className="sql-view-spacer"/>
             {view!=='sql'&&<button type="button" className="toolbar-button sql-export-csv" title="Export underlying values to CSV" disabled={!result||disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button>}
@@ -368,7 +396,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         </section>}
       </section>
     </div>
-    {queryName!==null&&<Modal title={renameQuery?"Rename query":"Save query"} onClose={()=>setQueryName(null)}><form className="sql-dialog-form" onSubmit={event=>{event.preventDefault();saveAsQuery();}}><label>Query name<input autoFocus maxLength={80} value={queryName} onChange={event=>{setQueryName(event.target.value);setNameError('');}} placeholder="Enter a query name"/></label>{nameError&&<p className="sql-dialog-error" role="alert">{nameError}</p>}<div className="sql-dialog-actions"><button type="button" className="subtle-button" onClick={()=>setQueryName(null)}>Cancel</button><button type="submit" className="run-button" disabled={!queryName.trim()}>{renameQuery?"Rename":"Save"}</button></div></form></Modal>}
+    {queryName!==null&&<Modal title={renameQuery?"Rename query":"Save query"} busy={querySaving} onClose={cancelQuerySave}><form className="sql-dialog-form" onSubmit={event=>{event.preventDefault();void saveAsQuery();}}>{pendingNavigation.current&&<p className="sql-form-note">Save your query before continuing.</p>}<label>Query name<input autoFocus disabled={querySaving} maxLength={80} value={queryName} onChange={event=>{setQueryName(event.target.value);setNameError('');}} placeholder="Enter a query name"/></label>{nameError&&<p className="sql-dialog-error" role="alert">{nameError}</p>}<div className="sql-dialog-actions"><button type="button" className="subtle-button" disabled={querySaving} onClick={cancelQuerySave}>Cancel</button><button type="submit" className="run-button" disabled={querySaving||!queryName.trim()}>{querySaving?"Saving…":pendingNavigation.current?"Save and continue":renameQuery?"Rename":"Save"}</button></div></form></Modal>}
     {modal === 'database' && <CreateDatabaseDialog names={databaseNames} onCreate={createDatabase} onClose={() => setModal(null)}/>}
     {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} stoppable={busy && !saving} error={error} onClose={() => { setModal(null); setError(''); }} onStop={()=>stop()} onCreate={table => execute({ action:'create', table })} existingNames={state?.tables.map(table=>table.name)??[]} onImport={files => execute({action:'import',files})}/>}
     {designTable && <DesignView table={designTable} busy={busy} stoppable={busy && !saving} error={error} onClose={()=>{setDesignTable(null);setError('');}} onStop={()=>stop()} fields={displays.find(item=>item.table===designTable.name)?.fields??[]} onSave={(design,fields,schemaChanged)=>{const change={table:design.name,fields};if(schemaChanged){execute({action:'design',design},change);return;}const name=activeRef.current;const entry=name?databases.get(name):undefined;if(name&&entry){const next=[...(entry.displays??[]).filter(item=>item.table!==design.name),change];entry.displays=next;setDisplays(next);if(storageAvailable)persist(saveDisplays(name,next));}setDesignTable(null);}}/>}
