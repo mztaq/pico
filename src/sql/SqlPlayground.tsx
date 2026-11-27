@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, Database, Download, Play, Upload, Settings2, X, Table2, FileCode2, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Database, Download, Play, Settings2, X, Table2, FileCode2, Trash2, Plus } from 'lucide-react';
 import { cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { FloatingPanel } from '../app/components/FloatingPanel';
@@ -33,7 +33,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const [sql, setSql] = useState(() => selectedDatabase ? databases.get(selectedDatabase)?.query ?? '' : '');
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
-  const [status, setStatus] = useState(selectedDatabase ? 'SQLite ready' : 'Create a database to begin');
+  const [status, setStatus] = useState(selectedDatabase ? 'SQLite ready' : '');
   const [error, setError] = useState('');
   const worker = useRef<Worker | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -149,8 +149,6 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         <h1 className="sql-workspace-title">SQL Playground</h1>
       </div>
       <div className="topbar-spacer"/>
-      <button type="button" className="toolbar-button sql-create-database" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={15}/> Create database</button>
-      <button type="button" className="toolbar-button sql-create-table" disabled={disabled || !activeDatabase} onClick={() => openTable('manual')}><Plus size={15}/> Create table</button>
       <div className="settings-anchor" ref={settingsAnchor}>
         <button type="button" className={`topbar-icon ${themeOpen ? 'active' : ''}`} aria-label="Open settings" aria-expanded={themeOpen} title="Settings" onClick={() => setThemeOpen(open => !open)}><Settings2 size={16}/></button>
         <FloatingPanel anchor={settingsAnchor} open={themeOpen} className="settings-popover">
@@ -169,22 +167,22 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     <div className="sql-layout" style={{ '--sql-sidebar-width': sidebarWidth + 'px' } as CSSProperties}>
       <aside className="sql-sidebar">
         <div className="sql-database-picker">
-          <label htmlFor="sql-database-select"><Database size={16}/> Database</label>
-          <select id="sql-database-select" value={activeDatabase ?? ''} disabled={disabled || !databaseNames.length} onChange={event => selectDatabase(event.target.value)}>
+          <div className="sql-database-heading"><label htmlFor={databaseNames.length ? 'sql-database-select' : undefined}><Database size={16}/> Database</label>{!!databaseNames.length && <button type="button" className="topbar-icon sql-create-database" aria-label="Create database" title="Create database" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={16}/></button>}</div>
+          {databaseNames.length ? <select id="sql-database-select" value={activeDatabase ?? ''} disabled={disabled} onChange={event => selectDatabase(event.target.value)}>
             <option value="" disabled>Select a database</option>
             {databaseNames.map(name => <option key={name}>{name}</option>)}
-          </select>
+          </select> : <button type="button" className="subtle-button sql-create-database" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={15}/> Create database</button>}
         </div>
-        <div className="sql-panel-heading"><h2><Table2 size={16}/> Tables</h2><button type="button" className="topbar-icon" aria-label="Clear database" title="Clear database" disabled={disabled || !state?.tables.length} onClick={() => { if (window.confirm('Clear all tables in this SQL session?')) execute({ action: 'reset' }); }}><Trash2 size={15}/></button></div>
+        {activeDatabase && <><div className="sql-panel-heading"><h2><Table2 size={16}/> Tables</h2><div className="sql-sidebar-actions"><button type="button" className="topbar-icon sql-create-table" aria-label="Create table" title="Create table" disabled={disabled} onClick={() => openTable('manual')}><Plus size={16}/></button>{!!state?.tables.length && <button type="button" className="topbar-icon" aria-label="Clear database" title="Clear database" disabled={disabled || !state?.tables.length} onClick={() => { if (window.confirm('Clear all tables in this SQL session?')) execute({ action: 'reset' }); }}><Trash2 size={15}/></button>}</div></div>
         <div className="sql-tables">
           {state?.tables.map(table => <details className="sql-table-item" key={table.name} open>
             <summary><Database size={15}/><span>{table.name}</span></summary>
             <button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + formatIdentifier(table.name) + ';'; updateQuery(query); execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>
             <ul>{table.columns.map((column, i) => <li key={i}><span>{column.name}</span><small>{column.type}</small></li>)}</ul>
           </details>)}
-          {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Database size={18}/></span><p>{activeDatabase ? 'No tables yet' : 'No database selected'}</p>{activeDatabase ? <><button type="button" className="toolbar-button" disabled={disabled} onClick={() => openTable('manual')}><Plus size={14}/> Create table</button><button type="button" className="toolbar-button sql-import" disabled={disabled} onClick={() => openTable('csv')}><Upload size={14}/> Import CSV</button></> : <button type="button" className="toolbar-button" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={14}/> Create database</button>}</div>}
-          {!!state?.tables.length && <button type="button" className="toolbar-button sql-import" disabled={disabled} onClick={() => openTable('csv')}><Upload size={14}/> Import CSV</button>}
-        </div>
+          {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Table2 size={18}/></span><p>No tables yet</p></div>}
+        </div></>}
+        {!activeDatabase && <div className="sql-tables"/>}
         <div className="sql-sidebar-bottom">Databases stay on your device for this session.</div>
       </aside>
       <ResizeHandle axis="x" label="Resize table explorer" onResize={delta => setSidebarWidth(value => Math.max(190, Math.min(420, value + delta)))}/>
@@ -198,7 +196,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         <section className="tool-dock sql-results-panel">
           <div className="dock-tab-row sql-dock-head"><div className="dock-tab active"><Table2 size={16}/> Results</div><span className="sql-result-status" role="status">{reading ? 'Reading files…' : status}</span><button type="button" className="toolbar-button" disabled={!result || disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button></div>
           {error && <p className="sql-error" role="alert">{error}</p>}
-          {result ? <><div className="sql-result-scroll"><table><thead><tr><th scope="col">#</th>{result.columns.map((column, i) => <th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{i + 1}</td>{row.map((cell, j) => <td key={j}>{cell === null ? <i>NULL</i> : String(cell)}</td>)}</tr>)}</tbody></table></div>{result.truncated && <p className="sql-muted">Preview limited to 500 rows or 1 MB of displayed text. Export contains this preview.</p>}</> : <div className="sql-empty-state sql-empty-results"><span className="console-placeholder-mark"><Table2 size={20}/></span><p>{state?.tables.length ? 'No results to display' : 'Run a query to see results'}</p></div>}
+          {result ? <><div className="sql-result-scroll"><table><thead><tr><th scope="col">#</th>{result.columns.map((column, i) => <th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{i + 1}</td>{row.map((cell, j) => <td key={j}>{cell === null ? <i>NULL</i> : String(cell)}</td>)}</tr>)}</tbody></table></div>{result.truncated && <p className="sql-muted">Preview limited to 500 rows or 1 MB of displayed text. Export contains this preview.</p>}</> : <div className="sql-empty-state sql-empty-results"><span className="console-placeholder-mark"><Table2 size={20}/></span><p>{activeDatabase ? 'No results to display' : 'Create a database to begin'}</p></div>}
         </section>
       </section>
     </div>

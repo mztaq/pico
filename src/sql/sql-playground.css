@@ -97,3 +97,7 @@
 .sql-app .sql-record-pages { display:flex; align-items:center; gap:8px; font-size:var(--ds-text-xs); color:var(--ds-muted); }
 .sql-app .sql-record-pages span { flex:1; }
 @media(max-width:480px){.sql-app .sql-table-size {grid-template-columns:1fr 1fr}.sql-app .sql-table-size>button {grid-column:1/-1}}
+
+.sql-app .sql-database-heading,.sql-app .sql-sidebar-actions { display:flex; align-items:center; justify-content:space-between; gap:4px; }
+.sql-app .sql-database-picker>.sql-create-database { display:flex; align-items:center; justify-content:center; gap:6px; }
+.sql-app .sql-database-heading { min-height:32px; }

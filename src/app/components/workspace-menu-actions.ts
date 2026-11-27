@@ -155,7 +155,6 @@ export function buildWorkspaceMenu(
     else choose('Run query', '.sql-run', Play, 'run');
     choose('Create database', '.sql-create-database', FilePlus2, 'files');
     choose('Create table', '.sql-create-table', Plus, 'files');
-    choose('Import CSV', '.sql-import', FilePlus2, 'files');
     add('Export CSV', findText('.sql-results-panel button', 'Export CSV'), Copy, 'files');
   }
 
