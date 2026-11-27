@@ -1,8 +1,11 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Activity, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
+import { HomeFluidBackground } from './HomeFluidBackground';
+import { HomeTechnologyCycle } from './HomeTechnologyCycle';
+import { useHomePreviewStep } from './useHomePreviewStep';
 import { HighlightedCode } from './HighlightedCode';
 import { UpdateCenter } from './UpdateCenter';
 import { SiteInfoLinks } from './SiteInfo';
@@ -94,8 +97,8 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
     const timeout = window.setTimeout(() => setReportNotice(null), 6000);
     return () => window.clearTimeout(timeout);
   }, [reportNotice]);
-  return <main className="pico-home" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
-      <HomeAmbientCurves />
+  return <main className="pico-home pico-home-glass" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
+      <HomeFluidBackground theme={theme} disabled={reportOpen || offlineReportWarning} fallback={<HomeAmbientCurves />} />
     <div className="home-nav">
       <div className="home-theme-anchor" ref={themeMenuRef}>
         <button type="button" className="home-theme-trigger" aria-label="Change theme" aria-expanded={themeOpen} aria-controls="home-theme-menu" onClick={() => setThemeOpen(open => !open)}>
@@ -104,7 +107,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           {themeOpen && <div id="home-theme-menu" className="home-theme-menu" aria-label="Choose a theme">
             <ThemePicker value={settings.theme} onChange={changeTheme} showSound={false} />
         </div>}
-        <a className="home-games-link home-status-link" href="https://status.picompiler.pages.dev/" target="_blank" rel="noopener noreferrer" aria-label="Status"><Activity size={16} aria-hidden="true" /><span>Status</span></a>
       </div>
       <div className="home-updates">
         <a className="home-games-link" href="/app/learn" onClick={event => {
@@ -127,60 +129,85 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
           event.preventDefault(); onChoose('learn');
         }}><BookOpen size={17} aria-hidden="true" /> New to a topic? Learn and practise first <span aria-hidden="true">→</span></a>
+        <HomeTechnologyCycle />
       </div>
       <div className="compiler-choices">
         <HomeGroup label="Code" detail="Write, run and debug programs">
-          <WorkspaceChoice icon={<Terminal size={18} />} tag=".pico" title="Pseudocode Compiler" description="Run and debug Cambridge-style pseudocode." onClick={() => onChoose('pseudocode')}>
-            <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode code={'DECLARE Name : STRING\nINPUT Name\nOUTPUT "Hello ", Name, "!"'} /></pre>
+          <WorkspaceChoice icon={<Terminal size={18} />} previewInterval={350} title="Pseudocode Compiler" description="Run and debug Cambridge-style pseudocode." onClick={() => onChoose('pseudocode')}>
+            {step => <pre className="compiler-choice-preview home-code-live" aria-hidden="true"><HighlightedCode code={'DECLARE Total : INTEGER\nTotal <- 6 * 7\nOUTPUT Total'} /><span className="home-preview-output" data-running={step % 4 === 1}>{step % 4 === 1 ? 'Running…' : '> ' + (6 * 7)}</span></pre>}
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Code2 size={18} />} tag=".py" title="Python Compiler" description="Run Python with interactive input and debugging." onClick={() => onChoose('python')}>
-            <pre className="compiler-choice-preview" aria-hidden="true"><HighlightedCode language="python" code={'name = input("Enter your name: ")\nprint(f"Hello {name}!")'} /></pre>
+          <WorkspaceChoice icon={<Code2 size={18} />} previewInterval={350} title="Python Compiler" description="Run Python with interactive input and debugging." onClick={() => onChoose('python')}>
+            {step => <pre className="compiler-choice-preview home-code-live" aria-hidden="true"><HighlightedCode language="python" code={'total = 6 * 7\nprint(total)'} /><span className="home-preview-output" data-running={step % 4 === 1}>{step % 4 === 1 ? 'Running…' : '> ' + (6 * 7)}</span></pre>}
           </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Visual labs" detail="Build and explore interactive models" kind="visual">
           <WorkspaceChoice icon={<GitBranch size={18} />} title="Flowchart Builder" description="Build, run and convert flowcharts to pseudocode." onClick={() => onChoose('flowchart')}>
-            <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
-          <rect x="1" y="22" width="68" height="32" rx="16"/>
+            {step => <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
+          <rect className={step % 3 === 0 ? 'home-preview-active' : ''} x="1" y="22" width="68" height="32" rx="16"/>
           <path className="home-chart-link" d="M 70 38 H 103 M 97 33 L 103 38 L 97 43 M 233 38 H 279 M 273 33 L 279 38 L 273 43"/>
-          <path d="M 116 16 H 242 L 229 60 H 103 Z"/>
-          <rect x="280" y="22" width="69" height="32" rx="16"/>
-          <text x="35" y="43">Start</text><text className="home-chart-output" x="172" y="43">Output "Hello!"</text><text x="314" y="43">End</text>
-        </svg>
+          <path className={step % 3 === 1 ? 'home-preview-active' : ''} d="M 116 16 H 242 L 229 60 H 103 Z"/>
+          <rect className={step % 3 === 2 ? 'home-preview-active' : ''} x="280" y="22" width="69" height="32" rx="16"/>
+          <text x="35" y="43">Start</text><text className="home-chart-output" x="172" y="43">OUTPUT "Hello"</text><text x="314" y="43">End</text>
+        </svg>}
           </WorkspaceChoice>
           <WorkspaceChoice icon={<Binary size={18} />} title="Logic Sim" description="Build circuits and inspect live signals." onClick={() => onChoose('logic')}>
-            <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
-          <path className="home-chart-link" d="M49 23 H95 M49 53 H95 M202 38 H261"/>
+            {step => <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
+          <path className="home-chart-link home-preview-signal" d="M49 23 H95"/><path className={step % 2 ? 'home-chart-link home-preview-signal' : 'home-chart-link'} d="M49 53 H95 M202 38 H276"/>
           <rect x="1" y="11" width="47" height="24" rx="5"/><rect x="1" y="41" width="47" height="24" rx="5"/>
           <path d="M 95 13 H 146 C 174 13 190 20 202 38 C 190 56 174 63 146 63 H 95 Z" />
-          <circle cx="288" cy="38" r="18"/>
-          <text x="24" y="27">1</text><text x="24" y="57">0</text><text x="142" y="42">AND</text><text x="288" y="43">0</text>
-        </svg>
+          <g className="home-preview-bulb" data-lit={Boolean(step % 2)}>
+            <path className="home-preview-bulb-glass" d="M276 38 C272 21 285 15 294 17 C307 19 314 32 307 43 C304 47 300 50 300 55 H284 C284 49 280 45 276 38 Z"/>
+            <path className="home-preview-bulb-base" d="M284 55 H300 M285 59 H299 M288 63 H296"/>
+            {step % 2 === 1 && <path className="home-preview-bulb-rays" d="M292 5 V12 M315 13 L310 19 M325 33 H318 M269 13 L274 19 M259 24 L266 27"/>}
+          </g>
+          <text x="24" y="27">1</text><text x="24" y="57">{step % 2}</text><text x="142" y="42">AND</text>
+        </svg>}
           </WorkspaceChoice>
           <WorkspaceChoice icon={<Cpu size={18} />} title="CPU Studio" description="Explore fetch, decode and execute." onClick={() => onChoose('cpu')}>
-            <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
+            {step => <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 90" aria-hidden="true">
           <rect x="16" y="7" width="233" height="62" rx="8"/>
-          <rect x="29" y="19" width="60" height="39" rx="4"/><rect x="99" y="19" width="139" height="39" rx="4"/>
+          <rect className={step % 3 === 1 ? 'home-preview-active' : ''} x="29" y="19" width="60" height="39" rx="4"/><rect className={step % 3 === 2 ? 'home-preview-active' : ''} x="99" y="19" width="139" height="39" rx="4"/>
           <text x="59" y="43">CU</text><text className="home-cpu-label" x="168.5" y="43" textLength={124} lengthAdjust="spacingAndGlyphs" style={{fontSize:"14px",fontWeight:700,whiteSpace:"nowrap"}}>ALU + REGISTERS</text>
           <path className="home-chart-link" d="M 250 38 H 271"/>
-          <rect x="273" y="15" width="71" height="45" rx="5"/>
+          <rect className={step % 3 === 0 ? 'home-preview-active' : ''} x="273" y="15" width="71" height="45" rx="5"/>
           <text x="308.5" y="42">RAM</text>
-        </svg>
+          <text className="home-preview-phase" x="175" y="86">{['FETCH', 'DECODE', 'EXECUTE'][step % 3]}</text>
+        </svg>}
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Network size={18}/>} title="Traffic Storm" description="Watch simulated request floods and server overload." onClick={() => onChoose('traffic')}>
-            <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 76" aria-hidden="true">
-              <path className="home-chart-link" d="M 57 12 C 126 12 131 38 192 38 H 259 M 57 38 H 259 M 57 64 C 126 64 131 38 192 38 H 259"/>
-              {[12,38,64].map(y => <g key={y}><rect x="7" y={y-10} width="50" height="20" rx="5"/><circle cx="21" cy={y} r="4"/><path d={`M 33 ${y} h 14`} className="home-chart-link"/></g>)}
-              <rect x="259" y="10" width="71" height="56" rx="7"/><rect x="269" y="21" width="51" height="12" rx="3"/><rect x="269" y="41" width="51" height="12" rx="3"/><circle cx="278" cy="27" r="2.5"/><circle cx="278" cy="47" r="2.5"/>
-              <circle cx="164" cy="38" r="5" className="home-traffic-packet"/><circle cx="220" cy="38" r="3" className="home-traffic-packet"/>
-            </svg>
+          <WorkspaceChoice icon={<Network size={18}/>} title="Traffic Storm" previewInterval={500} description="Watch simulated request floods and server overload." onClick={() => onChoose('traffic')}>
+            {step => <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 76" aria-hidden="true">
+              {[15,38,61].map(y => <g key={y}>
+                <path className="home-chart-link" d={`M 49 ${y} C 105 ${y} 126 38 173 38 H 253`}/>
+                <rect x="5" y={y-10} width="44" height="20" rx="4"/><circle cx="16" cy={y} r="3"/><path d={`M 26 ${y} h 14`} className="home-chart-link"/>
+              </g>)}
+              {[15,38,61].map((y, lane) => Array.from({length: 4}, (_, index) =>
+                <circle key={`${lane}-${index}`} className="home-traffic-packet" r="2.5" opacity={.75 + lane * .1}>
+                  <animateMotion path={`M 49 ${y} C 105 ${y} 126 38 173 38`} dur="1.5s" begin={`-${(index * .375 + lane * .125).toFixed(3)}s`} repeatCount="indefinite" calcMode="paced"/>
+                </circle>
+              ))}
+              {Array.from({length: 6}, (_, index) => {
+                const y = 38 + (index % 3 - 1) * 3;
+                return <circle key={index} className="home-traffic-packet home-traffic-spam" r="2.2">
+                  <animateMotion path={`M 173 ${y} H 253`} dur="0.9s" begin={`-${(index * .15).toFixed(2)}s`} repeatCount="indefinite" calcMode="paced"/>
+                </circle>;
+              })}
+              <rect className="home-traffic-server" x="253" y="7" width="89" height="60" rx="7"/>
+              {[18,38].map(y => <g key={y}><rect x="262" y={y} width="71" height="14" rx="3"/><circle className="home-traffic-status-light" cx="270" cy={y+7} r="2.5"/><path className="home-chart-link" d={`M 279 ${y+7} h 44`}/></g>)}
+              <rect className="home-traffic-load-track" x="262" y="57" width="71" height="4" rx="2"/>
+              <rect className="home-traffic-load" x="262" y="57" width={57 + step % 5 * 3} height="4" rx="2"/>
+            </svg>}
           </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">
           <WorkspaceChoice icon={<Calculator size={18} />} title="Binary Lab" description="Explore bits, hexadecimal, logical shifts, overflow and two’s complement." onClick={() => onChoose('binary')}>
-            <div className="compiler-choice-preview home-binary-preview" aria-hidden="true">
-              <div className="home-binary-byte">{'00101010'.split('').map((bit, index) => <span className={bit === '1' ? 'on' : ''} key={index}>{bit}</span>)}</div>
-              <div className="home-binary-equation"><code>0010 1010</code><span>=</span><strong>42</strong><span>=</span><code>0x2A</code></div>
-            </div>
+            {step => {
+              const value = 42 + step % 4;
+              const bits = value.toString(2).padStart(8, '0');
+              return <div className="compiler-choice-preview home-binary-preview" aria-hidden="true">
+                <div className="home-binary-byte">{bits.split('').map((bit, index) => <span className={bit === '1' ? 'on' : ''} key={index}>{bit}</span>)}</div>
+                <div className="home-binary-equation"><code>{bits.slice(0, 4)} {bits.slice(4)}</code><span>=</span><strong>{value}</strong><span>=</span><code>0x{value.toString(16).toUpperCase()}</code></div>
+              </div>;
+            }}
           </WorkspaceChoice>
         </HomeGroup>
       </div>
@@ -213,11 +240,12 @@ function HomeGroup({ label, detail, children, kind }: { label: string; detail: s
   </section>;
 }
 
-function WorkspaceChoice({ icon, tag, title, description, onClick, children }: { icon: ReactNode; tag?: string; title: string; description: string; onClick: () => void; children: ReactNode }) {
+function WorkspaceChoice({ icon, previewInterval, title, description, onClick, children }: { icon: ReactNode; previewInterval?: number; title: string; description: string; onClick: () => void; children: (step: number) => ReactNode }) {
+  const { ref, step } = useHomePreviewStep(previewInterval);
   return <button className="compiler-choice" onClick={onClick}>
-    <div className="compiler-choice-stage" aria-hidden="true">{children}</div>
+    <div className="compiler-choice-stage" ref={ref} data-preview-step={step} aria-hidden="true">{children(step)}</div>
     <div className="compiler-choice-copy">
-      <div className="compiler-choice-title"><i className="compiler-choice-icon" aria-hidden="true">{icon}</i><h2>{title}</h2>{tag && <code className="compiler-choice-tag" aria-hidden="true">{tag}</code>}</div>
+      <div className="compiler-choice-title"><i className="compiler-choice-icon" aria-hidden="true">{icon}</i><h2>{title}</h2></div>
       <p>{description}</p>
     </div>
   </button>;

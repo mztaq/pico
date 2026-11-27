@@ -3,7 +3,7 @@ import {rateLimit} from '../_lib/rate-limit';
 import {reportEmailHtml} from '../_lib/bug-report-email';
 
 const TYPES = ['Bug / Something broken', 'Visual or layout issue', 'Feature request', 'Other feedback'];
-const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio', 'Binary Lab'];
+const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio', 'Binary Lab', 'Traffic Storm', 'Learn', 'Games'];
 const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 const MAX_TOTAL_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 const MAX_SCREENSHOTS = 5;

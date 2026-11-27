@@ -72,6 +72,7 @@ function Navigation() {
     <a href="#features" onClick={()=>setOpen(false)}>Tools</a>
     <a href="#downloads" onClick={()=>setOpen(false)}>Downloads</a>
     <a href="/mcp-docs" onClick={()=>setOpen(false)}>MCP Docs</a>
+    <a href="https://status.picompiler.pages.dev/" target="_blank" rel="noopener noreferrer" onClick={()=>setOpen(false)}>Status</a>
   </nav><div className="lp-nav-actions"><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header></div>;
 }
 // Production publishes one installer for each supported operating system.
@@ -166,17 +167,19 @@ export default function LandingPage() {
         <div className="lp-section-heading"><h2 id="lp-features-title">Pico's tools</h2></div>
         <div className="lp-feature-groups">
           <div className="lp-feature-group">
-            <div className="lp-feature-category"><h3>Programming</h3></div>
+            <div className="lp-feature-category"><h3>Programming &amp; learning</h3></div>
             <div className="lp-feature-items">
               <a className="lp-feature-item" href="/app/pseudocode" aria-label="Open Pseudocode in Pico"><span className="lp-feature-item-head"><h4>Pseudocode</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Write and run pseudocode.</p></a>
               <a className="lp-feature-item" href="/app/python" aria-label="Open Python in Pico"><span className="lp-feature-item-head"><h4>Python</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Execute Python code.</p></a>
+              <a className="lp-feature-item" href="/app/learn" aria-label="Open Learn in Pico"><span className="lp-feature-item-head"><h4>Learn</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Read notes and practise computer science.</p></a>
             </div>
           </div>
           <div className="lp-feature-group">
-            <div className="lp-feature-category"><h3>Visual tools</h3></div>
+            <div className="lp-feature-category"><h3>Visual tools &amp; games</h3></div>
             <div className="lp-feature-items">
               <a className="lp-feature-item" href="/app/flowchart" aria-label="Open Flowchart Builder in Pico"><span className="lp-feature-item-head"><h4>Flowchart Builder</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Build and run flowcharts.</p></a>
               <a className="lp-feature-item" href="/app/logic" aria-label="Open Logic Sim in Pico"><span className="lp-feature-item-head"><h4>Logic Sim</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Test logic circuits.</p></a>
+              <a className="lp-feature-item" href="/app/games" aria-label="Open Games in Pico"><span className="lp-feature-item-head"><h4>Games</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Explore computer science through games.</p></a>
             </div>
           </div>
           <div className="lp-feature-group">
@@ -184,6 +187,7 @@ export default function LandingPage() {
             <div className="lp-feature-items">
               <a className="lp-feature-item" href="/app/cpu" aria-label="Open CPU Studio in Pico"><span className="lp-feature-item-head"><h4>CPU Studio</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Explore CPU execution.</p></a>
               <a className="lp-feature-item" href="/app/binary" aria-label="Open Binary Lab in Pico"><span className="lp-feature-item-head"><h4>Binary Lab</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Convert binary and hexadecimal.</p></a>
+              <a className="lp-feature-item" href="/app/traffic" aria-label="Open Traffic Storm in Pico"><span className="lp-feature-item-head"><h4>Traffic Storm</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Simulate network request floods.</p></a>
             </div>
           </div>
         </div>

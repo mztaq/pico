@@ -7,7 +7,7 @@ const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 const MAX_TOTAL_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 const MAX_SCREENSHOTS = 5;
 const SCREENSHOT_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
-const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio', 'Binary Lab'];
+const WORKSPACES = ['Home / Other', 'Pseudocode Compiler', 'Python Compiler', 'Flowchart Builder', 'Logic Sim', 'CPU Studio', 'Binary Lab', 'Traffic Storm', 'Learn', 'Games'];
 
 export function BugReportDialog({ onClose, onResult }: { onClose: () => void; onResult: (type: 'success' | 'error', message: string) => void }) {
   const dialogRef = useRef<HTMLElement>(null);

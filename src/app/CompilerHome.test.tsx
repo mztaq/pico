@@ -44,6 +44,10 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.res
 it('opens on a themed home screen with all workspace choices',()=>{
   expect(document.title).toBe('Pico | Home');
   expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelector('.pico-home-glass')).not.toBeNull();
+  expect(container.querySelector('.pico-home-fluid')?.getAttribute('aria-hidden')).toBe('true');
+  expect(container.querySelector('.pico-home-curves')).not.toBeNull();
+  expect(container.querySelector('.pico-home-fluid canvas')).toBeNull();
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
@@ -53,6 +57,36 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
+});
+it('keeps the original Pico logo and all seven initial workspace previews without Quick Launch', async()=>{
+  const logo=container.querySelector<HTMLAnchorElement>('.home-brand')!;
+  expect(logo.getAttribute('href')).toBe('/app');
+  expect(logo.querySelector('img')?.getAttribute('src')).toBe('/pico-logo.svg');
+  expect(container.querySelector('.home-interactive-logo')).toBeNull();
+  expect(container.querySelector('.compiler-choice-tag')).toBeNull();
+  expect(container.querySelector('.home-chart-output')?.textContent).toBe('OUTPUT "Hello"');
+  expect(container.querySelector('.home-preview-bulb')?.getAttribute('data-lit')).toBe('false');
+  expect(container.querySelectorAll('.home-traffic-packet')).toHaveLength(18);
+  expect(container.querySelector('.home-traffic-preview')?.textContent).not.toMatch(/REQUEST FLOOD|429|OVERLOAD/);
+  expect(container.querySelectorAll('.home-traffic-packet > animateMotion')).toHaveLength(18);
+  expect([...container.querySelectorAll('.home-traffic-packet > animateMotion')].every(motion => motion.getAttribute('repeatCount') === 'indefinite')).toBe(true);
+  expect(container.querySelector('.home-quick-trigger')).toBeNull();
+  await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true,cancelable:true})));
+  expect(container.querySelector('.home-quick-dialog')).toBeNull();
+  expect(container.querySelectorAll('.compiler-choice-stage[data-preview-step="0"]')).toHaveLength(7);
+  expect([...container.querySelectorAll('.home-preview-output')].map(node=>node.textContent)).toEqual(['> 42','> 42']);
+  expect(container.querySelector('.home-binary-equation')?.textContent).toBe('0010 1010=42=0x2A');
+});
+it('shows only the eleven technology logos in a seamless carousel without playback buttons',()=>{
+  const cycle = container.querySelector('.home-tech-cycle');
+  expect(cycle).not.toBeNull();
+  const expected = ["Cloudflare","GitHub","Resend","UptimeRobot","WebAssembly","WebGL","Three.js","Electron","CodeMirror","SQLite","MCP"];
+  const strips = [...cycle!.querySelectorAll('.home-tech-strip')];
+  expect(strips).toHaveLength(2);
+  for(const strip of strips) expect([...strip.querySelectorAll('.home-tech-item')].map(node=>node.textContent)).toEqual(expected);
+  expect(cycle!.querySelector('button')).toBeNull();
+  expect(cycle!.textContent).not.toContain('Built with');
+  expect(cycle!.querySelector('.home-tech-window')?.getAttribute('tabindex')).toBe('0');
 });
 it('resets test navigation after visiting Games', async()=>{
   const gamesLink=container.querySelector<HTMLAnchorElement>('a.home-games-link[href="/app/games"]')!;
@@ -69,6 +103,9 @@ it('opens the Games library from home and returns to the workspace chooser', asy
   expect(window.location.pathname).toBe('/app/games');
   expect(document.title).toBe('Pico | Games');
   expect(container.querySelector('.pico-games h1')?.textContent).toBe('Games');
+  expect(container.querySelector('.pico-home-glass')).toBeNull();
+  expect(container.querySelector('.pico-home-fluid')).toBeNull();
+  expect(container.querySelector('.pico-home-curves')).not.toBeNull();
   const header=container.querySelector('.pico-games-nav')!;
   expect(header.firstElementChild?.classList.contains('pico-games-brand')).toBe(true);
   expect(header.lastElementChild?.classList.contains('pico-games-back')).toBe(true);
@@ -316,14 +353,13 @@ it('opens the bug report dialog directly from /app/report and updates browser hi
   expect(window.location.pathname).toBe('/app/report');
   expect(container.querySelector('.pico-home')).not.toBeNull();
   expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+  expect([...container.querySelectorAll<HTMLOptionElement>('#bug-report-workspace option')].slice(1).map(option=>option.value)).toEqual(["Home / Other","Pseudocode Compiler","Python Compiler","Flowchart Builder","Logic Sim","CPU Studio","Binary Lab","Traffic Storm","Learn","Games"]);
   await act(async()=>container.querySelector<HTMLButtonElement>('[aria-label="Close report form"]')?.click());
   expect(window.location.pathname).toBe('/app');
 });
 
 
-it('links to Pico Status beside the home theme control',()=>{
-  const link=container.querySelector<HTMLAnchorElement>('.home-theme-anchor .home-status-link');
-  expect(link?.getAttribute('href')).toBe('https://status.picompiler.pages.dev/');
-  expect(link?.textContent).toBe('Status');
-  expect(link?.target).toBe('_blank');
+it('keeps the external status page out of the workspace chooser and desktop app',()=>{
+  expect(container.querySelector('.home-status-link')).toBeNull();
+  expect(container.querySelector('a[href="https://status.picompiler.pages.dev/"]')).toBeNull();
 });

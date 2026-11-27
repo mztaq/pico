@@ -98,10 +98,20 @@ it.each([
   expect(document.title).toBe(`Pico | ${title}`);
   expect([...dialog.querySelectorAll('h2')].some(heading => heading.textContent === section)).toBe(true);
   expect(localStorage.getItem('pico.projects.v1')).toBe(savedProjects);
-  expect(dialog.querySelector('time')?.getAttribute('dateTime')).toBe('2026-10-24');
+  expect(dialog.querySelector('time')?.getAttribute('dateTime')).toBe(hash === '/app/privacy' ? '2026-11-27' : '2026-10-24');
   expect(host.querySelector('.pico-home')).not.toBeNull();
 });
 
+it('discloses current workspace analytics and separately submitted reports', async () => {
+  window.history.replaceState(null, '', '/app/privacy');
+  await renderApp();
+  const page = host.querySelector('.site-info-page')!;
+  expect(page.textContent).toContain('Binary Lab and Traffic Storm');
+  expect(page.textContent).toContain('Learn and Games do not have separate workspace-time tracking');
+  expect(page.textContent).toContain('through Resend');
+  expect(page.textContent).toContain('Cloudflare Turnstile');
+  expect(page.textContent).toContain('Pico MCP');
+});
 it('displays only the requested policy, scroll area, focus and saved theme', async () => {
   localStorage.setItem('pico.settings.v6', JSON.stringify({ theme: 'high-contrast-light' }));
   window.history.replaceState(null, '', '/app/terms');

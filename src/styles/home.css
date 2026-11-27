@@ -195,7 +195,6 @@ body:has(.pico-cookie-banner) .pico-home {
   border-radius: var(--ds-radius-md); background: var(--ds-accent-soft); color: var(--accent); font-style: normal;
 }
 .pico-home .compiler-choice h2 { margin: 0; font-size: var(--ds-text-lg); font-weight: 650; letter-spacing: -.01em; }
-.compiler-choice-tag { margin-left: auto; padding: 3px 7px; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); color: var(--ds-muted); font: 500 var(--ds-text-2xs)/1 var(--ds-font-code); }
 .pico-home .compiler-choice p { margin: 10px 0 0; color: var(--ds-muted); font-size: var(--ds-text-md); line-height: 1.55; }
 
 .pico-home .site-info-links {
@@ -253,4 +252,196 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home .home-traffic-preview .home-traffic-packet{fill:var(--accent);stroke:none}
 
 .pico-home .home-theme-anchor { display: flex; align-items: center; gap: 4px; }
-.pico-home .home-status-link { flex-shrink: 0; }
+
+/* WebGL is decorative and never intercepts clicks, touch scrolling or focus. */
+.pico-home-fluid { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; opacity: .48; }
+.pico-home-fluid canvas { display: block; width: 100%; height: 100%; }
+@media (prefers-reduced-motion: reduce), (forced-colors: active) { .pico-home-fluid { display: none; } }
+
+
+/* Workspace chooser only: restrained liquid glass over the live fluid canvas.
+   All surfaces retain their selected Pico palette; cool tints are secondary. */
+.pico-home.pico-home-glass {
+  --home-glass-cool: color-mix(in srgb, #83b9cb 50%, #8bcbb6);
+  --home-glass-tint: color-mix(in srgb, var(--accent) 80%, var(--home-glass-cool));
+  --home-glass-base: color-mix(in srgb, var(--bg) 78%, var(--ds-panel-raised));
+  --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 55%, transparent);
+  --home-glass-stage: color-mix(in srgb, var(--bg) 25%, transparent);
+  --home-glass-edge: color-mix(in srgb, var(--home-glass-tint) 30%, var(--ds-line-strong));
+  --home-glass-highlight: color-mix(in srgb, var(--home-glass-tint) 13%, transparent);
+  --home-glass-rim: color-mix(in srgb, #fff 20%, transparent);
+  --home-glass-copy: color-mix(in srgb, var(--ds-text) 85%, var(--ds-muted));
+  --home-glass-blur: 6px;
+  --home-glass-code-opacity: 64%;
+  --home-card-radius: 20px;
+  --home-card-padding: 16px;
+}
+.pico-home.pico-home-glass[data-high-contrast='true'] {
+  --home-glass-tint: var(--accent);
+  --home-glass-fill: color-mix(in srgb, var(--bg) 84%, transparent);
+  --home-glass-stage: color-mix(in srgb, var(--bg) 40%, transparent);
+  --home-glass-edge: var(--accent);
+  --home-glass-highlight: color-mix(in srgb, var(--accent) 4%, transparent);
+  --home-glass-rim: color-mix(in srgb, var(--accent) 35%, transparent);
+  --home-glass-copy: var(--ds-text);
+  --home-glass-code-opacity: 88%;
+}
+
+/* One backdrop-filter per surface, not on every nested preview. */
+.pico-home-glass .compiler-choice,
+.pico-home-glass :is(.home-learning-link, .home-footer-links .bug-report-trigger) {
+  background: var(--home-glass-base);
+  background: var(--home-glass-fill);
+  border: 1px solid var(--home-glass-edge);
+  box-shadow: inset 0 1px 0 var(--home-glass-rim), inset 0 -1px 0 var(--home-glass-highlight);
+  -webkit-backdrop-filter: blur(var(--home-glass-blur)) saturate(115%);
+  backdrop-filter: blur(var(--home-glass-blur)) saturate(115%);
+  color: var(--ds-text);
+}
+.pico-home-glass .compiler-choice {
+  border-radius: var(--home-card-radius);
+  isolation: isolate;
+}
+.pico-home-glass .compiler-choice-stage {
+  background: var(--home-glass-stage);
+  border-color: var(--home-glass-edge);
+}
+.pico-home-glass .compiler-choice-stage:has(> pre) {
+  padding: var(--home-card-padding);
+}
+.pico-home-glass .compiler-choice-stage pre {
+  background: color-mix(in srgb, var(--editor-bg) var(--home-glass-code-opacity), transparent);
+  border-radius: max(0px, calc(var(--home-card-radius) - var(--home-card-padding)));
+  align-self: stretch;
+  align-content: center;
+  border-color: var(--home-glass-edge);
+}
+.pico-home-glass .compiler-choice-icon {
+  border-radius: 11px;
+  border: 1px solid var(--home-glass-edge);
+  background: var(--ds-accent-soft);
+  box-shadow: inset 0 1px 0 var(--home-glass-rim);
+}
+.pico-home-glass .compiler-choice p,
+.pico-home-glass .home-group-detail {
+  color: var(--home-glass-copy);
+}
+.pico-home-glass .home-binary-byte span {
+  border-radius: 9px;
+  background: var(--home-glass-fill);
+}
+.pico-home-glass .home-binary-byte span.on {
+  background: var(--ds-accent-soft);
+}
+.pico-home-glass .home-footer-links .bug-report-trigger {
+  border-radius: 12px;
+}
+.pico-home-glass .home-learning-link { border-radius: 15px; }
+.pico-home-glass :is(.home-learning-link, .home-footer-links .bug-report-trigger, .compiler-choice):hover {
+  border-color: var(--accent);
+  background: var(--home-glass-fill);
+  color: var(--ds-text);
+}
+.pico-home-glass :is(.home-learning-link, .home-footer-links .bug-report-trigger, .compiler-choice):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pico-home.pico-home-glass { --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 65%, transparent); }
+  .pico-home.pico-home-glass[data-high-contrast='true'] { --home-glass-fill: color-mix(in srgb, var(--bg) 94%, transparent); }
+}
+@media (max-width: 640px) {
+  .pico-home.pico-home-glass { --home-card-padding: 14px; }
+}
+@media (max-width: 640px), (pointer: coarse) {
+  .pico-home.pico-home-glass { --home-glass-blur: 4px; }
+}
+@media (forced-colors: active) {
+  .pico-home-glass :is(.compiler-choice, .home-learning-link, .home-footer-links .bug-report-trigger) {
+    background: Canvas;
+    color: CanvasText;
+    border-color: ButtonText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+
+/* Seamless horizontal carousel with two identical locally rendered strips. */
+.pico-home-glass .home-tech-cycle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 900px);
+  min-width: 0;
+  min-height: 32px;
+  color: var(--ds-muted);
+  font-size: 13px;
+  line-height: 1.2;
+}
+.pico-home-glass .home-tech-window {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 900px;
+  overflow: hidden;
+  padding-block: 3px;
+}
+.pico-home-glass .home-tech-track {
+  display: flex;
+  width: max-content;
+  animation: pico-home-tech-scroll 38.923s linear 0.8s infinite backwards;
+}
+.pico-home-glass .home-tech-strip { display: flex; flex: none; }
+.pico-home-glass .home-tech-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  width: 150px;
+  height: 30px;
+  color: var(--ds-text);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pico-home-glass .home-tech-item svg { flex: 0 0 21px; }
+@keyframes pico-home-tech-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.pico-home-glass .home-tech-window:focus-within .home-tech-track { animation-play-state: paused; }
+.pico-home-glass .home-tech-window:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+@media (max-width: 540px) {
+  .pico-home-glass .home-tech-window { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pico-home-glass .home-tech-cycle { flex-wrap: wrap; }
+  .pico-home-glass .home-tech-window { overflow: visible; max-width: none; }
+  .pico-home-glass .home-tech-track { animation: none; width: 100%; }
+  .pico-home-glass .home-tech-strip { flex: 1 1 auto; flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
+  .pico-home-glass .home-tech-strip[data-copy='1'] { display: none; }
+  .pico-home-glass .home-tech-item { width: auto; font-size: 13px; }
+}
+
+
+/* Lightweight state-driven previews. Text and actual outputs remain legible. */
+.pico-home-glass .compiler-choice-stage pre.home-code-live { padding: 6px 12px; font-size: 11px; line-height: 1.4; }
+.pico-home-glass .home-preview-output { display: block; margin-top: 4px; padding-top: 3px; border-top: 1px solid var(--ds-line); color: var(--syntax-string); }
+.pico-home-glass .home-preview-output[data-running='true'] { color: var(--ds-muted); }
+.pico-home-glass .home-chart-preview .home-preview-active { fill: var(--ds-accent-soft); stroke: var(--accent); stroke-width: 2.2; }
+.pico-home-glass .home-chart-preview .home-preview-signal { stroke: var(--accent); stroke-width: 2; }
+.pico-home-glass .home-chart-preview text.home-preview-phase { fill: var(--accent); font-size: 11px; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) {
+  .pico-home-glass .home-chart-preview rect, .pico-home-glass .home-chart-preview circle, .pico-home-glass .home-chart-preview path { transition: fill 180ms ease, stroke 180ms ease; }
+}
+
+.pico-home-glass .home-chart-preview .home-preview-bulb-glass { fill: var(--ds-panel-raised); stroke: var(--ds-muted); }
+.pico-home-glass .home-chart-preview .home-preview-bulb-base { fill: none; stroke: var(--ds-muted); stroke-width: 2; stroke-linecap: round; }
+.pico-home-glass .home-chart-preview .home-preview-bulb[data-lit='true'] .home-preview-bulb-glass { fill: var(--accent); stroke: var(--accent); }
+.pico-home-glass .home-chart-preview .home-preview-bulb-rays { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; }
+.pico-home-glass .home-traffic-preview .home-traffic-spam { fill: var(--accent); }
+.pico-home-glass .home-traffic-preview .home-traffic-server { stroke: var(--accent); stroke-width: 1.8; }
+.pico-home-glass .home-traffic-preview .home-traffic-status-light, .pico-home-glass .home-traffic-preview .home-traffic-load { fill: var(--accent); stroke: none; }
+.pico-home-glass .home-traffic-preview .home-traffic-load-track { fill: var(--ds-line); stroke: none; }

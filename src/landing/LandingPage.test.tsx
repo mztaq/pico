@@ -47,6 +47,13 @@ describe('Pico landing page', () => {
     expect(container.querySelectorAll('.lp-hero .lp-hero-copy')).toHaveLength(1);
     expect(container.querySelectorAll('.lp-hero .lp-hero-cpu')).toHaveLength(1);
   });
+  it('provides the Status link in public landing navigation', async () => {
+    await render();
+    const status=container.querySelector<HTMLAnchorElement>('nav.lp-links a[href="https://status.picompiler.pages.dev/"]');
+    expect(status?.textContent).toBe('Status');
+    expect(status?.target).toBe('_blank');
+    expect(status?.rel).toBe('noopener noreferrer');
+  });
   it('keeps navbar layout stable and ignores small scroll reversals', async () => {
     Object.defineProperty(window, 'scrollY', { configurable:true, writable:true, value:0 });
     await render();
@@ -110,12 +117,12 @@ describe('Pico landing page', () => {
     expect(footer?.querySelector('nav')).toBeNull();
     expect(footer?.textContent).not.toContain('Original site materials');
   });
-  it('orders tools as three deliberate pairs without placeholder copy', async () => {
+  it('lists all nine current destinations in three balanced groups', async () => {
     await render();
     const groups=[...container.querySelectorAll('.lp-feature-group')];
     expect(groups).toHaveLength(3);
-    expect(groups.map(group=>group.querySelector('h3')?.textContent)).toEqual(['Programming','Visual tools','Computer systems']);
-    expect(groups.map(group=>group.querySelectorAll('.lp-feature-item').length)).toEqual([2,2,2]);
+    expect(groups.map(group=>group.querySelector('h3')?.textContent)).toEqual(['Programming & learning','Visual tools & games','Computer systems']);
+    expect(groups.map(group=>group.querySelectorAll('.lp-feature-item').length)).toEqual([3,3,3]);
     expect(container.textContent).not.toContain('Six workspaces for programming, algorithms and computer architecture.');
     expect(container.textContent).not.toContain('Inside Pico');
     expect(container.querySelector('#lp-features-title')?.textContent).toBe("Pico's tools");
@@ -124,8 +131,9 @@ describe('Pico landing page', () => {
     expect(container.querySelector('.lp-feature-card')).toBeNull();
     const links=[...container.querySelectorAll<HTMLAnchorElement>('.lp-feature-item')];
     expect(links.map(link=>link.getAttribute('href'))).toEqual([
-      '/app/pseudocode','/app/python','/app/flowchart',
-      '/app/logic','/app/cpu','/app/binary',
+      '/app/pseudocode','/app/python','/app/learn',
+      '/app/flowchart','/app/logic','/app/games',
+      '/app/cpu','/app/binary','/app/traffic',
     ]);
     expect(links.every(link=>link.getAttribute('aria-label')?.startsWith('Open '))).toBe(true);
     const layout=container.querySelector('main > .lp-tools-downloads');

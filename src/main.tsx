@@ -7,6 +7,7 @@ const AiUsagePage = lazy(() => import('./landing/AiUsagePage'));
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { OfflineStatus } from './app/components/OfflineStatus';
 import { WorkspaceContextMenu } from './app/components/WorkspaceContextMenu';
+import { checkHomeFluidSupport } from './app/components/home-fluid-context.js';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
 import { workspaceFromLocation } from './app/workspace-deeplink';
@@ -18,7 +19,7 @@ import './styles/overlays.css';
 import './app/styles/accessibility.css';
 
 function LoadingScreen() {
-  return <div className="pico-loading" role="status"><span className="pico-loading-label">Loading Pico…</span><div aria-hidden="true"><div className="pico-skeleton-nav"><div className="pico-skeleton pico-skeleton-logo"/><div className="pico-skeleton-links"><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#home"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#features"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#downloads"/></div></div><div className="pico-skeleton-hero"><div className="pico-skeleton-copy"><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-line"/><div className="pico-skeleton-actions"><div className="pico-skeleton pico-skeleton-button" data-placeholder-for="/app"/><div className="pico-skeleton pico-skeleton-button" data-placeholder-for="#downloads"/></div></div><div className="pico-skeleton pico-skeleton-preview"/></div><div className="pico-skeleton-cards"><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/></div></div></div>;
+  return <div className="pico-loading" role="status"><span className="pico-loading-label">Loading Pico…</span><div aria-hidden="true"><div className="pico-skeleton-nav"><div className="pico-skeleton pico-skeleton-logo"/><div className="pico-skeleton-links"><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#home"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#features"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="#downloads"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="/mcp-docs"/><div className="pico-skeleton pico-skeleton-link" data-placeholder-for="https://status.picompiler.pages.dev/"/></div></div><div className="pico-skeleton-hero"><div className="pico-skeleton-copy"><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-title"/><div className="pico-skeleton pico-skeleton-line"/><div className="pico-skeleton-actions"><div className="pico-skeleton pico-skeleton-button" data-placeholder-for="/app"/><div className="pico-skeleton pico-skeleton-button" data-placeholder-for="#downloads"/></div></div><div className="pico-skeleton pico-skeleton-preview"/></div><div className="pico-skeleton-cards"><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/><div className="pico-skeleton pico-skeleton-card"/></div></div></div>;
 }
 
 /** The HTML home placeholder stays above Suspense until the real App commits. */
@@ -61,6 +62,11 @@ const initialHomeScreen = inApp &&
   !workspaceFromLocation(window.location.pathname, window.location.search) &&
   !informationPageFromPath(window.location.pathname) &&
   !window.location.hash;
+// Warm the same self-hosted engine chunk on the landing page, before /app navigation.
+// Importing the module performs no GPU work; only HomeFluidBackground starts it.
+if ((isHomePage || initialHomeScreen) && checkHomeFluidSupport(isHomePage)) {
+  void import('./app/components/home-fluid-engine.js').catch(() => {});
+}
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
