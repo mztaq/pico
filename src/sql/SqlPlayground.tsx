@@ -7,9 +7,8 @@ import { MAX_CSV_BYTES, quoteIdentifier, toCsv } from './csv';
 import type { SqlRequest, SqlResponse, WorkerReply } from './engine';
 import './sql-playground.css';
 
-const SAMPLE = 'id,name,score,subject\n1,Ada,92,Computing\n2,Sam,76,Maths\n3,Alex,88,Computing\n4,Robin,65,Maths';
 let session: SqlResponse | undefined;
-let sessionQuery = 'SELECT * FROM students;';
+let sessionQuery = '';
 
 export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const [themeId, setThemeId] = useState(() => loadSettings().theme);
@@ -109,7 +108,6 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         <div className="sql-panel-heading"><h2><Database size={17}/> Tables</h2><button type="button" disabled={disabled} onClick={() => fileInput.current?.click()}><Upload size={15}/> Import CSV</button></div>
         <input ref={fileInput} type="file" accept=".csv,text/csv" multiple hidden onChange={importFiles} />
         <p className="sql-muted">First row contains column names. Up to 5 MB per file.</p>
-        <button type="button" disabled={disabled} onClick={() => execute({ action: 'import', files: [{ name: 'students.csv', text: SAMPLE }] })}>Load example</button>
         <div className="sql-tables">
           {state?.tables.map(table => <div className="sql-table-item" key={table.name}><button type="button" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + quoteIdentifier(table.name) + ';'; updateQuery(query); execute({ action: 'query', sql: query }); }}><Database size={15}/>{table.name}</button>
             <ul>{table.columns.map((column, i) => <li key={i}><span>{column.name}</span><small>{column.type}</small></li>)}</ul>
@@ -121,14 +119,14 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       <section className="sql-main">
         <section className="sql-editor-panel">
           <div className="sql-panel-heading"><h2>SQL editor</h2><div className="sql-actions">{busy ? <button type="button" onClick={() => stop()}>Stop</button> : <button type="button" className="sql-run" onClick={() => execute({ action: 'query', sql })} disabled={reading || !sql.trim()}><Play size={16}/> Run query</button>}</div></div>
-          <textarea aria-label="SQL query" spellCheck={false} value={sql} onChange={event => updateQuery(event.target.value)} onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); if (!disabled) execute({ action: 'query', sql }); } }} />
+          <textarea aria-label="SQL query" placeholder="Enter a SQL query…" spellCheck={false} value={sql} onChange={event => updateQuery(event.target.value)} onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); if (!disabled) execute({ action: 'query', sql }); } }} />
           <div className="sql-editor-footer"><span>SQLite</span><span>Ctrl / ⌘ + Enter to run</span></div>
         </section>
         <section className="sql-results-panel">
           <div className="sql-panel-heading"><h2>Results</h2><button type="button" disabled={!result || disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button></div>
           <div className="sql-result-status" role="status">{reading ? 'Reading files…' : status}</div>
           {error && <p className="sql-error" role="alert">{error}</p>}
-          {result ? <><div className="sql-result-scroll"><table><thead><tr><th scope="col">#</th>{result.columns.map((column, i) => <th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{i + 1}</td>{row.map((cell, j) => <td key={j}>{cell === null ? <i>NULL</i> : String(cell)}</td>)}</tr>)}</tbody></table></div>{result.truncated && <p className="sql-muted">Preview limited to 500 rows or 1 MB of displayed text. Export contains this preview.</p>}</> : <p className="sql-empty">{state?.tables.length ? 'No result table. Run a SELECT query to display rows.' : 'Import a CSV or load the example, then run a query.'}</p>}
+          {result ? <><div className="sql-result-scroll"><table><thead><tr><th scope="col">#</th>{result.columns.map((column, i) => <th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{i + 1}</td>{row.map((cell, j) => <td key={j}>{cell === null ? <i>NULL</i> : String(cell)}</td>)}</tr>)}</tbody></table></div>{result.truncated && <p className="sql-muted">Preview limited to 500 rows or 1 MB of displayed text. Export contains this preview.</p>}</> : <p className="sql-empty">{state?.tables.length ? 'No result table. Run a SELECT query to display rows.' : 'Import a CSV file, then run a query.'}</p>}
         </section>
       </section>
     </div>
