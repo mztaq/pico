@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties, type ChangeEvent } from 'react';
-import { ArrowLeft, Database, Download, Play, Upload, Settings2, X } from 'lucide-react';
+import { ArrowLeft, Database, Download, Play, Upload, Settings2, X, Table2, FileCode2, Trash2 } from 'lucide-react';
 import { cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
+import { FloatingPanel } from '../app/components/FloatingPanel';
+import { ResizeHandle } from '../app/components/ResizeHandle';
+import { SqlEditor } from './SqlEditor';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { MAX_CSV_BYTES, quoteIdentifier, toCsv } from './csv';
 import type { SqlRequest, SqlResponse, WorkerReply } from './engine';
@@ -11,7 +14,12 @@ let session: SqlResponse | undefined;
 let sessionQuery = '';
 
 export function SqlPlayground({ onHome }: { onHome: () => void }) {
-  const [themeId, setThemeId] = useState(() => loadSettings().theme);
+  const [settings, setSettings] = useState(loadSettings);
+  const themeId = settings.theme;
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [editorRatio, setEditorRatio] = useState(55);
+  const mainRef = useRef<HTMLElement>(null);
+  const settingsAnchor = useRef<HTMLDivElement>(null);
   const theme = getTheme(themeId);
   const [themeOpen, setThemeOpen] = useState(false);
   const [state, setState] = useState<SqlResponse | undefined>(session);
@@ -29,15 +37,17 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const disabled = busy || reading;
 
   useEffect(() => {
-    try { saveSettings({ ...loadSettings(), theme: themeId }); } catch { /* Theme remains active. */ }
+    try { saveSettings(settings); } catch { /* Theme remains active. */ }
     for (const [property, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(property, value);
     document.documentElement.style.colorScheme = theme.appearance;
-  }, [theme, themeId]);
+  }, [theme, settings]);
   useEffect(() => {
     if (!themeOpen) return;
     const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setThemeOpen(false); };
+    const outside = (event: PointerEvent) => { if (!settingsAnchor.current?.contains(event.target as Node)) setThemeOpen(false); };
     window.addEventListener('keydown', close);
-    return () => window.removeEventListener('keydown', close);
+    document.addEventListener('pointerdown', outside);
+    return () => { window.removeEventListener('keydown', close); document.removeEventListener('pointerdown', outside); };
   }, [themeOpen]);
 
   const clearTimer = () => { clearTimeout(timer.current); timer.current = undefined; };
@@ -98,38 +108,61 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'pico-query-results.csv'; anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  return <main className="sql-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
-    <header className="sql-header pico-appbar">
-      <div className="sql-header-brand"><button type="button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={18} /></button><button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img src="/pico-logo.svg" alt="" width="24" height="24"/><span>Pico<span className="brand-period">.</span></span></button><h1>SQL Playground</h1></div>
-      <button type="button" aria-label="Choose theme" onClick={() => setThemeOpen(true)}><Settings2 size={18}/></button>
+  const runQuery = (value: string) => {
+    if (!disabled && value.trim()) execute({ action: 'query', sql: value });
+  };
+  return <main className="pico-app sql-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
+    <header className="topbar pico-appbar sql-header">
+      <div className="pico-appbar-lead">
+        <button className="toolbar-button home-button" type="button" aria-label="Go to home screen" onClick={onHome}><ArrowLeft size={16}/></button>
+        <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico</span><span className="brand-period">.</span></button>
+        <h1 className="sql-workspace-title">SQL Playground</h1>
+      </div>
+      <div className="topbar-spacer"/>
+      <button type="button" className="toolbar-button sql-import" disabled={disabled} onClick={() => fileInput.current?.click()}><Upload size={15}/> Import CSV</button>
+      <input ref={fileInput} type="file" accept=".csv,text/csv" multiple hidden onChange={importFiles}/>
+      <div className="settings-anchor" ref={settingsAnchor}>
+        <button type="button" className={`topbar-icon ${themeOpen ? 'active' : ''}`} aria-label="Open settings" aria-expanded={themeOpen} title="Settings" onClick={() => setThemeOpen(open => !open)}><Settings2 size={16}/></button>
+        <FloatingPanel anchor={settingsAnchor} open={themeOpen} className="settings-popover">
+          <div className="settings-title"><div><Settings2 size={15}/><strong>Editor settings</strong></div><button className="icon-button quiet" aria-label="Close settings" onClick={() => setThemeOpen(false)}><X size={14}/></button></div>
+          <label className="sql-setting-toggle"><span>Autocomplete</span><input type="checkbox" checked={settings.autocomplete} onChange={event => setSettings(previous => ({ ...previous, autocomplete: event.target.checked }))}/></label>
+          <ThemePicker value={themeId} onChange={id => setSettings(previous => ({ ...previous, theme: id }))}/>
+          <label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="24" value={settings.fontSize} onChange={event => setSettings(previous => ({ ...previous, fontSize: Number(event.target.value) }))}/></label>
+          <button className="reset-layout-button" onClick={() => { setSidebarWidth(260); setEditorRatio(55); }}>Reset workspace layout</button>
+        </FloatingPanel>
+      </div>
+      <div className="pico-appbar-run sql-actions">
+        {busy && <button type="button" className="toolbar-button stop-button" onClick={() => stop()}><X size={15}/> Stop</button>}
+        <button type="button" className="run-button sql-run" disabled={disabled || !sql.trim()} onClick={() => runQuery(sql)}><Play size={14} fill="currentColor"/> <span>Run query</span><kbd>Ctrl ↵</kbd></button>
+      </div>
     </header>
-    <div className="sql-layout">
+    <div className="sql-layout" style={{ '--sql-sidebar-width': sidebarWidth + 'px' } as CSSProperties}>
       <aside className="sql-sidebar">
-        <div className="sql-panel-heading"><h2><Database size={17}/> Tables</h2><button type="button" disabled={disabled} onClick={() => fileInput.current?.click()}><Upload size={15}/> Import CSV</button></div>
-        <input ref={fileInput} type="file" accept=".csv,text/csv" multiple hidden onChange={importFiles} />
-        <p className="sql-muted">First row contains column names. Up to 5 MB per file.</p>
+        <div className="sql-panel-heading"><h2><Database size={16}/> Tables</h2><button type="button" className="topbar-icon" aria-label="Clear database" title="Clear database" disabled={disabled || !state?.tables.length} onClick={() => { if (window.confirm('Clear all tables in this SQL session?')) execute({ action: 'reset' }); }}><Trash2 size={15}/></button></div>
         <div className="sql-tables">
-          {state?.tables.map(table => <div className="sql-table-item" key={table.name}><button type="button" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + quoteIdentifier(table.name) + ';'; updateQuery(query); execute({ action: 'query', sql: query }); }}><Database size={15}/>{table.name}</button>
+          {state?.tables.map(table => <details className="sql-table-item" key={table.name} open>
+            <summary><Database size={15}/><span>{table.name}</span></summary>
+            <button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + quoteIdentifier(table.name) + ';'; updateQuery(query); execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>
             <ul>{table.columns.map((column, i) => <li key={i}><span>{column.name}</span><small>{column.type}</small></li>)}</ul>
-          </div>)}
-          {!state?.tables.length && <p className="sql-muted">No tables yet.</p>}
+          </details>)}
+          {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Database size={18}/></span><p>No tables yet</p><button type="button" className="toolbar-button" disabled={disabled} onClick={() => fileInput.current?.click()}><Upload size={14}/> Import CSV</button></div>}
         </div>
-        <div className="sql-sidebar-bottom"><p className="sql-muted">Files stay on this device. Tables are kept for this tab until you reload.</p><button type="button" disabled={disabled || !state?.tables.length} onClick={() => { if (window.confirm('Clear all tables in this SQL session?')) execute({ action: 'reset' }); }}>Clear database</button></div>
+        <div className="sql-sidebar-bottom">CSV files stay on your device for this session.</div>
       </aside>
-      <section className="sql-main">
-        <section className="sql-editor-panel">
-          <div className="sql-panel-heading"><h2>SQL editor</h2><div className="sql-actions">{busy ? <button type="button" onClick={() => stop()}>Stop</button> : <button type="button" className="sql-run" onClick={() => execute({ action: 'query', sql })} disabled={reading || !sql.trim()}><Play size={16}/> Run query</button>}</div></div>
-          <textarea aria-label="SQL query" placeholder="Enter a SQL query…" spellCheck={false} value={sql} onChange={event => updateQuery(event.target.value)} onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); if (!disabled) execute({ action: 'query', sql }); } }} />
-          <div className="sql-editor-footer"><span>SQLite</span><span>Ctrl / ⌘ + Enter to run</span></div>
+      <ResizeHandle axis="x" label="Resize table explorer" onResize={delta => setSidebarWidth(value => Math.max(190, Math.min(420, value + delta)))}/>
+      <section ref={mainRef} className="sql-main" style={{ '--sql-editor-ratio': editorRatio + '%' } as CSSProperties}>
+        <section className="editor-card sql-editor-panel">
+          <div className="file-tabs sql-editor-tabs"><div className="file-tab active sql-file-tab"><FileCode2 size={15}/><span>query.sql</span></div></div>
+          <SqlEditor value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables ?? []}/>
+          <div className="editor-card-foot sql-editor-footer"><span>SQLite</span><span>{sql.split('\n').length} {sql.split('\n').length === 1 ? 'line' : 'lines'}</span></div>
         </section>
-        <section className="sql-results-panel">
-          <div className="sql-panel-heading"><h2>Results</h2><button type="button" disabled={!result || disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button></div>
-          <div className="sql-result-status" role="status">{reading ? 'Reading files…' : status}</div>
+        <ResizeHandle axis="y" label="Resize query results" onResize={delta => setEditorRatio(value => Math.max(25, Math.min(75, value + delta / Math.max(1, mainRef.current?.clientHeight ?? 600) * 100)))}/>
+        <section className="tool-dock sql-results-panel">
+          <div className="dock-tab-row sql-dock-head"><div className="dock-tab active"><Table2 size={16}/> Results</div><span className="sql-result-status" role="status">{reading ? 'Reading files…' : status}</span><button type="button" className="toolbar-button" disabled={!result || disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button></div>
           {error && <p className="sql-error" role="alert">{error}</p>}
-          {result ? <><div className="sql-result-scroll"><table><thead><tr><th scope="col">#</th>{result.columns.map((column, i) => <th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{i + 1}</td>{row.map((cell, j) => <td key={j}>{cell === null ? <i>NULL</i> : String(cell)}</td>)}</tr>)}</tbody></table></div>{result.truncated && <p className="sql-muted">Preview limited to 500 rows or 1 MB of displayed text. Export contains this preview.</p>}</> : <p className="sql-empty">{state?.tables.length ? 'No result table. Run a SELECT query to display rows.' : 'Import a CSV file, then run a query.'}</p>}
+          {result ? <><div className="sql-result-scroll"><table><thead><tr><th scope="col">#</th>{result.columns.map((column, i) => <th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{i + 1}</td>{row.map((cell, j) => <td key={j}>{cell === null ? <i>NULL</i> : String(cell)}</td>)}</tr>)}</tbody></table></div>{result.truncated && <p className="sql-muted">Preview limited to 500 rows or 1 MB of displayed text. Export contains this preview.</p>}</> : <div className="sql-empty-state sql-empty-results"><span className="console-placeholder-mark"><Table2 size={20}/></span><p>{state?.tables.length ? 'No results to display' : 'Run a query to see results'}</p></div>}
         </section>
       </section>
     </div>
-    {themeOpen && <div className="sql-theme-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setThemeOpen(false); }}><div className="sql-theme-dialog" role="dialog" aria-modal="true" aria-label="Choose SQL Playground theme"><div className="sql-theme-head"><strong>Theme</strong><button type="button" aria-label="Close themes" onClick={() => setThemeOpen(false)}><X size={17}/></button></div><ThemePicker value={themeId} onChange={setThemeId}/></div></div>}
   </main>;
 }
