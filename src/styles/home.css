@@ -267,14 +267,14 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   --home-glass-cool: color-mix(in srgb, #83b9cb 50%, #8bcbb6);
   --home-glass-tint: color-mix(in srgb, var(--accent) 80%, var(--home-glass-cool));
   --home-glass-base: color-mix(in srgb, var(--bg) 78%, var(--ds-panel-raised));
-  --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 42%, transparent);
-  --home-glass-stage: color-mix(in srgb, var(--bg) 12%, transparent);
+  --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 55%, transparent);
+  --home-glass-stage: color-mix(in srgb, var(--bg) 25%, transparent);
   --home-glass-edge: color-mix(in srgb, var(--home-glass-tint) 30%, var(--ds-line-strong));
   --home-glass-highlight: color-mix(in srgb, var(--home-glass-tint) 13%, transparent);
   --home-glass-rim: color-mix(in srgb, #fff 20%, transparent);
   --home-glass-copy: color-mix(in srgb, var(--ds-text) 85%, var(--ds-muted));
   --home-glass-blur: 6px;
-  --home-glass-code-opacity: 48%;
+  --home-glass-code-opacity: 64%;
   --home-card-radius: 20px;
   --home-card-padding: 16px;
 }
