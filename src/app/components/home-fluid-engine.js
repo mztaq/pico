@@ -39,7 +39,7 @@ export function startFluid(canvas, initialPalette, onFailure) {
     DENSITY_DISSIPATION: 0.85, VELOCITY_DISSIPATION: 0.55, SPLAT_RADIUS: 0.28 };
   let lastPointer = null;
   let pending = null;
-  const frameInterval = 1000 / 50;
+  const frameInterval = 1000 / 60;
   let lastFrame = 0;
   let frameBudget = 0;
   let simulatedElapsed = 0;
@@ -624,7 +624,7 @@ draw();
 update = now => {
   if (disposed || document.hidden) return;
   frame = requestAnimationFrame(update);
-  // Limit GPU simulation and drawing to 50fps. Carry fractional frame time forward.
+  // Limit GPU simulation and drawing to 60fps. Carry fractional frame time forward.
   const elapsed = lastFrame ? now - lastFrame : frameInterval;
   lastFrame = now;
   frameBudget += Math.min(elapsed, 40);
