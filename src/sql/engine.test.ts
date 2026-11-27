@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import initSqlJs, { type SqlModule } from 'sql.js';
 import { csvTable, parseCsv, toCsv } from './csv';
 import { executeSql } from './engine';
+import { resizeManualGrid, validateManualTable } from './manual-table';
 
 let SQL: SqlModule;
 beforeAll(async () => { SQL = await initSqlJs(); });
@@ -53,5 +54,26 @@ describe('manual worksheet tables', () => {
     expect(()=>create([['bad']])).toThrow(/integer/);
     expect(()=>create([['1'],['1']])).toThrow(/UNIQUE/);
     expect(()=>executeSql(SQL,{action:'create',table:{name:'Records',columns:[...columns,...columns],rows:[]}})).toThrow(/unique/);
+  });
+});
+
+describe('worksheet dimensions and syllabus data types', () => {
+  it('expands and shrinks the entry grid without losing retained data', () => {
+    const columns = [{ name:'ID', type:'INTEGER', primaryKey:true }] as const;
+    const larger = resizeManualGrid([...columns], [['1']], 3, 10);
+    expect(larger.columns).toHaveLength(3);
+    expect(larger.rows).toHaveLength(10);
+    expect(larger.rows[0]).toEqual(['1','','']);
+    expect(larger.columns[0]).toEqual(columns[0]);
+    expect(resizeManualGrid(larger.columns,larger.rows,1,1).rows).toEqual([['1']]);
+    expect(resizeManualGrid(larger.columns,larger.rows,2,0).rows).toEqual([]);
+    expect(()=>resizeManualGrid([],[],0,1)).toThrow();
+  });
+  it('validates character, date and time values before inserting', () => {
+    const table = {name:'Attendance',columns:[{name:'Code',type:'CHARACTER',primaryKey:true},{name:'Day',type:'DATE',primaryKey:false},{name:'Arrival',type:'TIME',primaryKey:false},{name:'Recorded',type:'DATETIME',primaryKey:false}] as const,rows:[['A','2026-11-27','08:30','2026-11-27T08:30']]};
+    expect(executeSql(SQL,{action:'create',table:{...table,columns:[...table.columns]}}).result?.rows).toEqual([['A','2026-11-27','08:30','2026-11-27 08:30']]);
+    for (const row of [['AB','2026-11-27','08:30','2026-11-27'],['A','2026-02-30','08:30','2026-11-27'],['A','2026-11-27','25:00','2026-11-27']]) {
+      expect(()=>validateManualTable({...table,columns:[...table.columns],rows:[row]})).toThrow();
+    }
   });
 });

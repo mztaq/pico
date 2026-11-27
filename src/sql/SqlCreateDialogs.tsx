@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ClipboardEvent, type ReactNode } from 'react';
 import { Database, Plus, Table2, Trash2, Upload, X } from 'lucide-react';
-import { columnTypes, type ColumnType, type ManualColumn, type ManualTable, validateManualTable } from './manual-table';
+import { columnTypes, type ColumnType, type ManualColumn, type ManualTable, validateManualTable, resizeManualGrid, columnTypeLabels } from './manual-table';
 
 function Modal({ title, children, onClose, busy = false }: { title: string; children: ReactNode; onClose: () => void; busy?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -42,8 +42,26 @@ export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, 
   const [name, setName] = useState('');
   const [columns, setColumns] = useState<ManualColumn[]>([blankColumn(), blankColumn()]);
   const [rows, setRows] = useState<string[][]>([['','']]);
+  const [fieldCount, setFieldCount] = useState('2');
+  const [recordCount, setRecordCount] = useState('1');
+  const [recordPage, setRecordPage] = useState(0);
+  const pageSize = 25;
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const page = Math.min(recordPage, pageCount - 1);
+  useEffect(() => { setFieldCount(String(columns.length)); setRecordCount(String(rows.length)); }, [columns.length, rows.length]);
   const [files, setFiles] = useState<File[]>([]);
   const [validation, setValidation] = useState('');
+  function applySize() {
+    const fields = Number(fieldCount), records = Number(recordCount);
+    if (!fieldCount.trim() || !recordCount.trim() || !Number.isInteger(fields) || fields < 1 || fields > 100 || !Number.isInteger(records) || records < 0 || records > 1000) {
+      setValidation('Choose 1–100 fields and 0–1,000 records.'); return;
+    }
+    const removesData = columns.slice(fields).some(column => column.name || column.primaryKey || column.type !== 'TEXT') ||
+      rows.some((row, i) => (i >= records ? row : row.slice(fields)).some(cell => cell !== ''));
+    if (removesData && !window.confirm('Reducing the size will remove some entered fields or records. Continue?')) return;
+    const next = resizeManualGrid(columns, rows, fields, records);
+    setColumns(next.columns); setRows(next.rows); setRecordPage(0); setValidation('');
+  }
   function changeColumn(index: number, change: Partial<ManualColumn>) {
     setColumns(previous => previous.map((column,i) => i === index ? {...column,...change} : column));
     setValidation('');
@@ -78,6 +96,7 @@ export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, 
   }
   function submit() {
     if (mode === 'csv') { if (files.length) onImport(files); return; }
+    if (fieldCount !== String(columns.length) || recordCount !== String(rows.length)) { setValidation('Select Set size before creating the table.'); return; }
     const table = { name, columns, rows: rows.filter(row => row.some(cell => cell !== '')) };
     try { validateManualTable(table); setValidation(''); onCreate(table); }
     catch (cause) { setValidation(cause instanceof Error ? cause.message : String(cause)); }
@@ -91,21 +110,27 @@ export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, 
       </div>
       {mode === 'manual' ? <>
         <label>Table name<input autoFocus disabled={busy} value={name} onChange={event => setName(event.target.value)} maxLength={100} placeholder="Enter a table name"/></label>
-        <div className="sql-form-heading"><h3>Fields</h3><button className="toolbar-button" type="button" disabled={busy || columns.length >= 100} onClick={addColumn}><Plus size={15}/> Add field</button></div>
+        <div className="sql-table-size">
+          <label>Number of fields<input type="number" min={1} max={100} step={1} value={fieldCount} disabled={busy} onChange={event => setFieldCount(event.target.value)}/></label>
+          <label>Number of records<input type="number" min={0} max={1000} step={1} value={recordCount} disabled={busy} onChange={event => setRecordCount(event.target.value)}/></label>
+          <button type="button" className="subtle-button" disabled={busy || (fieldCount === String(columns.length) && recordCount === String(rows.length))} onClick={applySize}>Set size</button>
+        </div>
+        <div className="sql-form-heading"><h3>Fields <span className="sql-count">({columns.length})</span></h3><button className="toolbar-button" type="button" disabled={busy || columns.length >= 100} onClick={addColumn}><Plus size={15}/> Add field</button></div>
         <div className="sql-field-list">
           <div className="sql-field-row sql-field-labels"><span>Field name</span><span>Data type</span><span>Primary key</span><span/></div>
           {columns.map((column,i) => <div className="sql-field-row" key={i}>
             <input aria-label={'Field ' + (i+1) + ' name'} disabled={busy} maxLength={100} value={column.name} placeholder={'Field ' + (i+1)} onChange={event => changeColumn(i,{name:event.target.value})}/>
-            <select aria-label={'Field ' + (i+1) + ' type'} disabled={busy} value={column.type} onChange={event => changeColumn(i,{type:event.target.value as ColumnType})}>{columnTypes.map(type => <option key={type}>{type}</option>)}</select>
+            <select aria-label={'Field ' + (i+1) + ' type'} disabled={busy} value={column.type} onChange={event => changeColumn(i,{type:event.target.value as ColumnType})}>{columnTypes.map(type => <option key={type} value={type}>{columnTypeLabels[type]}</option>)}</select>
             <input type="checkbox" aria-label={'Field ' + (i+1) + ' primary key'} disabled={busy} checked={column.primaryKey} onChange={event => changeColumn(i,{primaryKey:event.target.checked})}/>
             <button type="button" className="topbar-icon" aria-label={'Remove field ' + (i+1)} disabled={busy || columns.length === 1} onClick={() => removeColumn(i)}><Trash2 size={15}/></button>
           </div>)}
         </div>
-        <div className="sql-form-heading"><h3>Records</h3><button type="button" className="toolbar-button" disabled={busy || rows.length >= 1000} onClick={() => setRows(previous => [...previous,columns.map(()=>'')])}><Plus size={15}/> Add row</button></div>
+        <div className="sql-form-heading"><h3>Records <span className="sql-count">({rows.length})</span></h3><button type="button" className="toolbar-button" disabled={busy || rows.length >= 1000} onClick={() => { setRows(previous => [...previous,columns.map(()=>'')]); setRecordPage(Math.floor(rows.length / pageSize)); }}><Plus size={15}/> Add row</button></div>
         <div className="sql-record-grid"><table><thead><tr><th>#</th>{columns.map((column,i)=><th key={i}>{column.name || 'Field ' + (i+1)}</th>)}<th/></tr></thead><tbody>
-          {rows.map((row,i)=><tr key={i}><td>{i+1}</td>{row.map((cell,j)=><td key={j}><input aria-label={'Row ' + (i+1) + ', field ' + (j+1)} disabled={busy} value={cell} maxLength={4096} onChange={event => changeCell(i,j,event.target.value)} onPaste={event => pasteCells(event,i,j)}/></td>)}<td><button type="button" className="topbar-icon" aria-label={'Remove row ' + (i+1)} disabled={busy} onClick={() => setRows(previous => previous.filter((_,index)=>index!==i))}><X size={15}/></button></td></tr>)}
+          {rows.slice(page * pageSize, (page + 1) * pageSize).map((row,index)=>{ const i = page * pageSize + index; return <tr key={i}><td>{i+1}</td>{row.map((cell,j)=><td key={j}><input aria-label={'Row ' + (i+1) + ', field ' + (j+1)} disabled={busy} value={cell} maxLength={4096} onChange={event => changeCell(i,j,event.target.value)} onPaste={event => pasteCells(event,i,j)}/></td>)}<td><button type="button" className="topbar-icon" aria-label={'Remove row ' + (i+1)} disabled={busy} onClick={() => setRows(previous => previous.filter((_,index)=>index!==i))}><X size={15}/></button></td></tr>; })}
         </tbody></table></div>
-        <p className="sql-form-note">Type records or paste cells from a spreadsheet. Empty cells become NULL. Fully blank rows are skipped.</p>
+        {pageCount > 1 && <div className="sql-record-pages"><span>Records {page * pageSize + 1}–{Math.min(rows.length, (page + 1) * pageSize)} of {rows.length}</span><button type="button" className="toolbar-button" disabled={page === 0 || busy} onClick={() => setRecordPage(page - 1)}>Previous</button><button type="button" className="toolbar-button" disabled={page + 1 >= pageCount || busy} onClick={() => setRecordPage(page + 1)}>Next</button></div>}
+        <p className="sql-form-note">Type records or paste spreadsheet cells. Empty cells become NULL. Fully blank rows are skipped. Use YYYY-MM-DD or HH:MM[:SS] for dates and times.</p>
       </> : <>
         <label className="sql-csv-select">CSV files<input type="file" multiple accept=".csv,text/csv" disabled={busy} onChange={event=>setFiles([...event.target.files ?? []])}/></label>
         <p className="sql-form-note">Each file becomes a table named after the file. The first row supplies field names. Up to 5 MB per file.</p>

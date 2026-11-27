@@ -112,7 +112,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   function createDatabase(name: string) {
     if (databases.has(name) || running.current || reading) return;
     databases.set(name, { query: '' });
-    setDatabaseNames([...databases.keys()]); setModal(null); selectDatabase(name);
+    setDatabaseNames([...databases.keys()]); selectDatabase(name); setModal('manual');
   }
   function openTable(mode: 'manual' | 'csv') {
     if (!activeRef.current || running.current || reading) return;

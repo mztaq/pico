@@ -90,3 +90,10 @@
 .sql-app .sql-dialog-actions { display:flex; justify-content:flex-end; align-items:center; gap:8px; border-top:1px solid var(--ds-line); padding-top:12px; }
 .sql-app .sql-create-dialog :is(input,select):focus-visible,.sql-app .sql-database-picker select:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
 @media(max-width:480px){.sql-app .sql-create-database,.sql-app .sql-create-table{padding-inline:3px}.sql-app .sql-dialog-form{padding:12px}.sql-app .sql-field-row{grid-template-columns:minmax(80px,1fr) 75px 62px 28px;gap:4px}}
+
+.sql-app .sql-table-size { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto; gap:10px; align-items:end; }
+.sql-app .sql-table-size label { display:grid; gap:6px; font-weight:600; }
+.sql-app .sql-count { font-weight:400; color:var(--ds-muted); }
+.sql-app .sql-record-pages { display:flex; align-items:center; gap:8px; font-size:var(--ds-text-xs); color:var(--ds-muted); }
+.sql-app .sql-record-pages span { flex:1; }
+@media(max-width:480px){.sql-app .sql-table-size {grid-template-columns:1fr 1fr}.sql-app .sql-table-size>button {grid-column:1/-1}}
