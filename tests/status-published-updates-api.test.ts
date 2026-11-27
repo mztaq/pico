@@ -103,3 +103,46 @@ describe('status uptime API resilience',()=>{
     expect(payload.services[0].availability30d).toBeNull();
   });
 });
+
+
+describe('latest status history box reflects current service health',()=>{
+  it.each([
+    ['UP','resolved',false,'up'],
+    ['UP','monitoring',false,'degraded'],
+    ['UP','resolved',true,'degraded'],
+    ['DOWN','resolved',false,'down'],
+    ['LOOKS_DOWN','resolved',false,'degraded'],
+  ])('shows %s / %s / another active %s as %s',async(monitorStatus,stage,anotherActive,expected)=>{
+    const now=Date.now(),hour=3600000;
+    const iso=(time:number)=>new Date(time).toISOString();
+    const created=iso(now-31*24*hour),started=iso(now-48*hour);
+    const resolved=stage==='resolved'?iso(now-hour):null;
+    vi.stubGlobal('fetch',vi.fn(async(input:string|URL|Request)=>{
+      const url=String(input);
+      if(url.includes('/monitors?'))return new Response(JSON.stringify({data:[
+        {id:1,url:'https://picompiler.pages.dev',status:monitorStatus,createDateTime:created},
+        {id:2,url:'https://picompiler.pages.dev/.well-known/oauth-protected-resource/app/mcp',status:'UP',createDateTime:created},
+      ]}));
+      if(url.includes('/stats/uptime'))return new Response(JSON.stringify({uptime:100}));
+      if(url.includes('/incidents?'))return new Response(JSON.stringify({data:[]}));
+      throw Error('Unexpected request '+url);
+    }));
+    const row={id:1,external_id:'manual-1',source:'manual',service_id:'website',title:'Issue',reason:'Service issue',started_at:started,resolved_at:resolved,status:stage};
+    const db={prepare(sql:string){
+      if(sql.includes('FROM pico_status_incidents'))return {bind:()=>({all:async()=>({results:anotherActive?[row,{...row,id:2,external_id:'manual-2',started_at:iso(now-2*hour),resolved_at:null,status:'investigating'}]:[row]})})};
+      if(sql.includes('FROM pico_status_updates'))return {bind:()=>({all:async()=>({results:[]})})};
+      throw Error('Unexpected SQL');
+    }};
+    const response=await onRequestGet({request:new Request('https://status.example.test/api/status'),env:{UPTIMEROBOT_API_KEY:'test-key',DB:db}} as never);
+    expect(response.status).toBe(200);
+    const payload=await response.json();
+    const [website,mcp]=payload.services;
+    expect(website.status).toBe(expected);
+    expect(website.history).toHaveLength(30);
+    expect(website.history.at(-1)).toBe(expected);
+    expect(website.history.at(-2)).toBe('degraded');
+    expect(website.availability30d).toBe(anotherActive?93.33:96.67);
+    expect(mcp.history.at(-1)).toBe('up');
+    expect(mcp.availability30d).toBe(100);
+  });
+});

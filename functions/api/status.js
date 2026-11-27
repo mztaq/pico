@@ -260,7 +260,8 @@ export async function onRequestGet(context) {
       }
     }
     const visibleServices=applyIncidentImpact(publicServices,incidents).map(service=>{
-      // Match the 30 history bars to the same incident window as availability.
+      // Keep historical incident impact in the earlier bars; the final bar
+      // represents the service's current health rather than past downtime.
       const timeline=Array.isArray(service.history)?[...service.history]:null;
       if(timeline?.length===30 && Array.isArray(incidents)){
         for(const incident of incidents){
@@ -273,6 +274,11 @@ export async function onRequestGet(context) {
             if(start<to && end>from && timeline[day]==="up")timeline[day]="degraded";
           }
         }
+      }
+      // A resolved incident must not keep the latest box degraded. Use the
+      // effective live status (including unresolved incidents and monitor outages).
+      if(timeline?.length===30){
+        timeline[29]=["up","degraded","down"].includes(service.status)?service.status:null;
       }
       return {
         ...service,
