@@ -180,5 +180,6 @@ it('uses the Pico logo alone and a styled return link in the public status heade
   expect(back?.getAttribute('href')).toBe('https://picompiler.pages.dev/');
   expect(back?.textContent).toContain('Back to Pico');
   expect(page.window.getComputedStyle(back!).display).toBe('inline-flex');
+  expect(page.window.getComputedStyle(back!).borderRadius).toBe('6px');
   page.window.close();
 });
