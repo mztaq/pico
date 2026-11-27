@@ -274,6 +274,8 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   --home-glass-rim: color-mix(in srgb, #fff 20%, transparent);
   --home-glass-copy: color-mix(in srgb, var(--ds-text) 85%, var(--ds-muted));
   --home-glass-blur: 10px;
+  --home-card-radius: 20px;
+  --home-card-padding: 16px;
 }
 .pico-home.pico-home-glass[data-high-contrast='true'] {
   --home-glass-tint: var(--accent);
@@ -299,7 +301,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   color: var(--ds-text);
 }
 .pico-home-glass .compiler-choice {
-  border-radius: 20px;
+  border-radius: var(--home-card-radius);
   isolation: isolate;
 }
 .pico-home-glass .compiler-choice-stage {
@@ -308,9 +310,14 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
     var(--home-glass-stage);
   border-color: var(--home-glass-edge);
 }
+.pico-home-glass .compiler-choice-stage:has(> pre) {
+  padding: var(--home-card-padding);
+}
 .pico-home-glass .compiler-choice-stage pre {
   background: color-mix(in srgb, var(--editor-bg) 88%, transparent);
-  border-radius: 12px;
+  border-radius: max(0px, calc(var(--home-card-radius) - var(--home-card-padding)));
+  align-self: stretch;
+  align-content: center;
   border-color: var(--home-glass-edge);
 }
 .pico-home-glass .compiler-choice-icon {
@@ -348,6 +355,9 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .pico-home.pico-home-glass { --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 93%, transparent); }
+}
+@media (max-width: 640px) {
+  .pico-home.pico-home-glass { --home-card-padding: 14px; }
 }
 @media (max-width: 640px), (pointer: coarse) {
   .pico-home.pico-home-glass { --home-glass-blur: 4px; }
