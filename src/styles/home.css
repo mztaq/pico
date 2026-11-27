@@ -287,13 +287,6 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   --home-glass-code-opacity: 88%;
 }
 
-.pico-home-glass .home-glass-filter-defs {
-  position: absolute;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
 /* One backdrop-filter per surface, not on every nested preview. */
 .pico-home-glass .compiler-choice,
 .pico-home-glass :is(.home-learning-link, .home-footer-links .bug-report-trigger) {
@@ -308,17 +301,6 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .compiler-choice {
   border-radius: var(--home-card-radius);
   isolation: isolate;
-}
-/* Per-card rounded bezel maps refract the live background, not the content. */
-.pico-home-glass .compiler-choice[data-refractive='true'] {
-  --home-glass-fill: color-mix(in srgb, var(--home-glass-base) 45%, transparent);
-  backdrop-filter: var(--home-lens) saturate(150%);
-  box-shadow: inset 1px 1px 0 color-mix(in srgb, white 43%, transparent),
-    inset -1px -1px 0 color-mix(in srgb, white 24%, transparent),
-    inset 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent);
-}
-.pico-home-glass[data-high-contrast='true'] .compiler-choice[data-refractive='true'] {
-  --home-glass-fill: color-mix(in srgb, var(--bg) 84%, transparent);
 }
 .pico-home-glass .compiler-choice-stage {
   background: var(--home-glass-stage);

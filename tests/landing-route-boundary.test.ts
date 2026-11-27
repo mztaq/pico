@@ -88,13 +88,6 @@ describe('Landing route migration leaves backend services available', () => {
     expect(home).toContain('className="pico-home pico-home-glass"');
     expect(css).toContain('.pico-home-glass .compiler-choice');
     expect(css).toContain('backdrop-filter: blur(var(--home-glass-blur))');
-    const lens = read('src/app/components/WorkspaceGlass.tsx');
-    expect(home).toContain('<WorkspaceGlassFilter id={glass.id}');
-    expect(lens).toContain('<feImage href={lens?.image}');
-    expect(lens).toContain('<feDisplacementMap in="SourceGraphic" in2="bezel"');
-    expect(lens).not.toContain('<feTurbulence');
-    expect(css).toContain('backdrop-filter: var(--home-lens) saturate(150%)');
-    expect(css).not.toMatch(/(^|[;{\s])filter:\s*var\(--home-lens\)/m);
     const glass = css.slice(css.indexOf('/* Workspace chooser only:'));
     expect(glass).not.toMatch(/home-theme-trigger|home-games-link|home-updates|home-theme-menu/);
     expect(css).toContain('--home-glass-tint: color-mix(in srgb, var(--accent)');
