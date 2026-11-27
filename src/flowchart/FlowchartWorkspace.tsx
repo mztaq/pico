@@ -227,8 +227,6 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" aria-label="Go to home screen" disabled={tutorialActive} onClick={()=>onHome(saveNow())}><ArrowLeft size={16}/></button>
         <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" disabled={tutorialActive} onClick={()=>onHome(saveNow())}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></button>
-        <span className="pico-appbar-sep" aria-hidden="true">/</span>
-        <span className="brand-subtitle pico-appbar-tool">Flowchart</span>
         <input className="project-title-input topbar-project-name" aria-label="Flowchart workspace name" value={nameDraft} maxLength={42} disabled={running||tutorialActive} onChange={e=>setNameDraft(e.target.value)} onBlur={rename} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();}}/>
       </div>
       <div className="topbar-spacer"/>
