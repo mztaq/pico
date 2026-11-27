@@ -1,7 +1,6 @@
 // Brand marks from Simple Icons (https://github.com/simple-icons/simple-icons).
 // UptimeRobot mark from Dashboard Icons, adapted to the active theme:
 // https://github.com/homarr-labs/dashboard-icons/blob/main/svg/uptimerobot.svg
-// Pyodide mark from https://github.com/pyodide/pyodide/blob/main/docs/_static/img/pyodide-logo-dark.svg
 // These marks identify services used by Pico, not sponsorship or endorsement.
 const technologies = [
   {
@@ -19,10 +18,6 @@ const technologies = [
   {
     "name": "UptimeRobot",
     "path": ""
-  },
-  {
-    "name": "Pyodide",
-    "path": "M135.18,97c0-.13-.01-7.24-.02-7.37h27.51v71.33H91.33V89.63h27.51c0,.13-.02,7.24-.02,7.37m32.59,56.33h4.9l-7.43-25.25h-7.45l-6.12,25.25h4.75l1.24-5.62h8.49l1.61,5.62Zm-26.03,0h4.69l6.02-25.25h-4.63l-3.69,17.4h-.06l-3.5-17.4h-4.42l-3.9,17.19h-.06l-3.23-17.19h-4.72l5.44,25.25h4.78l3.75-17.19h.06l3.47,17.19Zm18.89-19.03h1.99l2.37,9.27h-6.42l2.06-9.27Z"
   },
   {
     "name": "WebAssembly",
@@ -51,10 +46,6 @@ const technologies = [
   {
     "name": "MCP",
     "path": "M13.85 0a4.16 4.16 0 0 0-2.95 1.217L1.456 10.66a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l9.442-9.442a2.49 2.49 0 0 1 3.541 0 2.49 2.49 0 0 1 0 3.541L8.59 12.97l-.1.1a.835.835 0 0 0 0 1.18.835.835 0 0 0 1.18 0l.1-.098 7.03-7.034a2.49 2.49 0 0 1 3.542 0l.049.05a2.49 2.49 0 0 1 0 3.54l-8.54 8.54a1.96 1.96 0 0 0 0 2.755l1.753 1.753a.835.835 0 0 0 1.18 0 .835.835 0 0 0 0-1.18l-1.753-1.753a.266.266 0 0 1 0-.394l8.54-8.54a4.185 4.185 0 0 0 0-5.9l-.05-.05a4.16 4.16 0 0 0-2.95-1.218c-.2 0-.401.02-.6.048a4.17 4.17 0 0 0-1.17-3.552A4.16 4.16 0 0 0 13.85 0m0 3.333a.84.84 0 0 0-.59.245L6.275 10.56a4.186 4.186 0 0 0 0 5.902 4.186 4.186 0 0 0 5.902 0L19.16 9.48a.835.835 0 0 0 0-1.18.835.835 0 0 0-1.18 0l-6.985 6.984a2.49 2.49 0 0 1-3.54 0 2.49 2.49 0 0 1 0-3.54l6.983-6.985a.835.835 0 0 0 0-1.18.84.84 0 0 0-.59-.245"
-  },
-  {
-    "name": "OAuth",
-    "path": ""
   }
 ] as const;
 
@@ -64,8 +55,8 @@ export function HomeTechnologyCycle() {
       <div className="home-tech-track" aria-hidden="true">
         {[0, 1].map(copy => <div className="home-tech-strip" key={copy} data-copy={copy}>
           {technologies.map(technology => <span className="home-tech-item" key={technology.name}>
-            <svg viewBox={technology.name === "Pyodide" ? "91.33 89.63 71.34 71.33" : "0 0 24 24"} fill="currentColor" width="21" height="21" focusable="false">
-              {technology.name === 'UptimeRobot' ? <><circle cx="12" cy="12" r="12" opacity=".3"/><circle cx="12" cy="12" r="8"/></>  : technology.name === "OAuth" ? <g fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 15v2"/></g> : <path d={technology.path}/>}
+            <svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21" focusable="false">
+              {technology.name === 'UptimeRobot' ? <><circle cx="12" cy="12" r="12" opacity=".3"/><circle cx="12" cy="12" r="8"/></> : <path d={technology.path}/>}
             </svg>
             <span>{technology.name}</span>
           </span>)}
