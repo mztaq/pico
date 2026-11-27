@@ -271,7 +271,7 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
  </div>;
  return <div className="logic-app" data-pico-theme={theme.id} style={{...cssVariables(theme)} as React.CSSProperties}>
  <header className="logic-header topbar pico-appbar">
-  <div className="pico-appbar-lead logic-brand"><button className="toolbar-button home-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></button><span className="pico-appbar-sep" aria-hidden="true">/</span><strong className="brand-subtitle pico-appbar-tool">Logic Simulator</strong></div>
+  <div className="pico-appbar-lead logic-brand"><button className="toolbar-button home-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></button></div>
   <div className="topbar-spacer"/>
   {saveState==='error'&&<span className="pico-appbar-alert" role="alert">Autosave failed. Export your circuit.</span>}
   <div className="topbar-actions logic-header-right">
