@@ -43,7 +43,7 @@ function emptyEditorHint() {
 }
 
 /** Editor chrome and syntax colours for one theme. */
-function themeExtensions(theme: PicoTheme): Extension[] {
+export function themeExtensions(theme: PicoTheme): Extension[] {
   const { ui, syntax } = theme;
   const dark = theme.appearance === 'dark';
   const chrome = EditorView.theme({
