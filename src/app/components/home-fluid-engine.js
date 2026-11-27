@@ -38,6 +38,8 @@ export function startFluid(canvas, initialPalette, onFailure) {
   let lastPointer = null;
   let pending = null;
   let lastFrame = 0;
+  let frameBudget = 0;
+  let simulatedElapsed = 0;
   let nextAmbient = 0;
   let channel = 0;
   function allocate(kind, ...args) {
@@ -86,7 +88,7 @@ export function startFluid(canvas, initialPalette, onFailure) {
   }
   function onVisibility() {
     cancelAnimationFrame(frame);
-    frame = 0; lastFrame = 0; resetPointer();
+    frame = 0; lastFrame = 0; frameBudget = 0; simulatedElapsed = 0; resetPointer();
     if (!document.hidden && !disposed) frame = requestAnimationFrame(update);
   }
   // Assigned during initialization; visibility events only run after setup.
@@ -713,10 +715,16 @@ draw();
 update = now => {
   if (disposed || document.hidden) return;
   frame = requestAnimationFrame(update);
-  // Limit rendering to about 30fps; do not build a queue of pointer events.
-  if (lastFrame && now - lastFrame < 30) return;
-  const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.04) : 1 / 30;
+  // Target 60fps even on high-refresh displays. Carry fractional frame time forward.
+  const elapsed = lastFrame ? now - lastFrame : 1000 / 60;
   lastFrame = now;
+  frameBudget += Math.min(elapsed, 40);
+  simulatedElapsed += elapsed;
+  if (frameBudget < 1000 / 60 - 0.5) return;
+  const dt = Math.min(simulatedElapsed / 1000, 0.04);
+  simulatedElapsed = 0;
+  frameBudget = Math.max(0, frameBudget % (1000 / 60));
+  if (frameBudget > 1000 / 60 - 0.5) frameBudget = 0;
   try {
     if (resizeCanvas()) { initFramebuffers(); seed(); }
     if (pending) {
