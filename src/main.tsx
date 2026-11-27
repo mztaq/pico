@@ -7,6 +7,7 @@ const AiUsagePage = lazy(() => import('./landing/AiUsagePage'));
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { OfflineStatus } from './app/components/OfflineStatus';
 import { WorkspaceContextMenu } from './app/components/WorkspaceContextMenu';
+import { checkHomeFluidSupport } from './app/components/home-fluid-context.js';
 import { installSoundEffects } from './app/sound';
 import { isPicoDesktopWebview, shouldRenderPicoWorkspace } from './app/entry-route';
 import { workspaceFromLocation } from './app/workspace-deeplink';
@@ -63,7 +64,9 @@ const initialHomeScreen = inApp &&
   !window.location.hash;
 // Warm the same self-hosted engine chunk on the landing page, before /app navigation.
 // Importing the module performs no GPU work; only HomeFluidBackground starts it.
-if (isHomePage || initialHomeScreen) void import('./app/components/home-fluid-engine.js').catch(() => {});
+if ((isHomePage || initialHomeScreen) && checkHomeFluidSupport(isHomePage)) {
+  void import('./app/components/home-fluid-engine.js').catch(() => {});
+}
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

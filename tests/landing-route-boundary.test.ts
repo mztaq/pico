@@ -58,12 +58,16 @@ describe('Landing route migration leaves backend services available', () => {
     const entry = read('src/main.tsx');
     const home = read('src/app/components/HomeScreen.tsx');
     const fluid = read('src/app/components/HomeFluidBackground.tsx');
-    expect(entry).toContain("if (isHomePage || initialHomeScreen) void import('./app/components/home-fluid-engine.js')");
+    expect(entry).toContain('checkHomeFluidSupport(isHomePage)');
+    expect(entry).toContain("void import('./app/components/home-fluid-engine.js')");
     expect(fluid).toContain("import { startFluid } from './home-fluid-engine.js'");
     expect(fluid).toContain('useLayoutEffect(() => {');
     expect(fluid).not.toContain("import('./home-fluid-engine.js')");
     expect(home).toContain('<HomeFluidBackground theme={theme}');
-    expect(home).not.toContain('<HomeAmbientCurves />');
+    expect(home).toContain('fallback={<HomeAmbientCurves />}');
+    expect(fluid).toContain('useState(false)');
+    expect(fluid).toContain('!checkHomeFluidSupport()');
+    expect(fluid).toContain('{showFallback && fallback}');
     expect(read('src/app/components/GamesPage.tsx')).toContain('<HomeAmbientCurves />');
   });
   it('keeps studio telemetry within the app route', () => {

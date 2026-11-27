@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { checkHomeFluidSupport } from './home-fluid-context.js';
 import { startFluid } from './home-fluid-engine.js';
 import type { PicoTheme } from '../themes';
 import type { FluidColor, FluidController, FluidPalette } from './home-fluid-engine.js';
@@ -14,7 +15,8 @@ export function homeFluidPalette(theme: PicoTheme): FluidPalette {
   return [rgb(accents[0] ?? theme.accent), rgb(accents[1] ?? theme.accent), rgb(accents[2] ?? theme.accent)];
 }
 
-export function HomeFluidBackground({ theme, disabled = false }: { theme: PicoTheme; disabled?: boolean }) {
+export function HomeFluidBackground({ theme, disabled = false, fallback }: { theme: PicoTheme; disabled?: boolean; fallback?: ReactNode }) {
+  const [showFallback, setShowFallback] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
   const controller = useRef<FluidController | null>(null);
   const palette = useRef(homeFluidPalette(theme));
@@ -27,7 +29,9 @@ export function HomeFluidBackground({ theme, disabled = false }: { theme: PicoTh
   const highContrast = Boolean(theme.highContrast);
   useLayoutEffect(() => {
     const host = hostRef.current;
-    if (!host || disabled || highContrast || (!window.WebGLRenderingContext && !window.WebGL2RenderingContext)) return;
+    if (!host) return;
+    if (disabled) { setShowFallback(false); return; }
+    if (highContrast || !checkHomeFluidSupport()) { setShowFallback(true); return; }
     const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const forced = window.matchMedia?.('(forced-colors: active)');
     let canvas: HTMLCanvasElement | null = null;
@@ -38,18 +42,23 @@ export function HomeFluidBackground({ theme, disabled = false }: { theme: PicoTh
       canvas = null;
       if (host) delete host.dataset.fluidReady;
     }
+    function fail() {
+      stop();
+      setShowFallback(true);
+    }
     function sync() {
       stop();
-      if (!host || motion?.matches || forced?.matches) return;
+      if (!host || motion?.matches || forced?.matches) { setShowFallback(true); return; }
+      setShowFallback(false);
       // The engine is a static dependency, so the initial seeded frame is drawn
       // in this layout effect before the browser paints the workspace chooser.
       canvas = document.createElement('canvas');
       host.append(canvas);
       try {
-        controller.current = startFluid(canvas, palette.current, stop);
+        controller.current = startFluid(canvas, palette.current, fail);
         host.dataset.fluidReady = 'true';
       } catch {
-        stop();
+        fail();
       }
     }
     sync();
@@ -62,5 +71,5 @@ export function HomeFluidBackground({ theme, disabled = false }: { theme: PicoTh
     };
   }, [disabled, highContrast]);
 
-  return <div className="pico-home-fluid" ref={hostRef} aria-hidden="true" />;
+  return <><div className="pico-home-fluid" ref={hostRef} aria-hidden="true" />{showFallback && fallback}</>;
 }

@@ -45,7 +45,8 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(document.title).toBe('Pico | Home');
   expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
   expect(container.querySelector('.pico-home-fluid')?.getAttribute('aria-hidden')).toBe('true');
-  expect(container.querySelector('.pico-home-curves')).toBeNull();
+  expect(container.querySelector('.pico-home-curves')).not.toBeNull();
+  expect(container.querySelector('.pico-home-fluid canvas')).toBeNull();
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
