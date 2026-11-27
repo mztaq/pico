@@ -20,7 +20,6 @@
   </tr>
 </table>
 
-<p align="center"><sub>Cloudflare traffic snapshot from a 30-day period in our project presentation. Historical figures, not live statistics or unique-user counts.</sub></p>
 
 ## From one editor to a learning platform
 
