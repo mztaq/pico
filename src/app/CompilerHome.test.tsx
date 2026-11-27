@@ -58,6 +58,32 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
+it('opens Quick Launch with Ctrl K, searches and launches a workspace', async()=>{
+  await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true,cancelable:true})));
+  const dialog=container.querySelector('[role="dialog"][aria-label="Quick Launch"]')!;
+  expect(dialog).not.toBeNull();
+  const search=dialog.querySelector<HTMLInputElement>('input')!;
+  expect(document.activeElement).toBe(search);
+  await type(search,'logic');
+  expect([...dialog.querySelectorAll('.home-quick-result')].map(node=>node.textContent)).toEqual(['Logic Sim↵']);
+  await act(async()=>search.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true})));
+  expect(window.location.pathname).toBe('/app/logic');
+  await vi.waitFor(()=>expect(container.querySelector('.logic-app')).not.toBeNull());
+});
+it('closes Quick Launch with Escape and shows accurate initial preview results', async()=>{
+  const trigger=container.querySelector<HTMLButtonElement>('.home-quick-trigger')!;
+  trigger.focus();
+  await click(trigger);
+  const search=container.querySelector<HTMLInputElement>('.home-quick-search input')!;
+  await type(search,'not-a-workspace');
+  expect(container.querySelector('.home-quick-empty')).not.toBeNull();
+  await act(async()=>search.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+  expect(container.querySelector('.home-quick-dialog')).toBeNull();
+  expect(document.activeElement).toBe(trigger);
+  expect(container.querySelectorAll('.compiler-choice-stage[data-preview-step="0"]')).toHaveLength(7);
+  expect([...container.querySelectorAll('.home-preview-output')].map(node=>node.textContent)).toEqual(['> 42','> 42']);
+  expect(container.querySelector('.home-binary-equation')?.textContent).toBe('0010 1010=42=0x2A');
+});
 it('shows only the eleven technology logos in a seamless carousel without playback buttons',()=>{
   const cycle = container.querySelector('.home-tech-cycle');
   expect(cycle).not.toBeNull();
