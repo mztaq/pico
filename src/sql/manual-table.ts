@@ -26,11 +26,10 @@ function validDateTime(value: string) {
   return parts.length === 1 ? validDate(value) || validTime(value) : parts.length === 2 && validDate(parts[0]) && validTime(parts[1]);
 }
 
-export function validateManualTable(table: ManualTable) {
+export function validateTableSchema(table: Pick<ManualTable, 'name' | 'columns'>) {
   const name = table.name.trim();
   if (!name || name.length > 100 || /^sqlite_/i.test(name) || name.includes('\0')) throw new Error('Enter a valid table name.');
   if (!table.columns.length || table.columns.length > 100) throw new Error('Use between 1 and 100 columns.');
-  if (table.rows.length > 1000) throw new Error('Manual entry supports up to 1,000 rows. Import CSV for larger tables.');
   const columns = table.columns.map(column => ({ ...column, name: column.name.trim() }));
   const names = new Set<string>();
   for (const column of columns) {
@@ -39,36 +38,45 @@ export function validateManualTable(table: ManualTable) {
     names.add(column.name.toLowerCase());
     if (!columnTypes.includes(column.type)) throw new Error('Choose a valid column type.');
   }
-  const values: Cell[][] = table.rows.map((row, rowIndex) => {
-    if (row.length !== columns.length) throw new Error('Row ' + (rowIndex + 1) + ' has the wrong number of values.');
-    return row.map((raw, index) => {
-      const column = columns[index];
-      const value = raw.trim();
-      const fail = () => new Error('Row ' + (rowIndex + 1) + ', ' + column.name + ': enter a valid ' + column.type.toLowerCase() + ' value.');
-      if (raw.length > 4096) throw new Error('Manual cells must contain at most 4,096 characters.');
-      if (raw === '') {
-        if (column.primaryKey) throw new Error('Row ' + (rowIndex + 1) + ': primary key values are required.');
-        return null;
-      }
-      if (column.type === 'TEXT') return raw;
-      if (column.type === 'CHARACTER') {
-        if (Array.from(raw).length !== 1) throw fail();
-        return raw;
-      }
-      if (column.type === 'DATE' || column.type === 'TIME' || column.type === 'DATETIME') {
-        const valid = column.type === 'DATE' ? validDate(value) : column.type === 'TIME' ? validTime(value) : validDateTime(value);
-        if (!valid) throw fail();
-        return value.replace('T', ' ');
-      }
-      if (column.type === 'BOOLEAN') {
-        if (/^(true|yes|1)$/i.test(value)) return 1;
-        if (/^(false|no|0)$/i.test(value)) return 0;
-        throw fail();
-      }
-      if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value)) throw fail();
-      const number = Number(value);
-      if (!Number.isFinite(number) || (column.type === 'INTEGER' && !Number.isSafeInteger(number))) throw fail();
-      return number;
+  return { name, columns };
+}
+
+export function convertFieldValue(raw: string | null, column: ManualColumn, rowIndex: number): Cell {
+  const fail = () => new Error('Row ' + (rowIndex + 1) + ', ' + column.name + ': enter a valid ' + column.type.toLowerCase() + ' value.');
+  if (raw === null) {
+    if (column.primaryKey) throw new Error('Row ' + (rowIndex + 1) + ': primary key values are required.');
+    return null;
+  }
+  const value = raw.trim();
+  if (column.type === 'TEXT') return raw;
+  if (column.type === 'CHARACTER') {
+    if (Array.from(raw).length !== 1) throw fail();
+    return raw;
+  }
+  if (column.type === 'DATE' || column.type === 'TIME' || column.type === 'DATETIME') {
+    const valid = column.type === 'DATE' ? validDate(value) : column.type === 'TIME' ? validTime(value) : validDateTime(value);
+    if (!valid) throw fail();
+    return value.replace('T', ' ');
+  }
+  if (column.type === 'BOOLEAN') {
+    if (/^(true|yes|1)$/i.test(value)) return 1;
+    if (/^(false|no|0)$/i.test(value)) return 0;
+    throw fail();
+  }
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value)) throw fail();
+  const number = Number(value);
+  if (!Number.isFinite(number) || (column.type === 'INTEGER' && !Number.isSafeInteger(number))) throw fail();
+  return number;
+
+}
+export function validateManualTable(table: ManualTable) {
+  const { name, columns } = validateTableSchema(table);
+  if (table.rows.length > 1000) throw new Error('Manual entry supports up to 1,000 rows. Import CSV for larger tables.');
+  const values = table.rows.map((row, i) => {
+    if (row.length !== columns.length) throw new Error('Row ' + (i+1) + ' has the wrong number of values.');
+    return row.map((value,j) => {
+      if (value.length > 4096) throw new Error('Manual cells must contain at most 4,096 characters.');
+      return convertFieldValue(value === '' ? null : value, columns[j], i);
     });
   });
   return { name, columns, values };

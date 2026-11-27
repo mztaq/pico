@@ -58,7 +58,7 @@ export function tableName(filename: string, taken: Set<string>) {
   if (/^\d|^sqlite_/i.test(base)) base = 'data_' + base;
   return uniqueName(base, taken);
 }
-export function csvTable(text: string) {
+export function inspectCsv(text: string) {
   const [header, ...rows] = parseCsv(text);
   const taken = new Set<string>();
   const names = header.map((name, index) => uniqueName(name.trim() || 'column_' + (index + 1), taken));
@@ -68,6 +68,10 @@ export function csvTable(text: string) {
     if (!populated.length || !populated.every(value => numeric.test(value) && Number.isFinite(Number(value)) && (!Number.isInteger(Number(value)) || Number.isSafeInteger(Number(value))))) return 'TEXT';
     return populated.every(value => Number.isSafeInteger(Number(value))) ? 'INTEGER' : 'REAL';
   });
+  return { names, types, rows };
+}
+export function csvTable(text: string) {
+  const { names, types, rows } = inspectCsv(text);
   const values: Cell[][] = rows.map(row => row.map((value, i) => value === '' ? null : types[i] === 'TEXT' ? value : Number(value)));
   return { names, types, values };
 }
