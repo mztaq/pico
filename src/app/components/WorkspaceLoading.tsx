@@ -12,8 +12,6 @@ function LoadingTopbar() {
     <div className="pico-load-brand" aria-hidden="true">
       <Placeholder className="pico-load-mark" />
       <Placeholder className="pico-load-wordmark" />
-      <span className="pico-load-separator" />
-      <Placeholder className="pico-load-workspace-name" />
     </div>
     <div className="pico-load-top-actions" aria-hidden="true">
       <Placeholder className="pico-load-action" />
