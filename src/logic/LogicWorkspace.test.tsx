@@ -112,7 +112,7 @@ it('drops a palette component using pointer events without the WebView native Co
   expect(host.querySelector('.logic-placement-hint')).toBeNull();
 });
 
-it('fits the rendered circuit again after auto-layout commits its new positions',async()=>{
+it('keeps the fitted viewport unchanged during auto-layout and measures new bounds on explicit fit',async()=>{
   const board=host.querySelector<SVGSVGElement>('svg[aria-label="Circuit canvas"]')!;
   Object.defineProperties(board,{clientWidth:{value:1000},clientHeight:{value:600}});
   const group=board.querySelector<SVGGElement>('.logic-circuit-content')!;
@@ -121,16 +121,45 @@ it('fits the rendered circuit again after auto-layout commits its new positions'
   const fit=host.querySelector<HTMLButtonElement>('[aria-label="Fit circuit"]')!;
   const auto=host.querySelector<HTMLButtonElement>('[aria-label="Auto-layout circuit"]')!;
   await act(async()=>fit.click());
-  expect(group.parentElement!.getAttribute('transform')).toContain('scale(0.');
   expect(Number(host.querySelector('.logic-zoom')!.textContent!.replace('%',''))).toBeLessThan(35);
+  const view=group.parentElement!.getAttribute('transform');
   const before=nodes()[0]!.firstElementChild!.getAttribute('transform');
-  getBounds.mockImplementation(()=>{
-    expect(nodes()[0]!.firstElementChild!.getAttribute('transform')).not.toBe(before);
-    return {x:64,y:48,width:5000,height:2400};
-  });
   await act(async()=>auto.click());
-  const fitted=group.parentElement!.getAttribute('transform');
-  expect(getBounds).toHaveBeenCalledTimes(2);
+  expect(nodes()[0]!.firstElementChild!.getAttribute('transform')).not.toBe(before);
+  expect(group.parentElement!.getAttribute('transform')).toBe(view);
+  expect(getBounds).toHaveBeenCalledTimes(1);
+  expect(host.textContent).not.toContain('Circuit arranged by signal flow.');
+  getBounds.mockReturnValue({x:64,y:48,width:5000,height:2400});
   await act(async()=>fit.click());
-  expect(group.parentElement!.getAttribute('transform')).toBe(fitted);
+  expect(getBounds).toHaveBeenCalledTimes(2);
+  expect(group.parentElement!.getAttribute('transform')).not.toBe(view);
+});
+
+it('uses cursor-anchored Ctrl-wheel zoom without preventing normal scrolling',async()=>{
+  const board=host.querySelector<SVGSVGElement>('svg[aria-label="Circuit canvas"]')!;
+  vi.spyOn(board,'getBoundingClientRect').mockReturnValue({
+    left:200,top:100,right:1000,bottom:800,width:800,height:700,x:200,y:100,toJSON:()=>({})
+  } as DOMRect);
+  const group=board.querySelector<SVGGElement>('.logic-circuit-content')!;
+  const readView=()=>{
+    const values=group.parentElement!.getAttribute('transform')!.match(/-?[0-9.]+(?:e[+-]?\d+)?/g)!.map(Number);
+    return {x:values[0]!,y:values[1]!,zoom:values[2]!};
+  };
+  const before=readView();
+  const normal=new WheelEvent('wheel',{deltaY:-100,bubbles:true,cancelable:true,clientX:400,clientY:350});
+  await act(async()=>board.dispatchEvent(normal));
+  expect(normal.defaultPrevented).toBe(false);
+  expect(readView()).toEqual(before);
+  const zoomIn=new WheelEvent('wheel',{ctrlKey:true,deltaY:-100,bubbles:true,cancelable:true,clientX:400,clientY:350});
+  await act(async()=>board.dispatchEvent(zoomIn));
+  expect(zoomIn.defaultPrevented).toBe(true);
+  const after=readView();
+  expect(after.zoom).toBeGreaterThan(before.zoom);
+  expect((200-after.x)/after.zoom).toBeCloseTo((200-before.x)/before.zoom);
+  expect((250-after.y)/after.zoom).toBeCloseTo((250-before.y)/before.zoom);
+  const zoomOut=new WheelEvent('wheel',{ctrlKey:true,deltaY:100,bubbles:true,cancelable:true,clientX:400,clientY:350});
+  await act(async()=>board.dispatchEvent(zoomOut));
+  expect(zoomOut.defaultPrevented).toBe(true);
+  expect(readView().zoom).toBeCloseTo(before.zoom);
+  expect(host.querySelector('[aria-label="Auto-layout circuit"]')!.textContent).toContain('Auto Layout');
 });
