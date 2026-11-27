@@ -1,5 +1,5 @@
 import '../../styles/home.css';
-import { useEffect, useRef, useState, type ReactNode, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { Activity, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
@@ -216,7 +216,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
 }
 
 function HomeInteractiveLogo() {
-  function move(event: PointerEvent<HTMLAnchorElement>) {
+  function move(event: ReactPointerEvent<HTMLAnchorElement>) {
     if (event.pointerType === 'touch' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const logo = event.currentTarget;
     const rect = logo.getBoundingClientRect();
@@ -228,7 +228,7 @@ function HomeInteractiveLogo() {
     logo.style.setProperty('--logo-rx', `${-y * 12}deg`);
     logo.style.setProperty('--logo-ry', `${x * 12}deg`);
   }
-  function reset(event: PointerEvent<HTMLAnchorElement>) {
+  function reset(event: ReactPointerEvent<HTMLAnchorElement>) {
     for (const key of ['--logo-x', '--logo-y', '--logo-rx', '--logo-ry']) event.currentTarget.style.removeProperty(key);
   }
   return <a className="home-brand home-interactive-logo" href="/app" aria-label="Pico, Workspaces" onPointerMove={move} onPointerLeave={reset} onPointerCancel={reset}>
