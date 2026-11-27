@@ -87,6 +87,7 @@ it.each([
   ['/app/privacy', 'Privacy Policy', 'Service and storage'],
   ['/app/terms', 'Terms and Conditions', 'Your work'],
   ['/app/cookies', 'Cookie Policy', 'Essential storage'],
+  ['/app/ai-usage', 'Copyright & AI Usage', '1. Copyright and ownership'],
 ] as const)('opens %s as a dimmed dialog on initial entry without losing saved work', async (hash, title, section) => {
   const savedProjects = JSON.stringify([{ id: 'untouched', code: 'OUTPUT 42' }]);
   localStorage.setItem('pico.projects.v1', savedProjects);
@@ -98,7 +99,7 @@ it.each([
   expect(document.title).toBe(`Pico | ${title}`);
   expect([...dialog.querySelectorAll('h2')].some(heading => heading.textContent === section)).toBe(true);
   expect(localStorage.getItem('pico.projects.v1')).toBe(savedProjects);
-  expect(dialog.querySelector('time')?.getAttribute('dateTime')).toBe(hash === '/app/privacy' ? '2026-11-27' : '2026-10-24');
+  expect(dialog.querySelector('time')?.getAttribute('dateTime')).toBe(hash === '/app/privacy' ? '2026-11-27' : hash === '/app/ai-usage' ? '2026-11-14' : '2026-10-24');
   expect(host.querySelector('.pico-home')).not.toBeNull();
 });
 
@@ -176,4 +177,25 @@ it('shows one policy at a time and requires closing it before opening another fr
   expect(cookieDialog.querySelector('h1')?.textContent).toBe('Cookie Policy');
   expect(host.querySelectorAll('.site-info-backdrop')).toHaveLength(1);
   expect(cookieDialog.querySelectorAll('a[href]')).toHaveLength(0);
+});
+
+it('opens Copyright & AI Usage from the home footer without replacing the homepage', async () => {
+  await renderApp();
+  const home = host.querySelector('.pico-home');
+  const link = host.querySelector<HTMLAnchorElement>('.site-info-links a[href="/app/ai-usage"]')!;
+  link.focus();
+  await act(async () => link.click());
+  const dialog = host.querySelector<HTMLElement>('.site-info-dialog[data-page="ai-usage"]')!;
+  expect(window.location.pathname).toBe('/app/ai-usage');
+  expect(dialog.querySelector('h1')?.textContent).toBe('Copyright & AI Usage');
+  expect(dialog.querySelectorAll('.site-info-section')).toHaveLength(7);
+  expect(dialog.textContent).toContain('Amar Abdelhak Ayache');
+  expect(dialog.querySelector('a[href="/robots.txt"]')).not.toBeNull();
+  expect(host.querySelector('.pico-home')).toBe(home);
+  expect(host.querySelector('.site-info-home-underlay[inert]')).not.toBeNull();
+  await act(async () => dialog.querySelector<HTMLButtonElement>('.site-info-dialog-close')?.click());
+  expect(window.location.pathname).toBe('/app');
+  expect(host.querySelector('.site-info-dialog')).toBeNull();
+  expect(host.querySelector('.pico-home')).toBe(home);
+  expect(document.activeElement).toBe(link);
 });

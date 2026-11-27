@@ -11,6 +11,7 @@ const pages = [
   { id: 'privacy', title: 'Privacy Policy', icon: ShieldCheck },
   { id: 'cookies', title: 'Cookie Policy', icon: Cookie },
   { id: 'terms', title: 'Terms and Conditions', icon: FileText },
+  { id: 'ai-usage', title: 'Copyright & AI Usage', icon: FileText },
 ] as const;
 export type InformationPage = typeof pages[number]['id'];
 
@@ -32,7 +33,6 @@ export function SiteInfoLinks({ current }: { current?: InformationPage }) {
     }}>
       <Icon size={17} aria-hidden="true" /><span>{title}</span>
     </a>)}
-    <a href="/app/ai-usage"><FileText size={17} aria-hidden="true" /><span>Copyright &amp; AI Usage</span></a>
   </nav>;
 }
 
@@ -152,6 +152,39 @@ function Terms() {
   </>;
 }
 
+function AiUsage() {
+  return <>
+    <p>How Pico's original materials may be accessed and used.</p>
+    <p><strong>Copyright holder:</strong> Amar Abdelhak Ayache</p>
+    <Section title="1. Copyright and ownership">
+          <p>Original materials published on Pico are owned by Amar Abdelhak Ayache or their respective rights holders and are protected by applicable intellectual property laws. These may include original visual compositions, layouts and creative arrangements, source code and proprietary implementations, graphics, illustrations, animations, written content, documentation, and branding.</p>
+          <p>Access to this website does not itself grant a licence to reproduce copyright-protected expression. General ideas, functionality, methods, and design concepts are distinct from protected expression.</p>
+        </Section>
+        <Section title="2. Website reproduction">
+          <p>Without prior written permission, copying, distributing, or substantially reproducing Pico's copyright-protected materials is prohibited to the extent applicable law allows. This applies whether reproduction is performed manually, through automated scraping or website replication, or with AI coding assistants such as Claude Code, Cursor, Windsurf, and ChatGPT.</p>
+          <p>Using an AI tool does not independently grant permission to reproduce protected materials. Similar functionality or general design ideas do not, by themselves, establish copyright infringement.</p>
+        </Section>
+        <Section title="3. AI systems and automated access">
+          <p>Automated crawlers and AI data collection services are requested to follow Pico's <a href="/robots.txt">robots.txt</a> directives. Access to public pages does not itself grant permission to reproduce, redistribute, or commercially exploit protected materials.</p>
+          <p>Robots.txt communicates crawler preferences; it does not technically prevent all access, including visits through a person's browser or user-controlled tools.</p>
+        </Section>
+        <Section title="4. Redistribution and commercial use">
+          <p>Unauthorized publication, redistribution, or commercial exploitation of substantially reproduced protected materials is prohibited to the extent permitted by applicable law. This includes presenting copied original materials as independently created or distributing unauthorized copies of proprietary assets or source code.</p>
+        </Section>
+        <Section title="5. Permissions and licensing">
+          <p>To request permission to reproduce, adapt, redistribute, or otherwise use protected materials, contact the copyright holder through Pico's published contact information. Obtain written permission where applicable law requires it.</p>
+        </Section>
+        <Section title="6. Legal limitations">
+          <p>This policy does not restrict lawful uses under applicable copyright exceptions, limitations, or other legal provisions. The scope and enforceability of these terms depend on applicable law.</p>
+        </Section>
+        <Section title="7. Contact">
+          <p>For copyright inquiries, licensing requests, or permission questions, use the contact information provided on Pico.</p>
+        </Section>
+  </>;
+}
+
+const aiUsageCanonicalUrl = 'https://picompiler.pages.dev/app/ai-usage';
+
 export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: () => void }) {
   const [settings] = useState(loadSettings);
   const theme = getTheme(settings.theme);
@@ -164,6 +197,20 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
     for (const [property, value] of Object.entries(cssVariables(theme))) document.documentElement.style.setProperty(property, value);
     document.documentElement.style.colorScheme = theme.appearance;
   }, [theme]);
+
+  useEffect(() => {
+    if (page !== 'ai-usage') return;
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    const previousDescription = meta?.content;
+    const previousCanonical = canonical?.getAttribute('href');
+    if (meta) meta.content = 'Pico copyright, automated access, and AI-assisted website reproduction policy.';
+    if (canonical) canonical.href = aiUsageCanonicalUrl;
+    return () => {
+      if (meta && previousDescription !== undefined) meta.content = previousDescription;
+      if (canonical && previousCanonical !== undefined && previousCanonical !== null) canonical.setAttribute('href', previousCanonical);
+    };
+  }, [page]);
 
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -223,6 +270,8 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
               <h1 id="pico-info-dialog-title" ref={heading} tabIndex={-1}>{title}</h1>
               {page === 'team'
                 ? <p className="site-info-author-subtitle">The people behind Pico.</p>
+                : page === 'ai-usage'
+                ? <p className="site-info-intro">Effective date <time dateTime="2026-11-14">14 November 2026</time></p>
                 : <p className="site-info-intro">Last updated <time dateTime={page === 'privacy' ? '2026-11-27' : '2026-10-24'}>{page === 'privacy' ? '27 November 2026' : '24 October 2026'}</time></p>}
             </div>
           </div>
@@ -234,7 +283,7 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
       <div ref={scrollArea} className="site-info-dialog-scroll">
         <div className="site-info-shell">
           <main>
-            {page === 'team' ? <PicoTeam /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : <Terms />}
+            {page === 'team' ? <PicoTeam /> : page === 'privacy' ? <Privacy /> : page === 'cookies' ? <Cookies /> : page === 'ai-usage' ? <AiUsage /> : <Terms />}
           </main>
         </div>
       </div>

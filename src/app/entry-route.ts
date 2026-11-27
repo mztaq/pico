@@ -14,7 +14,7 @@ export function isPicoDesktopWebview(host: object): boolean {
 /** The website's / stays the landing page; an old Tauri webview keeps Pico. */
 export function shouldRenderPicoWorkspace(pathname: string, inTauriWebview: boolean): boolean {
   return pathname === '/app' ||
-    /^\/app\/(pseudocode|python|flowchart|logic|cpu|binary|traffic|games|learn|team|terms|privacy|cookies|report)\/?$/.test(pathname) ||
+    /^\/app\/(pseudocode|python|flowchart|logic|cpu|binary|traffic|games|learn|team|terms|privacy|cookies|report|ai-usage)\/?$/.test(pathname) ||
     pathname === '/app/' ||
     (pathname === '/' && inTauriWebview);
 }
