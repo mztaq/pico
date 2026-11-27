@@ -65,6 +65,13 @@ it('keeps the original Pico logo and all eight initial workspace previews withou
   expect(container.querySelector('.home-interactive-logo')).toBeNull();
   expect(container.querySelector('.compiler-choice-tag')).toBeNull();
   expect(container.querySelector('.home-chart-output')?.textContent).toBe('OUTPUT "Hello"');
+  expect(container.querySelector('.home-chart-output .syntax-keyword')?.textContent).toBe('OUTPUT');
+  expect(container.querySelector('.home-chart-output .syntax-string')?.textContent).toBe('"Hello"');
+  const sqlPreview=container.querySelector('.home-sql-preview')!;
+  expect(sqlPreview.querySelector('code')?.textContent).toBe('SELECT name, score\nFROM students\nWHERE score > 80;');
+  expect([...sqlPreview.querySelectorAll('.syntax-keyword')].map(node=>node.textContent)).toEqual(['SELECT','FROM','WHERE']);
+  expect(sqlPreview.querySelector('.syntax-number')?.textContent).toBe('80');
+  expect([...container.querySelectorAll('.home-group--data .compiler-choice h2')].map(node=>node.textContent)).toEqual(['Binary Lab','SQL Playground']);
   expect(container.querySelector('.home-preview-bulb')?.getAttribute('data-lit')).toBe('false');
   expect(container.querySelectorAll('.home-traffic-packet')).toHaveLength(18);
   expect(container.querySelector('.home-traffic-preview')?.textContent).not.toMatch(/REQUEST FLOOD|429|OVERLOAD/);

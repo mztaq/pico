@@ -8,6 +8,17 @@ import { HomeLoading } from '../src/app/components/WorkspaceLoading';
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Pico workspace-selector home skeleton',()=>{
+  it('uses the same two-column desktop grid and single-column mobile layout for data cards',()=>{
+    const home=read('src/styles/home.css');
+    const loading=read('src/app/components/workspace-loading.css');
+    const boot=read('index.html');
+    expect(home).toMatch(/\.home-group-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+    expect(home).not.toMatch(/\.home-group--data\s+\.home-group-grid/);
+    expect(loading).not.toMatch(/\.pico-load-home-section--data\s+\.pico-load-home-grid/);
+    expect(boot).not.toMatch(/\.pico-initial-home-data\s+\.pico-initial-home-cards/);
+    expect(loading).toContain('.pico-load-home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))');
+    expect(boot).toContain('.pico-initial-home-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))');
+  });
   it('matches the Code, Visual Labs and Data Lab card counts',()=>{
     const html=renderToStaticMarkup(createElement(HomeLoading));
     expect(html).toContain('data-loading-workspace="Home"');
