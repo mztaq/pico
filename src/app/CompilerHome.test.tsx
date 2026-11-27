@@ -44,6 +44,7 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.res
 it('opens on a themed home screen with all workspace choices',()=>{
   expect(document.title).toBe('Pico | Home');
   expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
+  expect(container.querySelector('.pico-home-glass')).not.toBeNull();
   expect(container.querySelector('.pico-home-fluid')?.getAttribute('aria-hidden')).toBe('true');
   expect(container.querySelector('.pico-home-curves')).not.toBeNull();
   expect(container.querySelector('.pico-home-fluid canvas')).toBeNull();
@@ -72,6 +73,7 @@ it('opens the Games library from home and returns to the workspace chooser', asy
   expect(window.location.pathname).toBe('/app/games');
   expect(document.title).toBe('Pico | Games');
   expect(container.querySelector('.pico-games h1')?.textContent).toBe('Games');
+  expect(container.querySelector('.pico-home-glass')).toBeNull();
   expect(container.querySelector('.pico-home-fluid')).toBeNull();
   expect(container.querySelector('.pico-home-curves')).not.toBeNull();
   const header=container.querySelector('.pico-games-nav')!;

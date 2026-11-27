@@ -72,6 +72,17 @@ describe('Landing route migration leaves backend services available', () => {
     expect(fluid).toContain('{showFallback && fallback}');
     expect(read('src/app/components/GamesPage.tsx')).toContain('<HomeAmbientCurves />');
   });
+  it('limits theme-aware liquid glass surfaces to the workspace chooser', () => {
+    const home = read('src/app/components/HomeScreen.tsx');
+    const css = read('src/styles/home.css');
+    expect(home).toContain('className="pico-home pico-home-glass"');
+    expect(css).toContain('.pico-home-glass .compiler-choice');
+    expect(css).toContain('backdrop-filter: blur(var(--home-glass-blur))');
+    expect(css).toContain('--home-glass-tint: color-mix(in srgb, var(--accent)');
+    expect(css).toContain(".pico-home.pico-home-glass[data-high-contrast='true']");
+    expect(read('src/app/components/GamesPage.tsx')).not.toContain('pico-home-glass');
+    expect(read('src/landing/LandingPage.tsx')).not.toContain('pico-home-glass');
+  });
   it('keeps studio telemetry within the app route', () => {
     const entry = read('src/main.tsx');
     expect(entry).toContain('<PicoTelemetry />');

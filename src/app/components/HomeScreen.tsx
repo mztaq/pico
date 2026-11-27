@@ -95,7 +95,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
     const timeout = window.setTimeout(() => setReportNotice(null), 6000);
     return () => window.clearTimeout(timeout);
   }, [reportNotice]);
-  return <main className="pico-home" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
+  return <main className="pico-home pico-home-glass" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
       <HomeFluidBackground theme={theme} disabled={reportOpen || offlineReportWarning} fallback={<HomeAmbientCurves />} />
     <div className="home-nav">
       <div className="home-theme-anchor" ref={themeMenuRef}>
