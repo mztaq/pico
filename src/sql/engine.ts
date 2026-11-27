@@ -2,6 +2,7 @@ import type { Database, SqlModule, SqlValue } from 'sql.js';
 import { csvTable, quoteIdentifier, tableName, type Cell } from './csv';
 
 import { validateManualTable, type ManualTable } from './manual-table';
+import { normalizeSortDirections } from './worksheet-sql';
 
 export const MAX_RESULT_ROWS = 500;
 const MAX_DATABASE_BYTES = 32 * 1024 * 1024;
@@ -88,7 +89,7 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
     } else if (request.action === 'query') {
       if (!request.sql?.trim()) throw new Error('Enter a SQL statement.');
       if (request.sql.length > 100_000) throw new Error('Query exceeds 100,000 characters.');
-      result = query(db, request.sql);
+      result = query(db, normalizeSortDirections(request.sql));
       message = result ? result.rows.length + (result.truncated ? '+ rows returned (preview limited)' : ' rows returned') : 'Query completed';
     } else if (request.action === 'reset') message = 'Database cleared';
     const schema = tables(db);

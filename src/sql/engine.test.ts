@@ -77,3 +77,20 @@ describe('worksheet dimensions and syllabus data types', () => {
     }
   });
 });
+
+describe('worksheet SQL ordering', () => {
+  it('accepts both spelled-out directions and standard SQLite ASC/DESC', () => {
+    const data=executeSql(SQL,{action:'import',files:[{name:'scores.csv',text:'name,score\nAda,90\nSam,60\nLee,80'}]});
+    for (const direction of ['DESCENDING','DESC']) {
+      expect(executeSql(SQL,{action:'query',database:data.database,sql:'SELECT name FROM scores WHERE score > 60 ORDER BY score '+direction+';'}).result?.rows).toEqual([['Ada'],['Lee']]);
+    }
+    for (const direction of ['ASCENDING','ASC']) {
+      expect(executeSql(SQL,{action:'query',database:data.database,sql:'SELECT name FROM scores ORDER BY score '+direction+';'}).result?.rows).toEqual([['Sam'],['Lee'],['Ada']]);
+    }
+  });
+  it('does not rewrite field names, quoted strings or comments', () => {
+    const data=executeSql(SQL,{action:'query',sql:"CREATE TABLE t (descending INTEGER, note TEXT); INSERT INTO t VALUES (1,'ORDER BY score DESCENDING'),(2,'ASCENDING');"});
+    expect(executeSql(SQL,{action:'query',database:data.database,sql:"SELECT note FROM t ORDER BY descending DESCENDING; -- ORDER BY note DESCENDING"}).result?.rows).toEqual([['ASCENDING'],['ORDER BY score DESCENDING']]);
+    expect(executeSql(SQL,{action:'query',database:data.database,sql:'SELECT descending FROM t ORDER BY descending;'}).result?.rows).toEqual([[1],[2]]);
+  });
+});
