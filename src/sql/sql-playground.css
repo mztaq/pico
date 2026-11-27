@@ -177,3 +177,15 @@
 .sql-app .sql-document .sql-continuous-sheet th{z-index:2}
 
 .sql-app .sql-document-tabs .file-tab.active::before,.sql-app .sql-document-tabs .file-tab.active::after{display:none}
+
+/* Access-style naming dialog: compact title bar, one field, OK and Cancel. */
+.sql-app .sql-create-dialog.sql-compact-dialog { width:min(360px,calc(100vw - 32px)); border-radius:6px; }
+.sql-app .sql-compact-dialog::backdrop { background:rgba(0,0,0,.46); backdrop-filter:none; }
+.sql-app .sql-compact-dialog .sql-dialog-head { padding:7px 12px; min-height:34px; box-sizing:border-box; }
+.sql-app .sql-compact-dialog .sql-dialog-head h2 { font-size:var(--ds-text-md); font-weight:600; }
+.sql-app .sql-compact-dialog .sql-dialog-head .topbar-icon { width:26px; height:26px; min-width:26px; padding:0; border-radius:3px; }
+.sql-app .sql-compact-dialog .sql-dialog-form { gap:12px; padding:12px; }
+.sql-app .sql-compact-dialog .sql-dialog-form>label { gap:5px; font-weight:400; }
+.sql-app .sql-compact-dialog .sql-dialog-form input:not([type=checkbox]):not([type=file]) { height:30px; border-radius:3px; width:100%; box-sizing:border-box; padding:0 8px; }
+.sql-app .sql-compact-dialog .sql-dialog-actions { border:0; padding:0; gap:7px; }
+.sql-app .sql-compact-dialog .sql-dialog-actions button { min-width:78px; min-height:28px; height:30px; padding:4px 12px; border-radius:3px; font-size:var(--ds-text-sm); }

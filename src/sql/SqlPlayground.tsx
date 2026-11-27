@@ -396,7 +396,16 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         </section>}
       </section>
     </div>
-    {queryName!==null&&<Modal title={renameQuery?"Rename query":"Save query"} busy={querySaving} onClose={cancelQuerySave}><form className="sql-dialog-form" onSubmit={event=>{event.preventDefault();void saveAsQuery();}}>{pendingNavigation.current&&<p className="sql-form-note">Save your query before continuing.</p>}<label>Query name<input autoFocus disabled={querySaving} maxLength={80} value={queryName} onChange={event=>{setQueryName(event.target.value);setNameError('');}} placeholder="Enter a query name"/></label>{nameError&&<p className="sql-dialog-error" role="alert">{nameError}</p>}<div className="sql-dialog-actions"><button type="button" className="subtle-button" disabled={querySaving} onClick={cancelQuerySave}>Cancel</button><button type="submit" className="run-button" disabled={querySaving||!queryName.trim()}>{querySaving?"Saving…":pendingNavigation.current?"Save and continue":renameQuery?"Rename":"Save"}</button></div></form></Modal>}
+    {queryName!==null&&<Modal title={renameQuery?'Rename':'Save As'} compact busy={querySaving} onClose={cancelQuerySave}>
+      <form className="sql-dialog-form" onSubmit={event=>{event.preventDefault();void saveAsQuery();}}>
+        <label>Query name:<input autoFocus onFocus={event=>event.currentTarget.select()} disabled={querySaving} maxLength={80} value={queryName} onChange={event=>{setQueryName(event.target.value);setNameError('');}}/></label>
+        {nameError&&<p className="sql-dialog-error" role="alert">{nameError}</p>}
+        <div className="sql-dialog-actions">
+          <button type="submit" className="run-button" disabled={querySaving||!queryName.trim()}>{querySaving?'Saving…':'OK'}</button>
+          <button type="button" className="subtle-button" disabled={querySaving} onClick={cancelQuerySave}>Cancel</button>
+        </div>
+      </form>
+    </Modal>}
     {modal === 'database' && <CreateDatabaseDialog names={databaseNames} onCreate={createDatabase} onClose={() => setModal(null)}/>}
     {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} stoppable={busy && !saving} error={error} onClose={() => { setModal(null); setError(''); }} onStop={()=>stop()} onCreate={table => execute({ action:'create', table })} existingNames={state?.tables.map(table=>table.name)??[]} onImport={files => execute({action:'import',files})}/>}
     {designTable && <DesignView table={designTable} busy={busy} stoppable={busy && !saving} error={error} onClose={()=>{setDesignTable(null);setError('');}} onStop={()=>stop()} fields={displays.find(item=>item.table===designTable.name)?.fields??[]} onSave={(design,fields,schemaChanged)=>{const change={table:design.name,fields};if(schemaChanged){execute({action:'design',design},change);return;}const name=activeRef.current;const entry=name?databases.get(name):undefined;if(name&&entry){const next=[...(entry.displays??[]).filter(item=>item.table!==design.name),change];entry.displays=next;setDisplays(next);if(storageAvailable)persist(saveDisplays(name,next));}setDesignTable(null);}}/>}
