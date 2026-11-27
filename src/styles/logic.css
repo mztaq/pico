@@ -205,3 +205,20 @@
 .logic-app .logic-speed-select { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; color:var(--ds-muted); font:500 var(--ds-text-xs) var(--ds-font-ui); }
 .logic-app .logic-speed-select input[type="range"] { width:110px; accent-color:var(--accent); cursor:pointer; }
 .logic-app .logic-speed-select output { min-width:42px; text-align:right; color:var(--ds-text); font:600 var(--ds-text-xs) var(--ds-font-code); }
+
+/* Match the labelled viewport controls in Flowchart Studio. */
+.logic-app .logic-toolbar { height: 48px; }
+.logic-app .logic-toolbar > button { flex-shrink: 0; }
+.logic-app .logic-view-controls {
+  margin-left: auto; display: flex; align-items: center; gap: 2px;
+  flex: 0 0 auto; padding: 2px; border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius-md);
+}
+.logic-app .logic-view-controls button {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 34px; min-width: 34px; padding: 0 9px;
+  flex: 0 0 auto; white-space: nowrap; font-size: 12px;
+}
+.logic-app .logic-view-controls button span { display: inline; }
+.logic-app .logic-view-controls button svg { flex-shrink: 0; }
+.logic-app .logic-view-controls .logic-zoom { flex: 0 0 auto; font-size: 12px; }
