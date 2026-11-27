@@ -9,6 +9,7 @@ import { CreateDatabaseDialog, CreateTableDialog } from './SqlCreateDialogs';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { MAX_CSV_BYTES, toCsv } from './csv';
 import { formatIdentifier } from './identifiers';
+import { diagnoseSqlError, type SqlDiagnostic } from './diagnostics';
 import type { SqlRequest, SqlResponse, WorkerReply } from './engine';
 import './sql-playground.css';
 
@@ -35,6 +36,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const [reading, setReading] = useState(false);
   const [status, setStatus] = useState(selectedDatabase ? 'SQLite ready' : '');
   const [error, setError] = useState('');
+  const [queryError, setQueryError] = useState<{ diagnostic: SqlDiagnostic; source: string } | null>(null);
   const worker = useRef<Worker | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const running = useRef(false);
@@ -64,7 +66,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   function execute(request: Omit<SqlRequest, 'database'>) {
     if (running.current || !alive.current || !activeRef.current) return;
     const databaseName = activeRef.current;
-    running.current = true; setBusy(true); setError(''); setStatus(request.action === 'import' ? 'Importing CSV…' : request.action === 'init' ? 'Loading SQLite…' : request.action === 'create' ? 'Creating table…' : 'Running…');
+    running.current = true; setBusy(true); setError(''); setQueryError(null); setStatus(request.action === 'import' ? 'Importing CSV…' : request.action === 'init' ? 'Loading SQLite…' : request.action === 'create' ? 'Creating table…' : 'Running…');
     const fail = (message: string) => { dispose(); setBusy(false); setError(message); setStatus('Previous database kept'); };
     try {
       worker.current ??= new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
@@ -78,7 +80,11 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
           return;
         }
         clearTimer(); running.current = false; setBusy(false);
-        if (!reply.ok) { setError(reply.error); setStatus('Previous database kept'); return; }
+        if (!reply.ok) {
+          if (request.action === 'query' && request.sql) setQueryError({ diagnostic: diagnoseSqlError(reply.error, request.sql), source: request.sql });
+          else setError(reply.error);
+          setStatus('Previous database kept'); return;
+        }
         const value = reply.value;
         const entry = databases.get(databaseName);
         if (!entry) return;
@@ -97,6 +103,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   }, []);
   function updateQuery(value: string) {
     setSql(value);
+    setQueryError(previous => previous?.source === value ? previous : null);
     const entry = activeRef.current ? databases.get(activeRef.current) : undefined;
     if (entry) entry.query = value;
   }
@@ -106,7 +113,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if (!entry) return;
     selectedDatabase = name; activeRef.current = name; setActiveDatabase(name);
     database.current = entry.response?.database; setState(entry.response); setSql(entry.query);
-    setError(''); setStatus(entry.response ? 'SQLite ready' : 'Loading SQLite…');
+    setError(''); setQueryError(null); setStatus(entry.response ? 'SQLite ready' : 'Loading SQLite…');
     if (!entry.response) execute({ action: 'init' });
   }
   function createDatabase(name: string) {
@@ -116,7 +123,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   }
   function openTable(mode: 'manual' | 'csv') {
     if (!activeRef.current || running.current || reading) return;
-    setError(''); setModal(mode);
+    setError(''); setQueryError(null); setModal(mode);
   }
   async function importFiles(files: File[]) {
     if (!files.length || running.current || reading) return;
@@ -188,13 +195,14 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       <section ref={mainRef} className="sql-main" style={{ '--sql-editor-ratio': editorRatio + '%' } as CSSProperties}>
         <section className="editor-card sql-editor-panel">
           <div className="file-tabs sql-editor-tabs"><div className="file-tab active sql-file-tab"><FileCode2 size={15}/><span>query.sql</span></div></div>
-          <SqlEditor key={activeDatabase ?? "no-database"} value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables ?? []}/>
+          <SqlEditor key={activeDatabase ?? "no-database"} value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables ?? []} diagnostic={queryError?.source === sql ? queryError.diagnostic : undefined}/>
           <div className="editor-card-foot sql-editor-footer"><span>SQLite</span><span>{sql.split('\n').length} {sql.split('\n').length === 1 ? 'line' : 'lines'}</span></div>
         </section>
         <ResizeHandle axis="y" label="Resize query results" onResize={delta => setEditorRatio(value => Math.max(25, Math.min(75, value + delta / Math.max(1, mainRef.current?.clientHeight ?? 600) * 100)))}/>
         <section className="tool-dock sql-results-panel">
           <div className="dock-tab-row sql-dock-head"><div className="dock-tab active"><Table2 size={16}/> Results</div><span className="sql-result-status" role="status">{reading ? 'Reading files…' : status}</span><button type="button" className="toolbar-button" disabled={!result || disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button></div>
           {error && <p className="sql-error" role="alert">{error}</p>}
+          {queryError && <div className="sql-error sql-query-error" role="alert"><strong>{queryError.diagnostic.title}{queryError.source === sql && queryError.diagnostic.line ? ' · Line ' + queryError.diagnostic.line : ''}</strong><p>{queryError.diagnostic.message}</p>{queryError.diagnostic.detail !== queryError.diagnostic.message && <details><summary>Technical details</summary><code>{queryError.diagnostic.detail}</code></details>}</div>}
           {result ? <><div className="sql-result-scroll"><table><thead><tr><th scope="col">#</th>{result.columns.map((column, i) => <th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{i + 1}</td>{row.map((cell, j) => <td key={j}>{cell === null ? <i>NULL</i> : String(cell)}</td>)}</tr>)}</tbody></table></div>{result.truncated && <p className="sql-muted">Preview limited to 500 rows or 1 MB of displayed text. Export contains this preview.</p>}</> : <div className="sql-empty-state sql-empty-results"><span className="console-placeholder-mark"><Table2 size={20}/></span><p>{activeDatabase ? 'No results to display' : 'Create a database to begin'}</p></div>}
         </section>
       </section>

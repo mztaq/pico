@@ -3,12 +3,13 @@ import { autocompletion, closeBrackets, closeBracketsKeymap, type CompletionCont
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { bracketMatching, StreamLanguage } from '@codemirror/language';
 import { Compartment, EditorState } from '@codemirror/state';
-import { EditorView, drawSelection, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, placeholder } from '@codemirror/view';
+import { EditorView, Decoration, drawSelection, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers, placeholder } from '@codemirror/view';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { tags } from '@lezer/highlight';
 import { themeExtensions } from '../app/components/CodeEditor';
 import type { PicoTheme } from '../app/themes';
 import type { TableInfo } from './engine';
+import type { SqlDiagnostic } from './diagnostics';
 import { formatIdentifier } from './identifiers';
 
 const keywords = 'SELECT FROM WHERE AS DISTINCT JOIN INNER LEFT RIGHT FULL CROSS OUTER ON USING GROUP BY HAVING ORDER ASC DESC ASCENDING DESCENDING LIMIT OFFSET UNION ALL INTERSECT EXCEPT WITH RECURSIVE INSERT INTO VALUES UPDATE SET DELETE CREATE TABLE VIEW INDEX DROP ALTER ADD COLUMN IF EXISTS NOT NULL IS IN LIKE BETWEEN AND OR CASE WHEN THEN ELSE END PRIMARY KEY FOREIGN REFERENCES DEFAULT UNIQUE CHECK BEGIN COMMIT ROLLBACK RETURNING PRAGMA EXPLAIN QUERY PLAN OVER PARTITION WINDOW'.split(' ');
@@ -52,7 +53,7 @@ export const sqlLanguage = StreamLanguage.define({
   },
   languageData: { commentTokens: { line: '--', block: { open: '/*', close: '*/' } } },
 });
-interface Props { value: string; onChange: (value: string) => void; onRun: (value: string) => void; theme: PicoTheme; fontSize: number; tables: TableInfo[]; autocomplete: boolean; }
+interface Props { value: string; onChange: (value: string) => void; onRun: (value: string) => void; theme: PicoTheme; fontSize: number; tables: TableInfo[]; autocomplete: boolean; diagnostic?: SqlDiagnostic; }
 export function SqlEditor(props: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -60,6 +61,13 @@ export function SqlEditor(props: Props) {
   latest.current = props;
   const palette = useRef(new Compartment());
   const preferences = useRef(new Compartment());
+  const errorMarks = useRef(new Compartment());
+  function diagnosticExtension(diagnostic: SqlDiagnostic | undefined, length: number) {
+    if (diagnostic?.from === undefined || diagnostic.to === undefined || diagnostic.from < 0 || diagnostic.to > length || diagnostic.from >= diagnostic.to) return EditorView.decorations.of(Decoration.none);
+    const from = diagnostic.from, to = diagnostic.to;
+    const original = view.current?.state.doc.toString();
+    return EditorView.decorations.of(current => current.state.doc.toString() === original && to <= current.state.doc.length ? Decoration.set([Decoration.mark({ class: 'sql-error-token', attributes: { title: diagnostic.title + ': ' + diagnostic.message } }).range(from, to)]) : Decoration.none);
+  }
   function completion(context: CompletionContext) {
     const word = context.matchBefore(/[\w$]+/);
     if (!word && !context.explicit) return null;
@@ -84,7 +92,7 @@ export function SqlEditor(props: Props) {
       bracketMatching(), closeBrackets(), highlightSelectionMatches(),
       placeholder('Enter a SQL query…'), EditorView.contentAttributes.of({ 'aria-label': 'SQL query', spellcheck: 'false' }),
       keymap.of([{ key: 'Mod-Enter', run: editor => { latest.current.onRun(editor.state.doc.toString()); return true; } }, ...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
-      palette.current.of(themeExtensions(latest.current.theme)), preferences.current.of(settings()),
+      palette.current.of(themeExtensions(latest.current.theme)), preferences.current.of(settings()), errorMarks.current.of(EditorView.decorations.of(Decoration.none)),
       EditorView.updateListener.of(update => { if (update.docChanged) latest.current.onChange(update.state.doc.toString()); }),
     ] }) });
     view.current = editor;
@@ -96,5 +104,9 @@ export function SqlEditor(props: Props) {
   }, [props.value]);
   useEffect(() => { view.current?.dispatch({ effects: palette.current.reconfigure(themeExtensions(props.theme)) }); }, [props.theme]);
   useEffect(() => { view.current?.dispatch({ effects: preferences.current.reconfigure(settings()) }); }, [props.fontSize, props.autocomplete]);
+  useEffect(() => {
+    const editor = view.current;
+    if (editor) editor.dispatch({ effects: errorMarks.current.reconfigure(diagnosticExtension(props.diagnostic, editor.state.doc.length)) });
+  }, [props.diagnostic, props.value]);
   return <div className="code-editor sql-code-editor" ref={host} />;
 }

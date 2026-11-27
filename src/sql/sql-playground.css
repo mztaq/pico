@@ -101,3 +101,10 @@
 .sql-app .sql-database-heading,.sql-app .sql-sidebar-actions { display:flex; align-items:center; justify-content:space-between; gap:4px; }
 .sql-app .sql-database-picker>.sql-create-database { display:flex; align-items:center; justify-content:center; gap:6px; }
 .sql-app .sql-database-heading { min-height:32px; }
+
+.sql-app .sql-query-error { flex-shrink:0; max-height:45%; overflow:auto; background:color-mix(in srgb,var(--ds-danger) 7%,var(--ds-panel)); }
+.sql-app .sql-query-error strong { color:var(--ds-danger); font-size:var(--ds-text-md); }
+.sql-app .sql-query-error p { margin:4px 0; }
+.sql-app .sql-query-error details { color:var(--ds-muted); font-size:var(--ds-text-xs); }
+.sql-app .sql-query-error summary { cursor:pointer; }
+.sql-app .sql-error-token { text-decoration:underline wavy var(--ds-danger); text-underline-offset:4px; }

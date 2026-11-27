@@ -3,6 +3,7 @@ import initSqlJs, { type SqlModule } from 'sql.js';
 import { csvTable, parseCsv, toCsv } from './csv';
 import { executeSql } from './engine';
 import { formatIdentifier } from './identifiers';
+import { diagnoseSqlError } from './diagnostics';
 import { resizeManualGrid, validateManualTable } from './manual-table';
 
 let SQL: SqlModule;
@@ -109,5 +110,35 @@ describe('Cambridge-style identifiers', () => {
     expect(created.result?.rows).toEqual([['Ada']]);
     expect(executeSql(SQL,{action:'query',database:created.database,sql:'SELECT * FROM "Order";'}).result?.rows).toEqual([['Ada']]);
     expect(executeSql(SQL,{action:'query',database:created.database,sql:'SELECT Name, Score FROM Students WHERE Score > 80;'}).result?.rows).toEqual([['Ada',90]]);
+  });
+});
+
+describe('SQL query diagnostics', () => {
+  it('explains real SQLite failures without rejecting valid syntax', () => {
+    const data = executeSql(SQL,{action:'import',files:[{name:'Students.csv',text:'Name,Score\nAda,90'}]});
+    const cases = [
+      ['SELECT Name FROM Missing;', 'Table not found'],
+      ['SELECT Missing FROM Students;', 'Field not found'],
+      ['SELECT Name FROM Students WHERE Score > ;', 'Syntax error'],
+      ['SELECT Name FROM', 'Incomplete SQL statement'],
+      ["SELECT Name FROM Students WHERE Name = 'Ada", 'Missing closing quotation mark'],
+      ['SELECT (Score FROM Students;', 'Missing closing bracket'],
+      ['SELECT NONEXISTENT(Score) FROM Students;', 'Unknown function'],
+    ];
+    for (const [sql,title] of cases) {
+      let error = '';
+      try { executeSql(SQL,{action:'query',database:data.database,sql}); }
+      catch (cause) { error = String((cause as Error).message); }
+      expect(error).not.toBe('');
+      expect(diagnoseSqlError(error,sql).title).toBe(title);
+    }
+    expect(executeSql(SQL,{action:'query',database:data.database,sql:"SELECT Name FROM Students WHERE Name = 'Ada'"}).result?.rows).toEqual([['Ada']]);
+  });
+  it('locates unique tokens on the correct line, skipping comments and ambiguous occurrences', () => {
+    const sql = '-- Missing\nSELECT Missing FROM Students;';
+    const diagnostic = diagnoseSqlError('no such column: Missing',sql);
+    expect(diagnostic.line).toBe(2);
+    expect(sql.slice(diagnostic.from,diagnostic.to)).toBe('Missing');
+    expect(diagnoseSqlError('no such column: Missing','SELECT Missing, Missing FROM Students').line).toBeUndefined();
   });
 });
