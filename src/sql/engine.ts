@@ -115,8 +115,8 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
       const imported: string[] = [];
       for (const file of request.files ?? []) {
         const data = inspectCsv(file.text);
-        const name = file.tableName?.trim() || tableName(file.name, taken);
-        if (file.tableName) {
+        const name = file.tableName === undefined ? tableName(file.name, taken) : file.tableName.trim();
+        if (file.tableName !== undefined) {
           if (taken.has(name.toLowerCase())) throw new Error('Table "' + name + '" already exists.');
           taken.add(name.toLowerCase());
         }

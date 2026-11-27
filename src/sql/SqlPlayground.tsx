@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, Database, Download, Play, Settings2, X, Table2, FileCode2, Trash2, Plus, KeyRound, Settings2 as DesignIcon } from 'lucide-react';
+import { ArrowLeft, Database, Download, Play, Settings2, X, Table2, FileCode2, Trash2, Plus, KeyRound, PencilRuler } from 'lucide-react';
 import { cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { FloatingPanel } from '../app/components/FloatingPanel';
@@ -35,7 +35,6 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const [sql, setSql] = useState(() => selectedDatabase ? databases.get(selectedDatabase)?.query ?? '' : '');
   const [busy, setBusy] = useState(false);
   const [designTable, setDesignTable] = useState<TableInfo | null>(null);
-  const reading = false;
   const [status, setStatus] = useState(selectedDatabase ? 'SQLite ready' : '');
   const [error, setError] = useState('');
   const [queryError, setQueryError] = useState<{ diagnostic: SqlDiagnostic; source: string } | null>(null);
@@ -44,7 +43,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const running = useRef(false);
   const alive = useRef(true);
   const database = useRef(state?.database);
-  const disabled = busy || reading;
+  const disabled = busy;
 
   useEffect(() => {
     try { saveSettings(settings); } catch { /* Theme remains active. */ }
@@ -111,7 +110,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if (entry) entry.query = value;
   }
   function selectDatabase(name: string) {
-    if (running.current || reading) return;
+    if (running.current) return;
     const entry = databases.get(name);
     if (!entry) return;
     selectedDatabase = name; activeRef.current = name; setActiveDatabase(name);
@@ -120,12 +119,12 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if (!entry.response) execute({ action: 'init' });
   }
   function createDatabase(name: string) {
-    if (databases.has(name) || running.current || reading) return;
+    if (databases.has(name) || running.current) return;
     databases.set(name, { query: '' });
     setDatabaseNames([...databases.keys()]); selectDatabase(name); setModal('manual');
   }
   function openTable(mode: 'manual' | 'csv') {
-    if (!activeRef.current || running.current || reading) return;
+    if (!activeRef.current || running.current) return;
     setError(''); setQueryError(null); setModal(mode);
   }
   const result = state?.result;
@@ -174,7 +173,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         <div className="sql-tables">
           {state?.tables.map(table => <details className="sql-table-item" key={table.name} open>
             <summary><Table2 size={15}/><span>{table.name}</span></summary>
-            <div className="sql-table-tools"><button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + formatIdentifier(table.name) + ';'; execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>{table.kind !== 'view' && <button type="button" className="toolbar-button" disabled={disabled} onClick={()=>{setError('');setQueryError(null);setDesignTable(table);}}><DesignIcon size={14}/> Design View</button>}</div>
+            <div className="sql-table-tools"><button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + formatIdentifier(table.name) + ';'; execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>{table.kind !== 'view' && <button type="button" className="toolbar-button" disabled={disabled} onClick={()=>{setError('');setQueryError(null);setDesignTable(table);}}><PencilRuler size={14}/> Design View</button>}</div>
             <ul>{table.columns.map((column, i) => <li key={i}><span>{column.primaryKey && <KeyRound size={12}/>} {column.name}</span><small>{column.type}</small></li>)}</ul>
           </details>)}
           {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Table2 size={18}/></span><p>No tables yet</p></div>}
@@ -191,7 +190,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         </section>
         <ResizeHandle axis="y" label="Resize query results" onResize={delta => setEditorRatio(value => Math.max(25, Math.min(75, value + delta / Math.max(1, mainRef.current?.clientHeight ?? 600) * 100)))}/>
         <section className="tool-dock sql-results-panel">
-          <div className="dock-tab-row sql-dock-head"><div className="dock-tab active"><Table2 size={16}/> Results</div><span className="sql-result-status" role="status">{reading ? 'Reading files…' : status}</span><button type="button" className="toolbar-button" disabled={!result || disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button></div>
+          <div className="dock-tab-row sql-dock-head"><div className="dock-tab active"><Table2 size={16}/> Results</div><span className="sql-result-status" role="status">{status}</span><button type="button" className="toolbar-button" disabled={!result || disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button></div>
           {error && <p className="sql-error" role="alert">{error}</p>}
           {queryError && <div className="sql-error sql-query-error" role="alert"><strong>{queryError.diagnostic.title}{queryError.source === sql && queryError.diagnostic.line ? ' · Line ' + queryError.diagnostic.line : ''}</strong><p>{queryError.diagnostic.message}</p>{queryError.diagnostic.detail !== queryError.diagnostic.message && <details><summary>Technical details</summary><code>{queryError.diagnostic.detail}</code></details>}</div>}
           {result ? <><div className="sql-result-scroll"><table><thead><tr><th scope="col">#</th>{result.columns.map((column, i) => <th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row, i) => <tr key={i}><td>{i + 1}</td>{row.map((cell, j) => <td key={j}>{cell === null ? <i>NULL</i> : String(cell)}</td>)}</tr>)}</tbody></table></div>{result.truncated && <p className="sql-muted">Preview limited to 500 rows or 1 MB of displayed text. Export contains this preview.</p>}</> : <div className="sql-empty-state sql-empty-results"><span className="console-placeholder-mark"><Table2 size={20}/></span><p>{activeDatabase ? 'No results to display' : 'Create a database to begin'}</p></div>}
@@ -199,7 +198,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       </section>
     </div>
     {modal === 'database' && <CreateDatabaseDialog names={databaseNames} onCreate={createDatabase} onClose={() => setModal(null)}/>}
-    {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} stoppable={busy && !reading} error={error} onClose={() => { setModal(null); setError(''); }} onStop={() => { if (!reading) stop(); }} onCreate={table => execute({ action:'create', table })} existingNames={state?.tables.map(table=>table.name)??[]} onImport={files => execute({action:'import',files})}/>}
+    {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} stoppable={busy} error={error} onClose={() => { setModal(null); setError(''); }} onStop={()=>stop()} onCreate={table => execute({ action:'create', table })} existingNames={state?.tables.map(table=>table.name)??[]} onImport={files => execute({action:'import',files})}/>}
     {designTable && <DesignView table={designTable} busy={busy} error={error} onClose={()=>{setDesignTable(null);setError('');}} onStop={()=>stop()} onSave={design=>execute({action:'design',design})}/>}
   </main>;
 }

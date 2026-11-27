@@ -1,23 +1,9 @@
-import { useEffect, useRef, useState, type ClipboardEvent, type ReactNode } from 'react';
+import { useEffect, useState, type ClipboardEvent } from 'react';
 import { Database, Plus, Table2, Trash2, Upload, X } from 'lucide-react';
+import { Modal } from './SqlDialog';
 import { CsvImportDesign } from './SqlTableDesign';
 import type { CsvImportFile } from './engine';
-import { columnTypes, type ColumnType, type ManualColumn, type ManualTable, validateManualTable, resizeManualGrid, columnTypeLabels } from './manual-table';
-
-export function Modal({ title, children, onClose, busy = false }: { title: string; children: ReactNode; onClose: () => void; busy?: boolean }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const dialog = ref.current;
-    if (dialog && !dialog.open) dialog.showModal();
-    return () => { if (dialog?.open) dialog.close(); };
-  }, []);
-  return <dialog className="sql-create-dialog" ref={ref} aria-label={title} onCancel={event => { event.preventDefault(); if (!busy) onClose(); }} onClick={event => { if (!busy && event.target === event.currentTarget) onClose(); }}>
-    <div className="sql-dialog-content">
-      <header className="sql-dialog-head"><h2>{title}</h2><button type="button" className="topbar-icon" aria-label="Close dialog" disabled={busy} onClick={onClose}><X size={18}/></button></header>
-      {children}
-    </div>
-  </dialog>;
-}
+import { columnTypes, type ColumnType, type ManualColumn, type ManualTable, validateManualTable, validateTableSchema, resizeManualGrid, columnTypeLabels } from './manual-table';
 
 export function CreateDatabaseDialog({ names, onCreate, onClose }: { names: string[]; onCreate: (name: string) => void; onClose: () => void }) {
   const [name, setName] = useState('');
@@ -98,7 +84,19 @@ export function CreateTableDialog({ databaseName, initialMode, busy, stoppable, 
     setValidation('');
   }
   function submit() {
-    if (mode === 'csv') { if (files.length && !csvReading) onImport(files); return; }
+    if (mode === 'csv') {
+      if (!files.length || csvReading) return;
+      try {
+        const taken = new Set(existingNames.map(name=>name.toLowerCase()));
+        for (const file of files) {
+          const schema = validateTableSchema({name:file.tableName??'',columns:file.columns??[]});
+          if (taken.has(schema.name.toLowerCase())) throw new Error('Table "' + schema.name + '" already exists.');
+          taken.add(schema.name.toLowerCase());
+        }
+        setValidation(''); onImport(files);
+      } catch (cause) { setValidation(cause instanceof Error?cause.message:String(cause)); }
+      return;
+    }
     if (fieldCount !== String(columns.length) || recordCount !== String(rows.length)) { setValidation('Select Set size before creating the table.'); return; }
     const table = { name, columns, rows: rows.filter(row => row.some(cell => cell !== '')) };
     try { validateManualTable(table); setValidation(''); onCreate(table); }

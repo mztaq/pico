@@ -3,7 +3,7 @@ import { KeyRound, Table2, Upload, Save } from 'lucide-react';
 import { inspectCsv, MAX_CSV_BYTES, tableName } from './csv';
 import { columnTypes, columnTypeLabels, type ColumnType, type ManualColumn, validateTableSchema } from './manual-table';
 import type { CsvImportFile, TableDesign, TableInfo } from './engine';
-import { Modal } from './SqlCreateDialogs';
+import { Modal } from './SqlDialog';
 
 function FieldGrid({ columns, disabled, samples, onChange }: { columns: ManualColumn[]; disabled: boolean; samples?: string[][]; onChange: (columns: ManualColumn[]) => void }) {
   const update = (i: number, change: Partial<ManualColumn>) => onChange(columns.map((column,j)=>i===j?{...column,...change}:column));
