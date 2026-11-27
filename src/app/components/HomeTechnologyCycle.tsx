@@ -1,6 +1,7 @@
 // Brand marks from Simple Icons (https://github.com/simple-icons/simple-icons).
 // UptimeRobot mark from Dashboard Icons, adapted to the active theme:
 // https://github.com/homarr-labs/dashboard-icons/blob/main/svg/uptimerobot.svg
+// Pyodide mark from https://github.com/pyodide/pyodide/blob/main/docs/_static/img/pyodide-logo-dark.svg
 // These marks identify services used by Pico, not sponsorship or endorsement.
 const technologies = [
   {
@@ -18,6 +19,10 @@ const technologies = [
   {
     "name": "UptimeRobot",
     "path": ""
+  },
+  {
+    "name": "Pyodide",
+    "path": "M135.18,97c0-.13-.01-7.24-.02-7.37h27.51v71.33H91.33V89.63h27.51c0,.13-.02,7.24-.02,7.37m32.59,56.33h4.9l-7.43-25.25h-7.45l-6.12,25.25h4.75l1.24-5.62h8.49l1.61,5.62Zm-26.03,0h4.69l6.02-25.25h-4.63l-3.69,17.4h-.06l-3.5-17.4h-4.42l-3.9,17.19h-.06l-3.23-17.19h-4.72l5.44,25.25h4.78l3.75-17.19h.06l3.47,17.19Zm18.89-19.03h1.99l2.37,9.27h-6.42l2.06-9.27Z"
   },
   {
     "name": "WebGL",
@@ -43,7 +48,7 @@ export function HomeTechnologyCycle() {
       <div className="home-tech-track" aria-hidden="true">
         {[0, 1].map(copy => <div className="home-tech-strip" key={copy} data-copy={copy}>
           {technologies.map(technology => <span className="home-tech-item" key={technology.name}>
-            <svg viewBox="0 0 24 24" fill="currentColor" width="21" height="21" focusable="false">
+            <svg viewBox={technology.name === "Pyodide" ? "91.33 89.63 71.34 71.33" : "0 0 24 24"} fill="currentColor" width="21" height="21" focusable="false">
               {technology.name === 'UptimeRobot' ? <><circle cx="12" cy="12" r="12" opacity=".3"/><circle cx="12" cy="12" r="8"/></> : <path d={technology.path}/>}
             </svg>
             <span>{technology.name}</span>
