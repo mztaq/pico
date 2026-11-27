@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { lazy, Suspense } from 'react';
 const App = lazy(() => import('./app/App'));
 const LandingPage = lazy(() => import('./landing/LandingPage'));
-const AiUsagePage = lazy(() => import('./landing/AiUsagePage'));
 import { PicoTelemetry } from './telemetry/PicoTelemetry';
 import { OfflineStatus } from './app/components/OfflineStatus';
 import { WorkspaceContextMenu } from './app/components/WorkspaceContextMenu';
@@ -44,8 +43,6 @@ function SkipToContent() {
 // there only inside their native webviews, without changing the browser URL.
 const inApp = shouldRenderPicoWorkspace(window.location.pathname, isPicoDesktopWebview(window));
 const isHomePage = (window.location.pathname === '/' || window.location.pathname === '/index.html') && !inApp;
-// AI usage is a Pico information page, served at /app but rendered outside the workspace shell.
-const isAiUsagePage = /^\/app\/ai-usage\/?$/.test(window.location.pathname);
 // Direct workspace paths and legacy query links share the same loading skeleton.
 function directVisualWorkspace(pathname: string, search: string): VisualWorkspace | null {
   switch (workspaceFromLocation(pathname, search)) {
@@ -71,7 +68,7 @@ installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SkipToContent />
-    {inApp ? <><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /><OfflineStatus /><WorkspaceContextMenu /></> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}>{isAiUsagePage ? <AiUsagePage /> : <LandingPage />}</Suspense>}
+    {inApp ? <><Suspense fallback={initialVisualWorkspace ? <WorkspaceLoading workspace={initialVisualWorkspace} /> : initialHomeScreen ? <HomeLoading /> : null}><AppBootReady /></Suspense><PicoTelemetry /><OfflineStatus /><WorkspaceContextMenu /></> : <Suspense fallback={isHomePage ? <LoadingScreen /> : null}><LandingPage /></Suspense>}
   </React.StrictMode>,
 );
 

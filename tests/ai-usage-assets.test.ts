@@ -27,13 +27,14 @@ describe('AI usage deployment assets', () => {
   });
   it('keeps the copyright footer minimal and links it to the policy', () => {
     const landing=read('src/landing/LandingPage.tsx');
-    const policy=read('src/landing/AiUsagePage.tsx');
+    const policy=read('src/app/components/SiteInfo.tsx');
     const footer='© 2026 Pico Development Team. All rights reserved.';
     expect(landing).toContain('<a className="lp-footer-copyright" href="/app/ai-usage">'+footer+'</a>');
-    expect(policy).toContain('<a className="lp-footer-copyright" href="/app/ai-usage">'+footer+'</a>');
+    expect(policy).toContain("{ id: 'ai-usage', title: 'Copyright & AI Usage', icon: FileText }");
+    expect(policy).toContain('page === \'ai-usage\' ? <AiUsage />');
     expect(landing).not.toContain('Original site materials ©');
     expect(landing).not.toContain('lp-protected-notice');
     expect(policy).not.toContain('Pico · Legal');
-    expect(policy).toContain("const canonicalUrl = 'https://picompiler.pages.dev/app/ai-usage'");
+    expect(policy).toContain("const aiUsageCanonicalUrl = 'https://picompiler.pages.dev/app/ai-usage'");
   });
 });

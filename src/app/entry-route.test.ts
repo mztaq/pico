@@ -17,10 +17,10 @@ describe('Pico browser and desktop entry routes', () => {
     }
   });
 
-  it('renders AI Usage as a standalone information page instead of a workspace', () => {
+  it('renders AI Usage inside the workspace shell on browser and desktop', () => {
     for (const native of [false, true]) {
-      expect(shouldRenderPicoWorkspace('/app/ai-usage', native)).toBe(false);
-      expect(shouldRenderPicoWorkspace('/app/ai-usage/', native)).toBe(false);
+      expect(shouldRenderPicoWorkspace('/app/ai-usage', native)).toBe(true);
+      expect(shouldRenderPicoWorkspace('/app/ai-usage/', native)).toBe(true);
     }
   });
 
