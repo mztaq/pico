@@ -30,7 +30,7 @@ describe('Custom 404 for invalid app routes',()=>{
     expect(new URL(fetch.mock.calls[0]![0].url).pathname).toBe('/404.html');
   });
   it('keeps valid deep links loading the app',async()=>{
-    for(const route of ['/app/flowchart','/app/logic','/app/traffic','/app/traffic/','/app/games','/app/games/','/app/team','/app/ai-usage','/app/ai-usage/']){
+    for(const route of ['/app/flowchart','/app/logic','/app/traffic','/app/traffic/','/app/sql','/app/sql/','/app/games','/app/games/','/app/team','/app/ai-usage','/app/ai-usage/']){
       const {ctx,fetch}=context(route);
       const response=await workspaceRoute(ctx);
       expect(response.status).toBe(200);
@@ -48,7 +48,7 @@ describe('Custom 404 for invalid app routes',()=>{
     }
   });
   it('keeps direct workspaces and information pages working through the catch-all',async()=>{
-    for(const route of ['/app/flowchart','/app/logic','/app/python','/app/traffic','/app/traffic/','/app/games','/app/games/','/app/team','/app/report','/app/ai-usage','/app/ai-usage/']){
+    for(const route of ['/app/flowchart','/app/logic','/app/python','/app/traffic','/app/traffic/','/app/sql','/app/sql/','/app/games','/app/games/','/app/team','/app/report','/app/ai-usage','/app/ai-usage/']){
       const {ctx,fetch}=context(route);
       const response=await nestedRoute(ctx);
       expect(response.status).toBe(200);

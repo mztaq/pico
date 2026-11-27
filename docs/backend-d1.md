@@ -1,6 +1,6 @@
 # Pico Cloudflare D1 backend
 
-Pico uses an opt-in Cloudflare D1 backend for anonymous workspace usage and optional preference synchronization. It does **not** upload code, editor files, typed inputs, or flowcharts.
+Pico uses an opt-in Cloudflare D1 backend for pseudonymous workspace usage and optional preference synchronization. It does **not** upload code, editor files, typed inputs, flowcharts, SQL queries, CSV files, database records, or query results.
 
 ## Setup
 - Bind production and preview Cloudflare Pages to the existing `pico-db` D1 database using binding name `DB`. For safe previews, prefer a separate preview D1 database with the same schema.
@@ -14,7 +14,7 @@ Pico uses an opt-in Cloudflare D1 backend for anonymous workspace usage and opti
 - `GET /api/preferences`: read settings, gated by preference consent.
 - `PUT /api/preferences`: update theme, last workspace, and settings JSON.
 - `DELETE /api/preferences`: delete stored preferences.
-- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to seven workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice. The seven counters are `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, `binary_lab_seconds`, and `traffic_storm_seconds`.
+- `POST /api/usage`: submit `{batchId: crypto.randomUUID(), entries: [{workspace:'python',seconds:15}]}` with 1-60 total active seconds, up to eight workspaces per batch, when analytics is permitted. Repeating a batch ID does not add usage twice. The eight counters are `logic_sim_seconds`, `python_seconds`, `pseudocode_seconds`, `flowchart_seconds`, `cpu_studio_seconds`, `binary_lab_seconds`, `traffic_storm_seconds`, and `sql_playground_seconds`.
 
 ## Before new releases
 - Run `pnpm install`, `pnpm check`, `pnpm test`, and `pnpm build`. Review GitHub Actions results and run these checks locally when changing the backend.
@@ -53,7 +53,7 @@ A 404 indicates the Functions route is not deployed. A 503 indicates the D1 bind
 2. In Cloudflare Pages → picompiler → Settings → Preview → Variables and secrets, add a secret variable named `RATE_LIMIT_SECRET`. Generate a unique random value at least 32 characters long. Do not commit the secret to GitHub or paste it into chat.
 3. Redeploy the feature-branch preview.
 4. Verify `GET /api/cookies` still returns `database: connected`. Click Accept All and verify POST returns 200.
-5. Verify `POST /api/usage` sends a batch ID and one to six workspace entries. Replaying the **same** batch ID must return `applied:false` and leave totals unchanged.
+5. Verify `POST /api/usage` sends a batch ID and one to eight workspace entries. Replaying the **same** batch ID must return `applied:false` and leave totals unchanged.
 6. Check that excessively repeated requests return HTTP 429. The current per-minute ceilings are cookies 12, preferences 20 and usage 24 requests per IP address. Shared school networks may hit these sooner.
 
 ## Binary Lab usage counter migration (required before releasing)
@@ -109,6 +109,26 @@ SELECT visitor_id, traffic_storm_seconds FROM pico_usage LIMIT 5;
 ```
 
 Apply the change to Preview and test a consented Traffic Storm session first, then apply it to Production before merging. Users who decline Analytics must not have their time recorded in D1. An existing consented user who changes workspaces should have time attributed to each workspace separately, rather than accumulating under Traffic Storm.
+
+## SQL Playground usage counter (migration 0005)
+
+SQL Playground uses the existing opt-in active-time analytics. D1 stores elapsed seconds, not database names, table or field names, imported files, SQL statements, records or results. Local IndexedDB and localStorage continue to save user work regardless of analytics consent.
+
+Back up and check the Preview D1 database first. Before deploying the new API, execute this once in the matching D1 SQL Console:
+
+```sql
+ALTER TABLE pico_usage
+ADD COLUMN sql_playground_seconds INTEGER NOT NULL DEFAULT 0;
+```
+
+Alternatively use migration `migrations/0005_sql_playground_usage.sql` through the configured migrations runner. Do not apply both. Check the existing schema first and skip the command if the column already exists.
+
+```sql
+PRAGMA table_info(pico_usage);
+SELECT SUM(sql_playground_seconds) AS total_sql_seconds FROM pico_usage;
+```
+
+Test that Analytics opt-in increments this counter during active SQL Playground use, that hidden/inactive tabs are excluded, and that analytics opt-out deletes the associated usage record without deleting local databases. Repeat against Production before merging. The usage API updates all eight counters, so deploying before adding the column breaks usage tracking for every workspace.
 
 ## Scheduled retention cleanup
 

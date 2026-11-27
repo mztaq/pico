@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Binary, BookOpen, Bug, Calculator, Code2, Cpu, Database, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HomeFluidBackground } from './HomeFluidBackground';
@@ -198,7 +198,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
             </svg>}
           </WorkspaceChoice>
         </HomeGroup>
-        <HomeGroup label="Data lab" detail="Understand how computers represent numbers" kind="data">
+        <HomeGroup label="Data lab" detail="Explore binary and work with structured data" kind="data">
           <WorkspaceChoice icon={<Calculator size={18} />} title="Binary Lab" description="Explore bits, hexadecimal, logical shifts, overflow and two’s complement." onClick={() => onChoose('binary')}>
             {step => {
               const value = 42 + step % 4;
@@ -208,6 +208,9 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
                 <div className="home-binary-equation"><code>{bits.slice(0, 4)} {bits.slice(4)}</code><span>=</span><strong>{value}</strong><span>=</span><code>0x{value.toString(16).toUpperCase()}</code></div>
               </div>;
             }}
+          </WorkspaceChoice>
+          <WorkspaceChoice icon={<Database size={18} />} title="SQL Playground" description="Import CSV files and query tables using SQLite." onClick={() => onChoose('sql')}>
+            {step => <pre className="home-code-live"><span className="syntax-keyword">SELECT</span> name, score{'\n'}<span className="syntax-keyword">FROM</span> students{'\n'}<span className="syntax-keyword">WHERE</span> score &gt; 80;<span className="home-sql-preview-result" style={{display:'block',marginTop:6,color:'var(--accent)'}}>{step % 3 === 1 ? 'Running…' : '2 rows returned'}</span></pre>}
           </WorkspaceChoice>
         </HomeGroup>
       </div>

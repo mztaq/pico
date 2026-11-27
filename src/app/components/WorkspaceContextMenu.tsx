@@ -37,6 +37,7 @@ export function WorkspaceContextMenu() {
       // Older desktop shells render App at /. Their current workspace still
       // has a unique root class even if no deep-link was written.
       const inferred = workspace ?? (
+        scope.matches('.sql-app') ? 'sql' :
         scope.matches('.flow-builder') ? 'flowchart' :
         scope.matches('.logic-app') ? 'logic' :
         scope.matches('.cpu-app') ? 'cpu' :

@@ -188,6 +188,7 @@ export default function LandingPage() {
               <a className="lp-feature-item" href="/app/cpu" aria-label="Open CPU Studio in Pico"><span className="lp-feature-item-head"><h4>CPU Studio</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Explore CPU execution.</p></a>
               <a className="lp-feature-item" href="/app/binary" aria-label="Open Binary Lab in Pico"><span className="lp-feature-item-head"><h4>Binary Lab</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Convert binary and hexadecimal.</p></a>
               <a className="lp-feature-item" href="/app/traffic" aria-label="Open Traffic Storm in Pico"><span className="lp-feature-item-head"><h4>Traffic Storm</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Simulate network request floods.</p></a>
+              <a className="lp-feature-item" href="/app/sql" aria-label="Open SQL Playground in Pico"><span className="lp-feature-item-head"><h4>SQL Playground</h4><ArrowRight size={16} aria-hidden="true"/></span><p>Import CSV files and query tables.</p></a>
             </div>
           </div>
         </div>

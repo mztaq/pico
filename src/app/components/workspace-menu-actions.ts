@@ -23,7 +23,7 @@ export interface WorkspaceMenuModel {
 
 const names: Record<NonNullable<PicoWorkspace>, string> = {
   pseudocode: 'Pseudocode', python: 'Python', flowchart: 'Flowchart',
-  logic: 'Logic Sim', cpu: 'CPU Studio', binary: 'Binary Lab',
+  logic: 'Logic Sim', cpu: 'CPU Studio', binary: 'Binary Lab', sql: 'SQL Playground',
   traffic: 'Traffic Storm', games: 'Games', learn: 'Learn',
 };
 
@@ -147,6 +147,15 @@ export function buildWorkspaceMenu(
     add('Shift left', findText('.binary-operations button', 'Shift left'), ArrowLeft, 'bits');
     add('Shift right', findText('.binary-operations button', 'Shift right'), ArrowRight, 'bits');
     add('Add to register', findText('.binary-operations button', 'Add to register'), Plus, 'bits');
+  }
+
+  if (workspace === 'sql') {
+    const stop = findText('.sql-actions button', 'Stop');
+    if (stop) add('Stop query', stop, Pause, 'run');
+    else choose('Run query', '.sql-run', Play, 'run');
+    choose('Create database', '.sql-create-database', FilePlus2, 'files');
+    choose('Create table', '.sql-create-table', Plus, 'files');
+    choose('Export CSV', '.sql-export-csv', Copy, 'files');
   }
 
   if (workspace === 'traffic') {

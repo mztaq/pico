@@ -9,7 +9,7 @@ import { WorkspaceLoading, type VisualWorkspace } from '../src/app/components/Wo
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
 describe('Visual workspace loading skeletons',()=>{
-  const workspaces: VisualWorkspace[]=['Flowchart Builder','Logic Sim','Binary Lab','CPU Studio','Traffic Storm'];
+  const workspaces: VisualWorkspace[]=['Flowchart Builder','Logic Sim','Binary Lab','CPU Studio','Traffic Storm','SQL Playground'];
 
   it.each(workspaces)('provides an accessible, noninteractive skeleton for %s',(workspace)=>{
     const html=renderToStaticMarkup(createElement(WorkspaceLoading,{workspace}));

@@ -51,14 +51,14 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.textContent).not.toContain('YOUR COMPUTER SCIENCE WORKBENCH');
   expect(container.textContent).not.toContain('What will you build today?');
   expect(container.querySelector('.pico-home')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
-  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Traffic Storm','Binary Lab']);
+  expect([...container.querySelectorAll('.compiler-choice h2')].map(h=>h.textContent)).toEqual(['Pseudocode Compiler','Python Compiler','Flowchart Builder','Logic Sim','CPU Studio','Traffic Storm','Binary Lab','SQL Playground']);
   expect(container.querySelector('footer')).toBeNull();
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/team"]')?.textContent).toBe('Pico Team');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/privacy"]')?.textContent).toBe('Privacy Policy');
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
-it('keeps the original Pico logo and all seven initial workspace previews without Quick Launch', async()=>{
+it('keeps the original Pico logo and all eight initial workspace previews without Quick Launch', async()=>{
   const logo=container.querySelector<HTMLAnchorElement>('.home-brand')!;
   expect(logo.getAttribute('href')).toBe('/app');
   expect(logo.querySelector('img')?.getAttribute('src')).toBe('/pico-logo.svg');
@@ -73,7 +73,7 @@ it('keeps the original Pico logo and all seven initial workspace previews withou
   expect(container.querySelector('.home-quick-trigger')).toBeNull();
   await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true,cancelable:true})));
   expect(container.querySelector('.home-quick-dialog')).toBeNull();
-  expect(container.querySelectorAll('.compiler-choice-stage[data-preview-step="0"]')).toHaveLength(7);
+  expect(container.querySelectorAll('.compiler-choice-stage[data-preview-step="0"]')).toHaveLength(8);
   expect([...container.querySelectorAll('.home-preview-output')].map(node=>node.textContent)).toEqual(['> 42','> 42']);
   expect(container.querySelector('.home-binary-equation')?.textContent).toBe('0010 1010=42=0x2A');
 });
@@ -295,7 +295,7 @@ it('shows a Python tutorial with matching syntax and no rendering loop',async()=
 
 it('shows uncluttered workspace cards without Open labels or preview scrollbars',()=>{
  expect(container.querySelectorAll('.compiler-choice-title > span')).toHaveLength(0);
- expect(container.querySelectorAll('.compiler-choice')).toHaveLength(7);
+ expect(container.querySelectorAll('.compiler-choice')).toHaveLength(8);
 });
 it('offers both CPU simulation modes and a guided tutorial',async()=>{
  const cpuChoice=[...container.querySelectorAll<HTMLElement>('.compiler-choice')].find(choice=>choice.querySelector('h2')?.textContent==='CPU Studio');
@@ -353,7 +353,7 @@ it('opens the bug report dialog directly from /app/report and updates browser hi
   expect(window.location.pathname).toBe('/app/report');
   expect(container.querySelector('.pico-home')).not.toBeNull();
   expect(container.querySelector('[role="dialog"]')).not.toBeNull();
-  expect([...container.querySelectorAll<HTMLOptionElement>('#bug-report-workspace option')].slice(1).map(option=>option.value)).toEqual(["Home / Other","Pseudocode Compiler","Python Compiler","Flowchart Builder","Logic Sim","CPU Studio","Binary Lab","Traffic Storm","Learn","Games"]);
+  expect([...container.querySelectorAll<HTMLOptionElement>('#bug-report-workspace option')].slice(1).map(option=>option.value)).toEqual(["Home / Other","Pseudocode Compiler","Python Compiler","Flowchart Builder","Logic Sim","CPU Studio","Binary Lab","SQL Playground","Traffic Storm","Learn","Games"]);
   await act(async()=>container.querySelector<HTMLButtonElement>('[aria-label="Close report form"]')?.click());
   expect(window.location.pathname).toBe('/app');
 });

@@ -117,12 +117,12 @@ describe('Pico landing page', () => {
     expect(footer?.querySelector('nav')).toBeNull();
     expect(footer?.textContent).not.toContain('Original site materials');
   });
-  it('lists all nine current destinations in three balanced groups', async () => {
+  it('lists all ten current destinations in three groups', async () => {
     await render();
     const groups=[...container.querySelectorAll('.lp-feature-group')];
     expect(groups).toHaveLength(3);
     expect(groups.map(group=>group.querySelector('h3')?.textContent)).toEqual(['Programming & learning','Visual tools & games','Computer systems']);
-    expect(groups.map(group=>group.querySelectorAll('.lp-feature-item').length)).toEqual([3,3,3]);
+    expect(groups.map(group=>group.querySelectorAll('.lp-feature-item').length)).toEqual([3,3,4]);
     expect(container.textContent).not.toContain('Six workspaces for programming, algorithms and computer architecture.');
     expect(container.textContent).not.toContain('Inside Pico');
     expect(container.querySelector('#lp-features-title')?.textContent).toBe("Pico's tools");
@@ -133,7 +133,7 @@ describe('Pico landing page', () => {
     expect(links.map(link=>link.getAttribute('href'))).toEqual([
       '/app/pseudocode','/app/python','/app/learn',
       '/app/flowchart','/app/logic','/app/games',
-      '/app/cpu','/app/binary','/app/traffic',
+      '/app/cpu','/app/binary','/app/traffic','/app/sql',
     ]);
     expect(links.every(link=>link.getAttribute('aria-label')?.startsWith('Open '))).toBe(true);
     const layout=container.querySelector('main > .lp-tools-downloads');
