@@ -393,7 +393,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .home-tech-track {
   display: flex;
   width: max-content;
-  animation: pico-home-tech-scroll 42s linear 0.8s infinite backwards;
+  animation: pico-home-tech-scroll 46s linear 0.8s infinite backwards;
 }
 .pico-home-glass .home-tech-strip { display: flex; flex: none; }
 .pico-home-glass .home-tech-item {
