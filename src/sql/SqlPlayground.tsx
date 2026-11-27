@@ -7,7 +7,8 @@ import { ResizeHandle } from '../app/components/ResizeHandle';
 import { SqlEditor } from './SqlEditor';
 import { CreateDatabaseDialog, CreateTableDialog } from './SqlCreateDialogs';
 import { ThemePicker } from '../app/components/ThemePicker';
-import { MAX_CSV_BYTES, quoteIdentifier, toCsv } from './csv';
+import { MAX_CSV_BYTES, toCsv } from './csv';
+import { formatIdentifier } from './identifiers';
 import type { SqlRequest, SqlResponse, WorkerReply } from './engine';
 import './sql-playground.css';
 
@@ -178,7 +179,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         <div className="sql-tables">
           {state?.tables.map(table => <details className="sql-table-item" key={table.name} open>
             <summary><Database size={15}/><span>{table.name}</span></summary>
-            <button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + quoteIdentifier(table.name) + ';'; updateQuery(query); execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>
+            <button type="button" className="toolbar-button sql-preview-table" disabled={disabled} onClick={() => { const query = 'SELECT * FROM ' + formatIdentifier(table.name) + ';'; updateQuery(query); execute({ action: 'query', sql: query }); }}><Table2 size={14}/> View data</button>
             <ul>{table.columns.map((column, i) => <li key={i}><span>{column.name}</span><small>{column.type}</small></li>)}</ul>
           </details>)}
           {!state?.tables.length && <div className="sql-empty-state"><span className="console-placeholder-mark"><Database size={18}/></span><p>{activeDatabase ? 'No tables yet' : 'No database selected'}</p>{activeDatabase ? <><button type="button" className="toolbar-button" disabled={disabled} onClick={() => openTable('manual')}><Plus size={14}/> Create table</button><button type="button" className="toolbar-button sql-import" disabled={disabled} onClick={() => openTable('csv')}><Upload size={14}/> Import CSV</button></> : <button type="button" className="toolbar-button" disabled={disabled} onClick={() => { setError(''); setModal('database'); }}><Plus size={14}/> Create database</button>}</div>}

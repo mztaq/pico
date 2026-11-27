@@ -3,6 +3,7 @@ import { csvTable, quoteIdentifier, tableName, type Cell } from './csv';
 
 import { validateManualTable, type ManualTable } from './manual-table';
 import { normalizeSortDirections } from './worksheet-sql';
+import { formatIdentifier } from './identifiers';
 
 export const MAX_RESULT_ROWS = 500;
 const MAX_DATABASE_BYTES = 32 * 1024 * 1024;
@@ -64,7 +65,7 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
         imported.push(name);
       }
       if (imported.length) {
-        suggestedQuery = 'SELECT * FROM ' + quoteIdentifier(imported[0]) + ';';
+        suggestedQuery = 'SELECT * FROM ' + formatIdentifier(imported[0]) + ';';
         result = query(db, suggestedQuery);
       }
       message = 'Imported ' + imported.length + (imported.length === 1 ? ' table' : ' tables');
@@ -83,7 +84,7 @@ export function executeSql(SQL: SqlModule, request: SqlRequest): SqlResponse {
           db.run('COMMIT');
         } finally { insert.free(); }
       }
-      suggestedQuery = 'SELECT * FROM ' + quoteIdentifier(name) + ';';
+      suggestedQuery = 'SELECT * FROM ' + formatIdentifier(name) + ';';
       result = query(db, suggestedQuery);
       message = 'Created ' + name;
     } else if (request.action === 'query') {

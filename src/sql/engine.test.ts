@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import initSqlJs, { type SqlModule } from 'sql.js';
 import { csvTable, parseCsv, toCsv } from './csv';
 import { executeSql } from './engine';
+import { formatIdentifier } from './identifiers';
 import { resizeManualGrid, validateManualTable } from './manual-table';
 
 let SQL: SqlModule;
@@ -92,5 +93,19 @@ describe('worksheet SQL ordering', () => {
     const data=executeSql(SQL,{action:'query',sql:"CREATE TABLE t (descending INTEGER, note TEXT); INSERT INTO t VALUES (1,'ORDER BY score DESCENDING'),(2,'ASCENDING');"});
     expect(executeSql(SQL,{action:'query',database:data.database,sql:"SELECT note FROM t ORDER BY descending DESCENDING; -- ORDER BY note DESCENDING"}).result?.rows).toEqual([['ASCENDING'],['ORDER BY score DESCENDING']]);
     expect(executeSql(SQL,{action:'query',database:data.database,sql:'SELECT descending FROM t ORDER BY descending;'}).result?.rows).toEqual([[1],[2]]);
+  });
+});
+
+describe('Cambridge-style identifiers', () => {
+  it.each([['Students','Students'],['Student_ID','Student_ID'],['Score','Score'],['Full name','"Full name"'],['SELECT','"SELECT"'],['order','"order"'],['true','"true"'],['ASCENDING','"ASCENDING"'],['12A','"12A"'],['A"B','"A""B"']])('formats %s as %s', (name, expected) => {
+    expect(formatIdentifier(name)).toBe(expected);
+  });
+  it('generates executable bare-name queries for imported and manually created tables', () => {
+    const imported = executeSql(SQL,{action:'import',files:[{name:'Students.csv',text:'Name,Score\nAda,90'}]});
+    expect(imported.suggestedQuery).toBe('SELECT * FROM Students;');
+    const created = executeSql(SQL,{action:'create',database:imported.database,table:{name:'Order',columns:[{name:'Full name',type:'TEXT',primaryKey:false}],rows:[['Ada']]}});
+    expect(created.suggestedQuery).toBe('SELECT * FROM "Order";');
+    expect(executeSql(SQL,{action:'query',database:created.database,sql:created.suggestedQuery}).result?.rows).toEqual([['Ada']]);
+    expect(executeSql(SQL,{action:'query',database:created.database,sql:'SELECT Name, Score FROM Students WHERE Score > 80;'}).result?.rows).toEqual([['Ada',90]]);
   });
 });

@@ -9,7 +9,7 @@ import { tags } from '@lezer/highlight';
 import { themeExtensions } from '../app/components/CodeEditor';
 import type { PicoTheme } from '../app/themes';
 import type { TableInfo } from './engine';
-import { quoteIdentifier } from './csv';
+import { formatIdentifier } from './identifiers';
 
 const keywords = 'SELECT FROM WHERE AS DISTINCT JOIN INNER LEFT RIGHT FULL CROSS OUTER ON USING GROUP BY HAVING ORDER ASC DESC ASCENDING DESCENDING LIMIT OFFSET UNION ALL INTERSECT EXCEPT WITH RECURSIVE INSERT INTO VALUES UPDATE SET DELETE CREATE TABLE VIEW INDEX DROP ALTER ADD COLUMN IF EXISTS NOT NULL IS IN LIKE BETWEEN AND OR CASE WHEN THEN ELSE END PRIMARY KEY FOREIGN REFERENCES DEFAULT UNIQUE CHECK BEGIN COMMIT ROLLBACK RETURNING PRAGMA EXPLAIN QUERY PLAN OVER PARTITION WINDOW'.split(' ');
 const keywordSet = new Set(keywords);
@@ -60,8 +60,8 @@ export function SqlEditor(props: Props) {
     const word = context.matchBefore(/[\w$]+/);
     if (!word && !context.explicit) return null;
     const schema = latest.current.tables.flatMap(table => [
-      { label: table.name, type: 'class', apply: quoteIdentifier(table.name) },
-      ...table.columns.map(column => ({ label: column.name, detail: table.name, type: 'property', apply: quoteIdentifier(column.name) })),
+      { label: table.name, type: 'class', apply: formatIdentifier(table.name) },
+      ...table.columns.map(column => ({ label: column.name, detail: table.name, type: 'property', apply: formatIdentifier(column.name) })),
     ]);
     return { from: word?.from ?? context.pos, options: [
       ...keywords.map(label => ({ label, type: 'keyword' })),
