@@ -21,14 +21,14 @@ describe('Skeleton loading matches production landing navigation',()=>{
     expect(entry).toContain('const initialVisualWorkspace = inApp ? directVisualWorkspace(window.location.pathname, window.location.search) : null;');
   });
 
-  it('shows placeholders for only the three existing production navigation links',()=>{
-    for(const destination of ['#home','#features','#downloads']){
+  it('shows placeholders for all five production navigation links',()=>{
+    for(const destination of ['#home','#features','#downloads','/mcp-docs','https://status.picompiler.pages.dev/']){
       expect(html).toContain('data-placeholder-for="'+destination+'"');
       expect(entry).toContain('data-placeholder-for="'+destination+'"');
       expect(landing).toContain('href="'+destination+'"');
     }
-    expect(html.match(/class="pico-skeleton pico-skeleton-link"/g)).toHaveLength(3);
-    expect(entry.match(/className="pico-skeleton pico-skeleton-link"/g)).toHaveLength(3);
+    expect(html.match(/class="pico-skeleton pico-skeleton-link"/g)).toHaveLength(5);
+    expect(entry.match(/className="pico-skeleton pico-skeleton-link"/g)).toHaveLength(5);
     expect(html).toContain('.pico-skeleton-links{display:flex;align-items:center;gap:32px;margin-left:auto}');
     expect(html).toContain('@media(max-width:700px){.pico-skeleton-links{display:none}');
   });
