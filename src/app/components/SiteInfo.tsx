@@ -91,13 +91,17 @@ function PicoTeam() {
 function Privacy() {
   return <>
     <Section title="Your work">
-      <p>Your code, console input, projects and diagrams remain in your browser. Optional analytics does not collect their contents. They leave your device only if you export or share them.</p>
+      <p>Your code, console input, projects and diagrams in browser workspaces are processed locally. Optional analytics does not collect their contents. Information you choose to share, including through reports or MCP requests, is sent to the relevant service.</p>
     </Section>
     <Section title="Service and storage">
       <p>Browser storage saves projects, settings and consent choices. Cloudflare hosts Pico and Google Fonts serves some typography; those providers may process connection information.</p>
     </Section>
     <Section title="Optional data">
-      <p>If you opt in, analytics records browser information, visits and time spent in workspaces. Optional preferences store selected settings. A random browser identifier links those records; neither option is required.</p>
+      <p>If you opt in, analytics records browser information, visits and time spent in Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim, CPU Studio, Binary Lab and Traffic Storm. Learn and Games do not have separate workspace-time tracking. Optional preferences store selected settings. A random browser identifier links those records; neither option is required.</p>
+    </Section>
+    <Section title="Reports and integrations">
+      <p>When you submit a report, its type, workspace, description, optional email address and screenshots are sent to the Pico team through Resend. Cloudflare Turnstile verifies submissions and security controls help prevent abuse. Reports are separate from optional analytics. Avoid including passwords or other sensitive information.</p>
+      <p>When you use Pico MCP, the code, diagrams or other inputs you submit are processed by Pico’s authenticated server endpoint. Your connected client has its own privacy policy.</p>
     </Section>
     <Section title="Retention and controls">
       <p>Optional records are retained for approximately 90 days, potentially renewed through continued use. Cookie Settings lets you withdraw consent; turning both optional categories off clears the identifier and requests deletion of linked records. You can clear local browser storage yourself.</p>
@@ -219,7 +223,7 @@ export function SiteInfo({ page, onClose }: { page: InformationPage; onClose: ()
               <h1 id="pico-info-dialog-title" ref={heading} tabIndex={-1}>{title}</h1>
               {page === 'team'
                 ? <p className="site-info-author-subtitle">The people behind Pico.</p>
-                : <p className="site-info-intro">Last updated <time dateTime="2026-10-24">24 October 2026</time></p>}
+                : <p className="site-info-intro">Last updated <time dateTime={page === 'privacy' ? '2026-11-27' : '2026-10-24'}>{page === 'privacy' ? '27 November 2026' : '24 October 2026'}</time></p>}
             </div>
           </div>
           <button type="button" className="site-info-dialog-close" aria-label={`Close ${title}`} onClick={onClose}>

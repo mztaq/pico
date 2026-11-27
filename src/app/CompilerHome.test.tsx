@@ -353,6 +353,7 @@ it('opens the bug report dialog directly from /app/report and updates browser hi
   expect(window.location.pathname).toBe('/app/report');
   expect(container.querySelector('.pico-home')).not.toBeNull();
   expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+  expect([...container.querySelectorAll<HTMLOptionElement>('#bug-report-workspace option')].slice(1).map(option=>option.value)).toEqual(["Home / Other","Pseudocode Compiler","Python Compiler","Flowchart Builder","Logic Sim","CPU Studio","Binary Lab","Traffic Storm","Learn","Games"]);
   await act(async()=>container.querySelector<HTMLButtonElement>('[aria-label="Close report form"]')?.click());
   expect(window.location.pathname).toBe('/app');
 });

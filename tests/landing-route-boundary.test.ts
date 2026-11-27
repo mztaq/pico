@@ -10,6 +10,16 @@ describe('Landing route migration leaves backend services available', () => {
     expect(routes.include).toEqual(expect.arrayContaining(['/api/*', '/downloads/*', '/app', '/app/*']));
     expect(routes.exclude).toEqual([]);
   });
+  it('keeps bug report workspace choices aligned between the UI and API', () => {
+    const form=read('src/app/components/BugReportDialog.tsx');
+    const handler=read('functions/api/bug-report.ts');
+    const extract=(source:string)=>source.match(/const WORKSPACES = (\[[^\]]+\]);/)?.[1];
+    expect(extract(form)).toBeDefined();
+    expect(extract(handler)).toBe(extract(form));
+    for(const workspace of ['Traffic Storm','Learn','Games']){
+      expect(extract(form)).toContain("'"+workspace+"'");
+    }
+  });
   it('keeps D1-powered cookie and preferences endpoints in place', () => {
     expect(read('functions/api/cookies.ts')).toContain('ctx.env.DB');
     expect(read('functions/api/preferences.ts')).toContain('ctx.env.DB');
