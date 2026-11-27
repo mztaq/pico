@@ -1,7 +1,8 @@
 import type { SqlResponse } from './engine';
+import type { TableDisplay } from './formats';
 
 export interface SavedQuery { name:string; sql:string; }
-export interface DatabaseSession { response?: SqlResponse; query: string; savedQueries?: SavedQuery[]; activeQuery?: string|null; }
+export interface DatabaseSession { response?: SqlResponse; query: string; savedQueries?: SavedQuery[]; activeQuery?: string|null; displays?:TableDisplay[]; }
 export interface SqlLayout { sidebarWidth: number; editorRatio: number; }
 export interface SqlSavedState { databases: Map<string, DatabaseSession>; selected: string | null; layout: SqlLayout; }
 const DATABASE = 'pico-sql-playground';
@@ -11,6 +12,7 @@ const ACTIVE_QUERY_PREFIX = 'pico:sql:active-query:';
 const DEFAULT_LAYOUT: SqlLayout = { sidebarWidth:260, editorRatio:55 };
 export type StoredRecord =
   | { key: string; kind:'database'; name:string; response?:SqlResponse; query:string }
+  | { key:string; kind:'displays'; name:string; value:TableDisplay[] }
   | { key:string; kind:'savedQueries'; name:string; value:SavedQuery[] }
   | { key:string; kind:'query'; name:string; value:string }
   | { key:'selection'; kind:'selection'; name:string|null }
@@ -45,11 +47,13 @@ export function restoreRecords(records: StoredRecord[]):SqlSavedState {
   let selected:string|null=null,layout=DEFAULT_LAYOUT;
   const queries=new Map<string,string>();
   const savedQueries=new Map<string,SavedQuery[]>();
+  const displays=new Map<string,TableDisplay[]>();
   for(const record of records){
     if(record.kind==='database' && typeof record.name==='string' && typeof record.query==='string') {
       if(record.response && !(record.response.database instanceof Uint8Array)) throw new Error('Invalid saved database. Local data has been left untouched.');
       databases.set(record.name,{response:record.response,query:record.query});
-    } else if(record.kind==='savedQueries') savedQueries.set(record.name,record.value);
+    } else if(record.kind==='displays') displays.set(record.name,record.value);
+    else if(record.kind==='savedQueries') savedQueries.set(record.name,record.value);
     else if(record.kind==='query') queries.set(record.name,record.value);
     else if(record.kind==='selection') selected=record.name;
     else if(record.kind==='layout') layout=layoutValue(record.value);
@@ -57,6 +61,7 @@ export function restoreRecords(records: StoredRecord[]):SqlSavedState {
   for (const [name,entry] of databases) {
     entry.query=getQuery(name,queries.get(name)??entry.query);
     entry.savedQueries=savedQueries.get(name)??[];
+    entry.displays=displays.get(name)??[];
     try {
       const active=localStorage.getItem(ACTIVE_QUERY_PREFIX+encodeURIComponent(name));
       if(active&&entry.savedQueries.some(query=>query.name===active)){
@@ -92,6 +97,7 @@ export function saveDatabase(name:string,session:DatabaseSession):Promise<void>{
   // Snapshot metadata immediately. The SQLite byte array is immutable between successful operations.
   return put({key:'database:'+name,kind:'database',name,response:session.response,query:session.query});
 }
+export function saveDisplays(name:string,value:TableDisplay[]){return put({key:'displays:'+name,kind:'displays',name,value});}
 export function saveNamedQueries(name:string,value:SavedQuery[]){return put({key:'savedQueries:'+name,kind:'savedQueries',name,value});}
 export function saveSelection(name:string|null){return put({key:'selection',kind:'selection',name});}
 export function saveLayout(value:SqlLayout){return put({key:'layout',kind:'layout',value:layoutValue(value)});}

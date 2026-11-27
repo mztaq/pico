@@ -170,3 +170,11 @@
 .sql-app .sql-document .sql-result-scroll table{min-width:0;width:max-content}
 .sql-app .sql-document .sql-result-scroll th,.sql-app .sql-document .sql-result-scroll td{min-width:100px}
 @media(max-width:760px){.sql-app .sql-object-workspace{min-height:500px}.sql-app .sql-document{min-height:500px}.sql-app .sql-document-foot{display:flex}}
+
+/* Continuous full-width datasheet. Render only the visible records. */
+.sql-app .sql-document .sql-document-tabs .sql-file-tab{border-radius:0!important;border:0!important;border-bottom:2px solid var(--accent)!important;background:transparent!important;box-shadow:none!important}
+.sql-app .sql-document .sql-view-toolbar button,.sql-app .sql-document .sql-close-object{border-radius:4px!important}
+.sql-app .sql-document .sql-continuous-sheet table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0}
+.sql-app .sql-document .sql-continuous-sheet th,.sql-app .sql-document .sql-continuous-sheet td{box-sizing:border-box;height:34px;max-width:none;min-width:0;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--ds-font-ui)}
+.sql-app .sql-document .sql-continuous-sheet .sql-virtual-spacer td{padding:0;border:0}
+.sql-app .sql-document .sql-continuous-sheet th{z-index:2}

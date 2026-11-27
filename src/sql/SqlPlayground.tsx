@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, Database, Download, Play, Settings2, X, Table2, FileCode2, Trash2, Plus, PencilRuler, ChevronDown, ChevronRight, ChevronLeft, Save, Pencil } from 'lucide-react';
+import { ArrowLeft, Database, Download, Play, Settings2, X, Table2, FileCode2, Trash2, Plus, PencilRuler, ChevronDown, ChevronRight, Save, Pencil } from 'lucide-react';
 import { cssVariables, getTheme } from '../app/themes';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { FloatingPanel } from '../app/components/FloatingPanel';
@@ -8,11 +8,13 @@ import { SqlEditor } from './SqlEditor';
 import { CreateDatabaseDialog, CreateTableDialog } from './SqlCreateDialogs';
 import { Modal } from './SqlDialog';
 import { DesignView } from './SqlTableDesign';
+import { SqlDatasheet } from './SqlDatasheet';
+import type { FieldDisplay, TableDisplay } from './formats';
 import { ThemePicker } from '../app/components/ThemePicker';
 import { toCsv } from './csv';
 import { diagnoseSqlError, type SqlDiagnostic } from './diagnostics';
 import type { SqlRequest, SqlResponse, WorkerReply, TableInfo, QueryResult } from './engine';
-import { loadSqlState, saveDatabase, saveSelection, saveQuery, saveLayout, saveNamedQueries, saveActiveQuery, type SavedQuery, type DatabaseSession, type SqlLayout } from './storage';
+import { loadSqlState, saveDatabase, saveSelection, saveQuery, saveLayout, saveNamedQueries, saveActiveQuery, saveDisplays, type SavedQuery, type DatabaseSession, type SqlLayout } from './storage';
 import './sql-playground.css';
 
 const databases = new Map<string, DatabaseSession>();
@@ -50,6 +52,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const [queriesOpen,setQueriesOpen] = useState(true);
   const [selectedTable,setSelectedTable] = useState<string|null>(null);
   const [view,setView] = useState<'idle'|'table'|'sql'|'results'>('idle');
+  const [displays,setDisplays]=useState<TableDisplay[]>(()=>selectedDatabase?databases.get(selectedDatabase)?.displays??[]:[]);
   const [sheet,setSheet] = useState<SqlResponse|null>(null);
   const [queryResult,setQueryResult] = useState<QueryResult|null>(null);
   const [hasRun,setHasRun] = useState(false);
@@ -99,7 +102,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if (saving) return;
     dispose(); setBusy(false); setStatus(message);
   };
-  function execute(request: Omit<SqlRequest, 'database'>) {
+  function execute(request: Omit<SqlRequest, 'database'>, formatChange?:TableDisplay) {
     if (running.current || !alive.current || !activeRef.current) return;
     const databaseName = activeRef.current;
     running.current = true; setBusy(true); setError(''); setQueryError(null); setStatus(request.action === 'import' ? 'Importing CSV…' : request.action === 'init' ? 'Loading SQLite…' : request.action === 'create' ? 'Creating table…' : request.action === 'design' ? 'Saving design…' : request.action === 'browse' ? 'Opening table…' : 'Running…');
@@ -129,6 +132,8 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         const entry = databases.get(databaseName);
         if (!entry) { running.current=false; setBusy(false); return; }
         entry.response = value;
+        if(formatChange){const next=[...(entry.displays??[]).filter(item=>item.table!==formatChange.table),formatChange];entry.displays=next;setDisplays(next);if(storageAvailable)persist(saveDisplays(databaseName,next));}
+        if(request.action==='reset'){entry.displays=[];setDisplays([]);if(storageAvailable)persist(saveDisplays(databaseName,[]));}
         if (storageAvailable) {
           setSaving(true); setStatus('Saving…');
           try { await saveDatabase(databaseName,entry); } catch { reportStorageError(); }
@@ -142,7 +147,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
         if(request.action==='reset') { setSheet(null);setSelectedTable(null);setQueryResult(null);setHasRun(false);setView('idle'); }
         if(value.openedTable && ['create','import','design'].includes(request.action)) {
           setSelectedTable(value.openedTable);setView('table');setSheet(null);
-          execute({action:'browse',browse:{table:value.openedTable,offset:0}});
+          execute({action:'browse',browse:{table:value.openedTable}});
         }
       };
       current.onerror = () => fail('SQLite failed to start. Try again or reload Pico.');
@@ -158,7 +163,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       const name=selectedDatabase;
       const entry=name?databases.get(name):undefined;
       activeRef.current=name; setActiveDatabase(name); setDatabaseNames([...databases.keys()]);
-      setSavedQueries(entry?.savedQueries??[]); setSelectedTable(null); setSelectedQuery(entry?.activeQuery??null);
+      setDisplays(entry?.displays??[]);setSavedQueries(entry?.savedQueries??[]); setSelectedTable(null); setSelectedQuery(entry?.activeQuery??null);
       database.current=entry?.response?.database; setState(entry?.response); setSql(entry?.query??'');
       setSidebarWidth(savedLayout.sidebarWidth);
       setView(entry?.activeQuery||entry?.query.trim()?'sql':'idle');setSheet(null);setQueryResult(null);setHasRun(false);
@@ -193,7 +198,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if (!entry) return;
     selectedDatabase = name; activeRef.current = name; setActiveDatabase(name);
     if (storageAvailable) persist(saveSelection(name));
-    setSavedQueries(entry.savedQueries??[]); setSelectedTable(null); setSelectedQuery(entry.activeQuery??null);
+    setDisplays(entry.displays??[]);setSavedQueries(entry.savedQueries??[]); setSelectedTable(null); setSelectedQuery(entry.activeQuery??null);
     setView(entry.activeQuery||entry.query.trim()?'sql':'idle');setSheet(null);setQueryResult(null);setHasRun(false);
     database.current = entry.response?.database; setState(entry.response); setSql(entry.query);
     setError(''); setQueryError(null); setStatus(entry.response ? 'SQLite ready' : 'Loading SQLite…');
@@ -256,16 +261,16 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   function viewTable(table:TableInfo) {
     if(disabled)return;
     setSelectedTable(table.name);setSheet(null);setView('table');setError('');setQueryError(null);
-    execute({action:'browse',browse:{table:table.name,offset:0}});
+    execute({action:'browse',browse:{table:table.name}});
   }
   const result = view==='table'?sheet?.result:queryResult;
-  const page=view==='table'?sheet?.datasheet:undefined;
+  const tableInfo=view==='table'?sheet?.datasheet:undefined;
+  const displayFields=view==='table'?displays.find(item=>item.table===selectedTable)?.fields:undefined;
   const isQuery=view==='sql'||view==='results';
-  function pageTo(offset:number){if(!disabled&&selectedTable)execute({action:'browse',browse:{table:selectedTable,offset}});}
   function downloadResults() {
     if (!result) return;
     const url = URL.createObjectURL(new Blob([toCsv(result.columns, result.rows)], { type: 'text/csv;charset=utf-8' }));
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = view==='table'?'pico-table-page.csv':'pico-query-results.csv'; anchor.click();
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = view==='table'?'pico-table.csv':'pico-query-results.csv'; anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const runQuery = (value: string) => {
@@ -350,16 +355,15 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
               {selectedQuery?<button type="button" className="toolbar-button" disabled={disabled} onClick={()=>{setRenameQuery(true);setNameError('');setQueryName(selectedQuery);}}><Pencil size={14}/> Rename</button>:<button type="button" className="toolbar-button sql-save-query" disabled={disabled||!sql.trim()} onClick={saveCurrentQuery}><Save size={14}/> Save query</button>}
             </>}
             <span className="sql-view-spacer"/>
-            {view!=='sql'&&<button type="button" className="toolbar-button sql-export-csv" disabled={!result||disabled} onClick={downloadResults}><Download size={15}/> {view==='table'?'Export page':'Export CSV'}</button>}
+            {view!=='sql'&&<button type="button" className="toolbar-button sql-export-csv" disabled={!result||disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button>}
           </div>
           {error&&<p className="sql-error" role="alert">{error}</p>}
           {isQuery&&queryError&&<div className="sql-error sql-query-error" role="alert"><strong>{queryError.diagnostic.title}{queryError.source===sql&&queryError.diagnostic.line?' · Line '+queryError.diagnostic.line:''}</strong><p>{queryError.diagnostic.message}</p>{queryError.diagnostic.detail!==queryError.diagnostic.message&&<details><summary>Technical details</summary><code>{queryError.diagnostic.detail}</code></details>}</div>}
-          {view==='sql'?<SqlEditor key={(activeDatabase??'no-database')+'::'+(selectedQuery??'draft')} value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables??[]} diagnostic={queryError?.source===sql?queryError.diagnostic:undefined}/>:result?<div className="sql-result-scroll"><table><thead><tr>{result.columns.map((column,i)=><th scope="col" key={i}>{column}</th>)}</tr></thead><tbody>{result.rows.map((row,i)=><tr key={i}>{row.map((cell,j)=><td key={j}>{cell===null?<i>NULL</i>:String(cell)}</td>)}</tr>)}</tbody></table>{!result.rows.length&&<div className="sql-object-empty">No records</div>}</div>:<div className="sql-empty-state sql-empty-results"><p>{busy?'Loading…':hasRun?'Query completed':'No records to display'}</p></div>}
+          {view==='sql'?<SqlEditor key={(activeDatabase??'no-database')+'::'+(selectedQuery??'draft')} value={sql} onChange={updateQuery} onRun={runQuery} theme={theme} fontSize={settings.fontSize} autocomplete={settings.autocomplete} tables={state?.tables??[]} diagnostic={queryError?.source===sql?queryError.diagnostic:undefined}/>:result?<SqlDatasheet result={result} fields={displayFields}/>:<div className="sql-empty-state sql-empty-results"><p>{busy?'Loading…':hasRun?'Query completed':'No records to display'}</p></div>}
           <div className="editor-card-foot sql-document-foot">
-            <span role="status">{busy?status:view==='sql'?'SQLite':view==='results'?status:page?page.total+' records':status}</span>
-            {page&&<div className="sql-page-controls"><button type="button" className="topbar-icon" aria-label="First page" title="First page" disabled={disabled||page.offset===0} onClick={()=>pageTo(0)}>«</button><button type="button" className="topbar-icon" aria-label="Previous page" title="Previous page" disabled={disabled||page.offset===0} onClick={()=>pageTo(page.offset-page.pageSize)}><ChevronLeft size={15}/></button><span>{page.total?page.offset+1:0}–{Math.min(page.total,page.offset+page.pageSize)} of {page.total}</span><button type="button" className="topbar-icon" aria-label="Next page" title="Next page" disabled={disabled||page.offset+page.pageSize>=page.total} onClick={()=>pageTo(page.offset+page.pageSize)}><ChevronRight size={15}/></button><button type="button" className="topbar-icon" aria-label="Last page" title="Last page" disabled={disabled||page.offset+page.pageSize>=page.total} onClick={()=>pageTo(Math.floor((page.total-1)/page.pageSize)*page.pageSize)}>»</button></div>}
+            <span role="status">{busy?status:view==='sql'?'SQLite':view==='results'?status:tableInfo?tableInfo.total+' records':status}</span>
             {view==='sql'&&<span>{sql.split('\n').length} {sql.split('\n').length===1?'line':'lines'}</span>}
-            {view==='results'&&result?.truncated&&<span>Preview limited to 500 rows or 1 MB</span>}
+            {result?.truncated&&<span>{view==='table'?'Showing '+result.rows.length+' records (display limit)':'Preview limited to 500 rows or 1 MB'}</span>}
           </div>
         </section>}
       </section>
@@ -367,6 +371,6 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     {queryName!==null&&<Modal title={renameQuery?"Rename query":"Save query"} onClose={()=>setQueryName(null)}><form className="sql-dialog-form" onSubmit={event=>{event.preventDefault();saveAsQuery();}}><label>Query name<input autoFocus maxLength={80} value={queryName} onChange={event=>{setQueryName(event.target.value);setNameError('');}} placeholder="Enter a query name"/></label>{nameError&&<p className="sql-dialog-error" role="alert">{nameError}</p>}<div className="sql-dialog-actions"><button type="button" className="subtle-button" onClick={()=>setQueryName(null)}>Cancel</button><button type="submit" className="run-button" disabled={!queryName.trim()}>{renameQuery?"Rename":"Save"}</button></div></form></Modal>}
     {modal === 'database' && <CreateDatabaseDialog names={databaseNames} onCreate={createDatabase} onClose={() => setModal(null)}/>}
     {(modal === 'manual' || modal === 'csv') && activeDatabase && <CreateTableDialog databaseName={activeDatabase} initialMode={modal} busy={disabled} stoppable={busy && !saving} error={error} onClose={() => { setModal(null); setError(''); }} onStop={()=>stop()} onCreate={table => execute({ action:'create', table })} existingNames={state?.tables.map(table=>table.name)??[]} onImport={files => execute({action:'import',files})}/>}
-    {designTable && <DesignView table={designTable} busy={busy} stoppable={busy && !saving} error={error} onClose={()=>{setDesignTable(null);setError('');}} onStop={()=>stop()} onSave={design=>execute({action:'design',design})}/>}
+    {designTable && <DesignView table={designTable} busy={busy} stoppable={busy && !saving} error={error} onClose={()=>{setDesignTable(null);setError('');}} onStop={()=>stop()} fields={displays.find(item=>item.table===designTable.name)?.fields??[]} onSave={(design,fields,schemaChanged)=>{const change={table:design.name,fields};if(schemaChanged){execute({action:'design',design},change);return;}const name=activeRef.current;const entry=name?databases.get(name):undefined;if(name&&entry){const next=[...(entry.displays??[]).filter(item=>item.table!==design.name),change];entry.displays=next;setDisplays(next);if(storageAvailable)persist(saveDisplays(name,next));}setDesignTable(null);}}/>}
   </main>;
 }

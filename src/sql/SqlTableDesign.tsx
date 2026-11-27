@@ -4,11 +4,12 @@ import { inspectCsv, MAX_CSV_BYTES, tableName } from './csv';
 import { columnTypes, columnTypeLabels, type ColumnType, type ManualColumn, validateTableSchema } from './manual-table';
 import type { CsvImportFile, TableDesign, TableInfo } from './engine';
 import { Modal } from './SqlDialog';
+import { availableFormats, formatLabels, type FieldFormat, type FieldDisplay } from './formats';
 
-function FieldGrid({ columns, disabled, samples, onChange }: { columns: ManualColumn[]; disabled: boolean; samples?: string[][]; onChange: (columns: ManualColumn[]) => void }) {
+function FieldGrid({ columns, disabled, samples, onChange, formats, onFormat }: { columns: ManualColumn[]; disabled: boolean; samples?: string[][]; onChange: (columns: ManualColumn[]) => void; formats?:FieldFormat[]; onFormat?:(index:number,value:FieldFormat)=>void }) {
   const update = (i: number, change: Partial<ManualColumn>) => onChange(columns.map((column,j)=>i===j?{...column,...change}:column));
-  return <div className="sql-design-grid"><table><thead><tr><th aria-label="Primary key"/><th>Field name</th><th>Data type</th>{samples && <th>Sample values</th>}</tr></thead><tbody>
-    {columns.map((column,i)=><tr key={i}><td><button type="button" title={column.primaryKey?'Remove primary key':'Set primary key'} aria-label={column.name + ' primary key'} aria-pressed={column.primaryKey} disabled={disabled} className={'topbar-icon sql-key-toggle'+(column.primaryKey?' active':'')} onClick={()=>update(i,{primaryKey:!column.primaryKey})}><KeyRound size={16}/></button></td><td><input aria-label={'Field '+(i+1)+' name'} value={column.name} maxLength={100} disabled={disabled} onChange={e=>update(i,{name:e.target.value})}/></td><td><select aria-label={'Field '+(i+1)+' data type'} value={column.type} disabled={disabled} onChange={e=>update(i,{type:e.target.value as ColumnType})}>{columnTypes.map(type=><option key={type} value={type}>{columnTypeLabels[type]}</option>)}</select></td>{samples && <td className="sql-design-sample">{samples[i]?.join(', ') || '—'}</td>}</tr>)}
+  return <div className="sql-design-grid"><table><thead><tr><th aria-label="Primary key"/><th>Field name</th><th>Data type</th>{formats&&<th>Format</th>}{samples && <th>Sample values</th>}</tr></thead><tbody>
+    {columns.map((column,i)=><tr key={i}><td><button type="button" title={column.primaryKey?'Remove primary key':'Set primary key'} aria-label={column.name + ' primary key'} aria-pressed={column.primaryKey} disabled={disabled} className={'topbar-icon sql-key-toggle'+(column.primaryKey?' active':'')} onClick={()=>update(i,{primaryKey:!column.primaryKey})}><KeyRound size={16}/></button></td><td><input aria-label={'Field '+(i+1)+' name'} value={column.name} maxLength={100} disabled={disabled} onChange={e=>update(i,{name:e.target.value})}/></td><td><select aria-label={'Field '+(i+1)+' data type'} value={column.type} disabled={disabled} onChange={e=>update(i,{type:e.target.value as ColumnType})}>{columnTypes.map(type=><option key={type} value={type}>{columnTypeLabels[type]}</option>)}</select></td>{formats&&<td><select aria-label={'Field '+(i+1)+' format'} value={availableFormats(column.type).includes(formats[i])?formats[i]:'general'} disabled={disabled} onChange={event=>onFormat?.(i,event.target.value as FieldFormat)}>{availableFormats(column.type).map(format=><option value={format} key={format}>{formatLabels[format]}</option>)}</select></td>}{samples && <td className="sql-design-sample">{samples[i]?.join(', ') || '—'}</td>}</tr>)}
   </tbody></table></div>;
 }
 
@@ -51,16 +52,19 @@ export function CsvImportDesign({ existingNames, files, onChange, disabled, onRe
   </>;
 }
 
-export function DesignView({table,busy,stoppable,error,onSave,onClose,onStop}:{table:TableInfo;busy:boolean;stoppable:boolean;error:string;onSave:(design:TableDesign)=>void;onClose:()=>void;onStop:()=>void}){
+export function DesignView({table,busy,stoppable,error,onSave,onClose,onStop,fields=[]}:{table:TableInfo;busy:boolean;stoppable:boolean;error:string;fields?:FieldDisplay[];onSave:(design:TableDesign,fields:FieldDisplay[],schemaChanged:boolean)=>void;onClose:()=>void;onStop:()=>void}){
   const unsupported=table.columns.some(column=>!columnTypes.includes(column.type as ColumnType));
   const [columns,setColumns]=useState<ManualColumn[]>(()=>table.columns.map(column=>({name:column.name,type:columnTypes.includes(column.type as ColumnType)?column.type as ColumnType:'TEXT',primaryKey:Boolean(column.primaryKey)})));
   const [validation,setValidation]=useState('');
-  const changed=columns.some((column,i)=>column.name!==table.columns[i]?.name||column.type!==table.columns[i]?.type||column.primaryKey!==Boolean(table.columns[i]?.primaryKey));
-  function save(){try{validateTableSchema({name:table.name,columns});setValidation('');onSave({name:table.name,columns});}catch(cause){setValidation(cause instanceof Error?cause.message:String(cause));}}
+  const initialFormats=table.columns.map(column=>fields.find(field=>field.name===column.name)?.format??'general');
+  const [formats,setFormats]=useState<FieldFormat[]>(initialFormats);
+  const schemaChanged=columns.some((column,i)=>column.name!==table.columns[i]?.name||column.type!==table.columns[i]?.type||column.primaryKey!==Boolean(table.columns[i]?.primaryKey));
+  const changed=schemaChanged||formats.some((format,i)=>format!==initialFormats[i]);
+  function save(){try{const valid=validateTableSchema({name:table.name,columns});setValidation('');onSave({name:table.name,columns:valid.columns},valid.columns.map((column,i)=>({name:column.name,format:availableFormats(column.type).includes(formats[i])?formats[i]:'general'})),schemaChanged);}catch(cause){setValidation(cause instanceof Error?cause.message:String(cause));}}
   return <Modal title="Design View" onClose={onClose} busy={busy}>
     <div className="sql-dialog-form"><div className="sql-dialog-db"><Table2 size={16}/>{table.name}</div>
-      {unsupported?<div className="sql-design-grid"><table><thead><tr><th>Field name</th><th>Data type</th></tr></thead><tbody>{table.columns.map(column=><tr key={column.name}><td>{column.name}</td><td>{column.type}</td></tr>)}</tbody></table><p className="sql-form-note">Custom SQL data types must be edited using SQL.</p></div>:<FieldGrid columns={columns} disabled={busy} onChange={next=>{setColumns(next);setValidation('');}}/>}
-      <p className="sql-form-note">Changes apply to existing records. Invalid conversions or duplicate primary keys leave the original table unchanged.</p>
+      {unsupported?<div className="sql-design-grid"><table><thead><tr><th>Field name</th><th>Data type</th></tr></thead><tbody>{table.columns.map(column=><tr key={column.name}><td>{column.name}</td><td>{column.type}</td></tr>)}</tbody></table><p className="sql-form-note">Custom SQL data types must be edited using SQL.</p></div>:<FieldGrid columns={columns} disabled={busy} formats={formats} onFormat={(index,value)=>setFormats(previous=>previous.map((format,i)=>i===index?value:format))} onChange={next=>{setColumns(next);setFormats(previous=>previous.map((format,i)=>availableFormats(next[i].type).includes(format)?format:'general'));setValidation('');}}/>}
+      <p className="sql-form-note">Formats affect display only. Data type changes validate existing records before saving.</p>
       {(validation||error)&&<p className="sql-dialog-error" role="alert">{validation||error}</p>}
       <div className="sql-dialog-actions">{busy?<button type="button" className="toolbar-button stop-button" disabled={!stoppable} onClick={onStop}>Stop</button>:<button type="button" className="subtle-button" onClick={onClose}>Cancel</button>}<button type="button" className="run-button" disabled={busy||unsupported||!changed} onClick={save}><Save size={15}/> Save changes</button></div>
     </div>
