@@ -55,7 +55,7 @@ export function useWorkspaceGlass() {
     const card = ref.current;
     // Some WebKit builds parse the URL syntax without rendering it correctly.
     // Explicitly restrict the native backdrop path to Chromium-based engines.
-    if (!card || !/(Chrome|Chromium|Edg)\\//.test(navigator.userAgent) || /CriOS|FxiOS|EdgiOS/.test(navigator.userAgent) ||
+    if (!card || !['Chrome/', 'Chromium/', 'Edg/'].some(brand => navigator.userAgent.includes(brand)) || /CriOS|FxiOS|EdgiOS/.test(navigator.userAgent) ||
       !window.CSS?.supports('backdrop-filter', 'url(#test)')) return;
     let lastKey = '';
     let frame = 0;
