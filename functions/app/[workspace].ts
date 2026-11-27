@@ -3,7 +3,7 @@ interface Context { request: Request; env: { ASSETS: { fetch: (request: Request)
 export async function onRequestGet({ request, env }: Context): Promise<Response> {
   const url = new URL(request.url);
   const workspace = url.pathname.split('/')[2];
-  if (!['pseudocode', 'python', 'flowchart', 'logic', 'cpu', 'binary', 'traffic', 'games', 'learn', 'team', 'terms', 'privacy', 'cookies', 'report', 'ai-usage'].includes(workspace)) return picoNotFound({request,env});
+  if (!['pseudocode', 'python', 'flowchart', 'logic', 'cpu', 'binary', 'sql', 'traffic', 'games', 'learn', 'team', 'terms', 'privacy', 'cookies', 'report', 'ai-usage'].includes(workspace)) return picoNotFound({request,env});
   url.pathname = '/';
   url.search = '';
   return env.ASSETS.fetch(new Request(url, request));

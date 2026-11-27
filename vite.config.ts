@@ -51,7 +51,7 @@ function offlineAssetManifest(): Plugin {
   return {
     name: 'pico-offline-asset-manifest',
     generateBundle(_options, bundle) {
-      const bundles = Object.keys(bundle).filter(path => /\.(js|css)$/.test(path)).map(path => '/' + path);
+      const bundles = Object.keys(bundle).filter(path => /\.(js|css|wasm)$/.test(path)).map(path => '/' + path);
       const pythonAssets = Object.keys(runtimeFiles).map(file => PYODIDE_INDEX_URL + file);
       this.emitFile({ type: 'asset', fileName: 'offline-assets.json', source: JSON.stringify([...bundles, ...pythonAssets]) });
     },
