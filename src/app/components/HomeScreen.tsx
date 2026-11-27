@@ -98,6 +98,14 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
     return () => window.clearTimeout(timeout);
   }, [reportNotice]);
   return <main className="pico-home pico-home-glass" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
+      <svg className="home-glass-filter-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <defs>
+          <filter id="pico-workspace-glass" x="-10%" y="-10%" width="120%" height="120%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.018 0.028" numOctaves={2} seed={8} result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale={12} xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
       <HomeFluidBackground theme={theme} disabled={reportOpen || offlineReportWarning} fallback={<HomeAmbientCurves />} />
     <div className="home-nav">
       <div className="home-theme-anchor" ref={themeMenuRef}>

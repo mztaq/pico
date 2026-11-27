@@ -287,6 +287,13 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   --home-glass-code-opacity: 88%;
 }
 
+.pico-home-glass .home-glass-filter-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
 /* One backdrop-filter per surface, not on every nested preview. */
 .pico-home-glass .compiler-choice,
 .pico-home-glass :is(.home-learning-link, .home-footer-links .bug-report-trigger) {
@@ -301,6 +308,13 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .compiler-choice {
   border-radius: var(--home-card-radius);
   isolation: isolate;
+}
+/* Displace the backdrop, never the foreground text, icons or previews.
+   The ordinary blur above remains the fallback when URL filters are unsupported. */
+@supports (backdrop-filter: url("#pico-workspace-glass") blur(3px) saturate(180%)) {
+  .pico-home-glass .compiler-choice {
+    backdrop-filter: url("#pico-workspace-glass") blur(3px) saturate(180%);
+  }
 }
 .pico-home-glass .compiler-choice-stage {
   background: var(--home-glass-stage);

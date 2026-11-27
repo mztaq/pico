@@ -45,6 +45,12 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(document.title).toBe('Pico | Home');
   expect(container.querySelector('.pico-home h1')?.textContent).toBe('Choose your workspace');
   expect(container.querySelector('.pico-home-glass')).not.toBeNull();
+  const glass=container.querySelector('svg.home-glass-filter-defs filter#pico-workspace-glass');
+  expect(glass).not.toBeNull();
+  expect(container.querySelectorAll('#pico-workspace-glass')).toHaveLength(1);
+  expect(glass?.querySelector('feTurbulence')?.getAttribute('type')).toBe('fractalNoise');
+  expect(glass?.querySelector('feDisplacementMap')?.getAttribute('in')).toBe('SourceGraphic');
+  expect(glass?.querySelector('feDisplacementMap')?.getAttribute('in2')).toBe('noise');
   expect(container.querySelector('.pico-home-fluid')?.getAttribute('aria-hidden')).toBe('true');
   expect(container.querySelector('.pico-home-curves')).not.toBeNull();
   expect(container.querySelector('.pico-home-fluid canvas')).toBeNull();
