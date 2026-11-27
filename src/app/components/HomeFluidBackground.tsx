@@ -26,12 +26,11 @@ export function HomeFluidBackground({ theme, disabled = false, fallback }: { the
     controller.current?.setPalette(palette.current);
   }, [theme]);
 
-  const highContrast = Boolean(theme.highContrast);
   useLayoutEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     if (disabled) { setShowFallback(false); return; }
-    if (highContrast || !checkHomeFluidSupport()) { setShowFallback(true); return; }
+    if (!checkHomeFluidSupport()) { setShowFallback(true); return; }
     const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const forced = window.matchMedia?.('(forced-colors: active)');
     let canvas: HTMLCanvasElement | null = null;
@@ -69,7 +68,7 @@ export function HomeFluidBackground({ theme, disabled = false, fallback }: { the
       forced?.removeEventListener('change', sync);
       stop();
     };
-  }, [disabled, highContrast]);
+  }, [disabled]);
 
   return <><div className="pico-home-fluid" ref={hostRef} aria-hidden="true" />{showFallback && fallback}</>;
 }

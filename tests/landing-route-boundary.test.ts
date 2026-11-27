@@ -67,6 +67,8 @@ describe('Landing route migration leaves backend services available', () => {
     expect(home).toContain('fallback={<HomeAmbientCurves />}');
     expect(fluid).toContain('useState(false)');
     expect(fluid).toContain('!checkHomeFluidSupport()');
+    expect(fluid).not.toContain('theme.highContrast');
+    expect(fluid).toContain('}, [disabled]);');
     expect(fluid).toContain('{showFallback && fallback}');
     expect(read('src/app/components/GamesPage.tsx')).toContain('<HomeAmbientCurves />');
   });
