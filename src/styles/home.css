@@ -393,7 +393,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .home-tech-track {
   display: flex;
   width: max-content;
-  animation: pico-home-tech-scroll 33.75s linear infinite;
+  animation: pico-home-tech-scroll 48.75s linear infinite;
 }
 .pico-home-glass .home-tech-strip { display: flex; flex: none; }
 .pico-home-glass .home-tech-item {
@@ -414,7 +414,6 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
-.pico-home-glass .home-tech-window:hover .home-tech-track,
 .pico-home-glass .home-tech-window:focus-within .home-tech-track { animation-play-state: paused; }
 .pico-home-glass .home-tech-window:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 @media (max-width: 540px) {
