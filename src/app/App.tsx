@@ -139,7 +139,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const [dockOpen, setDockOpen] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [runStatus, setRunStatus] = useState('');
-  const [pythonVersion, setPythonVersion] = useState('');
   const [outputTruncated, setOutputTruncated] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [projectNameDraft, setProjectNameDraft] = useState(() => initial.projects.find(project => project.id === initial.activeId)!.name);
@@ -353,7 +352,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       onLine: (line: number) => { if (jobRef.current === job) setLiveExecutionLine(line); },
       onOutput: (lines: string[]) => appendOutput(lines, 'output'),
       onStderr: (lines: string[]) => appendOutput(lines, 'error'),
-      onStatus: (message: string) => { if (jobRef.current === job) { setRunStatus(message.startsWith('Python ') ? '' : message); if (message.startsWith('Python ')) setPythonVersion(message); } },
+      onStatus: (message: string) => { if (jobRef.current === job) { setRunStatus(message.startsWith('Python ') ? '' : message); } },
       onInput: (request: PendingInput) => { if (jobRef.current === job) { setRunStatus(''); setPendingInput(request); setInputValue(''); setActivePanel('console'); } },
     };
     const job = isPython
@@ -442,8 +441,6 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
         <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={() => leaveWorkspace()}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26" /><span>Pico</span><span className="brand-period">.</span></button>
-        <span className="pico-appbar-sep" aria-hidden="true">/</span>
-        <span className="brand-subtitle pico-appbar-tool">{isPython ? pythonVersion || "Python" : "Pseudocode"}</span>
         <input data-tour="workspace" aria-label="Workspace name" title="Rename workspace" className="project-title-input topbar-project-name" value={projectNameDraft} aria-invalid={Boolean(projectNameError)} aria-describedby={projectNameError ? "project-name-error" : undefined} onChange={event => renameProject(event.target.value)} onBlur={finishProjectRename} onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") event.currentTarget.blur(); }} />
       </div>
       <div className="topbar-spacer" />
