@@ -155,7 +155,7 @@ export function buildWorkspaceMenu(
     else choose('Run query', '.sql-run', Play, 'run');
     choose('Create database', '.sql-create-database', FilePlus2, 'files');
     choose('Create table', '.sql-create-table', Plus, 'files');
-    add('Export CSV', findText('.sql-results-panel button', 'Export CSV'), Copy, 'files');
+    choose('Export CSV', '.sql-export-csv', Copy, 'files');
   }
 
   if (workspace === 'traffic') {

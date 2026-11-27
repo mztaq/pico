@@ -31,6 +31,13 @@ describe('SQL local workspace restoration',()=>{
     expect(saved.databases.get('A')?.savedQueries).toEqual([{name:'Top scores',sql:'SELECT Score FROM Students;'}]);
     expect(saved.databases.get('B')?.savedQueries).toEqual([]);
   });
+  it('restores the active named query and its latest synchronous draft',()=>{
+    localStorage.setItem('pico:sql:active-query:School','Query1');
+    localStorage.setItem('pico:sql:query:School','SELECT Score FROM Students;');
+    const saved=restoreRecords([{key:'database:School',kind:'database',name:'School',query:''},{key:'savedQueries:School',kind:'savedQueries',name:'School',value:[{name:'Query1',sql:'SELECT * FROM Students;'}]}]);
+    expect(saved.databases.get('School')?.activeQuery).toBe('Query1');
+    expect(saved.databases.get('School')?.savedQueries?.[0]?.sql).toBe('SELECT Score FROM Students;');
+  });
   it('handles empty storage and missing selections, clamps invalid layout values',()=>{
     expect(restoreRecords([]).selected).toBeNull();
     const saved=restoreRecords([{key:'database:A',kind:'database',name:'A',query:''},{key:'selection',kind:'selection',name:'Missing'},{key:'layout',kind:'layout',value:{sidebarWidth:900,editorRatio:10}}]);

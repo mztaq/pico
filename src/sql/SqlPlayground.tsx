@@ -12,7 +12,7 @@ import { ThemePicker } from '../app/components/ThemePicker';
 import { toCsv } from './csv';
 import { diagnoseSqlError, type SqlDiagnostic } from './diagnostics';
 import type { SqlRequest, SqlResponse, WorkerReply, TableInfo, QueryResult } from './engine';
-import { loadSqlState, saveDatabase, saveSelection, saveQuery, saveLayout, saveNamedQueries, type SavedQuery, type DatabaseSession, type SqlLayout } from './storage';
+import { loadSqlState, saveDatabase, saveSelection, saveQuery, saveLayout, saveNamedQueries, saveActiveQuery, type SavedQuery, type DatabaseSession, type SqlLayout } from './storage';
 import './sql-playground.css';
 
 const databases = new Map<string, DatabaseSession>();
@@ -158,10 +158,10 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
       const name=selectedDatabase;
       const entry=name?databases.get(name):undefined;
       activeRef.current=name; setActiveDatabase(name); setDatabaseNames([...databases.keys()]);
-      setSavedQueries(entry?.savedQueries??[]); setSelectedTable(null); setSelectedQuery(null);
+      setSavedQueries(entry?.savedQueries??[]); setSelectedTable(null); setSelectedQuery(entry?.activeQuery??null);
       database.current=entry?.response?.database; setState(entry?.response); setSql(entry?.query??'');
       setSidebarWidth(savedLayout.sidebarWidth);
-      setView(entry?.query.trim()?'sql':'idle');setSheet(null);setQueryResult(null);setHasRun(false);
+      setView(entry?.activeQuery||entry?.query.trim()?'sql':'idle');setSheet(null);setQueryResult(null);setHasRun(false);
       setStatus(entry?.response?.message??(name?'SQLite ready':''));
       if (!storageAvailable) setStorageError('Local storage is unavailable. Changes will not survive a refresh.');
       setLoading(false);
@@ -193,8 +193,8 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if (!entry) return;
     selectedDatabase = name; activeRef.current = name; setActiveDatabase(name);
     if (storageAvailable) persist(saveSelection(name));
-    setSavedQueries(entry.savedQueries??[]); setSelectedTable(null); setSelectedQuery(null);
-    setView(entry.query.trim()?'sql':'idle');setSheet(null);setQueryResult(null);setHasRun(false);
+    setSavedQueries(entry.savedQueries??[]); setSelectedTable(null); setSelectedQuery(entry.activeQuery??null);
+    setView(entry.activeQuery||entry.query.trim()?'sql':'idle');setSheet(null);setQueryResult(null);setHasRun(false);
     database.current = entry.response?.database; setState(entry.response); setSql(entry.query);
     setError(''); setQueryError(null); setStatus(entry.response ? 'SQLite ready' : 'Loading SQLite…');
     if (!entry.response) execute({ action: 'init' });
@@ -217,12 +217,18 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     entry.savedQueries=next;setSavedQueries(next);
     if(storageAvailable)persist(saveNamedQueries(name,next));
   }
+  function chooseQuery(name:string|null) {
+    setSelectedQuery(name);
+    const databaseName=activeRef.current;
+    const entry=databaseName?databases.get(databaseName):undefined;
+    if(entry&&databaseName){entry.activeQuery=name;if(storageAvailable)saveActiveQuery(databaseName,name);}
+  }
   function createQuery() {
     if(!activeDatabase||disabled)return;
     let n=1;
     while(savedQueries.some(query=>query.name.toLowerCase()===('Query'+n).toLowerCase()))n++;
     const name='Query'+n;
-    changeSavedQueries([...savedQueries,{name,sql:''}]);setSelectedQuery(name);
+    changeSavedQueries([...savedQueries,{name,sql:''}]);chooseQuery(name);
     loadQueryText('');setSelectedTable(null);setView('sql');setQueryResult(null);setHasRun(false);setError('');setQueryError(null);setStatus('');setQueriesOpen(true);
   }
   function saveCurrentQuery() {
@@ -235,17 +241,17 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
     if(!name||name.length>80){setNameError('Enter a query name (1–80 characters).');return;}
     if(savedQueries.some(query=>query.name.toLowerCase()===name.toLowerCase()&&(!renameQuery||query.name!==selectedQuery))){setNameError('A query with this name already exists.');return;}
     changeSavedQueries(renameQuery?savedQueries.map(query=>query.name===selectedQuery?{...query,name,sql}:query):[...savedQueries,{name,sql}]);
-    setSelectedQuery(name);setQueryName(null);setQueriesOpen(true);
+    chooseQuery(name);setQueryName(null);setQueriesOpen(true);
   }
   function openSavedQuery(query:SavedQuery) {
     if(disabled)return;
-    setSelectedQuery(query.name);loadQueryText(query.sql);setSelectedTable(null);
+    chooseQuery(query.name);loadQueryText(query.sql);setSelectedTable(null);
     setView('sql');setQueryResult(null);setHasRun(false);setError('');setQueryError(null);setStatus('');
   }
   function deleteSavedQuery(query:SavedQuery) {
     if(disabled||!window.confirm('Delete saved query "'+query.name+'"?'))return;
     changeSavedQueries(savedQueries.filter(item=>item.name!==query.name));
-    if(selectedQuery===query.name){setSelectedQuery(null);loadQueryText('');setQueryResult(null);setHasRun(false);if(view!=='table')setView('idle');}
+    if(selectedQuery===query.name){chooseQuery(null);loadQueryText('');setQueryResult(null);setHasRun(false);if(view!=='table')setView('idle');}
   }
   function viewTable(table:TableInfo) {
     if(disabled)return;
@@ -344,7 +350,7 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
               {selectedQuery?<button type="button" className="toolbar-button" disabled={disabled} onClick={()=>{setRenameQuery(true);setNameError('');setQueryName(selectedQuery);}}><Pencil size={14}/> Rename</button>:<button type="button" className="toolbar-button sql-save-query" disabled={disabled||!sql.trim()} onClick={saveCurrentQuery}><Save size={14}/> Save query</button>}
             </>}
             <span className="sql-view-spacer"/>
-            {view!=='sql'&&<button type="button" className="toolbar-button" disabled={!result||disabled} onClick={downloadResults}><Download size={15}/> Export CSV</button>}
+            {view!=='sql'&&<button type="button" className="toolbar-button sql-export-csv" disabled={!result||disabled} onClick={downloadResults}><Download size={15}/> {view==='table'?'Export page':'Export CSV'}</button>}
           </div>
           {error&&<p className="sql-error" role="alert">{error}</p>}
           {isQuery&&queryError&&<div className="sql-error sql-query-error" role="alert"><strong>{queryError.diagnostic.title}{queryError.source===sql&&queryError.diagnostic.line?' · Line '+queryError.diagnostic.line:''}</strong><p>{queryError.diagnostic.message}</p>{queryError.diagnostic.detail!==queryError.diagnostic.message&&<details><summary>Technical details</summary><code>{queryError.diagnostic.detail}</code></details>}</div>}

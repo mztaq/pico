@@ -1,12 +1,13 @@
 import type { SqlResponse } from './engine';
 
 export interface SavedQuery { name:string; sql:string; }
-export interface DatabaseSession { response?: SqlResponse; query: string; savedQueries?: SavedQuery[]; }
+export interface DatabaseSession { response?: SqlResponse; query: string; savedQueries?: SavedQuery[]; activeQuery?: string|null; }
 export interface SqlLayout { sidebarWidth: number; editorRatio: number; }
 export interface SqlSavedState { databases: Map<string, DatabaseSession>; selected: string | null; layout: SqlLayout; }
 const DATABASE = 'pico-sql-playground';
 const STORE = 'workspace';
 const QUERY_PREFIX = 'pico:sql:query:';
+const ACTIVE_QUERY_PREFIX = 'pico:sql:active-query:';
 const DEFAULT_LAYOUT: SqlLayout = { sidebarWidth:260, editorRatio:55 };
 export type StoredRecord =
   | { key: string; kind:'database'; name:string; response?:SqlResponse; query:string }
@@ -56,6 +57,13 @@ export function restoreRecords(records: StoredRecord[]):SqlSavedState {
   for (const [name,entry] of databases) {
     entry.query=getQuery(name,queries.get(name)??entry.query);
     entry.savedQueries=savedQueries.get(name)??[];
+    try {
+      const active=localStorage.getItem(ACTIVE_QUERY_PREFIX+encodeURIComponent(name));
+      if(active&&entry.savedQueries.some(query=>query.name===active)){
+        entry.activeQuery=active;
+        entry.savedQueries=entry.savedQueries.map(query=>query.name===active?{...query,sql:entry.query}:query);
+      }
+    } catch { /* Named queries remain available in IndexedDB. */ }
   }
   return {databases,selected:selected && databases.has(selected)?selected:databases.keys().next().value??null,layout};
 }
@@ -93,3 +101,5 @@ export function saveQuery(name:string,query:string):Promise<void>{
   catch { try { localStorage.removeItem(queryKey(name)); } catch { /* Browser storage denied. IndexedDB remains the fallback. */ } }
   return put({key:'query:'+name,kind:'query',name,value:query});
 }
+
+export function saveActiveQuery(name:string,query:string|null){try{const key=ACTIVE_QUERY_PREFIX+encodeURIComponent(name);if(query===null)localStorage.removeItem(key);else localStorage.setItem(key,query);}catch{/* IndexedDB still retains named queries. */}}
