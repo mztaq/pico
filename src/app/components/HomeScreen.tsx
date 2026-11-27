@@ -147,7 +147,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           <path className="home-chart-link" d="M 70 38 H 103 M 97 33 L 103 38 L 97 43 M 233 38 H 279 M 273 33 L 279 38 L 273 43"/>
           <path className={step % 3 === 1 ? 'home-preview-active' : ''} d="M 116 16 H 242 L 229 60 H 103 Z"/>
           <rect className={step % 3 === 2 ? 'home-preview-active' : ''} x="280" y="22" width="69" height="32" rx="16"/>
-          <text x="35" y="43">Start</text><text className="home-chart-output" x="172" y="43">OUTPUT "Hello"</text><text x="314" y="43">End</text>
+          <text x="35" y="43">Start</text><text className="home-chart-output" x="172" y="43"><tspan className="syntax-keyword">OUTPUT</tspan>{' '}<tspan className="syntax-string">"Hello"</tspan></text><text x="314" y="43">End</text>
         </svg>}
           </WorkspaceChoice>
           <WorkspaceChoice icon={<Binary size={18} />} title="Logic Sim" description="Build circuits and inspect live signals." onClick={() => onChoose('logic')}>
@@ -210,7 +210,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
             }}
           </WorkspaceChoice>
           <WorkspaceChoice icon={<Database size={18} />} title="SQL Playground" description="Import CSV files and query tables using SQLite." onClick={() => onChoose('sql')}>
-            {step => <pre className="home-code-live"><span className="syntax-keyword">SELECT</span> name, score{'\n'}<span className="syntax-keyword">FROM</span> students{'\n'}<span className="syntax-keyword">WHERE</span> score &gt; 80;<span className="home-sql-preview-result" style={{display:'block',marginTop:6,color:'var(--accent)'}}>{step % 3 === 1 ? 'Running…' : '2 rows returned'}</span></pre>}
+            {step => <pre className="compiler-choice-preview home-code-live home-sql-preview" aria-hidden="true"><code className="highlighted-code"><span className="syntax-keyword">SELECT</span>{' '}<span className="syntax-variable">name</span><span className="syntax-punctuation">,</span>{' '}<span className="syntax-variable">score</span>{'\n'}<span className="syntax-keyword">FROM</span>{' '}<span className="syntax-variable">students</span>{'\n'}<span className="syntax-keyword">WHERE</span>{' '}<span className="syntax-variable">score</span>{' '}<span className="syntax-operator">&gt;</span>{' '}<span className="syntax-number">80</span><span className="syntax-punctuation">;</span></code><span className="home-preview-output" data-running={step % 3 === 1}>{step % 3 === 1 ? 'Running…' : '2 rows returned'}</span></pre>}
           </WorkspaceChoice>
         </HomeGroup>
       </div>

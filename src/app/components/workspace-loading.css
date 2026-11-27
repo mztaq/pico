@@ -114,7 +114,7 @@
 }
 @media(prefers-reduced-motion:reduce){.pico-load-shimmer{animation:none;background:var(--pico-load-shimmer-a)}}
 
-/* Workspace selection home: two code cards, three visual labs, one data lab. */
+/* Workspace selection home: two code cards, four visual labs, two data labs. */
 .pico-load-home-layout{height:100%;overflow-y:auto;overflow-x:hidden}
 .pico-load-home-nav{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc(50% - 540px))}
 .pico-load-home-nav-theme{width:76px;height:32px}
@@ -133,7 +133,6 @@
 .pico-load-home-section-detail{width:205px;height:13px}
 .pico-load-home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .pico-load-home-section--visual .pico-load-home-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-.pico-load-home-section--data .pico-load-home-grid{grid-template-columns:minmax(0,1fr)}
 .pico-load-home-card{min-width:0;overflow:hidden;border:1px solid var(--pico-load-border);border-radius:12px;background:var(--pico-load-surface)}
 .pico-load-home-card-stage{height:132px;padding:18px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border-bottom:1px solid var(--pico-load-border);background:var(--bg,#1e1e2e)}
 .pico-load-home-stage-detail{width:min(100%,290px);height:17px}
@@ -144,9 +143,6 @@
 .pico-load-home-card-title{height:17px;width:min(70%,190px)}
 .pico-load-home-card-description{height:13px;width:90%}
 .pico-load-home-description-short{width:58%}
-.pico-load-home-section--data .pico-load-home-card{display:flex;flex-direction:row}
-.pico-load-home-section--data .pico-load-home-card-stage{flex:0 0 43%;height:auto;min-height:150px;border-bottom:0;border-right:1px solid var(--pico-load-border)}
-.pico-load-home-section--data .pico-load-home-card-info{flex:1;justify-content:center}
 .pico-load-home-footer{display:flex;justify-content:center;gap:18px;padding:20px 0;margin-top:16px;border-top:1px solid var(--pico-load-border)}
 .pico-load-home-footer-item{width:80px;height:12px}
 @media(max-width:960px){
@@ -165,8 +161,6 @@
  .pico-load-home-grid,.pico-load-home-section--visual .pico-load-home-grid{grid-template-columns:minmax(0,1fr);gap:12px}
  .pico-load-home-card-stage{height:112px;padding:14px 16px}
  .pico-load-home-card-info{padding:16px}
- .pico-load-home-section--data .pico-load-home-card{flex-direction:column}
- .pico-load-home-section--data .pico-load-home-card-stage{flex:auto;height:112px;min-height:0;border-right:0;border-bottom:1px solid var(--pico-load-border)}
 }
 
 /* Four visual workspaces, two columns for consistent card proportions. */
