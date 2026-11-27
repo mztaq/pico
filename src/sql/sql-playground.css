@@ -1,0 +1,41 @@
+.sql-app{height:100dvh;display:flex;flex-direction:column;min-width:0;background:var(--bg);color:var(--ds-text);font:14px/1.5 var(--font-ui)}
+.sql-header{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:8px 18px;border-bottom:1px solid var(--ds-line);background:var(--ds-panel)}
+.sql-header-brand,.sql-panel-heading,.sql-actions{display:flex;align-items:center;gap:10px;min-width:0}
+.sql-header-brand h1{font-size:16px;margin:0;font-weight:650}
+.sql-app button{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--ds-line);background:var(--ds-panel-raised);border-radius:7px;padding:8px 11px;color:var(--ds-text);font:inherit;cursor:pointer}
+.sql-app button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.sql-app button:disabled{opacity:.5;cursor:not-allowed}
+.sql-app button:focus-visible,.sql-app textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sql-header .brand-lockup{border:0;background:transparent;padding:4px}
+.sql-layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(240px,300px) minmax(0,1fr);gap:0;overflow:hidden}
+.sql-sidebar{padding:18px;display:flex;flex-direction:column;gap:13px;min-height:0;border-right:1px solid var(--ds-line);background:var(--ds-panel);overflow:auto}
+.sql-panel-heading{justify-content:space-between;flex-wrap:wrap}
+.sql-panel-heading h2{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:650;margin:0}
+.sql-muted{font-size:12px;color:var(--ds-muted);margin:0;overflow-wrap:anywhere}
+.sql-tables{display:grid;gap:12px}
+.sql-table-item{border:1px solid var(--ds-line);border-radius:8px;overflow:hidden}
+.sql-table-item>button{width:100%;border:0;border-radius:0;justify-content:flex-start;overflow-wrap:anywhere;text-align:left}
+.sql-table-item ul{list-style:none;padding:6px 10px;margin:0;display:grid;gap:6px}
+.sql-table-item li{display:flex;gap:10px;justify-content:space-between;align-items:baseline;overflow-wrap:anywhere}
+.sql-table-item small{color:var(--ds-muted);font:11px var(--font-mono);flex-shrink:0}
+.sql-sidebar-bottom{margin-top:auto;display:grid;gap:10px}
+.sql-main{min-width:0;min-height:0;display:grid;grid-template-rows:minmax(210px,42%) minmax(0,1fr);gap:14px;padding:18px;overflow:auto}
+.sql-editor-panel,.sql-results-panel{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid var(--ds-line);border-radius:10px;background:var(--ds-panel);overflow:hidden}
+.sql-editor-panel .sql-panel-heading,.sql-results-panel .sql-panel-heading{padding:12px 15px;border-bottom:1px solid var(--ds-line)}
+.sql-app .sql-run{background:var(--accent);color:var(--accent-foreground,var(--bg));font-weight:650;border-color:var(--accent)}
+.sql-app .sql-run:hover:not(:disabled){color:var(--accent-foreground,var(--bg));filter:brightness(1.08)}
+.sql-editor-panel textarea{flex:1;resize:none;width:100%;min-height:100px;border:0;background:var(--editor-bg,var(--bg));color:var(--ds-text);padding:16px;font:15px/1.7 var(--font-mono,monospace);box-sizing:border-box;tab-size:2}
+.sql-editor-footer{padding:7px 15px;border-top:1px solid var(--ds-line);display:flex;justify-content:space-between;gap:10px;color:var(--ds-muted);font-size:12px}
+.sql-result-status{padding:8px 15px;color:var(--ds-muted);font-size:13px}
+.sql-error{margin:0 12px 10px;padding:10px;color:var(--ds-text);border:1px solid var(--error,#e06c75);border-radius:6px;overflow-wrap:anywhere}
+.sql-result-scroll{min-width:0;min-height:0;overflow:auto;flex:1}
+.sql-result-scroll table{border-collapse:separate;border-spacing:0;min-width:100%;width:max-content;font:13px/1.5 var(--font-mono,monospace)}
+.sql-result-scroll th,.sql-result-scroll td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--ds-line);border-right:1px solid var(--ds-line);max-width:450px;white-space:pre-wrap;overflow-wrap:anywhere}
+.sql-result-scroll th{position:sticky;top:0;background:var(--ds-panel-raised);z-index:1;color:var(--ds-text)}
+.sql-result-scroll td:first-child,.sql-result-scroll td i{color:var(--ds-muted)}
+.sql-result-scroll tbody tr:hover td{background:var(--ds-panel-raised)}
+.sql-results-panel>.sql-muted,.sql-empty{padding:12px 15px;color:var(--ds-muted)}
+.sql-theme-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.7);display:grid;place-items:center;padding:16px}
+.sql-theme-dialog{width:min(560px,100%);max-height:85dvh;overflow:auto;background:var(--bg);border:1px solid var(--ds-line);border-radius:12px;padding:16px}
+.sql-theme-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+@media(max-width:720px){.sql-app{height:100dvh;overflow:auto}.sql-layout{display:flex;flex-direction:column;overflow:visible;flex:1}.sql-sidebar{min-height:180px;max-height:44dvh;border-right:0;border-bottom:1px solid var(--ds-line)}.sql-main{min-height:600px;grid-template-rows:260px minmax(300px,1fr);padding:12px}.sql-header-brand h1{font-size:14px}.sql-header{padding:8px 10px}}
