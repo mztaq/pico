@@ -47,6 +47,13 @@ describe('Pico landing page', () => {
     expect(container.querySelectorAll('.lp-hero .lp-hero-copy')).toHaveLength(1);
     expect(container.querySelectorAll('.lp-hero .lp-hero-cpu')).toHaveLength(1);
   });
+  it('provides the Status link in public landing navigation', async () => {
+    await render();
+    const status=container.querySelector<HTMLAnchorElement>('nav.lp-links a[href="https://status.picompiler.pages.dev/"]');
+    expect(status?.textContent).toBe('Status');
+    expect(status?.target).toBe('_blank');
+    expect(status?.rel).toBe('noopener noreferrer');
+  });
   it('keeps navbar layout stable and ignores small scroll reversals', async () => {
     Object.defineProperty(window, 'scrollY', { configurable:true, writable:true, value:0 });
     await render();

@@ -358,9 +358,7 @@ it('opens the bug report dialog directly from /app/report and updates browser hi
 });
 
 
-it('links to Pico Status beside the home theme control',()=>{
-  const link=container.querySelector<HTMLAnchorElement>('.home-theme-anchor .home-status-link');
-  expect(link?.getAttribute('href')).toBe('https://status.picompiler.pages.dev/');
-  expect(link?.textContent).toBe('Status');
-  expect(link?.target).toBe('_blank');
+it('keeps the external status page out of the workspace chooser and desktop app',()=>{
+  expect(container.querySelector('.home-status-link')).toBeNull();
+  expect(container.querySelector('a[href="https://status.picompiler.pages.dev/"]')).toBeNull();
 });

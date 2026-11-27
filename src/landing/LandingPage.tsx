@@ -72,6 +72,7 @@ function Navigation() {
     <a href="#features" onClick={()=>setOpen(false)}>Tools</a>
     <a href="#downloads" onClick={()=>setOpen(false)}>Downloads</a>
     <a href="/mcp-docs" onClick={()=>setOpen(false)}>MCP Docs</a>
+    <a href="https://status.picompiler.pages.dev/" target="_blank" rel="noopener noreferrer" onClick={()=>setOpen(false)}>Status</a>
   </nav><div className="lp-nav-actions"><button type="button" className="lp-menu" onClick={()=>setOpen(v=>!v)} aria-label={open?'Close menu':'Open menu'} aria-expanded={open}>{open?<X size={21}/>:<Menu size={21}/>}</button></div></div></header></div>;
 }
 // Production publishes one installer for each supported operating system.

@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Activity, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HomeFluidBackground } from './HomeFluidBackground';
@@ -107,7 +107,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           {themeOpen && <div id="home-theme-menu" className="home-theme-menu" aria-label="Choose a theme">
             <ThemePicker value={settings.theme} onChange={changeTheme} showSound={false} />
         </div>}
-        <a className="home-games-link home-status-link" href="https://status.picompiler.pages.dev/" target="_blank" rel="noopener noreferrer" aria-label="Status"><Activity size={16} aria-hidden="true" /><span>Status</span></a>
       </div>
       <div className="home-updates">
         <a className="home-games-link" href="/app/learn" onClick={event => {

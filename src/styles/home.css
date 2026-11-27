@@ -252,7 +252,6 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home .home-traffic-preview .home-traffic-packet{fill:var(--accent);stroke:none}
 
 .pico-home .home-theme-anchor { display: flex; align-items: center; gap: 4px; }
-.pico-home .home-status-link { flex-shrink: 0; }
 
 /* WebGL is decorative and never intercepts clicks, touch scrolling or focus. */
 .pico-home-fluid { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; opacity: .48; }
