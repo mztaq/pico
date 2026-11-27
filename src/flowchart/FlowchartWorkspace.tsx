@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowRight, Code2, Copy, Download, GitBranch, CircleHelp, Play, Plus, Redo2, Settings2, Trash2, Undo2, Upload, X, ZoomIn, ZoomOut, Maximize2, Network } from 'lucide-react';
 import { compileFlowchart, ChartError, type ChartCompilation } from './compiler';
 import { autoLayoutChart } from './layout';
@@ -149,6 +149,37 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     if(debug&&reply?.result&&!reply.error)setPanel('debugger');if(reply?.result?.outputTruncated)setTruncated(true);
   }
   function submit() {if(!pending||!jobRef.current?.provideInput(pending.id,input))return;setEntries(items=>[...items,{kind:'input' as const,text:input}].slice(-OUTPUT_LIMIT));setPending(null);setInput('');}
+  const zoomAnchor=useRef<{left:number;top:number}|null>(null);
+  function zoomAt(next:number,clientX?:number,clientY?:number) {
+    const viewport=layoutRef.current?.querySelector<HTMLElement>('.flow-viewport');
+    const target=Math.max(.35,Math.min(1.5,next));
+    if(target===zoom)return;
+    if(viewport){
+      const bounds=viewport.getBoundingClientRect();
+      const x=clientX===undefined?viewport.clientWidth/2:clientX-bounds.left;
+      const y=clientY===undefined?viewport.clientHeight/2:clientY-bounds.top;
+      const ratio=target/zoom;
+      zoomAnchor.current={left:(viewport.scrollLeft+x)*ratio-x,top:(viewport.scrollTop+y)*ratio-y};
+    }
+    setZoom(target);
+  }
+  useLayoutEffect(()=>{
+    const anchor=zoomAnchor.current;zoomAnchor.current=null;
+    if(!anchor)return;
+    const viewport=layoutRef.current?.querySelector<HTMLElement>('.flow-viewport');
+    if(viewport){viewport.scrollLeft=anchor.left;viewport.scrollTop=anchor.top;}
+  },[zoom]);
+  useEffect(()=>{
+    const viewport=layoutRef.current?.querySelector<HTMLElement>('.flow-viewport');
+    if(!viewport)return;
+    const wheel=(event:WheelEvent)=>{
+      if(!event.ctrlKey&&!event.metaKey)return;
+      event.preventDefault();
+      if(event.deltaY!==0)zoomAt(zoom*(event.deltaY<0?1.12:1/1.12),event.clientX,event.clientY);
+    };
+    viewport.addEventListener('wheel',wheel,{passive:false});
+    return()=>viewport.removeEventListener('wheel',wheel);
+  },[zoom]);
   function fit() {
     const viewport=layoutRef.current?.querySelector<HTMLElement>('.flow-viewport');if(!viewport)return;
     const nodes=projectRef.current.nodes;const width=Math.max(...nodes.map(n=>n.x+NODE_WIDTH+80),600),height=Math.max(...nodes.map(n=>n.y+NODE_HEIGHT+80),450);
@@ -158,7 +189,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     if(running||tutorialActive||project.nodes.length<2)return;
     const arranged=autoLayoutChart(project);
     if(arranged.nodes.every((node,index)=>node.x===project.nodes[index]?.x&&node.y===project.nodes[index]?.y))return;
-    update(arranged);setMessage('Flowchart arranged.');requestAnimationFrame(()=>fit());
+    update(arranged);
   }
   function enterLesson(step:number) {
     resetExecution();setConnection(null);setSelected(null);setPanel('console');
@@ -222,7 +253,7 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
 
       </aside>
       {paletteDrag.preview&&<div className={`pico-palette-drag-preview flow-drag-preview flow-kind-${paletteDrag.preview.kind}`} aria-hidden="true" style={{left:paletteDrag.preview.x,top:paletteDrag.preview.y}}><BlockSymbol kind={paletteDrag.preview.kind}/></div>}
-      <main className="flow-main"><div className="flow-canvas-toolbar"><span>{connection?`Choose a destination for ${connection.port==='next'?'Next':connection.port==='yes'?'Yes':'No'}`:'Drag a connection port onto another block. Drag the background to pan.'}</span><div>{connection&&<button aria-label="Cancel connection" onClick={()=>setConnection(null)}><X size={15}/></button>}<button aria-label="Zoom out" disabled={zoom<=0.35} onClick={()=>setZoom(v=>Math.max(0.35,v-0.1))}><ZoomOut size={16}/></button><output>{Math.round(zoom*100)}%</output><button aria-label="Zoom in" disabled={zoom>=1.5} onClick={()=>setZoom(v=>Math.min(1.5,v+0.1))}><ZoomIn size={16}/></button><button aria-label="Fit flowchart" onClick={fit}><Maximize2 size={16}/></button><button className="flow-auto-layout" aria-label="Auto-layout flowchart" title="Auto-layout flowchart" disabled={running||tutorialActive||project.nodes.length<2} onClick={autoLayout}><Network size={15}/></button></div></div>
+      <main className="flow-main"><div className="flow-canvas-toolbar"><span>{connection?`Choose a destination for ${connection.port==='next'?'Next':connection.port==='yes'?'Yes':'No'}`:'Drag a connection port onto another block. Drag the background to pan.'}</span><div>{connection&&<button aria-label="Cancel connection" onClick={()=>setConnection(null)}><X size={15}/></button>}<button aria-label="Zoom out" disabled={zoom<=0.35} onClick={()=>zoomAt(zoom/1.12)}><ZoomOut size={18}/><span>Zoom out</span></button><output>{Math.round(zoom*100)}%</output><button aria-label="Zoom in" disabled={zoom>=1.5} onClick={()=>zoomAt(zoom*1.12)}><ZoomIn size={18}/><span>Zoom in</span></button><button aria-label="Fit flowchart" onClick={fit}><Maximize2 size={18}/><span>Fit</span></button><button className="flow-auto-layout" aria-label="Auto-layout flowchart" title="Auto-layout flowchart" disabled={running||tutorialActive||project.nodes.length<2} onClick={autoLayout}><Network size={18}/><span>Auto Layout</span></button></div></div>
         <ChartCanvas project={project} selected={selected} activeNode={activeNode} errorNode={errorNode??(!tutorialActive?conversion.error?.nodeId:undefined)} connection={connection} zoom={zoom} disabled={running} onSelect={select} onChange={update} onConnect={connect} onTarget={target} onLink={link} onCancelConnection={()=>setConnection(null)}/>
         <ResizeHandle axis="y" label="Resize flowchart console" onResize={delta=>{const available=layoutRef.current?.clientHeight??700;setDockHeight(v=>Math.min(available*0.65,Math.max(160,v-delta)));}}/>
         <section className="flow-dock" style={{height:tutorialActive?160:dockHeight}} aria-label="Flowchart tools"><div className="dock-tabs" role="tablist" aria-label="Flowchart tool panels">{(['console','debugger','pseudocode'] as const).map(tab=><button className={`dock-tab ${panel===tab?'active':''}`} role="tab" aria-selected={panel===tab} key={tab} onClick={()=>setPanel(tab)}>{tab==='console'?'Console':tab==='debugger'?'Debugger':'Pseudocode'}</button>)}</div><div className="flow-dock-content" role="tabpanel">

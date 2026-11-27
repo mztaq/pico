@@ -140,3 +140,36 @@ it('drags a palette block onto the canvas using pointer events without native HT
   expect(container.querySelectorAll('.flow-node')).toHaveLength(6);
   expect(container.querySelector('.pico-palette-drag-preview')).toBeNull();
 });
+
+it('auto-layout rearranges blocks without a message or changing the viewport zoom',async()=>{
+  const viewport=container.querySelector<HTMLElement>('.flow-viewport')!;
+  const zoom=container.querySelector('.flow-canvas-toolbar output')!.textContent;
+  const node=container.querySelector<HTMLElement>('[data-node-id="start"]')!;
+  const before=node.style.left+':'+node.style.top;
+  viewport.scrollLeft=100;viewport.scrollTop=120;
+  await click(container.querySelector('[aria-label="Auto-layout flowchart"]')!);
+  expect(node.style.left+':'+node.style.top).not.toBe(before);
+  expect(container.querySelector('.flow-canvas-toolbar output')!.textContent).toBe(zoom);
+  expect(viewport.scrollLeft).toBe(100);
+  expect(viewport.scrollTop).toBe(120);
+  expect(container.querySelector('.flow-message')?.textContent??'').not.toContain('Flowchart arranged');
+});
+
+it('zooms only the flowchart on Ctrl-wheel and leaves normal wheel scrolling alone',async()=>{
+  const viewport=container.querySelector<HTMLElement>('.flow-viewport')!;
+  const percentage=()=>parseInt(container.querySelector('.flow-canvas-toolbar output')!.textContent!,10);
+  const before=percentage();
+  const normal=new WheelEvent('wheel',{deltaY:-100,bubbles:true,cancelable:true});
+  await act(async()=>viewport.dispatchEvent(normal));
+  expect(normal.defaultPrevented).toBe(false);
+  expect(percentage()).toBe(before);
+  const inEvent=new WheelEvent('wheel',{ctrlKey:true,deltaY:-100,bubbles:true,cancelable:true});
+  await act(async()=>viewport.dispatchEvent(inEvent));
+  expect(inEvent.defaultPrevented).toBe(true);
+  expect(percentage()).toBeGreaterThan(before);
+  const outEvent=new WheelEvent('wheel',{ctrlKey:true,deltaY:100,bubbles:true,cancelable:true});
+  await act(async()=>viewport.dispatchEvent(outEvent));
+  expect(outEvent.defaultPrevented).toBe(true);
+  expect(percentage()).toBe(before);
+  expect(container.querySelector('[aria-label="Auto-layout flowchart"]')!.textContent).toContain('Auto Layout');
+});
