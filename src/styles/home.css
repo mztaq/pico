@@ -291,9 +291,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .compiler-choice,
 .pico-home-glass :is(.home-learning-link, .home-footer-links .bug-report-trigger) {
   background: var(--home-glass-base);
-  background:
-    linear-gradient(145deg, var(--home-glass-highlight), transparent 52%),
-    var(--home-glass-fill);
+  background: var(--home-glass-fill);
   border: 1px solid var(--home-glass-edge);
   box-shadow: inset 0 1px 0 var(--home-glass-rim), inset 0 -1px 0 var(--home-glass-highlight);
   -webkit-backdrop-filter: blur(var(--home-glass-blur)) saturate(115%);
@@ -305,9 +303,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   isolation: isolate;
 }
 .pico-home-glass .compiler-choice-stage {
-  background:
-    radial-gradient(ellipse at 18% 0%, var(--home-glass-highlight), transparent 72%),
-    var(--home-glass-stage);
+  background: var(--home-glass-stage);
   border-color: var(--home-glass-edge);
 }
 .pico-home-glass .compiler-choice-stage:has(> pre) {
@@ -323,7 +319,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .compiler-choice-icon {
   border-radius: 11px;
   border: 1px solid var(--home-glass-edge);
-  background: linear-gradient(145deg, var(--home-glass-highlight), transparent), var(--ds-accent-soft);
+  background: var(--ds-accent-soft);
   box-shadow: inset 0 1px 0 var(--home-glass-rim);
 }
 .pico-home-glass .compiler-choice p,
@@ -344,9 +340,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .home-learning-link { border-radius: 15px; }
 .pico-home-glass :is(.home-learning-link, .home-footer-links .bug-report-trigger, .compiler-choice):hover {
   border-color: var(--accent);
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--home-glass-tint) 20%, transparent), transparent 65%),
-    var(--home-glass-fill);
+  background: var(--home-glass-fill);
   color: var(--ds-text);
 }
 .pico-home-glass :is(.home-learning-link, .home-footer-links .bug-report-trigger, .compiler-choice):focus-visible {
