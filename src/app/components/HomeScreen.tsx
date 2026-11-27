@@ -1,5 +1,5 @@
 import '../../styles/home.css';
-import { useEffect, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Activity, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
@@ -124,7 +124,7 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
     </div>
     <div className="home-inner">
       <div className="home-hero">
-      <HomeInteractiveLogo />
+      <a className="home-brand" href="/app" aria-label="Pico, Workspaces"><img src="/pico-logo.svg" alt="" width="30" height="30" /><span>Pico<span className="brand-period">.</span></span></a>
         <h1>Choose your workspace</h1>
         <a className="home-learning-link" href="/app/learn" onClick={event => {
           if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -134,11 +134,11 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
       </div>
       <div className="compiler-choices">
         <HomeGroup label="Code" detail="Write, run and debug programs">
-          <WorkspaceChoice icon={<Terminal size={18} />} tag=".pico" title="Pseudocode Compiler" description="Run and debug Cambridge-style pseudocode." onClick={() => onChoose('pseudocode')}>
-            {step => <pre className="compiler-choice-preview home-code-live" aria-hidden="true"><HighlightedCode code={'DECLARE Total : INTEGER\nTotal <- 6 * 7\nOUTPUT Total'} /><span className="home-preview-output" data-running={step % 4 === 1 || step % 4 === 2}>{step % 4 === 1 || step % 4 === 2 ? 'Running…' : '> ' + (6 * 7)}</span></pre>}
+          <WorkspaceChoice icon={<Terminal size={18} />} previewInterval={350} title="Pseudocode Compiler" description="Run and debug Cambridge-style pseudocode." onClick={() => onChoose('pseudocode')}>
+            {step => <pre className="compiler-choice-preview home-code-live" aria-hidden="true"><HighlightedCode code={'DECLARE Total : INTEGER\nTotal <- 6 * 7\nOUTPUT Total'} /><span className="home-preview-output" data-running={step % 4 === 1}>{step % 4 === 1 ? 'Running…' : '> ' + (6 * 7)}</span></pre>}
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Code2 size={18} />} tag=".py" title="Python Compiler" description="Run Python with interactive input and debugging." onClick={() => onChoose('python')}>
-            {step => <pre className="compiler-choice-preview home-code-live" aria-hidden="true"><HighlightedCode language="python" code={'total = 6 * 7\nprint(total)'} /><span className="home-preview-output" data-running={step % 4 === 1 || step % 4 === 2}>{step % 4 === 1 || step % 4 === 2 ? 'Running…' : '> ' + (6 * 7)}</span></pre>}
+          <WorkspaceChoice icon={<Code2 size={18} />} previewInterval={350} title="Python Compiler" description="Run Python with interactive input and debugging." onClick={() => onChoose('python')}>
+            {step => <pre className="compiler-choice-preview home-code-live" aria-hidden="true"><HighlightedCode language="python" code={'total = 6 * 7\nprint(total)'} /><span className="home-preview-output" data-running={step % 4 === 1}>{step % 4 === 1 ? 'Running…' : '> ' + (6 * 7)}</span></pre>}
           </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Visual labs" detail="Build and explore interactive models" kind="visual">
@@ -148,16 +148,20 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           <path className="home-chart-link" d="M 70 38 H 103 M 97 33 L 103 38 L 97 43 M 233 38 H 279 M 273 33 L 279 38 L 273 43"/>
           <path className={step % 3 === 1 ? 'home-preview-active' : ''} d="M 116 16 H 242 L 229 60 H 103 Z"/>
           <rect className={step % 3 === 2 ? 'home-preview-active' : ''} x="280" y="22" width="69" height="32" rx="16"/>
-          <text x="35" y="43">Start</text><text className="home-chart-output" x="172" y="43">Output "Hello!"</text><text x="314" y="43">End</text>
+          <text x="35" y="43">Start</text><text className="home-chart-output" x="172" y="43">OUTPUT "Hello"</text><text x="314" y="43">End</text>
         </svg>}
           </WorkspaceChoice>
           <WorkspaceChoice icon={<Binary size={18} />} title="Logic Sim" description="Build circuits and inspect live signals." onClick={() => onChoose('logic')}>
             {step => <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
-          <path className="home-chart-link home-preview-signal" d="M49 23 H95"/><path className={step % 2 ? 'home-chart-link home-preview-signal' : 'home-chart-link'} d="M49 53 H95 M202 38 H261"/>
+          <path className="home-chart-link home-preview-signal" d="M49 23 H95"/><path className={step % 2 ? 'home-chart-link home-preview-signal' : 'home-chart-link'} d="M49 53 H95 M202 38 H276"/>
           <rect x="1" y="11" width="47" height="24" rx="5"/><rect x="1" y="41" width="47" height="24" rx="5"/>
           <path d="M 95 13 H 146 C 174 13 190 20 202 38 C 190 56 174 63 146 63 H 95 Z" />
-          <circle className={step % 2 ? 'home-preview-active' : ''} cx="288" cy="38" r="18"/>
-          <text x="24" y="27">1</text><text x="24" y="57">{step % 2}</text><text x="142" y="42">AND</text><text x="288" y="43">{1 & (step % 2)}</text>
+          <g className="home-preview-bulb" data-lit={Boolean(step % 2)}>
+            <path className="home-preview-bulb-glass" d="M276 38 C272 21 285 15 294 17 C307 19 314 32 307 43 C304 47 300 50 300 55 H284 C284 49 280 45 276 38 Z"/>
+            <path className="home-preview-bulb-base" d="M284 55 H300 M285 59 H299 M288 63 H296"/>
+            {step % 2 === 1 && <path className="home-preview-bulb-rays" d="M292 5 V12 M315 13 L310 19 M325 33 H318 M269 13 L274 19 M259 24 L266 27"/>}
+          </g>
+          <text x="24" y="27">1</text><text x="24" y="57">{step % 2}</text><text x="142" y="42">AND</text>
         </svg>}
           </WorkspaceChoice>
           <WorkspaceChoice icon={<Cpu size={18} />} title="CPU Studio" description="Explore fetch, decode and execute." onClick={() => onChoose('cpu')}>
@@ -171,12 +175,24 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           <text className="home-preview-phase" x="175" y="86">{['FETCH', 'DECODE', 'EXECUTE'][step % 3]}</text>
         </svg>}
           </WorkspaceChoice>
-          <WorkspaceChoice icon={<Network size={18}/>} title="Traffic Storm" description="Watch simulated request floods and server overload." onClick={() => onChoose('traffic')}>
-            {step => <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 76" aria-hidden="true">
-              <path className="home-chart-link" d="M 57 12 C 126 12 131 38 192 38 H 259 M 57 38 H 259 M 57 64 C 126 64 131 38 192 38 H 259"/>
-              {[12,38,64].map(y => <g key={y}><rect x="7" y={y-10} width="50" height="20" rx="5"/><circle cx="21" cy={y} r="4"/><path d={`M 33 ${y} h 14`} className="home-chart-link"/></g>)}
-              <rect x="259" y="10" width="71" height="56" rx="7"/><rect x="269" y="21" width="51" height="12" rx="3"/><rect x="269" y="41" width="51" height="12" rx="3"/><circle cx="278" cy="27" r="2.5"/><circle cx="278" cy="47" r="2.5"/>
-              <circle cx={70 + (step % 6) * 30} cy="38" r="5" className="home-traffic-packet"/><circle cx={70 + ((step + 2) % 6) * 30} cy="38" r="3" className="home-traffic-packet"/>
+          <WorkspaceChoice icon={<Network size={18}/>} title="Traffic Storm" previewInterval={125} description="Watch simulated request floods and server overload." onClick={() => onChoose('traffic')}>
+            {step => <svg className="compiler-choice-preview home-chart-preview home-traffic-preview" viewBox="0 0 350 88" aria-hidden="true">
+              {[15,38,61].map(y => <g key={y}>
+                <path className="home-chart-link" d={`M 49 ${y} C 105 ${y} 126 38 173 38 H 253`}/>
+                <rect x="5" y={y-10} width="44" height="20" rx="4"/><circle cx="16" cy={y} r="3"/><path d={`M 26 ${y} h 14`} className="home-chart-link"/>
+              </g>)}
+              {[15,38,61].map((y, lane) => Array.from({length: 4}, (_, index) => {
+                const t = ((step + index * 3 + lane) % 12) / 12;
+                const x = 54 + 118 * t;
+                const py = y + (38 - y) * (t * t * (3 - 2 * t));
+                return <circle key={`${lane}-${index}`} className="home-traffic-packet" cx={x} cy={py} r="2.5" opacity={.75 + lane * .1}/>;
+              }))}
+              {Array.from({length: 6}, (_, index) => <circle key={index} className="home-traffic-packet home-traffic-spam" cx={177 + ((step * 7 + index * 13) % 74)} cy={38 + (index % 3 - 1) * 3} r="2.2"/>)}
+              <rect className="home-traffic-server" x="253" y="7" width="89" height="60" rx="7"/>
+              {[18,38].map(y => <g key={y}><rect x="262" y={y} width="71" height="14" rx="3"/><circle className="home-traffic-status-light" cx="270" cy={y+7} r="2.5"/><path className="home-chart-link" d={`M 279 ${y+7} h 44`}/></g>)}
+              <rect className="home-traffic-load-track" x="262" y="57" width="71" height="4" rx="2"/>
+              <rect className="home-traffic-load" x="262" y="57" width={57 + step % 5 * 3} height="4" rx="2"/>
+              <text className="home-traffic-rate" x="128" y="83">REQUEST FLOOD</text><text className="home-traffic-rate" x="297" y="83">429 · OVERLOAD</text>
             </svg>}
           </WorkspaceChoice>
         </HomeGroup>
@@ -215,27 +231,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
   </main>;
 }
 
-function HomeInteractiveLogo() {
-  function move(event: ReactPointerEvent<HTMLAnchorElement>) {
-    if (event.pointerType === 'touch' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const logo = event.currentTarget;
-    const rect = logo.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    const x = Math.max(-1, Math.min(1, (event.clientX - rect.left) / rect.width * 2 - 1));
-    const y = Math.max(-1, Math.min(1, (event.clientY - rect.top) / rect.height * 2 - 1));
-    logo.style.setProperty('--logo-x', `${x * 5}px`);
-    logo.style.setProperty('--logo-y', `${y * 4}px`);
-    logo.style.setProperty('--logo-rx', `${-y * 12}deg`);
-    logo.style.setProperty('--logo-ry', `${x * 12}deg`);
-  }
-  function reset(event: ReactPointerEvent<HTMLAnchorElement>) {
-    for (const key of ['--logo-x', '--logo-y', '--logo-rx', '--logo-ry']) event.currentTarget.style.removeProperty(key);
-  }
-  return <a className="home-brand home-interactive-logo" href="/app" aria-label="Pico, Workspaces" onPointerMove={move} onPointerLeave={reset} onPointerCancel={reset}>
-    <img src="/pico-logo.svg" alt="" width="30" height="30" draggable={false} /><span>Pico<span className="brand-period">.</span></span>
-  </a>;
-}
-
 function HomeGroup({ label, detail, children, kind }: { label: string; detail: string; children: ReactNode; kind?: 'visual' | 'data' }) {
   return <section className={`home-group${kind ? ` home-group--${kind}` : ''}`} aria-label={label}>
     <div className="home-group-head"><span className="home-group-label">{label}</span><span className="home-group-detail">{detail}</span></div>
@@ -243,12 +238,12 @@ function HomeGroup({ label, detail, children, kind }: { label: string; detail: s
   </section>;
 }
 
-function WorkspaceChoice({ icon, tag, title, description, onClick, children }: { icon: ReactNode; tag?: string; title: string; description: string; onClick: () => void; children: (step: number) => ReactNode }) {
-  const { ref, step } = useHomePreviewStep();
+function WorkspaceChoice({ icon, previewInterval, title, description, onClick, children }: { icon: ReactNode; previewInterval?: number; title: string; description: string; onClick: () => void; children: (step: number) => ReactNode }) {
+  const { ref, step } = useHomePreviewStep(previewInterval);
   return <button className="compiler-choice" onClick={onClick}>
     <div className="compiler-choice-stage" ref={ref} data-preview-step={step} aria-hidden="true">{children(step)}</div>
     <div className="compiler-choice-copy">
-      <div className="compiler-choice-title"><i className="compiler-choice-icon" aria-hidden="true">{icon}</i><h2>{title}</h2>{tag && <code className="compiler-choice-tag" aria-hidden="true">{tag}</code>}</div>
+      <div className="compiler-choice-title"><i className="compiler-choice-icon" aria-hidden="true">{icon}</i><h2>{title}</h2></div>
       <p>{description}</p>
     </div>
   </button>;

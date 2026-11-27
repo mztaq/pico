@@ -195,7 +195,6 @@ body:has(.pico-cookie-banner) .pico-home {
   border-radius: var(--ds-radius-md); background: var(--ds-accent-soft); color: var(--accent); font-style: normal;
 }
 .pico-home .compiler-choice h2 { margin: 0; font-size: var(--ds-text-lg); font-weight: 650; letter-spacing: -.01em; }
-.compiler-choice-tag { margin-left: auto; padding: 3px 7px; border: 1px solid var(--ds-line); border-radius: var(--ds-radius-pill); color: var(--ds-muted); font: 500 var(--ds-text-2xs)/1 var(--ds-font-code); }
 .pico-home .compiler-choice p { margin: 10px 0 0; color: var(--ds-muted); font-size: var(--ds-text-md); line-height: 1.55; }
 
 .pico-home .site-info-links {
@@ -325,8 +324,7 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
   box-shadow: inset 0 1px 0 var(--home-glass-rim);
 }
 .pico-home-glass .compiler-choice p,
-.pico-home-glass .home-group-detail,
-.pico-home-glass .compiler-choice-tag {
+.pico-home-glass .home-group-detail {
   color: var(--home-glass-copy);
 }
 .pico-home-glass .home-binary-byte span {
@@ -429,23 +427,6 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 }
 
 
-/* Pointer-reactive brand, scoped to the workspace chooser. */
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .pico-home-glass .home-interactive-logo img {
-    transition: transform 260ms cubic-bezier(.2,.8,.2,1), filter 260ms ease;
-    transform: perspective(220px) translate3d(var(--logo-x, 0px), var(--logo-y, 0px), 0) rotateX(var(--logo-rx, 0deg)) rotateY(var(--logo-ry, 0deg));
-  }
-  .pico-home-glass .home-interactive-logo:hover img {
-    transform: perspective(220px) translate3d(var(--logo-x, 0px), var(--logo-y, 0px), 0) rotateX(var(--logo-rx, 0deg)) rotateY(var(--logo-ry, 0deg)) scale(1.1);
-    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent) 65%, transparent));
-    transition-duration: 110ms, 220ms;
-  }
-  .pico-home-glass .home-interactive-logo > span { transition: transform 220ms ease; }
-  .pico-home-glass .home-interactive-logo:hover > span { transform: translate(var(--logo-x, 0px), var(--logo-y, 0px)); }
-  .pico-home-glass .home-interactive-logo:hover .brand-period { color: var(--accent); }
-  .pico-home-glass .home-interactive-logo:active img { transform: scale(.94); }
-}
-
 /* Lightweight state-driven previews. Text and actual outputs remain legible. */
 .pico-home-glass .compiler-choice-stage pre.home-code-live { padding: 6px 12px; font-size: 11px; line-height: 1.4; }
 .pico-home-glass .home-preview-output { display: block; margin-top: 4px; padding-top: 3px; border-top: 1px solid var(--ds-line); color: var(--syntax-string); }
@@ -455,5 +436,14 @@ body:has(.pico-cookie-banner) .pico-home .home-footer-links .site-info-links,
 .pico-home-glass .home-chart-preview text.home-preview-phase { fill: var(--accent); font-size: 11px; font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) {
   .pico-home-glass .home-chart-preview rect, .pico-home-glass .home-chart-preview circle, .pico-home-glass .home-chart-preview path { transition: fill 180ms ease, stroke 180ms ease; }
-  .pico-home-glass .home-traffic-preview .home-traffic-packet { transition: cx 220ms ease; }
 }
+
+.pico-home-glass .home-chart-preview .home-preview-bulb-glass { fill: var(--ds-panel-raised); stroke: var(--ds-muted); }
+.pico-home-glass .home-chart-preview .home-preview-bulb-base { fill: none; stroke: var(--ds-muted); stroke-width: 2; stroke-linecap: round; }
+.pico-home-glass .home-chart-preview .home-preview-bulb[data-lit='true'] .home-preview-bulb-glass { fill: var(--accent); stroke: var(--accent); }
+.pico-home-glass .home-chart-preview .home-preview-bulb-rays { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; }
+.pico-home-glass .home-traffic-preview .home-traffic-spam { fill: var(--accent); }
+.pico-home-glass .home-traffic-preview .home-traffic-server { stroke: var(--accent); stroke-width: 1.8; }
+.pico-home-glass .home-traffic-preview .home-traffic-status-light, .pico-home-glass .home-traffic-preview .home-traffic-load { fill: var(--accent); stroke: none; }
+.pico-home-glass .home-traffic-preview .home-traffic-load-track { fill: var(--ds-line); stroke: none; }
+.pico-home-glass .home-traffic-preview text.home-traffic-rate { font-size: 9px; font-weight: 700; fill: var(--ds-muted); }

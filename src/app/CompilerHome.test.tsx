@@ -58,10 +58,15 @@ it('opens on a themed home screen with all workspace choices',()=>{
   expect(container.querySelector('nav[aria-label="Pico information"] a[href="/app/terms"]')?.textContent).toBe('Terms and Conditions');
   expect(container.querySelector('.compiler-choices .syntax-keyword')).not.toBeNull();
 });
-it('keeps the interactive Pico logo and all seven initial workspace previews without Quick Launch', async()=>{
-  const logo=container.querySelector<HTMLAnchorElement>('.home-interactive-logo')!;
+it('keeps the original Pico logo and all seven initial workspace previews without Quick Launch', async()=>{
+  const logo=container.querySelector<HTMLAnchorElement>('.home-brand')!;
   expect(logo.getAttribute('href')).toBe('/app');
   expect(logo.querySelector('img')?.getAttribute('src')).toBe('/pico-logo.svg');
+  expect(container.querySelector('.home-interactive-logo')).toBeNull();
+  expect(container.querySelector('.compiler-choice-tag')).toBeNull();
+  expect(container.querySelector('.home-chart-output')?.textContent).toBe('OUTPUT "Hello"');
+  expect(container.querySelector('.home-preview-bulb')?.getAttribute('data-lit')).toBe('false');
+  expect(container.querySelectorAll('.home-traffic-packet')).toHaveLength(18);
   expect(container.querySelector('.home-quick-trigger')).toBeNull();
   await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true,cancelable:true})));
   expect(container.querySelector('.home-quick-dialog')).toBeNull();

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 /** Tiny local preview clock; never starts a workspace, interpreter or worker. */
-export function useHomePreviewStep() {
+export function useHomePreviewStep(interval = 1050) {
   const ref = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   useEffect(() => {
@@ -12,7 +12,7 @@ export function useHomePreviewStep() {
     let timer: ReturnType<typeof setInterval> | undefined;
     function sync() {
       if (timer !== undefined) { clearInterval(timer); timer = undefined; }
-      if (visible && !document.hidden && !reduced?.matches) timer = setInterval(() => setStep(previous => (previous + 1) % 12), 1050);
+      if (visible && !document.hidden && !reduced?.matches) timer = setInterval(() => setStep(previous => (previous + 1) % 12), interval);
     }
     const observer = new IntersectionObserver(entries => {
       visible = entries.some(entry => entry.isIntersecting);
@@ -27,6 +27,6 @@ export function useHomePreviewStep() {
       document.removeEventListener('visibilitychange', sync);
       reduced?.removeEventListener?.('change', sync);
     };
-  }, []);
+  }, [interval]);
   return { ref, step };
 }
