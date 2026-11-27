@@ -97,7 +97,6 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
   }, [reportNotice]);
   return <main className="pico-home" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? "true" : undefined} style={cssVariables(theme) as React.CSSProperties}>
       <HomeFluidBackground theme={theme} disabled={reportOpen || offlineReportWarning} />
-      <HomeAmbientCurves />
     <div className="home-nav">
       <div className="home-theme-anchor" ref={themeMenuRef}>
         <button type="button" className="home-theme-trigger" aria-label="Change theme" aria-expanded={themeOpen} aria-controls="home-theme-menu" onClick={() => setThemeOpen(open => !open)}>

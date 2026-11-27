@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
+import { startFluid } from './home-fluid-engine.js';
 import type { PicoTheme } from '../themes';
 import type { FluidColor, FluidController, FluidPalette } from './home-fluid-engine.js';
 
@@ -18,21 +19,19 @@ export function HomeFluidBackground({ theme, disabled = false }: { theme: PicoTh
   const controller = useRef<FluidController | null>(null);
   const palette = useRef(homeFluidPalette(theme));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     palette.current = homeFluidPalette(theme);
     controller.current?.setPalette(palette.current);
   }, [theme]);
 
   const highContrast = Boolean(theme.highContrast);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const host = hostRef.current;
     if (!host || disabled || highContrast || (!window.WebGLRenderingContext && !window.WebGL2RenderingContext)) return;
     const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const forced = window.matchMedia?.('(forced-colors: active)');
-    let generation = 0;
     let canvas: HTMLCanvasElement | null = null;
     function stop() {
-      generation++;
       controller.current?.dispose();
       controller.current = null;
       canvas?.remove();
@@ -42,18 +41,16 @@ export function HomeFluidBackground({ theme, disabled = false }: { theme: PicoTh
     function sync() {
       stop();
       if (!host || motion?.matches || forced?.matches) return;
-      const ticket = generation;
-      void import('./home-fluid-engine.js').then(({ startFluid }) => {
-        if (ticket !== generation) return;
-        canvas = document.createElement('canvas');
-        host.append(canvas);
-        try {
-          controller.current = startFluid(canvas, palette.current, stop);
-          host.dataset.fluidReady = 'true';
-        } catch {
-          stop();
-        }
-      }).catch(() => { if (ticket === generation) stop(); });
+      // The engine is a static dependency, so the initial seeded frame is drawn
+      // in this layout effect before the browser paints the workspace chooser.
+      canvas = document.createElement('canvas');
+      host.append(canvas);
+      try {
+        controller.current = startFluid(canvas, palette.current, stop);
+        host.dataset.fluidReady = 'true';
+      } catch {
+        stop();
+      }
     }
     sync();
     motion?.addEventListener('change', sync);

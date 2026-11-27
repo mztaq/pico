@@ -54,6 +54,18 @@ describe('Landing route migration leaves backend services available', () => {
     expect(publish).toContain("node scripts/stage-desktop-downloads.mjs");
     expect(downloadHandler).toContain("'Pico_universal.dmg'");
   });
+  it('preloads the fluid engine on landing and initializes the home canvas without a curve flash', () => {
+    const entry = read('src/main.tsx');
+    const home = read('src/app/components/HomeScreen.tsx');
+    const fluid = read('src/app/components/HomeFluidBackground.tsx');
+    expect(entry).toContain("if (isHomePage || initialHomeScreen) void import('./app/components/home-fluid-engine.js')");
+    expect(fluid).toContain("import { startFluid } from './home-fluid-engine.js'");
+    expect(fluid).toContain('useLayoutEffect(() => {');
+    expect(fluid).not.toContain("import('./home-fluid-engine.js')");
+    expect(home).toContain('<HomeFluidBackground theme={theme}');
+    expect(home).not.toContain('<HomeAmbientCurves />');
+    expect(read('src/app/components/GamesPage.tsx')).toContain('<HomeAmbientCurves />');
+  });
   it('keeps studio telemetry within the app route', () => {
     const entry = read('src/main.tsx');
     expect(entry).toContain('<PicoTelemetry />');

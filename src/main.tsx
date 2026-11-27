@@ -61,6 +61,9 @@ const initialHomeScreen = inApp &&
   !workspaceFromLocation(window.location.pathname, window.location.search) &&
   !informationPageFromPath(window.location.pathname) &&
   !window.location.hash;
+// Warm the same self-hosted engine chunk on the landing page, before /app navigation.
+// Importing the module performs no GPU work; only HomeFluidBackground starts it.
+if (isHomePage || initialHomeScreen) void import('./app/components/home-fluid-engine.js').catch(() => {});
 installSoundEffects();
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
