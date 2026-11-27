@@ -91,13 +91,13 @@ function PicoTeam() {
 function Privacy() {
   return <>
     <Section title="Your work">
-      <p>Your code, console input, projects and diagrams in browser workspaces are processed locally. Optional analytics does not collect their contents. Information you choose to share, including through reports or MCP requests, is sent to the relevant service.</p>
+      <p>Your code, console input, projects and diagrams in browser workspaces are processed locally. SQL Playground processes CSV files and queries locally in browser memory; these tables are not uploaded or saved by Pico after you reload. Optional analytics does not collect their contents. Information you choose to share, including through reports or MCP requests, is sent to the relevant service.</p>
     </Section>
     <Section title="Service and storage">
       <p>Browser storage saves projects, settings and consent choices. Cloudflare hosts Pico and Google Fonts serves some typography; those providers may process connection information.</p>
     </Section>
     <Section title="Optional data">
-      <p>If you opt in, analytics records browser information, visits and time spent in Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim, CPU Studio, Binary Lab and Traffic Storm. Learn and Games do not have separate workspace-time tracking. Optional preferences store selected settings. A random browser identifier links those records; neither option is required.</p>
+      <p>If you opt in, analytics records browser information, visits and time spent in Pseudocode Compiler, Python Compiler, Flowchart Builder, Logic Sim, CPU Studio, Binary Lab and Traffic Storm. Learn, Games and SQL Playground do not have separate workspace-time tracking. Optional preferences store selected settings. A random browser identifier links those records; neither option is required.</p>
     </Section>
     <Section title="Reports and integrations">
       <p>When you submit a report, its type, workspace, description, optional email address and screenshots are sent to the Pico team through Resend. Cloudflare Turnstile verifies submissions and security controls help prevent abuse. Reports are separate from optional analytics. Avoid including passwords or other sensitive information.</p>
