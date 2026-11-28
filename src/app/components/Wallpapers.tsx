@@ -10,12 +10,45 @@ export const WALLPAPERS = [
   { id: 'ember', name: 'Ember', category: 'Ambient', description: 'A slow copper glow', animated: true },
   { id: 'sakura-dream', name: 'Sakura Dream', category: 'Anime', description: 'Petals beneath a pastel moon', animated: true },
   { id: 'neon-tokyo', name: 'Neon Tokyo', category: 'Anime', description: 'A dreamy city after dark', animated: true },
+  { id: 'anime-video', name: 'Gojo & Sukuna', category: 'Anime', description: 'Import your video to use it here', animated: true },
 ] as const;
 
 export type WallpaperId = typeof WALLPAPERS[number]['id'];
 const wallpaperIds = new Set<string>(WALLPAPERS.map(wallpaper => wallpaper.id));
 export function isWallpaperId(value: unknown): value is WallpaperId {
   return typeof value === 'string' && wallpaperIds.has(value);
+}
+
+const videoDatabase = 'pico-wallpaper-media';
+const videoStore = 'wallpapers';
+function openVideoDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(videoDatabase, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(videoStore);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+async function saveAnimeVideo(file: File): Promise<void> {
+  const db = await openVideoDatabase();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(videoStore, 'readwrite');
+    transaction.objectStore(videoStore).put(file, 'gojo-sukuna');
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+  db.close();
+}
+async function loadAnimeVideo(): Promise<Blob | undefined> {
+  const db = await openVideoDatabase();
+  const blob = await new Promise<Blob | undefined>((resolve, reject) => {
+    const request = db.transaction(videoStore, 'readonly').objectStore(videoStore).get('gojo-sukuna');
+    request.onsuccess = () => resolve(request.result as Blob | undefined);
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+  return blob;
 }
 
 interface WallpaperPickerProps {
@@ -27,7 +60,28 @@ interface WallpaperPickerProps {
 export function WallpaperPicker({ value, onChange, highContrast = false }: WallpaperPickerProps) {
   const categories = useMemo(() => ['All', ...new Set(WALLPAPERS.map(wallpaper => wallpaper.category))], []);
   const [category, setCategory] = useState('All');
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoMessage, setVideoMessage] = useState('');
+  const videoInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!('indexedDB' in window)) return;
+    loadAnimeVideo().then(video => setVideoReady(Boolean(video))).catch(() => setVideoReady(false));
+  }, []);
   const visible = category === 'All' ? WALLPAPERS : WALLPAPERS.filter(wallpaper => wallpaper.category === category);
+  const importVideo = async (file?: File) => {
+    if (!file) return;
+    const supportedType = file.type === 'video/mp4' || file.type === 'video/webm' || /\.(mp4|webm)$/i.test(file.name);
+    if (!supportedType) { setVideoMessage('Choose an MP4 or WebM video.'); return; }
+    if (file.size > 100 * 1024 * 1024) { setVideoMessage('That video is over the 100 MB limit.'); return; }
+    try {
+      await saveAnimeVideo(file);
+      setVideoReady(true);
+      setVideoMessage('Saved in this browser. Ready to play.');
+      onChange('anime-video');
+    } catch {
+      setVideoMessage('Could not save this video in browser storage.');
+    }
+  };
 
   return <section className="wallpaper-picker" aria-label="Workspace wallpaper">
     <div className="wallpaper-picker-head">
@@ -37,19 +91,20 @@ export function WallpaperPicker({ value, onChange, highContrast = false }: Wallp
     <div className="wallpaper-categories" role="group" aria-label="Filter wallpapers">
       {categories.map(item => <button key={item} type="button" className={category === item ? 'active' : ''} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}
     </div>
+    <input ref={videoInput} className="wallpaper-video-input" type="file" accept="video/mp4,video/webm,.mp4,.webm" aria-label="Import Gojo and Sukuna video wallpaper" onChange={event => { void importVideo(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} />
     <div className="wallpaper-grid" role="radiogroup" aria-label="Choose a workspace wallpaper">
       <button type="button" role="radio" aria-checked={!value} className={`wallpaper-option wallpaper-none ${!value ? 'active' : ''}`} onClick={() => onChange(undefined)}>
         <span className="wallpaper-preview" aria-hidden="true"><i /></span>
         <span className="wallpaper-option-copy"><strong>None</strong><small>Theme background</small></span>
         {!value && <Check size={14} aria-hidden="true" />}
       </button>
-      {visible.map(wallpaper => <button key={wallpaper.id} type="button" role="radio" aria-checked={value === wallpaper.id} className={`wallpaper-option ${value === wallpaper.id ? 'active' : ''}`} onClick={() => onChange(wallpaper.id)}>
+      {visible.map(wallpaper => <button key={wallpaper.id} type="button" role="radio" aria-checked={value === wallpaper.id} className={`wallpaper-option wallpaper-option-${wallpaper.id} ${value === wallpaper.id ? 'active' : ''}`} onClick={() => wallpaper.id === 'anime-video' && !videoReady ? videoInput.current?.click() : onChange(wallpaper.id)}>
         <span className={`wallpaper-preview wallpaper-${wallpaper.id}`} aria-hidden="true"><i /></span>
-        <span className="wallpaper-option-copy"><strong>{wallpaper.name}</strong><small>{wallpaper.description}</small></span>
+        <span className="wallpaper-option-copy"><strong>{wallpaper.name}</strong><small>{wallpaper.id === 'anime-video' ? videoReady ? 'Saved on this device · click to use' : 'Click to import your MP4' : wallpaper.description}</small></span>
         {value === wallpaper.id && <Check size={14} aria-hidden="true" />}
       </button>)}
     </div>
-    <p className="wallpaper-note">{highContrast ? 'Wallpapers are hidden while a high contrast theme is active.' : 'Decorative backgrounds sit behind your workspace panels.'}</p>
+    <p className="wallpaper-note">{videoMessage || (highContrast ? 'Wallpapers are hidden while a high contrast theme is active.' : 'Decorative backgrounds sit behind your workspace panels.')}</p>
   </section>;
 }
 
@@ -57,6 +112,7 @@ export function WallpaperLayer({ wallpaper }: { wallpaper?: string }) {
   const [visible, setVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
   const layer = useRef<HTMLDivElement>(null);
   const pointer = useRef({ x: 0.5, y: 0.5, active: false });
+  const [videoUrl, setVideoUrl] = useState<string>();
   useEffect(() => {
     const update = () => setVisible(document.visibilityState !== 'hidden');
     document.addEventListener('visibilitychange', update);
@@ -68,6 +124,8 @@ export function WallpaperLayer({ wallpaper }: { wallpaper?: string }) {
         y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(rect.height, 1))),
         active: true,
       };
+      layer.current?.style.setProperty('--pointer-x', `${pointer.current.x * 100}%`);
+      layer.current?.style.setProperty('--pointer-y', `${pointer.current.y * 100}%`);
     };
     const leave = () => { pointer.current.active = false; };
     const onPointerOut = (event: PointerEvent) => { if (!event.relatedTarget) leave(); };
@@ -80,10 +138,27 @@ export function WallpaperLayer({ wallpaper }: { wallpaper?: string }) {
     };
   }, [layer]);
   useEffect(() => {
+    if (wallpaper !== 'anime-video' || !('indexedDB' in window)) { setVideoUrl(undefined); return; }
+    let active = true;
+    let objectUrl: string | undefined;
+    loadAnimeVideo().then(blob => {
+      if (!active || !blob) return;
+      objectUrl = URL.createObjectURL(blob);
+      setVideoUrl(objectUrl);
+    }).catch(() => setVideoUrl(undefined));
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [wallpaper]);
+  useEffect(() => {
+    const video = layer.current?.querySelector('video');
+    if (!video) return;
+    if (visible && document.visibilityState !== 'hidden') void video.play().catch(() => undefined);
+    else video.pause();
+  }, [visible, videoUrl]);
+  useEffect(() => {
     const node = layer.current;
     const canvas = node?.querySelector('canvas');
     const context = canvas?.getContext('2d', { alpha: true });
-    if (!node || !canvas || !context || !isWallpaperId(wallpaper)) return;
+    if (!node || !canvas || !context || !isWallpaperId(wallpaper) || wallpaper === 'anime-video') return;
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const colors = getComputedStyle(node);
@@ -239,5 +314,5 @@ export function WallpaperLayer({ wallpaper }: { wallpaper?: string }) {
     return () => { stop(); observer.disconnect(); reducedMotion.removeEventListener('change', onMotion); };
   }, [wallpaper, visible]);
   if (!isWallpaperId(wallpaper)) return null;
-  return <div ref={node => { layer.current = node; }} className={`workspace-wallpaper wallpaper-${wallpaper}`} data-paused={!visible || undefined} aria-hidden="true"><canvas /><i /></div>;
+  return <div ref={node => { layer.current = node; }} className={`workspace-wallpaper wallpaper-${wallpaper}`} data-paused={!visible || undefined} aria-hidden="true">{wallpaper === 'anime-video' && videoUrl ? <video src={videoUrl} autoPlay muted loop playsInline /> : <canvas />}<i /></div>;
 }

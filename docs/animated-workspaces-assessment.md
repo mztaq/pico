@@ -6,19 +6,20 @@ Pico is a React 19, TypeScript and Vite application. Its editor themes are defin
 
 ## What browser wallpapers can support
 
-Lively accepts images, video, web pages and shader/web content in its desktop application. Wallpaper Engine has video, web and rendered scene wallpaper formats, including 2D/3D and shader driven content. A normal browser app can render CSS animations, canvas/WebGL, and muted inline video, but it cannot host arbitrary native application wallpapers or assume desktop app integrations, GPU budget, codecs, autoplay, or unrestricted cross-origin access. Those desktop features are outside this implementation.
+Lively's Web Player hosts ordinary webpages in Chromium based WebView2 or CEF, and its documentation says browser features can be used alongside optional Lively APIs. Wallpaper Engine has video, web and rendered scene wallpaper formats, including 2D/3D and shader driven content. Pico uses the same browser-native foundation: CSS for theme-aware static fallbacks and previews, Canvas 2D for original animated scenes, and muted inline video for a user-imported clip. A normal website cannot host arbitrary native wallpaper formats or assume desktop app integrations, GPU budget, codecs, autoplay, or unrestricted cross-origin access. Those desktop features are outside this implementation.
 
 ## Performance, compatibility and licensing
 
-CSS gradients are inexpensive, require no network requests, and can keep a static appearance if motion is disabled. Canvas/WebGL and video add continuous rendering, memory, decoding, battery and mobile-data costs, so they should be opt-in and paused when their view is inactive. Browser visibility signals can pause media and are widely supported. Reduced-motion preferences must turn animation off. Wallpaper Engine Workshop content must not be copied without its creator's permission; this feature uses original CSS compositions and does not redistribute media or run wallpaper supplied scripts.
+CSS gradients are inexpensive, require no network requests, and keep a static appearance if motion is disabled. Canvas and video add rendering, memory, decoding and battery costs, so Pico caps Canvas rendering to 30 fps and 1.5x device pixel ratio, pauses work when the document is hidden, and honors reduced motion. Imported video is muted, stored in IndexedDB on the user's device, and limited to 100 MB; it is not bundled into or redistributed with the repository. Wallpaper Engine Workshop content must not be copied without its creator's permission. Pico runs no wallpaper supplied scripts.
 
 ## Initial implementation scope
 
-Add a small curated set of original CSS ambient backgrounds, rendered with static CSS previews, selected in Settings, and stored as an optional wallpaper ID on each compiler workspace. Preserve existing themes and use the current theme's sunken background as the `None` fallback. Do not add a media engine or third-party dependency.
+Add a curated set of original ambient and anime inspired scenes, selected in Settings and stored as an optional wallpaper ID on each compiler workspace. Users can optionally import a local MP4/WebM as a video wallpaper; the media blob stays in that browser's IndexedDB. Preserve existing themes and use the current theme's sunken background as the `None` fallback. Do not add a third-party dependency.
 
 ## References
 
 - [Lively Wallpaper repository](https://github.com/rocksdanister/lively)
+- [Lively Web Player documentation](https://github.com/lively-community/lively/wiki/Web-Player)
 - [Wallpaper Engine FAQ](https://help.wallpaperengine.io/)
 - [MDN: Page Visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)
 - [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion)
