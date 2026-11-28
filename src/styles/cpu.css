@@ -181,8 +181,8 @@
 
 /* Orthogonal schematic routes share the same geometry as the animated transfers. */
 .cpu-app .cpu-advanced-wire { stroke-linecap: butt; stroke-linejoin: miter; }
-.cpu-app .cpu-control-wire { stroke-width: 1.25; opacity: .64; }
-.cpu-app .cpu-control-junction { fill: var(--muted); opacity: .64; }
-.cpu-app .cpu-control-wire.cpu-wire-active { stroke: var(--accent); stroke-width: 2; opacity: 1; }
-.cpu-app .cpu-control-junction.cpu-wire-active { fill: var(--accent); opacity: 1; }
+.cpu-app .cpu-advanced-wire { stroke-width: 1.6; }
+.cpu-app .cpu-control-wire { stroke: color-mix(in srgb, var(--accent) 65%, var(--muted)); stroke-width: 1; stroke-dasharray: 4 3; opacity: .58; }
+.cpu-app .cpu-advanced-wire.cpu-wire-active { stroke-width: 2.4; }
+.cpu-app .cpu-control-wire.cpu-wire-active { stroke: var(--accent); stroke-width: 1.7; opacity: 1; }
 .cpu-app .cpu-flow-path { stroke-linejoin: miter; }

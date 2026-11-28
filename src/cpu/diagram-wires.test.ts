@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {NORMAL_WIRES,ADVANCED_WIRES,normalTransferRoute,cpuTransferRoute,orthogonalPath} from './diagram-wires';
+import {NORMAL_WIRES,ADVANCED_WIRES,NORMAL_LAYOUT,ADVANCED_LAYOUT,normalTransferRoute,cpuTransferRoute,orthogonalPath} from './diagram-wires';
 import {assemble,DEFAULT_PROGRAM} from './assembler';
 import {boot,step} from './engine';
 describe('CPU schematic routes',()=>{
@@ -10,6 +10,19 @@ describe('CPU schematic routes',()=>{
  it('connects the Control Unit to each visible normal component without advanced-only units',()=>{
   expect(NORMAL_WIRES.filter(w=>w.control&&w.target).map(w=>w.target).sort()).toEqual(['ACC','ALU','CACHE','CIR','MAR','MDR','PC']);
   expect(ADVANCED_WIRES.filter(w=>w.control&&w.target).map(w=>w.target).sort()).toEqual(['ACC','ALU','CACHE','CIR','CLOCK','DECODE','INTERRUPT','MAR','MDR','PC','STATUS']);
+ });
+ it('gives each control signal a distinct port on the control unit',()=>{
+  for(const [wires,cu] of [[NORMAL_WIRES,{x:548,y:443,w:160,h:95}],[ADVANCED_WIRES,ADVANCED_LAYOUT.CU!]] as const){
+   const controls=wires.filter(w=>w.control);
+   const starts=controls.map(w=>w.path.split(' ').slice(0,2).join(' '));
+   expect(new Set(starts).size).toBe(controls.length);
+   for(const start of starts){
+    const [x,y]=start.slice(1).split(' ').map(Number) as [number,number];
+    expect(x>=cu.x&&x<=cu.x+cu.w&&y>=cu.y&&y<=cu.y+cu.h).toBe(true);
+    expect(x===cu.x||x===cu.x+cu.w||y===cu.y||y===cu.y+cu.h).toBe(true);
+   }
+  }
+  expect(NORMAL_LAYOUT.ACC?.w).toBe(160);
  });
  it('follows rendered data wires and their reverses for every animated step',()=>{
   let machine=boot(assemble(DEFAULT_PROGRAM));

@@ -11,20 +11,13 @@ import {advanceWithInterrupt,initialInterrupt,requestInterrupt} from './advanced
 import {advanceRunFrame} from './playback';
 import {playCue} from '../app/sound';
 import {cpuFrameCue} from './frame-sound';
-import {cpuTransferRoute,normalTransferRoute,NORMAL_WIRES,ADVANCED_WIRES,type CpuWire} from './diagram-wires';
+import {cpuTransferRoute,normalTransferRoute,NORMAL_WIRES,ADVANCED_WIRES,NORMAL_LAYOUT,ADVANCED_LAYOUT,type CpuWire} from './diagram-wires';
 export {cpuTransferRoute,normalTransferRoute,NORMAL_WIRES,ADVANCED_WIRES} from './diagram-wires';
 import './cpu.css';
 import '../styles/cpu.css';
 
 export type CpuMode='normal'|'advanced';
 const DEFAULT_IMAGE=assemble(DEFAULT_PROGRAM);
-/** Rebalanced Normal layout leaves no large empty Decode Unit hole. */
-const NORMAL_LAYOUT:Partial<Record<Register|'CACHE'|'DECODE'|'CLOCK'|'STATUS'|'INTERRUPT',{x:number;y:number;w:number;h:number}>>={
- ACC:{x:45,y:189,w:240,h:90},
- ALU:{x:45,y:299,w:240,h:110},
- CIR:{x:315,y:197,w:165,h:102},
- CACHE:{x:45,y:431,w:240,h:100},
-};
 const LABELS:Record<Register,string>={
  PC:'Program Counter (PC)',MAR:'Memory Address Register (MAR)',
  MDR:'Memory Data Register (MDR)',CIR:'Current Instruction Register (CIR)',
@@ -97,15 +90,10 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  const [stepKey,setStepKey]=useState(0);
  const machineRef=useRef(machine);machineRef.current=machine;
  const theme=getTheme(landingPreview?'catppuccin-mocha':themeId);
- const lastCpuSound=useRef(-Infinity);
  function soundFrame(previous:Machine,next:Machine){
   if(landingPreview||document.hidden)return;
   const cue=cpuFrameCue(previous,next);
   if(!cue)return;
-  // Keep short CPU pulses separate even during the fastest playback.
-  const now=performance.now();
-  if(now-lastCpuSound.current<42)return;
-  lastCpuSound.current=now;
   playCue(cue);
  }
  const active=machine.frame.active;
@@ -162,7 +150,8 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  };
  const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
  const memoryActive=activeUnits.has('RAM');
- const renderedBoxes=BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=>mode==='normal'&&NORMAL_LAYOUT[box.key]?{...box,...NORMAL_LAYOUT[box.key]}:box);
+ const layout=mode==='normal'?NORMAL_LAYOUT:ADVANCED_LAYOUT;
+ const renderedBoxes=BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=>({...box,...layout[box.key]}));
  return <div ref={previewRef} className={landingPreview?"cpu-app cpu-embedded":"cpu-app workspace-fluid-surface"} style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
     {!landingPreview && <WorkspaceFluidBackground theme={theme}/>}
   <header className="cpu-topbar topbar pico-appbar">
@@ -192,8 +181,8 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
     <svg className={"cpu-diagram"+(focused?" cpu-has-focus":"")} viewBox="0 0 1190 558" role="img" aria-label="CPU architecture with registers, ALU and Control Unit connected to RAM by address, data and control buses">
      <defs>
       <marker id="cpu-arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5 Z" fill="var(--accent)"/></marker>
-      <marker id="cpu-wire-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.5" orient="auto-start-reverse"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--muted)"/></marker>
-      <marker id="cpu-wire-active-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.5" orient="auto-start-reverse"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--accent)"/></marker>
+      <marker id="cpu-wire-arrow" viewBox="0 0 8 8" markerWidth="4" markerHeight="4" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 Z" fill="var(--muted)"/></marker>
+      <marker id="cpu-wire-active-arrow" viewBox="0 0 8 8" markerWidth="4" markerHeight="4" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 Z" fill="var(--accent)"/></marker>
      </defs>
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
      <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing Unit (CPU)</text>
@@ -203,11 +192,10 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
        const arrow=highlighted?'url(#cpu-wire-active-arrow)':'url(#cpu-wire-arrow)';
        return <path key={wire.id} data-wire-id={wire.id}
         className={'cpu-advanced-wire'+(wire.control?' cpu-control-wire':'')+(highlighted?' cpu-wire-active':'')}
-        d={wire.path} markerStart={wire.bidirectional?arrow:undefined} markerEnd={wire.trunk?undefined:arrow}>
+        d={wire.path} markerStart={wire.bidirectional?arrow:undefined} markerEnd={wire.control?undefined:arrow}>
         <title>{wire.label}</title>
        </path>;
       })}
-      {wires.filter(wire=>wire.junction).map(wire=><circle key={wire.id+'-junction'} className={'cpu-control-junction'+(wireActive(wire)?' cpu-wire-active':'')} cx={wire.junction![0]} cy={wire.junction![1]} r="2.4"/>)}
      </g>
      {renderedBoxes.map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
       <title>{HELP[box.key]}</title><rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
