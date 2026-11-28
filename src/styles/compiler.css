@@ -128,6 +128,7 @@
 .pico-app .keyword-pill:hover { border-color: var(--ds-line-strong); background: var(--ds-hover); color: var(--ds-text); }
 .pico-app .keyword-pill.active { border-color: var(--accent); background: var(--ds-accent-soft); color: var(--ds-text); font-weight: 650; }
 .pico-app .reference-explanation { border-color: var(--ds-line); }
+.pico-app .reference-explanation > strong { margin: 0 0 4px; }
 .pico-app .mini-label { color: var(--ds-muted); font: 600 var(--ds-text-2xs)/1 var(--ds-font-code); letter-spacing: .07em; }
 .pico-app .reference-explanation > strong { color: var(--accent); font-size: var(--ds-text-md); }
 .pico-app .reference-explanation p { color: var(--ds-text); font-size: 1em; line-height: 1.6; }

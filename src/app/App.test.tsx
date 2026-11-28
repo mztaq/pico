@@ -412,7 +412,9 @@ it('shows the selected keyword example for every reference entry without changin
   expect(container.querySelector('.reference-scope')).toBeNull();
   expect(container.querySelector('.sidebar-bottom')).toBeNull();
   expect(container.querySelector('.reference-controls')?.textContent).not.toContain('CAMBRIDGE');
-  expect(container.querySelector('.reference-controls')?.textContent).toContain('Drag the divider to resize');
+  expect(container.querySelector('.reference-controls')?.textContent).not.toContain('Drag the divider to resize');
+  expect(container.querySelector('.reference-explanation .mini-label')).toBeNull();
+  expect(container.querySelector('.reference-search input')?.getAttribute('placeholder')).toBe('Search');
   expect(container.querySelector('.hover-doc-setting')).toBeNull();
   expect(container.querySelector('.editor-preferences')).toBeNull();
   await click(container.querySelector('[aria-label="Open settings"]')!);
