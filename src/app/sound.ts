@@ -4,7 +4,7 @@
  * when muted, when storage is blocked, or when the browser has no Web Audio.
  */
 const KEY = 'pico.sound.v1';
-type Cue = 'tap' | 'toggleOn' | 'toggleOff' | 'run' | 'stop' | 'success' | 'error' | 'open' | 'close' | 'step' | 'stepBack' | 'tab' | 'add' | 'remove' | 'undo' | 'redo' | 'theme' | 'file' | 'notify' | 'zoomIn' | 'zoomOut' | 'place' | 'zap' | 'lampOn' | 'type' | 'typeEnter' | 'typeErase';
+type Cue = 'tap' | 'toggleOn' | 'toggleOff' | 'run' | 'stop' | 'success' | 'error' | 'open' | 'close' | 'step' | 'stepBack' | 'tab' | 'add' | 'remove' | 'undo' | 'redo' | 'theme' | 'file' | 'notify' | 'zoomIn' | 'zoomOut' | 'place' | 'zap' | 'lampOn' | 'type' | 'typeEnter' | 'typeErase' | 'cpuRegister' | 'cpuTransfer' | 'cpuTransferWrite';
 
 let context: AudioContext | null = null;
 let installed = false;
@@ -162,6 +162,9 @@ export function playCue(cue: Cue): void {
     case 'open': tone(ctx, 620, t, 0.07, 0.04, 'sine', 900); break;
     case 'close': tone(ctx, 900, t, 0.07, 0.035, 'sine', 600); break;
     case 'tab': tone(ctx, 1500, t, 0.025, 0.03, 'sine'); tone(ctx, 1900, t + 0.02, 0.03, 0.02, 'sine'); break;
+    case 'cpuRegister': tone(ctx, 760, t, 0.035, 0.028, 'triangle', 480); break;
+    case 'cpuTransfer': tone(ctx, 460, t, 0.045, 0.023, 'sine', 1120); break;
+    case 'cpuTransferWrite': tone(ctx, 460, t, 0.035, 0.023, 'sine', 1120); tone(ctx, 760, t + 0.028, 0.035, 0.025, 'triangle', 480); break;
     case 'step': tone(ctx, 1600, t, 0.03, 0.03, 'square'); break;
     case 'stepBack': tone(ctx, 1200, t, 0.03, 0.03, 'square'); break;
     case 'run': tone(ctx, 523, t, 0.08, 0.06, 'triangle'); tone(ctx, 784, t + 0.07, 0.11, 0.06, 'triangle'); break;

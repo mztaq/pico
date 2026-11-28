@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { HighlightedCode } from './HighlightedCode';
-import { ResizeHandle } from './ResizeHandle';
 const entries = [
   {word:'print',description:'Write text or values to the Console.',code:'name = "Pico"\nprint("Hello", name)'},
   {word:'input',description:'Wait for text typed in the Console. Convert it when you need a number.',code:'age = int(input("Enter your age: "))\nprint(age)'},
@@ -16,14 +15,13 @@ const entries = [
   {word:'open',description:'Read or write a project practice file.',code:'with open("notes.txt", "w") as file:\n    file.write("Hello Pico")\n\nwith open("notes.txt") as file:\n    print(file.read())'},
   {word:'import',description:'Import modules from Python’s standard library or another .py tab.',code:'import math\nprint(math.sqrt(16))'},
 ];
-export function PythonReference({onResizeKeywords}:{onResizeKeywords:(delta:number)=>void}) {
+export function PythonReference() {
   const [word,setWord]=useState('print');
   const [search,setSearch]=useState('');
   const current=entries.find(entry=>entry.word===word)!;
   return <>
     <div className="reference-search"><input aria-label="Search Python reference" placeholder="Search" value={search} onChange={event=>setSearch(event.target.value)} /></div>
     <div className="reference-keywords">{entries.filter(entry=>entry.word.includes(search.trim().toLowerCase())).map(entry=><button className={`keyword-pill ${word===entry.word?'active':''}`} aria-pressed={word===entry.word} key={entry.word} onClick={()=>setWord(entry.word)}>{entry.word}</button>)}</div>
-    <ResizeHandle axis="y" label="Resize keyword list" className="reference-keywords-resize" onResize={onResizeKeywords}/>
     <div className="reference-explanation"><strong>{current.word}</strong><p>{current.description}</p><div className="reference-example"><pre aria-label={`${current.word} code example`}><HighlightedCode language="python" code={current.code} /></pre></div></div>
   </>;
 }

@@ -392,18 +392,15 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   function reorderPanels(target: PanelKey) { if (!draggedPanel || draggedPanel === target) return; const order = [...settings.panelOrder]; const from = order.indexOf(draggedPanel); const to = order.indexOf(target); if (from < 0 || to < 0) return; order.splice(from, 1); order.splice(to, 0, draggedPanel); changeSettings({ panelOrder: order }); setDraggedPanel(null); }
   function applyLayoutPreset(preset: PicoSettings['layoutPreset']) {
     const presets: Record<Exclude<PicoSettings['layoutPreset'], 'custom'>, Partial<PicoSettings>> = {
-      coding: { sidebarVisible: true, referenceVisible: true, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 360, referenceKeywordHeight: 128, dockSize: 33, panelOrder: [...defaultPanelOrder] },
-      debugging: { sidebarVisible: true, referenceVisible: false, sidebarSide: 'left', dockSide: 'right', sidebarWidth: 226, referenceWidth: 360, referenceKeywordHeight: 128, dockSize: 42, panelOrder: ['debugger','console'] },
-      focus: { sidebarVisible: false, referenceVisible: false, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 360, referenceKeywordHeight: 128, dockSize: 28, panelOrder: [...defaultPanelOrder] },
+      coding: { sidebarVisible: true, referenceVisible: true, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 360, dockSize: 33, panelOrder: [...defaultPanelOrder] },
+      debugging: { sidebarVisible: true, referenceVisible: false, sidebarSide: 'left', dockSide: 'right', sidebarWidth: 226, referenceWidth: 360, dockSize: 42, panelOrder: ['debugger','console'] },
+      focus: { sidebarVisible: false, referenceVisible: false, sidebarSide: 'left', dockSide: 'bottom', sidebarWidth: 226, referenceWidth: 360, dockSize: 28, panelOrder: [...defaultPanelOrder] },
     };
     changeSettings({ ...(presets[preset as Exclude<PicoSettings['layoutPreset'], 'custom'>] ?? {}), layoutPreset: preset });
   }
   function resetLayout() { applyLayoutPreset('coding'); }
   function resizeReference(delta: number) {
     setSettings(current => ({ ...current, referenceWidth: Math.min(600, Math.max(280, current.referenceWidth - delta)), layoutPreset: 'custom' }));
-  }
-  function resizeReferenceKeywords(delta: number) {
-    setSettings(current => ({ ...current, referenceKeywordHeight: Math.min(400, Math.max(48, (current.referenceKeywordHeight ?? 128) + delta)), layoutPreset: 'custom' }));
   }
   function resizeDock(delta: number) {
     const available = settings.dockSide === 'right' ? workspaceMainRef.current?.clientWidth : workspaceMainRef.current?.clientHeight;
@@ -443,7 +440,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     setFileMenuOpen(false);
   }
 
-  return <div className="pico-app ios-workspace-ui workspace-fluid-surface" data-execution-active={running ? "true" : undefined} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--reference-keyword-height': `${settings.referenceKeywordHeight ?? 128}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
+  return <div className="pico-app ios-workspace-ui workspace-fluid-surface" data-execution-active={running ? "true" : undefined} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
     <WorkspaceFluidBackground theme={theme}/>
     <header className="topbar pico-appbar" inert={tutorialOpen || tutorialOfferOpen}>
       <div className="pico-appbar-lead">
@@ -495,10 +492,9 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           {layout.referenceVisible && <button className="reference-backdrop" aria-label="Dismiss quick reference" onClick={closeReference} tabIndex={-1} />}
           {layout.referenceVisible && <aside className="reference-card" id="quick-reference" data-tour="reference" aria-label="Quick reference">
             <div className="reference-head"><div><BookOpen size={15} /><strong>Quick reference</strong></div><button className="reference-close" aria-label="Close quick reference" onClick={closeReference}><X size={18} /></button></div>
-            {isPython ? <PythonReference onResizeKeywords={resizeReferenceKeywords} /> : <>
+            {isPython ? <PythonReference /> : <>
             <div className="reference-search"><Search size={13} /><input value={docSearch} onChange={event => setDocSearch(event.target.value)} placeholder="Search" aria-label="Search pseudocode keywords" /></div>
             <div className="reference-keywords">{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} aria-pressed={selectedDoc === term} onClick={() => setSelectedDoc(term)}>{term}</button>)}{!shownTerms.length && <p className="reference-no-results">No matches</p>}</div>
-            <ResizeHandle axis="y" label="Resize keyword list" className="reference-keywords-resize" onResize={resizeReferenceKeywords}/>
             <div className="reference-explanation" key={selectedDoc}>
               <strong>{selectedDoc}</strong><p>{currentDoc}</p>
               <div className="reference-example"><pre aria-label={`${selectedDoc} code example`}><HighlightedCode code={currentExample.code} /></pre>{currentExample.inputs && <p className="reference-input-hint">Example input: <code>{currentExample.inputs.join(', ')}</code></p>}</div>
