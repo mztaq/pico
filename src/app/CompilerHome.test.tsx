@@ -344,10 +344,11 @@ it('supports Step Back and only shows decode unit in Advanced mode',async()=>{
  for(const name of ['Clock','Status Register','Interrupt Register']){
   expect(container.querySelector('g.cpu-block[aria-label="'+name+'"]')).not.toBeNull();
  }
- expect(container.querySelectorAll('path.cpu-advanced-wire')).toHaveLength(14);
+ expect(container.querySelectorAll('path.cpu-advanced-wire')).toHaveLength(23);
+ expect([...container.querySelectorAll('path.cpu-control-wire')].map(wire=>wire.getAttribute('data-wire-id')).sort()).toEqual(['cu-acc','cu-alu','cu-cache','cu-cir','cu-clock','cu-decode','cu-interrupt','cu-mar','cu-mdr','cu-pc','cu-status']);
  expect(container.querySelector('path[data-wire-id="clock-cu"]')).not.toBeNull();
- expect(container.querySelector('path[data-wire-id="status-cu"]')).not.toBeNull();
- expect(container.querySelector('path[data-wire-id="interrupt-cu"]')).not.toBeNull();
+ expect(container.querySelector('path[data-wire-id="cu-status"]')).not.toBeNull();
+ expect(container.querySelector('path[data-wire-id="cu-interrupt"]')).not.toBeNull();
  expect(container.querySelector('[aria-label="Request CPU interrupt"]')).not.toBeNull();
  expect(container.textContent).not.toContain('Von Neumann · Cambridge IGCSE');
 });
