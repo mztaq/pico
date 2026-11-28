@@ -24,7 +24,12 @@ export function WallpaperPicker({ value, onChange, highContrast = false }: Wallp
     </div>
     <div className="wallpaper-grid" role="radiogroup" aria-label="Workspace wallpaper">
       <button type="button" role="radio" aria-checked={value === WALLPAPER_ID} className={`wallpaper-option wallpaper-option-gojo-sukuna ${value === WALLPAPER_ID ? 'active' : ''}`} onClick={() => onChange(WALLPAPER_ID)}>
-        <span className="wallpaper-preview wallpaper-gojo-sukuna" aria-hidden="true" />
+        <span className="wallpaper-preview wallpaper-gojo-sukuna" aria-hidden="true">
+          <video src={videoUrl} muted playsInline preload="auto" tabIndex={-1} onLoadedData={event => {
+            const preview = event.currentTarget;
+            if (Number.isFinite(preview.duration) && preview.duration > 0) preview.currentTime = Math.min(1.2, preview.duration / 2);
+          }} onSeeked={event => event.currentTarget.pause()} />
+        </span>
         <span className="wallpaper-option-copy"><strong>Gojo &amp; Sukuna</strong><small>Bundled looping video</small></span>
         <span className="wallpaper-option-check" aria-hidden="true">✓</span>
       </button>

@@ -63,6 +63,7 @@
 .wallpaper-option.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .wallpaper-option-check { position: absolute; top: 6px; right: 7px; display: grid; width: 18px; height: 18px; place-items: center; border-radius: 50%; background: var(--ds-panel-raised); color: var(--accent); font-size: 13px; font-weight: 800; }
 .wallpaper-preview { position: relative; display: block; height: 72px; overflow: hidden; background: linear-gradient(135deg, #171527, #3d2752 55%, #111b30); }
+.wallpaper-preview > video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
 .wallpaper-preview::after { position: absolute; inset: 0; content: ''; background: linear-gradient(180deg, transparent 45%, rgb(10 11 18 / 48%)); }
 .wallpaper-preview.wallpaper-gojo-sukuna { background-image: radial-gradient(ellipse at 70% 30%, rgb(180 142 255 / 55%), transparent 28%), linear-gradient(135deg, #171527, #3d2752 55%, #111b30); }
 .wallpaper-option-copy { display: flex; flex-direction: column; gap: 2px; padding: 7px 8px 8px; }
