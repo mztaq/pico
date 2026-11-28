@@ -1,3 +1,4 @@
+import { WorkspaceFluidBackground } from '../app/components/WorkspaceFluidBackground';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, Database, Download, Play, Settings2, X, Table2, FileCode2, Trash2, Plus, PencilRuler, ChevronDown, ChevronRight, Save, Pencil } from 'lucide-react';
 import { cssVariables, getTheme } from '../app/themes';
@@ -304,7 +305,8 @@ export function SqlPlayground({ onHome }: { onHome: () => void }) {
   const runQuery = (value: string) => {
     if (activeDatabase && isQuery && !disabled && value.trim()) {setQueryResult(null);setHasRun(false);setView('sql');execute({action:'query',sql:value});}
   };
-  return <main className="pico-app sql-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
+  return <main className="pico-app sql-app workspace-fluid-surface" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
+    <WorkspaceFluidBackground theme={theme}/>
     <header className="topbar pico-appbar sql-header">
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" type="button" aria-label="Go to home screen" onClick={onHome}><ArrowLeft size={16}/></button>

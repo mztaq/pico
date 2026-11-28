@@ -19,6 +19,7 @@ export interface PicoSettings {
   dockSide: 'bottom' | 'right';
   sidebarWidth: number;
   referenceWidth: number;
+  referenceKeywordHeight?: number;
   referenceFontSize: number;
   dockSize: number;
   panelOrder: PanelKeyPreference[];
@@ -39,6 +40,7 @@ export const defaultSettings: PicoSettings = {
   dockSide: 'bottom',
   sidebarWidth: 226,
   referenceWidth: 360,
+  referenceKeywordHeight: 128,
   referenceFontSize: 13,
   dockSize: 33,
   panelOrder: [
@@ -98,6 +100,10 @@ export function loadSettings(): PicoSettings {
             typeof c.referenceWidth === 'number' && Number.isFinite(c.referenceWidth)
               ? Math.min(600, Math.max(280, c.referenceWidth))
               : 360,
+          referenceKeywordHeight:
+            typeof c.referenceKeywordHeight === 'number' && Number.isFinite(c.referenceKeywordHeight)
+              ? Math.min(400, Math.max(48, c.referenceKeywordHeight))
+              : 128,
           referenceFontSize:
             typeof c.referenceFontSize === 'number' && Number.isFinite(c.referenceFontSize)
               ? Math.min(18, Math.max(12, c.referenceFontSize - (['pico.settings.v4', 'pico.settings.v3'].includes(key) ? 2 : 0)))

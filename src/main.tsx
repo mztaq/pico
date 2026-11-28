@@ -1,3 +1,4 @@
+import './styles/ios-ui.css';
 import React, { useLayoutEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { lazy, Suspense } from 'react';

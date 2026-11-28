@@ -4,25 +4,20 @@
 .reference-head { position: sticky; top: 0; z-index: 1; min-height: 46px; margin: 0 -12px; padding: 0 12px; }
 .reference-head strong { color: var(--text); font-size: 14px; }
 .reference-close { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 7px; background: transparent; color: var(--text); cursor: pointer; }
-.reference-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0 4px; }
-.reference-controls > span { color: var(--muted); font-size: 11px; line-height: 1.5; }
-.reference-controls > span > span { display: block; }
-.reference-controls > div { display: flex; align-items: center; gap: 7px; }
-.reference-controls button { min-width: 34px; height: 34px; padding: 0 5px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-raised); color: var(--text); font-size: 14px; cursor: pointer; }
-.reference-controls button:disabled { opacity: .4; cursor: default; }
-.reference-controls output { color: var(--muted); font-size: 12px; }
-.reference-search { height: 34px; flex-basis: 34px; padding: 0 10px; margin: 12px 0; }
+.reference-search { height: 34px; flex-basis: 34px; padding: 0 10px; margin: 8px 0; }
 .reference-search input { color: var(--text); font-size: 13px; }
 .reference-search input::placeholder { color: var(--muted); }
-.reference-keywords { min-height: 100px; max-height: 190px; flex-shrink: 1; gap: 6px; padding-bottom: 10px; }
+.reference-keywords { box-sizing: border-box; min-height: 48px; max-height: 400px; flex: 0 0 var(--reference-keyword-height, 128px); gap: 6px; padding: 2px 0 4px; overscroll-behavior: contain; }
+.reference-card .reference-keywords-resize { width: 100%; height: 12px; min-height: 12px; }
+.reference-card .reference-keywords-resize .resize-handle-grip { height: 3px; width: 28px; }
 .pico-app[data-pico-theme] .keyword-pill { min-height: 30px; height: auto; padding: 5px 8px; font-size: var(--reference-font-size); background: var(--surface-raised); color: var(--reference-label); }
 .pico-app[data-pico-theme] .keyword-pill:hover { border-color: var(--accent); background: var(--accent-soft); }
 .pico-app[data-pico-theme] .keyword-pill.active { color: var(--reference-label); background: var(--surface-raised); border-color: var(--border); font-weight: 600; }
 .pico-app[data-pico-theme] .keyword-pill.active:hover { border-color: var(--accent); background: var(--accent-soft); }
 .reference-no-results { margin: 4px 0; color: var(--muted); font-size: 14px; }
-.reference-explanation { padding: 12px 0; border-color: var(--border); border-bottom: 0; user-select: text; }
+.reference-explanation { min-height: 0; padding: 4px 0 8px; border-top: 0; border-bottom: 0; user-select: text; }
 .reference-explanation .mini-label { font-size: 11px; color: var(--muted); }
-.reference-explanation > strong { margin-top: 9px; font-size: calc(var(--reference-font-size) + 1px); color: var(--reference-label); }
+.reference-explanation > strong { margin-top: 0; font-size: calc(var(--reference-font-size) + 1px); color: var(--reference-label); }
 .reference-explanation > p { color: var(--text); font-size: var(--reference-font-size); line-height: 1.6; }
 .reference-scope { border-color: var(--border); background: var(--accent-soft); padding: 12px; }
 .reference-scope strong { color: var(--text); font-size: 13px; }
@@ -41,7 +36,6 @@
 @media (max-width: 1070px) {
   .ide-shell.reference-open .reference-card { display: flex; position: fixed; z-index: 75; top: 72px; right: 16px; bottom: 80px; width: min(var(--reference-width), calc(100vw - 32px)); max-width: 600px; box-shadow: 0 20px 70px rgba(0,0,0,.4); }
   .ide-shell.reference-open .reference-backdrop { display: block; position: fixed; inset: 0; z-index: 70; border: 0; background: rgba(0,0,0,.45); }
-  .reference-controls > span > span { display: none; }
 }
 @media (max-width: 800px) {
   .save-indicator { font-size: 0; }
@@ -95,8 +89,8 @@
 .editor-card-foot kbd { padding: 2px 5px; color: var(--text); border-color: var(--border); font-size: 12px; }
 .editor-card-foot svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-.reference-example { margin-top: 16px; }
-.reference-example pre { margin: 8px 0 0; padding: 10px; overflow-x: auto; background: var(--surface-raised); border-radius: 6px; color: var(--text); font-family: var(--font-code); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; white-space: pre; user-select: text; }
+.reference-example { margin-top: 6px; }
+.reference-example pre { margin: 0; padding: 10px; overflow-x: auto; background: var(--surface-raised); border-radius: 6px; color: var(--text); font-family: var(--font-code); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.65; white-space: pre; user-select: text; }
 .reference-example .reference-input-hint { margin: 8px 0 0; color: var(--text); font-size: calc(var(--reference-font-size) - 1px); line-height: 1.5; }
 .reference-input-hint code { font-family: var(--font-code); }
 

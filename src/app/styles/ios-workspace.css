@@ -1,0 +1,77 @@
+/* iOS-inspired workspace surfaces and controls, independent of background media. */
+.pico-app.ios-workspace-ui { position: relative; isolation: isolate; background: var(--bg); }
+.pico-app.ios-workspace-ui .ide-shell { background: var(--bg); }
+.pico-app.ios-workspace-ui .workspace-main { background: var(--bg) !important; }
+.pico-app.ios-workspace-ui .topbar {
+  background: var(--surface) !important;
+  border-bottom-color: color-mix(in srgb, var(--border) 76%, transparent);
+  backdrop-filter: blur(20px);
+}
+.pico-app.ios-workspace-ui .workspace-tabs {
+  background: var(--surface);
+  backdrop-filter: blur(18px);
+}
+.pico-app.ios-workspace-ui .workspace-tabs .project-row {
+  align-self: center;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  border-bottom-color: transparent;
+  transition: background .16s ease, border-color .16s ease;
+}
+.pico-app.ios-workspace-ui .workspace-tabs .project-row.active {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-bottom-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+.pico-app.ios-workspace-ui .reference-card,
+.pico-app.ios-workspace-ui .tool-dock {
+  background: var(--surface) !important;
+  border-color: color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: var(--pico-card-radius, 15px);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 18%), inset 0 1px 0 rgb(255 255 255 / 4%);
+  backdrop-filter: none;
+}
+.pico-app.ios-workspace-ui .editor-card {
+  background: var(--surface) !important;
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 15px;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 20%), inset 0 1px 0 rgb(255 255 255 / 4%);
+  backdrop-filter: none;
+}
+.pico-app.ios-workspace-ui .cm-editor,
+.pico-app.ios-workspace-ui .cm-scroller {
+  background: transparent !important;
+}
+.pico-app.ios-workspace-ui .cm-editor {
+  backdrop-filter: none;
+}
+.pico-app.ios-workspace-ui .cm-gutters {
+  background: var(--editor-bg) !important;
+}
+.pico-app.ios-workspace-ui .file-tabs,
+.pico-app.ios-workspace-ui .editor-card-foot,
+.pico-app.ios-workspace-ui .dock-content {
+  background: var(--surface);
+}
+.pico-app.ios-workspace-ui .reference-head,
+.pico-app.ios-workspace-ui .dock-tab-row,
+.pico-app.ios-workspace-ui .workspace-tabs {
+  background: var(--surface-raised);
+}
+.pico-app.ios-workspace-ui .file-tab {
+  border: 1px solid transparent;
+  border-radius: 9px 9px 0 0;
+}
+.pico-app.ios-workspace-ui .file-tab.active {
+  border-color: color-mix(in srgb, var(--border) 84%, transparent);
+  border-bottom-color: transparent;
+  background: var(--surface-raised);
+}
+.pico-app.ios-workspace-ui .topbar-icon,
+.pico-app.ios-workspace-ui .help-button { border-radius: 999px; }
+.pico-app.ios-workspace-ui .run-button {
+  border-radius: var(--ds-radius-md);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+

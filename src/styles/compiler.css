@@ -90,10 +90,10 @@
 .pico-app .suggestion-chip b { color: var(--syntax-type, #e2b978); }
 
 /* Quick reference */
-.pico-app .reference-card { padding: 0 14px 14px; }
+.pico-app .reference-card { --pico-card-inset: 14px; --pico-card-radius: calc(var(--pico-card-inset) + var(--ds-radius-sm)); padding: 0 var(--pico-card-inset) var(--pico-card-inset); border-radius: var(--pico-card-radius); }
 .pico-app .reference-head {
   min-height: 44px;
-  margin: 0 -14px 4px;
+  margin: 0 calc(-1 * var(--pico-card-inset)) 4px;
   padding: 0 8px 0 14px;
   border-bottom: 1px solid var(--ds-line);
   background: var(--ds-panel);
@@ -102,8 +102,6 @@
 .pico-app .reference-head strong { color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 650; }
 .pico-app .reference-close { border-radius: var(--ds-radius-sm); }
 .pico-app .reference-close:hover { background: var(--ds-hover); }
-.pico-app .reference-controls { color: var(--ds-muted); font-size: var(--ds-text-xs); }
-.pico-app .reference-controls button, .pico-app .reference-controls output { border-radius: var(--ds-radius-sm); }
 .pico-app .reference-search {
   height: 36px;
   flex-basis: 36px;
@@ -128,6 +126,8 @@
 .pico-app .keyword-pill:hover { border-color: var(--ds-line-strong); background: var(--ds-hover); color: var(--ds-text); }
 .pico-app .keyword-pill.active { border-color: var(--accent); background: var(--ds-accent-soft); color: var(--ds-text); font-weight: 650; }
 .pico-app .reference-explanation { border-color: var(--ds-line); }
+.pico-app .reference-keywords { scrollbar-width: thin; }
+.pico-app .reference-explanation > strong { margin: 0 0 4px; }
 .pico-app .mini-label { color: var(--ds-muted); font: 600 var(--ds-text-2xs)/1 var(--ds-font-code); letter-spacing: .07em; }
 .pico-app .reference-explanation > strong { color: var(--accent); font-size: var(--ds-text-md); }
 .pico-app .reference-explanation p { color: var(--ds-text); font-size: 1em; line-height: 1.6; }
@@ -225,4 +225,8 @@
   .pico-app .workspace-shell .editor-split { padding-top: 8px; }
   .pico-app .workspace-main > .tool-dock { margin-bottom: 8px; }
   .pico-app .editor-card-foot { display: none; }
+}
+
+.pico-app .reference-card :is(.reference-search,.reference-example pre) {
+  border-radius: max(0px, calc(var(--pico-card-radius) - var(--pico-card-inset)));
 }

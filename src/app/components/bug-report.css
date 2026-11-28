@@ -22,8 +22,10 @@
   color: var(--ds-text); font-family: var(--ds-font-ui);
 }
 .bug-report-dialog {
+  --pico-card-inset: 22px;
+  --pico-card-radius: calc(var(--pico-card-inset) + var(--ds-radius-sm));
   width: min(540px, 100%); max-height: min(92dvh, 780px); overflow-y: auto;
-  border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-xl);
+  border: 1px solid var(--ds-line-strong); border-radius: var(--pico-card-radius);
   background: var(--ds-panel-raised); box-shadow: var(--ds-shadow-dialog);
 }
 .bug-report-header {
@@ -42,7 +44,7 @@
   color: var(--ds-muted); cursor: pointer;
 }
 .bug-report-close:hover { background: var(--ds-hover); color: var(--ds-text); }
-.bug-report-form { display: flex; flex-direction: column; gap: 16px; padding: 20px 22px 22px; }
+.bug-report-form { display: flex; flex-direction: column; gap: 16px; padding: 20px var(--pico-card-inset) var(--pico-card-inset); }
 .bug-report-field { display: flex; flex-direction: column; gap: 7px; }
 .bug-report-field label { font-size: var(--ds-text-sm); font-weight: 650; }
 .bug-report-field label span { color: var(--ds-muted); font-weight: 400; }
@@ -90,7 +92,8 @@
 
 @media (max-width: 540px) {
   .bug-report-header { padding: 16px; }
-  .bug-report-form { padding: 16px; }
+  .bug-report-dialog { --pico-card-inset: 16px; }
+  .bug-report-form { padding: var(--pico-card-inset); }
 }
 
 .bug-report-success { margin: 0; padding: 10px 12px; border: 1px solid var(--ds-line-strong); border-radius: var(--ds-radius-md); color: var(--ds-text); font-size: var(--ds-text-sm); }
@@ -125,3 +128,7 @@
 @keyframes bug-report-countdown { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .bug-report-notice-progress > div { animation: none; } }
 
+
+.bug-report-dialog :is(.bug-report-file-row,.bug-report-attachment,.bug-report-success) {
+  border-radius: max(0px, calc(var(--pico-card-radius) - var(--pico-card-inset)));
+}

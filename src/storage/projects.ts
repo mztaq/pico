@@ -92,7 +92,7 @@ export function loadProjects(language: CompilerLanguage = 'pseudocode'): PicoPro
 }
 function normalizeProject(value: unknown): PicoProject | undefined {
   if (!value || typeof value !== 'object') return;
-  const project = value as Partial<PicoProject>;
+  const project = value as Partial<PicoProject> & { wallpaper?: unknown };
   if (
     typeof project.id !== 'string' ||
     typeof project.name !== 'string' ||
@@ -115,8 +115,9 @@ function normalizeProject(value: unknown): PicoProject | undefined {
     : files[0]!.id;
   const active = files.find((file) => file.id === activeFileId)!;
   const virtualFiles = normalizeVirtualFiles(project.virtualFiles);
+  const { wallpaper: _legacyWallpaper, ...workspace } = project;
   return {
-    ...project,
+    ...workspace,
     virtualFiles,
     code: active.code,
     files,

@@ -345,13 +345,18 @@ describe('guided help and readable reference',()=>{
     expect(container.querySelector<HTMLElement>('.tutorial-spotlight')?.style.left).toBe('695px');
     measure.mockRestore();
   });
-  it('adjusts and persists reference size with keyboard resizing',async()=>{
-    await click(container.querySelector('[aria-label="Increase reference text size"]')!);
-    expect(container.querySelector('.reference-controls output')?.textContent).toBe('14px');
+  it('adjusts and persists reference panel width with keyboard resizing',async()=>{
+    expect(container.querySelector('.reference-controls')).toBeNull();
     const splitter=container.querySelector('[aria-label="Resize quick reference panel"]')!;
     await act(async()=>splitter.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true})));
     const settings=JSON.parse(localStorage.getItem('pico.settings.v6')!);
-    expect(settings.referenceWidth).toBe(370);expect(settings.referenceFontSize).toBe(14);
+    expect(settings.referenceWidth).toBe(370);
+    const keywordSplitter=container.querySelector('[aria-label="Resize keyword list"]')!;
+    await act(async()=>keywordSplitter.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true})));
+    expect(JSON.parse(localStorage.getItem('pico.settings.v6')!).referenceKeywordHeight).toBe(138);
+    expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--reference-keyword-height: 138px');
+    await act(async()=>keywordSplitter.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true})));
+    expect(JSON.parse(localStorage.getItem('pico.settings.v6')!).referenceKeywordHeight).toBe(128);
     expect(container.querySelector('.pico-app')?.getAttribute('style')).toContain('--reference-width: 370px');
     await click(button('FOR'));expect(container.querySelector('.reference-explanation > strong')?.textContent).toBe('FOR');
   });
@@ -408,11 +413,13 @@ it('shows the selected keyword example for every reference entry without changin
   await click(button('FOR'));
   expect(container.querySelector('.reference-input-hint')).toBeNull();
   expect(container.querySelector('textarea')!.value).toBe(originalCode);
-  expect(container.querySelector('.reference-controls')).not.toBeNull();
+  expect(container.querySelector('.reference-controls')).toBeNull();
   expect(container.querySelector('.reference-scope')).toBeNull();
   expect(container.querySelector('.sidebar-bottom')).toBeNull();
-  expect(container.querySelector('.reference-controls')?.textContent).not.toContain('CAMBRIDGE');
-  expect(container.querySelector('.reference-controls')?.textContent).toContain('Drag the divider to resize');
+  expect(container.querySelector('.reference-explanation .mini-label')).toBeNull();
+  expect(container.querySelector('.reference-search input')?.getAttribute('placeholder')).toBe('Search');
+  const reference=container.querySelector('.reference-card')!;
+  expect([...reference.children].map(node=>node.classList.contains('reference-keywords-resize')?'reference-keywords-resize':node.className)).toEqual(['reference-head','reference-search','reference-keywords','reference-keywords-resize','reference-explanation']);
   expect(container.querySelector('.hover-doc-setting')).toBeNull();
   expect(container.querySelector('.editor-preferences')).toBeNull();
   await click(container.querySelector('[aria-label="Open settings"]')!);
