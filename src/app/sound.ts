@@ -147,6 +147,53 @@ function playKeyboardClick(ctx: AudioContext, start: number, kind: KeyKind): voi
   source.start(start);
 }
 
+// CPU cues use the same sampled audio path as typing. Match transient energy,
+ // rather than increasing the oscillator peak (which decays almost immediately).
+type CpuCue = 'cpuRegister' | 'cpuTransfer' | 'cpuTransferWrite';
+const cpuBuffers = new WeakMap<AudioContext, Map<CpuCue, AudioBuffer>>();
+function playCpuCue(ctx: AudioContext, start: number, cue: CpuCue): void {
+  let cached = cpuBuffers.get(ctx);
+  if (!cached) { cached = new Map(); cpuBuffers.set(ctx, cached); }
+  let buffer = cached.get(cue);
+  if (!buffer) {
+    const duration = cue === 'cpuTransferWrite' ? 0.090 : 0.072;
+    const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+    buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    const pulse = (time: number, from: number, to: number, span: number) => {
+      if (time < 0 || time >= span) return 0;
+      const attack = Math.sin(Math.min(1, time / 0.004) * Math.PI / 2);
+      const tail = Math.sin(Math.min(1, (span - time) / 0.012) * Math.PI / 2);
+      const phase = 2 * Math.PI * (from * time + (to - from) * time * time / (2 * span));
+      return attack * tail * Math.exp(-time * 38) * (0.76 * Math.sin(phase) + 0.19 * Math.sin(phase * 2) + 0.05 * Math.sin(phase * 3));
+    };
+    let energy = 0, peak = 0;
+    for (let i = 0; i < length; i++) {
+      const time = i / ctx.sampleRate;
+      const sample = cue === 'cpuRegister' ? pulse(time, 1100, 650, duration)
+        : cue === 'cpuTransfer' ? pulse(time, 650, 1500, duration)
+        : 0.8 * pulse(time, 650, 1500, 0.048) + 0.75 * pulse(time - 0.034, 1100, 650, 0.056);
+      data[i] = sample;
+      energy += sample * sample;
+      peak = Math.max(peak, Math.abs(sample));
+    }
+    // Match against the actual normal typing waveform at the same sample rate.
+    // A 1.6x energy-amplitude factor gives CPU cues a small audible lead over typing.
+    const reference = (keyBuffers.get(ctx)?.get('normal') ?? buildKeyBuffer(ctx, 'normal')).getChannelData(0);
+    let referenceEnergy = 0;
+    for (const sample of reference) referenceEnergy += sample * sample;
+    const scale = Math.min(0.85 / Math.max(peak, 0.0001), 1.6 * Math.sqrt(referenceEnergy / Math.max(energy, 0.0001)));
+    for (let i = 0; i < length; i++) data[i] *= scale;
+    cached.set(cue, buffer);
+  }
+  const source = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  source.buffer = buffer;
+  gain.gain.setValueAtTime(0.21, start);
+  source.connect(gain).connect(ctx.destination);
+  source.start(start);
+}
+
 export function playCue(cue: Cue): void {
   if (!soundEnabled()) return;
   const ctx = audio();
@@ -162,9 +209,7 @@ export function playCue(cue: Cue): void {
     case 'open': tone(ctx, 620, t, 0.07, 0.04, 'sine', 900); break;
     case 'close': tone(ctx, 900, t, 0.07, 0.035, 'sine', 600); break;
     case 'tab': tone(ctx, 1500, t, 0.025, 0.03, 'sine'); tone(ctx, 1900, t + 0.02, 0.03, 0.02, 'sine'); break;
-    case 'cpuRegister': tone(ctx, 760, t, 0.035, 0.055, 'triangle', 480); break;
-    case 'cpuTransfer': tone(ctx, 460, t, 0.045, 0.055, 'sine', 1120); break;
-    case 'cpuTransferWrite': tone(ctx, 460, t, 0.035, 0.050, 'sine', 1120); tone(ctx, 760, t + 0.028, 0.035, 0.050, 'triangle', 480); break;
+    case 'cpuRegister': case 'cpuTransfer': case 'cpuTransferWrite': playCpuCue(ctx, t, cue); break;
     case 'step': tone(ctx, 1600, t, 0.03, 0.03, 'square'); break;
     case 'stepBack': tone(ctx, 1200, t, 0.03, 0.03, 'square'); break;
     case 'run': tone(ctx, 523, t, 0.08, 0.06, 'triangle'); tone(ctx, 784, t + 0.07, 0.11, 0.06, 'triangle'); break;

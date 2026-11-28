@@ -336,12 +336,24 @@ describe('compiler typing sounds', () => {
   });
 });
 
- describe('CPU frame audio',()=>{
-  it('plays short transfer and register cues and respects mute',()=>{
+describe('CPU frame audio',()=>{
+  it('matches or exceeds normal typing energy with distinct cached samples and respects mute',()=>{
+    playCue('type');
     playCue('cpuRegister');playCue('cpuTransfer');playCue('cpuTransferWrite');
-    expect(oscillatorStarts).toHaveBeenCalledTimes(4);
+    expect(bursts).toHaveBeenCalledTimes(4);
+    const energy=(samples:Float32Array)=>samples.reduce((sum,value)=>sum+value*value,0);
+    const typingEnergy=energy(playedWaveforms[0]!);
+    for(const samples of playedWaveforms.slice(1)){
+      expect(energy(samples)).toBeGreaterThan(typingEnergy*1.5);
+      expect(samples.every(value=>Number.isFinite(value)&&Math.abs(value)<=0.851)).toBe(true);
+      expect(samples[0]).toBe(0);
+      expect(Math.abs(samples.at(-1)??1)).toBeLessThan(0.015);
+    }
+    expect(playedWaveforms[1]).not.toBe(playedWaveforms[2]);
+    playCue('cpuRegister');
+    expect(playedWaveforms[4]).toBe(playedWaveforms[1]);
     localStorage.setItem('pico.sound.v1','off');
     playCue('cpuRegister');playCue('cpuTransfer');playCue('cpuTransferWrite');
-    expect(oscillatorStarts).toHaveBeenCalledTimes(4);
+    expect(bursts).toHaveBeenCalledTimes(5);
   });
- });
+});
