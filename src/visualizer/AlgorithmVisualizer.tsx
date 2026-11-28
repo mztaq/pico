@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Shuffle } from 'lucide-react';
 import { loadSettings } from '../storage/settings';
 import { cssVariables, getTheme } from '../app/themes';
+import { WorkspaceFluidBackground } from '../app/components/WorkspaceFluidBackground';
 import { createRandomValues, createSortFrames, SORT_ALGORITHMS, type SortAlgorithm } from './sorting';
 import './algorithm-visualizer.css';
 
@@ -32,8 +33,18 @@ export function AlgorithmVisualizer({ onHome }: { onHome: () => void }) {
   function reset(nextValues = values) { setPlaying(false); setValues(nextValues); setStep(0); }
   function advance(amount: number) { setPlaying(false); setStep(current => Math.max(0, Math.min(current + amount, frames.length - 1))); }
 
-  return <main className="algorithm-app" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as React.CSSProperties}>
-    <header className="algorithm-topbar"><button className="algorithm-back" type="button" onClick={onHome}><ArrowLeft size={17}/> Workspaces</button><span className="algorithm-brand"><span className="algorithm-brand-mark">P</span> Pico <span className="algorithm-separator">/</span> Algorithm Visualizer</span></header>
+  return <div className="pico-app algorithm-app workspace-fluid-surface" data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as React.CSSProperties}>
+    <WorkspaceFluidBackground theme={theme}/>
+    <header className="topbar pico-appbar algorithm-topbar">
+      <div className="pico-appbar-lead">
+        <button className="toolbar-button home-button" type="button" aria-label="Go to home screen" onClick={onHome}><ArrowLeft size={16}/></button>
+        <button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></button>
+        <span className="pico-appbar-sep">/</span><span className="pico-appbar-tool">Algorithm Visualizer</span>
+      </div>
+      <div className="topbar-spacer"/>
+      <div className="pico-appbar-run"><button type="button" className="run-button" aria-label={playing ? 'Pause sorting' : 'Run sorting'} onClick={() => done ? reset() : setPlaying(value => !value)}>{playing ? <Pause size={14} fill="currentColor"/> : <Play size={14} fill="currentColor"/>}<span>{playing ? 'Pause' : done ? 'Run again' : 'Run'}</span></button></div>
+    </header>
+    <main className="algorithm-page-scroll">
     <div className="algorithm-content">
       <header className="algorithm-heading"><span className="algorithm-eyebrow">VISUAL LAB</span><h1>See how sorting works.</h1><p>Follow each comparison and swap. Change the algorithm, then step through it at your own pace.</p></header>
       <section className="algorithm-card" aria-label="Sorting visualizer">
@@ -50,5 +61,6 @@ export function AlgorithmVisualizer({ onHome }: { onHome: () => void }) {
       </section>
       <section className="algorithm-explainer"><div><span className="algorithm-eyebrow">HOW IT WORKS</span><h2>{SORT_ALGORITHMS[algorithm].name}</h2><p>{SORT_ALGORITHMS[algorithm].description}</p></div><div className="algorithm-complexity"><span>Complexity</span><strong>{SORT_ALGORITHMS[algorithm].complexity}</strong></div></section>
     </div>
-  </main>;
+    </main>
+  </div>;
 }

@@ -1,11 +1,9 @@
-.algorithm-app { min-height: 100dvh; overflow: auto; background: var(--bg); color: var(--text); font-family: var(--font-ui); }
+.algorithm-app { min-height: 570px; color: var(--text); font-family: var(--font-ui); }
 .algorithm-app * { box-sizing: border-box; }
-.algorithm-topbar { min-height: 58px; display: flex; align-items: center; gap: 18px; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
-.algorithm-back { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; border: 0; border-radius: 999px; padding: 0 12px; background: transparent; color: var(--muted); font: 600 13px var(--font-ui); cursor: pointer; }
-.algorithm-back:hover, .algorithm-quiet-button:hover { background: var(--surface-raised); color: var(--text); }
-.algorithm-brand { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13px; font-weight: 750; }
-.algorithm-brand-mark { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 8px; background: var(--accent); color: var(--on-accent, white); }
-.algorithm-separator { color: var(--muted); font-weight: 400; }
+.algorithm-topbar .pico-appbar-lead { gap: 6px; }
+.algorithm-topbar .pico-appbar-tool { margin-left: 3px; }
+.algorithm-quiet-button:hover { background: var(--surface-raised); color: var(--text); }
+.algorithm-page-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; }
 .algorithm-content { width: min(900px, calc(100% - 40px)); margin: 0 auto; padding: 44px 0 64px; }
 .algorithm-heading { margin: 0 0 26px; }
 .algorithm-eyebrow { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .11em; }
@@ -13,6 +11,9 @@
 .algorithm-heading p, .algorithm-explainer p { margin: 0; color: var(--muted); line-height: 1.6; }
 .algorithm-card, .algorithm-explainer { border: 1px solid var(--border); border-radius: 20px; background: var(--surface); box-shadow: 0 14px 38px color-mix(in srgb, var(--text) 8%, transparent); }
 .algorithm-card { overflow: hidden; }
+.algorithm-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .algorithm-card,
+.algorithm-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .algorithm-explainer { background: var(--workspace-fluid-panel); }
+.algorithm-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .algorithm-chart { background: var(--workspace-fluid-canvas); }
 .algorithm-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--border); }
 .algorithm-select-label { display: grid; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 700; }
 .algorithm-select-label select { min-height: 38px; min-width: 170px; border: 1px solid var(--border); border-radius: 11px; padding: 0 30px 0 11px; background: var(--surface-raised); color: var(--text); font: 650 13px var(--font-ui); }
@@ -48,8 +49,8 @@
 .algorithm-home-preview i { width: 7%; border-radius: 5px 5px 2px 2px; background: var(--accent); opacity: .75; transition: height .24s ease; }
 @keyframes algorithm-bar-in { from { opacity: .5; transform: scaleY(.94); transform-origin: bottom; } to { opacity: 1; transform: scaleY(1); } }
 @media (max-width: 620px) {
-  .algorithm-topbar { gap: 7px; padding: 0 12px; }
-  .algorithm-brand { font-size: 11px; }
+  .algorithm-topbar .pico-appbar-lead { min-width: 0; }
+  .algorithm-topbar .pico-appbar-tool { overflow: hidden; text-overflow: ellipsis; }
   .algorithm-content { width: min(100% - 24px, 900px); padding-top: 30px; }
   .algorithm-toolbar { align-items: stretch; flex-direction: column; padding: 14px; }
   .algorithm-select-label select { width: 100%; }
