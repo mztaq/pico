@@ -15,6 +15,7 @@ import { contrastRatio, cssVariables, getTheme } from '../app/themes';
 import { FloatingPanel } from './components/FloatingPanel';
 import { ResizeHandle } from './components/ResizeHandle';
 import { ThemePicker } from './components/ThemePicker';
+import { WallpaperLayer, WallpaperPicker, isWallpaperId } from './components/Wallpapers';
 import { GuidedTutorial, tutorialSteps } from './components/GuidedTutorial';
 import { TutorialOffer } from './components/TutorialOffer';
 import { HighlightedCode } from './components/HighlightedCode';
@@ -48,6 +49,7 @@ import './styles/resizable-workspace.css';
 import './styles/readability.css';
 import './styles/high-contrast.css';
 import './styles/motion.css';
+import './styles/wallpapers.css';
 import './styles/compiler-workspace.css';
 import '../styles/shell.css';
 import '../styles/compiler.css';
@@ -59,6 +61,16 @@ const panelTabs: { key: PanelKey; title: string }[] = [
 interface ParseState { ast: Program | null; error: unknown | null; }
 
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
+const WORKSPACE_WALLPAPER_KEY = 'pico.workspaceWallpaper.v1';
+
+function loadWorkspaceWallpaper(): string | undefined | null {
+  try {
+    const stored = localStorage.getItem(WORKSPACE_WALLPAPER_KEY);
+    if (stored === null) return null;
+    if (stored === 'none') return undefined;
+    return isWallpaperId(stored) ? stored : null;
+  } catch { return null; }
+}
 function closeInformationPage() {
   window.history.pushState(window.history.state, '', '/app');
   window.dispatchEvent(new PopStateEvent('popstate'));
@@ -102,6 +114,8 @@ export default function App() {
   const startCode = (starter: NonNullable<Topic['starter']>) => {
     const projects = snapshots.current[starter.language]?.projects ?? loadProjects(starter.language);
     const project = newProject(uniqueProjectName(starter.name, projects), starter.language);
+    const wallpaper = loadWorkspaceWallpaper();
+    if (wallpaper !== null) project.wallpaper = wallpaper;
     project.code = starter.code;
     project.files[0].code = starter.code;
     snapshots.current[starter.language] = { projects: [...projects, project], activeId: project.id };
@@ -124,6 +138,8 @@ export default function App() {
     charts.current = store;
     const projects = snapshots.current.pseudocode?.projects ?? loadProjects('pseudocode');
     const project = newProject(uniqueProjectName(name, projects), 'pseudocode');
+    const wallpaper = loadWorkspaceWallpaper();
+    if (wallpaper !== null) project.wallpaper = wallpaper;
     project.code = code;
     project.files[0].code = code;
     snapshots.current.pseudocode = { projects: [...projects, project], activeId: project.id };
@@ -137,6 +153,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const [projects, setProjects] = useState<PicoProject[]>(initial.projects);
   const [activeId, setActiveId] = useState(initial.activeId);
   const [settings, setSettings] = useState<PicoSettings>(() => loadSettings());
+  const [globalWallpaper, setGlobalWallpaper] = useState<string | undefined | null>(() => loadWorkspaceWallpaper());
   const [activePanel, setActivePanel] = useState<PanelKey>('console');
   const [dockOpen, setDockOpen] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -177,8 +194,9 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const autoDeclaredTypesRef = useRef<Record<string, Record<string, DataType>>>({});
 
   const activeProject = projects.find(project => project.id === activeId) ?? projects[0]!;
+  const workspaceWallpaper = globalWallpaper === null ? activeProject.wallpaper : globalWallpaper;
   const activeFile = activeProject.files.find(file => file.id === activeProject.activeFileId) ?? activeProject.files[0]!;
-  const markExported=useExitWarning(JSON.stringify(projects.map(p=>({id:p.id,name:p.name,files:p.files,tests:p.tests,virtualFiles:p.virtualFiles}))));
+  const markExported=useExitWarning(JSON.stringify(projects.map(p=>({id:p.id,name:p.name,files:p.files,tests:p.tests,virtualFiles:p.virtualFiles,wallpaper:p.wallpaper}))));
   const theme = getTheme(settings.theme);
   const parsed = useMemo<ParseState>(() => {
     if (isPython) return { ast: null, error: null };
@@ -286,6 +304,11 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     if (!window.matchMedia('(max-width: 1070px)').matches) changeSettings({ referenceVisible: false, layoutPreset: 'custom' });
   }
   function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
+  function applyWallpaperToAll(wallpaper: string | undefined) {
+    setGlobalWallpaper(wallpaper);
+    try { localStorage.setItem(WORKSPACE_WALLPAPER_KEY, wallpaper ?? 'none'); } catch { /* The active view still updates when storage is unavailable. */ }
+    setProjects(current => current.map(project => ({ ...project, wallpaper })));
+  }
   function selectProject(id: string) {
     setActiveId(id); setExecutionError(null); setResult(null); setConsoleEntries([]); setOutputTruncated(false); setPendingInput(null); setInputValue(''); setActivePanel('console');
     try { localStorage.setItem(isPython ? 'pico.python.activeProject.v1' : 'pico.activeProject.v1', id); } catch { /* Autosave status will explain local-storage availability. */ }
@@ -295,7 +318,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     if (requested === null) return;
     const name = normalizeProjectName(requested) || 'Untitled program';
     if (projectNameExists(name, projects)) { window.alert('A project with that name already exists. Choose a different name.'); return; }
-    const project = newProject(name, language); setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
+    const project = newProject(name, language); project.wallpaper = workspaceWallpaper; setProjects(current => [...current, project]); selectProject(project.id); setActivePanel('console');
   }
   function renameProject(draft: string) {
     setProjectNameDraft(draft.slice(0, 42));
@@ -324,7 +347,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     if (file.id === activeProject.activeFileId) { setExecutionError(null); setResult(null); setConsoleEntries([]); setOutputTruncated(false); }
   }
   function removeProject(id: string) {
-    if (projects.length < 2) { if (!window.confirm('This is your last local project. Replace it with a fresh blank program?')) return; const replacement = newProject(undefined, language); setProjects([replacement]); selectProject(replacement.id); return; }
+    if (projects.length < 2) { if (!window.confirm('This is your last local project. Replace it with a fresh blank program?')) return; const replacement = newProject(undefined, language); replacement.wallpaper = workspaceWallpaper; setProjects([replacement]); selectProject(replacement.id); return; }
     const project = projects.find(item => item.id === id);
     if (!window.confirm(`Delete “${project?.name ?? 'this project'}” from this browser? This cannot be undone.`)) return;
     const remaining = projects.filter(item => item.id !== id); setProjects(remaining);
@@ -412,7 +435,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     if (!file) return;
     try {
       const project = await importProject(file, language);
-      setProjects(current => [...current, { ...project, name: uniqueProjectName(project.name, current) }]);
+      setProjects(current => [...current, { ...project, wallpaper: workspaceWallpaper, name: uniqueProjectName(project.name, current) }]);
       selectProject(project.id);
     } catch (error) { window.alert(error instanceof Error ? error.message : 'Could not import that .pico file.'); }
     input.value = '';
@@ -438,7 +461,8 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     setFileMenuOpen(false);
   }
 
-  return <div className="pico-app" data-execution-active={running ? "true" : undefined} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
+  return <div className="pico-app" data-wallpaper={!theme.highContrast && isWallpaperId(workspaceWallpaper) ? workspaceWallpaper : 'none'} data-execution-active={running ? "true" : undefined} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={{ ...cssVariables(theme), '--on-accent': contrastRatio('#ffffff', theme.accent) >= contrastRatio('#000000', theme.accent) ? '#ffffff' : '#000000', '--error-color': theme.appearance === 'light' ? '#a40000' : '#ff7474', '--reference-width': `${settings.referenceWidth}px`, '--reference-font-size': `${settings.referenceFontSize}px`, '--dock-size': `${settings.dockSize}%` } as React.CSSProperties}>
+    <WallpaperLayer wallpaper={theme.highContrast ? undefined : workspaceWallpaper} />
     <header className="topbar pico-appbar" inert={tutorialOpen || tutorialOfferOpen}>
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" aria-label="Go to home screen" onClick={() => leaveWorkspace()}><ArrowLeft size={16} /></button>
@@ -455,6 +479,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
           {!isPython && <SettingRow title="Hover documentation" detail="Explain keywords when you pause over them" checked={settings.hoverDocs} onChange={value => changeSettings({ hoverDocs: value })} />}
           {!isPython && <SettingRow title="Auto-declare variables" detail="Infer types from assignments and usage" checked={settings.autoDeclare} onChange={value => changeSettings({ autoDeclare: value })} />}
           <ThemePicker value={settings.theme} onChange={id => changeSettings({ theme: id })} />
+          <WallpaperPicker value={workspaceWallpaper} highContrast={theme.highContrast} onChange={applyWallpaperToAll} />
           <label className="font-setting"><span>Tool dock position</span><select value={settings.dockSide} onChange={event => changeSettings({ dockSide: event.target.value as PicoSettings['dockSide'] })}><option value="bottom">Bottom</option><option value="right">Right</option></select></label>
           <label className="font-setting"><span>Editor text size <b>{settings.fontSize}px</b></span><input type="range" min="12" max="24" value={settings.fontSize} onChange={event => changeSettings({ fontSize: Number(event.target.value) })} /></label>
           <label className="font-setting"><span>Layout preset</span><select value={settings.layoutPreset} onChange={event => applyLayoutPreset(event.target.value as PicoSettings['layoutPreset'])}><option value="coding">Coding</option><option value="debugging">Debugging</option><option value="focus">Focus</option><option value="custom">Custom</option></select></label>

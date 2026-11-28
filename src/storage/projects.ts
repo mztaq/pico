@@ -26,6 +26,8 @@ export interface PicoProject {
   virtualFiles: VirtualFiles;
   updatedAt: number;
   language?: CompilerLanguage;
+  /** Optional decorative wallpaper, persisted with this workspace. */
+  wallpaper?: string;
 }
 const PROJECTS_KEY = 'pico.projects.v1';
 const ACTIVE_KEY = 'pico.activeProject.v1';

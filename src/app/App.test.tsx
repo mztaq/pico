@@ -50,6 +50,30 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();vi.unstubAllGlobals();});
 describe('workspace execution integration',()=>{
+  it('applies a wallpaper across existing and new workspaces without changing the editor theme',async()=>{
+    const firstPrompt=vi.spyOn(window,'prompt').mockReturnValue('Second project');
+    await click(container.querySelector<HTMLElement>('[aria-label="New project"]')!);
+    firstPrompt.mockRestore();
+    await click(container.querySelectorAll<HTMLElement>('.project-select')[0]!);
+    const app=container.querySelector<HTMLElement>('.pico-app')!;
+    const originalTheme=app.dataset.picoTheme;
+    await click(container.querySelector<HTMLElement>('[aria-label="Open settings"]')!);
+    await click(container.querySelector<HTMLElement>('.wallpaper-grid [role="radio"]:nth-child(2)')!);
+    expect(container.querySelector('.pico-app')?.getAttribute('data-wallpaper')).toBe('aurora');
+    expect(container.querySelector('.pico-app')?.getAttribute('data-pico-theme')).toBe(originalTheme);
+    await act(async()=>new Promise(resolve=>setTimeout(resolve,400)));
+    const projects=JSON.parse(localStorage.getItem('pico.projects.v1')!);
+    expect(projects).toHaveLength(2);
+    expect(projects.every((project:{wallpaper?:string})=>project.wallpaper==='aurora')).toBe(true);
+    expect(localStorage.getItem('pico.workspaceWallpaper.v1')).toBe('aurora');
+    const prompt=vi.spyOn(window,'prompt').mockReturnValue('Third project');
+    await click(container.querySelector<HTMLElement>('[aria-label="New project"]')!);
+    prompt.mockRestore();
+    expect(container.querySelector('.pico-app')?.getAttribute('data-wallpaper')).toBe('aurora');
+    const oldWorkspace=container.querySelectorAll<HTMLElement>('.project-select')[0]!;
+    await click(oldWorkspace);
+    expect(container.querySelector('.pico-app')?.getAttribute('data-wallpaper')).toBe('aurora');
+  });
   it('runs through a worker, shows output and replays final debugger state',async()=>{
     expect(container.querySelector('.pico-app')?.getAttribute('data-pico-theme')).toBe('catppuccin-mocha');
     expect(button('Run⌘ ↵').closest('.topbar')).not.toBeNull();
