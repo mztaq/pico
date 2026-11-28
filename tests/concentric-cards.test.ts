@@ -2,11 +2,13 @@ import {readFileSync} from 'node:fs';
 import {describe,it,expect} from 'vitest';
 const read=(path:string)=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 describe('Concentric cards and neutral home navigation',()=>{
-  it('keeps blur without accent colour or saturation on the home navbar',()=>{
+  it('keeps the home navbar transparent without a backdrop effect',()=>{
     const css=read('src/styles/ios-ui.css');
     const nav=css.match(/\.pico-home \.home-nav\s*\{[^}]*\}/)?.[0]??'';
     expect(nav).toContain('background: transparent');
-    expect(nav).toContain('backdrop-filter: blur(18px) grayscale(1)');
+    expect(nav).toContain('backdrop-filter: none');
+    expect(nav).not.toContain('grayscale(');
+    expect(nav).not.toContain('blur(');
     expect(nav).not.toContain('saturate(');
   });
   it('calculates inset panel radii instead of hardcoding independent corners',()=>{

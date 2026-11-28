@@ -18,8 +18,8 @@
 .pico-home .home-nav {
   background: transparent;
   box-shadow: none;
-  -webkit-backdrop-filter: blur(18px) grayscale(1);
-  backdrop-filter: blur(18px) grayscale(1);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .pico-app.ios-workspace-ui .topbar { min-height: 52px; }
 @media (max-width: 700px) {
