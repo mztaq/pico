@@ -1,7 +1,7 @@
 import {picoNotFound} from '../_lib/pico-not-found';
 
 interface Context { request: Request; env: { ASSETS: { fetch: (request: Request) => Promise<Response> } } }
-const appRoute=/^\/app(?:\/(?:pseudocode|python|flowchart|logic|cpu|binary|sql|traffic|games|learn|team|terms|privacy|cookies|report|ai-usage))?\/?$/;
+const appRoute=/^\/app(?:\/(?:pseudocode|python|flowchart|algorithm|logic|cpu|binary|sql|traffic|games|learn|team|terms|privacy|cookies|report|ai-usage))?\/?$/;
 
 /** Handle Pages catch-all precedence without treating valid Pico app paths as 404s. */
 export async function onRequestGet({request,env}:Context):Promise<Response>{

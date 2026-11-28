@@ -22,7 +22,7 @@ export interface WorkspaceMenuModel {
 }
 
 const names: Record<NonNullable<PicoWorkspace>, string> = {
-  pseudocode: 'Pseudocode', python: 'Python', flowchart: 'Flowchart',
+  pseudocode: 'Pseudocode', python: 'Python', flowchart: 'Flowchart', algorithm: 'Algorithm Visualizer',
   logic: 'Logic Sim', cpu: 'CPU Studio', binary: 'Binary Lab', sql: 'SQL Playground',
   traffic: 'Traffic Storm', games: 'Games', learn: 'Learn',
 };

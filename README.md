@@ -32,6 +32,7 @@ Pico started in October 2026 when we needed a better way to practise our compute
 | [Pseudocode Compiler](https://picompiler.pages.dev/app/pseudocode) | Run Cambridge-style pseudocode, enter inputs and debug line by line. |
 | [Python Compiler](https://picompiler.pages.dev/app/python) | Execute real Python in the browser with a console and debugger. |
 | [Flowchart Builder](https://picompiler.pages.dev/app/flowchart) | Draw, test and convert flowcharts into pseudocode. |
+| [Algorithm Visualizer](https://picompiler.pages.dev/app/algorithm) | Step through bubble, selection and insertion sort. |
 | [Logic Sim](https://picompiler.pages.dev/app/logic) | Connect gates, follow signals and generate truth tables. |
 | [CPU Studio](https://picompiler.pages.dev/app/cpu) | Step through fetch, decode and execute with visual CPU components. |
 | [Binary Lab](https://picompiler.pages.dev/app/binary) | Explore bits, hex, shifts, overflow and two's complement. |
