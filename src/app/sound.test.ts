@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { installSoundEffects, isCompilerTypingKey, soundEnabled } from './sound';
+import { installSoundEffects, isCompilerTypingKey, soundEnabled, playCue } from './sound';
 
 const bursts = vi.fn();
 const oscillatorStarts = vi.fn();
@@ -335,3 +335,13 @@ describe('compiler typing sounds', () => {
     }
   });
 });
+
+ describe('CPU frame audio',()=>{
+  it('plays short transfer and register cues and respects mute',()=>{
+    playCue('cpuRegister');playCue('cpuTransfer');playCue('cpuTransferWrite');
+    expect(oscillatorStarts).toHaveBeenCalledTimes(4);
+    localStorage.setItem('pico.sound.v1','off');
+    playCue('cpuRegister');playCue('cpuTransfer');playCue('cpuTransferWrite');
+    expect(oscillatorStarts).toHaveBeenCalledTimes(4);
+  });
+ });

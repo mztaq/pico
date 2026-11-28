@@ -9,6 +9,8 @@ import {boot,step,type Machine,type Register} from './engine';
 import {CpuTutorial,CPU_TUTORIAL_KEY} from './CpuTutorial';
 import {advanceWithInterrupt,initialInterrupt,requestInterrupt} from './advanced';
 import {advanceRunFrame} from './playback';
+import {playCue} from '../app/sound';
+import {cpuFrameCue} from './frame-sound';
 import './cpu.css';
 import '../styles/cpu.css';
 
@@ -162,6 +164,11 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  const [stepKey,setStepKey]=useState(0);
  const machineRef=useRef(machine);machineRef.current=machine;
  const theme=getTheme(landingPreview?'catppuccin-mocha':themeId);
+ function soundFrame(previous:Machine,next:Machine){
+  if(landingPreview||document.hidden)return;
+  const cue=cpuFrameCue(previous,next);
+  if(cue)playCue(cue);
+ }
  const active=machine.frame.active;
  const transfer=machine.frame.transfer;
  const modeDone=machine.halted;
@@ -177,15 +184,16 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
   const result=advanceRunFrame(current,interruptRef.current,mode);
   const next=result.machine;recordPrevious(current,interruptRef.current);
   interruptRef.current=result.interrupt;setInterrupt(result.interrupt);
+  soundFrame(current,next);
   machineRef.current=next;setMachine(next);setStepKey(n=>n+1);
   if(next.error)setPlaying(false);
- },waitForStep(clock));return()=>window.clearInterval(interval);},[isRunning,mode,clock]);
+ },waitForStep(clock));return()=>window.clearInterval(interval);},[isRunning,mode,clock,landingPreview]);
  function reset(nextMode=mode){setMode(nextMode);setPlaying(false);historyRef.current=[];setHistoryLength(0);const fresh=boot(DEFAULT_IMAGE);const empty=initialInterrupt();interruptRef.current=empty;setInterrupt(empty);machineRef.current=fresh;setMachine(fresh);setStepKey(n=>n+1);}
  function advance(){
   if(playing||modeDone)return;
   const result=mode==='advanced'?advanceWithInterrupt(machineRef.current,interruptRef.current):{machine:step(machineRef.current),interrupt:interruptRef.current};
   recordPrevious(machineRef.current,interruptRef.current);
-  interruptRef.current=result.interrupt;setInterrupt(result.interrupt);const next=result.machine;machineRef.current=next;setMachine(next);setStepKey(n=>n+1);
+  interruptRef.current=result.interrupt;setInterrupt(result.interrupt);const next=result.machine;soundFrame(machineRef.current,next);machineRef.current=next;setMachine(next);setStepKey(n=>n+1);
  }
  function back(){
   if(playing)return;
