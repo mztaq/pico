@@ -337,24 +337,22 @@ describe('compiler typing sounds', () => {
 });
 
 describe('CPU frame audio',()=>{
-  it('uses the exact same electrical zap as Logic Sim and respects mute',()=>{
-    const random=vi.spyOn(Math,'random').mockReturnValue(0.1);
-    try {
-      playCue('zap');
-      const reference=playedWaveforms.map(samples=>samples.slice());
-      expect(bursts).toHaveBeenCalledTimes(2);
-      expect(oscillatorStarts).toHaveBeenCalledTimes(2);
-      for(const cue of ['cpuRegister','cpuTransfer','cpuTransferWrite'] as const){
-        bursts.mockClear();oscillatorStarts.mockClear();playedWaveforms.length=0;
-        playCue(cue);
-        expect(bursts).toHaveBeenCalledTimes(2);
-        expect(oscillatorStarts).toHaveBeenCalledTimes(2);
-        expect(playedWaveforms).toEqual(reference);
-      }
-      localStorage.setItem('pico.sound.v1','off');
-      playCue('cpuRegister');playCue('cpuTransfer');playCue('cpuTransferWrite');
-      expect(bursts).toHaveBeenCalledTimes(2);
-      expect(oscillatorStarts).toHaveBeenCalledTimes(2);
-    } finally {random.mockRestore();}
+  it('plays distinct short, cached digital pulses without oscillator glides, and respects mute',()=>{
+    playCue('cpuRegister');playCue('cpuTransfer');playCue('cpuTransferWrite');
+    expect(bursts).toHaveBeenCalledTimes(3);
+    expect(oscillatorStarts).not.toHaveBeenCalled();
+    expect(startedSampleLengths).toEqual([1235,1852,1852]);
+    expect(playedWaveforms[1]).not.toEqual(playedWaveforms[2]);
+    for(const samples of playedWaveforms){
+      expect(samples[0]).toBe(0);
+      expect(Math.abs(samples.at(-1)??1)).toBeLessThan(0.015);
+      expect(samples.every(value=>Number.isFinite(value)&&Math.abs(value)<=0.821)).toBe(true);
+      expect(samples.some(value=>Math.abs(value)>0.8)).toBe(true);
+    }
+    playCue('cpuRegister');
+    expect(playedWaveforms[3]).toBe(playedWaveforms[0]);
+    localStorage.setItem('pico.sound.v1','off');
+    playCue('cpuRegister');playCue('cpuTransfer');playCue('cpuTransferWrite');
+    expect(bursts).toHaveBeenCalledTimes(4);
   });
 });

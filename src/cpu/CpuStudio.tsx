@@ -169,9 +169,9 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
   if(landingPreview||document.hidden)return;
   const cue=cpuFrameCue(previous,next);
   if(!cue)return;
-  // Logic Sim's zap lasts 200ms. Avoid stacking loud zaps at high clock speeds.
+  // Keep short CPU pulses separate even during the fastest playback.
   const now=performance.now();
-  if(now-lastCpuSound.current<200)return;
+  if(now-lastCpuSound.current<42)return;
   lastCpuSound.current=now;
   playCue(cue);
  }
