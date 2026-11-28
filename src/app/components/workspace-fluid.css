@@ -10,8 +10,8 @@
 }
 /* Preserve the original opaque surfaces when the fluid is unavailable. */
 .workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) {
-  --workspace-fluid-panel: color-mix(in srgb, var(--ds-panel) 86%, transparent);
-  --workspace-fluid-editor: color-mix(in srgb, var(--editor-bg, var(--bg)) 86%, transparent);
+  --workspace-fluid-panel: color-mix(in srgb, var(--ds-panel) 78%, transparent);
+  --workspace-fluid-editor: color-mix(in srgb, var(--editor-bg, var(--bg)) 78%, transparent);
   --workspace-fluid-canvas: color-mix(in srgb, var(--ds-sunken) 45%, transparent);
 }
 .ios-workspace-ui.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) :is(.ide-shell,.workspace-main) {
@@ -32,8 +32,13 @@
   background: transparent !important;
 }
 .flow-builder.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .flow-viewport,
-.logic-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .logic-board {
+.logic-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .logic-board,
+.cpu-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .cpu-diagram-scroll {
   background-color: var(--workspace-fluid-canvas) !important;
+}
+/* Keep the CPU grid, but let fluid show through its background and outer SVG shells. */
+.cpu-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) :is(.cpu-shell,.cpu-ram-shell) {
+  fill: var(--workspace-fluid-panel);
 }
 .binary-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .binary-panel,
 .cpu-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .cpu-information,
