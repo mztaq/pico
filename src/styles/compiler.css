@@ -102,8 +102,6 @@
 .pico-app .reference-head strong { color: var(--ds-text); font-size: var(--ds-text-md); font-weight: 650; }
 .pico-app .reference-close { border-radius: var(--ds-radius-sm); }
 .pico-app .reference-close:hover { background: var(--ds-hover); }
-.pico-app .reference-controls { color: var(--ds-muted); font-size: var(--ds-text-xs); }
-.pico-app .reference-controls button, .pico-app .reference-controls output { border-radius: var(--ds-radius-sm); }
 .pico-app .reference-search {
   height: 36px;
   flex-basis: 36px;
