@@ -11,68 +11,19 @@ import {advanceWithInterrupt,initialInterrupt,requestInterrupt} from './advanced
 import {advanceRunFrame} from './playback';
 import {playCue} from '../app/sound';
 import {cpuFrameCue} from './frame-sound';
+import {cpuTransferRoute,normalTransferRoute,NORMAL_WIRES,ADVANCED_WIRES,type CpuWire} from './diagram-wires';
+export {cpuTransferRoute,normalTransferRoute,NORMAL_WIRES,ADVANCED_WIRES} from './diagram-wires';
 import './cpu.css';
 import '../styles/cpu.css';
 
 export type CpuMode='normal'|'advanced';
 const DEFAULT_IMAGE=assemble(DEFAULT_PROGRAM);
-/** Follow visible connections, rather than animating directly through register labels. */
-export function cpuTransferRoute(from:Register,to:Register):string {
- const routes:Record<string,string>={
-  'PC>MAR':'M203 110 C315 110 420 110 548 110',
-  'MAR>RAM':'M708 121 C780 121 850 121 929 121',
-  'CU>RAM':'M708 485 C780 485 850 485 929 485',
-  'RAM>MDR':'M929 343 C850 343 780 343 708 343',
-  'MDR>CIR':'M548 350 C518 350 517 370 517 401 S500 448 480 448',
-  'CIR>MAR':'M480 445 C526 440 515 142 548 142',
-  'MDR>ACC':'M548 349 C505 349 530 228 480 228',
-  'ACC>MDR':'M480 225 C530 225 505 350 548 350',
-  'MDR>ALU':'M548 350 C519 350 501 350 480 350',
-  'ALU>ACC':'M397 283 C388 278 388 272 397 265',
-  'CIR>PC':'M315 445 C230 445 231 115 203 115',
-  'CIR>ACC':'M397 401 C420 367 420 305 397 265',
- };
- const route=routes[from+'>'+to];
- if(route)return route;
- const reverse=routes[to+'>'+from];
- if(reverse){
-   let x=0,y=0;const vertices:{x:number;y:number}[]=[];
-   for(const token of reverse.match(/[MHVL][0-9 .-]+/g)??[]){
-     const op=token[0];const nums=token.slice(1).trim().split(/\s+/).map(Number);
-     if(op==='M'){x=nums[0]!;y=nums[1]!;}else if(op==='H')x=nums[0]!;else if(op==='V')y=nums[0]!;
-     vertices.push({x,y});
-   }
-   if(vertices.length>1)return 'M'+vertices.at(-1)!.x+' '+vertices.at(-1)!.y+vertices.slice(0,-1).reverse().map(p=>' L'+p.x+' '+p.y).join('');
- }
- return '';
-}
 /** Rebalanced Normal layout leaves no large empty Decode Unit hole. */
 const NORMAL_LAYOUT:Partial<Record<Register|'CACHE'|'DECODE'|'CLOCK'|'STATUS'|'INTERRUPT',{x:number;y:number;w:number;h:number}>>={
  ACC:{x:45,y:189,w:240,h:90},
  ALU:{x:45,y:299,w:240,h:110},
  CIR:{x:315,y:197,w:165,h:102},
  CACHE:{x:45,y:431,w:240,h:100},
-};
-export function normalTransferRoute(from:Register,to:Register):string {
- const routes:Record<string,string>={
-  'PC>MAR':'M203 111 C300 96 440 96 548 111',
-  'MAR>RAM':'M708 121 C790 121 850 121 929 121',
-  'CU>RAM':'M708 485 C790 485 850 485 929 485',
-  'RAM>MDR':'M929 343 C850 343 786 343 708 343',
-  'MDR>CIR':'M548 341 C505 341 500 248 480 248',
-  'CIR>MAR':'M480 248 C526 237 514 126 548 126',
-  'MDR>ACC':'M548 341 C470 344 365 247 285 235',
-  'ACC>MDR':'M285 235 C367 247 471 344 548 341',
-  'MDR>ALU':'M548 351 C459 351 365 351 285 351',
-  'ALU>ACC':'M165 299 C149 290 149 287 165 279',
-  'CIR>ACC':'M315 248 C303 248 300 235 285 235',
- };
- return routes[from+'>'+to]??cpuTransferRoute(from,to);
-}
-const POINTS:Record<Register,{x:number;y:number}>={
- PC:{x:122,y:116},MAR:{x:631,y:115},MDR:{x:629,y:341},
- CIR:{x:396,y:447},ACC:{x:394,y:225},ALU:{x:396,y:334},
- CU:{x:629,y:480},RAM:{x:940,y:300},
 };
 const LABELS:Record<Register,string>={
  PC:'Program Counter (PC)',MAR:'Memory Address Register (MAR)',
@@ -113,24 +64,6 @@ const BOXES:{key:Register|'DECODE'|'CACHE'|'CLOCK'|'STATUS'|'INTERRUPT';x:number
  {key:'CLOCK',x:548,y:367,w:160,h:52,label:'Clock',value:m=>'TICK '+m.cycles},
  {key:'CU',x:548,y:443,w:160,h:95,label:'Control Unit',value:m=>m.frame.signal??'DECODE / CONTROL'},
 ];
-/** Schematic links remain visible throughout the walkthrough.
- * This is an educational component diagram, not a pin-level circuit. */
-export const ADVANCED_WIRES = [
- {id:'pc-mar',label:'PC sends the next instruction address to MAR',path:'M203 112 C318 100 433 100 548 112'},
- {id:'cu-decode',label:'Control Unit directs the Decode Unit',path:'M548 458 H525 Q512 458 512 445 V281 Q512 273 503 273 H304 Q296 273 292 266'},
- {id:'cir-decode',label:'CIR supplies the instruction for decoding',path:'M315 429 C301 429 303 377 292 377'},
- {id:'cache-decode',label:'Schematic cache connection to the CPU',path:'M175 423 C175 419 175 414 175 410'},
- {id:'alu-acc',label:'ALU result enters accumulator',path:'M372 283 C372 277 372 271 372 265'},
- {id:'acc-alu',label:'Accumulator supplies ALU',path:'M423 265 C423 271 423 277 423 283'},
- {id:'mdr-cir',label:'Memory Data Register transfers fetched instruction to CIR',path:'M548 319 C516 319 508 395 480 421'},
- {id:'alu-status',label:'ALU output updates the illustrative status register',path:'M480 344 H490 Q505 344 505 360 V474 Q505 482 480 482'},
- {id:'clock-cu',label:'Clock signal reaches Control Unit',path:'M616 419 C616 427 616 435 616 443'},
- {id:'cu-clock',label:'Control Unit and clock schematic connection',path:'M642 443 C642 434 642 427 642 419'},
- {id:'status-cu',label:'Illustrative status register to Control Unit',path:'M480 479 C510 479 522 470 548 470'},
- {id:'cu-status',label:'Control Unit to illustrative status register',path:'M548 488 C523 488 508 491 480 491'},
- {id:'interrupt-cu',label:'Interrupt register to Control Unit',path:'M480 513 C508 513 522 505 548 505'},
- {id:'cu-interrupt',label:'Control Unit to interrupt register',path:'M548 520 C522 520 506 528 480 528'},
-] as const;
 export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landingPreview?:boolean}){
  const [mode,setMode]=useState<CpuMode>('normal');
  const [machine,setMachine]=useState<Machine>(()=>boot(DEFAULT_IMAGE));
@@ -209,7 +142,7 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
   setStepKey(n=>n+1);
  }
  function finishTutorial(){setTourStep(null);try{localStorage.setItem(CPU_TUTORIAL_KEY,'done');}catch{/* Tutorial still closes. */}}
- const route=transfer?((mode==='normal'?normalTransferRoute(transfer.from,transfer.to):cpuTransferRoute(transfer.from,transfer.to))||('M '+POINTS[transfer.from].x+' '+POINTS[transfer.from].y+' L'+POINTS[transfer.to].x+' '+POINTS[transfer.to].y)):'';
+ const route=transfer?(mode==='normal'?normalTransferRoute(transfer.from,transfer.to):cpuTransferRoute(transfer.from,transfer.to)):'';
  const phase=machine.frame.phase;
  const focused=machine.cycles>0&&phase!=='error';
  const activeUnits=new Set<string>(active);
@@ -218,13 +151,14 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  if(mode==='advanced'&&(interrupt.pending||interrupt.stage>0))activeUnits.add('INTERRUPT');
  if(mode==='advanced'&&machine.cycles>0)activeUnits.add('CLOCK');
  if(mode==='advanced'&&phase==='execute'&&machine.frame.active.includes('ACC'))activeUnits.add('STATUS');
- const wireActive=(id:string)=>{
-  if(id.includes('clock'))return machine.cycles>0;
-  if(id.includes('interrupt'))return phase==='interrupt'||interrupt.pending||interrupt.stage>0;
-  if(id.includes('status')||id==='alu-status')return phase==='execute'&&(active.includes('ALU')||active.includes('ACC'));
-  if(id.includes('decode'))return phase==='decode';
-  if(id==='mdr-cir')return transfer?.from==='MDR'&&transfer?.to==='CIR';
-  return id==='pc-mar'&&transfer?.from==='PC'&&transfer?.to==='MAR';
+ const wires=mode==='normal'?NORMAL_WIRES:ADVANCED_WIRES;
+ const wireActive=(wire:CpuWire)=>{
+  if(wire.control)return activeUnits.has('CU')&&(!wire.target||activeUnits.has(wire.target));
+  if(wire.id.includes('clock'))return machine.cycles>0;
+  if(wire.id.includes('interrupt'))return phase==='interrupt'||interrupt.pending||interrupt.stage>0;
+  if(wire.id.includes('status'))return phase==='execute'&&(active.includes('ALU')||active.includes('ACC'));
+  if(wire.id.includes('decode'))return phase==='decode';
+  return !!transfer&&!!wire.from&&((wire.from===transfer.from&&wire.to===transfer.to)||(wire.bidirectional&&wire.from===transfer.to&&wire.to===transfer.from));
  };
  const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
  const memoryActive=activeUnits.has('RAM');
@@ -258,28 +192,23 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
     <svg className={"cpu-diagram"+(focused?" cpu-has-focus":"")} viewBox="0 0 1190 558" role="img" aria-label="CPU architecture with registers, ALU and Control Unit connected to RAM by address, data and control buses">
      <defs>
       <marker id="cpu-arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5 Z" fill="var(--accent)"/></marker>
-      <marker id="cpu-wire-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--muted)"/></marker>
-      <marker id="cpu-wire-active-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--accent)"/></marker>
+      <marker id="cpu-wire-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.5" orient="auto-start-reverse"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--muted)"/></marker>
+      <marker id="cpu-wire-active-arrow" markerWidth="6" markerHeight="6" refX="5.5" refY="3.5" orient="auto-start-reverse"><path d="M0 0 L6 3.5 L0 7 Z" fill="var(--accent)"/></marker>
      </defs>
      <rect className="cpu-shell" x="17" y="15" width="706" height="532" rx="8"/>
      <text className="cpu-main-title" x="370" y="40" textAnchor="middle">Central Processing Unit (CPU)</text>
-     {mode==='normal'&&<g className="cpu-connectors">
-       <path d="M203 111 C300 96 440 96 548 111"/>
-       <path d="M165 279 C150 291 150 291 165 299"/>
-       <path d="M285 235 C301 235 301 247 315 247"/>
-       <path d="M480 247 C527 247 510 341 548 341"/>
-       <path d="M285 350 C415 350 470 351 548 351"/>
-       <path d="M480 248 C520 258 510 468 548 478"/>
-      </g>}
-     {mode==='advanced'&&<g className="cpu-advanced-wiring" aria-label="Advanced CPU connections">
-      {ADVANCED_WIRES.map(wire=><path key={wire.id}
-       data-wire-id={wire.id}
-       className={'cpu-advanced-wire'+(wireActive(wire.id)?' cpu-wire-active':'')}
-       d={wire.path}
-       markerEnd={wireActive(wire.id)?'url(#cpu-wire-active-arrow)':'url(#cpu-wire-arrow)'}>
-       <title>{wire.label}</title>
-      </path>)}
-     </g>}
+     <g className="cpu-advanced-wiring" aria-label={mode==='normal'?'CPU connections':'Advanced CPU connections'}>
+      {wires.map(wire=>{
+       const highlighted=wireActive(wire);
+       const arrow=highlighted?'url(#cpu-wire-active-arrow)':'url(#cpu-wire-arrow)';
+       return <path key={wire.id} data-wire-id={wire.id}
+        className={'cpu-advanced-wire'+(wire.control?' cpu-control-wire':'')+(highlighted?' cpu-wire-active':'')}
+        d={wire.path} markerStart={wire.bidirectional?arrow:undefined} markerEnd={wire.trunk?undefined:arrow}>
+        <title>{wire.label}</title>
+       </path>;
+      })}
+      {wires.filter(wire=>wire.junction).map(wire=><circle key={wire.id+'-junction'} className={'cpu-control-junction'+(wireActive(wire)?' cpu-wire-active':'')} cx={wire.junction![0]} cy={wire.junction![1]} r="2.4"/>)}
+     </g>
      {renderedBoxes.map(box=><g key={box.key} data-cpu-tour={box.key==='CU'?'control':box.key==='PC'?'pc':undefined} tabIndex={0} role="button" aria-label={box.label} className={'cpu-block '+(focused?(activeUnits.has(box.key)?'cpu-active ':'cpu-dimmed '):'')+(selected===box.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(box.key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelected(box.key);}}}>
       <title>{HELP[box.key]}</title><rect x={box.x} y={box.y} width={box.w} height={box.h} rx="4"/>
       {box.key==='STATUS'||box.key==='INTERRUPT'?<g className="cpu-compact-register">
@@ -305,7 +234,7 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
      </g>)}
      <g className="cpu-connection-buses" data-cpu-tour="buses">
       {([{key:'ADDRESS',y:121,direction:1},{key:'DATA',y:343,direction:0},{key:'CONTROL',y:485,direction:0}] as const).map(b=><g key={b.key} tabIndex={0} role="button" aria-label={b.key+' bus'} className={'cpu-external-bus '+(focused?(activeBus===b.key?'cpu-bus-active ':'cpu-dimmed '):'')+(selected===b.key&&!focused?'cpu-selected':'')} onClick={()=>setSelected(b.key)} onKeyDown={e=>{if(e.key==='Enter')setSelected(b.key);}}>
-        <path d={'M716 '+(b.direction===0?b.y-15:b.y)+' H924'} markerEnd="url(#cpu-arr)"/>{b.direction===0&&<path d={'M924 '+(b.y+15)+' H716'} markerEnd="url(#cpu-arr)"/>}
+        <path d={'M708 '+(b.direction===0?b.y-15:b.y)+' H924'} markerEnd="url(#cpu-arr)"/>{b.direction===0&&<path d={'M924 '+(b.y+15)+' H708'} markerEnd="url(#cpu-arr)"/>}
         <text x="821" y={b.y-29} textAnchor="middle">{b.key[0]+b.key.slice(1).toLowerCase()} bus</text>
        </g>)}
      </g>
