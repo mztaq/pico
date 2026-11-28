@@ -2,16 +2,16 @@
 .workspace-fluid-surface { position: relative; isolation: isolate; }
 .workspace-fluid-surface > .pico-workspace-fluid {
   position: fixed; inset: 0; z-index: -1; overflow: hidden;
-  pointer-events: none; user-select: none; opacity: .48;
+  pointer-events: none; user-select: none; opacity: .32;
 }
 .pico-workspace-fluid canvas {
   display: block; width: 100%; height: 100%;
-  filter: blur(24px) saturate(.75);
+  filter: blur(12px) saturate(.9);
 }
 /* Preserve the original opaque surfaces when the fluid is unavailable. */
 .workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) {
-  --workspace-fluid-panel: color-mix(in srgb, var(--ds-panel) 78%, transparent);
-  --workspace-fluid-editor: color-mix(in srgb, var(--editor-bg, var(--bg)) 78%, transparent);
+  --workspace-fluid-panel: color-mix(in srgb, var(--ds-panel) 68%, transparent);
+  --workspace-fluid-editor: color-mix(in srgb, var(--editor-bg, var(--bg)) 72%, transparent);
   --workspace-fluid-canvas: color-mix(in srgb, var(--ds-sunken) 45%, transparent);
 }
 .ios-workspace-ui.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) :is(.ide-shell,.workspace-main) {

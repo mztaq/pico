@@ -18,7 +18,10 @@ describe('Interactive workspace fluid background',()=>{
     expect(engine).toContain("parent.addEventListener('pointerdown', onPointer, {passive: true, capture: true});");
     expect(css).toContain('pointer-events: none');
     expect(css).toContain('.pico-workspace-fluid canvas {');
-    expect(css).toContain('filter: blur(24px)');
+    expect(css).toContain('filter: blur(12px) saturate(.9)');
+    expect(css).toContain('opacity: .32');
+    expect(css).toContain('var(--ds-panel) 68%, transparent');
+    expect(css).toContain('var(--editor-bg, var(--bg)) 72%, transparent');
     expect(css).toContain('prefers-reduced-motion: reduce');
     expect(read('src/app/styles/ios-workspace.css')).toMatch(/\.run-button\s*\{\s*border-radius: var\(--ds-radius-md\)/);
   });
