@@ -1,6 +1,6 @@
 import '../../styles/home.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Binary, BookOpen, Bug, Calculator, Code2, Cpu, Database, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
+import { Activity, Binary, BookOpen, Bug, Calculator, Code2, Cpu, Database, Gamepad2, GitBranch, Network, Palette, Terminal, WifiOff, X as CloseIcon } from 'lucide-react';
 import { loadSettings, saveSettings } from '../../storage/settings';
 import { cssVariables, getTheme, normalizeThemeId } from '../themes';
 import { HomeFluidBackground } from './HomeFluidBackground';
@@ -141,6 +141,9 @@ export function HomeScreen({ onChoose }: { onChoose: (language: PicoWorkspace) =
           </WorkspaceChoice>
         </HomeGroup>
         <HomeGroup label="Visual labs" detail="Build and explore interactive models" kind="visual">
+          <WorkspaceChoice icon={<Activity size={18} />} title="Algorithm Visualizer" description="Watch sorting algorithms work, one comparison at a time." onClick={() => onChoose('algorithm')}>
+            {step => <div className="compiler-choice-preview algorithm-home-preview" aria-hidden="true">{[30, 52, 40, 72, 47, 62, 34, 57].map((height, index) => <i key={index} style={{ height: `${height + ((step + index) % 4) * 3}%` }} />)}</div>}
+          </WorkspaceChoice>
           <WorkspaceChoice icon={<GitBranch size={18} />} title="Flowchart Builder" description="Build, run and convert flowcharts to pseudocode." onClick={() => onChoose('flowchart')}>
             {step => <svg className="compiler-choice-preview home-chart-preview" viewBox="0 0 350 76" aria-hidden="true">
           <rect className={step % 3 === 0 ? 'home-preview-active' : ''} x="1" y="22" width="68" height="32" rx="16"/>

@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from 'react';
-import { WorkspaceLoading } from './WorkspaceLoading';
+import { WorkspaceLoading, type VisualWorkspace } from './WorkspaceLoading';
 
 /**
  * Suspense displays the loader only while a workspace's lazy module is pending.
@@ -8,6 +8,6 @@ import { WorkspaceLoading } from './WorkspaceLoading';
  */
 export function WorkspaceTransition({
   workspace, children,
-}: { workspace: 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab' | 'Traffic Storm' | 'SQL Playground'; children: ReactNode }) {
+}: { workspace: VisualWorkspace; children: ReactNode }) {
   return <Suspense fallback={<WorkspaceLoading workspace={workspace} />}>{children}</Suspense>;
 }

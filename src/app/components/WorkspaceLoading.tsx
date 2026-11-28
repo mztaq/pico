@@ -1,10 +1,10 @@
 import './workspace-loading.css';
 import { readSavedTrafficAlias } from '../../traffic/traffic-alias';
 
-export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Binary Lab' | 'Traffic Storm' | 'SQL Playground';
+export type VisualWorkspace = 'CPU Studio' | 'Logic Sim' | 'Flowchart Builder' | 'Algorithm Visualizer' | 'Binary Lab' | 'Traffic Storm' | 'SQL Playground';
 
-function Placeholder({ className = '' }: { className?: string }) {
-  return <div className={`pico-load-shimmer ${className}`} />;
+function Placeholder({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
+  return <div className={`pico-load-shimmer ${className}`} style={style} />;
 }
 
 function LoadingTopbar() {
@@ -139,6 +139,15 @@ function BinarySkeleton() {
   </div>;
 }
 
+function AlgorithmSkeleton() {
+  return <div className="pico-load-algorithm">
+    <Placeholder className="pico-load-algorithm-title" />
+    <Placeholder className="pico-load-algorithm-description" />
+    <div className="pico-load-algorithm-bars">{[36, 58, 44, 76, 49, 65, 32, 54].map((height, index) => <Placeholder key={index} className="pico-load-algorithm-bar" style={{ height: `${height}%` }} />)}</div>
+    <div className="pico-load-algorithm-actions"><Placeholder className="pico-load-action" /><Placeholder className="pico-load-action" /></div>
+  </div>;
+}
+
 function TrafficStormSkeleton() {
   return <div className="pico-load-storm-content">
     <div className="pico-load-storm-entry">
@@ -212,6 +221,7 @@ export function WorkspaceLoading({ workspace }: { workspace: VisualWorkspace }) 
     <div className="pico-load-layout" aria-hidden="true">
       <LoadingTopbar />
       {workspace === 'Flowchart Builder' ? <FlowchartSkeleton /> :
+       workspace === 'Algorithm Visualizer' ? <AlgorithmSkeleton /> :
        workspace === 'Logic Sim' ? <LogicSkeleton /> :
        workspace === 'CPU Studio' ? <CpuSkeleton /> :
        workspace === 'Traffic Storm' ? (returningToStorm ? <TrafficStormDiagramSkeleton /> : <TrafficStormSkeleton />) :

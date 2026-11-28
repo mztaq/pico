@@ -15,6 +15,7 @@ describe('Pico browser and desktop entry routes', () => {
       expect(shouldRenderPicoWorkspace('/app/sql', native)).toBe(true);
       expect(shouldRenderPicoWorkspace('/app/games', native)).toBe(true);
       expect(shouldRenderPicoWorkspace('/app/games/', native)).toBe(true);
+      expect(shouldRenderPicoWorkspace('/app/algorithm', native)).toBe(true);
     }
   });
 
