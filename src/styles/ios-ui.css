@@ -15,8 +15,9 @@
 .pico-home .home-learning-link, .pico-home .pico-games-card { border-radius: var(--ios-radius-card); box-shadow: var(--ios-shadow-card); }
 .pico-home .compiler-choice { border-radius: var(--home-card-radius); box-shadow: var(--ios-shadow-card); }
 .pico-home .compiler-choice { border-width: 1px; }
-.algorithm-home-preview { display: flex; align-items: end; justify-content: center; gap: 8px; padding: 10px 20px; }
-.algorithm-home-preview i { width: 7%; border-radius: 5px 5px 2px 2px; background: var(--accent); opacity: .75; transition: height .24s ease; }
+.algorithm-home-preview { height: 76px; display: flex; align-items: end; justify-content: center; gap: 8px; padding: 4px 20px 0; border-bottom: 1px solid color-mix(in srgb, var(--accent) 22%, var(--ds-line)); }
+.algorithm-home-preview i { display: block; width: 7%; flex: 0 1 16px; border-radius: 5px 5px 2px 2px; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 72%, var(--ds-text)), var(--accent)); opacity: .82; transition: height .24s ease, opacity .24s ease; }
+.algorithm-home-preview i:nth-child(3n) { opacity: .58; }
 .pico-home .home-nav {
   background: transparent;
   box-shadow: none;
