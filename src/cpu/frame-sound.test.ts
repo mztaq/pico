@@ -8,7 +8,9 @@ describe('CPU micro-operation sounds',()=>{
   expect(cpuFrameCue(previous,previous)).toBeNull();
   const cues=[];
   for(let i=0;i<7;i++){const next=step(previous);cues.push(cpuFrameCue(previous,next));previous=next;}
-  expect(cues).toEqual([null,'cpuTransfer','cpuTransfer','cpuTransfer','cpuTransferWrite','cpuTransferWrite','cpuRegister']);
+  expect(cues).toEqual(['cpuRegister','cpuTransfer','cpuTransfer','cpuTransfer','cpuTransferWrite','cpuTransferWrite','cpuRegister']);
   expect(cpuFrameCue(previous,boot(previous.initial))).toBeNull();
+  while(!previous.halted){const next=step(previous);expect(cpuFrameCue(previous,next)).not.toBeNull();previous=next;}
+  expect(cpuFrameCue(previous,step(previous))).toBeNull();
  });
 });

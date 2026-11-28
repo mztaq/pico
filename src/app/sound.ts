@@ -147,6 +147,54 @@ function playKeyboardClick(ctx: AudioContext, start: number, kind: KeyKind): voi
   source.start(start);
 }
 
+/** Short, non-musical digital hardware sounds. Fixed-frequency harmonics
+ * and a band-limited noise transient resemble switching electronics.
+ * No pitch glides, musical notes in sequence, or electrical explosion.
+ */
+type CpuCue = 'cpuRegister' | 'cpuTransfer' | 'cpuTransferWrite';
+const cpuBuffers = new WeakMap<AudioContext, Map<CpuCue, AudioBuffer>>();
+function buildCpuBuffer(ctx: AudioContext, cue: CpuCue): AudioBuffer {
+  const duration = cue === 'cpuRegister' ? 0.028 : 0.042;
+  const buffer = ctx.createBuffer(1, Math.max(1, Math.round(ctx.sampleRate * duration)), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  let seed = 0x51f2a9c3, previousNoise = 0, filteredNoise = 0, peak = 0;
+  const tau = Math.PI * 2;
+  const envelope = (t: number, length: number) => {
+    if (t <= 0 || t >= length) return 0;
+    return Math.min(1, t / 0.0018) * Math.exp(-t * 37) * Math.min(1, (length - t) / 0.008);
+  };
+  for (let i = 0; i < data.length; i++) {
+    const t = i / ctx.sampleRate;
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    const noise = seed / 2147483648 - 1;
+    filteredNoise += 0.32 * (noise - previousNoise - filteredNoise);
+    previousNoise = noise;
+    const clock = Math.sin(tau * 1170 * t) * 0.45 + Math.sin(tau * 2340 * t) * 0.20 + Math.sin(tau * 3510 * t) * 0.08;
+    const digital = Math.sin(tau * 1680 * t) * 0.40 + Math.sin(tau * 3360 * t) * 0.16 + Math.sin(tau * 840 * t) * 0.16;
+    const packetGate = 0.68 + 0.32 * Math.cos(tau * 180 * t);
+    const tick = (clock + 0.65 * filteredNoise) * envelope(t, 0.028);
+    const packet = (digital * packetGate + 0.55 * filteredNoise) * envelope(t, 0.042);
+    data[i] = cue === 'cpuRegister' ? tick : cue === 'cpuTransfer' ? packet : 0.62 * packet + 0.65 * tick;
+    peak = Math.max(peak, Math.abs(data[i]!));
+  }
+  // Use consistent peaks with a separate playback gain; preserve headroom.
+  const scale = 0.82 / Math.max(peak, 0.001);
+  for (let i = 0; i < data.length; i++) data[i] = data[i]! * scale;
+  return buffer;
+}
+function playCpuCue(ctx: AudioContext, start: number, cue: CpuCue): void {
+  let cached = cpuBuffers.get(ctx);
+  if (!cached) { cached = new Map(); cpuBuffers.set(ctx, cached); }
+  let buffer = cached.get(cue);
+  if (!buffer) { buffer = buildCpuBuffer(ctx, cue); cached.set(cue, buffer); }
+  const source = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  source.buffer = buffer;
+  gain.gain.setValueAtTime(0.30, start);
+  source.connect(gain).connect(ctx.destination);
+  source.start(start);
+}
+
 export function playCue(cue: Cue): void {
   if (!soundEnabled()) return;
   const ctx = audio();
@@ -162,9 +210,6 @@ export function playCue(cue: Cue): void {
     case 'open': tone(ctx, 620, t, 0.07, 0.04, 'sine', 900); break;
     case 'close': tone(ctx, 900, t, 0.07, 0.035, 'sine', 600); break;
     case 'tab': tone(ctx, 1500, t, 0.025, 0.03, 'sine'); tone(ctx, 1900, t + 0.02, 0.03, 0.02, 'sine'); break;
-    case 'cpuRegister': tone(ctx, 760, t, 0.035, 0.055, 'triangle', 480); break;
-    case 'cpuTransfer': tone(ctx, 460, t, 0.045, 0.055, 'sine', 1120); break;
-    case 'cpuTransferWrite': tone(ctx, 460, t, 0.035, 0.050, 'sine', 1120); tone(ctx, 760, t + 0.028, 0.035, 0.050, 'triangle', 480); break;
     case 'step': tone(ctx, 1600, t, 0.03, 0.03, 'square'); break;
     case 'stepBack': tone(ctx, 1200, t, 0.03, 0.03, 'square'); break;
     case 'run': tone(ctx, 523, t, 0.08, 0.06, 'triangle'); tone(ctx, 784, t + 0.07, 0.11, 0.06, 'triangle'); break;
@@ -180,6 +225,7 @@ export function playCue(cue: Cue): void {
     case 'notify': tone(ctx, 1046, t, 0.12, 0.04, 'sine'); tone(ctx, 1318, t + 0.1, 0.18, 0.035, 'sine'); break;
     case 'zoomIn': tone(ctx, 900, t, 0.05, 0.03, 'sine', 1300); break;
     case 'zoomOut': tone(ctx, 1300, t, 0.05, 0.03, 'sine', 900); break;
+    case 'cpuRegister': case 'cpuTransfer': case 'cpuTransferWrite': playCpuCue(ctx, t, cue); break;
     case 'zap':
       // Layer a bright electrical snap over two noisy arcs and a short low-voltage thump.
       crackle(ctx, t, 0.2, 0.42, 3000 + Math.random() * 1800);

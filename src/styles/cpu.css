@@ -178,3 +178,11 @@
   .cpu-app .cpu-ram-row rect { transition: fill .25s ease, stroke .25s ease; }
   .cpu-app .cpu-phase { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
 }
+
+/* Orthogonal schematic routes share the same geometry as the animated transfers. */
+.cpu-app .cpu-advanced-wire { stroke-linecap: butt; stroke-linejoin: miter; }
+.cpu-app .cpu-advanced-wire { stroke-width: 1.6; }
+.cpu-app .cpu-control-wire { stroke: color-mix(in srgb, var(--accent) 65%, var(--muted)); stroke-width: 1; stroke-dasharray: 4 3; opacity: .58; }
+.cpu-app .cpu-advanced-wire.cpu-wire-active { stroke-width: 2.4; }
+.cpu-app .cpu-control-wire.cpu-wire-active { stroke: var(--accent); stroke-width: 1.7; opacity: 1; }
+.cpu-app .cpu-flow-path { stroke-linejoin: miter; }
