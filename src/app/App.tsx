@@ -490,7 +490,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
 
           {layout.referenceVisible && <ResizeHandle axis="x" label="Resize quick reference panel" className="reference-resize-handle" onResize={resizeReference} />}
           {layout.referenceVisible && <button className="reference-backdrop" aria-label="Dismiss quick reference" onClick={closeReference} tabIndex={-1} />}
-          {layout.referenceVisible && <aside className="reference-card" id="quick-reference" data-tour="reference" aria-label="Quick reference">
+          {layout.referenceVisible && <aside className={`reference-card${isPython ? ' python-reference' : ''}`} id="quick-reference" data-tour="reference" aria-label="Quick reference">
             <div className="reference-head"><div><BookOpen size={15} /><strong>Quick reference</strong></div><button className="reference-close" aria-label="Close quick reference" onClick={closeReference}><X size={18} /></button></div>
             {isPython ? <PythonReference /> : <>
             <div className="reference-search"><Search size={13} /><input value={docSearch} onChange={event => setDocSearch(event.target.value)} placeholder="Search" aria-label="Search pseudocode keywords" /></div>

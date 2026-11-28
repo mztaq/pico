@@ -14,6 +14,9 @@
 .pico-app[data-pico-theme] .keyword-pill.active:hover { border-color: var(--accent); background: var(--accent-soft); }
 .reference-no-results { margin: 4px 0; color: var(--muted); font-size: 14px; }
 .reference-card .reference-explanation { box-sizing: border-box; min-height: 0; flex: 1 1 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 0 4px; border-top: 0; border-bottom: 0; user-select: text; }
+/* Python has fewer keywords, so keep its example directly beneath the list. */
+.reference-card.python-reference .reference-keywords { flex: 0 1 auto; max-height: 50%; }
+.reference-card.python-reference .reference-explanation { flex: 1 1 0; }
 .reference-explanation .mini-label { font-size: 11px; color: var(--muted); }
 .reference-explanation > strong { margin-top: 0; font-size: calc(var(--reference-font-size) + 1px); color: var(--reference-label); }
 .reference-explanation > p { color: var(--text); font-size: var(--reference-font-size); line-height: 1.6; }
