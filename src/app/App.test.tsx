@@ -412,6 +412,8 @@ it('shows the selected keyword example for every reference entry without changin
   expect(container.querySelector('.sidebar-bottom')).toBeNull();
   expect(container.querySelector('.reference-explanation .mini-label')).toBeNull();
   expect(container.querySelector('.reference-search input')?.getAttribute('placeholder')).toBe('Search');
+  const reference=container.querySelector('.reference-card')!;
+  expect([...reference.children].map(node=>node.className)).toEqual(['reference-head','reference-search','reference-explanation','reference-keywords']);
   expect(container.querySelector('.hover-doc-setting')).toBeNull();
   expect(container.querySelector('.editor-preferences')).toBeNull();
   await click(container.querySelector('[aria-label="Open settings"]')!);

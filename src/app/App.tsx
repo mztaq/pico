@@ -494,11 +494,11 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
             <div className="reference-head"><div><BookOpen size={15} /><strong>Quick reference</strong></div><button className="reference-close" aria-label="Close quick reference" onClick={closeReference}><X size={18} /></button></div>
             {isPython ? <PythonReference /> : <>
             <div className="reference-search"><Search size={13} /><input value={docSearch} onChange={event => setDocSearch(event.target.value)} placeholder="Search" aria-label="Search pseudocode keywords" /></div>
-            <div className="reference-keywords">{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} aria-pressed={selectedDoc === term} onClick={() => setSelectedDoc(term)}>{term}</button>)}{!shownTerms.length && <p className="reference-no-results">No matches</p>}</div>
             <div className="reference-explanation" key={selectedDoc}>
               <strong>{selectedDoc}</strong><p>{currentDoc}</p>
               <div className="reference-example"><pre aria-label={`${selectedDoc} code example`}><HighlightedCode code={currentExample.code} /></pre>{currentExample.inputs && <p className="reference-input-hint">Example input: <code>{currentExample.inputs.join(', ')}</code></p>}</div>
             </div>
+            <div className="reference-keywords">{shownTerms.map(term => <button key={term} className={`keyword-pill ${selectedDoc === term ? 'active' : ''}`} aria-pressed={selectedDoc === term} onClick={() => setSelectedDoc(term)}>{term}</button>)}{!shownTerms.length && <p className="reference-no-results">No matches</p>}</div>
             </>}
           </aside>}
         </div>

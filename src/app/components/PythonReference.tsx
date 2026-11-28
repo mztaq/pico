@@ -21,7 +21,7 @@ export function PythonReference() {
   const current=entries.find(entry=>entry.word===word)!;
   return <>
     <div className="reference-search"><input aria-label="Search Python reference" placeholder="Search" value={search} onChange={event=>setSearch(event.target.value)} /></div>
-    <div className="reference-keywords">{entries.filter(entry=>entry.word.includes(search.trim().toLowerCase())).map(entry=><button className={`keyword-pill ${word===entry.word?'active':''}`} aria-pressed={word===entry.word} key={entry.word} onClick={()=>setWord(entry.word)}>{entry.word}</button>)}</div>
     <div className="reference-explanation"><strong>{current.word}</strong><p>{current.description}</p><div className="reference-example"><pre aria-label={`${current.word} code example`}><HighlightedCode language="python" code={current.code} /></pre></div></div>
+    <div className="reference-keywords">{entries.filter(entry=>entry.word.includes(search.trim().toLowerCase())).map(entry=><button className={`keyword-pill ${word===entry.word?'active':''}`} aria-pressed={word===entry.word} key={entry.word} onClick={()=>setWord(entry.word)}>{entry.word}</button>)}</div>
   </>;
 }
