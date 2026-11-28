@@ -15,42 +15,92 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: .82;
-  filter: saturate(1.08);
+  opacity: .72;
+  filter: brightness(.82) saturate(.82);
+}
+.workspace-wallpaper::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  content: '';
+  background: color-mix(in srgb, var(--bg) 28%, transparent);
 }
 .workspace-wallpaper[data-paused] > video,
 .workspace-wallpaper[data-video-failed] > video { display: none; }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) { position: relative; isolation: isolate; background: transparent; }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .ide-shell { background: transparent; }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .workspace-main { background: transparent !important; }
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .topbar {
+  background: color-mix(in srgb, var(--surface) 94%, transparent) !important;
+  border-bottom-color: color-mix(in srgb, var(--border) 76%, transparent);
+  backdrop-filter: blur(20px) saturate(135%);
+}
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .workspace-tabs {
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(18px) saturate(130%);
+}
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .workspace-tabs .project-row {
+  align-self: center;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  border-bottom-color: transparent;
+  transition: background .16s ease, border-color .16s ease;
+}
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .workspace-tabs .project-row.active {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-bottom-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .reference-card,
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .tool-dock {
-  background: color-mix(in srgb, var(--surface) 62%, transparent) !important;
+  background: color-mix(in srgb, var(--surface) 86%, transparent) !important;
+  border-color: color-mix(in srgb, var(--border) 78%, transparent);
+  border-radius: 15px;
+  box-shadow: 0 14px 34px rgb(0 0 0 / 18%), inset 0 1px 0 rgb(255 255 255 / 4%);
   backdrop-filter: blur(18px) saturate(125%);
 }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .editor-card {
-  background: transparent !important;
-  backdrop-filter: none;
+  background: color-mix(in srgb, var(--surface) 82%, transparent) !important;
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 15px;
+  box-shadow: 0 18px 42px rgb(0 0 0 / 20%), inset 0 1px 0 rgb(255 255 255 / 4%);
+  backdrop-filter: blur(14px) saturate(120%);
 }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .cm-editor,
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .cm-scroller {
   background: transparent !important;
 }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .cm-editor {
-  backdrop-filter: blur(12px) saturate(120%);
+  backdrop-filter: none;
 }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .cm-gutters {
-  background: color-mix(in srgb, var(--editor-bg) 48%, transparent) !important;
+  background: color-mix(in srgb, var(--editor-bg) 88%, transparent) !important;
 }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .file-tabs,
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .editor-card-foot,
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .dock-content {
-  background: color-mix(in srgb, var(--surface) 76%, transparent);
+  background: color-mix(in srgb, var(--surface) 93%, transparent);
 }
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .reference-head,
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .dock-tab-row,
 .pico-app[data-wallpaper]:not([data-wallpaper='none']) .workspace-tabs {
-  background: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+}
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .file-tab {
+  border: 1px solid transparent;
+  border-radius: 9px 9px 0 0;
+}
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .file-tab.active {
+  border-color: color-mix(in srgb, var(--border) 84%, transparent);
+  border-bottom-color: transparent;
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+}
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .topbar-icon,
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .help-button { border-radius: 999px; }
+.pico-app[data-wallpaper]:not([data-wallpaper='none']) .run-button {
+  border-radius: 999px;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .wallpaper-picker { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--ds-line); }
