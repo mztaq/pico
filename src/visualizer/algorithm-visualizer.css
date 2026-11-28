@@ -1,0 +1,68 @@
+.algorithm-app { min-height: 100dvh; overflow: auto; background: var(--bg); color: var(--text); font-family: var(--font-ui); }
+.algorithm-app * { box-sizing: border-box; }
+.algorithm-topbar { min-height: 58px; display: flex; align-items: center; gap: 18px; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.algorithm-back { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; border: 0; border-radius: 999px; padding: 0 12px; background: transparent; color: var(--muted); font: 600 13px var(--font-ui); cursor: pointer; }
+.algorithm-back:hover, .algorithm-quiet-button:hover { background: var(--surface-raised); color: var(--text); }
+.algorithm-brand { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13px; font-weight: 750; }
+.algorithm-brand-mark { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 8px; background: var(--accent); color: var(--on-accent, white); }
+.algorithm-separator { color: var(--muted); font-weight: 400; }
+.algorithm-content { width: min(900px, calc(100% - 40px)); margin: 0 auto; padding: 44px 0 64px; }
+.algorithm-heading { margin: 0 0 26px; }
+.algorithm-eyebrow { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .11em; }
+.algorithm-heading h1 { margin: 9px 0 8px; font-size: clamp(28px, 4vw, 40px); line-height: 1.12; letter-spacing: -.045em; }
+.algorithm-heading p, .algorithm-explainer p { margin: 0; color: var(--muted); line-height: 1.6; }
+.algorithm-card, .algorithm-explainer { border: 1px solid var(--border); border-radius: 20px; background: var(--surface); box-shadow: 0 14px 38px color-mix(in srgb, var(--text) 8%, transparent); }
+.algorithm-card { overflow: hidden; }
+.algorithm-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--border); }
+.algorithm-select-label { display: grid; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.algorithm-select-label select { min-height: 38px; min-width: 170px; border: 1px solid var(--border); border-radius: 11px; padding: 0 30px 0 11px; background: var(--surface-raised); color: var(--text); font: 650 13px var(--font-ui); }
+.algorithm-toolbar-actions { display: flex; gap: 6px; }
+.algorithm-quiet-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; border: 0; border-radius: 999px; padding: 0 11px; background: transparent; color: var(--muted); font: 650 12px var(--font-ui); cursor: pointer; }
+.algorithm-chart { padding: 22px 22px 12px; background: color-mix(in srgb, var(--surface-raised) 42%, var(--surface)); }
+.algorithm-bars { height: clamp(220px, 35vh, 330px); display: flex; align-items: end; gap: clamp(4px, 1.1vw, 10px); padding: 0 2px; border-bottom: 1px solid var(--border); }
+.algorithm-bar { position: relative; flex: 1; min-width: 0; display: flex; align-items: start; justify-content: center; border-radius: 8px 8px 3px 3px; background: color-mix(in srgb, var(--accent) 70%, var(--surface-raised)); transition: height .28s cubic-bezier(.2,.75,.2,1), background-color .2s, transform .2s; animation: algorithm-bar-in .35s both; animation-delay: calc(var(--bar-index) * 13ms); }
+.algorithm-bar span { margin-top: 7px; color: var(--text); font-size: 11px; font-weight: 750; }
+.algorithm-bar.is-active { z-index: 1; background: var(--accent); transform: translateY(-4px); box-shadow: 0 5px 18px color-mix(in srgb, var(--accent) 30%, transparent); }
+.algorithm-bar.is-sorted { background: color-mix(in srgb, #36a980 72%, var(--surface-raised)); }
+.algorithm-indexes { display: flex; gap: clamp(4px, 1.1vw, 10px); padding: 7px 2px 0; color: var(--muted); font-size: 9px; text-align: center; }
+.algorithm-indexes span { flex: 1; }
+.algorithm-caption { min-height: 66px; display: flex; align-items: center; gap: 18px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.algorithm-step-count { display: flex; flex: none; gap: 4px; color: var(--text); font-size: 12px; font-weight: 750; }
+.algorithm-step-count span { color: var(--muted); font-weight: 500; }
+.algorithm-caption p { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--muted); font-size: 13px; }
+.algorithm-caption p svg { color: #36a980; }
+.algorithm-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; }
+.algorithm-step-buttons { display: flex; align-items: center; gap: 8px; }
+.algorithm-step-buttons > button:not(.algorithm-play) { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; background: var(--surface-raised); color: var(--text); cursor: pointer; }
+.algorithm-step-buttons button:disabled { opacity: .4; cursor: not-allowed; }
+.algorithm-play { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 999px; padding: 0 18px; background: var(--accent); color: var(--on-accent, white); font: 750 12px var(--font-ui); cursor: pointer; }
+.algorithm-speed { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; font-weight: 650; }
+.algorithm-speed input { width: 100px; accent-color: var(--accent); }
+.algorithm-speed span { width: 40px; }
+.algorithm-explainer { display: flex; align-items: center; justify-content: space-between; gap: 28px; margin-top: 14px; padding: 20px 22px; }
+.algorithm-explainer h2 { margin: 6px 0; font-size: 17px; letter-spacing: -.02em; }
+.algorithm-explainer p { max-width: 520px; font-size: 13px; }
+.algorithm-complexity { display: grid; flex: none; gap: 6px; color: var(--muted); font-size: 11px; }
+.algorithm-complexity strong { color: var(--text); font-size: 12px; }
+.algorithm-home-preview { display: flex; align-items: end; justify-content: center; gap: 8px; padding: 10px 20px; }
+.algorithm-home-preview i { width: 7%; border-radius: 5px 5px 2px 2px; background: var(--accent); opacity: .75; transition: height .24s ease; }
+@keyframes algorithm-bar-in { from { opacity: .5; transform: scaleY(.94); transform-origin: bottom; } to { opacity: 1; transform: scaleY(1); } }
+@media (max-width: 620px) {
+  .algorithm-topbar { gap: 7px; padding: 0 12px; }
+  .algorithm-brand { font-size: 11px; }
+  .algorithm-content { width: min(100% - 24px, 900px); padding-top: 30px; }
+  .algorithm-toolbar { align-items: stretch; flex-direction: column; padding: 14px; }
+  .algorithm-select-label select { width: 100%; }
+  .algorithm-toolbar-actions { justify-content: flex-start; }
+  .algorithm-chart { padding-inline: 12px; }
+  .algorithm-bars { height: 230px; gap: 4px; }
+  .algorithm-bar { border-radius: 5px 5px 2px 2px; }
+  .algorithm-bar span { font-size: 9px; }
+  .algorithm-indexes { gap: 4px; font-size: 8px; }
+  .algorithm-caption { align-items: flex-start; flex-direction: column; gap: 5px; padding: 12px 14px; }
+  .algorithm-controls { align-items: flex-start; flex-direction: column; padding: 12px 14px; }
+  .algorithm-explainer { align-items: flex-start; flex-direction: column; gap: 14px; padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .algorithm-bar { animation: none; transition: none; }
+}

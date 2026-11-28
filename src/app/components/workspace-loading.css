@@ -31,6 +31,12 @@
 .pico-load-toolbar-label{width:112px;height:14px}
 .pico-load-visual-grid{flex:1;display:grid;min-height:0}
 .pico-load-flowchart-grid{grid-template-columns:214px minmax(0,1fr) 262px}
+.pico-load-algorithm{width:min(820px,calc(100% - 40px));margin:8vh auto 0}
+.pico-load-algorithm-title{width:48%;height:34px;margin-bottom:12px}
+.pico-load-algorithm-description{width:72%;height:15px;margin-bottom:28px}
+.pico-load-algorithm-bars{height:320px;display:flex;align-items:end;gap:12px;padding:20px;border:1px solid var(--pico-load-border);border-radius:20px;background:var(--pico-load-surface)}
+.pico-load-algorithm-bar{flex:1;border-radius:7px 7px 2px 2px}
+.pico-load-algorithm-actions{display:flex;gap:12px;margin-top:16px}
 .pico-load-logic-grid{grid-template-columns:226px minmax(0,1fr) 250px}
 .pico-load-palette,.pico-load-inspector{min-height:0;overflow:hidden;padding:20px 14px;background:var(--pico-load-surface)}
 .pico-load-palette{border-right:1px solid var(--pico-load-border)}

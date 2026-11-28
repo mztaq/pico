@@ -32,6 +32,7 @@ import { PythonReference } from './components/PythonReference';
 import { preloadPythonRuntime, startPythonExecution } from '../runtime/python/runner';
 // Split visual workspaces into separate chunks instead of downloading every simulator up front.
 const FlowchartWorkspace = lazy(() => import('../flowchart/FlowchartWorkspace').then(m => ({ default: m.FlowchartWorkspace })));
+const AlgorithmVisualizer = lazy(() => import('../visualizer/AlgorithmVisualizer').then(m => ({ default: m.AlgorithmVisualizer })));
 const LogicWorkspace = lazy(() => import('../logic/LogicWorkspace').then(m => ({ default: m.LogicWorkspace })));
 const CpuStudio = lazy(() => import('../cpu/CpuStudio').then(m => ({ default: m.CpuStudio })));
 const BinaryLab = lazy(() => import('../binary/BinaryLab').then(m => ({ default: m.BinaryLab })));
@@ -93,7 +94,7 @@ export default function App() {
       window.removeEventListener('hashchange', syncInformation);
     };
   }, []);
-  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : informationPage === 'ai-usage' ? 'Copyright & AI Usage' : 'Terms and Conditions'}` : language === 'learn' ? 'Pico | Learn and practice' : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : language === 'sql' ? 'Pico | SQL Playground' : language === 'traffic' ? 'Pico | Traffic Storm' : language === 'games' ? 'Pico | Games' : 'Pico | Home'; }, [language, informationPage]);
+  useEffect(() => { document.title = informationPage ? `Pico | ${informationPage === 'team' ? 'Pico Team' : informationPage === 'privacy' ? 'Privacy Policy' : informationPage === 'cookies' ? 'Cookie Policy' : informationPage === 'ai-usage' ? 'Copyright & AI Usage' : 'Terms and Conditions'}` : language === 'learn' ? 'Pico | Learn and practice' : language === 'pseudocode' ? 'Pico | Pseudocode Compiler' : language === 'python' ? 'Pico | Python Compiler' : language === 'flowchart' ? 'Pico | Flowchart Builder' : language === 'algorithm' ? 'Pico | Algorithm Visualizer' : language === 'logic' ? 'Pico | Logic Sim' : language === 'cpu' ? 'Pico | CPU Studio' : language === 'binary' ? 'Pico | Binary Lab' : language === 'sql' ? 'Pico | SQL Playground' : language === 'traffic' ? 'Pico | Traffic Storm' : language === 'games' ? 'Pico | Games' : 'Pico | Home'; }, [language, informationPage]);
   // Workspace URLs are updated by setLanguage, and popstate restores browser history.
   const snapshots = useRef<Partial<Record<CompilerLanguage, WorkspaceSnapshot>>>({});
   const charts = useRef<ChartStore | undefined>(undefined);
@@ -117,6 +118,7 @@ export default function App() {
   </>;
   if (language === 'games') return <GamesPage onHome={() => setLanguage(null)} />;
   if (language === 'learn') return <LearningHub onBack={() => setLanguage(null)} onOpenTool={setLanguage} onStartCode={startCode} />;
+  if (language === 'algorithm') return <WorkspaceLoadBoundary key="algorithm" workspace="Algorithm Visualizer"><WorkspaceTransition workspace="Algorithm Visualizer"><AlgorithmVisualizer onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'logic') return <WorkspaceLoadBoundary key="logic" workspace="Logic Sim"><WorkspaceTransition workspace="Logic Sim"><LogicWorkspace onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'cpu') return <WorkspaceLoadBoundary key="cpu" workspace="CPU Studio"><WorkspaceTransition workspace="CPU Studio"><CpuStudio onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
   if (language === 'binary') return <WorkspaceLoadBoundary key="binary" workspace="Binary Lab"><WorkspaceTransition workspace="Binary Lab"><BinaryLab onHome={() => setLanguage(null)} /></WorkspaceTransition></WorkspaceLoadBoundary>;
