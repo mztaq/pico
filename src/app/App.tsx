@@ -15,7 +15,7 @@ import { contrastRatio, cssVariables, getTheme } from '../app/themes';
 import { FloatingPanel } from './components/FloatingPanel';
 import { ResizeHandle } from './components/ResizeHandle';
 import { ThemePicker } from './components/ThemePicker';
-import { WallpaperLayer, WallpaperPicker, isWallpaperId } from './components/Wallpapers';
+import { WallpaperLayer, WallpaperPicker, isWallpaperId, WALLPAPER_ID } from './components/Wallpapers';
 import { GuidedTutorial, tutorialSteps } from './components/GuidedTutorial';
 import { TutorialOffer } from './components/TutorialOffer';
 import { HighlightedCode } from './components/HighlightedCode';
@@ -63,13 +63,11 @@ interface ParseState { ast: Program | null; error: unknown | null; }
 interface WorkspaceSnapshot { projects: PicoProject[]; activeId: string; }
 const WORKSPACE_WALLPAPER_KEY = 'pico.workspaceWallpaper.v1';
 
-function loadWorkspaceWallpaper(): string | undefined | null {
+function loadWorkspaceWallpaper(): string {
   try {
-    const stored = localStorage.getItem(WORKSPACE_WALLPAPER_KEY);
-    if (stored === null) return null;
-    if (stored === 'none') return undefined;
-    return isWallpaperId(stored) ? stored : null;
-  } catch { return null; }
+    localStorage.setItem(WORKSPACE_WALLPAPER_KEY, WALLPAPER_ID);
+  } catch { /* The bundled wallpaper still applies for this session. */ }
+  return WALLPAPER_ID;
 }
 function closeInformationPage() {
   window.history.pushState(window.history.state, '', '/app');
@@ -150,10 +148,10 @@ export default function App() {
 export function Workspace({ language, snapshot, onChoose, onHome }: { language: CompilerLanguage; snapshot?: WorkspaceSnapshot; onChoose: (language: CompilerLanguage, snapshot: WorkspaceSnapshot) => void; onHome: (snapshot: WorkspaceSnapshot) => void }) {
   const isPython = language === 'python';
   const [initial] = useState(() => { if (snapshot) return snapshot; const projects = loadProjects(language); return { projects, activeId: loadActiveId(projects, language) }; });
-  const [projects, setProjects] = useState<PicoProject[]>(initial.projects);
+  const [projects, setProjects] = useState<PicoProject[]>(() => initial.projects.map(project => ({ ...project, wallpaper: WALLPAPER_ID })));
   const [activeId, setActiveId] = useState(initial.activeId);
   const [settings, setSettings] = useState<PicoSettings>(() => loadSettings());
-  const [globalWallpaper, setGlobalWallpaper] = useState<string | undefined | null>(() => loadWorkspaceWallpaper());
+  const [globalWallpaper, setGlobalWallpaper] = useState<string>(() => loadWorkspaceWallpaper());
   const [activePanel, setActivePanel] = useState<PanelKey>('console');
   const [dockOpen, setDockOpen] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -194,7 +192,7 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
   const autoDeclaredTypesRef = useRef<Record<string, Record<string, DataType>>>({});
 
   const activeProject = projects.find(project => project.id === activeId) ?? projects[0]!;
-  const workspaceWallpaper = globalWallpaper === null ? activeProject.wallpaper : globalWallpaper;
+  const workspaceWallpaper = globalWallpaper;
   const activeFile = activeProject.files.find(file => file.id === activeProject.activeFileId) ?? activeProject.files[0]!;
   const markExported=useExitWarning(JSON.stringify(projects.map(p=>({id:p.id,name:p.name,files:p.files,tests:p.tests,virtualFiles:p.virtualFiles,wallpaper:p.wallpaper}))));
   const theme = getTheme(settings.theme);
@@ -304,10 +302,10 @@ export function Workspace({ language, snapshot, onChoose, onHome }: { language: 
     if (!window.matchMedia('(max-width: 1070px)').matches) changeSettings({ referenceVisible: false, layoutPreset: 'custom' });
   }
   function changeSettings(patch: Partial<PicoSettings>) { setSettings(current => ({ ...current, ...patch })); }
-  function applyWallpaperToAll(wallpaper: string | undefined) {
-    setGlobalWallpaper(wallpaper);
-    try { localStorage.setItem(WORKSPACE_WALLPAPER_KEY, wallpaper ?? 'none'); } catch { /* The active view still updates when storage is unavailable. */ }
-    setProjects(current => current.map(project => ({ ...project, wallpaper })));
+  function applyWallpaperToAll(_wallpaper: string | undefined) {
+    setGlobalWallpaper(WALLPAPER_ID);
+    try { localStorage.setItem(WORKSPACE_WALLPAPER_KEY, WALLPAPER_ID); } catch { /* The active view still updates when storage is unavailable. */ }
+    setProjects(current => current.map(project => ({ ...project, wallpaper: WALLPAPER_ID })));
   }
   function selectProject(id: string) {
     setActiveId(id); setExecutionError(null); setResult(null); setConsoleEntries([]); setOutputTruncated(false); setPendingInput(null); setInputValue(''); setActivePanel('console');

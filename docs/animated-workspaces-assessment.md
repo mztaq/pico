@@ -6,15 +6,15 @@ Pico is a React 19, TypeScript and Vite application. Its editor themes are defin
 
 ## What browser wallpapers can support
 
-Lively's Web Player hosts ordinary webpages in Chromium based WebView2 or CEF, and its documentation says browser features can be used alongside optional Lively APIs. Wallpaper Engine has video, web and rendered scene wallpaper formats, including 2D/3D and shader driven content. Pico uses the same browser-native foundation: CSS for theme-aware static fallbacks and previews, Canvas 2D for original animated scenes, and muted inline video for a user-imported clip. A normal website cannot host arbitrary native wallpaper formats or assume desktop app integrations, GPU budget, codecs, autoplay, or unrestricted cross-origin access. Those desktop features are outside this implementation.
+Lively's Web Player hosts ordinary webpages in Chromium based WebView2 or CEF, and its documentation says browser features can be used alongside optional Lively APIs. Wallpaper Engine has video, web and rendered scene wallpaper formats, including 2D/3D and shader driven content. Pico uses the same browser-native foundation: a bundled muted inline video with CSS theme-aware fallback. A normal website cannot host arbitrary native wallpaper formats or assume desktop app integrations, GPU budget, codecs, autoplay, or unrestricted cross-origin access. Those desktop features are outside this implementation.
 
 ## Performance, compatibility and licensing
 
-CSS gradients are inexpensive, require no network requests, and keep a static appearance if motion is disabled. Canvas and video add rendering, memory, decoding and battery costs, so Pico caps Canvas rendering to 30 fps and 1.5x device pixel ratio, pauses work when the document is hidden, and honors reduced motion. Imported video is muted, stored in IndexedDB on the user's device, and limited to 100 MB; it is not bundled into or redistributed with the repository. Wallpaper Engine Workshop content must not be copied without its creator's permission. Pico runs no wallpaper supplied scripts.
+Video adds decoding, memory and battery costs. The supplied clip was reduced from 4K/30 fps to 1080p/24 fps, uses H.264, and is served as a same-origin bundled MP4. Pico mutes and loops playback, pauses when the document is hidden, and honors reduced motion with a static theme-aware fallback. Wallpaper Engine Workshop content must not be copied without its creator's permission. Pico runs no wallpaper supplied scripts.
 
 ## Initial implementation scope
 
-Add a curated set of original ambient and anime inspired scenes, selected in Settings and stored as an optional wallpaper ID on each compiler workspace. Users can optionally import a local MP4/WebM as a video wallpaper; the media blob stays in that browser's IndexedDB. Preserve existing themes and use the current theme's sunken background as the `None` fallback. Do not add a third-party dependency.
+Use the user's provided video as the single workspace wallpaper, bundled locally with Pico and applied to every compiler workspace. Preserve existing editor themes and use a static theme-aware fallback when video playback is unavailable or reduced motion is enabled. Do not add a third-party dependency.
 
 ## References
 
