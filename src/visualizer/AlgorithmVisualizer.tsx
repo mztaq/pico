@@ -3,17 +3,18 @@ import { ArrowLeft, Check, ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Sh
 import { loadSettings } from '../storage/settings';
 import { cssVariables, getTheme } from '../app/themes';
 import { WorkspaceFluidBackground } from '../app/components/WorkspaceFluidBackground';
-import { createRandomValues, createSortFrames, SORT_ALGORITHMS, type SortAlgorithm } from './sorting';
+import { ALGORITHM_INFO, createAlgorithmFrames, createRandomValues, type AlgorithmId } from './sorting';
 import './algorithm-visualizer.css';
 
 export function AlgorithmVisualizer({ onHome }: { onHome: () => void }) {
   const theme = getTheme(loadSettings().theme);
-  const [algorithm, setAlgorithm] = useState<SortAlgorithm>('bubble');
+  const [algorithm, setAlgorithm] = useState<AlgorithmId>('bubble');
   const [values, setValues] = useState(() => createRandomValues());
+  const [target, setTarget] = useState(50);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(3);
-  const frames = useMemo(() => createSortFrames(values, algorithm), [values, algorithm]);
+  const frames = useMemo(() => createAlgorithmFrames(values, algorithm, target), [values, algorithm, target]);
   const frame = frames[Math.min(step, frames.length - 1)]!;
   const done = step === frames.length - 1;
 
@@ -46,10 +47,18 @@ export function AlgorithmVisualizer({ onHome }: { onHome: () => void }) {
     </header>
     <main className="algorithm-page-scroll">
     <div className="algorithm-content">
-      <header className="algorithm-heading"><span className="algorithm-eyebrow">VISUAL LAB</span><h1>See how sorting works.</h1><p>Follow each comparison and swap. Change the algorithm, then step through it at your own pace.</p></header>
-      <section className="algorithm-card" aria-label="Sorting visualizer">
+      <header className="algorithm-heading"><span className="algorithm-eyebrow">CAMBRIDGE IGCSE · COMPUTER SCIENCE</span><h1>See algorithms step by step.</h1><p>Explore the standard search, sorting and list-processing methods, one trace at a time.</p></header>
+      <section className="algorithm-card" aria-label="Algorithm visualizer">
         <div className="algorithm-toolbar">
-          <label className="algorithm-select-label">Algorithm<select aria-label="Sorting algorithm" value={algorithm} onChange={event => setAlgorithm(event.target.value as SortAlgorithm)}>{Object.entries(SORT_ALGORITHMS).map(([id, item]) => <option key={id} value={id}>{item.name}</option>)}</select></label>
+          <label className="algorithm-select-label">Algorithm<select aria-label="Algorithm" value={algorithm} onChange={event => setAlgorithm(event.target.value as AlgorithmId)}>
+            <optgroup label="Cambridge IGCSE standard methods">
+              {(['linear-search', 'bubble', 'total', 'count', 'maximum', 'minimum', 'average'] as AlgorithmId[]).map(id => <option key={id} value={id}>{ALGORITHM_INFO[id].name}</option>)}
+            </optgroup>
+            <optgroup label="Extra sorting practice">
+              {(['selection', 'insertion'] as AlgorithmId[]).map(id => <option key={id} value={id}>{ALGORITHM_INFO[id].name}</option>)}
+            </optgroup>
+          </select></label>
+          {(algorithm === 'linear-search' || algorithm === 'count') && <label className="algorithm-select-label algorithm-target-label">{algorithm === 'linear-search' ? 'Search for' : 'Count values at least'}<input aria-label={algorithm === 'linear-search' ? 'Search target' : 'Count threshold'} type="number" min="10" max="99" value={target} onChange={event => setTarget(Math.max(10, Math.min(99, Number(event.target.value) || 10)))}/></label>}
           <div className="algorithm-toolbar-actions"><button type="button" className="algorithm-quiet-button" onClick={() => reset(createRandomValues())}><Shuffle size={15}/> New values</button><button type="button" className="algorithm-quiet-button" onClick={() => reset()}><RotateCcw size={15}/> Reset</button></div>
         </div>
         <div className="algorithm-chart" role="img" aria-label={`Sorting values. Step ${step + 1} of ${frames.length}. ${frame.label}`}>
@@ -57,9 +66,10 @@ export function AlgorithmVisualizer({ onHome }: { onHome: () => void }) {
           <div className="algorithm-indexes" aria-hidden="true">{frame.values.map((_, index) => <span key={index}>{index + 1}</span>)}</div>
         </div>
         <div className="algorithm-caption" aria-live="polite"><span className="algorithm-step-count">Step {step + 1} <span>of {frames.length}</span></span><p>{done && <Check size={16}/>} {frame.label}</p></div>
+        {frame.variables.length > 0 && <div className="algorithm-variables" aria-label="Current variable values">{frame.variables.map(variable => <code key={variable}>{variable}</code>)}</div>}
         <div className="algorithm-controls"><div className="algorithm-step-buttons"><button type="button" aria-label="Previous step" disabled={step === 0} onClick={() => advance(-1)}><ChevronLeft size={18}/></button><button type="button" className="algorithm-play" onClick={() => done ? reset() : setPlaying(value => !value)}>{playing ? <Pause size={16} fill="currentColor"/> : <Play size={16} fill="currentColor"/>}{playing ? 'Pause' : done ? 'Run again' : step ? 'Resume' : 'Play'}</button><button type="button" aria-label="Next step" disabled={done} onClick={() => advance(1)}><ChevronRight size={18}/></button></div><label className="algorithm-speed">Speed <input aria-label="Animation speed" type="range" min="1" max="5" value={speed} onChange={event => setSpeed(Number(event.target.value))}/><span>{['Slow','', 'Normal','','Fast'][speed - 1]}</span></label></div>
       </section>
-      <section className="algorithm-explainer"><div><span className="algorithm-eyebrow">HOW IT WORKS</span><h2>{SORT_ALGORITHMS[algorithm].name}</h2><p>{SORT_ALGORITHMS[algorithm].description}</p></div><div className="algorithm-complexity"><span>Complexity</span><strong>{SORT_ALGORITHMS[algorithm].complexity}</strong></div></section>
+      <section className="algorithm-explainer"><div className="algorithm-explainer-copy"><span className="algorithm-eyebrow">HOW IT WORKS</span><h2>{ALGORITHM_INFO[algorithm].name}</h2><p>{ALGORITHM_INFO[algorithm].description}</p><pre className="algorithm-code"><code>{ALGORITHM_INFO[algorithm].python}</code></pre></div><div className="algorithm-complexity"><span>Complexity</span><strong>{ALGORITHM_INFO[algorithm].complexity}</strong></div></section>
     </div>
     </main>
   </div>;

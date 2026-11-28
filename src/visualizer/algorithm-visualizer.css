@@ -17,6 +17,7 @@
 .algorithm-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--border); }
 .algorithm-select-label { display: grid; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 700; }
 .algorithm-select-label select { min-height: 38px; min-width: 170px; border: 1px solid var(--border); border-radius: 11px; padding: 0 30px 0 11px; background: var(--surface-raised); color: var(--text); font: 650 13px var(--font-ui); }
+.algorithm-select-label input { width: 110px; min-height: 38px; border: 1px solid var(--border); border-radius: 11px; padding: 0 11px; background: var(--surface-raised); color: var(--text); font: 650 13px var(--font-ui); }
 .algorithm-toolbar-actions { display: flex; gap: 6px; }
 .algorithm-quiet-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; border: 0; border-radius: 999px; padding: 0 11px; background: transparent; color: var(--muted); font: 650 12px var(--font-ui); cursor: pointer; }
 .algorithm-chart { padding: 22px 22px 12px; background: color-mix(in srgb, var(--surface-raised) 42%, var(--surface)); }
@@ -32,6 +33,8 @@
 .algorithm-step-count span { color: var(--muted); font-weight: 500; }
 .algorithm-caption p { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--muted); font-size: 13px; }
 .algorithm-caption p svg { color: #36a980; }
+.algorithm-variables { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 20px 14px; }
+.algorithm-variables code { border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; background: var(--surface-raised); color: var(--text); font: 600 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
 .algorithm-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; }
 .algorithm-step-buttons { display: flex; align-items: center; gap: 8px; }
 .algorithm-step-buttons > button:not(.algorithm-play) { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; background: var(--surface-raised); color: var(--text); cursor: pointer; }
@@ -43,6 +46,8 @@
 .algorithm-explainer { display: flex; align-items: center; justify-content: space-between; gap: 28px; margin-top: 14px; padding: 20px 22px; }
 .algorithm-explainer h2 { margin: 6px 0; font-size: 17px; letter-spacing: -.02em; }
 .algorithm-explainer p { max-width: 520px; font-size: 13px; }
+.algorithm-code { overflow-x: auto; max-width: 600px; margin: 14px 0 0; border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; background: var(--surface-raised); color: var(--text); font: 11px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.algorithm-code code { white-space: pre; }
 .algorithm-complexity { display: grid; flex: none; gap: 6px; color: var(--muted); font-size: 11px; }
 .algorithm-complexity strong { color: var(--text); font-size: 12px; }
 .algorithm-home-preview { display: flex; align-items: end; justify-content: center; gap: 8px; padding: 10px 20px; }
@@ -54,6 +59,7 @@
   .algorithm-content { width: min(100% - 24px, 900px); padding-top: 30px; }
   .algorithm-toolbar { align-items: stretch; flex-direction: column; padding: 14px; }
   .algorithm-select-label select { width: 100%; }
+  .algorithm-select-label input { width: 100%; }
   .algorithm-toolbar-actions { justify-content: flex-start; }
   .algorithm-chart { padding-inline: 12px; }
   .algorithm-bars { height: 230px; gap: 4px; }
@@ -61,6 +67,7 @@
   .algorithm-bar span { font-size: 9px; }
   .algorithm-indexes { gap: 4px; font-size: 8px; }
   .algorithm-caption { align-items: flex-start; flex-direction: column; gap: 5px; padding: 12px 14px; }
+  .algorithm-variables { padding-inline: 14px; }
   .algorithm-controls { align-items: flex-start; flex-direction: column; padding: 12px 14px; }
   .algorithm-explainer { align-items: flex-start; flex-direction: column; gap: 14px; padding: 16px; }
 }
