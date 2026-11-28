@@ -164,10 +164,16 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  const [stepKey,setStepKey]=useState(0);
  const machineRef=useRef(machine);machineRef.current=machine;
  const theme=getTheme(landingPreview?'catppuccin-mocha':themeId);
+ const lastCpuSound=useRef(-Infinity);
  function soundFrame(previous:Machine,next:Machine){
   if(landingPreview||document.hidden)return;
   const cue=cpuFrameCue(previous,next);
-  if(cue)playCue(cue);
+  if(!cue)return;
+  // Logic Sim's zap lasts 200ms. Avoid stacking loud zaps at high clock speeds.
+  const now=performance.now();
+  if(now-lastCpuSound.current<200)return;
+  lastCpuSound.current=now;
+  playCue(cue);
  }
  const active=machine.frame.active;
  const transfer=machine.frame.transfer;
