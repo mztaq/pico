@@ -26,7 +26,7 @@ SOFTWARE.
 // Pico: isolated instance, live theme uniforms, bounded resolution, no GUI, analytics or external assets.
 import { getWebGLContext } from './home-fluid-context.js';
 
-export function startFluid(canvas, initialPalette, onFailure) {
+export function startFluid(canvas, initialPalette, onFailure, { workspace = false } = {}) {
   let context;
   let frame = 0;
   let disposed = false;
@@ -34,12 +34,12 @@ export function startFluid(canvas, initialPalette, onFailure) {
   const resources = new Map();
   const parent = canvas.parentElement.parentElement;
   const compact = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-  const config = { SIM_RESOLUTION: 128, DYE_RESOLUTION: compact ? 192 : 320,
-    PRESSURE_ITERATIONS: compact ? 8 : 12, PRESSURE: 0.8, CURL: 24,
+  const config = { SIM_RESOLUTION: workspace ? 64 : 128, DYE_RESOLUTION: workspace ? 128 : compact ? 192 : 320,
+    PRESSURE_ITERATIONS: workspace ? 6 : compact ? 8 : 12, PRESSURE: 0.8, CURL: 24,
     DENSITY_DISSIPATION: 0.85, VELOCITY_DISSIPATION: 0.55, SPLAT_RADIUS: 0.28 };
   let lastPointer = null;
   let pending = null;
-  const frameInterval = 1000 / 60;
+  const frameInterval = 1000 / (workspace ? 30 : 60);
   let lastFrame = 0;
   let frameBudget = 0;
   let simulatedElapsed = 0;
@@ -99,7 +99,7 @@ export function startFluid(canvas, initialPalette, onFailure) {
   try {
     resizeCanvas();
     const {gl, ext} = getWebGLContext(canvas, value => { context = value; });
-    if (!ext.supportLinearFiltering) config.DYE_RESOLUTION = 192;
+    if (!ext.supportLinearFiltering && !workspace) config.DYE_RESOLUTION = 192;
 
 class Program {
     constructor (vertexShader, fragmentShader) {
@@ -624,7 +624,7 @@ draw();
 update = now => {
   if (disposed || document.hidden) return;
   frame = requestAnimationFrame(update);
-  // Limit GPU simulation and drawing to 60fps. Carry fractional frame time forward.
+  // Limit GPU simulation and drawing to the selected frame rate. Carry fractional frame time forward.
   const elapsed = lastFrame ? now - lastFrame : frameInterval;
   lastFrame = now;
   frameBudget += Math.min(elapsed, 40);
@@ -637,7 +637,7 @@ update = now => {
   try {
     if (resizeCanvas()) { initFramebuffers(); seed(); }
     if (pending) {
-      addInk(pending.x, pending.y, pending.dx, pending.dy, 0.65);
+      addInk(pending.x, pending.y, pending.dx, pending.dy, workspace ? 0.45 : 0.65);
       pending = null;
     }
     if (now >= nextAmbient) {
@@ -645,7 +645,7 @@ update = now => {
       addInk(left ? 0.09 + Math.random() * 0.16 : 0.75 + Math.random() * 0.16,
         0.15 + Math.random() * 0.7, (left ? 1 : -1) * (130 + Math.random() * 140),
         (Math.random() - 0.5) * 220, 0.85);
-      nextAmbient = now + 1600;
+      nextAmbient = now + (workspace ? 2400 : 1600);
     }
     step(dt);
     draw();
@@ -668,7 +668,7 @@ return {setPalette(next) { palette = next; }, dispose};
   function resizeCanvas() {
     const width = Math.max(1, canvas.clientWidth);
     const height = Math.max(1, canvas.clientHeight);
-    const scale = Math.min(window.devicePixelRatio || 1, 1, 1280 / width, 900 / height);
+    const scale = Math.min(window.devicePixelRatio || 1, 1, (workspace ? 640 : 1280) / width, (workspace ? 450 : 900) / height);
     const w = Math.max(1, Math.round(width * scale));
     const h = Math.max(1, Math.round(height * scale));
     if (canvas.width === w && canvas.height === h) return false;

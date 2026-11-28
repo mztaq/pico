@@ -15,7 +15,7 @@ export function homeFluidPalette(theme: PicoTheme): FluidPalette {
   return [rgb(accents[0] ?? theme.accent), rgb(accents[1] ?? theme.accent), rgb(accents[2] ?? theme.accent)];
 }
 
-export function HomeFluidBackground({ theme, disabled = false, fallback }: { theme: PicoTheme; disabled?: boolean; fallback?: ReactNode }) {
+export function HomeFluidBackground({ theme, disabled = false, fallback, workspace = false }: { theme: PicoTheme; disabled?: boolean; fallback?: ReactNode; workspace?: boolean }) {
   const [showFallback, setShowFallback] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
   const controller = useRef<FluidController | null>(null);
@@ -54,7 +54,7 @@ export function HomeFluidBackground({ theme, disabled = false, fallback }: { the
       canvas = document.createElement('canvas');
       host.append(canvas);
       try {
-        controller.current = startFluid(canvas, palette.current, fail);
+        controller.current = startFluid(canvas, palette.current, fail, { workspace });
         host.dataset.fluidReady = 'true';
       } catch {
         fail();
@@ -68,7 +68,7 @@ export function HomeFluidBackground({ theme, disabled = false, fallback }: { the
       forced?.removeEventListener('change', sync);
       stop();
     };
-  }, [disabled]);
+  }, [disabled, workspace]);
 
-  return <><div className="pico-home-fluid" ref={hostRef} aria-hidden="true" />{showFallback && fallback}</>;
+  return <><div className={workspace ? "pico-workspace-fluid" : "pico-home-fluid"} ref={hostRef} aria-hidden="true" />{showFallback && fallback}</>;
 }

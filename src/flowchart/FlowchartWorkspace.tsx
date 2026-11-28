@@ -1,3 +1,4 @@
+import { WorkspaceFluidBackground } from '../app/components/WorkspaceFluidBackground';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowRight, Code2, Copy, Download, GitBranch, CircleHelp, Play, Plus, Redo2, Settings2, Trash2, Undo2, Upload, X, ZoomIn, ZoomOut, Maximize2, Network } from 'lucide-react';
 import { compileFlowchart, ChartError, type ChartCompilation } from './compiler';
@@ -222,7 +223,8 @@ export function FlowchartWorkspace({snapshot,onHome,onPseudocode}:Props) {
     if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();deleteSelected();}
   }window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);});
   const style={...cssVariables(theme),'--on-accent':contrastRatio('#fff',theme.accent)>=contrastRatio('#000',theme.accent)?'#fff':'#000','--error-color':theme.appearance==='light'?'#a40000':'#ff7474'} as CSSProperties;
-  return <div className="pico-app flow-builder" data-pico-theme={theme.id} data-high-contrast={theme.highContrast?'true':undefined} style={style}>
+  return <div className="pico-app flow-builder workspace-fluid-surface" data-pico-theme={theme.id} data-high-contrast={theme.highContrast?'true':undefined} style={style}>
+    <WorkspaceFluidBackground theme={theme}/>
     <header className="topbar pico-appbar">
       <div className="pico-appbar-lead">
         <button className="toolbar-button home-button" aria-label="Go to home screen" disabled={tutorialActive} onClick={()=>onHome(saveNow())}><ArrowLeft size={16}/></button>

@@ -1,3 +1,4 @@
+import { WorkspaceFluidBackground } from '../app/components/WorkspaceFluidBackground';
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, CircleHelp, Minus, Pause, Play, Plus, RotateCcw, Server, ServerCog, Settings2 } from 'lucide-react';
 import { SoundButton } from '../app/components/SoundToggle';
@@ -600,7 +601,8 @@ export function TrafficStorm({ onHome }: { onHome: () => void }) {
   const proxyLoads = proxyYs.map((_, index) =>
     nodeLoadRatio(stats.rps, proxyCount, index, PROXY_CAPACITY));
 
-  return <main className={'storm-app' + (mode === 'setup' ? ' storm-start' : ' storm-in-session')} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
+  return <main className={'storm-app workspace-fluid-surface' + (mode === 'setup' ? ' storm-start' : ' storm-in-session')} data-pico-theme={theme.id} data-high-contrast={theme.highContrast ? 'true' : undefined} style={cssVariables(theme) as CSSProperties}>
+    <WorkspaceFluidBackground theme={theme}/>
     <header className="storm-header pico-appbar">
       <div className="pico-appbar-lead">
         <button type="button" className="storm-icon-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17}/></button>

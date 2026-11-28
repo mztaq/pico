@@ -1,3 +1,4 @@
+import { WorkspaceFluidBackground } from '../app/components/WorkspaceFluidBackground';
 import {useEffect,useRef,useState} from 'react';
 import {ArrowLeft,BookOpen,Cpu,Gauge,Pause,Play,RotateCcw,Settings2,StepBack,StepForward,X} from 'lucide-react';
 import {ThemePicker} from '../app/components/ThemePicker';
@@ -214,7 +215,8 @@ export function CpuStudio({onHome,landingPreview=false}:{onHome:()=>void;landing
  const activeBus=transfer?.bus==='address'?'ADDRESS':transfer?.bus==='data'?'DATA':transfer?.bus==='control'?'CONTROL':null;
  const memoryActive=activeUnits.has('RAM');
  const renderedBoxes=BOXES.filter(box=>mode==='advanced'||!['DECODE','CLOCK','STATUS','INTERRUPT'].includes(box.key)).map(box=>mode==='normal'&&NORMAL_LAYOUT[box.key]?{...box,...NORMAL_LAYOUT[box.key]}:box);
- return <div ref={previewRef} className={landingPreview?"cpu-app cpu-embedded":"cpu-app"} style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
+ return <div ref={previewRef} className={landingPreview?"cpu-app cpu-embedded":"cpu-app workspace-fluid-surface"} style={cssVariables(theme) as React.CSSProperties} data-pico-theme={theme.id}>
+    {!landingPreview && <WorkspaceFluidBackground theme={theme}/>}
   <header className="cpu-topbar topbar pico-appbar">
    <div className="pico-appbar-lead cpu-brand"><button className="toolbar-button home-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></button></div>
    <div className="topbar-spacer"/>

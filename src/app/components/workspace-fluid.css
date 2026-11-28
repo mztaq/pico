@@ -1,0 +1,45 @@
+/* Interactive fluid behind the workspace. Blur only the canvas, never text or controls. */
+.workspace-fluid-surface { position: relative; isolation: isolate; }
+.workspace-fluid-surface > .pico-workspace-fluid {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden;
+  pointer-events: none; user-select: none; opacity: .48;
+}
+.pico-workspace-fluid canvas {
+  display: block; width: 100%; height: 100%;
+  filter: blur(24px) saturate(.75);
+}
+/* Preserve the original opaque surfaces when the fluid is unavailable. */
+.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) {
+  --workspace-fluid-panel: color-mix(in srgb, var(--ds-panel) 86%, transparent);
+  --workspace-fluid-editor: color-mix(in srgb, var(--editor-bg, var(--bg)) 86%, transparent);
+  --workspace-fluid-canvas: color-mix(in srgb, var(--ds-sunken) 45%, transparent);
+}
+.ios-workspace-ui.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) :is(.ide-shell,.workspace-main) {
+  background: transparent !important;
+}
+.ios-workspace-ui.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) :is(.reference-card,.tool-dock),
+.sql-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .sql-sidebar {
+  background: var(--workspace-fluid-panel) !important;
+}
+.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]):is(.ios-workspace-ui,.sql-app) .editor-card {
+  background: var(--workspace-fluid-editor) !important;
+}
+.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]):is(.ios-workspace-ui,.sql-app) :is(.cm-editor,.cm-scroller,.dock-content) {
+  background: transparent !important;
+}
+.flow-builder.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .flow-main,
+.logic-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .logic-workarea {
+  background: transparent !important;
+}
+.flow-builder.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .flow-viewport,
+.logic-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .logic-board {
+  background-color: var(--workspace-fluid-canvas) !important;
+}
+.binary-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .binary-panel,
+.cpu-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) .cpu-information,
+.storm-app.workspace-fluid-surface:has(> .pico-workspace-fluid[data-fluid-ready]) :is(.storm-panel,.storm-metric,.storm-setup-form,.storm-network) {
+  background-color: var(--workspace-fluid-panel) !important;
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .workspace-fluid-surface > .pico-workspace-fluid { display: none; }
+}

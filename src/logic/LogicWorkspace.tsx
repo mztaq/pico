@@ -1,3 +1,4 @@
+import { WorkspaceFluidBackground } from '../app/components/WorkspaceFluidBackground';
 import {useEffect,useMemo,useRef,useState,type PointerEvent as ReactPointerEvent} from 'react';
 import {LogicTutorial,LOGIC_TOUR_KEY} from './LogicTutorial';
 import {PasteJsonDialog} from '../app/components/PasteJsonDialog';
@@ -269,7 +270,8 @@ export function LogicWorkspace({onHome}:{onHome:()=>void}){
    <div className="logic-inspector-actions"><button onClick={rotate}><RotateCw size={14}/> Rotate</button><button onClick={duplicate}><Copy size={14}/> Duplicate</button><button onClick={remove}><Trash2 size={14}/> Delete</button></div>
   </>:selectedWire?<><span className="logic-eyebrow">SELECTED CONNECTION</span><h3>Wire</h3><p>{selectedWire.fromPin} → {selectedWire.toPin}</p><p>Signal: {stateName[signals[key(selectedWire.from,selectedWire.fromPin)]??'Z']}</p><button onClick={remove}><Trash2 size={14}/> Remove wire</button></>:<><span className="logic-eyebrow">CIRCUIT SETTINGS</span><h3>Document</h3><label>Title<input aria-label="Circuit title" value={doc.title} maxLength={120} onChange={e=>change(d=>({...d,title:e.target.value}))}/></label><label className="logic-check"><input type="checkbox" checked={doc.strict} onChange={e=>change(d=>({...d,strict:e.target.checked}))}/> Strict floating inputs</label>{!doc.strict&&<label>Loose input default<select value={doc.looseDefault} onChange={e=>change(d=>({...d,looseDefault:Number(e.target.value) as 0|1}))}><option value="0">LOW (0)</option><option value="1">HIGH (1)</option></select></label>}<label className="logic-check"><input type="checkbox" checked={doc.grid} onChange={e=>change(d=>({...d,grid:e.target.checked}))}/> Show grid</label><label className="logic-check"><input type="checkbox" checked={doc.snap} onChange={e=>change(d=>({...d,snap:e.target.checked}))}/> Snap to grid</label><p className="logic-help">Strict mode treats unconnected inputs as X. Loose mode uses your chosen 0 or 1 for unconnected and high-impedance inputs. A pin with multiple conflicting drivers resolves to X.</p></>}
  </div>;
- return <div className="logic-app" data-pico-theme={theme.id} style={{...cssVariables(theme)} as React.CSSProperties}>
+ return <div className="logic-app workspace-fluid-surface" data-pico-theme={theme.id} style={{...cssVariables(theme)} as React.CSSProperties}>
+    <WorkspaceFluidBackground theme={theme}/>
  <header className="logic-header topbar pico-appbar">
   <div className="pico-appbar-lead logic-brand"><button className="toolbar-button home-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={16}/></button><button type="button" className="brand-lockup pico-brand-home" aria-label="Pico, back to Workspaces" onClick={onHome}><img className="brand-mark" src="/pico-logo.svg" alt="" width="26" height="26"/><span>Pico<span className="brand-period">.</span></span></button></div>
   <div className="topbar-spacer"/>

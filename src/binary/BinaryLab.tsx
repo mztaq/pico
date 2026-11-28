@@ -1,3 +1,4 @@
+import { WorkspaceFluidBackground } from '../app/components/WorkspaceFluidBackground';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowLeftCircle, ArrowRightCircle, BookOpen, Plus, RotateCcw, Settings2, X } from 'lucide-react';
 import { ThemePicker } from '../app/components/ThemePicker';
@@ -118,7 +119,8 @@ export function BinaryLab({ onHome }: { onHome: () => void }) {
     });
   }
 
-  return <main className="binary-app" data-pico-theme={theme.id} style={cssVariables(theme) as CSSProperties}>
+  return <main className="binary-app workspace-fluid-surface" data-pico-theme={theme.id} style={cssVariables(theme) as CSSProperties}>
+    <WorkspaceFluidBackground theme={theme}/>
     <header className="binary-header pico-appbar">
       <div className="pico-appbar-lead">
         <button className="binary-icon-button" aria-label="Back to Pico" onClick={onHome}><ArrowLeft size={17} /></button>

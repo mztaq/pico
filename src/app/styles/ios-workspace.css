@@ -71,7 +71,7 @@
 .pico-app.ios-workspace-ui .topbar-icon,
 .pico-app.ios-workspace-ui .help-button { border-radius: 999px; }
 .pico-app.ios-workspace-ui .run-button {
-  border-radius: 999px;
+  border-radius: var(--ds-radius-md);
   box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
