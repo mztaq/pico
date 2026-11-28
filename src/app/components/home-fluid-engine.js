@@ -39,7 +39,7 @@ export function startFluid(canvas, initialPalette, onFailure, { workspace = fals
     DENSITY_DISSIPATION: 0.85, VELOCITY_DISSIPATION: 0.55, SPLAT_RADIUS: 0.28 };
   let lastPointer = null;
   let pending = null;
-  const frameInterval = 1000 / (workspace ? 30 : 60);
+  const frameInterval = 1000 / 60;
   let lastFrame = 0;
   let frameBudget = 0;
   let simulatedElapsed = 0;

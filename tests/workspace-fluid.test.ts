@@ -13,7 +13,8 @@ describe('Interactive workspace fluid background',()=>{
   it('keeps pointer interaction, limits workspace GPU cost and blurs only the decorative canvas',()=>{
     const engine=read('src/app/components/home-fluid-engine.js');
     const css=read('src/app/components/workspace-fluid.css');
-    expect(engine).toContain('1000 / (workspace ? 30 : 60)');
+    expect(engine).toContain('const frameInterval = 1000 / 60;');
+    expect(engine).toContain('SIM_RESOLUTION: workspace ? 64 : 128');
     expect(engine).toContain("parent.addEventListener('pointermove', onPointer, {passive: true, capture: true});");
     expect(engine).toContain("parent.addEventListener('pointerdown', onPointer, {passive: true, capture: true});");
     expect(css).toContain('pointer-events: none');
