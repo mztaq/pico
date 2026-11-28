@@ -90,10 +90,10 @@
 .pico-app .suggestion-chip b { color: var(--syntax-type, #e2b978); }
 
 /* Quick reference */
-.pico-app .reference-card { padding: 0 14px 14px; }
+.pico-app .reference-card { --pico-card-inset: 14px; --pico-card-radius: calc(var(--pico-card-inset) + var(--ds-radius-sm)); padding: 0 var(--pico-card-inset) var(--pico-card-inset); border-radius: var(--pico-card-radius); }
 .pico-app .reference-head {
   min-height: 44px;
-  margin: 0 -14px 4px;
+  margin: 0 calc(-1 * var(--pico-card-inset)) 4px;
   padding: 0 8px 0 14px;
   border-bottom: 1px solid var(--ds-line);
   background: var(--ds-panel);
@@ -225,4 +225,8 @@
   .pico-app .workspace-shell .editor-split { padding-top: 8px; }
   .pico-app .workspace-main > .tool-dock { margin-bottom: 8px; }
   .pico-app .editor-card-foot { display: none; }
+}
+
+.pico-app .reference-card :is(.reference-search,.reference-example pre) {
+  border-radius: max(0px, calc(var(--pico-card-radius) - var(--pico-card-inset)));
 }

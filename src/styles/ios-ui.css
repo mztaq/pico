@@ -9,18 +9,22 @@
 :where([data-pico-theme]) :where(input, select, textarea):focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 68%, transparent); outline-offset: 2px; }
 :where([data-pico-theme]) :where(button, a) { transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease, color .18s ease; }
 :where([data-pico-theme]) :where(input, select, textarea) { border-radius: var(--ios-radius-control); }
-.learning-topbar { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(18px) saturate(150%); }
-.learning-catalogue, .learning-panel { border-radius: var(--ios-radius-card); box-shadow: var(--ios-shadow-card); }
-.learning-topic, .learning-answer { border-radius: 14px; }
+.learning-topbar { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(18px); }
+.learning-catalogue, .learning-panel { box-shadow: var(--ios-shadow-card); }
 .learning-primary, .learning-secondary, .learning-path button, .learning-back { border-radius: 999px; }
-.pico-home .compiler-choice, .pico-home .home-learning-link, .pico-home .pico-games-card { border-radius: var(--ios-radius-card); box-shadow: var(--ios-shadow-card); }
+.pico-home .home-learning-link, .pico-home .pico-games-card { border-radius: var(--ios-radius-card); box-shadow: var(--ios-shadow-card); }
+.pico-home .compiler-choice { border-radius: var(--home-card-radius); box-shadow: var(--ios-shadow-card); }
 .pico-home .compiler-choice { border-width: 1px; }
-.pico-home .home-nav { backdrop-filter: blur(18px) saturate(150%); }
+.pico-home .home-nav {
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(18px) grayscale(1);
+  backdrop-filter: blur(18px) grayscale(1);
+}
 .pico-app.ios-workspace-ui .topbar { min-height: 52px; }
 @media (max-width: 700px) {
   .learning-hub { padding-inline: 16px; }
   .learning-layout { gap: 16px; }
-  .learning-catalogue, .learning-panel { border-radius: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   :where([data-pico-theme]) *, :where([data-pico-theme]) *::before, :where([data-pico-theme]) *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

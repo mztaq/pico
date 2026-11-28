@@ -556,7 +556,8 @@
 .storm-in-session .storm-metric>strong{margin:5px 0 0}
 .storm-in-session .storm-side>.storm-server-details{
   gap:14px;
-  padding:17px 16px;
+  --pico-card-inset:16px;
+  padding:17px var(--pico-card-inset);
 }
 .storm-in-session .storm-live-ping{
   display:flex;
@@ -1304,4 +1305,14 @@
 .storm-network-svg .storm-route-note--success{color:var(--ds-success)}
 @media(max-width:700px){
   .storm-network-svg .storm-route-note-text{font-size:13px}
+}
+
+/* The ping terminal is inset within the server card. */
+.storm-in-session .storm-side > .storm-server-details {
+  --pico-card-inset: 16px;
+  --pico-card-radius: calc(var(--pico-card-inset) + var(--ds-radius-md));
+  border-radius: var(--pico-card-radius);
+}
+.storm-in-session .storm-server-details .storm-live-ping {
+  border-radius: max(0px, calc(var(--pico-card-radius) - var(--pico-card-inset)));
 }
